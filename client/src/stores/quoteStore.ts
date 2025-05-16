@@ -1,60 +1,90 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage, PersistStorage } from 'zustand/middleware';
 
-// Define types
-interface Treatment {
+// Treatment interface
+export interface Treatment {
   id: string;
   name: string;
+  description: string;
   price: number;
   quantity: number;
-  category?: string;
-  description?: string;
-  imageUrl?: string;
 }
 
-interface PatientInfo {
+// Patient info interface
+export interface PatientInfo {
   firstName: string;
   lastName: string;
   email: string;
-  phone?: string;
-  preferredDate?: string;
-  notes?: string;
+  phone: string;
+  preferredDate: string;
+  notes: string;
 }
 
-interface QuoteState {
+// Quote state interface
+export interface QuoteState {
+  // Treatment data
   treatments: Treatment[];
-  promoCode: string | null;
-  discountPercent: number;
-  subtotal: number;
-  total: number;
-  patientInfo: PatientInfo | null;
-  currentStep: 'treatments' | 'patient-info' | 'summary';
-  loading: {
-    promoCode: boolean;
-    saving: boolean;
-    treatments: boolean;
-  };
   
-  // Actions
+  // Patient info
+  patientInfo: PatientInfo | null;
+  
+  // Pricing
+  subtotal: number;
+  discountPercent: number;
+  total: number;
+  
+  // Promo code
+  promoCode: string;
+  
+  // Special offer ID (if coming from a special offer)
+  specialOfferId: string | null;
+  
+  // Actions for treatments
   addTreatment: (treatment: Treatment) => void;
   removeTreatment: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
-  applyPromoCode: (code: string) => Promise<boolean>;
-  removePromoCode: () => void;
+  updateTreatment: (id: string, treatment: Treatment) => void;
+  
+  // Actions for patient info
   setPatientInfo: (info: PatientInfo) => void;
-  setCurrentStep: (step: 'treatments' | 'patient-info' | 'summary') => void;
-  saveQuote: () => Promise<string | null>;
+  
+  // Actions for promo code
+  applyPromoCode: (code: string) => boolean;
+  
+  // Action for setting special offer ID
+  setSpecialOfferId: (id: string | null) => void;
+  
+  // Action to reset the quote
   resetQuote: () => void;
 }
 
-// Helper function to calculate totals
-const calculateTotals = (treatments: Treatment[], discountPercent: number) => {
-  const subtotal = treatments.reduce(
-    (sum, t) => sum + (t.price * (t.quantity || 1)), 
-    0
-  );
-  const total = subtotal * (1 - (discountPercent / 100));
-  return { subtotal, total };
+// Custom storage handler to fix localStorage JSON parsing issues
+const customStorage: PersistStorage<QuoteState> = {
+  getItem: (name) => {
+    try {
+      const value = localStorage.getItem(name);
+      if (!value) return null;
+      return JSON.parse(value);
+    } catch (error) {
+      console.error("Error retrieving storage", error);
+      return null;
+    }
+  },
+  setItem: (name, value) => {
+    localStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name) => {
+    localStorage.removeItem(name);
+  }
+};
+
+// Default patient info for initialization
+const defaultPatientInfo: PatientInfo = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  preferredDate: '',
+  notes: ''
 };
 
 // Create the store with persistence
@@ -63,274 +93,160 @@ export const useQuoteStore = create<QuoteState>()(
     (set, get) => ({
       // Initial state
       treatments: [],
-      promoCode: null,
-      discountPercent: 0,
-      subtotal: 0,
-      total: 0,
       patientInfo: null,
-      currentStep: 'treatments',
-      loading: {
-        promoCode: false,
-        saving: false,
-        treatments: false
+      subtotal: 0,
+      discountPercent: 0,
+      total: 0,
+      promoCode: '',
+      specialOfferId: null,
+      
+      // Calculate totals
+      calculateTotals: () => {
+        const state = get();
+        
+        const calculatedSubtotal = state.treatments.reduce(
+          (sum, item) => sum + item.price * item.quantity,
+          0
+        );
+        
+        const calculatedTotal = state.discountPercent > 0
+          ? calculatedSubtotal * (1 - state.discountPercent / 100)
+          : calculatedSubtotal;
+          
+        set({
+          subtotal: calculatedSubtotal,
+          total: calculatedTotal
+        });
       },
       
-      // Add treatment action
+      // Treatment actions
       addTreatment: (treatment) => {
-        const state = get();
-        const existingTreatment = state.treatments.find(t => t.id === treatment.id);
+        const { treatments } = get();
         
-        let updatedTreatments;
-        if (existingTreatment) {
-          // Increase quantity if treatment already exists
-          updatedTreatments = state.treatments.map(t => 
-            t.id === treatment.id 
-              ? { ...t, quantity: (t.quantity || 1) + 1 } 
-              : t
-          );
+        // Check if treatment already exists
+        const existingIndex = treatments.findIndex(t => t.id === treatment.id);
+        
+        if (existingIndex >= 0) {
+          // Update existing treatment quantity
+          const updated = [...treatments];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            quantity: updated[existingIndex].quantity + treatment.quantity
+          };
+          
+          set({ treatments: updated });
         } else {
-          // Add new treatment with quantity 1
-          updatedTreatments = [...state.treatments, { ...treatment, quantity: treatment.quantity || 1 }];
+          // Add new treatment
+          set({ treatments: [...treatments, treatment] });
         }
         
-        const { subtotal, total } = calculateTotals(updatedTreatments, state.discountPercent);
-        
-        set({
-          treatments: updatedTreatments,
-          subtotal,
-          total
-        });
-        
-        console.log('STORE: Added treatment', treatment.name);
+        // Recalculate totals
+        get().calculateTotals();
       },
       
-      // Remove treatment action
       removeTreatment: (id) => {
-        const state = get();
-        const updatedTreatments = state.treatments.filter(t => t.id !== id);
-        const { subtotal, total } = calculateTotals(updatedTreatments, state.discountPercent);
+        const { treatments } = get();
+        set({ treatments: treatments.filter(t => t.id !== id) });
         
-        set({
-          treatments: updatedTreatments,
-          subtotal,
-          total
-        });
-        
-        console.log('STORE: Removed treatment with ID:', id);
+        // Recalculate totals
+        get().calculateTotals();
       },
       
-      // Update quantity action
-      updateQuantity: (id, quantity) => {
-        const state = get();
-        const updatedTreatments = state.treatments.map(t => 
-          t.id === id ? { ...t, quantity } : t
+      updateTreatment: (id, treatment) => {
+        const { treatments } = get();
+        const updatedTreatments = treatments.map(t => 
+          t.id === id ? treatment : t
         );
-        const { subtotal, total } = calculateTotals(updatedTreatments, state.discountPercent);
         
-        set({
-          treatments: updatedTreatments,
-          subtotal,
-          total
-        });
+        set({ treatments: updatedTreatments });
         
-        console.log('STORE: Updated quantity for treatment ID:', id, 'to', quantity);
+        // Recalculate totals
+        get().calculateTotals();
       },
       
-      // Apply promo code action with enhanced state handling
-      applyPromoCode: async (code) => {
-        console.log('STORE: Applying promo code', code);
-        
-        // First, capture the current state to preserve it
-        const currentState = get();
-        const currentStep = currentState.currentStep;
-        
-        // Set loading state
-        set(state => ({ 
-          loading: { ...state.loading, promoCode: true } 
-        }));
-        
+      // Patient info actions
+      setPatientInfo: (info) => {
+        set({ patientInfo: info });
+      },
+      
+      // Promo code actions
+      applyPromoCode: (code) => {
         try {
-          // Try the API endpoint
-          const response = await fetch('/api/quotes/promo-codes/validate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code })
-          });
+          const formattedCode = code.trim().toUpperCase();
           
-          if (!response.ok) {
-            throw new Error('Failed to validate promo code');
-          }
-          
-          const data = await response.json();
-          console.log('STORE: Promo code API response:', data);
-          
-          if (data.valid) {
-            // Get latest state in case it changed during async operation
-            const state = get();
-            const { subtotal, total } = calculateTotals(
-              state.treatments, 
-              data.discountPercentage
-            );
-            
-            // Explicitly preserve the step that was active when the promo code was applied
-            set({
-              promoCode: code,
-              discountPercent: data.discountPercentage,
-              subtotal,
-              total,
-              loading: { ...state.loading, promoCode: false },
-              currentStep // Explicitly use the captured step
+          // If empty code, clear discount
+          if (!formattedCode) {
+            set({ 
+              promoCode: '',
+              discountPercent: 0
             });
             
-            // Force state update synchronously before returning
-            localStorage.setItem('currentQuoteStep', currentStep);
-            
-            console.log('STORE: Promo code applied successfully', code, data.discountPercentage);
+            // Recalculate totals
+            get().calculateTotals();
             return true;
-          } else {
-            set(state => ({ 
-              loading: { ...state.loading, promoCode: false },
-              currentStep // Explicitly keep the same step
-            }));
-            console.log('STORE: Invalid promo code:', code);
-            return false;
           }
+          
+          // Apply discount based on promo code
+          // In a real app, this would validate against a server API
+          const discountMap: Record<string, number> = {
+            'SUMMER15': 15,
+            'DENTAL25': 25,
+            'NEWPATIENT': 20,
+            'TEST10': 10,
+            'LUXHOTEL20': 20,
+            'IMPLANTCROWN30': 30,
+            'FREECONSULT': 100, // Free consultation
+            'FREEWHITE': 100,   // Free whitening
+          };
+          
+          // Check if valid promo code
+          if (formattedCode in discountMap) {
+            set({ 
+              promoCode: formattedCode,
+              discountPercent: discountMap[formattedCode]
+            });
+            
+            // Recalculate totals
+            get().calculateTotals();
+            return true;
+          }
+          
+          return false;
         } catch (error) {
-          console.error('STORE: Error applying promo code:', error);
-          
-          // Fallback to simulated behavior if API fails
-          const discountPercentage = 
-            code === 'SUMMER15' ? 15 : 
-            code === 'DENTAL25' ? 25 : 
-            code === 'NEWPATIENT' ? 20 :
-            code === 'TEST10' ? 10 : 
-            code === 'FREECONSULT' ? 100 :
-            code === 'LUXHOTEL20' ? 20 :
-            code === 'IMPLANTCROWN30' ? 30 :
-            code === 'FREEWHITE' ? 100 : 0;
-          
-          if (discountPercentage > 0) {
-            const state = get();
-            const { subtotal, total } = calculateTotals(
-              state.treatments, 
-              discountPercentage
-            );
-            
-            set({
-              promoCode: code,
-              discountPercent: discountPercentage,
-              subtotal,
-              total,
-              loading: { ...state.loading, promoCode: false },
-              currentStep // Explicitly use the captured step
-            });
-            
-            // Force state update synchronously before returning
-            localStorage.setItem('currentQuoteStep', currentStep);
-            
-            console.log('STORE: Promo code applied successfully with fallback', code, discountPercentage);
-            return true;
-          }
-          
-          set(state => ({ 
-            loading: { ...state.loading, promoCode: false },
-            currentStep // Explicitly keep the same step
-          }));
+          console.error("Error applying promo code:", error);
           return false;
         }
       },
       
-      // Remove promo code action
-      removePromoCode: () => {
-        console.log('STORE: Removing promo code');
-        
-        const state = get();
-        const { subtotal, total } = calculateTotals(state.treatments, 0);
-        
-        set({
-          promoCode: null,
-          discountPercent: 0,
-          subtotal,
-          total
-        });
+      // Special offer actions
+      setSpecialOfferId: (id) => {
+        set({ specialOfferId: id });
       },
       
-      // Save quote action
-      saveQuote: async () => {
-        console.log('STORE: Saving quote');
-        
-        const state = get();
-        set({ loading: { ...state.loading, saving: true } });
-        
-        try {
-          const response = await fetch('/api/quotes/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              patientInfo: state.patientInfo,
-              treatments: state.treatments,
-              promoCode: state.promoCode,
-              discountPercent: state.discountPercent,
-              subtotal: state.subtotal,
-              total: state.total
-            })
-          });
-          
-          if (!response.ok) {
-            throw new Error('Failed to save quote');
-          }
-          
-          const data = await response.json();
-          console.log('STORE: Quote saved successfully:', data);
-          
-          set({ loading: { ...state.loading, saving: false } });
-          return data.quoteId || `quote-${Date.now()}`; // Fallback ID if API doesn't provide one
-        } catch (error) {
-          console.error('STORE: Error saving quote:', error);
-          
-          // Simulate successful save if API fails
-          const quoteId = `quote-${Date.now()}`;
-          console.log('STORE: Quote saved successfully:', quoteId);
-          set({ loading: { ...state.loading, saving: false } });
-          return quoteId; // Fallback quote ID
-        }
-      },
-      
-      // Set patient info action
-      setPatientInfo: (info) => {
-        console.log('STORE: Setting patient info', info);
-        set({ patientInfo: info });
-      },
-
-      // Set current step action
-      setCurrentStep: (step) => {
-        console.log('STORE: Setting current step to', step);
-        set({ currentStep: step });
-      },
-      
-      // Reset quote action
+      // Reset quote
       resetQuote: () => {
-        console.log('STORE: Reset quote');
-        
         set({
           treatments: [],
-          promoCode: null,
-          discountPercent: 0,
-          subtotal: 0,
-          total: 0,
           patientInfo: null,
-          currentStep: 'treatments',
-          loading: {
-            promoCode: false,
-            saving: false,
-            treatments: false
-          }
+          subtotal: 0,
+          discountPercent: 0,
+          total: 0,
+          promoCode: '',
+          specialOfferId: null
         });
       }
     }),
     {
-      name: 'quote-storage', // localStorage key
-      storage: localStorage // Use localStorage for persistence
+      name: 'dental-quote-storage',
+      storage: createJSONStorage(() => customStorage),
+      // Only persist select properties to avoid issues
+      partialize: (state) => ({
+        treatments: state.treatments,
+        patientInfo: state.patientInfo,
+        promoCode: state.promoCode,
+        discountPercent: state.discountPercent,
+        specialOfferId: state.specialOfferId
+      }),
     }
   )
 );
