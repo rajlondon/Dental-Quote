@@ -350,6 +350,16 @@ function Router() {
         );
       }} />
       
+      {/* Comprehensive Quote Builder - Integrates dental chart with special offers and packages */}
+      <Route path="/comprehensive-quote" component={() => {
+        const ComprehensiveQuotePage = React.lazy(() => import("./pages/ComprehensiveQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading comprehensive quote builder...</div>}>
+            <ComprehensiveQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Static Quote Demo - 100% buttons, no input elements whatsoever */}
       <Route path="/static-quote" component={() => {
         const StaticQuoteDemo = React.lazy(() => import("./pages/StaticQuoteDemo"));
