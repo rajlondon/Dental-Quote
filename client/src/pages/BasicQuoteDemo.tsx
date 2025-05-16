@@ -3,6 +3,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/utils/currency-formatter';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from '@/components/ui/use-toast';
+import { quoteService } from '@/services/quote-service';
+import { emailService } from '@/services/email-service';
+import { MainLayout } from '@/components/layout/MainLayout';
 
 // Define simple types
 interface Treatment {
@@ -116,6 +123,12 @@ export default function BasicQuoteDemo() {
   const [promoInput, setPromoInput] = useState('');
   const [promoError, setPromoError] = useState('');
   const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  
+  // Patient form state
+  const [patientInfo, setPatientInfo] = useState({ name: '', email: '' });
+  const [showPatientForm, setShowPatientForm] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   
   // Calculate totals
   const calculateTotals = () => {
@@ -271,6 +284,98 @@ export default function BasicQuoteDemo() {
     setPromoError('');
   };
   
+  // Handle saving the quote
+  const handleSaveQuote = async () => {
+    if (!patientInfo.name || !patientInfo.email) {
+      return;
+    }
+    
+    setIsSaving(true);
+    try {
+      // Get current totals
+      const { subtotal, savings, total } = calculateTotals();
+      
+      // Prepare quote data
+      const quoteData = {
+        patientName: patientInfo.name,
+        patientEmail: patientInfo.email,
+        treatments: quote.treatments,
+        selectedPackage: quote.selectedPackage,
+        appliedOffer: quote.appliedOffer,
+        promoCode: quote.promoCode,
+        subtotal,
+        savings,
+        total
+      };
+      
+      // Save quote to local storage
+      const savedQuote = quoteService.saveQuote(quoteData);
+      
+      // Reset form
+      setShowPatientForm(false);
+      
+      // Show success message
+      toast({
+        title: "Quote Saved Successfully",
+        description: `Quote #${savedQuote.id} has been saved.`,
+      });
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      toast({
+        title: "Save Failed",
+        description: "There was an error saving your quote.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Handle sending the quote via email
+  const handleSendEmail = async () => {
+    if (!patientInfo.name || !patientInfo.email) {
+      return;
+    }
+    
+    setIsSendingEmail(true);
+    try {
+      // Get current totals
+      const { subtotal, savings, total } = calculateTotals();
+      
+      // Prepare quote data
+      const quoteData = {
+        id: `temp_${Date.now()}`,
+        createdAt: new Date().toISOString(),
+        patientName: patientInfo.name,
+        patientEmail: patientInfo.email,
+        treatments: quote.treatments,
+        selectedPackage: quote.selectedPackage,
+        appliedOffer: quote.appliedOffer,
+        promoCode: quote.promoCode,
+        subtotal,
+        savings,
+        total,
+        status: 'pending' as const
+      };
+      
+      // Send email
+      await emailService.sendQuoteEmail(quoteData);
+      
+      // Reset form
+      setShowPatientForm(false);
+      
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: "Email Failed",
+        description: "There was an error sending the email.",
+        variant: "destructive", 
+      });
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       <div className="mb-6">
@@ -554,9 +659,16 @@ export default function BasicQuoteDemo() {
                 </div>
               )}
               
-              {/* Checkout button */}
+              {/* Save and checkout buttons */}
               {(quote.treatments.length > 0 || quote.selectedPackage) && (
-                <div className="mt-6">
+                <div className="mt-6 space-y-3">
+                  <Button 
+                    className="w-full" 
+                    variant="outline"
+                    onClick={() => setShowPatientForm(true)}
+                  >
+                    Save Quote
+                  </Button>
                   <Button className="w-full" size="lg">
                     Proceed to Checkout
                   </Button>
