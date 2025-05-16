@@ -331,6 +331,16 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Standalone Quote Builder Demo - completely self-contained component */}
+      <Route path="/standalone-quote" component={() => {
+        const StandaloneQuoteDemo = React.lazy(() => import("./pages/StandaloneQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading standalone quote demo...</div>}>
+            <StandaloneQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
