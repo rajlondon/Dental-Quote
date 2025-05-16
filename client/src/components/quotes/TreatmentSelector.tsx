@@ -1,142 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { useQuoteStore } from '@/stores/quoteStore';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Minus, Tag } from 'lucide-react';
+import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { toast } from '@/hooks/use-toast';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import { Plus, Minus, ArrowRight } from 'lucide-react';
+import { useQuoteStore, Treatment } from '@/stores/quoteStore';
 
-// Define treatment categories
-const categories = [
-  { id: 'implants', name: 'Dental Implants' },
-  { id: 'veneers', name: 'Veneers' },
-  { id: 'crowns', name: 'Crowns' },
-  { id: 'bridges', name: 'Bridges' },
-  { id: 'whitening', name: 'Whitening' },
-  { id: 'orthodontics', name: 'Orthodontics' },
-  { id: 'general', name: 'General Dentistry' },
-];
-
-// Sample treatments data - in a real app, this would come from an API
-const treatmentsData = [
-  { 
-    id: 'implant-standard', 
-    name: 'Standard Dental Implant', 
-    description: 'Complete dental implant procedure including abutment and crown',
+// Sample treatments for demonstration
+const SAMPLE_TREATMENTS = [
+  {
+    id: 'implant',
+    name: 'Dental Implant',
+    description: 'Titanium post surgically placed into the jawbone to support a replacement tooth',
     price: 1200,
     category: 'implants'
   },
-  { 
-    id: 'implant-premium', 
-    name: 'Premium Dental Implant', 
-    description: 'Premium dental implant with lifetime warranty',
-    price: 1800,
-    category: 'implants'
-  },
-  { 
-    id: 'veneer-porcelain', 
-    name: 'Porcelain Veneer', 
-    description: 'High-quality porcelain veneer, per tooth',
-    price: 600,
-    category: 'veneers'
-  },
-  { 
-    id: 'veneer-composite', 
-    name: 'Composite Veneer', 
-    description: 'Durable composite veneer, per tooth',
-    price: 400,
-    category: 'veneers'
-  },
-  { 
-    id: 'crown-porcelain', 
-    name: 'Porcelain Crown', 
-    description: 'Natural-looking porcelain crown, per tooth',
-    price: 750,
+  {
+    id: 'crown',
+    name: 'Porcelain Crown',
+    description: 'Custom-made tooth-shaped cap that covers a damaged or decayed tooth',
+    price: 800,
     category: 'crowns'
   },
-  { 
-    id: 'crown-zirconia', 
-    name: 'Zirconia Crown', 
-    description: 'Extremely durable zirconia crown, per tooth',
-    price: 850,
-    category: 'crowns'
+  {
+    id: 'veneers',
+    name: 'Porcelain Veneers',
+    description: 'Thin shells of porcelain that are bonded to the front of teeth to improve appearance',
+    price: 900,
+    category: 'cosmetic'
   },
-  { 
-    id: 'bridge-3unit', 
-    name: '3-Unit Bridge', 
-    description: 'Bridge to replace one missing tooth',
-    price: 1500,
-    category: 'bridges'
-  },
-  { 
-    id: 'whitening-laser', 
-    name: 'Laser Teeth Whitening', 
-    description: 'Professional in-office laser whitening procedure',
+  {
+    id: 'whitening',
+    name: 'Teeth Whitening',
+    description: 'Professional procedure to remove stains and discoloration from teeth',
     price: 350,
-    category: 'whitening'
+    category: 'cosmetic'
   },
-  { 
-    id: 'braces-metal', 
-    name: 'Metal Braces', 
-    description: 'Traditional metal braces treatment',
-    price: 2500,
-    category: 'orthodontics'
+  {
+    id: 'rootcanal',
+    name: 'Root Canal',
+    description: 'Procedure to treat infection at the center of a tooth',
+    price: 750,
+    category: 'endodontics'
   },
-  { 
-    id: 'braces-ceramic', 
-    name: 'Ceramic Braces', 
-    description: 'Less visible ceramic braces treatment',
-    price: 3200,
-    category: 'orthodontics'
+  {
+    id: 'extraction',
+    name: 'Tooth Extraction',
+    description: 'Removal of a tooth from its socket in the bone',
+    price: 200,
+    category: 'oral-surgery'
   },
-  { 
-    id: 'cleaning', 
-    name: 'Professional Cleaning', 
-    description: 'Dental cleaning and check-up',
+  {
+    id: 'bridge',
+    name: 'Dental Bridge',
+    description: 'Fixed replacement for missing teeth',
+    price: 1500,
+    category: 'prosthodontics'
+  },
+  {
+    id: 'cleaning',
+    name: 'Professional Cleaning',
+    description: 'Removal of plaque and tartar to prevent cavities and gum disease',
     price: 120,
-    category: 'general'
-  },
-  { 
-    id: 'filling', 
-    name: 'Dental Filling', 
-    description: 'Composite filling for cavity, per tooth',
-    price: 150,
-    category: 'general'
-  },
+    category: 'preventive'
+  }
+];
+
+// Categories for filtering
+const CATEGORIES = [
+  { value: 'all', label: 'All Treatments' },
+  { value: 'implants', label: 'Implants' },
+  { value: 'crowns', label: 'Crowns' },
+  { value: 'cosmetic', label: 'Cosmetic' },
+  { value: 'endodontics', label: 'Endodontics' },
+  { value: 'oral-surgery', label: 'Oral Surgery' },
+  { value: 'prosthodontics', label: 'Prosthodontics' },
+  { value: 'preventive', label: 'Preventive' }
 ];
 
 const TreatmentSelector: React.FC = () => {
-  const { treatments, addTreatment, removeTreatment, updateTreatmentQuantity, promoCode, applyPromoCode, subtotal } = useQuoteStore();
+  const [_, navigate] = useLocation();
+  const { treatments, addTreatment, updateTreatmentQuantity } = useQuoteStore();
+  
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [promoInput, setPromoInput] = useState(promoCode || '');
-  const [, navigate] = useLocation();
-
-  // Filter treatments based on search query and active category
-  const filteredTreatments = treatmentsData.filter(treatment => {
-    const matchesSearch = treatment.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          treatment.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = activeCategory === 'all' || treatment.category === activeCategory;
+  
+  // Filter treatments based on category and search query
+  const filteredTreatments = SAMPLE_TREATMENTS.filter(treatment => {
+    const matchesCategory = selectedCategory === 'all' || treatment.category === selectedCategory;
+    const matchesSearch = treatment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         treatment.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return matchesSearch && matchesCategory;
+    return matchesCategory && matchesSearch;
   });
-
-  // Get quantity of a specific treatment
-  const getTreatmentQuantity = (treatmentId: string) => {
-    const treatment = treatments.find(t => t.id === treatmentId);
+  
+  // Check if a treatment is already in the cart
+  const isTreatmentInCart = (id: string) => {
+    return treatments.some(t => t.id === id);
+  };
+  
+  // Get quantity of a treatment in the cart
+  const getTreatmentQuantity = (id: string) => {
+    const treatment = treatments.find(t => t.id === id);
     return treatment ? treatment.quantity : 0;
   };
-
-  // Handle increment treatment quantity
-  const handleIncrement = (treatment: any) => {
-    const currentQuantity = getTreatmentQuantity(treatment.id);
-    
-    if (currentQuantity === 0) {
-      // Add treatment if not already in the cart
+  
+  // Handle adding a treatment to the cart
+  const handleAddTreatment = (treatment: typeof SAMPLE_TREATMENTS[0]) => {
+    if (isTreatmentInCart(treatment.id)) {
+      updateTreatmentQuantity(treatment.id, getTreatmentQuantity(treatment.id) + 1);
+    } else {
       addTreatment({
         id: treatment.id,
         name: treatment.name,
@@ -144,236 +132,119 @@ const TreatmentSelector: React.FC = () => {
         price: treatment.price,
         quantity: 1
       });
-    } else {
-      // Update quantity if already in the cart
-      updateTreatmentQuantity(treatment.id, currentQuantity + 1);
     }
   };
-
-  // Handle decrement treatment quantity
-  const handleDecrement = (treatmentId: string) => {
-    const currentQuantity = getTreatmentQuantity(treatmentId);
-    
-    if (currentQuantity === 1) {
-      // Remove treatment if quantity will be zero
-      removeTreatment(treatmentId);
-    } else if (currentQuantity > 1) {
-      // Decrease quantity if more than one
-      updateTreatmentQuantity(treatmentId, currentQuantity - 1);
+  
+  // Handle removing a treatment from the cart
+  const handleDecrementTreatment = (id: string) => {
+    const currentQuantity = getTreatmentQuantity(id);
+    if (currentQuantity > 1) {
+      updateTreatmentQuantity(id, currentQuantity - 1);
     }
   };
-
-  // Apply promo code
-  const handleApplyPromoCode = () => {
-    if (!promoInput.trim()) {
-      toast({
-        title: 'Please enter a promo code',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Known promo codes
-    const validPromoCodes: Record<string, {discountPercentage: number, description: string}> = {
-      'SUMMER15': { discountPercentage: 15, description: 'Summer Special Discount' },
-      'DENTAL25': { discountPercentage: 25, description: 'Dental Care Package Discount' },
-      'NEWPATIENT': { discountPercentage: 20, description: 'New Patient Discount' },
-      'TEST10': { discountPercentage: 10, description: 'Test Discount Code' },
-      'LUXHOTEL20': { discountPercentage: 20, description: 'Luxury Hotel Package Discount' },
-      'IMPLANTCROWN30': { discountPercentage: 30, description: 'Implant & Crown Bundle Discount' },
-    };
-
-    const promoCode = promoInput.toUpperCase();
-    
-    if (validPromoCodes[promoCode]) {
-      applyPromoCode(promoCode, validPromoCodes[promoCode].discountPercentage);
-      toast({
-        title: 'Promo code applied',
-        description: `${validPromoCodes[promoCode].description}: ${validPromoCodes[promoCode].discountPercentage}% off`,
-        variant: 'default'
-      });
-    } else {
-      toast({
-        title: 'Invalid promo code',
-        description: 'The promo code you entered is not valid',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Continue to patient info
+  
+  // Continue to next step
   const handleContinue = () => {
-    if (treatments.length === 0) {
-      toast({
-        title: 'No treatments selected',
-        description: 'Please select at least one treatment before proceeding',
-        variant: 'destructive'
-      });
-      return;
+    if (treatments.length > 0) {
+      navigate('/quote/patient-info');
     }
-    
-    navigate('/quote/patient-info');
   };
-
+  
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Select Dental Treatments</CardTitle>
-        <CardDescription>Choose the treatments you're interested in for your dental trip</CardDescription>
-      </CardHeader>
-      
-      <CardContent className="space-y-6">
-        {/* Search and filters */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search treatments..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <div className="flex gap-2 items-center">
-            <Label htmlFor="promo-code" className="whitespace-nowrap">Promo Code:</Label>
-            <div className="flex">
-              <Input
-                id="promo-code"
-                placeholder="Enter code"
-                value={promoInput}
-                onChange={(e) => setPromoInput(e.target.value)}
-                className="rounded-r-none"
-              />
-              <Button 
-                variant="secondary" 
-                className="rounded-l-none"
-                onClick={handleApplyPromoCode}
-              >
-                Apply
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <Label htmlFor="search">Search Treatments</Label>
+          <Input
+            id="search"
+            placeholder="Search by name or description..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
         </div>
-        
-        {/* Treatment Categories */}
-        <Tabs defaultValue="all" value={activeCategory} onValueChange={setActiveCategory}>
-          <TabsList className="flex flex-wrap">
-            <TabsTrigger value="all">All Treatments</TabsTrigger>
-            {categories.map((category) => (
-              <TabsTrigger key={category.id} value={category.id}>
-                {category.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          <TabsContent value={activeCategory} className="mt-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredTreatments.map((treatment) => {
-                const quantity = getTreatmentQuantity(treatment.id);
-                return (
-                  <Card key={treatment.id} className={quantity > 0 ? 'border-primary' : ''}>
-                    <CardHeader className="py-4">
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-base font-semibold">{treatment.name}</CardTitle>
-                        <div className="font-bold text-lg">${treatment.price}</div>
-                      </div>
-                      <CardDescription className="text-sm">{treatment.description}</CardDescription>
-                    </CardHeader>
-                    <CardFooter className="py-3 flex justify-between">
-                      <div className="flex items-center gap-2">
-                        {quantity > 0 ? (
-                          <>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => handleDecrement(treatment.id)}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
-                            <span className="w-8 text-center">{quantity}</span>
-                            <Button 
-                              variant="outline" 
-                              size="icon" 
-                              className="h-8 w-8"
-                              onClick={() => handleIncrement(treatment)}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                          </>
-                        ) : (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleIncrement(treatment)}
-                          >
-                            <Plus className="h-4 w-4 mr-1" /> Add
-                          </Button>
-                        )}
-                      </div>
-                      {quantity > 0 && (
-                        <div className="text-sm font-medium">
-                          Total: ${treatment.price * quantity}
-                        </div>
-                      )}
-                    </CardFooter>
-                  </Card>
-                );
-              })}
-            </div>
-            
-            {filteredTreatments.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No treatments found. Try adjusting your search or filter.</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-        
-        {/* Selected treatments summary */}
-        {treatments.length > 0 && (
-          <div className="border rounded-md p-4 mt-6">
-            <h3 className="font-semibold text-lg mb-2">Selected Treatments</h3>
-            <div className="space-y-2">
-              {treatments.map((treatment) => (
-                <div key={treatment.id} className="flex justify-between items-center">
-                  <div>
-                    <span className="font-medium">{treatment.name}</span>
-                    <span className="text-sm text-muted-foreground ml-2">x{treatment.quantity}</span>
-                  </div>
-                  <div>${treatment.price * treatment.quantity}</div>
-                </div>
+        <div className="w-full md:w-64">
+          <Label htmlFor="category">Filter by Category</Label>
+          <Select
+            value={selectedCategory}
+            onValueChange={setSelectedCategory}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select category" />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((category) => (
+                <SelectItem key={category.value} value={category.value}>
+                  {category.label}
+                </SelectItem>
               ))}
-              <div className="border-t pt-2 mt-2 flex justify-between font-semibold">
-                <span>Subtotal</span>
-                <span>${subtotal}</span>
-              </div>
-              {promoCode && (
-                <div className="flex justify-between items-center text-green-600">
-                  <div className="flex items-center">
-                    <Tag className="h-4 w-4 mr-1" />
-                    <span>Promo: {promoCode}</span>
-                  </div>
-                  <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                    Applied
-                  </Badge>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </CardContent>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       
-      <CardFooter className="flex justify-end">
-        <Button 
-          onClick={handleContinue}
-          disabled={treatments.length === 0}
-        >
-          Continue to Your Information
-        </Button>
-      </CardFooter>
-    </Card>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredTreatments.map((treatment) => (
+          <Card key={treatment.id} className="flex flex-col">
+            <CardHeader>
+              <CardTitle>{treatment.name}</CardTitle>
+              <CardDescription>
+                ${treatment.price.toLocaleString()}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <p className="text-sm text-muted-foreground">
+                {treatment.description}
+              </p>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center">
+              {isTreatmentInCart(treatment.id) ? (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleDecrementTreatment(treatment.id)}
+                    disabled={getTreatmentQuantity(treatment.id) <= 1}
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                  <span className="w-8 text-center">
+                    {getTreatmentQuantity(treatment.id)}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleAddTreatment(treatment)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Button onClick={() => handleAddTreatment(treatment)}>
+                  Add
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      
+      {treatments.length > 0 && (
+        <div className="flex justify-between items-center p-4 bg-muted rounded-lg">
+          <div>
+            <p className="font-semibold">
+              {treatments.length} {treatments.length === 1 ? 'treatment' : 'treatments'} selected
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Total items: {treatments.reduce((sum, t) => sum + t.quantity, 0)}
+            </p>
+          </div>
+          <Button onClick={handleContinue}>
+            Continue <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      )}
+    </div>
   );
 };
 
