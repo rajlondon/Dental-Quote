@@ -173,6 +173,9 @@ const QuickQuoteIsolated = () => {
     const treatmentsCopy = [...selectedTreatments];
     const treatmentIds = selectedTreatments.map(t => t.id);
     
+    // Store in ref for recovery
+    preservedTreatmentsRef.current = treatmentsCopy;
+    
     if (!MOCK_PROMO_CODES[code]) {
       toast({
         title: 'Invalid Code',
@@ -186,8 +189,13 @@ const QuickQuoteIsolated = () => {
     console.log('[PROMO APPLYING] Applying code:', code);
     
     try {
+      // IMPORTANT FIX: Store treatments explicitly before any async operations
+      // This creates a stable reference that won't be affected by React's batched updates
+      const stableTreatments = [...selectedTreatments];
+
       // Simulate API call with detailed logging
       console.log('[PROMO API] Making API call...');
+      await new Promise(resolve => setTimeout(resolve, 100));
       
       // Check treatments still exist before calculation
       console.log('[PROMO API] Treatments check:', {
@@ -197,8 +205,11 @@ const QuickQuoteIsolated = () => {
         currentIds: selectedTreatments.map(t => t.id)
       });
       
-      // Calculate the discount based on mock data
-      const { subtotal } = calculateTotals();
+      // IMPORTANT FIX: Calculate the discount based on the stable treatment copy
+      // This ensures correct calculation even if state updates have issues
+      const subtotal = stableTreatments.reduce((sum, treatment) => 
+        sum + (treatment.price * (treatment.quantity || 1)), 0);
+        
       let calculatedDiscount = 0;
       
       if (MOCK_PROMO_CODES[code].type === 'percentage') {
@@ -219,6 +230,10 @@ const QuickQuoteIsolated = () => {
         originalTreatments: treatmentsCopy.length
       });
       
+      // IMPORTANT FIX: First make sure treatments are preserved by setting them explicitly
+      // This critical fix ensures treatments don't disappear when promo code is applied
+      setSelectedTreatments(stableTreatments);
+      
       // CRITICAL: Update the promo code and discount state separately
       // This avoids any potential race conditions or dependencies
       setAppliedPromoCode(code);
@@ -228,19 +243,19 @@ const QuickQuoteIsolated = () => {
       setPromoCodeInput('');
       
       // Force preservation of treatments if they were somehow lost
-      if (selectedTreatments.length === 0 && treatmentsCopy.length > 0) {
+      if (selectedTreatments.length === 0 && stableTreatments.length > 0) {
         console.log('[PROMO RECOVERY] Treatments were lost! Restoring from backup');
-        setSelectedTreatments(treatmentsCopy);
+        setSelectedTreatments(stableTreatments);
       }
       
-      // Show success message
+      // Show success message with delay to allow state updates to complete
       setTimeout(() => {
         console.log('[PROMO TOAST] Showing success toast, treatments:', selectedTreatments.length);
         toast({
           title: 'Promo Code Applied',
           description: `${code} has been applied successfully! Discount: ${formatCurrency(calculatedDiscount)}`,
         });
-      }, 100);
+      }, 300);
     } catch (error) {
       console.error('[PROMO ERROR]', error);
       toast({
