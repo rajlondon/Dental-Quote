@@ -311,6 +311,16 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Enhanced Basic Quote - simple yet powerful implementation */}
+      <Route path="/quote-builder" component={() => {
+        const EnhancedBasicQuote = React.lazy(() => import("./pages/EnhancedBasicQuote"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote builder...</div>}>
+            <EnhancedBasicQuote />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (

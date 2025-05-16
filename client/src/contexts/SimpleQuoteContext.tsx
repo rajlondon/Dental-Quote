@@ -445,7 +445,7 @@ export function SimpleQuoteProvider({ children }: { children: ReactNode }) {
         description: 'Please select at least one treatment or package before saving.',
         variant: 'destructive'
       });
-      return null;
+      return "";
     }
     
     setIsLoading(true);
@@ -496,7 +496,7 @@ export function SimpleQuoteProvider({ children }: { children: ReactNode }) {
         description: err.message || 'Failed to save your quote. Please try again.',
         variant: 'destructive'
       });
-      return null;
+      return "";
     } finally {
       setIsLoading(false);
     }
