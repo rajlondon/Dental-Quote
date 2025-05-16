@@ -35,6 +35,7 @@ import ResilientWebSocketTest3 from "@/pages/ResilientWebSocketTest3";
 import ClinicAccessDeniedPage from "@/components/ClinicAccessDeniedPage";
 import QuickQuoteNew from "@/pages/QuickQuoteNew";
 import QuickQuoteDirect from "@/pages/QuickQuoteDirect";
+import QuickQuoteIsolated from "@/pages/QuickQuoteIsolated";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -330,6 +331,16 @@ function Router() {
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading direct quote implementation...</div>}>
             <QuickQuoteDirect />
+          </React.Suspense>
+        );
+      }} />
+      
+      {/* Isolated implementation - completely separate state variables */}
+      <Route path="/quick-quote-isolated" component={() => {
+        const QuickQuoteIsolated = React.lazy(() => import("./pages/QuickQuoteIsolated"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading isolated quote implementation...</div>}>
+            <QuickQuoteIsolated />
           </React.Suspense>
         );
       }} />
