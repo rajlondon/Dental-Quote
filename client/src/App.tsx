@@ -342,6 +342,16 @@ function Router() {
         );
       }} />
       
+      {/* Final Quote Builder - Industrial-grade solution with isolated state management */}
+      <Route path="/final-quote" component={() => {
+        const FinalQuoteBuilder = React.lazy(() => import("./pages/FinalQuoteBuilder"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading final quote builder...</div>}>
+            <FinalQuoteBuilder />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
