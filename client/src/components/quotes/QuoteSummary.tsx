@@ -1,34 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useQuoteStore } from '@/stores/quoteStore';
+import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Download, Loader2, Send, Tag } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import { useLocation } from 'wouter';
+import { apiRequest } from '@/lib/queryClient';
 
 const QuoteSummary: React.FC = () => {
-  const { treatments, patientInfo, subtotal, discountPercent, total, promoCode, resetQuote } = useQuoteStore();
+  const { treatments, patientInfo, promoCode, discountPercentage, subtotal, total } = useQuoteStore();
   const [, navigate] = useLocation();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
-  // Format currency
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
+  const handleBack = () => {
+    navigate('/quote/patient-info');
   };
 
-  // Submit quote to server
-  const submitQuote = async () => {
+  const handleSubmit = async () => {
     if (!patientInfo) {
       toast({
-        title: 'Missing patient information',
-        description: 'Please fill in your information before submitting the quote',
+        title: 'Missing information',
+        description: 'Please complete your patient information first',
         variant: 'destructive'
       });
-      
-      // Navigate back to patient info form
       navigate('/quote/patient-info');
       return;
     }
@@ -36,11 +31,9 @@ const QuoteSummary: React.FC = () => {
     if (treatments.length === 0) {
       toast({
         title: 'No treatments selected',
-        description: 'Please select at least one treatment before submitting',
+        description: 'Please select at least one treatment before submitting your quote',
         variant: 'destructive'
       });
-      
-      // Navigate back to treatment selection
       navigate('/quote/treatments');
       return;
     }
@@ -48,25 +41,48 @@ const QuoteSummary: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // In a real app, this would submit to an API endpoint
-      // For demo purposes, simulate an API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Success
+      // Prepare quote data for submission
+      const quoteData = {
+        patientInfo,
+        treatments,
+        promoCode,
+        discountPercentage,
+        subtotal,
+        total
+      };
+      
+      // Send to API
+      const response = await apiRequest('POST', '/api/quotes', quoteData);
+      
+      if (!response.ok) {
+        throw new Error('Failed to submit quote');
+      }
+      
+      const data = await response.json();
+      
+      // Generate PDF if successful
+      if (data.id) {
+        const pdfResponse = await apiRequest('GET', `/api/quotes/${data.id}/pdf`);
+        
+        if (pdfResponse.ok) {
+          const pdfBlob = await pdfResponse.blob();
+          const pdfObjectUrl = URL.createObjectURL(pdfBlob);
+          setPdfUrl(pdfObjectUrl);
+        }
+      }
+      
+      // Show success message
       toast({
         title: 'Quote submitted successfully',
-        description: 'We will contact you shortly with more information.',
+        description: 'Your quote has been saved. We will contact you shortly!',
         variant: 'default'
       });
-
-      // Reset the quote store and navigate to confirmation
-      resetQuote();
-      navigate('/quote/confirmation');
+      
     } catch (error) {
       console.error('Error submitting quote:', error);
       toast({
-        title: 'Error submitting quote',
-        description: 'Please try again later',
+        title: 'Submission failed',
+        description: 'There was an error submitting your quote. Please try again.',
         variant: 'destructive'
       });
     } finally {
@@ -74,104 +90,155 @@ const QuoteSummary: React.FC = () => {
     }
   };
 
+  const handleDownloadPdf = () => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = `MyDentalFly_Quote_${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
+  // Calculate discount amount
+  const discountAmount = subtotal * (discountPercentage / 100);
+
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle>Quote Summary</CardTitle>
-        <CardDescription>Review your selected treatments and information</CardDescription>
+        <CardDescription>Review your dental treatment quote before submitting</CardDescription>
       </CardHeader>
       
       <CardContent className="space-y-6">
         {/* Patient Information */}
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Patient Information</h3>
-          {patientInfo ? (
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div>
-                <span className="font-medium">Name:</span> {patientInfo.firstName} {patientInfo.lastName}
-              </div>
-              <div>
-                <span className="font-medium">Email:</span> {patientInfo.email}
-              </div>
-              <div>
-                <span className="font-medium">Phone:</span> {patientInfo.phone}
-              </div>
-              <div>
-                <span className="font-medium">Preferred Date:</span> {patientInfo.preferredDate}
-              </div>
-              {patientInfo.notes && (
-                <div className="col-span-2">
-                  <span className="font-medium">Notes:</span> {patientInfo.notes}
+        <div>
+          <h3 className="font-semibold text-lg mb-2">Patient Information</h3>
+          <div className="bg-muted p-4 rounded-md">
+            {patientInfo ? (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Name:</p>
+                  <p>{patientInfo.firstName} {patientInfo.lastName}</p>
                 </div>
-              )}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Please provide your information</p>
-          )}
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Email:</p>
+                  <p>{patientInfo.email}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Phone:</p>
+                  <p>{patientInfo.phone}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Preferred Date:</p>
+                  <p>{new Date(patientInfo.preferredDate).toLocaleDateString()}</p>
+                </div>
+                {patientInfo.notes && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-muted-foreground">Notes:</p>
+                    <p>{patientInfo.notes}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No patient information provided</p>
+            )}
+          </div>
         </div>
         
         {/* Selected Treatments */}
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Selected Treatments</h3>
+        <div>
+          <h3 className="font-semibold text-lg mb-2">Selected Treatments</h3>
           {treatments.length > 0 ? (
-            <div>
-              <div className="border rounded-md divide-y">
-                {treatments.map((treatment) => (
-                  <div key={treatment.id} className="px-4 py-3 flex justify-between items-center">
-                    <div>
-                      <p className="font-medium">{treatment.name}</p>
-                      <p className="text-sm text-muted-foreground">{treatment.description}</p>
-                      <p className="text-xs">Quantity: {treatment.quantity}</p>
-                    </div>
-                    <div className="text-right">
-                      <p>{formatCurrency(treatment.price * treatment.quantity)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="border rounded-md overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-2 text-left font-medium">Treatment</th>
+                    <th className="px-4 py-2 text-center font-medium">Qty</th>
+                    <th className="px-4 py-2 text-right font-medium">Price</th>
+                    <th className="px-4 py-2 text-right font-medium">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {treatments.map((treatment) => (
+                    <tr key={treatment.id} className="border-t">
+                      <td className="px-4 py-3">
+                        <div>
+                          <p className="font-medium">{treatment.name}</p>
+                          <p className="text-sm text-muted-foreground">{treatment.description}</p>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center">{treatment.quantity}</td>
+                      <td className="px-4 py-3 text-right">${treatment.price}</td>
+                      <td className="px-4 py-3 text-right">${treatment.price * treatment.quantity}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-muted/50">
+                  <tr className="border-t">
+                    <td colSpan={3} className="px-4 py-2 font-medium text-right">Subtotal:</td>
+                    <td className="px-4 py-2 text-right font-medium">${subtotal}</td>
+                  </tr>
+                  
+                  {promoCode && (
+                    <tr>
+                      <td colSpan={3} className="px-4 py-2 font-medium text-right text-green-600 flex items-center justify-end">
+                        <Tag className="h-4 w-4 mr-1" />
+                        Discount ({promoCode} - {discountPercentage}%):
+                      </td>
+                      <td className="px-4 py-2 text-right font-medium text-green-600">
+                        -${discountAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                  )}
+                  
+                  <tr className="border-t">
+                    <td colSpan={3} className="px-4 py-2 font-bold text-right">Total:</td>
+                    <td className="px-4 py-2 text-right font-bold">${total}</td>
+                  </tr>
+                </tfoot>
+              </table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">No treatments selected</p>
+            <p className="text-muted-foreground">No treatments selected</p>
           )}
         </div>
         
-        {/* Pricing Summary */}
-        <div className="space-y-2 border-t pt-4">
-          <div className="flex justify-between items-center">
-            <span>Subtotal</span>
-            <span>{formatCurrency(subtotal)}</span>
+        {/* PDF Download Button */}
+        {pdfUrl && (
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+              className="gap-2"
+            >
+              <Download className="h-4 w-4" />
+              Download Quote PDF
+            </Button>
           </div>
-          
-          {discountPercent > 0 && (
-            <div className="flex justify-between items-center text-green-600">
-              <span className="flex items-center">
-                <CheckCircle className="h-4 w-4 mr-1" />
-                Discount {promoCode && `(${promoCode})`}
-              </span>
-              <span>-{formatCurrency(subtotal * (discountPercent / 100))}</span>
-            </div>
-          )}
-          
-          <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
-            <span>Total</span>
-            <span>{formatCurrency(total)}</span>
-          </div>
-        </div>
+        )}
       </CardContent>
       
-      <CardFooter className="flex flex-col space-y-4">
-        <div className="flex justify-between w-full">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/quote/patient-info')}
-            disabled={isSubmitting}
-          >
-            Back
+      <CardFooter className="flex justify-between">
+        <Button 
+          type="button" 
+          variant="outline" 
+          onClick={handleBack}
+          disabled={isSubmitting}
+        >
+          Back
+        </Button>
+        
+        {pdfUrl ? (
+          <Button onClick={() => navigate('/')}>
+            Return to Home
           </Button>
-          
+        ) : (
           <Button 
-            onClick={submitQuote}
-            disabled={isSubmitting || !patientInfo || treatments.length === 0}
+            onClick={handleSubmit}
+            disabled={isSubmitting || treatments.length === 0 || !patientInfo}
           >
             {isSubmitting ? (
               <>
@@ -179,10 +246,13 @@ const QuoteSummary: React.FC = () => {
                 Submitting...
               </>
             ) : (
-              'Submit Quote'
+              <>
+                <Send className="mr-2 h-4 w-4" />
+                Submit Quote Request
+              </>
             )}
           </Button>
-        </div>
+        )}
       </CardFooter>
     </Card>
   );

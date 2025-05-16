@@ -1,7 +1,7 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage, PersistStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
-// Treatment interface
+// Define types for our store
 export interface Treatment {
   id: string;
   name: string;
@@ -10,7 +10,6 @@ export interface Treatment {
   quantity: number;
 }
 
-// Patient info interface
 export interface PatientInfo {
   firstName: string;
   lastName: string;
@@ -20,71 +19,36 @@ export interface PatientInfo {
   notes: string;
 }
 
-// Quote state interface
 export interface QuoteState {
-  // Treatment data
   treatments: Treatment[];
-  
-  // Patient info
   patientInfo: PatientInfo | null;
-  
-  // Pricing
+  promoCode: string | null;
+  discountPercentage: number;
   subtotal: number;
-  discountPercent: number;
   total: number;
-  
-  // Promo code
-  promoCode: string;
-  
-  // Special offer ID (if coming from a special offer)
   specialOfferId: string | null;
   
-  // Actions for treatments
+  // Actions
   addTreatment: (treatment: Treatment) => void;
   removeTreatment: (id: string) => void;
-  updateTreatment: (id: string, treatment: Treatment) => void;
-  
-  // Actions for patient info
+  updateTreatmentQuantity: (id: string, quantity: number) => void;
   setPatientInfo: (info: PatientInfo) => void;
-  
-  // Actions for promo code
-  applyPromoCode: (code: string) => boolean;
-  
-  // Action for setting special offer ID
+  applyPromoCode: (code: string, percentage: number) => void;
+  clearPromoCode: () => void;
   setSpecialOfferId: (id: string | null) => void;
-  
-  // Action to reset the quote
   resetQuote: () => void;
 }
 
-// Custom storage handler to fix localStorage JSON parsing issues
-const customStorage: PersistStorage<QuoteState> = {
-  getItem: (name) => {
-    try {
-      const value = localStorage.getItem(name);
-      if (!value) return null;
-      return JSON.parse(value);
-    } catch (error) {
-      console.error("Error retrieving storage", error);
-      return null;
-    }
-  },
-  setItem: (name, value) => {
-    localStorage.setItem(name, JSON.stringify(value));
-  },
-  removeItem: (name) => {
-    localStorage.removeItem(name);
-  }
-};
-
-// Default patient info for initialization
-const defaultPatientInfo: PatientInfo = {
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  preferredDate: '',
-  notes: ''
+// Helper function to calculate totals
+const calculateTotals = (treatments: Treatment[], discountPercentage: number) => {
+  const subtotal = treatments.reduce((sum, treatment) => {
+    return sum + (treatment.price * treatment.quantity);
+  }, 0);
+  
+  const discount = subtotal * (discountPercentage / 100);
+  const total = Math.max(0, subtotal - discount);
+  
+  return { subtotal, total };
 };
 
 // Create the store with persistence
@@ -94,159 +58,115 @@ export const useQuoteStore = create<QuoteState>()(
       // Initial state
       treatments: [],
       patientInfo: null,
+      promoCode: null,
+      discountPercentage: 0,
       subtotal: 0,
-      discountPercent: 0,
       total: 0,
-      promoCode: '',
       specialOfferId: null,
       
-      // Calculate totals
-      calculateTotals: () => {
-        const state = get();
-        
-        const calculatedSubtotal = state.treatments.reduce(
-          (sum, item) => sum + item.price * item.quantity,
-          0
-        );
-        
-        const calculatedTotal = state.discountPercent > 0
-          ? calculatedSubtotal * (1 - state.discountPercent / 100)
-          : calculatedSubtotal;
-          
-        set({
-          subtotal: calculatedSubtotal,
-          total: calculatedTotal
-        });
-      },
-      
-      // Treatment actions
+      // Actions
       addTreatment: (treatment) => {
-        const { treatments } = get();
-        
-        // Check if treatment already exists
+        const treatments = [...get().treatments];
         const existingIndex = treatments.findIndex(t => t.id === treatment.id);
         
         if (existingIndex >= 0) {
-          // Update existing treatment quantity
-          const updated = [...treatments];
-          updated[existingIndex] = {
-            ...updated[existingIndex],
-            quantity: updated[existingIndex].quantity + treatment.quantity
-          };
-          
-          set({ treatments: updated });
+          // Update quantity if treatment already exists
+          treatments[existingIndex].quantity += treatment.quantity;
         } else {
           // Add new treatment
-          set({ treatments: [...treatments, treatment] });
+          treatments.push(treatment);
         }
         
-        // Recalculate totals
-        get().calculateTotals();
+        const { subtotal, total } = calculateTotals(treatments, get().discountPercentage);
+        
+        set({
+          treatments,
+          subtotal,
+          total
+        });
       },
       
       removeTreatment: (id) => {
-        const { treatments } = get();
-        set({ treatments: treatments.filter(t => t.id !== id) });
+        const treatments = get().treatments.filter(t => t.id !== id);
+        const { subtotal, total } = calculateTotals(treatments, get().discountPercentage);
         
-        // Recalculate totals
-        get().calculateTotals();
+        set({
+          treatments,
+          subtotal,
+          total
+        });
       },
       
-      updateTreatment: (id, treatment) => {
-        const { treatments } = get();
-        const updatedTreatments = treatments.map(t => 
-          t.id === id ? treatment : t
+      updateTreatmentQuantity: (id, quantity) => {
+        const treatments = get().treatments.map(treatment => 
+          treatment.id === id ? { ...treatment, quantity } : treatment
         );
         
-        set({ treatments: updatedTreatments });
+        const { subtotal, total } = calculateTotals(treatments, get().discountPercentage);
         
-        // Recalculate totals
-        get().calculateTotals();
+        set({
+          treatments,
+          subtotal,
+          total
+        });
       },
       
-      // Patient info actions
       setPatientInfo: (info) => {
         set({ patientInfo: info });
       },
       
-      // Promo code actions
-      applyPromoCode: (code) => {
-        try {
-          const formattedCode = code.trim().toUpperCase();
-          
-          // If empty code, clear discount
-          if (!formattedCode) {
-            set({ 
-              promoCode: '',
-              discountPercent: 0
-            });
-            
-            // Recalculate totals
-            get().calculateTotals();
-            return true;
-          }
-          
-          // Apply discount based on promo code
-          // In a real app, this would validate against a server API
-          const discountMap: Record<string, number> = {
-            'SUMMER15': 15,
-            'DENTAL25': 25,
-            'NEWPATIENT': 20,
-            'TEST10': 10,
-            'LUXHOTEL20': 20,
-            'IMPLANTCROWN30': 30,
-            'FREECONSULT': 100, // Free consultation
-            'FREEWHITE': 100,   // Free whitening
-          };
-          
-          // Check if valid promo code
-          if (formattedCode in discountMap) {
-            set({ 
-              promoCode: formattedCode,
-              discountPercent: discountMap[formattedCode]
-            });
-            
-            // Recalculate totals
-            get().calculateTotals();
-            return true;
-          }
-          
-          return false;
-        } catch (error) {
-          console.error("Error applying promo code:", error);
-          return false;
-        }
+      applyPromoCode: (code, percentage) => {
+        const { subtotal } = get();
+        const total = subtotal * (1 - percentage / 100);
+        
+        set({
+          promoCode: code,
+          discountPercentage: percentage,
+          total
+        });
       },
       
-      // Special offer actions
+      clearPromoCode: () => {
+        const { subtotal } = get();
+        
+        set({
+          promoCode: null,
+          discountPercentage: 0,
+          total: subtotal
+        });
+      },
+      
       setSpecialOfferId: (id) => {
         set({ specialOfferId: id });
       },
       
-      // Reset quote
       resetQuote: () => {
         set({
           treatments: [],
           patientInfo: null,
+          promoCode: null,
+          discountPercentage: 0,
           subtotal: 0,
-          discountPercent: 0,
           total: 0,
-          promoCode: '',
           specialOfferId: null
         });
       }
     }),
     {
-      name: 'dental-quote-storage',
-      storage: createJSONStorage(() => customStorage),
-      // Only persist select properties to avoid issues
-      partialize: (state) => ({
-        treatments: state.treatments,
-        patientInfo: state.patientInfo,
-        promoCode: state.promoCode,
-        discountPercent: state.discountPercent,
-        specialOfferId: state.specialOfferId
-      }),
+      name: 'dental-quote-storage', // name of the item in local storage
+      // Optional configuration to handle storage issues
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          console.log('Quote state hydrated from storage');
+          
+          // Recalculate totals after rehydration to ensure consistency
+          const { treatments, discountPercentage } = state;
+          const { subtotal, total } = calculateTotals(treatments, discountPercentage);
+          
+          state.subtotal = subtotal;
+          state.total = total;
+        }
+      }
     }
   )
 );
