@@ -22,11 +22,7 @@ const QuotePageContent: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const quoteStore = useQuoteStore();
-  const [step, setStep] = React.useState<QuoteStep>(() => {
-    // Initialize step from localStorage if available
-    const savedStep = localStorage.getItem('quoteBuilderStep');
-    return (savedStep as QuoteStep) || 'patient-info';
-  });
+  const [step, setStep] = React.useState<QuoteStep>('patient-info');
   const [submittingQuote, setSubmittingQuote] = React.useState(false);
   const [promoCodeInput, setPromoCodeInput] = React.useState('');
   const [validatingPromo, setValidatingPromo] = React.useState(false);
