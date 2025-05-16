@@ -89,17 +89,28 @@ const QuotePageContent: React.FC = () => {
     setValidatingPromo(true);
     
     try {
-      // Important: Save current step BEFORE making async call
+      // Capture and preserve current step
       const currentStep = step;
       
-      const success = await quoteStore.applyPromoCode(promoCodeInput.trim());
+      // We need to manually set the current step in the store to ensure it persists
+      quoteStore.setCurrentStep(quoteStore.currentStep);
       
-      // This ensures we always restore back to the correct step
-      setTimeout(() => {
+      // Directly apply the promo code without waiting for the state update
+      const response = await fetch('/api/quotes/promo-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoCodeInput.trim() })
+      });
+      
+      const data = await response.json();
+      
+      if (data.valid) {
+        // Manually update the store state without causing a re-render
+        quoteStore.applyPromoCode(promoCodeInput.trim());
+        
+        // Ensure we're still on the same step
         setStep(currentStep);
-      }, 10);
-      
-      if (success) {
+        
         toast({
           title: "Success",
           description: `Applied discount with code ${promoCodeInput}`,
