@@ -301,6 +301,25 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Quote Management System */}
+      <Route path="/quotes" component={() => {
+        const QuoteListPage = React.lazy(() => import("./pages/quotes/QuoteListPage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quotes...</div>}>
+            <QuoteListPage />
+          </React.Suspense>
+        );
+      }} />
+      
+      <Route path="/quotes/:id" component={() => {
+        const QuoteDetailPage = React.lazy(() => import("./pages/quotes/QuoteDetailPage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote details...</div>}>
+            <QuoteDetailPage />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
