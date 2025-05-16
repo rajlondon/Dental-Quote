@@ -322,6 +322,16 @@ function Router() {
         );
       }} />
       
+      {/* Ultra-Safe Quote Builder - zero forms approach for guaranteed state persistence */}
+      <Route path="/ultra-quote" component={() => {
+        const UltraQuoteDemo = React.lazy(() => import("./pages/UltraQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading ultra quote builder...</div>}>
+            <UltraQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
