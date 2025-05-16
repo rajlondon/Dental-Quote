@@ -157,6 +157,15 @@ function Router() {
         {() => <Redirect to="/blog/how-it-works" />}
       </Route>
       <Route path="/faq" component={FAQPage} />
+      {/* Direct standalone quote builder route */}
+      <Route path="/quote" component={() => {
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote builder...</div>}>
+            <SimpleStandaloneQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
       <Route path="/your-quote">
         {() => {
           // Skip redirect for clinic staff - check both session storage and cookies
