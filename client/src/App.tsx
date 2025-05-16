@@ -412,6 +412,16 @@ function Router() {
         );
       }} />
       
+      {/* Emergency Quote Builder - Completely standalone implementation */}
+      <Route path="/emergency-quote" component={() => {
+        const EmergencyQuotePage = React.lazy(() => import("./pages/EmergencyQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading emergency quote builder...</div>}>
+            <EmergencyQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
