@@ -79,6 +79,7 @@ import FullMouthPage from "@/pages/FullMouthPage";
 import BookingPage from "@/pages/BookingPage";
 import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
+import StandaloneQuotePage from "@/pages/StandaloneQuotePage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
@@ -740,6 +741,11 @@ function Router() {
             </React.Suspense>
           );
         }}
+      </Route>
+      
+      {/* Standalone Quote Builder - New simplified implementation */}
+      <Route path="/standalone-quote">
+        <StandaloneQuotePage />
       </Route>
       {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
