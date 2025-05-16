@@ -33,6 +33,7 @@ import ResilientWebSocketTest2 from "@/pages/ResilientWebSocketTest2";
 import ResilientWebSocketTest from "@/pages/ResilientWebSocketTest";
 import ResilientWebSocketTest3 from "@/pages/ResilientWebSocketTest3";
 import ClinicAccessDeniedPage from "@/components/ClinicAccessDeniedPage";
+import QuickQuoteNew from "@/pages/QuickQuoteNew";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
