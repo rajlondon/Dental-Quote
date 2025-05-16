@@ -121,7 +121,7 @@ export default function QuickQuote() {
     });
   };
   
-  // Apply promo code - fixed implementation from document
+  // Apply promo code - simplified direct fix
   const applyPromoCode = () => {
     const code = promoInput.trim().toUpperCase();
     
@@ -143,111 +143,80 @@ export default function QuickQuote() {
       return;
     }
     
-    setIsLoading(true);
+    // Get the current quote state first
+    const currentQuote = {...quote};
+    const treatments = [...currentQuote.treatments]; // Make a copy of treatments
     
-    try {
-      // Store the current treatments before making any changes
-      const currentTreatments = [...quote.treatments];
-      
-      // Use functional update to ensure we have the latest state
-      setQuote(prevQuote => {
-        // Calculate the discount based on the promo code
-        const subtotal = calculateSubtotal(prevQuote.treatments);
-        let promoDiscount = 0;
-        
-        if (promoCodes[code].type === 'percentage') {
-          promoDiscount = (subtotal * promoCodes[code].value / 100);
-          console.log(`[QuoteBuilder] Applying ${promoCodes[code].value}% discount on ${subtotal} = ${promoDiscount}`);
-        } else if (promoCodes[code].type === 'fixed') {
-          promoDiscount = promoCodes[code].value;
-          console.log(`[QuoteBuilder] Applying fixed discount of ${promoCodes[code].value}`);
-        }
-        
-        // Ensure discount doesn't exceed subtotal
-        promoDiscount = Math.min(promoDiscount, subtotal);
-        
-        // Return a new quote object that PRESERVES the treatments array
-        return {
-          ...prevQuote,
-          treatments: currentTreatments, // Keep the existing treatments!
-          promoCode: code,
-          promoType: promoCodes[code].type,
-          promoValue: promoCodes[code].value,
-          discount: promoDiscount,
-          subtotal: subtotal,
-          total: subtotal - promoDiscount
-        };
-      });
-      
-      // Add logging to verify the state after update
-      setTimeout(() => {
-        console.log("[QuoteBuilder] Updated quote after promo code application:", quote);
-        
-        toast({
-          title: 'Promo Code Applied',
-          description: `${code} has been applied successfully!`,
-        });
-      }, 100);
-      
-    } catch (error) {
-      console.error("[QuoteBuilder] Error applying promo code:", error);
-      toast({
-        title: "Error",
-        description: "Failed to apply promo code",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-      setPromoInput('');
+    // Calculate discount
+    const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
+    let discount = 0;
+    
+    if (promoCodes[code].type === 'percentage') {
+      discount = (subtotal * promoCodes[code].value / 100);
+      console.log(`[QuoteBuilder] Applying ${promoCodes[code].value}% discount on ${subtotal} = ${discount}`);
+    } else if (promoCodes[code].type === 'fixed') {
+      discount = promoCodes[code].value;
+      console.log(`[QuoteBuilder] Applying fixed discount of ${promoCodes[code].value}`);
     }
+    
+    // Ensure discount doesn't exceed subtotal
+    discount = Math.min(discount, subtotal);
+    
+    // Create updated quote with treatments preserved
+    const updatedQuote = {
+      ...currentQuote,
+      treatments: treatments, // Explicitly keep treatments
+      promoCode: code,
+      promoType: promoCodes[code].type,
+      promoValue: promoCodes[code].value,
+      discount: discount,
+      subtotal: subtotal,
+      total: subtotal - discount
+    };
+    
+    // Set the state directly with the complete object
+    console.log("[QuickQuote] Setting quote with preserved treatments:", updatedQuote);
+    setQuote(updatedQuote);
+    
+    setPromoInput('');
+    
+    // Show success message
+    toast({
+      title: 'Promo Code Applied',
+      description: `${code} has been applied successfully!`,
+    });
   };
   
-  // Remove promo code
+  // Remove promo code - simplified direct approach
   const removePromoCode = () => {
-    setIsLoading(true);
+    // Get the current quote state first
+    const currentQuote = {...quote};
+    const treatments = [...currentQuote.treatments]; // Make a copy of treatments
     
-    try {
-      // Store the current treatments before making any changes
-      const currentTreatments = [...quote.treatments];
-      
-      setQuote(prevQuote => {
-        console.log("[QuoteBuilder] Removing promo code from quote:", prevQuote);
-        
-        const subtotal = calculateSubtotal(currentTreatments);
-        
-        // Return a new object that preserves ALL previous state
-        return {
-          ...prevQuote,
-          treatments: currentTreatments, // Keep the existing treatments!
-          promoCode: null,
-          promoType: undefined,
-          promoValue: undefined,
-          promoDiscount: 0,
-          discount: 0,
-          subtotal: subtotal,
-          total: subtotal
-        };
-      });
-      
-      // Delay the success message to ensure state is updated
-      setTimeout(() => {
-        console.log("[QuoteBuilder] Quote after removing promo:", quote);
-        
-        toast({
-          title: 'Promo Code Removed',
-          description: 'The promo code has been removed from your quote',
-        });
-      }, 100);
-    } catch (error) {
-      console.error("[QuoteBuilder] Error removing promo code:", error);
-      toast({
-        title: "Error",
-        description: "Failed to remove promo code",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // Calculate subtotal
+    const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
+    
+    // Create updated quote with treatments preserved
+    const updatedQuote = {
+      ...currentQuote,
+      treatments: treatments, // Explicitly keep treatments
+      promoCode: null,
+      promoType: undefined,
+      promoValue: undefined,
+      discount: 0,
+      subtotal: subtotal,
+      total: subtotal
+    };
+    
+    // Set the state directly with the complete object
+    console.log("[QuickQuote] Removing promo code, keeping treatments:", updatedQuote);
+    setQuote(updatedQuote);
+    
+    // Show success message
+    toast({
+      title: 'Promo Code Removed',
+      description: 'The promo code has been removed from your quote',
+    });
   };
   
   // Reset quote
