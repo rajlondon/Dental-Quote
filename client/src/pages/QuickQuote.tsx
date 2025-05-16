@@ -130,25 +130,63 @@ export default function QuickQuote() {
       return;
     }
     
-    setQuote(prev => ({
-      ...prev,
-      promoCode: code
-    }));
+    // Use functional update to ensure we have the latest state
+    setQuote(prev => {
+      console.log("[QuickQuote] Applying promo to quote:", prev);
+      
+      const subtotal = prev.subtotal;
+      const promoDetails = promoCodes[code];
+      let calculatedDiscount = 0;
+      
+      if (promoDetails.type === 'percentage') {
+        calculatedDiscount = (subtotal * promoDetails.value / 100);
+        console.log(`[QuickQuote] Applying ${promoDetails.value}% discount on ${subtotal} = ${calculatedDiscount}`);
+      } else {
+        calculatedDiscount = promoDetails.value;
+        console.log(`[QuickQuote] Applying fixed discount of ${promoDetails.value}`);
+      }
+      
+      // Ensure discount doesn't exceed subtotal
+      calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+      
+      // Return a new object that preserves ALL previous state
+      return {
+        ...prev,
+        promoCode: code,
+        discount: calculatedDiscount,
+        total: subtotal - calculatedDiscount
+      };
+    });
     
     setPromoInput('');
     
-    toast({
-      title: 'Promo Code Applied',
-      description: `${code} has been applied to your quote`,
-    });
+    // Delay the success message to ensure state is updated
+    setTimeout(() => {
+      const promoDetails = promoCodes[code];
+      const discountText = promoDetails.type === 'percentage' 
+        ? `${promoDetails.value}%` 
+        : `${formatCurrency(promoDetails.value)}`;
+        
+      toast({
+        title: 'Promo Code Applied',
+        description: `${code} (${discountText} discount) has been applied to your quote`,
+      });
+    }, 100);
   };
   
   // Remove promo code
   const removePromoCode = () => {
-    setQuote(prev => ({
-      ...prev,
-      promoCode: null
-    }));
+    setQuote(prev => {
+      console.log("[QuickQuote] Removing promo code from quote:", prev);
+      
+      // Return a new object that preserves ALL previous state
+      return {
+        ...prev,
+        promoCode: null,
+        discount: 0,
+        total: prev.subtotal
+      };
+    });
     
     toast({
       title: 'Promo Code Removed',

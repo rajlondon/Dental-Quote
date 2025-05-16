@@ -1,0 +1,128 @@
+Root Cause Analysis
+Looking at the information from the Web Searching Agent, this is likely related to:
+
+State Update Timing: React's asynchronous state updates might be causing the issue, as setState schedules an update rather than immediately applying it
+Duplication of State: There might be multiple sources of truth for the treatment selections and pricing
+Let me propose a solution to fix this issue:
+
+// In use-quote-builder.ts or similar hook file
+
+// Current problematic implementation (simplified)
+const applyPromoCode = async (code) => {
+  setIsLoading(true);
+  try {
+    const response = await validatePromoCode(code);
+    
+    // The problem might be here - creating a new state object
+    // instead of updating the existing one
+    setQuote({
+      subtotal: calculateSubtotal(),
+      promoCode: code,
+      promoDiscount: calculateDiscount(response),
+      // Missing the treatments array here!
+    });
+    
+    toast.success("Promo code applied successfully!");
+  } catch (error) {
+    toast.error("Invalid promo code");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Improved implementation
+const applyPromoCode = async (code) => {
+  setIsLoading(true);
+  try {
+    const response = await validatePromoCode(code);
+    
+    // Use functional update to ensure we have the latest state
+    setQuote(prevQuote => {
+      const promoDiscount = calculateDiscount(response, prevQuote.subtotal);
+      
+      // Return a new object that preserves ALL previous state
+      return {
+        ...prevQuote,
+        promoCode: code,
+        promoDiscount: promoDiscount,
+        total: prevQuote.subtotal - promoDiscount
+      };
+    });
+    
+    // Add a delayed log to verify the quote state after React updates
+    setTimeout(() => {
+      console.log("[QuoteBuilder] Updated quote after promo:", quote);
+    }, 100);
+    
+    toast.success("Promo code applied successfully!");
+  } catch (error) {
+    console.error("[QuoteBuilder] Promo code error:", error);
+    toast.error("Invalid promo code");
+  } finally {
+    setIsLoading(false);
+  }
+};
+The key improvements in this solution:
+
+Using functional state updates (setQuote(prevQuote => ...)) to ensure we're working with the latest state
+Preserving all existing state properties with the spread operator (...prevQuote)
+Only updating the specific properties that need to change (promoCode, promoDiscount, total)
+Adding better logging for debugging
+Additional Synchronization Fixes
+There also appears to be a synchronization issue where success messages appear before the state is fully updated. To address this:
+
+const applyPromoCode = async (code) => {
+  setIsLoading(true);
+  try {
+    const response = await validatePromoCode(code);
+    
+    // Use functional update to ensure we have the latest state
+    setQuote(prevQuote => {
+      console.log("[QuoteBuilder] Applying promo to quote:", prevQuote);
+      
+      const subtotal = prevQuote.subtotal || 0;
+      const discountType = response.discountType;
+      const discountValue = response.discountValue;
+      
+      let calculatedDiscount = 0;
+      
+      if (discountType === 'percentage') {
+        calculatedDiscount = (subtotal * discountValue / 100);
+        console.log(`[QuoteBuilder] Applying ${discountValue}% discount on ${subtotal} = ${calculatedDiscount}`);
+      } else if (discountType === 'fixed') {
+        calculatedDiscount = discountValue;
+        console.log(`[QuoteBuilder] Applying fixed discount of ${discountValue}`);
+      }
+      
+      // Ensure discount doesn't exceed subtotal
+      calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+      
+      // Return a new object that preserves ALL previous state
+      return {
+        ...prevQuote,
+        promoCode: code,
+        promoType: discountType,
+        promoValue: discountValue,
+        promoDiscount: calculatedDiscount,
+        total: subtotal - calculatedDiscount
+      };
+    });
+    
+    // Delay the success message to ensure state is updated
+    setTimeout(() => {
+      toast.success(`Promo code applied successfully! Your discount: $${formatCurrency(quote.promoDiscount)}`);
+    }, 100);
+    
+  } catch (error) {
+    console.error("[QuoteBuilder] Promo code error:", error);
+    toast.error("Invalid promo code");
+  } finally {
+    setIsLoading(false);
+  }
+};
+This implementation:
+
+Adds detailed logging throughout the process
+Ensures the discount calculation is correct and visible
+Delays the success toast slightly to ensure state updates are complete
+Shows the actual discount amount in the success message
