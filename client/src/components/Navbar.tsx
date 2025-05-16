@@ -1,50 +1,39 @@
 import React from 'react';
 import { Link } from 'wouter';
-import { Button } from '@/components/ui/button';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const Navbar: React.FC = () => {
   return (
-    <header className="bg-white shadow-sm">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-between items-center">
-          {/* Logo and site name */}
-          <Link href="/">
-            <a className="flex items-center space-x-2">
-              <span className="text-xl font-bold text-primary">MyDentalFly</span>
-            </a>
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex gap-6 md:gap-10">
+          <Link href="/" className="flex items-center space-x-2">
+            <span className="text-2xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-500 text-transparent bg-clip-text">
+              MyDentalFly
+            </span>
           </Link>
           
-          {/* Navigation links */}
-          <nav className="hidden md:flex items-center space-x-6">
-            <Link href="/">
-              <a className="text-gray-600 hover:text-primary transition-colors">Home</a>
+          <nav className="hidden gap-6 md:flex">
+            <Link href="/" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
+              Home
             </Link>
-            <Link href="/treatments">
-              <a className="text-gray-600 hover:text-primary transition-colors">Treatments</a>
+            <Link href="/quote" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
+              Get a Quote
             </Link>
-            <Link href="/clinics">
-              <a className="text-gray-600 hover:text-primary transition-colors">Clinics</a>
+            <Link href="/offers" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
+              Special Offers
             </Link>
-            <Link href="/standalone-quote">
-              <a className="text-primary font-medium hover:text-primary/80 transition-colors">Quote Builder</a>
-            </Link>
-            <Link href="/blog">
-              <a className="text-gray-600 hover:text-primary transition-colors">Blog</a>
-            </Link>
-            <Link href="/contact">
-              <a className="text-gray-600 hover:text-primary transition-colors">Contact</a>
+            <Link href="/clinics" className="flex items-center text-sm font-medium transition-colors hover:text-primary">
+              Clinics
             </Link>
           </nav>
-          
-          {/* Call to action buttons */}
-          <div className="flex items-center space-x-2">
-            <Link href="/portal/login">
-              <Button variant="outline">Log In</Button>
-            </Link>
-            <Link href="/auth">
-              <Button>Sign Up</Button>
-            </Link>
-          </div>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
+          <Link href="/auth" className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md text-sm font-medium">
+            Sign In
+          </Link>
         </div>
       </div>
     </header>

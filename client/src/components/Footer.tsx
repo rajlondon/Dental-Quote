@@ -3,128 +3,127 @@ import { Link } from 'wouter';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-100">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          {/* Company Info */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-bold text-primary">MyDentalFly</h3>
-            <p className="text-gray-600 text-sm">
-              Your trusted platform for finding affordable, high-quality dental treatments abroad.
+    <footer className="border-t bg-muted/40">
+      <div className="container py-10">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
+          <div>
+            <Link href="/" className="flex items-center space-x-2">
+              <span className="text-xl font-bold bg-gradient-to-r from-indigo-500 to-cyan-500 text-transparent bg-clip-text">
+                MyDentalFly
+              </span>
+            </Link>
+            <p className="mt-4 text-sm text-muted-foreground">
+              Your trusted partner for affordable, high-quality dental care in Turkey.
+              Compare clinics, get quotes, and book with confidence.
             </p>
-            <div className="flex space-x-4">
-              <a href="#" className="text-gray-500 hover:text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-500 hover:text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M22.675 0h-21.35c-.732 0-1.325.593-1.325 1.325v21.351c0 .731.593 1.324 1.325 1.324h11.495v-9.294h-3.128v-3.622h3.128v-2.671c0-3.1 1.893-4.788 4.659-4.788 1.325 0 2.463.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.313h3.587l-.467 3.622h-3.12v9.293h6.116c.73 0 1.323-.593 1.323-1.325v-21.35c0-.732-.593-1.325-1.325-1.325z" />
-                </svg>
-              </a>
-              <a href="#" className="text-gray-500 hover:text-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                </svg>
-              </a>
+          </div>
+          
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:col-span-3 lg:grid-cols-3">
+            <div>
+              <h3 className="text-lg font-semibold">Patients</h3>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <Link href="/quote" className="text-sm hover:underline">
+                    Get a Quote
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/offers" className="text-sm hover:underline">
+                    Special Offers
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/clinics" className="text-sm hover:underline">
+                    Find a Clinic
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/treatments" className="text-sm hover:underline">
+                    Treatment Options
+                  </Link>
+                </li>
+              </ul>
             </div>
-          </div>
-          
-          {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Home</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/treatments">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Treatments</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/clinics">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Clinics</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/standalone-quote">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Quote Builder</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Blog</a>
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Treatments */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Treatments</h3>
-            <ul className="space-y-2">
-              <li>
-                <Link href="/treatments/dental-implants">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Dental Implants</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/treatments/veneers">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Veneers</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/treatments/crowns">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Crowns</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/treatments/whitening">
-                  <a className="text-gray-600 hover:text-primary transition-colors">Teeth Whitening</a>
-                </Link>
-              </li>
-              <li>
-                <Link href="/treatments/all">
-                  <a className="text-gray-600 hover:text-primary transition-colors">All Treatments</a>
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Contact */}
-          <div>
-            <h3 className="text-lg font-bold mb-4">Contact Us</h3>
-            <ul className="space-y-2">
-              <li className="text-gray-600">
-                Email: <a href="mailto:info@mydentalfly.com" className="text-primary hover:underline">info@mydentalfly.com</a>
-              </li>
-              <li className="text-gray-600">
-                Phone: <a href="tel:+441234567890" className="text-primary hover:underline">+44 123 456 7890</a>
-              </li>
-              <li className="text-gray-600">
-                Address: 123 Dental Street,<br />
-                London, UK
-              </li>
-            </ul>
+            
+            <div>
+              <h3 className="text-lg font-semibold">Clinics</h3>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <Link href="/for-clinics" className="text-sm hover:underline">
+                    Join Our Network
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/clinic-portal" className="text-sm hover:underline">
+                    Clinic Portal
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/clinic-testimonials" className="text-sm hover:underline">
+                    Success Stories
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="text-lg font-semibold">Company</h3>
+              <ul className="mt-4 space-y-2">
+                <li>
+                  <Link href="/about" className="text-sm hover:underline">
+                    About Us
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/contact" className="text-sm hover:underline">
+                    Contact
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/faq" className="text-sm hover:underline">
+                    FAQ
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/privacy" className="text-sm hover:underline">
+                    Privacy Policy
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms" className="text-sm hover:underline">
+                    Terms of Service
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
         
-        <div className="border-t border-gray-200 mt-8 pt-8 text-center text-gray-500 text-sm">
-          <p>&copy; {new Date().getFullYear()} MyDentalFly. All rights reserved.</p>
-          <div className="mt-2 space-x-4">
-            <Link href="/privacy">
-              <a className="hover:text-primary">Privacy Policy</a>
-            </Link>
-            <Link href="/terms">
-              <a className="hover:text-primary">Terms of Service</a>
-            </Link>
-            <Link href="/cookies">
-              <a className="hover:text-primary">Cookie Policy</a>
-            </Link>
+        <div className="mt-10 border-t pt-6 flex flex-col md:flex-row justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            &copy; {new Date().getFullYear()} MyDentalFly. All rights reserved.
+          </p>
+          <div className="flex items-center space-x-4 mt-4 md:mt-0">
+            <a href="#" className="text-muted-foreground hover:text-primary">
+              <span className="sr-only">Facebook</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
+              </svg>
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-primary">
+              <span className="sr-only">Instagram</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+              </svg>
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-primary">
+              <span className="sr-only">Twitter</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
+              </svg>
+            </a>
           </div>
         </div>
       </div>
