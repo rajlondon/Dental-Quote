@@ -301,6 +301,16 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Enhanced Quote Page - improved implementation with backend integration */}
+      <Route path="/enhanced-quote" component={() => {
+        const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading enhanced quote system...</div>}>
+            <EnhancedQuotePage />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
