@@ -64,20 +64,146 @@ import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 import HotelSelectionSection from '@/components/dashboard/HotelSelectionSection';
 import HotelAccommodationSection from '@/components/dashboard/HotelAccommodationSection';
 import FlightDetailsSection from '@/components/dashboard/FlightDetailsSection';
+import { queryClient } from '@/lib/queryClient';
+import { useSearch, Link } from 'wouter';
+import { Plus, Loader2, FileText } from 'lucide-react';
 
 // Import our components for the quotes section
 import PatientQuotesContent from '@/components/patient/PatientQuotesContent';
 import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';
 
 // Create a proper wrapper component for quotes section that can use hooks
-const QuotesSectionWrapper = () => {
+// This component handles loading quotes and displaying them in the patient portal
+const QuotesSection = () => {
   const { t } = useTranslation();
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-  // Get URL parameters the wouter way
   const search = useSearch();
-  
+  const { toast } = useToast();
+
   // Check URL params for quote ID
   useEffect(() => {
+    const params = new URLSearchParams(search);
+    const quoteId = params.get('quoteId');
+    if (quoteId) {
+      console.log(`[DEBUG] Found quoteId in URL params: ${quoteId}`);
+      setSelectedQuoteId(quoteId);
+    }
+  }, [search]);
+  
+  // Refresh quotes data when this section is displayed
+  useEffect(() => {
+    console.log('[DEBUG] Quotes section mounted, refreshing quotes data');
+    queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
+  }, []);
+  
+  // Handler for going back to quotes list
+  const handleBackToQuotes = () => {
+    setSelectedQuoteId(null);
+    
+    // Remove the quoteId parameter while preserving other parameters
+    const currentParams = new URLSearchParams(search);
+    currentParams.delete('quoteId');
+    
+    // Build the new URL
+    let newSearch = currentParams.toString();
+    newSearch = newSearch ? `?${newSearch}` : '';
+    const newUrl = window.location.pathname + newSearch;
+    
+    // Update the URL without triggering a navigation
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // Fetch user's quotes  
+  const { 
+    data: userQuotes = [], 
+    isLoading: isLoadingQuotes,
+    error: quotesError
+  } = useQuery({
+    queryKey: ['/api/quotes/user'],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/quotes/user');
+        const data = await response.json();
+        
+        if (!data.success) {
+          console.error('[ERROR] User quotes API returned unsuccessful response:', data);
+          return [];
+        }
+        
+        return data.data || [];
+      } catch (error) {
+        console.error('[ERROR] Failed to fetch quotes:', error);
+        throw error;
+      }
+    }
+  });
+
+  // Handler for creating a new quote
+  const handleCreateNewQuote = () => {
+    window.location.href = '/quote';
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">{t('portal.quotes.title', 'My Quotes')}</h2>
+        <Button onClick={handleCreateNewQuote} className="flex items-center gap-2">
+          <Plus size={16} />
+          {t('portal.quotes.newQuote', 'New Quote')}
+        </Button>
+      </div>
+
+      {isLoadingQuotes ? (
+        <div className="flex justify-center p-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : quotesError ? (
+        <div className="text-center p-6 bg-red-50 rounded-lg border border-red-200">
+          <p className="text-red-600 mb-2">{t('portal.quotes.error', 'Error loading quotes')}</p>
+          <Button variant="outline" size="sm" onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] })}>
+            {t('common.retry', 'Retry')}
+          </Button>
+        </div>
+      ) : userQuotes.length === 0 ? (
+        <div className="text-center p-12 bg-gray-50 rounded-lg border border-gray-200">
+          <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-800 mb-2">{t('portal.quotes.empty.title', 'No Quotes Found')}</h3>
+          <p className="text-gray-600 max-w-md mx-auto mb-6">
+            {t('portal.quotes.empty.description', "You don't have any quotes yet. Create your first quote to see potential treatment options and pricing.")}
+          </p>
+          <Button onClick={handleCreateNewQuote}>{t('portal.quotes.createFirst', 'Create Your First Quote')}</Button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {userQuotes.map((quote: any) => (
+            <div key={quote.id} className="bg-white p-4 rounded-lg border border-gray-200 hover:border-primary/50 hover:shadow-md transition-all">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-gray-800">Quote #{quote.id.substring(0, 8)}</h3>
+                  <p className="text-sm text-gray-500">Created: {new Date(quote.createdAt).toLocaleDateString()}</p>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" asChild>
+                    <Link href={`/quote/${quote.id}`}>View Quote</Link>
+                  </Button>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href={`/quote/${quote.id}/edit`}>Edit</Link>
+                  </Button>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">{quote.treatments?.length || 0} treatments</span>
+                  <span className="font-medium text-gray-800">Total: £{quote.total || 0}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
     // Use URLSearchParams to parse the search string
     const params = new URLSearchParams(search);
     const quoteId = params.get('quoteId');
@@ -1022,8 +1148,8 @@ const PatientPortalPage: React.FC<PatientPortalPageProps> = ({
       case 'messages':
         return <MessagesSection />;
       case 'quotes':
-        // Use the proper wrapper component that contains the useEffect hook
-        return <QuotesSectionWrapper />;
+        // Use our enhanced quotes section with quote builder integration
+        return <QuotesSection />;
       case 'quote_upload_xrays':
         return <PatientQuoteXrayUploadPage />;
       case 'quote_review':
