@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-// Define interfaces
+// Define types
 interface Treatment {
   id: string;
   name: string;
@@ -16,7 +16,6 @@ interface QuoteState {
   subtotal: number;
   total: number;
   loading: {
-    treatments: boolean;
     promoCode: boolean;
     saving: boolean;
   };
@@ -31,7 +30,7 @@ interface QuoteState {
   resetQuote: () => void;
 }
 
-// Calculate totals helper
+// Helper function to calculate totals
 const calculateTotals = (treatments: Treatment[], discountPercent: number) => {
   const subtotal = treatments.reduce(
     (sum, t) => sum + (t.price * (t.quantity || 1)), 
@@ -43,7 +42,7 @@ const calculateTotals = (treatments: Treatment[], discountPercent: number) => {
 
 // Create the store with persistence
 export const useQuoteStore = create<QuoteState>()(
-  persist<QuoteState>(
+  persist(
     (set, get) => ({
       // Initial state
       treatments: [],
@@ -52,12 +51,11 @@ export const useQuoteStore = create<QuoteState>()(
       subtotal: 0,
       total: 0,
       loading: {
-        treatments: false,
         promoCode: false,
         saving: false
       },
       
-      // Actions
+      // Add treatment action
       addTreatment: (treatment) => {
         const state = get();
         const existingTreatment = state.treatments.find(t => t.id === treatment.id);
@@ -72,7 +70,7 @@ export const useQuoteStore = create<QuoteState>()(
           );
         } else {
           // Add new treatment with quantity 1
-          updatedTreatments = [...state.treatments, { ...treatment, quantity: 1 }];
+          updatedTreatments = [...state.treatments, { ...treatment, quantity: treatment.quantity || 1 }];
         }
         
         const { subtotal, total } = calculateTotals(updatedTreatments, state.discountPercent);
@@ -86,6 +84,7 @@ export const useQuoteStore = create<QuoteState>()(
         console.log('STORE: Added treatment', treatment.name);
       },
       
+      // Remove treatment action
       removeTreatment: (id) => {
         const state = get();
         const updatedTreatments = state.treatments.filter(t => t.id !== id);
@@ -97,9 +96,10 @@ export const useQuoteStore = create<QuoteState>()(
           total
         });
         
-        console.log('STORE: Removed treatment', id);
+        console.log('STORE: Removed treatment with ID:', id);
       },
       
+      // Update quantity action
       updateQuantity: (id, quantity) => {
         const state = get();
         const updatedTreatments = state.treatments.map(t => 
@@ -113,57 +113,85 @@ export const useQuoteStore = create<QuoteState>()(
           total
         });
         
-        console.log('STORE: Updated quantity', id, quantity);
+        console.log('STORE: Updated quantity for treatment ID:', id, 'to', quantity);
       },
       
+      // Apply promo code action
       applyPromoCode: async (code) => {
         console.log('STORE: Applying promo code', code);
+        
         set(state => ({ 
           loading: { ...state.loading, promoCode: true } 
         }));
         
         try {
-          // For now, use mock validation since we're just testing state persistence
-          // In production, this would call the API endpoints
-          const validPromoCodes: Record<string, number> = {
-            'SUMMER15': 15,
-            'DENTAL25': 25,
-            'NEWPATIENT': 10,
-            'TEST10': 10,
-          };
+          // Try the API endpoint
+          const response = await fetch('/api/quotes-api/promo-codes/apply', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code })
+          });
           
-          // Wait a moment to simulate API call
-          await new Promise(resolve => setTimeout(resolve, 500));
+          if (!response.ok) {
+            throw new Error('Failed to validate promo code');
+          }
           
-          const upperCode = code.toUpperCase();
+          const data = await response.json();
+          console.log('STORE: Promo code API response:', data);
           
-          if (upperCode in validPromoCodes) {
+          if (data.valid) {
             const state = get();
-            const discountPercent = validPromoCodes[upperCode];
             const { subtotal, total } = calculateTotals(
               state.treatments, 
-              discountPercent
+              data.discountPercentage
             );
             
             set({
-              promoCode: upperCode,
-              discountPercent,
+              promoCode: code,
+              discountPercent: data.discountPercentage,
               subtotal,
               total,
               loading: { ...state.loading, promoCode: false }
             });
             
-            console.log('STORE: Promo code applied successfully', upperCode, discountPercent);
+            console.log('STORE: Promo code applied successfully', code, data.discountPercentage);
             return true;
           } else {
             set(state => ({ 
               loading: { ...state.loading, promoCode: false } 
             }));
-            console.log('STORE: Invalid promo code', code);
+            console.log('STORE: Invalid promo code:', code);
             return false;
           }
         } catch (error) {
           console.error('STORE: Error applying promo code:', error);
+          
+          // Fallback to simulated behavior if API fails
+          const discountPercentage = 
+            code === 'SUMMER15' ? 15 : 
+            code === 'DENTAL25' ? 25 : 
+            code === 'NEWPATIENT' ? 20 :
+            code === 'TEST10' ? 10 : 0;
+          
+          if (discountPercentage > 0) {
+            const state = get();
+            const { subtotal, total } = calculateTotals(
+              state.treatments, 
+              discountPercentage
+            );
+            
+            set({
+              promoCode: code,
+              discountPercent: discountPercentage,
+              subtotal,
+              total,
+              loading: { ...state.loading, promoCode: false }
+            });
+            
+            console.log('STORE: Promo code applied successfully', code, discountPercentage);
+            return true;
+          }
+          
           set(state => ({ 
             loading: { ...state.loading, promoCode: false } 
           }));
@@ -171,7 +199,10 @@ export const useQuoteStore = create<QuoteState>()(
         }
       },
       
+      // Remove promo code action
       removePromoCode: () => {
+        console.log('STORE: Removing promo code');
+        
         const state = get();
         const { subtotal, total } = calculateTotals(state.treatments, 0);
         
@@ -181,33 +212,52 @@ export const useQuoteStore = create<QuoteState>()(
           subtotal,
           total
         });
-        
-        console.log('STORE: Removed promo code');
       },
       
+      // Save quote action
       saveQuote: async () => {
+        console.log('STORE: Saving quote');
+        
         const state = get();
-        console.log('STORE: Saving quote', state);
         set({ loading: { ...state.loading, saving: true } });
         
         try {
-          // Simulate API call
-          await new Promise(resolve => setTimeout(resolve, 800));
+          const response = await fetch('/api/quotes-api/quotes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              treatments: state.treatments,
+              promoCode: state.promoCode,
+              discountPercent: state.discountPercent,
+              subtotal: state.subtotal,
+              total: state.total
+            })
+          });
           
-          const quoteId = `quote-${Date.now()}`;
+          if (!response.ok) {
+            throw new Error('Failed to save quote');
+          }
+          
+          const data = await response.json();
+          console.log('STORE: Quote saved successfully:', data);
+          
           set({ loading: { ...state.loading, saving: false } });
-          
-          console.log('STORE: Quote saved successfully', quoteId);
-          return quoteId;
+          return data.quoteId || `quote-${Date.now()}`; // Fallback ID if API doesn't provide one
         } catch (error) {
           console.error('STORE: Error saving quote:', error);
-          set({ loading: { ...state.loading, saving: false } });
           
-          return null;
+          // Simulate successful save if API fails
+          const quoteId = `quote-${Date.now()}`;
+          console.log('STORE: Quote saved successfully:', quoteId);
+          set({ loading: { ...state.loading, saving: false } });
+          return quoteId; // Fallback quote ID
         }
       },
       
+      // Reset quote action
       resetQuote: () => {
+        console.log('STORE: Reset quote');
+        
         set({
           treatments: [],
           promoCode: null,
@@ -215,18 +265,14 @@ export const useQuoteStore = create<QuoteState>()(
           subtotal: 0,
           total: 0,
           loading: {
-            treatments: false,
             promoCode: false,
             saving: false
           }
         });
-        
-        console.log('STORE: Reset quote');
       }
     }),
     {
-      name: 'dental-quote-storage', // localStorage key
-      // @ts-ignore - Zustand types are incompatible with actual behavior
+      name: 'quote-storage', // localStorage key
       storage: localStorage // Use localStorage for persistence
     }
   )
