@@ -1,0 +1,547 @@
+Browser-level Form Submission: Even with preventDefault(), some browsers might still attempt to refresh under certain conditions
+React StrictMode: If the application uses React's StrictMode, components mount, unmount, and remount during development, which can appear as state loss
+API Call Side Effects: The API call to validate promo codes might be triggering unexpected behavior
+Component Architecture: The component structure might be causing unmounts/remounts
+Definitive Solution Approach
+Let's implement a solution that addresses all these potential causes:
+
+1. Create a Completely Isolated Quote Builder with useReducer
+// client/src/hooks/useIsolatedQuoteState.ts
+import { useReducer, useCallback } from 'react';
+
+// Define the state structure
+interface QuoteState {
+  treatments: Treatment[];
+  promoCode: string | null;
+  discountPercent: number;
+  subtotal: number;
+  total: number;
+  loading: {
+    promoCode: boolean;
+    treatments: boolean;
+    saving: boolean;
+  };
+}
+
+// Define all possible actions
+type QuoteAction =
+  | { type: 'ADD_TREATMENT'; treatment: Treatment }
+  | { type: 'REMOVE_TREATMENT'; id: string }
+  | { type: 'UPDATE_QUANTITY'; id: string; quantity: number }
+  | { type: 'PROMO_CODE_REQUEST' }
+  | { type: 'PROMO_CODE_SUCCESS'; code: string; discountPercent: number }
+  | { type: 'PROMO_CODE_FAILURE' }
+  | { type: 'REMOVE_PROMO_CODE' }
+  | { type: 'SAVE_QUOTE_REQUEST' }
+  | { type: 'SAVE_QUOTE_SUCCESS'; quoteId: string }
+  | { type: 'SAVE_QUOTE_FAILURE' };
+
+// Initial state
+const initialState: QuoteState = {
+  treatments: [],
+  promoCode: null,
+  discountPercent: 0,
+  subtotal: 0,
+  total: 0,
+  loading: {
+    promoCode: false,
+    treatments: false,
+    saving: false
+  }
+};
+
+// Helper for calculating totals
+const calculateTotals = (treatments: Treatment[], discountPercent: number) => {
+  const subtotal = treatments.reduce(
+    (sum, t) => sum + (t.price * (t.quantity || 1)), 
+    0
+  );
+  const total = subtotal * (1 - (discountPercent / 100));
+  return { subtotal, total };
+};
+
+// Pure reducer function
+function quoteReducer(state: QuoteState, action: QuoteAction): QuoteState {
+  switch (action.type) {
+    case 'ADD_TREATMENT': {
+      const treatments = [...state.treatments, action.treatment];
+      const { subtotal, total } = calculateTotals(treatments, state.discountPercent);
+      return {
+        ...state,
+        treatments,
+        subtotal,
+        total
+      };
+    }
+    
+    case 'REMOVE_TREATMENT': {
+      const treatments = state.treatments.filter(t => t.id !== action.id);
+      const { subtotal, total } = calculateTotals(treatments, state.discountPercent);
+      return {
+        ...state,
+        treatments,
+        subtotal,
+        total
+      };
+    }
+    
+    case 'UPDATE_QUANTITY': {
+      const treatments = state.treatments.map(t => 
+        t.id === action.id ? { ...t, quantity: action.quantity } : t
+      );
+      const { subtotal, total } = calculateTotals(treatments, state.discountPercent);
+      return {
+        ...state,
+        treatments,
+        subtotal,
+        total
+      };
+    }
+    
+    case 'PROMO_CODE_REQUEST':
+      return {
+        ...state,
+        loading: { ...state.loading, promoCode: true }
+      };
+    
+    case 'PROMO_CODE_SUCCESS': {
+      const { subtotal, total } = calculateTotals(state.treatments, action.discountPercent);
+      return {
+        ...state,
+        promoCode: action.code,
+        discountPercent: action.discountPercent,
+        subtotal,
+        total,
+        loading: { ...state.loading, promoCode: false }
+      };
+    }
+    
+    case 'PROMO_CODE_FAILURE':
+      return {
+        ...state,
+        loading: { ...state.loading, promoCode: false }
+      };
+    
+    case 'REMOVE_PROMO_CODE': {
+      const { subtotal, total } = calculateTotals(state.treatments, 0);
+      return {
+        ...state,
+        promoCode: null,
+        discountPercent: 0,
+        subtotal,
+        total
+      };
+    }
+    
+    case 'SAVE_QUOTE_REQUEST':
+      return {
+        ...state,
+        loading: { ...state.loading, saving: true }
+      };
+    
+    case 'SAVE_QUOTE_SUCCESS':
+      return {
+        ...state,
+        loading: { ...state.loading, saving: false }
+      };
+    
+    case 'SAVE_QUOTE_FAILURE':
+      return {
+        ...state,
+        loading: { ...state.loading, saving: false }
+      };
+    
+    default:
+      return state;
+  }
+}
+
+// The hook
+export function useIsolatedQuoteState() {
+  const [state, dispatch] = useReducer(quoteReducer, initialState);
+  
+  // Memoized action creators
+  const addTreatment = useCallback((treatment: Treatment) => {
+    dispatch({ type: 'ADD_TREATMENT', treatment });
+  }, []);
+  
+  const removeTreatment = useCallback((id: string) => {
+    dispatch({ type: 'REMOVE_TREATMENT', id });
+  }, []);
+  
+  const updateQuantity = useCallback((id: string, quantity: number) => {
+    dispatch({ type: 'UPDATE_QUANTITY', id, quantity });
+  }, []);
+  
+  const applyPromoCode = useCallback(async (code: string) => {
+    dispatch({ type: 'PROMO_CODE_REQUEST' });
+    
+    try {
+      // API call to validate promo code
+      const response = await fetch('/api/quotes-api/promo-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to validate promo code');
+      }
+      
+      const data = await response.json();
+      
+      if (data.valid) {
+        dispatch({ 
+          type: 'PROMO_CODE_SUCCESS', 
+          code, 
+          discountPercent: data.discountPercentage 
+        });
+        return true;
+      } else {
+        dispatch({ type: 'PROMO_CODE_FAILURE' });
+        return false;
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error);
+      dispatch({ type: 'PROMO_CODE_FAILURE' });
+      return false;
+    }
+  }, []);
+  
+  const removePromoCode = useCallback(() => {
+    dispatch({ type: 'REMOVE_PROMO_CODE' });
+  }, []);
+  
+  const saveQuote = useCallback(async () => {
+    dispatch({ type: 'SAVE_QUOTE_REQUEST' });
+    
+    try {
+      // API call to save quote
+      const response = await fetch('/api/quotes-api/quotes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          treatments: state.treatments,
+          promoCode: state.promoCode,
+          discountPercent: state.discountPercent,
+          subtotal: state.subtotal,
+          total: state.total
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save quote');
+      }
+      
+      const data = await response.json();
+      dispatch({ type: 'SAVE_QUOTE_SUCCESS', quoteId: data.quoteId });
+      return data.quoteId;
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      dispatch({ type: 'SAVE_QUOTE_FAILURE' });
+      return null;
+    }
+  }, [state]);
+  
+  return {
+    state,
+    addTreatment,
+    removeTreatment,
+    updateQuantity,
+    applyPromoCode,
+    removePromoCode,
+    saveQuote
+  };
+}
+2. Create a Component with Extreme Form Prevention
+// client/src/components/quotes/FinalQuoteBuilder.tsx
+import React, { useState, useCallback, useRef } from 'react';
+import { useIsolatedQuoteState } from '../../hooks/useIsolatedQuoteState';
+
+export function FinalQuoteBuilder() {
+  const {
+    state,
+    addTreatment,
+    removeTreatment,
+    updateQuantity,
+    applyPromoCode,
+    removePromoCode,
+    saveQuote
+  } = useIsolatedQuoteState();
+  
+  const [promoInput, setPromoInput] = useState('');
+  const promoInputRef = useRef<HTMLInputElement>(null);
+  
+  // Sample treatments (in practice, you'd fetch these)
+  const availableTreatments = [
+    { id: 't1', name: 'Teeth Cleaning', price: 80 },
+    { id: 't2', name: 'Whitening', price: 200 },
+    { id: 't3', name: 'Filling', price: 150 }
+  ];
+  
+  // Handle adding treatment with no form submission
+  const handleAddTreatment = useCallback((treatment) => {
+    addTreatment({
+      ...treatment,
+      quantity: 1
+    });
+  }, [addTreatment]);
+  
+  // Handle promo code with extreme prevention measures
+  const handleApplyPromoCode = useCallback((e?: React.MouseEvent | React.FormEvent) => {
+    // Prevent any possible form submission
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Do nothing if no promo code
+    if (!promoInput) return;
+    
+    // Use setTimeout to ensure this executes after any potential form event
+    setTimeout(() => {
+      applyPromoCode(promoInput)
+        .then(success => {
+          if (success) {
+            setPromoInput('');
+            if (promoInputRef.current) {
+              promoInputRef.current.value = '';
+            }
+          }
+        });
+    }, 0);
+  }, [promoInput, applyPromoCode]);
+  
+  // Prevent form submission on enter key
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      handleApplyPromoCode();
+    }
+  }, [handleApplyPromoCode]);
+  
+  return (
+    <div className="final-quote-builder">
+      <h2>Build Your Quote</h2>
+      
+      {/* Available Treatments */}
+      <div className="section">
+        <h3>Available Treatments</h3>
+        <div className="treatment-list">
+          {availableTreatments.map(treatment => (
+            <div key={treatment.id} className="treatment-item">
+              <span>{treatment.name} - ${treatment.price}</span>
+              {/* Use div instead of button to prevent any form behavior */}
+              <div 
+                role="button"
+                tabIndex={0}
+                className="add-button"
+                onClick={() => handleAddTreatment(treatment)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleAddTreatment(treatment);
+                  }
+                }}
+              >
+                Add
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Selected Treatments */}
+      <div className="section">
+        <h3>Your Treatments</h3>
+        {state.treatments.length === 0 ? (
+          <p>No treatments selected yet</p>
+        ) : (
+          <div className="selected-treatments">
+            {state.treatments.map(treatment => (
+              <div key={treatment.id} className="treatment-item">
+                <span>{treatment.name} - ${treatment.price}</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={treatment.quantity || 1}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value, 10);
+                    if (!isNaN(value) && value > 0) {
+                      updateQuantity(treatment.id, value);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                    }
+                  }}
+                />
+                <div 
+                  role="button"
+                  tabIndex={0}
+                  className="remove-button"
+                  onClick={() => removeTreatment(treatment.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      removeTreatment(treatment.id);
+                    }
+                  }}
+                >
+                  Remove
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      
+      {/* Promo Code */}
+      <div className="section">
+        <h3>Promo Code</h3>
+        {/* No form element at all */}
+        <div className="promo-code-container">
+          <input
+            ref={promoInputRef}
+            type="text"
+            value={promoInput}
+            onChange={(e) => setPromoInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter promo code"
+          />
+          <div 
+            role="button"
+            tabIndex={0}
+            className="apply-button"
+            onClick={handleApplyPromoCode}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleApplyPromoCode();
+              }
+            }}
+          >
+            {state.loading.promoCode ? 'Applying...' : 'Apply'}
+          </div>
+        </div>
+        
+        {state.promoCode && (
+          <div className="applied-promo">
+            <p>Applied: {state.promoCode} ({state.discountPercent}% off)</p>
+            <div 
+              role="button"
+              tabIndex={0}
+              className="remove-button"
+              onClick={removePromoCode}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  removePromoCode();
+                }
+              }}
+            >
+              Remove
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {/* Quote Summary */}
+      <div className="section summary">
+        <h3>Quote Summary</h3>
+        <div className="summary-details">
+          <p>Subtotal: ${state.subtotal.toFixed(2)}</p>
+          {state.discountPercent > 0 && (
+            <p>Discount: ${(state.subtotal - state.total).toFixed(2)}</p>
+          )}
+          <p className="total">Total: ${state.total.toFixed(2)}</p>
+        </div>
+        
+        <div 
+          role="button"
+          tabIndex={0}
+          className={`save-button ${state.treatments.length === 0 ? 'disabled' : ''}`}
+          onClick={() => {
+            if (state.treatments.length > 0) {
+              saveQuote();
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              if (state.treatments.length > 0) {
+                saveQuote();
+              }
+            }
+          }}
+        >
+          {state.loading.saving ? 'Saving...' : 'Save Quote'}
+        </div>
+      </div>
+    </div>
+  );
+}
+3. Extreme Measures to Consider
+If the above solution still doesn't work, here are some extreme measures to try:
+
+Disable React StrictMode: If your app uses StrictMode, it might be causing double renders in development
+
+// In index.tsx, remove StrictMode
+ReactDOM.render(<App />, document.getElementById('root'));
+Use localStorage for State Persistence: Add localStorage backup for state
+
+// In useIsolatedQuoteState.ts
+const [state, dispatch] = useReducer((state, action) => {
+  const newState = quoteReducer(state, action);
+  // Save to localStorage after every state change
+  localStorage.setItem('quoteState', JSON.stringify(newState));
+  return newState;
+}, initialState);
+
+// Initialize with localStorage if available
+useEffect(() => {
+  const savedState = localStorage.getItem('quoteState');
+  if (savedState) {
+    try {
+      const parsedState = JSON.parse(savedState);
+      // Dispatch initial state from localStorage
+      Object.entries(parsedState).forEach(([key, value]) => {
+        if (key !== 'loading') {
+          dispatch({ type: 'RESTORE_' + key.toUpperCase(), value });
+        }
+      });
+    } catch (e) {
+      console.error('Failed to parse saved state:', e);
+    }
+  }
+}, []);
+Use a Custom Event System: Completely bypass React's event system
+
+// Create a custom event handler
+const customApplyPromoCode = () => {
+  const code = promoInput;
+  setPromoInput('');
+  
+  // Use a direct DOM manipulation approach
+  document.querySelector('#promo-input').value = '';
+  
+  // Call API directly without using React state first
+  fetch('/api/quotes-api/promo-codes/validate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.valid) {
+      // Update state after API call completes
+      dispatch({ 
+        type: 'PROMO_CODE_SUCCESS', 
+        code, 
+        discountPercent: data.discountPercentage 
+      });
+    }
+  });
+};
