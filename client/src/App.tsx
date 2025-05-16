@@ -33,9 +33,6 @@ import ResilientWebSocketTest2 from "@/pages/ResilientWebSocketTest2";
 import ResilientWebSocketTest from "@/pages/ResilientWebSocketTest";
 import ResilientWebSocketTest3 from "@/pages/ResilientWebSocketTest3";
 import ClinicAccessDeniedPage from "@/components/ClinicAccessDeniedPage";
-import QuickQuoteNew from "@/pages/QuickQuoteNew";
-import QuickQuoteDirect from "@/pages/QuickQuoteDirect";
-import QuickQuoteIsolated from "@/pages/QuickQuoteIsolated";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -135,18 +132,7 @@ function Router() {
       <PromoDetector />
       <Switch>
         {/* Public Routes */}
-      <Route path="/">
-        {() => {
-          const QuoteNavigation = React.lazy(() => import("@/components/QuoteNavigation"));
-          return (
-            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">
-              <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-            </div>}>
-              <QuoteNavigation />
-            </React.Suspense>
-          );
-        }}
-      </Route>
+      <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/index">
         {() => <Redirect to="/" />}
@@ -312,81 +298,6 @@ function Router() {
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading basic quote demo...</div>}>
             <BasicQuoteDemo />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Simple Quote Demo - clean implementation */}
-      <Route path="/simple-quote" component={() => {
-        const SimpleQuoteDemo = React.lazy(() => import("./pages/SimpleQuoteDemo"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading simple quote demo...</div>}>
-            <SimpleQuoteDemo />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Reliable Quick Quote - ultra stable implementation */}
-      <Route path="/quick-quote" component={() => {
-        const QuickQuote = React.lazy(() => import("./pages/QuickQuote"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quick quote...</div>}>
-            <QuickQuote />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Direct Approach - separate state variables implementation */}
-      <Route path="/quick-quote-direct" component={() => {
-        const QuickQuoteDirect = React.lazy(() => import("./pages/QuickQuoteDirect"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading direct quote implementation...</div>}>
-            <QuickQuoteDirect />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Isolated implementation - completely separate state variables */}
-      <Route path="/quick-quote-isolated" component={() => {
-        const QuickQuoteIsolated = React.lazy(() => import("./pages/QuickQuoteIsolated"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading isolated quote implementation...</div>}>
-            <QuickQuoteIsolated />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Basic Quote Demo - completely clean implementation with zero dependencies */}
-      <Route path="/basic-quote-demo" component={() => {
-        const BasicQuoteDemo = React.lazy(() => import("./pages/BasicQuoteDemo"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading basic quote demo...</div>}>
-            <BasicQuoteDemo />
-          </React.Suspense>
-        );
-      }} />
-      
-      {/* Quote Management System with MainLayout */}
-      <Route path="/quotes" component={() => {
-        const QuoteListPage = React.lazy(() => import("./pages/quotes/QuoteListPage"));
-        const MainLayout = React.lazy(() => import("./components/layout/MainLayout"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quotes...</div>}>
-            <MainLayout>
-              <QuoteListPage />
-            </MainLayout>
-          </React.Suspense>
-        );
-      }} />
-      
-      <Route path="/quotes/:id" component={() => {
-        const QuoteDetailPage = React.lazy(() => import("./pages/quotes/QuoteDetailPage"));
-        const MainLayout = React.lazy(() => import("./components/layout/MainLayout"));
-        return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote details...</div>}>
-            <MainLayout>
-              <QuoteDetailPage />
-            </MainLayout>
           </React.Suspense>
         );
       }} />
