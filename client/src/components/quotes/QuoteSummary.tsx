@@ -29,8 +29,18 @@ import {
 import { useQuoteStore } from '@/stores/quoteStore';
 import { useToast } from '@/hooks/use-toast';
 
+// Define promo code type
+type PromoCodeInfo = {
+  discountPercentage: number;
+  description: string;
+};
+
+type PromoCodesType = {
+  [code: string]: PromoCodeInfo;
+};
+
 // Define available promo codes for demonstration
-const PROMO_CODES = {
+const PROMO_CODES: PromoCodesType = {
   'SUMMER15': { discountPercentage: 15, description: 'Summer Special' },
   'DENTAL25': { discountPercentage: 25, description: 'Dental Care Package' },
   'NEWPATIENT': { discountPercentage: 20, description: 'New Patient Discount' },
@@ -276,7 +286,7 @@ const QuoteSummary: React.FC = () => {
               <div>
                 <p className="font-medium">{promoCode}</p>
                 <p className="text-sm text-muted-foreground">
-                  {PROMO_CODES[promoCode]?.description || 'Discount'} ({discountPercentage}% off)
+                  {promoCode in PROMO_CODES ? PROMO_CODES[promoCode].description : 'Discount'} ({discountPercentage}% off)
                 </p>
               </div>
               <Button variant="outline" onClick={handleRemovePromoCode}>

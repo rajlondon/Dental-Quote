@@ -73,17 +73,13 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/quote-builder">
-                  <a className="text-sm text-muted-foreground hover:text-primary">
-                    Get a Quote
-                  </a>
+                <Link href="/quote-builder" className="text-sm text-muted-foreground hover:text-primary">
+                  Get a Quote
                 </Link>
               </li>
               <li>
-                <Link href="/pricing">
-                  <a className="text-sm text-muted-foreground hover:text-primary">
-                    Pricing
-                  </a>
+                <Link href="/pricing" className="text-sm text-muted-foreground hover:text-primary">
+                  Pricing
                 </Link>
               </li>
               <li>
@@ -103,15 +99,11 @@ const Footer: React.FC = () => {
             © {currentYear} MyDentalFly. All rights reserved.
           </p>
           <div className="flex gap-6">
-            <Link href="/privacy-policy">
-              <a className="text-sm text-muted-foreground hover:text-primary">
-                Privacy Policy
-              </a>
+            <Link href="/privacy-policy" className="text-sm text-muted-foreground hover:text-primary">
+              Privacy Policy
             </Link>
-            <Link href="/terms-of-service">
-              <a className="text-sm text-muted-foreground hover:text-primary">
-                Terms of Service
-              </a>
+            <Link href="/terms-of-service" className="text-sm text-muted-foreground hover:text-primary">
+              Terms of Service
             </Link>
           </div>
         </div>
