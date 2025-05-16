@@ -432,6 +432,17 @@ function Router() {
         );
       }} />
       
+      {/* Enhanced Quote Builder - Multi-step workflow with treatment categories */}
+      <Route path="/enhanced-quote" component={() => {
+        const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading enhanced quote builder...</div>}>
+            <EnhancedQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
