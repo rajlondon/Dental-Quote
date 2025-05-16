@@ -4,7 +4,7 @@ import { apiRequest } from '../lib/queryClient';
 import { Treatment } from '../stores/quoteStore';
 
 // Define treatment package type
-export interface TreatmentPackage {
+export type TreatmentPackage = {
   id: string;
   name: string;
   description: string;

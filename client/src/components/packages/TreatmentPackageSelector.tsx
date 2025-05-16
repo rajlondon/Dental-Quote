@@ -1,8 +1,9 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { TreatmentPackage } from '../../hooks/use-treatment-packages';
+import type { TreatmentPackage } from '../../hooks/use-treatment-packages';
 import { Skeleton } from '../ui/skeleton';
+import { BadgePercentIcon, PackageIcon, ListChecksIcon } from 'lucide-react';
 
 interface TreatmentPackageSelectorProps {
   packages: TreatmentPackage[];
@@ -20,8 +21,8 @@ export function TreatmentPackageSelector({
   // If loading, show skeleton UI
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map((item) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[1, 2].map((item) => (
           <Card key={item} className="overflow-hidden">
             <div className="aspect-video w-full bg-slate-200">
               <Skeleton className="h-full w-full" />
@@ -49,7 +50,7 @@ export function TreatmentPackageSelector({
       <div className="text-center p-8 border rounded-lg">
         <h3 className="text-lg font-medium mb-2">No Treatment Packages Available</h3>
         <p className="text-muted-foreground">
-          There are currently no dental treatment packages available. Please check back later or contact us for custom treatment options.
+          There are currently no treatment packages available. Please check back later for new options.
         </p>
       </div>
     );
@@ -58,9 +59,9 @@ export function TreatmentPackageSelector({
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-lg font-medium mb-2">Select a Treatment Package</h3>
+        <h3 className="text-lg font-medium mb-2">Treatment Packages</h3>
         <p className="text-muted-foreground mb-4">
-          Choose from our carefully designed treatment packages to save on combined dental procedures.
+          Choose from our carefully designed treatment packages to save on your dental care.
         </p>
         
         {/* Clear selection button if a package is selected */}
@@ -75,24 +76,26 @@ export function TreatmentPackageSelector({
         )}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {packages.map((pkg) => {
           const isSelected = pkg.id === selectedPackageId;
           
-          // Calculate total regular price and savings
-          const totalRegularPrice = pkg.treatments.reduce(
+          // Calculate package total price
+          const packageTotal = pkg.treatments.reduce(
             (sum, treatment) => sum + (treatment.price * (treatment.quantity || 1)), 
             0
           );
           
-          let savingsAmount = 0;
+          // Calculate savings
+          let savings = 0;
           if (pkg.discountType === 'percentage') {
-            savingsAmount = totalRegularPrice * (pkg.discount / 100);
+            savings = packageTotal * (pkg.discount / 100);
           } else {
-            savingsAmount = pkg.discount;
+            savings = pkg.discount;
           }
           
-          const discountedPrice = totalRegularPrice - savingsAmount;
+          // Calculate final price
+          const finalPrice = packageTotal - savings;
           
           return (
             <Card 
@@ -118,42 +121,57 @@ export function TreatmentPackageSelector({
               )}
               
               <CardHeader>
-                <CardTitle>{pkg.name}</CardTitle>
+                <CardTitle className="flex items-center">
+                  <PackageIcon className="h-5 w-5 mr-2 text-primary" />
+                  {pkg.name}
+                </CardTitle>
                 <CardDescription>{pkg.description}</CardDescription>
               </CardHeader>
               
               <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Regular Price:</span>
-                    <span>£{totalRegularPrice.toFixed(2)}</span>
+                <div className="space-y-3">
+                  <div className="flex items-center text-primary">
+                    <BadgePercentIcon className="h-5 w-5 mr-2" />
+                    <span className="font-semibold">
+                      {pkg.discountType === 'percentage'
+                        ? `${pkg.discount}% off`
+                        : `£${pkg.discount} off`}
+                    </span>
                   </div>
                   
-                  <div className="flex justify-between text-green-600 font-medium">
-                    <span>Savings:</span>
-                    <span>£{savingsAmount.toFixed(2)}</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Package Value:</span>
+                    <span className="font-medium">£{packageTotal.toFixed(2)}</span>
                   </div>
                   
-                  <div className="flex justify-between font-bold">
-                    <span>Package Price:</span>
-                    <span>£{discountedPrice.toFixed(2)}</span>
+                  <div className="flex items-center justify-between text-green-600">
+                    <span>Your Savings:</span>
+                    <span className="font-medium">£{savings.toFixed(2)}</span>
                   </div>
-                </div>
-                
-                {/* List included treatments */}
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium mb-2">Included Treatments:</h4>
-                  <ul className="text-sm space-y-1">
-                    {pkg.treatments.map((treatment) => (
-                      <li key={treatment.id} className="flex justify-between">
-                        <span>
-                          {treatment.name} 
-                          {treatment.quantity > 1 && <span className="text-muted-foreground"> x{treatment.quantity}</span>}
-                        </span>
-                        <span>£{treatment.price}</span>
-                      </li>
-                    ))}
-                  </ul>
+                  
+                  <div className="flex items-center justify-between font-bold">
+                    <span>Final Price:</span>
+                    <span>£{finalPrice.toFixed(2)}</span>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <h4 className="text-sm font-medium flex items-center mb-2">
+                      <ListChecksIcon className="h-4 w-4 mr-1" />
+                      Included Treatments:
+                    </h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {pkg.treatments.map((treatment) => (
+                        <li key={treatment.id} className="flex justify-between">
+                          <span>{treatment.name}</span>
+                          {treatment.quantity > 1 && (
+                            <span className="text-xs bg-secondary px-1 rounded">
+                              x{treatment.quantity}
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </CardContent>
               
