@@ -312,6 +312,16 @@ function Router() {
         );
       }} />
       
+      {/* Minimal Quote Test - bare-bones implementation with event debugging */}
+      <Route path="/minimal-quote" component={() => {
+        const MinimalQuoteTest = React.lazy(() => import("./pages/MinimalQuoteTest"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading minimal quote test...</div>}>
+            <MinimalQuoteTest />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
