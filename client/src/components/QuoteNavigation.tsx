@@ -11,7 +11,22 @@ const QuoteNavigation = () => {
         Test different implementations of the dental quote system with promo code handling.
       </p>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <Card className="border-green-300 shadow-md">
+          <CardHeader className="bg-green-50">
+            <CardTitle>Basic Quote Demo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="mb-4 text-sm text-gray-600">
+              <strong className="text-green-600">RECOMMENDED</strong><br/>
+              Completely isolated implementation with zero dependencies between treatments and promos.
+            </p>
+            <Link href="/basic-quote-demo">
+              <Button className="w-full" variant="default">Open Basic Demo</Button>
+            </Link>
+          </CardContent>
+        </Card>
+        
         <Card>
           <CardHeader>
             <CardTitle>Original Implementation</CardTitle>
@@ -49,7 +64,7 @@ const QuoteNavigation = () => {
               Completely isolated implementation with separate state variables and mock data.
             </p>
             <Link href="/quick-quote-isolated">
-              <Button className="w-full" variant="default">Open Isolated Implementation</Button>
+              <Button className="w-full">Open Isolated Implementation</Button>
             </Link>
           </CardContent>
         </Card>
