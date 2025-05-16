@@ -171,7 +171,8 @@ export default function QuickQuote() {
           ...prevQuote,
           treatments: currentTreatments, // Keep the existing treatments!
           promoCode: code,
-          promoDiscount: promoDiscount,
+          promoType: promoCodes[code].type,
+          promoValue: promoCodes[code].value,
           discount: promoDiscount,
           subtotal: subtotal,
           total: subtotal - promoDiscount
@@ -394,8 +395,9 @@ export default function QuickQuote() {
           <div>Selected treatments: {quote.treatments?.length || 0}</div>
           <div>Subtotal: ${quote.subtotal.toFixed(2)}</div>
           <div>Promo code: {quote.promoCode || 'None'}</div>
-          <div>Discount: ${quote.discount.toFixed(2)}</div>
+          <div>Discount: ${(quote.discount || 0).toFixed(2)}</div>
           <div>Total: ${quote.total.toFixed(2)}</div>
+          <div>Treatment IDs: {quote.treatments.map(t => t.id).join(', ')}</div>
         </div>
       </div>
     );
