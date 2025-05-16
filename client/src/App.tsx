@@ -159,9 +159,10 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       {/* Direct standalone quote builder route */}
       <Route path="/quote" component={() => {
+        const BasicQuotePage = React.lazy(() => import("./pages/BasicQuotePage"));
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote builder...</div>}>
-            <SimpleStandaloneQuotePage />
+            <BasicQuotePage />
           </React.Suspense>
         );
       }} />

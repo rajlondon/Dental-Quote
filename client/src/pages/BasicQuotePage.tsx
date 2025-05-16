@@ -8,18 +8,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
 import { FileText, CheckCircle, RefreshCw, Tag } from 'lucide-react';
 
-const SimpleStandaloneQuotePage: React.FC = () => {
+// Define types to match the store
+type QuoteStep = 'patient-info' | 'treatments' | 'review' | 'complete';
+
+const BasicQuotePage: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const quoteStore = useQuoteStore();
-  const [step, setStep] = React.useState<'patient-info' | 'treatments' | 'review' | 'complete'>('patient-info');
+  const [step, setStep] = React.useState<QuoteStep>('patient-info');
   const [loading, setLoading] = React.useState(false);
   const [submittingQuote, setSubmittingQuote] = React.useState(false);
   const [promoCodeInput, setPromoCodeInput] = React.useState('');
   const [validatingPromo, setValidatingPromo] = React.useState(false);
+  const [quoteId, setQuoteId] = React.useState<string | null>(null);
 
   // Clear the store when the component mounts
   React.useEffect(() => {
@@ -32,7 +35,11 @@ const SimpleStandaloneQuotePage: React.FC = () => {
   // Patient info update handler
   const handlePatientInfoUpdate = (field: string, value: string) => {
     quoteStore.setPatientInfo({
-      ...quoteStore.patientInfo,
+      ...quoteStore.patientInfo || {
+        firstName: '',
+        lastName: '',
+        email: '',
+      },
       [field]: value
     });
   };
@@ -73,19 +80,18 @@ const SimpleStandaloneQuotePage: React.FC = () => {
     setValidatingPromo(true);
     
     try {
-      // Use the store's built-in applyPromoCode function
       const success = await quoteStore.applyPromoCode(promoCodeInput.trim());
       
       if (success) {
         toast({
           title: "Success",
-          description: `Applied ${quoteStore.discountPercent}% discount with code ${promoCodeInput}`,
+          description: `Applied discount with code ${promoCodeInput}`,
           variant: "default"
         });
       } else {
         toast({
           title: "Invalid Code",
-          description: data.message || "The promo code you entered is invalid",
+          description: "The promo code you entered is invalid",
           variant: "destructive"
         });
       }
@@ -100,11 +106,6 @@ const SimpleStandaloneQuotePage: React.FC = () => {
       setValidatingPromo(false);
     }
   };
-
-  // Calculate totals
-  const subtotal = quoteStore.treatments.reduce((sum, treatment) => sum + (treatment.price * treatment.quantity), 0);
-  const discount = quoteStore.discountPercent > 0 ? (subtotal * (quoteStore.discountPercent / 100)) : 0;
-  const total = subtotal - discount;
 
   // Submit quote
   const handleSubmitQuote = async () => {
@@ -132,37 +133,27 @@ const SimpleStandaloneQuotePage: React.FC = () => {
     setSubmittingQuote(true);
 
     try {
-      const response = await apiRequest('POST', '/api/quotes', {
-        patientInfo: quoteStore.patientInfo,
-        treatments: quoteStore.treatments,
-        promoCode: quoteStore.promoCode,
-        discountPercent: quoteStore.discountPercent,
-        subtotal,
-        discount,
-        total
-      });
+      const savedQuoteId = await quoteStore.saveQuote();
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (savedQuoteId) {
         toast({
           title: "Quote Created",
           description: "Your quote has been successfully created!",
           variant: "default"
         });
         
-        // Set the quote ID in the store
-        quoteStore.setQuoteId(data.id);
+        // Save the quote ID for display
+        setQuoteId(savedQuoteId);
         
         // Move to completion step
         setStep('complete');
         
         // Reset store after 2 seconds
         setTimeout(() => {
-          quoteStore.reset();
+          quoteStore.resetQuote();
         }, 2000);
       } else {
-        throw new Error(data.message || "Failed to create quote");
+        throw new Error("Failed to create quote");
       }
     } catch (error) {
       console.error("Error submitting quote:", error);
@@ -361,7 +352,7 @@ const SimpleStandaloneQuotePage: React.FC = () => {
                 </div>
                 
                 <div className="mt-4">
-                  <p className="text-lg font-medium">Subtotal: £{subtotal.toFixed(2)}</p>
+                  <p className="text-lg font-medium">Subtotal: £{quoteStore.subtotal.toFixed(2)}</p>
                 </div>
                 
                 <div className="mt-4 flex justify-between">
@@ -430,12 +421,11 @@ const SimpleStandaloneQuotePage: React.FC = () => {
                   placeholder="Enter promo code"
                   value={promoCodeInput}
                   onChange={(e) => setPromoCodeInput(e.target.value)}
-                  disabled={quoteStore.promoCode !== ''}
+                  disabled={quoteStore.promoCode !== null}
                 />
                 {quoteStore.promoCode ? (
                   <Button variant="outline" className="shrink-0" onClick={() => {
-                    quoteStore.setPromoCode('');
-                    quoteStore.setDiscountPercent(0);
+                    quoteStore.removePromoCode();
                     setPromoCodeInput('');
                   }}>
                     Remove
@@ -465,19 +455,19 @@ const SimpleStandaloneQuotePage: React.FC = () => {
             <div className="border-t pt-4">
               <div className="flex justify-between mb-2">
                 <span>Subtotal:</span>
-                <span>£{subtotal.toFixed(2)}</span>
+                <span>£{quoteStore.subtotal.toFixed(2)}</span>
               </div>
               
-              {discount > 0 && (
+              {quoteStore.discountPercent > 0 && (
                 <div className="flex justify-between mb-2 text-green-600">
                   <span>Discount ({quoteStore.discountPercent}%):</span>
-                  <span>-£{discount.toFixed(2)}</span>
+                  <span>-£{(quoteStore.subtotal * (quoteStore.discountPercent / 100)).toFixed(2)}</span>
                 </div>
               )}
               
               <div className="flex justify-between font-bold text-lg">
                 <span>Total:</span>
-                <span>£{total.toFixed(2)}</span>
+                <span>£{quoteStore.total.toFixed(2)}</span>
               </div>
             </div>
             
@@ -502,13 +492,13 @@ const SimpleStandaloneQuotePage: React.FC = () => {
             </div>
             <h2 className="text-2xl font-bold mb-2">Quote Created!</h2>
             <p className="text-gray-500 mb-6">Your dental quote has been successfully created.</p>
-            <p className="font-medium mb-4">Quote ID: {quoteStore.quoteId}</p>
+            <p className="font-medium mb-4">Quote ID: {quoteId}</p>
             <p className="text-sm text-gray-500 mb-6">
               A copy of your quote has been sent to {quoteStore.patientInfo?.email}.<br />
               You'll also be contacted by one of our specialists soon.
             </p>
             <Button onClick={() => {
-              quoteStore.reset();
+              quoteStore.resetQuote();
               setStep('patient-info');
             }}>
               Create Another Quote
@@ -579,4 +569,4 @@ const SimpleStandaloneQuotePage: React.FC = () => {
   );
 };
 
-export default SimpleStandaloneQuotePage;
+export default BasicQuotePage;
