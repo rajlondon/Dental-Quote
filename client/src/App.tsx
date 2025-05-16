@@ -362,6 +362,16 @@ function Router() {
         );
       }} />
       
+      {/* Zustand Quote Builder - Global state management with localStorage persistence */}
+      <Route path="/zustand-quote" component={() => {
+        const ZustandQuoteBuilder = React.lazy(() => import("./pages/ZustandQuoteBuilder"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading Zustand quote builder...</div>}>
+            <ZustandQuoteBuilder />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
