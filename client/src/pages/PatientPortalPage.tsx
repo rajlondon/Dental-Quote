@@ -202,20 +202,6 @@ const QuotesSection = () => {
     </div>
   );
 };
-    // Use URLSearchParams to parse the search string
-    const params = new URLSearchParams(search);
-    const quoteId = params.get('quoteId');
-    if (quoteId) {
-      console.log(`[DEBUG] Found quoteId in URL params: ${quoteId}`);
-      setSelectedQuoteId(quoteId);
-    }
-  }, [search]);
-  
-  // Use effect hook to refresh quotes data when this section is displayed
-  useEffect(() => {
-    console.log('[DEBUG] Quotes section wrapper mounted, refreshing quotes data');
-    queryClient.invalidateQueries({ queryKey: ['/api/quotes/user'] });
-  }, []);
   
   // Handler for going back to quotes list
   const handleBackToQuotes = () => {
