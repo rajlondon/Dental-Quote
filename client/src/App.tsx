@@ -539,11 +539,11 @@ function Router() {
           );
         }
         
-        // Load the enhanced quote page component
-        const EnhancedQuotePage = React.lazy(() => import("@/pages/EnhancedQuotePage"));
+        // Load the standalone quote page component
+        const StandaloneQuotePage = React.lazy(() => import("@/pages/StandaloneQuotePage"));
         return (
-          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading enhanced quote builder...</div>}>
-            <EnhancedQuotePage />
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote builder...</div>}>
+            <StandaloneQuotePage />
           </React.Suspense>
         );
       }} />
