@@ -1,0 +1,91 @@
+The Root Cause
+When a toast notification is triggered, it's likely causing one of these issues:
+
+Unintended Form Submission: The toast might be triggered by a button that's submitting a form, causing a page refresh
+State Reset: The toast implementation might be resetting component state after displaying
+Event Bubbling: The click event might be bubbling up to a parent component that's handling navigation
+Targeted Fix for Toast Notifications
+Let's implement a fix specifically for the toast notification issue:
+
+// 1. Find the toast notification implementation
+// In your PromoCodeInput.tsx or similar component
+
+// CURRENT PROBLEMATIC CODE:
+const handleApplyPromoCode = () => {
+  // API call happens here
+  toast.success('Promo code applied successfully'); // This might be causing the refresh
+};
+
+// FIXED CODE:
+const handleApplyPromoCode = (e) => {
+  // Prevent default form submission behavior
+  if (e && e.preventDefault) {
+    e.preventDefault();
+  }
+  
+  // API call happens here
+  
+  // Use setTimeout to ensure state updates complete before showing toast
+  setTimeout(() => {
+    toast.success('Promo code applied successfully');
+  }, 100);
+};
+Additional Button Fix
+If the toast is triggered by a button click, make sure the button isn't submitting a form:
+
+// PROBLEMATIC BUTTON:
+<button onClick={handleApplyPromoCode}>
+  Apply Promo Code
+</button>
+
+// FIXED BUTTON:
+<button 
+  type="button" // Explicitly set type to button to prevent form submission
+  onClick={handleApplyPromoCode}
+>
+  Apply Promo Code
+</button>
+Prevent Form Submission
+If the promo code input is inside a form, prevent the default form submission:
+
+// PROBLEMATIC FORM:
+<form>
+  <input value={promoCode} onChange={e => setPromoCode(e.target.value)} />
+  <button onClick={handleApplyPromoCode}>Apply</button>
+</form>
+
+// FIXED FORM:
+<form onSubmit={e => e.preventDefault()}>
+  <input value={promoCode} onChange={e => setPromoCode(e.target.value)} />
+  <button type="button" onClick={handleApplyPromoCode}>Apply</button>
+</form>
+Isolate the Toast Container
+Make sure the toast container is properly isolated and doesn't cause rerenders:
+
+// In your main App.tsx or layout component
+import { ToastContainer } from 'react-toastify';
+
+function App() {
+  return (
+    <>
+      {/* Rest of your app */}
+      {/* Place ToastContainer outside of your main component tree */}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        pauseOnFocusLoss={false} // Prevent pausing on focus loss
+        draggable
+        pauseOnHover
+      />
+    </>
+  );
+}
+Implementation Plan
+Find all toast notifications in your promo code handling code
+Add e.preventDefault() to all handler functions
+Set button types to type="button" explicitly
+Add setTimeout to delay toast notifications
+Make sure forms have onSubmit={e => e.preventDefault()}

@@ -421,7 +421,12 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
   }, []);
   
   // Handle apply promo code
-  const handleApplyPromoCode = useCallback(async (code: string) => {
+  const handleApplyPromoCode = useCallback(async (code: string, e?: React.MouseEvent | React.FormEvent) => {
+    // Prevent default form submission behavior
+    if (e && e.preventDefault) {
+      e.preventDefault();
+    }
+    
     if (!code.trim()) return;
     
     setIsApplyingPromo(true);
@@ -464,10 +469,13 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
             promoDiscount: data.discount || 0
           }));
           
-          toast({
-            title: 'Promo Code Applied',
-            description: `Promo code "${code}" has been applied to your quote.`,
-          });
+          // Use setTimeout to ensure state updates complete before showing toast
+          setTimeout(() => {
+            toast({
+              title: 'Promo Code Applied',
+              description: `Promo code "${code}" has been applied to your quote.`,
+            });
+          }, 100);
         } else {
           // Rollback on API error
           setQuote(previousState);
@@ -493,28 +501,35 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
           discountAmount = totals.subtotal * 0.1;
         }
         
-        // Update the quote with the calculated discount
+        // Update the quote with the calculated discount using functional update
         setQuote(prev => ({
           ...prev,
           promoCode: code,
           promoDiscount: discountAmount
         }));
         
-        toast({
-          title: 'Promo Code Applied',
-          description: `Promo code "${code}" has been applied to your quote.`,
-        });
+        // Use setTimeout to ensure state updates complete before showing toast
+        setTimeout(() => {
+          toast({
+            title: 'Promo Code Applied',
+            description: `Promo code "${code}" has been applied to your quote.`,
+          });
+        }, 100);
       }
       
       // Clear the input
       setPromoInput('');
     } catch (err: any) {
       setError(err.message || 'Error applying promo code');
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to apply the promo code. Please try again.',
-        variant: 'destructive'
-      });
+      
+      // Use setTimeout for error toast as well
+      setTimeout(() => {
+        toast({
+          title: 'Error',
+          description: err.message || 'Failed to apply the promo code. Please try again.',
+          variant: 'destructive'
+        });
+      }, 100);
     } finally {
       setIsApplyingPromo(false);
     }
@@ -788,7 +803,7 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
           )}
           
           {/* Promo code application section */}
-          <div className="mt-4 p-4 border rounded-md bg-gray-50 max-w-xl">
+          <form onSubmit={(e) => e.preventDefault()} className="mt-4 p-4 border rounded-md bg-gray-50 max-w-xl">
             <h3 className="text-lg font-medium mb-2">Promo Code</h3>
             <div className="flex gap-2">
               <Input
@@ -797,19 +812,32 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
                 placeholder="Enter promo code"
                 className="flex-1"
                 disabled={!!quote.promoCode || isApplyingPromo || isLoading}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (promoInput && !quote.promoCode && !isApplyingPromo && !isLoading) {
+                      handleApplyPromoCode(promoInput, e);
+                    }
+                  }
+                }}
               />
               {quote.promoCode ? (
                 <Button 
-                  onClick={handleClearPromoCode} 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleClearPromoCode();
+                  }} 
                   variant="destructive"
                   disabled={isLoading}
+                  type="button"
                 >
                   Remove
                 </Button>
               ) : (
                 <Button 
-                  onClick={() => handleApplyPromoCode(promoInput)} 
-                  disabled={isApplyingPromo || !promoInput.trim() || isLoading} 
+                  onClick={(e) => handleApplyPromoCode(promoInput, e)} 
+                  disabled={isApplyingPromo || !promoInput.trim() || isLoading}
+                  type="button"
                 >
                   {isApplyingPromo ? 'Applying...' : 'Apply'}
                 </Button>
@@ -825,7 +853,7 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
             <div className="mt-2 text-xs text-gray-500">
               Try codes like SUMMER15, DENTAL25, or FREECONSULT for different discounts
             </div>
-          </div>
+          </form>
           
           <div className="mt-4 flex gap-2">
             <Button 
