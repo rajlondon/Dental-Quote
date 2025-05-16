@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
     icon: <Home className="h-5 w-5" />
   },
   {
-    path: '/basic-quote-demo',
+    path: '/simple-quote',
     label: 'New Quote',
     icon: <Calculator className="h-5 w-5" />
   },
@@ -36,26 +36,6 @@ const navItems: NavItem[] = [
     path: '/quotes',
     label: 'My Quotes',
     icon: <FileText className="h-5 w-5" />
-  },
-  {
-    path: '/packages',
-    label: 'Treatment Packages',
-    icon: <Package className="h-5 w-5" />
-  },
-  {
-    path: '/special-offers',
-    label: 'Special Offers',
-    icon: <PercentCircle className="h-5 w-5" />
-  },
-  {
-    path: '/account',
-    label: 'Account',
-    icon: <User className="h-5 w-5" />
-  },
-  {
-    path: '/settings',
-    label: 'Settings',
-    icon: <Settings className="h-5 w-5" />
   }
 ];
 
