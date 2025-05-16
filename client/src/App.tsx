@@ -312,6 +312,16 @@ function Router() {
         );
       }} />
       
+      {/* Reliable Quick Quote - ultra stable implementation */}
+      <Route path="/quick-quote" component={() => {
+        const QuickQuote = React.lazy(() => import("./pages/QuickQuote"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quick quote...</div>}>
+            <QuickQuote />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Quote Management System with MainLayout */}
       <Route path="/quotes" component={() => {
         const QuoteListPage = React.lazy(() => import("./pages/quotes/QuoteListPage"));

@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
     icon: <Home className="h-5 w-5" />
   },
   {
-    path: '/simple-quote',
+    path: '/quick-quote',
     label: 'New Quote',
     icon: <Calculator className="h-5 w-5" />
   },
