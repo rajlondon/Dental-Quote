@@ -352,6 +352,16 @@ function Router() {
         );
       }} />
       
+      {/* Single Page Quote - Complete atomic implementation with no nested components */}
+      <Route path="/single-quote" component={() => {
+        const SinglePageQuote = React.lazy(() => import("./pages/SinglePageQuote"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading single page quote...</div>}>
+            <SinglePageQuote />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
