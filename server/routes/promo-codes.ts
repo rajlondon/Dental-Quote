@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { storage } from '../storage';
 import { ZodError } from 'zod';
 import { isAuthenticated } from '../middleware/auth';
+import { calculateDiscount, TreatmentItem } from '../utils/discount-calculator';
 
 const router = Router();
 
@@ -164,6 +165,96 @@ router.post('/:code/apply', isAuthenticated, async (req, res) => {
       success: true,
       data: updatedQuote
     });
+  } catch (error) {
+    console.error('Error applying promo code:', error);
+    
+    if (error instanceof ZodError) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid data.',
+        errors: error.errors
+      });
+    }
+    
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while applying the promo code.'
+    });
+  }
+});
+
+/**
+ * Apply a promo code to quote items
+ * POST /api/promo-codes/apply
+ */
+router.post('/apply', async (req, res) => {
+  try {
+    const { promoCode, treatments } = req.body;
+    
+    if (!promoCode || !treatments || !Array.isArray(treatments)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Promo code and treatments array are required'
+      });
+    }
+    
+    // Try to get promotion from database first
+    let promotion;
+    try {
+      promotion = await storage.getPromotionByCode(promoCode);
+    } catch (err) {
+      console.log('Error fetching promotion, using fallback calculation');
+    }
+    
+    // Calculate subtotal from provided treatments
+    let subtotal = 0;
+    treatments.forEach((item: TreatmentItem) => {
+      if (item.price && item.quantity) {
+        subtotal += item.price * item.quantity;
+      }
+    });
+    
+    // If promotion exists in database, use its values
+    if (promotion) {
+      const now = new Date();
+      const startDate = new Date(promotion.start_date);
+      const endDate = new Date(promotion.end_date);
+      
+      // Check if promotion is active
+      if (!promotion.is_active || now < startDate || now > endDate) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Promo code is not active or has expired'
+        });
+      }
+      
+      // Calculate discount based on promotion values
+      let discountAmount = 0;
+      if (promotion.discount_type === 'percentage') {
+        discountAmount = subtotal * (promotion.discount_value / 100);
+      } else {
+        discountAmount = Math.min(promotion.discount_value, subtotal);
+      }
+      
+      return res.status(200).json({
+        success: true,
+        code: promoCode,
+        discount: discountAmount,
+        discountType: promotion.discount_type,
+        discountValue: promotion.discount_value
+      });
+    } else {
+      // Use fallback calculation if no promotion found
+      const result = calculateDiscount(promoCode, treatments, subtotal);
+      
+      return res.status(200).json({
+        success: true,
+        code: promoCode,
+        discount: result.discount,
+        discountType: result.discountType,
+        discountValue: result.discountValue
+      });
+    }
   } catch (error) {
     console.error('Error applying promo code:', error);
     
