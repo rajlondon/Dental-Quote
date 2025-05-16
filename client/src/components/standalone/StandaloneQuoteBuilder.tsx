@@ -701,7 +701,12 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
   }, [quote, quoteId, saveQuote, calculateTotals, onQuoteComplete, toast]);
   
   // Handle complete quote
-  const handleCompleteQuote = useCallback(async () => {
+  const handleCompleteQuote = useCallback(async (e?: React.MouseEvent) => {
+    // Prevent default form submission if event is provided
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (quote.treatments.length === 0 && !quote.selectedPackage) {
       toast({
         title: 'No Items Selected',
@@ -711,27 +716,36 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
       return;
     }
     
-    // Save the quote if not already saved
-    let currentQuoteId = quoteId;
-    if (!currentQuoteId) {
-      currentQuoteId = await saveQuote();
+    try {
+      // Save the quote if not already saved
+      let currentQuoteId = quoteId;
       if (!currentQuoteId) {
-        return;
+        currentQuoteId = await saveQuote();
+        if (!currentQuoteId) {
+          return;
+        }
       }
-    }
-    
-    // Call the onQuoteComplete callback if provided
-    if (onQuoteComplete) {
-      const totals = calculateTotals();
-      onQuoteComplete({
-        treatments: quote.treatments,
-        selectedPackage: quote.selectedPackage,
-        appliedOffer: quote.appliedOffer,
-        promoCode: quote.promoCode,
-        total: totals.total,
-        subtotal: totals.subtotal,
-        savings: totals.savings,
-        quoteId: currentQuoteId
+      
+      // Call the onQuoteComplete callback if provided
+      if (onQuoteComplete) {
+        const totals = calculateTotals();
+        onQuoteComplete({
+          treatments: quote.treatments,
+          selectedPackage: quote.selectedPackage,
+          appliedOffer: quote.appliedOffer,
+          promoCode: quote.promoCode,
+          total: totals.total,
+          subtotal: totals.subtotal,
+          savings: totals.savings,
+          quoteId: currentQuoteId
+        });
+      }
+    } catch (err) {
+      console.error('Error completing quote:', err);
+      toast({
+        title: 'Error',
+        description: 'There was a problem completing your quote. Please try again.',
+        variant: 'destructive'
       });
     }
   }, [quote, quoteId, saveQuote, calculateTotals, onQuoteComplete, toast]);
@@ -814,19 +828,32 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
           </div>
           
           <div className="mt-4 flex gap-2">
-            <Button onClick={handleReset} variant="outline" disabled={isLoading}>
+            <Button 
+              onClick={(e) => {
+                e.preventDefault();
+                handleReset();
+              }} 
+              variant="outline" 
+              disabled={isLoading}
+              type="button"
+            >
               Reset Quote
             </Button>
             <Button 
-              onClick={() => setIsEmailDialogOpen(true)} 
+              onClick={(e) => {
+                e.preventDefault();
+                setIsEmailDialogOpen(true);
+              }} 
               variant="outline" 
               disabled={isLoading || (quote.treatments.length === 0 && !quote.selectedPackage)}
+              type="button"
             >
               <Mail className="h-4 w-4 mr-1" /> Email Quote
             </Button>
             <Button
-              onClick={handleCompleteQuote}
+              onClick={(e) => handleCompleteQuote(e)}
               disabled={isLoading || (quote.treatments.length === 0 && !quote.selectedPackage)}
+              type="button"
             >
               Complete Quote
             </Button>
@@ -1171,7 +1198,8 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
                         className="w-full" 
                         size="lg"
                         disabled={isLoading}
-                        onClick={handleCompleteQuote}
+                        onClick={(e) => handleCompleteQuote(e)}
+                        type="button"
                       >
                         Request This Quote
                       </Button>
