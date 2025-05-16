@@ -321,6 +321,16 @@ function Router() {
           </React.Suspense>
         );
       }} />
+      
+      {/* Improved Quote Builder - using React Hook Form and best practices */}
+      <Route path="/improved-quote" component={() => {
+        const ImprovedQuoteBuilder = React.lazy(() => import("./pages/ImprovedQuoteBuilder"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading improved quote builder...</div>}>
+            <ImprovedQuoteBuilder />
+          </React.Suspense>
+        );
+      }} />
       <Route path="/quote-summary" component={() => {
         const QuoteSummaryPage = React.lazy(() => import("@/pages/QuoteSummaryPage"));
         return (
