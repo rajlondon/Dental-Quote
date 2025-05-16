@@ -372,6 +372,16 @@ function Router() {
         );
       }} />
       
+      {/* Production Quote Builder - Final implementation with best practices */}
+      <Route path="/production-quote" component={() => {
+        const PersistentQuotePage = React.lazy(() => import("./pages/PersistentQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading production quote builder...</div>}>
+            <PersistentQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
