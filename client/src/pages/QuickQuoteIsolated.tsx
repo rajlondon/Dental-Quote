@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -54,6 +54,56 @@ const QuickQuoteIsolated = () => {
   const [discount, setDiscount] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isApplyingPromo, setIsApplyingPromo] = useState<boolean>(false);
+  
+  // 1. Add console logs for component lifecycle
+  useEffect(() => {
+    console.log('[MOUNT] QuickQuoteIsolated component mounted');
+    
+    return () => {
+      console.log('[UNMOUNT] QuickQuoteIsolated component unmounted');
+    };
+  }, []);
+
+  // 2. Add a ref to track treatments through renders
+  const treatmentsRef = useRef(selectedTreatments);
+  useEffect(() => {
+    console.log('[STATE CHANGE] Treatments changed:', {
+      previous: treatmentsRef.current,
+      current: selectedTreatments,
+      same: treatmentsRef.current === selectedTreatments
+    });
+    treatmentsRef.current = selectedTreatments;
+  }, [selectedTreatments]);
+
+  // 3. Monitor all state changes
+  useEffect(() => {
+    console.log('[STATE SNAPSHOT]', {
+      selectedTreatments: selectedTreatments.map(t => t.id),
+      promoCode: appliedPromoCode,
+      discount,
+      timestamp: new Date().toISOString()
+    });
+  }, [selectedTreatments, appliedPromoCode, discount]);
+  
+  // Force preservation of treatments
+  const preservedTreatmentsRef = useRef<Treatment[]>([]);
+  useEffect(() => {
+    if (selectedTreatments.length > 0) {
+      preservedTreatmentsRef.current = [...selectedTreatments];
+    }
+  }, [selectedTreatments]);
+
+  useEffect(() => {
+    // Check if treatments were lost after any state change
+    const timeoutId = setTimeout(() => {
+      if (selectedTreatments.length === 0 && preservedTreatmentsRef.current.length > 0) {
+        console.log('[RECOVERY] Treatments were lost! Restoring from preserved ref');
+        setSelectedTreatments([...preservedTreatmentsRef.current]);
+      }
+    }, 50);
+    
+    return () => clearTimeout(timeoutId);
+  });
   
   // UI state
   const [showPatientForm, setShowPatientForm] = useState(false);
@@ -112,6 +162,17 @@ const QuickQuoteIsolated = () => {
       return;
     }
     
+    // Log before any state changes
+    console.log('[PROMO START] Before applying promo:', {
+      selectedTreatments: selectedTreatments.map(t => ({id: t.id, name: t.name})),
+      treatmentCount: selectedTreatments.length,
+      promoCode: code
+    });
+    
+    // Store treatments in multiple ways to track potential issues
+    const treatmentsCopy = [...selectedTreatments];
+    const treatmentIds = selectedTreatments.map(t => t.id);
+    
     if (!MOCK_PROMO_CODES[code]) {
       toast({
         title: 'Invalid Code',
@@ -121,26 +182,42 @@ const QuickQuoteIsolated = () => {
       return;
     }
     
-    // Create a local copy of selected treatments for reference
-    const currentTreatments = [...selectedTreatments];
-    console.log('[QuickQuoteIsolated] Current treatments before promo:', currentTreatments.length);
-    
     setIsApplyingPromo(true);
+    console.log('[PROMO APPLYING] Applying code:', code);
+    
     try {
+      // Simulate API call with detailed logging
+      console.log('[PROMO API] Making API call...');
+      
+      // Check treatments still exist before calculation
+      console.log('[PROMO API] Treatments check:', {
+        originalCount: treatmentsCopy.length,
+        currentCount: selectedTreatments.length,
+        treatmentIds,
+        currentIds: selectedTreatments.map(t => t.id)
+      });
+      
       // Calculate the discount based on mock data
       const { subtotal } = calculateTotals();
       let calculatedDiscount = 0;
       
       if (MOCK_PROMO_CODES[code].type === 'percentage') {
         calculatedDiscount = (subtotal * MOCK_PROMO_CODES[code].value / 100);
-        console.log(`[QuickQuoteIsolated] Applying ${MOCK_PROMO_CODES[code].value}% discount on ${subtotal} = ${calculatedDiscount}`);
+        console.log(`[PROMO DISCOUNT] Applying ${MOCK_PROMO_CODES[code].value}% discount on ${subtotal} = ${calculatedDiscount}`);
       } else if (MOCK_PROMO_CODES[code].type === 'fixed') {
         calculatedDiscount = MOCK_PROMO_CODES[code].value;
-        console.log(`[QuickQuoteIsolated] Applying fixed discount of ${MOCK_PROMO_CODES[code].value}`);
+        console.log(`[PROMO DISCOUNT] Applying fixed discount of ${MOCK_PROMO_CODES[code].value}`);
       }
       
       // Ensure discount doesn't exceed subtotal
       calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+      
+      console.log('[PROMO SUCCESS] About to update state:', {
+        newDiscount: calculatedDiscount,
+        newPromoCode: code,
+        currentTreatments: selectedTreatments.length,
+        originalTreatments: treatmentsCopy.length
+      });
       
       // CRITICAL: Update the promo code and discount state separately
       // This avoids any potential race conditions or dependencies
@@ -150,23 +227,29 @@ const QuickQuoteIsolated = () => {
       // Clear the input
       setPromoCodeInput('');
       
-      // Log the state after updates
-      console.log('[QuickQuoteIsolated] Promo applied successfully. Discount:', calculatedDiscount);
-      console.log('[QuickQuoteIsolated] Selected treatments after promo:', currentTreatments.length);
+      // Force preservation of treatments if they were somehow lost
+      if (selectedTreatments.length === 0 && treatmentsCopy.length > 0) {
+        console.log('[PROMO RECOVERY] Treatments were lost! Restoring from backup');
+        setSelectedTreatments(treatmentsCopy);
+      }
       
       // Show success message
-      toast({
-        title: 'Promo Code Applied',
-        description: `${code} has been applied successfully! Discount: ${formatCurrency(calculatedDiscount)}`,
-      });
+      setTimeout(() => {
+        console.log('[PROMO TOAST] Showing success toast, treatments:', selectedTreatments.length);
+        toast({
+          title: 'Promo Code Applied',
+          description: `${code} has been applied successfully! Discount: ${formatCurrency(calculatedDiscount)}`,
+        });
+      }, 100);
     } catch (error) {
-      console.error('[QuickQuoteIsolated] Error applying promo code:', error);
+      console.error('[PROMO ERROR]', error);
       toast({
         title: 'Error',
         description: 'Failed to apply promo code',
         variant: 'destructive',
       });
     } finally {
+      console.log('[PROMO FINALLY] Resetting loading state, treatments:', selectedTreatments.length);
       setIsApplyingPromo(false);
     }
   };
