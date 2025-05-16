@@ -1,0 +1,296 @@
+Core Architecture for Reliable State Management
+Let's implement a solution focused exclusively on state persistence:
+
+1. Use a Reducer Pattern for Atomic State Updates
+// client/src/hooks/useQuoteReducer.ts
+import { useReducer } from 'react';
+
+// Define all possible state update actions
+type QuoteAction = 
+  | { type: 'ADD_TREATMENT'; treatment: Treatment }
+  | { type: 'REMOVE_TREATMENT'; treatmentId: string }
+  | { type: 'UPDATE_QUANTITY'; treatmentId: string; quantity: number }
+  | { type: 'APPLY_PROMO_CODE'; promoCode: string; discount: number }
+  | { type: 'RESET_PROMO_CODE' };
+
+// Initial state
+const initialState = {
+  treatments: [],
+  promoCode: null,
+  discount: 0,
+  total: 0
+};
+
+// Pure reducer function (no side effects)
+function quoteReducer(state, action: QuoteAction) {
+  switch (action.type) {
+    case 'ADD_TREATMENT':
+      return {
+        ...state,
+        treatments: [...state.treatments, action.treatment],
+        total: calculateTotal(
+          [...state.treatments, action.treatment], 
+          state.discount
+        )
+      };
+    
+    case 'REMOVE_TREATMENT':
+      const updatedTreatments = state.treatments.filter(
+        t => t.id !== action.treatmentId
+      );
+      return {
+        ...state,
+        treatments: updatedTreatments,
+        total: calculateTotal(updatedTreatments, state.discount)
+      };
+    
+    case 'UPDATE_QUANTITY':
+      const updatedWithQuantity = state.treatments.map(t => 
+        t.id === action.treatmentId 
+          ? { ...t, quantity: action.quantity } 
+          : t
+      );
+      return {
+        ...state,
+        treatments: updatedWithQuantity,
+        total: calculateTotal(updatedWithQuantity, state.discount)
+      };
+    
+    case 'APPLY_PROMO_CODE':
+      return {
+        ...state,
+        promoCode: action.promoCode,
+        discount: action.discount,
+        total: calculateTotal(state.treatments, action.discount)
+      };
+    
+    case 'RESET_PROMO_CODE':
+      return {
+        ...state,
+        promoCode: null,
+        discount: 0,
+        total: calculateTotal(state.treatments, 0)
+      };
+    
+    default:
+      return state;
+  }
+}
+
+// Helper function for total calculation
+function calculateTotal(treatments, discount) {
+  const subtotal = treatments.reduce(
+    (sum, t) => sum + (t.price * (t.quantity || 1)), 
+    0
+  );
+  return subtotal - (subtotal * (discount / 100));
+}
+
+// Hook to use in components
+export function useQuoteReducer() {
+  const [state, dispatch] = useReducer(quoteReducer, initialState);
+  
+  return {
+    state,
+    addTreatment: (treatment) => 
+      dispatch({ type: 'ADD_TREATMENT', treatment }),
+    removeTreatment: (treatmentId) => 
+      dispatch({ type: 'REMOVE_TREATMENT', treatmentId }),
+    updateQuantity: (treatmentId, quantity) => 
+      dispatch({ type: 'UPDATE_QUANTITY', treatmentId, quantity }),
+    applyPromoCode: (promoCode, discount) => 
+      dispatch({ type: 'APPLY_PROMO_CODE', promoCode, discount }),
+    resetPromoCode: () => 
+      dispatch({ type: 'RESET_PROMO_CODE' })
+  };
+}
+2. Create a Minimal Quote Builder Component
+// client/src/components/quotes/RobustQuoteBuilder.tsx
+import React, { useState } from 'react';
+import { useQuoteReducer } from '../../hooks/useQuoteReducer';
+
+export function RobustQuoteBuilder() {
+  const {
+    state,
+    addTreatment,
+    removeTreatment,
+    updateQuantity,
+    applyPromoCode,
+    resetPromoCode
+  } = useQuoteReducer();
+  
+  const [promoInput, setPromoInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Fetch treatments (mocked for now)
+  const treatments = [
+    { id: '1', name: 'Cleaning', price: 80 },
+    { id: '2', name: 'Whitening', price: 200 },
+    { id: '3', name: 'Filling', price: 150 }
+  ];
+  
+  // Handle adding treatment
+  const handleAddTreatment = (treatment) => {
+    addTreatment({
+      ...treatment,
+      quantity: 1
+    });
+  };
+  
+  // Handle promo code application
+  const handleApplyPromoCode = async (e) => {
+    e.preventDefault(); // Prevent form submission
+    
+    if (!promoInput) return;
+    
+    setIsLoading(true);
+    
+    try {
+      // Call API to validate promo code
+      const response = await fetch('/api/quotes-api/promo-codes/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: promoInput })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.valid) {
+          applyPromoCode(promoInput, data.discountPercentage);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to apply promo code:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  return (
+    <div className="quote-builder">
+      <h2>Build Your Quote</h2>
+      
+      {/* Treatment Selection */}
+      <div className="treatment-selection">
+        <h3>Available Treatments</h3>
+        <ul>
+          {treatments.map(treatment => (
+            <li key={treatment.id}>
+              {treatment.name} - ${treatment.price}
+              <button 
+                type="button" 
+                onClick={() => handleAddTreatment(treatment)}
+              >
+                Add
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+      
+      {/* Selected Treatments */}
+      <div className="selected-treatments">
+        <h3>Your Selected Treatments</h3>
+        {state.treatments.length === 0 ? (
+          <p>No treatments selected</p>
+        ) : (
+          <ul>
+            {state.treatments.map(treatment => (
+              <li key={treatment.id}>
+                {treatment.name} - ${treatment.price}
+                <input
+                  type="number"
+                  min="1"
+                  value={treatment.quantity}
+                  onChange={(e) => updateQuantity(
+                    treatment.id, 
+                    parseInt(e.target.value, 10)
+                  )}
+                />
+                <button 
+                  type="button"
+                  onClick={() => removeTreatment(treatment.id)}
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+      
+      {/* Promo Code */}
+      <div className="promo-code">
+        <h3>Promo Code</h3>
+        <form onSubmit={handleApplyPromoCode}>
+          <input
+            type="text"
+            value={promoInput}
+            onChange={(e) => setPromoInput(e.target.value)}
+            placeholder="Enter promo code"
+          />
+          <button 
+            type="submit"
+            disabled={isLoading || !promoInput}
+          >
+            {isLoading ? 'Applying...' : 'Apply'}
+          </button>
+        </form>
+        
+        {state.promoCode && (
+          <div className="applied-promo">
+            <p>Applied: {state.promoCode} ({state.discount}% off)</p>
+            <button 
+              type="button" 
+              onClick={resetPromoCode}
+            >
+              Remove
+            </button>
+          </div>
+        )}
+      </div>
+      
+      {/* Quote Summary */}
+      <div className="quote-summary">
+        <h3>Quote Summary</h3>
+        <p>Total: ${state.total.toFixed(2)}</p>
+        
+        <button 
+          type="button"
+          disabled={state.treatments.length === 0}
+          onClick={() => {
+            // Handle saving quote
+            alert('Quote saved! Total: $' + state.total.toFixed(2));
+          }}
+        >
+          Save Quote
+        </button>
+      </div>
+    </div>
+  );
+}
+3. Create a Demo Page
+// client/src/pages/RobustQuoteDemo.tsx
+import React from 'react';
+import { RobustQuoteBuilder } from '../components/quotes/RobustQuoteBuilder';
+
+export function RobustQuoteDemo() {
+  return (
+    <div className="page-container">
+      <h1>Robust Quote Builder Demo</h1>
+      <RobustQuoteBuilder />
+    </div>
+  );
+}
+4. Add to Routes
+// client/src/App.tsx
+import { RobustQuoteDemo } from './pages/RobustQuoteDemo';
+
+// In your routes array or JSX
+<Route path="/robust-quote" element={<RobustQuoteDemo />} />
+Why This Approach Will Work
+Reducer Pattern: All state updates are atomic and handled through a pure reducer function
+No Side Effects: State updates are completely separated from API calls
+Explicit Form Handling: All forms have explicit onSubmit handlers with preventDefault()
+Button Types: All buttons explicitly set type="button" to prevent accidental form submissions
+Immutable Updates: All state updates create new objects rather than modifying existing ones

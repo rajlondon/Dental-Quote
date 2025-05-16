@@ -97,6 +97,7 @@ import AccountSettingsPage from "@/pages/AccountSettingsPage";
 import ProfilePage from "@/pages/ProfilePage";
 import DataArchitecturePage from "@/pages/DataArchitecturePage";
 import DentalAdvicePage from "@/pages/DentalAdvicePage";
+import RobustQuoteDemo from "@/pages/RobustQuoteDemo";
 import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import VerifyEmailPage from "@/pages/VerifyEmailPage";
@@ -298,6 +299,15 @@ function Router() {
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading basic quote demo...</div>}>
             <BasicQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
+      
+      {/* Robust Quote Demo - reducer-based solution for reliable state management */}
+      <Route path="/robust-quote" component={() => {
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading robust quote builder...</div>}>
+            <RobustQuoteDemo />
           </React.Suspense>
         );
       }} />
