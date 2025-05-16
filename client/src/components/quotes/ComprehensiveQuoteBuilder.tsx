@@ -5,6 +5,7 @@ import { Card, CardContent } from '../ui/card';
 import { useQuoteStore } from '../../stores/quoteStore';
 import { TreatmentPackageSelector } from '../packages/TreatmentPackageSelector';
 import { SpecialOffersSelector } from '../offers/SpecialOffersSelector';
+// Fix import statement to match the export in QuoteSummary.tsx
 import { QuoteSummary } from './QuoteSummary';
 import { useToast } from '../../hooks/use-toast';
 
