@@ -232,11 +232,11 @@ export default function BasicQuoteDemo() {
             <CardContent>
               <div className="space-y-4">
                 {[
-                  { id: "t1", name: "Dental Implant", price: 1200, description: "Titanium implant with crown" },
-                  { id: "t2", name: "Teeth Whitening", price: 300, description: "Professional whitening treatment" },
-                  { id: "t3", name: "Root Canal", price: 500, description: "Complete root canal treatment" },
-                  { id: "t4", name: "Dental Veneers", price: 800, description: "Porcelain veneers (per tooth)" },
-                  { id: "t5", name: "Dental Crown", price: 650, description: "Full porcelain crown" }
+                  { id: "t1", name: "Dental Implant", price: 1200, description: "Titanium implant with crown", quantity: 1 },
+                  { id: "t2", name: "Teeth Whitening", price: 300, description: "Professional whitening treatment", quantity: 1 },
+                  { id: "t3", name: "Root Canal", price: 500, description: "Complete root canal treatment", quantity: 1 },
+                  { id: "t4", name: "Dental Veneers", price: 800, description: "Porcelain veneers (per tooth)", quantity: 1 },
+                  { id: "t5", name: "Dental Crown", price: 650, description: "Full porcelain crown", quantity: 1 }
                 ].map(treatment => {
                   const isSelected = treatments.some(t => t.id === treatment.id);
                   const selectedTreatment = treatments.find(t => t.id === treatment.id);
