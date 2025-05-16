@@ -1,256 +1,190 @@
 import React from 'react';
 import { useQuoteStore } from '@/stores/quoteStore';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash, Printer, Download, ArrowUpRight } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { Loader2, CheckCircle } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { useLocation } from 'wouter';
 
 const QuoteSummary: React.FC = () => {
-  const { 
-    treatments, 
-    patientInfo,
-    subtotal,
-    discountPercent,
-    total,
-    promoCode,
-    resetQuote
-  } = useQuoteStore();
-  
-  const { toast } = useToast();
+  const { treatments, patientInfo, subtotal, discountPercent, total, promoCode, resetQuote } = useQuoteStore();
+  const [, navigate] = useLocation();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Handle print quote
-  const handlePrintQuote = () => {
-    window.print();
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
   };
 
-  // Handle download quote as PDF
-  const handleDownloadPDF = async () => {
-    try {
+  // Submit quote to server
+  const submitQuote = async () => {
+    if (!patientInfo) {
       toast({
-        title: 'Generating PDF',
-        description: 'Please wait while we prepare your quote PDF...'
-      });
-      
-      const response = await fetch('/api/quotes/generate-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          treatments,
-          patientInfo,
-          subtotal,
-          discountPercent,
-          total,
-          promoCode,
-          date: new Date().toISOString()
-        })
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate PDF');
-      
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `dental-quote-${Date.now()}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-      
-      toast({
-        title: 'PDF Downloaded',
-        description: 'Your quote has been downloaded successfully.'
-      });
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
-      toast({
-        title: 'Download Failed',
-        description: 'Could not download your quote. Please try again later.',
+        title: 'Missing patient information',
+        description: 'Please fill in your information before submitting the quote',
         variant: 'destructive'
       });
+      
+      // Navigate back to patient info form
+      navigate('/quote/patient-info');
+      return;
     }
-  };
 
-  // Handle reset quote
-  const handleResetQuote = () => {
-    if (window.confirm('Are you sure you want to reset this quote? All your selected treatments and information will be lost.')) {
-      resetQuote();
+    if (treatments.length === 0) {
       toast({
-        title: 'Quote Reset',
-        description: 'Your quote has been reset.'
+        title: 'No treatments selected',
+        description: 'Please select at least one treatment before submitting',
+        variant: 'destructive'
       });
+      
+      // Navigate back to treatment selection
+      navigate('/quote/treatments');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // In a real app, this would submit to an API endpoint
+      // For demo purposes, simulate an API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Success
+      toast({
+        title: 'Quote submitted successfully',
+        description: 'We will contact you shortly with more information.',
+        variant: 'default'
+      });
+
+      // Reset the quote store and navigate to confirmation
+      resetQuote();
+      navigate('/quote/confirmation');
+    } catch (error) {
+      console.error('Error submitting quote:', error);
+      toast({
+        title: 'Error submitting quote',
+        description: 'Please try again later',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold mb-4">Quote Summary</h2>
-      <p className="text-gray-600 mb-6">
-        Review your personalized dental treatment quote below.
-      </p>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Quote Summary</CardTitle>
+        <CardDescription>Review your selected treatments and information</CardDescription>
+      </CardHeader>
       
-      {/* Patient Information */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Patient Information</CardTitle>
-          <CardDescription>Contact details for this quote</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <CardContent className="space-y-6">
+        {/* Patient Information */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Patient Information</h3>
           {patientInfo ? (
-            <div className="space-y-2">
-              <p>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              <div>
                 <span className="font-medium">Name:</span> {patientInfo.firstName} {patientInfo.lastName}
-              </p>
-              <p>
+              </div>
+              <div>
                 <span className="font-medium">Email:</span> {patientInfo.email}
-              </p>
-              {patientInfo.phone && (
-                <p>
-                  <span className="font-medium">Phone:</span> {patientInfo.phone}
-                </p>
-              )}
-              {patientInfo.preferredDate && (
-                <p>
-                  <span className="font-medium">Preferred Date:</span> {patientInfo.preferredDate}
-                </p>
-              )}
+              </div>
+              <div>
+                <span className="font-medium">Phone:</span> {patientInfo.phone}
+              </div>
+              <div>
+                <span className="font-medium">Preferred Date:</span> {patientInfo.preferredDate}
+              </div>
               {patientInfo.notes && (
-                <div>
-                  <span className="font-medium">Additional Notes:</span>
-                  <p className="text-gray-600 text-sm whitespace-pre-wrap mt-1">{patientInfo.notes}</p>
+                <div className="col-span-2">
+                  <span className="font-medium">Notes:</span> {patientInfo.notes}
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-gray-500 italic">No patient information provided</p>
+            <p className="text-sm text-muted-foreground">Please provide your information</p>
           )}
-        </CardContent>
-      </Card>
-      
-      {/* Treatment List */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Selected Treatments</CardTitle>
-          <CardDescription>Dental procedures included in this quote</CardDescription>
-        </CardHeader>
-        <CardContent>
+        </div>
+        
+        {/* Selected Treatments */}
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Selected Treatments</h3>
           {treatments.length > 0 ? (
-            <div className="space-y-4">
-              <div className="border-b">
-                <div className="grid grid-cols-12 font-medium pb-2">
-                  <div className="col-span-6">Treatment</div>
-                  <div className="col-span-2 text-right">Price</div>
-                  <div className="col-span-2 text-right">Qty</div>
-                  <div className="col-span-2 text-right">Subtotal</div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                {treatments.map(treatment => (
-                  <div key={treatment.id} className="grid grid-cols-12 items-center">
-                    <div className="col-span-6">
-                      <div className="font-medium">{treatment.name}</div>
-                      {treatment.description && (
-                        <div className="text-sm text-gray-500">{treatment.description}</div>
-                      )}
+            <div>
+              <div className="border rounded-md divide-y">
+                {treatments.map((treatment) => (
+                  <div key={treatment.id} className="px-4 py-3 flex justify-between items-center">
+                    <div>
+                      <p className="font-medium">{treatment.name}</p>
+                      <p className="text-sm text-muted-foreground">{treatment.description}</p>
+                      <p className="text-xs">Quantity: {treatment.quantity}</p>
                     </div>
-                    <div className="col-span-2 text-right">${treatment.price.toFixed(2)}</div>
-                    <div className="col-span-2 text-right">{treatment.quantity}</div>
-                    <div className="col-span-2 text-right font-medium">
-                      ${(treatment.price * treatment.quantity).toFixed(2)}
+                    <div className="text-right">
+                      <p>{formatCurrency(treatment.price * treatment.quantity)}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <p className="text-gray-500 italic">No treatments selected</p>
+            <p className="text-sm text-muted-foreground">No treatments selected</p>
           )}
-        </CardContent>
-      </Card>
-      
-      {/* Pricing Summary */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Quote Total</CardTitle>
-          <CardDescription>Final pricing for your selected treatments</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex justify-between">
-              <span>Subtotal:</span>
-              <span>${subtotal.toFixed(2)}</span>
-            </div>
-            
-            {promoCode && discountPercent > 0 && (
-              <div className="flex justify-between text-green-600">
-                <span>
-                  Promo Code Discount: <span className="font-medium">{promoCode}</span> ({discountPercent}%)
-                </span>
-                <span>-${(subtotal - total).toFixed(2)}</span>
-              </div>
-            )}
-            
-            <div className="flex justify-between pt-2 border-t mt-2 font-bold text-lg">
-              <span>Total:</span>
-              <span>${total.toFixed(2)}</span>
-            </div>
-          </div>
-        </CardContent>
-        <CardFooter className="flex flex-col gap-4">
-          <div className="text-sm text-gray-500">
-            <p>This quote is valid for 30 days from today.</p>
-            <p>Prices are estimated and may vary depending on specific clinical findings.</p>
-          </div>
-        </CardFooter>
-      </Card>
-      
-      {/* Actions */}
-      <div className="flex flex-wrap gap-3 justify-between">
-        <Button 
-          variant="outline" 
-          className="flex gap-2"
-          onClick={handlePrintQuote}
-        >
-          <Printer size={16} />
-          <span>Print Quote</span>
-        </Button>
+        </div>
         
-        <div className="flex gap-2">
-          <Button 
-            variant="destructive" 
-            className="flex gap-2"
-            onClick={handleResetQuote}
-          >
-            <Trash size={16} />
-            <span>Reset Quote</span>
-          </Button>
+        {/* Pricing Summary */}
+        <div className="space-y-2 border-t pt-4">
+          <div className="flex justify-between items-center">
+            <span>Subtotal</span>
+            <span>{formatCurrency(subtotal)}</span>
+          </div>
           
+          {discountPercent > 0 && (
+            <div className="flex justify-between items-center text-green-600">
+              <span className="flex items-center">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Discount {promoCode && `(${promoCode})`}
+              </span>
+              <span>-{formatCurrency(subtotal * (discountPercent / 100))}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between items-center font-bold text-lg border-t pt-2">
+            <span>Total</span>
+            <span>{formatCurrency(total)}</span>
+          </div>
+        </div>
+      </CardContent>
+      
+      <CardFooter className="flex flex-col space-y-4">
+        <div className="flex justify-between w-full">
           <Button 
             variant="outline" 
-            className="flex gap-2"
-            onClick={handleDownloadPDF}
+            onClick={() => navigate('/quote/patient-info')}
+            disabled={isSubmitting}
           >
-            <Download size={16} />
-            <span>Download PDF</span>
+            Back
           </Button>
           
-          <Button className="flex gap-2">
-            <ArrowUpRight size={16} />
-            <span>Find Clinics</span>
+          <Button 
+            onClick={submitQuote}
+            disabled={isSubmitting || !patientInfo || treatments.length === 0}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              </>
+            ) : (
+              'Submit Quote'
+            )}
           </Button>
         </div>
-      </div>
-    </div>
+      </CardFooter>
+    </Card>
   );
 };
 
