@@ -332,6 +332,16 @@ function Router() {
         );
       }} />
       
+      {/* Static Quote Demo - 100% buttons, no input elements whatsoever */}
+      <Route path="/static-quote" component={() => {
+        const StaticQuoteDemo = React.lazy(() => import("./pages/StaticQuoteDemo"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading static quote demo...</div>}>
+            <StaticQuoteDemo />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
