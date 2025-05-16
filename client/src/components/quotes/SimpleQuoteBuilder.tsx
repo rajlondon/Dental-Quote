@@ -89,24 +89,29 @@ export function SimpleQuoteBuilder() {
   // Handle promo code application
   const handleApplyPromoCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     if (!promoInput || loading.promoCode) return;
     
-    // Store current tab
-    const currentTab = activeTab;
+    // First - make a local copy of the tab state we want to preserve
+    const tabToKeep = 'summary';
     
+    // Apply the code
     const success = await applyPromoCode(promoInput);
     
     if (success) {
+      // Show success message
       toast({
         title: 'Promo Code Applied',
         description: `Successfully applied ${discountPercent}% discount.`,
       });
       setPromoInput('');
       
-      // Force tab state to persist
+      // IMPORTANT: Force stay on summary tab with increased delay
+      // We need to wait for the state to fully update
       setTimeout(() => {
-        setActiveTab(currentTab);
-      }, 50);
+        console.log('Forcing tab back to summary after promo code');
+        setActiveTab(tabToKeep);
+      }, 100);
     } else {
       toast({
         title: 'Invalid Promo Code',
@@ -121,16 +126,17 @@ export function SimpleQuoteBuilder() {
     e.preventDefault();
     e.stopPropagation();
     
-    // Store current tab
-    const currentTab = activeTab;
+    // Always keep on summary tab after removing promo
+    const tabToKeep = 'summary';
     
     // Remove the promo code
     removePromoCode();
     
-    // Force tab state to persist
+    // Force tab state to persist with longer timeout
     setTimeout(() => {
-      setActiveTab(currentTab);
-    }, 50);
+      console.log('Forcing tab back to summary after removing promo code');
+      setActiveTab(tabToKeep);
+    }, 100);
   };
   
   return (
