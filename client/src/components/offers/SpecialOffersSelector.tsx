@@ -1,151 +1,118 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Sparkles, Check, Calendar } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { SpecialOffer } from '@shared/offer-types';
-import { formatCurrency } from '@/utils/currency-formatter';
-import { format } from 'date-fns';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { SpecialOffer } from '../../stores/quoteStore';
+import { Badge } from '../ui/badge';
 
 interface SpecialOffersSelectorProps {
   offers: SpecialOffer[];
-  selectedOfferId: string | null;
-  onChange: (offerId: string | null) => void;
+  selectedOfferId: string | undefined;
+  onSelectOffer: (offer: SpecialOffer | null) => void;
   isLoading?: boolean;
 }
 
 export function SpecialOffersSelector({
   offers,
   selectedOfferId,
-  onChange,
+  onSelectOffer,
   isLoading = false
 }: SpecialOffersSelectorProps) {
-  const [expandedOfferId, setExpandedOfferId] = useState<string | null>(null);
-
-  const toggleExpand = (offerId: string) => {
-    setExpandedOfferId(expandedOfferId === offerId ? null : offerId);
-  };
-
-  const handleSelectOffer = (offerId: string) => {
-    // Toggle selection
-    onChange(selectedOfferId === offerId ? null : offerId);
-  };
-
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2].map((index) => (
-          <Card key={index} className="relative">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-5 w-2/3" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-9 w-24" />
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="p-8 text-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading special offers...</p>
       </div>
     );
   }
 
-  if (!offers || offers.length === 0) {
+  if (offers.length === 0) {
     return (
-      <Alert>
-        <AlertDescription>No special offers are currently available.</AlertDescription>
-      </Alert>
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <p className="text-center text-muted-foreground">No special offers available.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <RadioGroup value={selectedOfferId || ''} className="space-y-4" onValueChange={(value) => onChange(value || null)}>
-      {offers.map((offer) => {
-        const isSelected = selectedOfferId === offer.id;
-        const isExpanded = expandedOfferId === offer.id;
-        const discountValue = offer.discountValue || 0;
-        const discountLabel = offer.discountType === 'percentage' 
-          ? `${discountValue}% Off` 
-          : `${formatCurrency(discountValue)} Off`;
-
-        return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Select a Special Offer</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {offers.map((offer) => (
           <Card 
-            key={offer.id} 
-            className={`relative ${isSelected ? 'border-primary' : ''}`}
+            key={offer.id}
+            className={`cursor-pointer transition-all ${
+              selectedOfferId === offer.id
+                ? 'border-primary shadow-md'
+                : 'hover:border-muted-foreground'
+            }`}
+            onClick={() => onSelectOffer(offer)}
           >
-            {isSelected && (
-              <div className="absolute -top-2 -right-2 bg-primary text-white rounded-full p-1">
-                <Check className="h-4 w-4" />
+            {offer.bannerImage && (
+              <div className="relative w-full h-40 overflow-hidden">
+                <img 
+                  src={offer.bannerImage} 
+                  alt={offer.name}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute top-2 right-2">
+                  <Badge variant="destructive" className="text-white">
+                    {offer.discountType === 'percentage'
+                      ? `${offer.discountValue}% OFF`
+                      : `£${offer.discountValue} OFF`}
+                  </Badge>
+                </div>
               </div>
             )}
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  {offer.title}
-                </CardTitle>
-                <Badge variant="outline" className="bg-primary-50 text-primary border-primary-200">
-                  {discountLabel}
-                </Badge>
-              </div>
+              <CardTitle>{offer.name}</CardTitle>
               <CardDescription>{offer.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center mb-2">
-                <RadioGroupItem value={offer.id} id={`offer-${offer.id}`} className="mr-2" />
-                <Label htmlFor={`offer-${offer.id}`} className="font-medium flex-1">
-                  Apply this offer
-                </Label>
-              </div>
-
-              {isExpanded && (
-                <div className="mt-4 space-y-3">
-                  <Separator />
-
-                  {offer.terms && (
-                    <>
-                      <h4 className="font-medium text-sm">Terms & Conditions</h4>
-                      <p className="text-sm text-muted-foreground">{offer.terms}</p>
-                    </>
-                  )}
-
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                    <span>
-                      Valid from {format(new Date(offer.startDate), 'MMM d, yyyy')} to {format(new Date(offer.endDate), 'MMM d, yyyy')}
-                    </span>
-                  </div>
-
-                  {offer.minTreatmentCount && (
-                    <p className="text-sm text-muted-foreground">
-                      *Requires minimum {offer.minTreatmentCount} eligible treatments
-                    </p>
-                  )}
+              <div className="space-y-2">
+                <div className="font-medium">Eligible Treatments:</div>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {offer.applicableTreatments.map((treatment, index) => (
+                    <li key={index}>
+                      {treatment.replace(/_/g, ' ').replace(/\b\w/g, char => char.toUpperCase())}
+                    </li>
+                  ))}
+                </ul>
+                <div className="text-sm text-muted-foreground mt-2">
+                  <span className="font-medium">Terms:</span> {offer.terms}
                 </div>
-              )}
+                <div className="text-sm font-medium mt-2">
+                  Promo Code: <span className="text-primary">{offer.promoCode}</span>
+                </div>
+              </div>
             </CardContent>
-            <CardFooter className="pt-0 flex justify-between">
-              <Button variant="ghost" size="sm" onClick={() => toggleExpand(offer.id)}>
-                {isExpanded ? 'Show less' : 'Show details'}
-              </Button>
+            <CardFooter className="flex justify-end pt-2">
               <Button 
-                variant={isSelected ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => handleSelectOffer(offer.id)}
+                variant={selectedOfferId === offer.id ? "secondary" : "outline"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectOffer(selectedOfferId === offer.id ? null : offer);
+                }}
               >
-                {isSelected ? 'Applied' : 'Apply'}
+                {selectedOfferId === offer.id ? "Selected" : "Select"}
               </Button>
             </CardFooter>
           </Card>
-        );
-      })}
-    </RadioGroup>
+        ))}
+      </div>
+      
+      {selectedOfferId && (
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={() => onSelectOffer(null)}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

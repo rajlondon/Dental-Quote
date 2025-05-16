@@ -1,165 +1,106 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Package as PackageIcon, Check, Tag } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
-import { TreatmentPackage } from '@shared/offer-types';
-import { formatCurrency } from '@/utils/currency-formatter';
+import React from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
+import { Button } from '../ui/button';
+import { TreatmentPackage } from '../../stores/quoteStore';
 
 interface TreatmentPackageSelectorProps {
   packages: TreatmentPackage[];
-  selectedPackageId: string | null;
-  onChange: (packageId: string | null) => void;
+  selectedPackageId: string | undefined;
+  onSelectPackage: (pkg: TreatmentPackage | null) => void;
   isLoading?: boolean;
 }
 
 export function TreatmentPackageSelector({
   packages,
   selectedPackageId,
-  onChange,
+  onSelectPackage,
   isLoading = false
 }: TreatmentPackageSelectorProps) {
-  const [expandedPackageId, setExpandedPackageId] = useState<string | null>(null);
-
-  const toggleExpand = (packageId: string) => {
-    setExpandedPackageId(expandedPackageId === packageId ? null : packageId);
-  };
-
-  const handleSelectPackage = (packageId: string) => {
-    // Toggle selection
-    onChange(selectedPackageId === packageId ? null : packageId);
-  };
-
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {[1, 2].map((index) => (
-          <Card key={index} className="relative">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-5 w-2/3" />
-              <Skeleton className="h-4 w-3/4" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-20 w-full" />
-            </CardContent>
-            <CardFooter>
-              <Skeleton className="h-9 w-24" />
-            </CardFooter>
-          </Card>
-        ))}
+      <div className="p-8 text-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+        <p className="text-muted-foreground">Loading treatment packages...</p>
       </div>
     );
   }
 
-  if (!packages || packages.length === 0) {
+  if (packages.length === 0) {
     return (
-      <Alert>
-        <AlertDescription>No treatment packages are currently available.</AlertDescription>
-      </Alert>
+      <Card className="mb-4">
+        <CardContent className="pt-6">
+          <p className="text-center text-muted-foreground">No treatment packages available.</p>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <RadioGroup value={selectedPackageId || ''} className="space-y-4" onValueChange={(value) => onChange(value || null)}>
-      {packages.map((pkg) => {
-        const isSelected = selectedPackageId === pkg.id;
-        const isExpanded = expandedPackageId === pkg.id;
-        const savings = pkg.savings || 0;
-        const savingsPercentage = pkg.price ? Math.round((savings / (pkg.price + savings)) * 100) : 0;
-
-        return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-medium">Select a Treatment Package</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {packages.map((pkg) => (
           <Card 
-            key={pkg.id} 
-            className={`relative ${isSelected ? 'border-primary' : ''}`}
+            key={pkg.id}
+            className={`cursor-pointer transition-all ${
+              selectedPackageId === pkg.id
+                ? 'border-primary shadow-md'
+                : 'hover:border-muted-foreground'
+            }`}
+            onClick={() => onSelectPackage(pkg)}
           >
-            {isSelected && (
-              <div className="absolute -top-2 -right-2 bg-primary text-white rounded-full p-1">
-                <Check className="h-4 w-4" />
-              </div>
-            )}
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <PackageIcon className="h-5 w-5 text-primary" />
-                  {pkg.title}
-                </CardTitle>
-                {savingsPercentage > 0 && (
-                  <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                    Save {savingsPercentage}%
-                  </Badge>
-                )}
-              </div>
+              <CardTitle>{pkg.name}</CardTitle>
               <CardDescription>{pkg.description}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center mb-2">
-                <RadioGroupItem value={pkg.id} id={`package-${pkg.id}`} className="mr-2" />
-                <Label htmlFor={`package-${pkg.id}`} className="font-medium flex-1">
-                  Select this package
-                </Label>
-                <div className="text-right">
-                  <div className="text-lg font-semibold">{formatCurrency(pkg.price)}</div>
-                  {savings > 0 && (
-                    <div className="text-sm text-muted-foreground line-through">
-                      {formatCurrency(pkg.price + savings)}
-                    </div>
-                  )}
+              <div className="space-y-2">
+                <div className="font-medium">Includes:</div>
+                <ul className="list-disc list-inside text-sm space-y-1">
+                  {pkg.treatments.map((treatment) => (
+                    <li key={treatment.id}>
+                      {treatment.name} {treatment.quantity > 1 && `(x${treatment.quantity})`}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-between items-center pt-2">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xl font-bold">£{pkg.price}</span>
+                  <span className="text-sm text-muted-foreground line-through">
+                    £{pkg.originalPrice}
+                  </span>
+                </div>
+                <div className="text-sm text-green-600">
+                  Save £{pkg.originalPrice - pkg.price}
                 </div>
               </div>
-
-              {isExpanded && (
-                <div className="mt-4 space-y-3">
-                  <Separator />
-                  <h4 className="font-medium text-sm">Included Treatments</h4>
-                  <ul className="space-y-2">
-                    {pkg.includedTreatments.map((treatment, index) => (
-                      <li key={index} className="flex justify-between text-sm">
-                        <span>
-                          {treatment.name}
-                          {treatment.quantity > 1 && <span> x{treatment.quantity}</span>}
-                        </span>
-                        <span className="text-muted-foreground">{formatCurrency(treatment.price)}</span>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {pkg.additionalPerks && pkg.additionalPerks.length > 0 && (
-                    <>
-                      <Separator />
-                      <h4 className="font-medium text-sm">Additional Perks</h4>
-                      <ul className="space-y-1">
-                        {pkg.additionalPerks.map((perk, index) => (
-                          <li key={index} className="text-sm flex items-center">
-                            <Tag className="h-3 w-3 text-primary mr-2" />
-                            {perk}
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  )}
-                </div>
-              )}
-            </CardContent>
-            <CardFooter className="pt-0 flex justify-between">
-              <Button variant="ghost" size="sm" onClick={() => toggleExpand(pkg.id)}>
-                {isExpanded ? 'Show less' : 'Show details'}
-              </Button>
               <Button 
-                variant={isSelected ? "default" : "outline"} 
-                size="sm" 
-                onClick={() => handleSelectPackage(pkg.id)}
+                variant={selectedPackageId === pkg.id ? "secondary" : "outline"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onSelectPackage(selectedPackageId === pkg.id ? null : pkg);
+                }}
               >
-                {isSelected ? 'Selected' : 'Select'}
+                {selectedPackageId === pkg.id ? "Selected" : "Select"}
               </Button>
             </CardFooter>
           </Card>
-        );
-      })}
-    </RadioGroup>
+        ))}
+      </div>
+      
+      {selectedPackageId && (
+        <div className="mt-4 flex justify-end">
+          <Button 
+            variant="ghost" 
+            onClick={() => onSelectPackage(null)}
+          >
+            Clear Selection
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

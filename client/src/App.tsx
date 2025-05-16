@@ -754,6 +754,18 @@ function Router() {
       <Route path="/standalone-quote">
         <StandaloneQuotePage />
       </Route>
+
+      {/* Comprehensive Quote Builder with Special Offers and Packages */}
+      <Route path="/comprehensive-quote">
+        {() => {
+          const ComprehensiveQuotePage = React.lazy(() => import("@/pages/ComprehensiveQuotePage"));
+          return (
+            <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading comprehensive quote builder...</div>}>
+              <ComprehensiveQuotePage />
+            </React.Suspense>
+          );
+        }}
+      </Route>
       {/* Route moved to avoid duplication */}
       <Route path="/rebuild">
         {() => {
