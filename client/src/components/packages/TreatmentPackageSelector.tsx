@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import type { TreatmentPackage } from '../../hooks/use-treatment-packages';
+import { type TreatmentPackage } from '../../hooks/use-treatment-packages';
 import { Skeleton } from '../ui/skeleton';
 import { BadgePercentIcon, PackageIcon, ListChecksIcon } from 'lucide-react';
 

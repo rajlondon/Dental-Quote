@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { apiRequest } from '../lib/queryClient';
-import type { TreatmentPackage } from '../hooks/use-treatment-packages';
-import type { SpecialOffer } from '../hooks/use-special-offers';
+// Import types directly from our hooks files
+import { type TreatmentPackage } from '../hooks/use-treatment-packages';
+import { type SpecialOffer } from '../hooks/use-special-offers';
 
 // Treatment type
 export interface Treatment {
