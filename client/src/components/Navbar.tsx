@@ -7,48 +7,34 @@ const Navbar: React.FC = () => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/">
-            <a className="flex items-center gap-2 font-bold text-2xl text-primary">
-              MyDentalFly
-              <span className="text-sm font-normal text-muted-foreground">Turkey</span>
-            </a>
+          <Link href="/" className="flex items-center gap-2 font-bold text-2xl text-primary">
+            MyDentalFly
+            <span className="text-sm font-normal text-muted-foreground">Turkey</span>
           </Link>
           
           <nav className="hidden md:flex gap-6">
-            <Link href="/">
-              <a className="text-sm font-medium transition-colors hover:text-primary">
-                Home
-              </a>
+            <Link href="/" className="text-sm font-medium transition-colors hover:text-primary">
+              Home
             </Link>
-            <Link href="/dental-implants">
-              <a className="text-sm font-medium transition-colors hover:text-primary">
-                Implants
-              </a>
+            <Link href="/dental-implants" className="text-sm font-medium transition-colors hover:text-primary">
+              Implants
             </Link>
-            <Link href="/veneers">
-              <a className="text-sm font-medium transition-colors hover:text-primary">
-                Veneers
-              </a>
+            <Link href="/veneers" className="text-sm font-medium transition-colors hover:text-primary">
+              Veneers
             </Link>
-            <Link href="/quote-builder">
-              <a className="text-sm font-medium transition-colors hover:text-primary">
-                Get Quote
-              </a>
+            <Link href="/quote-builder" className="text-sm font-medium transition-colors hover:text-primary">
+              Get Quote
             </Link>
-            <Link href="/faq">
-              <a className="text-sm font-medium transition-colors hover:text-primary">
-                FAQ
-              </a>
+            <Link href="/faq" className="text-sm font-medium transition-colors hover:text-primary">
+              FAQ
             </Link>
           </nav>
         </div>
         
         <div className="flex items-center gap-4">
           <ThemeToggle />
-          <Link href="/quote-builder">
-            <a className="hidden md:inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
-              Get Your Quote
-            </a>
+          <Link href="/quote-builder" className="hidden md:inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">
+            Get Your Quote
           </Link>
         </div>
       </div>
