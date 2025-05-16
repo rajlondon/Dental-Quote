@@ -1,0 +1,101 @@
+Direct Fix for Promo Code Issue
+The key problem is likely related to how React's state updates work and how the component is structured. Let's implement a solution that completely separates the promo code application from the treatment selection:
+
+// In QuickQuote.tsx or use-quote-builder.ts
+
+// 1. First, ensure we have separate state variables
+const [treatments, setTreatments] = useState<Treatment[]>([]);
+const [promoCode, setPromoCode] = useState<string | null>(null);
+const [discount, setDiscount] = useState<number>(0);
+const [isApplyingPromo, setIsApplyingPromo] = useState<boolean>(false);
+
+// 2. Create a function to calculate totals based on current state
+const calculateTotals = useCallback(() => {
+  const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
+  const total = subtotal - discount;
+  return { subtotal, total };
+}, [treatments, discount]);
+
+// 3. Implement a completely separate promo code function
+const applyPromoCode = async (code: string) => {
+  // Important: Store treatments in a local variable first
+  const currentTreatments = [...treatments];
+  
+  setIsApplyingPromo(true);
+  try {
+    console.log("[QuoteBuilder] Applying promo code. Current treatments:", currentTreatments.length);
+    
+    // API call to validate the promo code
+    const response = await fetch(`/api/promo-codes/validate?code=${code}`);
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.message || "Invalid promo code");
+    }
+    
+    // Calculate the discount
+    const subtotal = currentTreatments.reduce((sum, t) => sum + t.price, 0);
+    let calculatedDiscount = 0;
+    
+    if (data.discountType === 'percentage') {
+      calculatedDiscount = (subtotal * data.discountValue / 100);
+    } else if (data.discountType === 'fixed') {
+      calculatedDiscount = data.discountValue;
+    }
+    
+    // Ensure discount doesn't exceed subtotal
+    calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+    
+    // CRITICAL: Update the state variables separately to avoid race conditions
+    setPromoCode(code);
+    setDiscount(calculatedDiscount);
+    
+    // Log the updated state for debugging
+    console.log("[QuoteBuilder] Promo applied successfully. Discount:", calculatedDiscount);
+    console.log("[QuoteBuilder] Treatments after promo:", currentTreatments.length);
+    
+    // Show success message after a small delay to ensure state updates
+    setTimeout(() => {
+      toast.success(`Promo code applied! Discount: $${calculatedDiscount.toFixed(2)}`);
+    }, 100);
+    
+  } catch (error) {
+    console.error("[QuoteBuilder] Error applying promo code:", error);
+    toast.error(error.message || "Failed to apply promo code");
+  } finally {
+    setIsApplyingPromo(false);
+  }
+};
+
+// 4. Implement a function to remove the promo code
+const removePromoCode = () => {
+  setPromoCode(null);
+  setDiscount(0);
+  toast.info("Promo code removed");
+};
+Debugging Component
+Also, let's add a simple debugging component to help visualize the state:
+
+const DebugInfo = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  
+  return (
+    <div className="mt-4 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
+      <h4 className="font-medium">Debug Info:</h4>
+      <div className="mt-1 space-y-1">
+        <div>Treatments: {treatments.length}</div>
+        <div>Treatment IDs: {treatments.map(t => t.id).join(', ')}</div>
+        <div>Promo Code: {promoCode || 'None'}</div>
+        <div>Discount: ${discount.toFixed(2)}</div>
+        <div>Subtotal: ${calculateTotals().subtotal.toFixed(2)}</div>
+        <div>Total: ${calculateTotals().total.toFixed(2)}</div>
+      </div>
+    </div>
+  );
+};
+Key Differences in This Approach:
+Completely separate state variables for treatments and promo/discount information
+No dependencies between state updates - we update each state variable independently
+Local variable for treatments to ensure we don't lose them during state updates
+Delayed toast notifications to ensure state updates complete first
+Comprehensive logging to track exactly what's happening with the state

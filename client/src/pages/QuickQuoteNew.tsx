@@ -19,7 +19,7 @@ interface Treatment {
   quantity: number;
 }
 
-export default function QuickQuote() {
+export default function QuickQuoteNew() {
   const [, navigate] = useLocation();
   
   // Available treatments
@@ -60,52 +60,54 @@ export default function QuickQuote() {
     return { subtotal, total };
   }, [treatments, discount]);
   
-  // Calculate totals whenever treatments or promo code changes
-  useEffect(() => {
-    const subtotal = quote.treatments.reduce((sum, t) => sum + t.price, 0);
-    let discount = 0;
+  // Toggle treatment selection - with separate state variables
+  const toggleTreatment = (treatment: Treatment) => {
+    // Important: Store current treatments in a local variable first
+    const currentTreatments = [...treatments];
     
-    if (quote.promoCode && promoCodes[quote.promoCode]) {
-      const promoDetails = promoCodes[quote.promoCode];
-      if (promoDetails.type === 'percentage') {
-        discount = subtotal * (promoDetails.value / 100);
-      } else {
-        discount = promoDetails.value;
-      }
+    // Check if treatment is already selected
+    const isSelected = currentTreatments.some(t => t.id === treatment.id);
+    
+    let newTreatments;
+    if (isSelected) {
+      // Remove treatment if already selected
+      newTreatments = currentTreatments.filter(t => t.id !== treatment.id);
+    } else {
+      // Add treatment if not already selected
+      newTreatments = [...currentTreatments, treatment];
     }
     
-    const total = Math.max(0, subtotal - discount);
+    // Update the treatments state directly
+    console.log("[QuoteBuilder] Toggling treatment:", treatment.id, "Selected:", !isSelected);
+    console.log("[QuoteBuilder] New treatments count:", newTreatments.length);
+    setTreatments(newTreatments);
     
-    setQuote(prev => ({
-      ...prev,
-      subtotal,
-      discount,
-      total
-    }));
-  }, [quote.treatments, quote.promoCode]);
-  
-  // Toggle treatment selection
-  const toggleTreatment = (treatment: Treatment) => {
-    setQuote(prev => {
-      const exists = prev.treatments.find(t => t.id === treatment.id);
-      
-      if (exists) {
-        // Remove treatment
-        return {
-          ...prev,
-          treatments: prev.treatments.filter(t => t.id !== treatment.id)
-        };
-      } else {
-        // Add treatment
-        return {
-          ...prev,
-          treatments: [...prev.treatments, {...treatment, quantity: 1}]
-        };
-      }
-    });
+    // If we have a promo code, recalculate the discount
+    if (promoCode && promoCodes[promoCode]) {
+      recalculateDiscount(newTreatments, promoCode);
+    }
   };
   
-  // Apply promo code - simplified direct fix
+  // Helper function to recalculate discount when treatments change
+  const recalculateDiscount = (currentTreatments: Treatment[], code: string) => {
+    const subtotal = currentTreatments.reduce((sum, t) => sum + t.price, 0);
+    let calculatedDiscount = 0;
+    
+    if (promoCodes[code].type === 'percentage') {
+      calculatedDiscount = (subtotal * promoCodes[code].value / 100);
+      console.log(`[QuoteBuilder] Recalculating ${promoCodes[code].value}% discount on ${subtotal} = ${calculatedDiscount}`);
+    } else if (promoCodes[code].type === 'fixed') {
+      calculatedDiscount = promoCodes[code].value;
+      console.log(`[QuoteBuilder] Recalculating fixed discount of ${promoCodes[code].value}`);
+    }
+    
+    // Ensure discount doesn't exceed subtotal
+    calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+    
+    setDiscount(calculatedDiscount);
+  };
+  
+  // 3. Implementing promo code application as a completely separate function
   const applyPromoCode = () => {
     const code = promoInput.trim().toUpperCase();
     
@@ -127,139 +129,106 @@ export default function QuickQuote() {
       return;
     }
     
-    // Get the current quote state first
-    const currentQuote = {...quote};
-    const treatments = [...currentQuote.treatments]; // Make a copy of treatments
+    // Important: Store treatments in a local variable first
+    const currentTreatments = [...treatments];
     
-    // Calculate discount
-    const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
-    let discount = 0;
-    
-    if (promoCodes[code].type === 'percentage') {
-      discount = (subtotal * promoCodes[code].value / 100);
-      console.log(`[QuoteBuilder] Applying ${promoCodes[code].value}% discount on ${subtotal} = ${discount}`);
-    } else if (promoCodes[code].type === 'fixed') {
-      discount = promoCodes[code].value;
-      console.log(`[QuoteBuilder] Applying fixed discount of ${promoCodes[code].value}`);
+    setIsApplyingPromo(true);
+    try {
+      console.log("[QuoteBuilder] Applying promo code. Current treatments:", currentTreatments.length);
+      
+      // Calculate the discount
+      const subtotal = currentTreatments.reduce((sum, t) => sum + t.price, 0);
+      let calculatedDiscount = 0;
+      
+      if (promoCodes[code].type === 'percentage') {
+        calculatedDiscount = (subtotal * promoCodes[code].value / 100);
+        console.log(`[QuoteBuilder] Applying ${promoCodes[code].value}% discount on ${subtotal} = ${calculatedDiscount}`);
+      } else if (promoCodes[code].type === 'fixed') {
+        calculatedDiscount = promoCodes[code].value;
+        console.log(`[QuoteBuilder] Applying fixed discount of ${promoCodes[code].value}`);
+      }
+      
+      // Ensure discount doesn't exceed subtotal
+      calculatedDiscount = Math.min(calculatedDiscount, subtotal);
+      
+      // CRITICAL: Update the state variables separately to avoid race conditions
+      setPromoCode(code);
+      setDiscount(calculatedDiscount);
+      
+      // Log the updated state for debugging
+      console.log("[QuoteBuilder] Promo applied successfully. Discount:", calculatedDiscount);
+      console.log("[QuoteBuilder] Treatments after promo:", currentTreatments.length);
+      
+      // Clear the input
+      setPromoInput('');
+      
+      // Show success message after a small delay to ensure state updates
+      setTimeout(() => {
+        toast({
+          title: 'Promo Code Applied',
+          description: `${code} has been applied successfully! Discount: ${formatCurrency(calculatedDiscount)}`,
+        });
+      }, 100);
+      
+    } catch (error) {
+      console.error("[QuoteBuilder] Error applying promo code:", error);
+      toast({
+        title: "Error",
+        description: "Failed to apply promo code",
+        variant: "destructive",
+      });
+    } finally {
+      setIsApplyingPromo(false);
     }
-    
-    // Ensure discount doesn't exceed subtotal
-    discount = Math.min(discount, subtotal);
-    
-    // Create updated quote with treatments preserved
-    const updatedQuote = {
-      ...currentQuote,
-      treatments: treatments, // Explicitly keep treatments
-      promoCode: code,
-      promoType: promoCodes[code].type,
-      promoValue: promoCodes[code].value,
-      discount: discount,
-      subtotal: subtotal,
-      total: subtotal - discount
-    };
-    
-    // Set the state directly with the complete object
-    console.log("[QuickQuote] Setting quote with preserved treatments:", updatedQuote);
-    setQuote(updatedQuote);
-    
-    setPromoInput('');
-    
-    // Show success message
-    toast({
-      title: 'Promo Code Applied',
-      description: `${code} has been applied successfully!`,
-    });
   };
   
-  // Remove promo code - simplified direct approach
+  // 4. Implementing a function to remove the promo code
   const removePromoCode = () => {
-    // Get the current quote state first
-    const currentQuote = {...quote};
-    const treatments = [...currentQuote.treatments]; // Make a copy of treatments
-    
-    // Calculate subtotal
-    const subtotal = treatments.reduce((sum, t) => sum + t.price, 0);
-    
-    // Create updated quote with treatments preserved
-    const updatedQuote = {
-      ...currentQuote,
-      treatments: treatments, // Explicitly keep treatments
-      promoCode: null,
-      promoType: undefined,
-      promoValue: undefined,
-      discount: 0,
-      subtotal: subtotal,
-      total: subtotal
-    };
-    
-    // Set the state directly with the complete object
-    console.log("[QuickQuote] Removing promo code, keeping treatments:", updatedQuote);
-    setQuote(updatedQuote);
-    
-    // Show success message
+    console.log("[QuoteBuilder] Removing promo code. Current treatments:", treatments.length);
+    setPromoCode(null);
+    setDiscount(0);
     toast({
-      title: 'Promo Code Removed',
-      description: 'The promo code has been removed from your quote',
+      title: "Promo Code Removed",
+      description: "The promo code has been removed",
     });
   };
   
   // Reset quote
   const resetQuote = () => {
-    setQuote({
-      treatments: [],
-      promoCode: null,
-      discount: 0,
-      subtotal: 0,
-      total: 0
-    });
-    
+    setTreatments([]);
+    setPromoCode(null);
+    setDiscount(0);
     setPromoInput('');
-    
     toast({
       title: 'Quote Reset',
       description: 'Your quote has been reset',
     });
   };
   
-  // Handle patient info change
-  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatientInfo(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  // Save quote
+  // Handle saving quote
   const handleSaveQuote = async () => {
-    if (quote.treatments.length === 0) {
+    if (treatments.length === 0) {
       toast({
-        title: 'No Treatments Selected',
+        title: 'Error',
         description: 'Please select at least one treatment',
         variant: 'destructive',
       });
       return;
     }
     
-    if (!patientInfo.name || !patientInfo.email) {
-      setShowPatientForm(true);
-      return;
-    }
-    
     setIsSaving(true);
     
     try {
-      const savedQuote = quoteService.saveQuote({
-        patientName: patientInfo.name,
-        patientEmail: patientInfo.email,
-        patientPhone: patientInfo.phone,
-        treatments: quote.treatments,
-        selectedPackage: null,
-        appliedOffer: null,
-        promoCode: quote.promoCode,
-        subtotal: quote.subtotal,
-        savings: quote.discount,
-        total: quote.total
+      const { subtotal, total } = calculateTotals();
+      
+      const quote = await quoteService.saveQuote({
+        treatments,
+        promoCode,
+        discount,
+        subtotal,
+        total,
+        patientName: '',
+        patientEmail: '',
       });
       
       toast({
@@ -267,12 +236,11 @@ export default function QuickQuote() {
         description: 'Your quote has been saved successfully',
       });
       
-      // Navigate to quote detail
-      navigate(`/quotes/${savedQuote.id}`);
+      navigate(`/quotes/${quote.id}`);
     } catch (error) {
       console.error('Error saving quote:', error);
       toast({
-        title: 'Save Failed',
+        title: 'Error',
         description: 'There was an error saving your quote',
         variant: 'destructive',
       });
@@ -281,56 +249,51 @@ export default function QuickQuote() {
     }
   };
   
-  // Send quote via email
+  // Handle patient info changes
+  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPatientInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+  
+  // Handle sending email
   const handleSendEmail = async () => {
-    if (quote.treatments.length === 0) {
+    if (!patientInfo.name || !patientInfo.email) {
       toast({
-        title: 'No Treatments Selected',
-        description: 'Please select at least one treatment',
+        title: 'Error',
+        description: 'Please provide name and email',
         variant: 'destructive',
       });
-      return;
-    }
-    
-    if (!patientInfo.name || !patientInfo.email) {
-      setShowPatientForm(true);
       return;
     }
     
     setIsSendingEmail(true);
     
     try {
-      // First save the quote if not already saved
-      const savedQuote = quoteService.saveQuote({
-        patientName: patientInfo.name,
-        patientEmail: patientInfo.email,
-        patientPhone: patientInfo.phone,
-        treatments: quote.treatments,
-        selectedPackage: null,
-        appliedOffer: null,
-        promoCode: quote.promoCode,
-        subtotal: quote.subtotal,
-        savings: quote.discount,
-        total: quote.total
+      const { subtotal, total } = calculateTotals();
+      
+      await emailService.sendQuoteEmail({
+        treatments,
+        promoCode,
+        discount,
+        subtotal,
+        total,
+        recipientName: patientInfo.name,
+        recipientEmail: patientInfo.email,
       });
       
-      // Send the email
-      await emailService.sendQuoteEmail(savedQuote);
-      
-      // Start email sequence
-      await emailService.startEmailSequence(savedQuote);
+      setShowPatientForm(false);
       
       toast({
         title: 'Email Sent',
-        description: `Quote has been emailed to ${patientInfo.email}`,
+        description: `Quote has been sent to ${patientInfo.email}`,
       });
-      
-      // Navigate to quote detail
-      navigate(`/quotes/${savedQuote.id}`);
     } catch (error) {
       console.error('Error sending email:', error);
       toast({
-        title: 'Email Failed',
+        title: 'Error',
         description: 'There was an error sending the email',
         variant: 'destructive',
       });
@@ -339,23 +302,28 @@ export default function QuickQuote() {
     }
   };
   
-  // Debug component to track state changes
-  const DebugSection = () => {
+  // Debug component to visualize state
+  const DebugInfo = () => {
+    if (process.env.NODE_ENV === 'production') return null;
+    
     return (
-      <div className="mt-4 p-4 border border-gray-200 rounded bg-gray-50">
-        <h3 className="text-sm font-medium">Debug Info</h3>
-        <div className="mt-2 text-xs font-mono">
-          <div>Selected treatments: {quote.treatments?.length || 0}</div>
-          <div>Subtotal: ${quote.subtotal.toFixed(2)}</div>
-          <div>Promo code: {quote.promoCode || 'None'}</div>
-          <div>Discount: ${(quote.discount || 0).toFixed(2)}</div>
-          <div>Total: ${quote.total.toFixed(2)}</div>
-          <div>Treatment IDs: {quote.treatments.map(t => t.id).join(', ')}</div>
+      <div className="mt-4 p-3 border border-gray-200 rounded bg-gray-50 text-xs">
+        <h4 className="font-medium">Debug Info:</h4>
+        <div className="mt-1 space-y-1">
+          <div>Treatments: {treatments.length}</div>
+          <div>Treatment IDs: {treatments.map(t => t.id).join(', ')}</div>
+          <div>Promo Code: {promoCode || 'None'}</div>
+          <div>Discount: ${discount.toFixed(2)}</div>
+          <div>Subtotal: ${calculateTotals().subtotal.toFixed(2)}</div>
+          <div>Total: ${calculateTotals().total.toFixed(2)}</div>
         </div>
       </div>
     );
   };
-
+  
+  // Calculate current totals
+  const { subtotal, total } = calculateTotals();
+  
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
@@ -368,7 +336,7 @@ export default function QuickQuote() {
             <div className="space-y-4 mb-6">
               {availableTreatments.map(treatment => (
                 <Card key={treatment.id} className={`cursor-pointer transition-colors ${
-                  quote.treatments.some(t => t.id === treatment.id) 
+                  treatments.some(t => t.id === treatment.id) 
                     ? 'border-blue-500 bg-blue-50' 
                     : 'hover:border-gray-300'
                 }`} onClick={() => toggleTreatment(treatment)}>
@@ -390,14 +358,20 @@ export default function QuickQuote() {
                   value={promoInput} 
                   onChange={e => setPromoInput(e.target.value)} 
                   placeholder="Enter promo code"
+                  disabled={isApplyingPromo}
                 />
-                <Button onClick={applyPromoCode}>Apply</Button>
+                <Button 
+                  onClick={applyPromoCode} 
+                  disabled={isApplyingPromo || !promoInput.trim()}
+                >
+                  {isApplyingPromo ? 'Applying...' : 'Apply'}
+                </Button>
               </div>
-              {quote.promoCode && (
+              {promoCode && (
                 <div className="mt-2 flex justify-between items-center">
                   <div className="text-sm">
-                    <span className="font-medium">{quote.promoCode}</span> applied: 
-                    <span className="text-green-600 ml-1">{formatCurrency(quote.discount)} discount</span>
+                    <span className="font-medium">{promoCode}</span> applied: 
+                    <span className="text-green-600 ml-1">{formatCurrency(discount)} discount</span>
                   </div>
                   <Button variant="outline" size="sm" onClick={removePromoCode}>Remove</Button>
                 </div>
@@ -413,45 +387,43 @@ export default function QuickQuote() {
           {/* Right column - Summary */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Quote Summary</h2>
-            <Card>
-              <CardContent className="p-6">
-                {quote.treatments.length === 0 ? (
-                  <div className="py-8 text-center text-gray-500">
-                    <p>Your quote is empty.</p>
-                    <p>Select treatments to get started.</p>
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                {treatments.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">Select treatments to see your quote</p>
                   </div>
                 ) : (
                   <>
-                    <h3 className="font-medium mb-4">Selected Treatments</h3>
-                    <div className="space-y-2 mb-6">
-                      {quote.treatments.map((treatment, index) => (
-                        <div key={index} className="flex justify-between">
+                    <div className="space-y-4">
+                      {treatments.map(treatment => (
+                        <div key={treatment.id} className="flex justify-between">
                           <span>{treatment.name}</span>
                           <span>{formatCurrency(treatment.price)}</span>
                         </div>
                       ))}
                     </div>
                     
-                    <div className="border-t pt-4 mb-4">
-                      <div className="flex justify-between mb-2">
-                        <span>Subtotal</span>
-                        <span>{formatCurrency(quote.subtotal)}</span>
+                    <div className="border-t mt-4 pt-4">
+                      <div className="flex justify-between font-medium">
+                        <span>Subtotal:</span>
+                        <span>{formatCurrency(subtotal)}</span>
                       </div>
                       
-                      {quote.discount > 0 && (
-                        <div className="flex justify-between mb-2 text-green-600">
-                          <span>Discount</span>
-                          <span>-{formatCurrency(quote.discount)}</span>
+                      {discount > 0 && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Discount:</span>
+                          <span>-{formatCurrency(discount)}</span>
                         </div>
                       )}
                       
-                      <div className="flex justify-between font-bold text-lg">
-                        <span>Total</span>
-                        <span>{formatCurrency(quote.total)}</span>
+                      <div className="flex justify-between font-bold text-lg mt-2">
+                        <span>Total:</span>
+                        <span>{formatCurrency(total)}</span>
                       </div>
                     </div>
                     
-                    <div className="space-y-2">
+                    <div className="mt-6 space-y-2">
                       <Button 
                         className="w-full" 
                         onClick={handleSaveQuote}
@@ -463,10 +435,10 @@ export default function QuickQuote() {
                       <Button 
                         className="w-full" 
                         variant="outline"
-                        onClick={handleSendEmail}
+                        onClick={() => setShowPatientForm(true)}
                         disabled={isSendingEmail}
                       >
-                        {isSendingEmail ? 'Sending...' : 'Email Quote'}
+                        Email Quote
                       </Button>
                     </div>
                   </>
@@ -475,7 +447,7 @@ export default function QuickQuote() {
             </Card>
             
             {/* Debug section - only shown in development */}
-            {process.env.NODE_ENV !== 'production' && <DebugSection />}
+            <DebugInfo />
           </div>
         </div>
         
@@ -521,9 +493,9 @@ export default function QuickQuote() {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => setShowPatientForm(false)}>Cancel</Button>
-              <Button onClick={isSendingEmail ? handleSendEmail : handleSaveQuote}>
-                {isSendingEmail ? 'Send Email' : 'Save Quote'}
+              <Button variant="outline" onClick={() => setShowPatientForm(false)}>Cancel</Button>
+              <Button onClick={handleSendEmail} disabled={isSendingEmail}>
+                {isSendingEmail ? 'Sending...' : 'Send Quote'}
               </Button>
             </DialogFooter>
           </DialogContent>
