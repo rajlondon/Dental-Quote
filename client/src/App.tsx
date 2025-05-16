@@ -302,21 +302,27 @@ function Router() {
         );
       }} />
       
-      {/* Quote Management System */}
+      {/* Quote Management System with MainLayout */}
       <Route path="/quotes" component={() => {
         const QuoteListPage = React.lazy(() => import("./pages/quotes/QuoteListPage"));
+        const MainLayout = React.lazy(() => import("./components/layout/MainLayout"));
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quotes...</div>}>
-            <QuoteListPage />
+            <MainLayout>
+              <QuoteListPage />
+            </MainLayout>
           </React.Suspense>
         );
       }} />
       
       <Route path="/quotes/:id" component={() => {
         const QuoteDetailPage = React.lazy(() => import("./pages/quotes/QuoteDetailPage"));
+        const MainLayout = React.lazy(() => import("./components/layout/MainLayout"));
         return (
           <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading quote details...</div>}>
-            <QuoteDetailPage />
+            <MainLayout>
+              <QuoteDetailPage />
+            </MainLayout>
           </React.Suspense>
         );
       }} />
