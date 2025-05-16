@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,24 +19,45 @@ interface Treatment {
   quantity: number;
 }
 
+interface QuoteState {
+  selectedTreatments: Treatment[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  promoCode: string;
+  promoPercent: number | null;
+}
+
 function SimpleQuoteDemo() {
   const [, navigate] = useLocation();
   
-  // State for treatments and quote
-  const [treatments, setTreatments] = useState<Treatment[]>([
+  // Available treatments catalog
+  const availableTreatments: Treatment[] = [
     { id: '1', name: 'Dental Cleaning', description: 'Professional teeth cleaning', price: 100, quantity: 1 },
     { id: '2', name: 'Teeth Whitening', description: 'Professional whitening treatment', price: 250, quantity: 1 },
     { id: '3', name: 'Dental Filling', description: 'Composite filling for cavities', price: 150, quantity: 1 },
     { id: '4', name: 'Root Canal', description: 'Root canal therapy', price: 800, quantity: 1 },
     { id: '5', name: 'Dental Crown', description: 'Porcelain crown', price: 1200, quantity: 1 },
-  ]);
+  ];
   
-  const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>([]);
-  const [subtotal, setSubtotal] = useState(0);
-  const [discount, setDiscount] = useState(0);
-  const [promoCode, setPromoCode] = useState('');
+  // Define promo codes
+  const promoCodes: Record<string, number> = {
+    'DENTAL10': 10,
+    'SMILE20': 20,
+    'DISCOUNT30': 30
+  };
   
-  // Patient info
+  // Unified quote state
+  const [quoteState, setQuoteState] = useState<QuoteState>({
+    selectedTreatments: [],
+    subtotal: 0,
+    discount: 0,
+    total: 0,
+    promoCode: '',
+    promoPercent: null
+  });
+  
+  // Patient info dialog state
   const [patientDialogOpen, setPatientDialogOpen] = useState(false);
   const [patientInfo, setPatientInfo] = useState({
     name: '',
@@ -44,41 +65,79 @@ function SimpleQuoteDemo() {
     phone: ''
   });
   
-  // Calculate total
-  const total = Math.max(0, subtotal - discount);
+  // Calculate total whenever subtotal or discount changes
+  useEffect(() => {
+    setQuoteState(prev => ({
+      ...prev,
+      total: Math.max(0, prev.subtotal - prev.discount)
+    }));
+  }, [quoteState.subtotal, quoteState.discount]);
+  
+  // Recalculate discount when promo percent or subtotal changes
+  useEffect(() => {
+    if (quoteState.promoPercent) {
+      const newDiscount = quoteState.subtotal * (quoteState.promoPercent / 100);
+      setQuoteState(prev => ({
+        ...prev,
+        discount: newDiscount
+      }));
+    }
+  }, [quoteState.subtotal, quoteState.promoPercent]);
   
   // Add treatment to quote
-  const addTreatment = (treatment: Treatment) => {
-    setSelectedTreatments([...selectedTreatments, { ...treatment }]);
-    setSubtotal(prev => prev + treatment.price);
-  };
+  const addTreatment = useCallback((treatment: Treatment) => {
+    setQuoteState(prev => {
+      const newSelectedTreatments = [...prev.selectedTreatments, { ...treatment }];
+      const newSubtotal = prev.subtotal + treatment.price;
+      
+      return {
+        ...prev,
+        selectedTreatments: newSelectedTreatments,
+        subtotal: newSubtotal
+      };
+    });
+  }, []);
   
   // Remove treatment from quote
-  const removeTreatment = (index: number) => {
-    const treatment = selectedTreatments[index];
-    const newSelectedTreatments = [...selectedTreatments];
-    newSelectedTreatments.splice(index, 1);
-    
-    setSelectedTreatments(newSelectedTreatments);
-    setSubtotal(prev => prev - treatment.price);
-  };
+  const removeTreatment = useCallback((index: number) => {
+    setQuoteState(prev => {
+      const treatment = prev.selectedTreatments[index];
+      const newSelectedTreatments = [...prev.selectedTreatments];
+      newSelectedTreatments.splice(index, 1);
+      
+      return {
+        ...prev,
+        selectedTreatments: newSelectedTreatments,
+        subtotal: prev.subtotal - treatment.price
+      };
+    });
+  }, []);
+  
+  // Update promo code input
+  const handlePromoCodeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.toUpperCase();
+    setQuoteState(prev => ({
+      ...prev,
+      promoCode: value
+    }));
+  }, []);
   
   // Apply promo code
-  const applyPromoCode = () => {
-    // Demo promo codes
-    const promoCodes: Record<string, number> = {
-      'DENTAL10': 10,
-      'SMILE20': 20,
-      'DISCOUNT30': 30
-    };
+  const applyPromoCode = useCallback(() => {
+    const promoPercent = promoCodes[quoteState.promoCode];
     
-    if (promoCodes[promoCode]) {
-      const discountAmount = subtotal * (promoCodes[promoCode] / 100);
-      setDiscount(discountAmount);
+    if (promoPercent) {
+      const discountAmount = quoteState.subtotal * (promoPercent / 100);
+      
+      setQuoteState(prev => ({
+        ...prev,
+        promoPercent,
+        discount: discountAmount
+      }));
       
       toast({
         title: 'Promo Code Applied',
-        description: `${promoCode} has been applied to your quote. You saved ${formatCurrency(discountAmount)}!`,
+        description: `${quoteState.promoCode} has been applied to your quote. You saved ${formatCurrency(discountAmount)}!`,
       });
     } else {
       toast({
@@ -87,16 +146,16 @@ function SimpleQuoteDemo() {
         variant: 'destructive'
       });
     }
-  };
+  }, [quoteState.promoCode, quoteState.subtotal, promoCodes]);
   
   // Handle patient info change
-  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePatientInfoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPatientInfo(prev => ({ ...prev, [name]: value }));
-  };
+  }, []);
   
   // Save quote
-  const saveQuote = () => {
+  const saveQuote = useCallback(() => {
     if (!patientInfo.name || !patientInfo.email) {
       toast({
         title: 'Missing Information',
@@ -111,11 +170,11 @@ function SimpleQuoteDemo() {
         patientName: patientInfo.name,
         patientEmail: patientInfo.email,
         patientPhone: patientInfo.phone,
-        treatments: selectedTreatments,
-        subtotal,
-        savings: discount,
-        total,
-        promoCode: promoCode || null
+        treatments: quoteState.selectedTreatments,
+        subtotal: quoteState.subtotal,
+        savings: quoteState.discount,
+        total: quoteState.total,
+        promoCode: quoteState.promoCode || null
       };
       
       const savedQuote = quoteService.saveQuote(quoteData);
@@ -138,7 +197,15 @@ function SimpleQuoteDemo() {
         variant: 'destructive'
       });
     }
-  };
+  }, [
+    patientInfo, 
+    quoteState.selectedTreatments, 
+    quoteState.subtotal,
+    quoteState.discount,
+    quoteState.total,
+    quoteState.promoCode,
+    navigate
+  ]);
   
   return (
     <MainLayout>
@@ -162,7 +229,7 @@ function SimpleQuoteDemo() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {treatments.map(treatment => (
+                  {availableTreatments.map(treatment => (
                     <div 
                       key={treatment.id} 
                       className="flex justify-between items-center p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
@@ -192,13 +259,13 @@ function SimpleQuoteDemo() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {selectedTreatments.length === 0 ? (
+                {quoteState.selectedTreatments.length === 0 ? (
                   <div className="text-center p-4 text-gray-500">
                     Your quote is empty. Select treatments from the list.
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {selectedTreatments.map((treatment, index) => (
+                    {quoteState.selectedTreatments.map((treatment, index) => (
                       <div key={`${treatment.id}-${index}`} className="flex justify-between items-center pb-2 border-b">
                         <div>
                           <p className="font-medium">{treatment.name}</p>
@@ -221,8 +288,8 @@ function SimpleQuoteDemo() {
                       <div className="flex gap-2 mt-1">
                         <Input 
                           id="promo-code" 
-                          value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          value={quoteState.promoCode}
+                          onChange={handlePromoCodeChange}
                           placeholder="Enter code"
                           className="flex-1"
                         />
@@ -237,19 +304,19 @@ function SimpleQuoteDemo() {
                     <div className="space-y-2 mt-6">
                       <div className="flex justify-between">
                         <span>Subtotal:</span>
-                        <span>{formatCurrency(subtotal)}</span>
+                        <span>{formatCurrency(quoteState.subtotal)}</span>
                       </div>
                       
-                      {discount > 0 && (
+                      {quoteState.discount > 0 && (
                         <div className="flex justify-between text-green-600">
                           <span>Discount:</span>
-                          <span>-{formatCurrency(discount)}</span>
+                          <span>-{formatCurrency(quoteState.discount)}</span>
                         </div>
                       )}
                       
                       <div className="flex justify-between font-bold text-lg pt-2 border-t">
                         <span>Total:</span>
-                        <span>{formatCurrency(total)}</span>
+                        <span>{formatCurrency(quoteState.total)}</span>
                       </div>
                     </div>
                   </div>
@@ -258,7 +325,7 @@ function SimpleQuoteDemo() {
               <CardFooter className="flex flex-col space-y-2">
                 <Button 
                   className="w-full" 
-                  disabled={selectedTreatments.length === 0}
+                  disabled={quoteState.selectedTreatments.length === 0}
                   onClick={() => setPatientDialogOpen(true)}
                 >
                   Save Quote
@@ -266,7 +333,7 @@ function SimpleQuoteDemo() {
                 <Button 
                   variant="outline" 
                   className="w-full"
-                  disabled={selectedTreatments.length === 0}
+                  disabled={quoteState.selectedTreatments.length === 0}
                 >
                   Request Appointment
                 </Button>
