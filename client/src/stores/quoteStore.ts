@@ -136,10 +136,15 @@ export const useQuoteStore = create<QuoteState>()(
         console.log('STORE: Updated quantity for treatment ID:', id, 'to', quantity);
       },
       
-      // Apply promo code action
+      // Apply promo code action with enhanced state handling
       applyPromoCode: async (code) => {
         console.log('STORE: Applying promo code', code);
         
+        // First, capture the current state to preserve it
+        const currentState = get();
+        const currentStep = currentState.currentStep;
+        
+        // Set loading state
         set(state => ({ 
           loading: { ...state.loading, promoCode: true } 
         }));
@@ -160,27 +165,32 @@ export const useQuoteStore = create<QuoteState>()(
           console.log('STORE: Promo code API response:', data);
           
           if (data.valid) {
+            // Get latest state in case it changed during async operation
             const state = get();
             const { subtotal, total } = calculateTotals(
               state.treatments, 
               data.discountPercentage
             );
             
+            // Explicitly preserve the step that was active when the promo code was applied
             set({
               promoCode: code,
               discountPercent: data.discountPercentage,
               subtotal,
               total,
               loading: { ...state.loading, promoCode: false },
-              // Preserve the current step
-              currentStep: state.currentStep
+              currentStep // Explicitly use the captured step
             });
+            
+            // Force state update synchronously before returning
+            localStorage.setItem('currentQuoteStep', currentStep);
             
             console.log('STORE: Promo code applied successfully', code, data.discountPercentage);
             return true;
           } else {
             set(state => ({ 
-              loading: { ...state.loading, promoCode: false } 
+              loading: { ...state.loading, promoCode: false },
+              currentStep // Explicitly keep the same step
             }));
             console.log('STORE: Invalid promo code:', code);
             return false;
@@ -193,7 +203,11 @@ export const useQuoteStore = create<QuoteState>()(
             code === 'SUMMER15' ? 15 : 
             code === 'DENTAL25' ? 25 : 
             code === 'NEWPATIENT' ? 20 :
-            code === 'TEST10' ? 10 : 0;
+            code === 'TEST10' ? 10 : 
+            code === 'FREECONSULT' ? 100 :
+            code === 'LUXHOTEL20' ? 20 :
+            code === 'IMPLANTCROWN30' ? 30 :
+            code === 'FREEWHITE' ? 100 : 0;
           
           if (discountPercentage > 0) {
             const state = get();
@@ -208,16 +222,19 @@ export const useQuoteStore = create<QuoteState>()(
               subtotal,
               total,
               loading: { ...state.loading, promoCode: false },
-              // Preserve the current step in fallback case too
-              currentStep: state.currentStep
+              currentStep // Explicitly use the captured step
             });
             
-            console.log('STORE: Promo code applied successfully', code, discountPercentage);
+            // Force state update synchronously before returning
+            localStorage.setItem('currentQuoteStep', currentStep);
+            
+            console.log('STORE: Promo code applied successfully with fallback', code, discountPercentage);
             return true;
           }
           
           set(state => ({ 
-            loading: { ...state.loading, promoCode: false } 
+            loading: { ...state.loading, promoCode: false },
+            currentStep // Explicitly keep the same step
           }));
           return false;
         }

@@ -1,381 +1,244 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from '../components/layouts/Layout';
 import { useQuoteStore } from '../stores/quoteStore';
+import { useLocation, useRoute } from 'wouter';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
-// Sample treatments for testing
-const SAMPLE_TREATMENTS = [
-  { id: "t1", name: "Dental Checkup", price: 50, category: "preventive" },
-  { id: "t2", name: "Teeth Cleaning", price: 75, category: "preventive" },
-  { id: "t3", name: "X-Ray", price: 120, category: "diagnostic" },
-  { id: "t4", name: "Filling", price: 150, category: "restorative" },
-  { id: "t5", name: "Root Canal", price: 800, category: "restorative" }
-];
+// Import components with default exports
+import TreatmentSelector from '@/components/quotes/TreatmentSelector';
+import PatientInfoForm from '@/components/quotes/PatientInfoForm';
+import QuoteSummary from '@/components/quotes/QuoteSummary';
 
-export default function StandaloneQuotePage() {
-  const quoteStore = useQuoteStore();
-  const treatments = quoteStore.treatments;
-  const subtotal = quoteStore.subtotal;
-  const total = quoteStore.total;
-  const discountPercent = quoteStore.discountPercent;
-  const promoCode = quoteStore.promoCode;
+const StandaloneQuotePage: React.FC = () => {
+  const [location] = useLocation();
+  const [, params] = useRoute('/standalone-quote/:step');
+  const { toast } = useToast();
   
-  const [promoInput, setPromoInput] = useState('');
-  const [patientInfo, setPatientInfo] = useState({ name: '', email: '', phone: '' });
-  const [step, setStep] = useState(1); // 1 = treatments, 2 = patient info, 3 = summary
-  const [isLoading, setIsLoading] = useState(false);
+  // Access the quote store
+  const quoteStore = useQuoteStore();
+  const { 
+    currentStep, 
+    setCurrentStep, 
+    treatments, 
+    patientInfo, 
+    promoCode, 
+    discountPercent,
+    total,
+    applyPromoCode,
+    resetQuote
+  } = quoteStore;
 
-  const handleAddTreatment = (treatment: any) => {
-    quoteStore.addTreatment({
-      id: treatment.id,
-      name: treatment.name,
-      price: treatment.price,
-      quantity: 1
-    });
-  };
-
-  const handleRemoveTreatment = (id: string) => {
-    quoteStore.removeTreatment(id);
-  };
-
-  const handleUpdateQuantity = (id: string, quantity: number) => {
-    if (quantity > 0) {
-      quoteStore.updateQuantity(id, quantity);
-    }
-  };
-
-  const handlePromoSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (promoInput.trim()) {
-      setIsLoading(true);
-      try {
-        const currentStep = step; // Store current step
-        
-        // Call store method to apply the promo code
-        await quoteStore.applyPromoCode(promoInput);
-        
-        // Force step to remain the same
-        setStep(currentStep);
-      } catch (error) {
-        console.error("Error applying promo code:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  };
-
-  const handleSaveQuote = async () => {
-    setIsLoading(true);
-    try {
-      if (!quoteStore.patientInfo) {
-        quoteStore.setPatientInfo({
-          firstName: patientInfo.name.split(' ')[0] || '',
-          lastName: patientInfo.name.split(' ').slice(1).join(' ') || '',
-          email: patientInfo.email,
-          phone: patientInfo.phone
+  // Parse URL parameters for promo code
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlPromoCode = params.get('promo');
+    
+    // If promo code is in URL and not already applied, apply it
+    if (urlPromoCode && !promoCode) {
+      console.log('Applying promo code from URL:', urlPromoCode);
+      applyPromoCode(urlPromoCode)
+        .then(success => {
+          if (success) {
+            toast({
+              title: 'Promo Code Applied',
+              description: `Discount of ${discountPercent}% applied to your quote.`,
+            });
+          } else {
+            toast({
+              title: 'Invalid Promo Code',
+              description: 'The promo code could not be applied.',
+              variant: 'destructive',
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error applying promo code:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to apply promo code.',
+            variant: 'destructive',
+          });
         });
-      }
-      
-      const savedQuoteId = await quoteStore.saveQuote();
-      if (savedQuoteId) {
-        // Handle successful save
-        alert('Quote saved successfully!');
-      }
-    } catch (error) {
-      console.error("Error saving quote:", error);
-    } finally {
-      setIsLoading(false);
     }
+  }, [location, promoCode, applyPromoCode, toast, discountPercent]);
+
+  // Determine which step to render
+  let currentStepParam = params?.step;
+  
+  // Synchronize URL step with store step if needed
+  useEffect(() => {
+    if (currentStepParam) {
+      if (currentStepParam === 'treatments' || 
+          currentStepParam === 'patient-info' || 
+          currentStepParam === 'summary') {
+        setCurrentStep(currentStepParam);
+      }
+    }
+  }, [currentStepParam, setCurrentStep]);
+
+  // Reset quote on component unmount for safety
+  useEffect(() => {
+    return () => {
+      // Optional cleanup - consider if this is desired behavior
+      // resetQuote();
+    };
+  }, []);
+
+  // Render progress indicator
+  const renderProgressIndicator = () => {
+    const steps = [
+      { id: 'treatments', label: 'Select Treatments' },
+      { id: 'patient-info', label: 'Patient Information' },
+      { id: 'summary', label: 'Quote Summary' }
+    ];
+
+    return (
+      <div className="flex justify-center mb-8">
+        <div className="flex items-center w-full max-w-3xl">
+          {steps.map((step, index) => (
+            <React.Fragment key={step.id}>
+              <div 
+                className={`flex-1 text-center py-2 px-4 rounded-md ${
+                  currentStep === step.id 
+                    ? 'bg-primary text-white font-bold' 
+                    : 'bg-gray-100'
+                }`}
+              >
+                <span className="hidden md:inline">{step.label}</span>
+                <span className="md:hidden">{index + 1}</span>
+              </div>
+              {index < steps.length - 1 && (
+                <div className="w-10 h-1 bg-gray-200 mx-2" />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+    );
   };
 
-  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setPatientInfo(prev => ({ ...prev, [name]: value }));
+  // Render navigation buttons
+  const renderNavigation = () => {
+    const canGoNext = currentStep === 'treatments' 
+      ? treatments.length > 0 
+      : currentStep === 'patient-info' 
+        ? !!patientInfo?.firstName && !!patientInfo?.lastName && !!patientInfo?.email
+        : true;
+
+    const handleNext = () => {
+      if (currentStep === 'treatments') {
+        setCurrentStep('patient-info');
+      } else if (currentStep === 'patient-info') {
+        setCurrentStep('summary');
+      }
+    };
+
+    const handleBack = () => {
+      if (currentStep === 'patient-info') {
+        setCurrentStep('treatments');
+      } else if (currentStep === 'summary') {
+        setCurrentStep('patient-info');
+      }
+    };
+
+    return (
+      <div className="flex justify-between mt-8">
+        {currentStep !== 'treatments' && (
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
+          >
+            Back
+          </Button>
+        )}
+        
+        <div className="flex-1" />
+        
+        {currentStep !== 'summary' && (
+          <Button 
+            onClick={handleNext}
+            disabled={!canGoNext}
+          >
+            {currentStep === 'treatments' ? 'Continue to Patient Info' : 'Review Quote'}
+          </Button>
+        )}
+        
+        {currentStep === 'summary' && (
+          <Button 
+            onClick={() => {
+              // Handle quote completion
+              quoteStore.saveQuote()
+                .then(quoteId => {
+                  if (quoteId) {
+                    toast({
+                      title: 'Quote Saved',
+                      description: 'Your quote has been saved successfully!',
+                    });
+                    // Optionally redirect to quote results
+                    // window.location.href = `/matched-clinics?quoteId=${quoteId}`;
+                  }
+                })
+                .catch(error => {
+                  console.error('Error saving quote:', error);
+                  toast({
+                    title: 'Error',
+                    description: 'Failed to save your quote.',
+                    variant: 'destructive', 
+                  });
+                });
+            }}
+          >
+            Complete Quote
+          </Button>
+        )}
+      </div>
+    );
+  };
+
+  // Render the appropriate step content
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 'treatments':
+        return <TreatmentSelector />;
+      case 'patient-info':
+        return <PatientInfoForm />;
+      case 'summary':
+        return <QuoteSummary />;
+      default:
+        return <div>Error: Unknown step</div>;
+    }
   };
 
   return (
     <Layout>
-      <div className="container mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold mb-6">Treatment Quote Builder</h1>
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold text-center mb-6">Dental Treatment Quote</h1>
         
-        {/* Step indicators */}
-        <div className="flex mb-8">
-          <div 
-            className={`flex-1 text-center p-2 ${step >= 1 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => step > 1 && setStep(1)}
-          >
-            1. Select Treatments
-          </div>
-          <div 
-            className={`flex-1 text-center p-2 ${step >= 2 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-            onClick={() => treatments.length > 0 && step > 2 && setStep(2)}
-          >
-            2. Patient Information
-          </div>
-          <div 
-            className={`flex-1 text-center p-2 ${step >= 3 ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
-          >
-            3. Review Quote
-          </div>
+        {renderProgressIndicator()}
+        
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          {renderStepContent()}
         </div>
         
-        {/* Step 1: Treatment Selection */}
-        {step === 1 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Left column - Treatment selection */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Available Treatments</h2>
-              <div className="space-y-4">
-                {SAMPLE_TREATMENTS.map(treatment => (
-                  <div key={treatment.id} className="p-4 border rounded-lg flex justify-between items-center">
-                    <div>
-                      <h3 className="font-medium">{treatment.name}</h3>
-                      <p className="text-gray-600">£{treatment.price}</p>
-                    </div>
-                    <button
-                      className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-                      onClick={() => handleAddTreatment(treatment)}
-                      type="button"
-                    >
-                      Add
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Right column - Current selections */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Selected Treatments</h2>
-              
-              {treatments.length === 0 ? (
-                <p className="text-gray-500 italic">No treatments selected yet.</p>
-              ) : (
-                <>
-                  <div className="space-y-4 mb-6">
-                    {treatments.map(treatment => (
-                      <div key={treatment.id} className="p-4 border rounded-lg flex justify-between items-center">
-                        <div>
-                          <h3 className="font-medium">{treatment.name}</h3>
-                          <p className="text-gray-600">£{treatment.price} each</p>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <button
-                            className="px-2 py-1 bg-gray-200 rounded"
-                            onClick={() => handleUpdateQuantity(treatment.id, Math.max(1, treatment.quantity - 1))}
-                            type="button"
-                          >
-                            -
-                          </button>
-                          <span>{treatment.quantity}</span>
-                          <button
-                            className="px-2 py-1 bg-gray-200 rounded"
-                            onClick={() => handleUpdateQuantity(treatment.id, treatment.quantity + 1)}
-                            type="button"
-                          >
-                            +
-                          </button>
-                          <button
-                            className="ml-2 px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200"
-                            onClick={() => handleRemoveTreatment(treatment.id)}
-                            type="button"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Quote summary */}
-                  <div className="p-4 bg-gray-50 rounded-lg mb-4">
-                    <div className="flex justify-between mb-2">
-                      <span>Subtotal:</span>
-                      <span>£{subtotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  
-                  <button
-                    className="w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    onClick={() => setStep(2)}
-                    disabled={treatments.length === 0}
-                    type="button"
-                  >
-                    Continue to Patient Information
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
+        {renderNavigation()}
         
-        {/* Step 2: Patient Information */}
-        {step === 2 && (
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold mb-4">Patient Information</h2>
-            
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block mb-1">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={patientInfo.name}
-                  onChange={handlePatientInfoChange}
-                  className="w-full p-2 border rounded"
-                  placeholder="Enter your full name"
-                />
-              </div>
-              
-              <div>
-                <label className="block mb-1">Email Address</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={patientInfo.email}
-                  onChange={handlePatientInfoChange}
-                  className="w-full p-2 border rounded"
-                  placeholder="Enter your email address"
-                />
-              </div>
-              
-              <div>
-                <label className="block mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={patientInfo.phone}
-                  onChange={handlePatientInfoChange}
-                  className="w-full p-2 border rounded"
-                  placeholder="Enter your phone number"
-                />
-              </div>
-            </div>
-            
-            <div className="flex space-x-4">
-              <button
-                className="px-4 py-2 border rounded hover:bg-gray-100"
-                onClick={() => setStep(1)}
-                type="button"
-              >
-                Back to Treatments
-              </button>
-              
-              <button
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                onClick={() => setStep(3)}
-                disabled={!patientInfo.name || !patientInfo.email || !patientInfo.phone}
-                type="button"
-              >
-                Continue to Review
-              </button>
-            </div>
-          </div>
-        )}
-        
-        {/* Step 3: Review Quote */}
-        {step === 3 && (
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl font-semibold mb-4">Review Your Quote</h2>
-            
-            <div className="mb-6 p-4 border rounded">
-              <h3 className="font-medium mb-2">Patient Information</h3>
-              <p><strong>Name:</strong> {patientInfo.name}</p>
-              <p><strong>Email:</strong> {patientInfo.email}</p>
-              <p><strong>Phone:</strong> {patientInfo.phone}</p>
-            </div>
-            
-            <div className="mb-6">
-              <h3 className="font-medium mb-2">Selected Treatments</h3>
-              <table className="w-full mb-4">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="p-2 text-left">Treatment</th>
-                    <th className="p-2 text-right">Price</th>
-                    <th className="p-2 text-right">Qty</th>
-                    <th className="p-2 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {treatments.map(treatment => (
-                    <tr key={treatment.id} className="border-b">
-                      <td className="p-2">{treatment.name}</td>
-                      <td className="p-2 text-right">£{treatment.price.toFixed(2)}</td>
-                      <td className="p-2 text-right">{treatment.quantity}</td>
-                      <td className="p-2 text-right">£{(treatment.price * treatment.quantity).toFixed(2)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-                            
-              {/* Promo code input */}
-              <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-                <h3 className="font-medium mb-2">Promo Code</h3>
-                <form onSubmit={handlePromoSubmit} className="flex space-x-2">
-                  <input
-                    type="text"
-                    value={promoInput}
-                    onChange={(e) => setPromoInput(e.target.value)}
-                    className="flex-1 p-2 border rounded"
-                    placeholder="Enter promo code"
-                  />
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Applying..." : "Apply"}
-                  </button>
-                </form>
-                
-                {promoCode && (
-                  <div className="mt-2 text-green-600">
-                    Promo code <strong>{promoCode}</strong> applied - {discountPercent}% discount
-                  </div>
-                )}
-              </div>
-              
-              {/* Totals */}
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex justify-between mb-2">
-                  <span>Subtotal:</span>
-                  <span>£{subtotal.toFixed(2)}</span>
-                </div>
-                
-                {discountPercent > 0 && (
-                  <div className="flex justify-between mb-2 text-green-600">
-                    <span>Discount ({discountPercent}%):</span>
-                    <span>-£{(subtotal * (discountPercent / 100)).toFixed(2)}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                  <span>Total:</span>
-                  <span>£{total.toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div className="flex space-x-4">
-              <button
-                className="px-4 py-2 border rounded hover:bg-gray-100"
-                onClick={() => setStep(2)}
-                type="button"
-              >
-                Back to Patient Info
-              </button>
-              
-              <button
-                className="flex-1 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                onClick={handleSaveQuote}
-                disabled={isLoading}
-                type="button"
-              >
-                {isLoading ? "Saving..." : "Save Quote"}
-              </button>
-            </div>
+        {/* Debugging info - remove in production */}
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="mt-8 p-4 bg-gray-100 rounded-md text-xs">
+            <h4 className="font-bold">Debug Info:</h4>
+            <p>Current Step: {currentStep}</p>
+            <p>URL Step Param: {currentStepParam || 'none'}</p>
+            <p>Treatments Count: {treatments.length}</p>
+            <p>Patient Info: {patientInfo ? 'Set' : 'Not Set'}</p>
+            <p>Promo Code: {promoCode || 'None'}</p>
+            <p>Discount: {discountPercent}%</p>
+            <p>Total: ${total.toFixed(2)}</p>
           </div>
         )}
       </div>
     </Layout>
   );
-}
+};
+
+export default StandaloneQuotePage;
