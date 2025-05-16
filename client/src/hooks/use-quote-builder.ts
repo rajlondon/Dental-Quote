@@ -335,15 +335,66 @@ export function useQuoteBuilder(): UseQuoteBuilderResult {
         return { success: false, message: "Please enter a valid promo code" };
       }
       
+      // Try the new dedicated /apply endpoint first
+      try {
+        console.log('[QuoteBuilder] Trying new promo code apply endpoint');
+        
+        // Calculate current items for API
+        const items = [...quote.treatments, ...quote.packages, ...quote.addons].map(item => ({
+          id: item.id,
+          quantity: (item as any).quantity || 1,
+          isPackage: item.type === 'package'
+        }));
+        
+        // Call the new API endpoint
+        const applyResponse = await apiRequest('POST', '/api/promo-codes/apply', {
+          promoCode: code.trim(),
+          treatments: items,
+          subtotal: quote.subtotal
+        });
+        
+        if (applyResponse.ok) {
+          const data = await applyResponse.json();
+          console.log('[QuoteBuilder] Successfully applied promo code with new endpoint:', data);
+          
+          // Important: Use functional update to ensure we're working with the latest state
+          setQuote(prevQuote => ({
+            ...prevQuote,
+            promoCode: code.trim(),
+            promoDiscount: data.discount || 0,
+            discountType: data.discountType,
+            discountValue: data.discountValue
+          }));
+          
+          // Track successful application
+          if (typeof window !== 'undefined' && window.gtag) {
+            window.gtag('event', 'promo_code_applied', {
+              event_category: 'promotions',
+              event_label: code,
+              value: data.discount || 0
+            });
+          }
+          
+          return { 
+            success: true, 
+            message: "Promo code applied successfully",
+            discountType: data.discountType,
+            discountValue: data.discountValue
+          };
+        }
+      } catch (newApiError) {
+        console.log('[QuoteBuilder] New promo API error, falling back to legacy endpoint:', newApiError);
+      }
+      
       // Check if we're in test mode
       const isTestMode = window.location.pathname.includes('quote-test') || window.location.pathname.includes('test-dashboard');
       
-      // Use test API endpoint if in test mode
+      // Use test API endpoint if in test mode (legacy path)
       const apiEndpoint = isTestMode 
         ? `/api/test-promo-codes/${encodeURIComponent(code.trim())}/validate` 
         : `/api/promo-codes/${encodeURIComponent(code.trim())}/validate`;
         
-      console.log(`[QuoteBuilder] Using promo code validation endpoint: ${apiEndpoint}`);
+      console.log(`[QuoteBuilder] Using legacy promo code validation endpoint: ${apiEndpoint}`);
       
       // Prepare request with current quote data for proper validation
       const response = await fetch(apiEndpoint, {

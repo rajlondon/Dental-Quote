@@ -1,0 +1,77 @@
+This is a classic example of what React developers call "state synchronization issues" - where multiple state updates need to happen in a coordinated way, but asynchronous operations break this coordination.
+
+A Targeted Fix for the Promo Code Issue
+Instead of reimplementing the entire quote system, let's focus specifically on fixing the promo code functionality in your existing code:
+
+// In use-quote-builder.ts hook
+
+// 1. Add a dedicated loading state for promo codes
+const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+
+// 2. Modify the applyPromoCode function
+const applyPromoCode = async (code: string): Promise<PromoCodeResponse> => {
+  // Set dedicated loading state
+  setIsApplyingPromo(true);
+  
+  try {
+    console.log('[QuoteBuilder] Applying promo code:', code);
+    
+    // Make API call
+    const { data } = await axios.post('/api/promo-codes/apply', { 
+      code,
+      quoteId: quote.id,
+      subtotal: quote.subtotal
+    });
+    
+    // Important: Create a new quote object with functional update
+    // This ensures we're using the latest state
+    setQuote(prevQuote => ({
+      ...prevQuote,
+      promoCode: code,
+      promoDiscount: data.discount
+    }));
+    
+    // Log success after state update
+    console.log('[QuoteBuilder] Promo code applied successfully:', data);
+    
+    // Return success
+    return { success: true, message: 'Promo code applied successfully' };
+  } 
+  catch (error) {
+    console.error('[QuoteBuilder] Error applying promo code:', error);
+    return { 
+      success: false, 
+      message: 'Error applying promo code. Please try again.' 
+    };
+  }
+  finally {
+    // Always reset loading state regardless of success/failure
+    setIsApplyingPromo(false);
+  }
+};
+
+// 3. Include the loading state in the hook's return value
+return {
+  // ... other return values
+  isApplyingPromo,
+  applyPromoCode,
+  // ... other return values
+};
+Then update the PromoCodeInput component:
+
+// In PromoCodeInput.tsx
+const { applyPromoCode, isApplyingPromo } = useQuoteBuilder();
+
+// Use isApplyingPromo for button state
+<Button 
+  type="submit" 
+  disabled={!promoCode || isApplyingPromo}
+  isLoading={isApplyingPromo}
+>
+  Apply
+</Button>
+Why This Targeted Approach Will Work
+Dedicated Loading State: By using a separate isApplyingPromo state, we avoid conflicts with the general loading state
+Functional State Updates: Using setQuote(prevQuote => ...) ensures we always update based on the latest state
+Finally Block: Ensures loading state is reset even if errors occur
+No setTimeout: Avoids timing issues that can cause race conditions
