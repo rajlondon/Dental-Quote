@@ -392,6 +392,16 @@ function Router() {
         );
       }} />
       
+      {/* Ultra Simple Quote Builder - No tabs, fully reliable implementation */}
+      <Route path="/ultra-simple-quote" component={() => {
+        const UltraSimpleQuotePage = React.lazy(() => import("./pages/UltraSimpleQuotePage"));
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading ultra simple quote builder...</div>}>
+            <UltraSimpleQuotePage />
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Enhanced Quote Page - improved implementation with backend integration */}
       <Route path="/enhanced-quote" component={() => {
         const EnhancedQuotePage = React.lazy(() => import("./pages/EnhancedQuotePage"));
