@@ -1,239 +1,159 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Check, Package, Percent, Tag, Sparkles, Info, Home } from 'lucide-react';
-import { Link } from 'wouter';
-import LazyQuoteFlow from '@/components/quotes/LazyQuoteFlow';
-import { useEnhancedQuoteFlow } from '@/contexts/EnhancedQuoteFlowContext';
-import { useSpecialOffers } from '@/components/SpecialOffersProvider';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Home, Check, X } from 'lucide-react';
+import { Link } from 'wouter';
 
 /**
- * Simplified Quote System Demo Page
+ * SimplifiedQuoteDemo
  * 
- * A streamlined version that addresses UI performance issues
+ * An extremely minimal quote builder that has no external dependencies
+ * or integrations. This helps isolate the core issue with state persistence.
  */
 const SimplifiedQuoteDemo: React.FC = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('standard');
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
-  const [selectedOfferId, setSelectedOfferId] = useState<string | null>(null);
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [currentPromoCode, setCurrentPromoCode] = useState<string | null>(null);
   
-  // Get from context
-  const { 
-    resetQuoteFlow, 
-    isQuoteInitialized,
-    initializeQuoteFlow 
-  } = useEnhancedQuoteFlow();
+  // Define treatments
+  const availableTreatments = [
+    { id: '1', name: 'Dental Cleaning', price: 100 },
+    { id: '2', name: 'Teeth Whitening', price: 250 },
+    { id: '3', name: 'Dental Filling', price: 150 },
+    { id: '4', name: 'Root Canal', price: 800 },
+    { id: '5', name: 'Dental Crown', price: 1200 },
+    { id: '6', name: 'Dental Implant', price: 900 },
+  ];
   
-  // Special offers from context
-  const specialOffersContext = useSpecialOffers();
-  const specialOffers = specialOffersContext?.offers || [];
+  // State for selected treatments and promo code
+  const [selectedTreatments, setSelectedTreatments] = useState<{ id: string, name: string, price: number }[]>([]);
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
+  const [discount, setDiscount] = useState<number>(0);
+  const [isQuoteComplete, setIsQuoteComplete] = useState<boolean>(false);
   
-  // Sample treatment packages (same as original file)
-  const treatmentPackages = [
-    {
-      id: 'pkg-001',
-      name: 'Dental Implant Package',
-      description: 'Complete package including implant, abutment, and crown',
-      price: 1200,
-      treatments: ['Dental Implant', 'Abutment', 'Crown'],
-      discount: 15,
-      discountType: 'percentage'
-    },
-    {
-      id: 'pkg-002',
-      name: 'Hollywood Smile',
-      description: '8 premium porcelain veneers for a perfect smile',
-      price: 2400,
-      treatments: ['Dental Exam', 'X-rays', '8 Porcelain Veneers'],
-      discount: 10,
-      discountType: 'percentage'
-    },
-    {
-      id: 'pkg-003',
-      name: 'Full Mouth Reconstruction',
-      description: 'Complete restoration with implants and fixed prosthetics',
-      price: 7500,
-      treatments: ['Dental Implants (6)', 'Fixed Bridge', 'Extractions', 'Bone Grafting'],
-      discount: 20,
-      discountType: 'percentage'
+  // Format number as currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(amount);
+  };
+  
+  // Toggle treatment selection
+  const toggleTreatment = useCallback((treatment: { id: string, name: string, price: number }) => {
+    setSelectedTreatments(prev => {
+      const existingIndex = prev.findIndex(t => t.id === treatment.id);
+      
+      if (existingIndex >= 0) {
+        // Remove if already selected
+        return prev.filter(t => t.id !== treatment.id);
+      } else {
+        // Add if not selected
+        return [...prev, treatment];
+      }
+    });
+  }, []);
+  
+  // Apply promo code
+  const applyPromoCode = useCallback((e?: React.FormEvent) => {
+    // Prevent form submission
+    if (e) e.preventDefault();
+    
+    if (!promoCode) return;
+    
+    // Simple promo code logic
+    let discountAmount = 0;
+    
+    if (promoCode.toUpperCase() === 'SUMMER15') {
+      discountAmount = getSubtotal() * 0.15; // 15% off
+    } else if (promoCode.toUpperCase() === 'NEWPATIENT') {
+      discountAmount = 50; // $50 off
+    } else if (promoCode.toUpperCase() === 'DENTAL25') {
+      discountAmount = getSubtotal() * 0.25; // 25% off
     }
-  ];
-  
-  // Sample promo codes
-  const promoCodes = [
-    { code: 'WELCOME20', discount: 20, type: 'percentage', description: '20% off your first quote' },
-    { code: 'FREECONSULT', discount: 100, type: 'fixed', description: 'Free consultation (£100 value)' },
-    { code: 'SUMMER50', discount: 50, type: 'fixed', description: '£50 off any treatment' }
-  ];
-  
-  // Reset everything on unmount
-  useEffect(() => {
-    return () => resetQuoteFlow();
-  }, [resetQuoteFlow]);
-  
-  // Simplified handlers with fewer state updates and better error handling
-  
-  const startStandardQuote = useCallback(() => {
-    console.log('Starting standard quote flow');
-    resetQuoteFlow();
     
-    // Initialize with empty params
-    initializeQuoteFlow({
-      queryParams: new URLSearchParams(),
-      onSuccess: () => {
-        toast({
-          title: 'Standard Quote Started',
-          description: 'Your quote has been initialized'
-        });
-      },
-      onError: (error) => {
-        console.error('Error starting quote:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to start the quote',
-          variant: 'destructive'
-        });
-      }
-    });
-  }, [resetQuoteFlow, initializeQuoteFlow, toast]);
-  
-  const startPackageQuote = useCallback((packageId: string) => {
-    console.log('Starting package quote with ID:', packageId);
-    resetQuoteFlow();
-    setSelectedPackageId(packageId);
-    
-    // Get package details for notification
-    const pkgDetails = treatmentPackages.find(p => p.id === packageId);
-    
-    // Set up parameters
-    const params = new URLSearchParams();
-    params.set('packageId', packageId);
-    
-    initializeQuoteFlow({
-      queryParams: params,
-      onSuccess: () => {
-        toast({
-          title: 'Package Quote Started',
-          description: pkgDetails 
-            ? `Package "${pkgDetails.name}" has been applied` 
-            : `Package ID: ${packageId} has been applied`
-        });
-      },
-      onError: (error) => {
-        console.error('Error starting package quote:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to apply the package',
-          variant: 'destructive'
-        });
-      }
-    });
-  }, [resetQuoteFlow, initializeQuoteFlow, toast, treatmentPackages]);
-  
-  const startSpecialOfferQuote = useCallback((offerId: string) => {
-    console.log('Starting special offer quote with ID:', offerId);
-    resetQuoteFlow();
-    setSelectedOfferId(offerId);
-    
-    // Find offer details for notification
-    const offerDetails = specialOffers.find((o: any) => o.id === offerId);
-    
-    // Set up parameters
-    const params = new URLSearchParams();
-    params.set('offerId', offerId);
-    
-    initializeQuoteFlow({
-      queryParams: params,
-      onSuccess: () => {
-        toast({
-          title: 'Special Offer Applied',
-          description: offerDetails 
-            ? `"${offerDetails.title}" offer has been applied` 
-            : `Offer ID: ${offerId} has been applied`
-        });
-      },
-      onError: (error) => {
-        console.error('Error applying special offer:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to apply the special offer',
-          variant: 'destructive'
-        });
-      }
-    });
-  }, [resetQuoteFlow, initializeQuoteFlow, toast, specialOffers]);
-  
-  const applyPromoCode = useCallback((code: string) => {
-    if (!code.trim()) return;
-    
-    console.log('Applying promo code:', code);
-    resetQuoteFlow();
-    setCurrentPromoCode(code);
-    
-    // Set up parameters
-    const params = new URLSearchParams();
-    params.set('promoCode', code);
-    
-    initializeQuoteFlow({
-      queryParams: params,
-      onSuccess: () => {
+    // Set discount and applied promo
+    if (discountAmount > 0) {
+      setAppliedPromo(promoCode);
+      setDiscount(discountAmount);
+      
+      // Use setTimeout to ensure state is updated before showing toast
+      setTimeout(() => {
         toast({
           title: 'Promo Code Applied',
-          description: `Promo code "${code}" has been applied to your quote`
+          description: `Applied "${promoCode}" to your quote.`,
         });
-      },
-      onError: (error) => {
-        console.error('Error applying promo code:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to apply the promo code',
-          variant: 'destructive'
-        });
-      }
-    });
-  }, [resetQuoteFlow, initializeQuoteFlow, toast]);
-  
-  const handlePromoSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (promoCodeInput.trim()) {
-      applyPromoCode(promoCodeInput.trim());
-      setPromoCodeInput(''); // Clear input after applying
+      }, 100);
+    } else {
+      toast({
+        title: 'Invalid Promo Code',
+        description: 'The promo code you entered is not valid.',
+        variant: 'destructive',
+      });
     }
-  };
+    
+    // Clear input field
+    setPromoCode('');
+  }, [promoCode, toast]);
   
-  const clearPromoCode = () => {
-    setCurrentPromoCode(null);
-    resetQuoteFlow();
+  // Calculate subtotal
+  const getSubtotal = useCallback(() => {
+    return selectedTreatments.reduce((total, item) => total + item.price, 0);
+  }, [selectedTreatments]);
+  
+  // Calculate total
+  const getTotal = useCallback(() => {
+    return Math.max(0, getSubtotal() - discount);
+  }, [getSubtotal, discount]);
+  
+  // Complete the quote
+  const completeQuote = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    if (selectedTreatments.length === 0) {
+      toast({
+        title: 'No Treatments Selected',
+        description: 'Please select at least one treatment.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Set the quote as complete
+    setIsQuoteComplete(true);
+    
+    // Show success toast after state update
+    setTimeout(() => {
+      toast({
+        title: 'Quote Completed',
+        description: `Your quote for ${formatCurrency(getTotal())} has been created.`,
+      });
+    }, 100);
+  }, [selectedTreatments, getTotal, toast]);
+  
+  // Reset the quote
+  const resetQuote = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    setSelectedTreatments([]);
+    setPromoCode('');
+    setAppliedPromo(null);
+    setDiscount(0);
+    setIsQuoteComplete(false);
     
     toast({
-      title: 'Promo Code Cleared',
-      description: 'The promo code has been removed'
+      title: 'Quote Reset',
+      description: 'Your quote has been reset.',
     });
-    
-    // Start a fresh quote
-    startStandardQuote();
-  };
+  }, [toast]);
   
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto p-4 max-w-6xl">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold">Quote System Demo</h1>
-            <p className="text-gray-500">
-              Streamlined demo with better performance
-            </p>
-          </div>
+      <header className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold text-primary">SimplifiedQuoteDemo</h1>
           <Link href="/">
             <Button variant="outline" size="sm" className="flex items-center gap-1">
               <Home className="h-4 w-4" />
@@ -241,254 +161,243 @@ const SimplifiedQuoteDemo: React.FC = () => {
             </Button>
           </Link>
         </div>
+      </header>
+      
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Simplified Quote Builder</h1>
+          <p className="text-gray-600 mb-4">
+            This is a minimal demo that isolates the quote building functionality
+          </p>
+          
+          {isQuoteComplete ? (
+            <Card className="mb-6 bg-green-50 border-green-200">
+              <CardHeader>
+                <CardTitle>Quote Successfully Created!</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <p><strong>Total:</strong> {formatCurrency(getTotal())}</p>
+                  <p><strong>Subtotal:</strong> {formatCurrency(getSubtotal())}</p>
+                  {discount > 0 && (
+                    <p><strong>Discount:</strong> {formatCurrency(discount)}</p>
+                  )}
+                  <p><strong>Promo Code:</strong> {appliedPromo || 'None'}</p>
+                  <p><strong>Selected Treatments:</strong> {selectedTreatments.length}</p>
+                </div>
+                <div className="mt-4">
+                  <Button 
+                    onClick={resetQuote}
+                    variant="outline"
+                    type="button"
+                  >
+                    Start New Quote
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ) : null}
+        </div>
         
-        {/* Main content */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          {/* Left sidebar */}
-          <div className="lg:col-span-1 space-y-6">
-            <Tabs defaultValue="standard" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="w-full grid grid-cols-3">
-                <TabsTrigger value="standard">Standard</TabsTrigger>
-                <TabsTrigger value="offers">Offers</TabsTrigger>
-                <TabsTrigger value="packages">Packages</TabsTrigger>
-              </TabsList>
-              
-              {/* Standard quote tab */}
-              <TabsContent value="standard" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Tag className="h-5 w-5 mr-2 text-primary" />
-                      Standard Quote
-                    </CardTitle>
-                    <CardDescription>
-                      Create a custom quote by selecting individual treatments
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      onClick={startStandardQuote}
-                      className="w-full"
-                    >
-                      Start New Quote
-                    </Button>
-                  </CardContent>
-                </Card>
-                
-                {/* Promo code section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Percent className="h-5 w-5 mr-2 text-primary" />
-                      Apply Promo Code
-                    </CardTitle>
-                    <CardDescription>
-                      Add a discount code to your quote
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {currentPromoCode ? (
-                      <Alert>
-                        <Info className="h-4 w-4" />
-                        <AlertTitle>Active Promo Code</AlertTitle>
-                        <AlertDescription className="flex items-center justify-between">
-                          <span>{currentPromoCode}</span>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={clearPromoCode}
-                          >
-                            Clear Code
-                          </Button>
-                        </AlertDescription>
-                      </Alert>
-                    ) : (
-                      <form onSubmit={handlePromoSubmit} className="flex space-x-2">
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Enter promo code"
-                            value={promoCodeInput}
-                            onChange={(e) => setPromoCodeInput(e.target.value)}
-                          />
-                        </div>
-                        <Button type="submit">Apply</Button>
-                      </form>
-                    )}
-                    
-                    <div className="space-y-3 pt-2">
-                      <p className="text-sm font-medium">Sample Codes:</p>
-                      {promoCodes.map((promo) => (
-                        <div
-                          key={promo.code}
-                          className="border rounded-md p-2 hover:bg-gray-50 cursor-pointer flex items-center justify-between"
-                          onClick={() => {
-                            setPromoCodeInput(promo.code);
-                          }}
-                        >
-                          <div>
-                            <p className="font-medium">{promo.code}</p>
-                            <p className="text-xs text-gray-500">{promo.description}</p>
-                          </div>
-                          <Badge variant="outline" className="text-xs">
-                            {promo.type === 'percentage' ? `${promo.discount}%` : `£${promo.discount}`}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              {/* Special offers tab */}
-              <TabsContent value="offers" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Sparkles className="h-5 w-5 mr-2 text-primary" />
-                      Special Offers
-                    </CardTitle>
-                    <CardDescription>
-                      Apply special promotions to your dental quote
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {specialOffers.length > 0 ? (
-                      specialOffers.map((offer: any) => (
-                        <div
-                          key={offer.id}
-                          className="border rounded-md overflow-hidden hover:border-primary/50 cursor-pointer transition-all"
-                          onClick={() => startSpecialOfferQuote(offer.id)}
-                        >
-                          <div className="p-3">
-                            <div className="flex justify-between items-start gap-2">
-                              <h3 className="font-medium">{offer.title}</h3>
-                              <Badge>
-                                {(offer.discount_type === 'percentage')
-                                  ? `${offer.discount_value}% off`
-                                  : `£${offer.discount_value} off`}
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-500 line-clamp-2 my-2">
-                              {offer.description}
-                            </p>
-                            <Button size="sm" className="w-full mt-2">
-                              Apply This Offer
-                            </Button>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4">
-                        <p>Loading special offers...</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-              
-              {/* Packages tab */}
-              <TabsContent value="packages" className="space-y-4 mt-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Package className="h-5 w-5 mr-2 text-primary" />
-                      Treatment Packages
-                    </CardTitle>
-                    <CardDescription>
-                      Pre-bundled treatments with special package pricing
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {treatmentPackages.map((pkg) => (
-                      <div
-                        key={pkg.id}
-                        className="border rounded-md p-4 hover:border-primary/50 transition-all"
+        {!isQuoteComplete ? (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left side - Treatments */}
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Select Treatments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {availableTreatments.map(treatment => (
+                      <div 
+                        key={treatment.id}
+                        className={`p-4 border rounded-md cursor-pointer transition-colors ${
+                          selectedTreatments.some(t => t.id === treatment.id)
+                            ? 'border-primary bg-primary/5'
+                            : 'hover:border-gray-300'
+                        }`}
+                        onClick={() => toggleTreatment(treatment)}
                       >
                         <div className="flex justify-between items-start">
-                          <h3 className="font-semibold">{pkg.name}</h3>
-                          <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                            Save {pkg.discount}%
-                          </Badge>
-                        </div>
-                        
-                        <div className="my-2">
-                          <div className="bg-gray-50 px-2 py-1 rounded text-xs font-mono mb-2">
-                            ID: {pkg.id}
+                          <div>
+                            <h3 className="font-medium">{treatment.name}</h3>
                           </div>
-                          <p className="text-sm text-gray-600">{pkg.description}</p>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold">{formatCurrency(treatment.price)}</span>
+                            {selectedTreatments.some(t => t.id === treatment.id) ? (
+                              <Check className="h-5 w-5 text-primary" />
+                            ) : (
+                              <div className="h-5 w-5 border rounded-full"></div>
+                            )}
+                          </div>
                         </div>
-                        
-                        <div className="space-y-2 my-3">
-                          <p className="text-sm font-medium">Includes:</p>
-                          <ul className="space-y-1">
-                            {pkg.treatments.map((treatment, idx) => (
-                              <li key={idx} className="text-sm flex items-start">
-                                <Check className="h-4 w-4 mr-1 mt-0.5 text-green-500 flex-shrink-0" />
-                                <span>{treatment}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Promo Code section */}
+              <Card className="mt-4">
+                <CardHeader>
+                  <CardTitle>Promo Code</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={applyPromoCode} className="flex gap-2">
+                    <Input
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      placeholder="Enter promo code"
+                      className="flex-1"
+                      disabled={!!appliedPromo}
+                    />
+                    {appliedPromo ? (
+                      <Button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setAppliedPromo(null);
+                          setDiscount(0);
+                        }}
+                        variant="destructive"
+                        type="button"
+                      >
+                        <X className="h-4 w-4 mr-1" />
+                        Remove
+                      </Button>
+                    ) : (
+                      <Button 
+                        onClick={(e) => applyPromoCode(e)}
+                        disabled={!promoCode.trim()}
+                        type="button"
+                      >
+                        Apply
+                      </Button>
+                    )}
+                  </form>
+                  
+                  {appliedPromo && (
+                    <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded">
+                      <p className="text-green-700 text-sm">
+                        Promo code <span className="font-semibold">{appliedPromo}</span> applied: {formatCurrency(discount)} discount
+                      </p>
+                    </div>
+                  )}
+                  
+                  <div className="mt-2 text-xs text-gray-500">
+                    Try codes like SUMMER15, DENTAL25, or NEWPATIENT for different discounts
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* Right side - Summary */}
+            <div className="lg:col-span-1">
+              <Card className="sticky top-4">
+                <CardHeader>
+                  <CardTitle>Quote Summary</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedTreatments.length > 0 ? (
+                    <>
+                      <div className="space-y-4">
+                        <div>
+                          <h3 className="font-medium mb-2">Selected Treatments:</h3>
+                          <ul className="space-y-2">
+                            {selectedTreatments.map(treatment => (
+                              <li key={treatment.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                                <span>{treatment.name}</span>
+                                <span className="font-medium">{formatCurrency(treatment.price)}</span>
                               </li>
                             ))}
                           </ul>
                         </div>
                         
-                        <div className="bg-gray-50 p-3 rounded mb-3">
-                          <div className="flex justify-between">
-                            <span className="text-sm">Package price:</span>
-                            <span className="font-bold">£{pkg.price}</span>
+                        {appliedPromo && (
+                          <div>
+                            <h3 className="font-medium mb-2">Applied Promo:</h3>
+                            <div className="bg-blue-50 p-3 rounded border border-blue-100">
+                              <Badge>{appliedPromo}</Badge>
+                              <p className="text-sm text-blue-700 mt-1">
+                                Discount: {formatCurrency(discount)}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="pt-4 border-t">
+                          <div className="flex justify-between mb-2">
+                            <span>Subtotal:</span>
+                            <span className="font-medium">{formatCurrency(getSubtotal())}</span>
+                          </div>
+                          
+                          {discount > 0 && (
+                            <div className="flex justify-between mb-2 text-green-600">
+                              <span>Discount:</span>
+                              <span className="font-medium">-{formatCurrency(discount)}</span>
+                            </div>
+                          )}
+                          
+                          <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
+                            <span>Total:</span>
+                            <span>{formatCurrency(getTotal())}</span>
                           </div>
                         </div>
                         
-                        <Button
-                          onClick={() => startPackageQuote(pkg.id)}
-                          className="w-full"
+                        <Button 
+                          className="w-full mt-4" 
+                          size="lg"
+                          onClick={completeQuote}
+                          type="button"
                         >
-                          Select This Package
+                          Complete Quote
                         </Button>
                       </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-          
-          {/* Right quote area */}
-          <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardHeader>
-                <CardTitle>Quote Builder</CardTitle>
-                <CardDescription>
-                  Build and customize dental treatment quotes
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="min-h-[600px]">
-                  {isQuoteInitialized ? (
-                    <LazyQuoteFlow 
-                      packageId={selectedPackageId || undefined}
-                      specialOfferId={selectedOfferId || undefined}
-                      promoCode={currentPromoCode || undefined}
-                    />
+                    </>
                   ) : (
-                    <div className="text-center py-12">
-                      <Package className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                      <h3 className="text-xl font-medium mb-2">No Quote Started</h3>
-                      <p className="text-gray-500 mb-6">
-                        Select an option from the left or use the button below
-                      </p>
-                      
-                      <Button 
-                        onClick={startStandardQuote}
-                        className="w-full max-w-md mx-auto"
-                      >
-                        Start a New Quote
-                      </Button>
+                    <div className="text-center py-10 text-gray-500">
+                      <p>Select treatments to build your quote</p>
                     </div>
                   )}
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mt-8 p-6 border rounded-lg bg-white shadow-sm">
+            <h2 className="text-xl font-semibold mb-4">Quote Details</h2>
+            <div className="space-y-4">
+              <h3 className="font-medium">Selected Treatments:</h3>
+              <ul className="space-y-2 mb-6">
+                {selectedTreatments.map(treatment => (
+                  <li key={treatment.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
+                    <span>{treatment.name}</span>
+                    <span className="font-medium">{formatCurrency(treatment.price)}</span>
+                  </li>
+                ))}
+              </ul>
+              
+              <div className="p-4 border rounded-md bg-gray-50">
+                <div className="flex justify-between mb-2">
+                  <span>Subtotal:</span>
+                  <span className="font-medium">{formatCurrency(getSubtotal())}</span>
+                </div>
+                
+                {discount > 0 && (
+                  <div className="flex justify-between mb-2 text-green-600">
+                    <span>Discount:</span>
+                    <span className="font-medium">-{formatCurrency(discount)}</span>
+                  </div>
+                )}
+                
+                <div className="flex justify-between text-lg font-bold mt-2 pt-2 border-t">
+                  <span>Total:</span>
+                  <span>{formatCurrency(getTotal())}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
