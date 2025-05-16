@@ -92,9 +92,12 @@ export function PersistentQuoteBuilder() {
     fetchTreatments();
   }, []);
   
-  // Handle promo code application
+  // Handle promo code application with tab persistence
   const handleApplyPromoCode = async () => {
     if (!promoInput || loading.promoCode) return;
+    
+    // Store current tab before API call
+    const currentTab = activeTab;
     
     const success = await applyPromoCode(promoInput);
     
@@ -104,6 +107,11 @@ export function PersistentQuoteBuilder() {
         description: `Successfully applied ${discountPercent}% discount.`,
       });
       setPromoInput('');
+      
+      // Restore tab selection - critical for UX
+      setTimeout(() => {
+        setActiveTab(currentTab);
+      }, 10);
     } else {
       toast({
         title: 'Invalid Promo Code',
@@ -314,12 +322,12 @@ export function PersistentQuoteBuilder() {
                           <div className="flex justify-between items-center">
                             <div className="flex items-center">
                               <Check className="h-4 w-4 text-green-600 mr-2" />
-                              <p className="text-green-700">
+                              <div className="text-green-700 flex items-center">
                                 <Badge variant="outline" className="bg-green-100 text-green-800 font-medium mr-2">
                                   {promoCode}
                                 </Badge>
                                 <span>{discountPercent}% discount applied</span>
-                              </p>
+                              </div>
                             </div>
                             <Button 
                               variant="ghost" 
