@@ -66,6 +66,19 @@ const BasicQuotePage: React.FC = () => {
     }
   };
 
+  // Store the current step in localStorage to persist it
+  React.useEffect(() => {
+    const savedStep = localStorage.getItem('quoteBuilderStep');
+    if (savedStep) {
+      setStep(savedStep as QuoteStep);
+    }
+  }, []);
+
+  // Save step to localStorage when it changes
+  React.useEffect(() => {
+    localStorage.setItem('quoteBuilderStep', step);
+  }, [step]);
+
   // Apply promo code
   const handleApplyPromoCode = async () => {
     if (!promoCodeInput.trim()) {
@@ -80,6 +93,9 @@ const BasicQuotePage: React.FC = () => {
     setValidatingPromo(true);
     
     try {
+      // Save current step before applying promo code
+      const currentStep = step;
+      
       const success = await quoteStore.applyPromoCode(promoCodeInput.trim());
       
       if (success) {
@@ -88,6 +104,11 @@ const BasicQuotePage: React.FC = () => {
           description: `Applied discount with code ${promoCodeInput}`,
           variant: "default"
         });
+        
+        // Make sure we stay on the same step after promo code is applied
+        setTimeout(() => {
+          setStep(currentStep);
+        }, 0);
       } else {
         toast({
           title: "Invalid Code",
