@@ -1,42 +1,62 @@
-import React from 'react';
-import { Link } from 'wouter';
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import Footer from '@/components/Footer';
-import Navbar from '@/components/Navbar';
+import React, { useState } from 'react';
+import { Layout } from '../components/layouts/Layout';
 
-// Simple placeholder for PatientPortalPage
-const PatientPortalPage: React.FC = () => {
-  const { t } = useTranslation();
+const QuotesSection = () => (
+  <div className="quotes-section">
+    <h2 className="text-2xl font-bold mb-4">Your Treatment Quotes</h2>
+    <p className="mb-4">You can view your saved quotes here once you create them.</p>
+    <a href="/quote" className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+      Create a New Quote
+    </a>
+  </div>
+);
+
+export default function PatientPortalPage() {
+  const [activeTab, setActiveTab] = useState("profile");
+  
+  const renderTabContent = () => {
+    switch(activeTab) {
+      case 'quotes':
+        return <QuotesSection />;
+      case 'profile':
+        return <div><h2 className="text-2xl font-bold mb-4">Profile Information</h2><p>Profile content here</p></div>;
+      case 'appointments':
+        return <div><h2 className="text-2xl font-bold mb-4">Your Appointments</h2><p>Appointments content here</p></div>;
+      default:
+        return <div><h2 className="text-2xl font-bold mb-4">Profile Information</h2><p>Profile content here</p></div>;
+    }
+  };
   
   return (
-    <div className="flex flex-col min-h-screen">
-      <Navbar />
-      
-      <main className="flex-grow bg-gray-50 py-8">
-        <div className="container mx-auto px-4">
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle>{t('portal.title', 'Patient Portal')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="mb-4">
-                {t('portal.under_development', 'The patient portal is currently under development.')}
-              </p>
-              <Link href="/quote">
-                <Button>
-                  {t('portal.try_quote_builder', 'Try our Quote Builder')}
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+    <Layout>
+      <div className="container mx-auto py-8">
+        <h1 className="text-3xl font-bold mb-6">Patient Portal</h1>
+        
+        <div className="flex border-b mb-6">
+          <button 
+            className={`px-4 py-2 ${activeTab === 'profile' ? 'border-b-2 border-blue-500 font-medium' : ''}`}
+            onClick={() => setActiveTab('profile')}
+          >
+            Profile
+          </button>
+          <button 
+            className={`px-4 py-2 ${activeTab === 'appointments' ? 'border-b-2 border-blue-500 font-medium' : ''}`}
+            onClick={() => setActiveTab('appointments')}
+          >
+            Appointments
+          </button>
+          <button 
+            className={`px-4 py-2 ${activeTab === 'quotes' ? 'border-b-2 border-blue-500 font-medium' : ''}`}
+            onClick={() => setActiveTab('quotes')}
+          >
+            Quotes
+          </button>
         </div>
-      </main>
-      
-      <Footer />
-    </div>
+        
+        <div className="tab-content">
+          {renderTabContent()}
+        </div>
+      </div>
+    </Layout>
   );
-};
-
-export default PatientPortalPage;
+}
