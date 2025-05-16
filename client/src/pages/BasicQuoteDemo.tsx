@@ -114,6 +114,10 @@ const VALID_PROMO_CODES: Record<string, { discountValue: number, discountType: '
 };
 
 export default function BasicQuoteDemo() {
+  // Navigation hook
+  const [, navigate] = useLocation();
+  
+  // Initialize component state
   const [quote, setQuote] = useState<QuoteState>({
     treatments: [],
     selectedPackage: null,
@@ -701,7 +705,7 @@ export default function BasicQuoteDemo() {
                   <Button 
                     className="w-full" 
                     variant="outline"
-                    onClick={() => setShowPatientForm(true)}
+                    onClick={() => setIsPatientDialogOpen(true)}
                   >
                     Save Quote
                   </Button>
