@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -6,10 +7,11 @@ import { formatCurrency } from '@/utils/currency-formatter';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { quoteService } from '@/services/quote-service';
 import { emailService } from '@/services/email-service';
-import { MainLayout } from '@/components/layout/MainLayout';
+import MainLayout from '@/components/layout/MainLayout';
+import PatientInfoDialog from '@/components/quotes/PatientInfoDialog';
 
 // Define simple types
 interface Treatment {
@@ -295,13 +297,42 @@ export default function BasicQuoteDemo() {
       // Get current totals
       const { subtotal, savings, total } = calculateTotals();
       
+      // Prepare quote data with quantity property for each treatment
+      const treatmentsWithQuantity = quote.treatments.map(treatment => ({
+        ...treatment,
+        quantity: 1, // Default quantity for each treatment
+        id: String(treatment.id) // Ensure ID is a string
+      }));
+      
+      // Prepare the selected package with correct structure
+      const formattedPackage = quote.selectedPackage ? {
+        ...quote.selectedPackage,
+        id: String(quote.selectedPackage.id),
+        treatments: quote.selectedPackage.treatments.map(t => ({
+          ...t,
+          quantity: 1,
+          id: String(t.id)
+        }))
+      } : null;
+      
+      // Prepare offer with correct structure
+      const formattedOffer = quote.appliedOffer ? {
+        ...quote.appliedOffer,
+        id: String(quote.appliedOffer.id),
+        clinicId: String(quote.appliedOffer.id), // Using ID as clinic ID for demo
+        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
+        discount: quote.appliedOffer.discountValue,
+        discountType: quote.appliedOffer.discountType
+      } : null;
+      
       // Prepare quote data
       const quoteData = {
         patientName: patientInfo.name,
         patientEmail: patientInfo.email,
-        treatments: quote.treatments,
-        selectedPackage: quote.selectedPackage,
-        appliedOffer: quote.appliedOffer,
+        patientPhone: patientInfo.phone,
+        treatments: treatmentsWithQuantity,
+        selectedPackage: formattedPackage,
+        appliedOffer: formattedOffer,
         promoCode: quote.promoCode,
         subtotal,
         savings,
@@ -312,13 +343,18 @@ export default function BasicQuoteDemo() {
       const savedQuote = quoteService.saveQuote(quoteData);
       
       // Reset form
-      setShowPatientForm(false);
+      setIsPatientDialogOpen(false);
       
       // Show success message
       toast({
         title: "Quote Saved Successfully",
         description: `Quote #${savedQuote.id} has been saved.`,
       });
+      
+      // Navigate to the quote detail page
+      setTimeout(() => {
+        navigate(`/quotes/${savedQuote.id}`);
+      }, 1000);
     } catch (error) {
       console.error('Error saving quote:', error);
       toast({
