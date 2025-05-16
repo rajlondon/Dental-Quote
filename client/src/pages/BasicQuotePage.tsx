@@ -13,12 +13,20 @@ import { FileText, CheckCircle, RefreshCw, Tag } from 'lucide-react';
 // Define types to match the store
 type QuoteStep = 'patient-info' | 'treatments' | 'review' | 'complete';
 
+// Create a wrapper component that handles the persistence outside the main component lifecycle
 const BasicQuotePage: React.FC = () => {
+  return <QuotePageContent />;
+};
+
+const QuotePageContent: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const quoteStore = useQuoteStore();
-  const [step, setStep] = React.useState<QuoteStep>('patient-info');
-  const [loading, setLoading] = React.useState(false);
+  const [step, setStep] = React.useState<QuoteStep>(() => {
+    // Initialize step from localStorage if available
+    const savedStep = localStorage.getItem('quoteBuilderStep');
+    return (savedStep as QuoteStep) || 'patient-info';
+  });
   const [submittingQuote, setSubmittingQuote] = React.useState(false);
   const [promoCodeInput, setPromoCodeInput] = React.useState('');
   const [validatingPromo, setValidatingPromo] = React.useState(false);
@@ -31,6 +39,11 @@ const BasicQuotePage: React.FC = () => {
       quoteStore.resetQuote();
     }
   }, []);
+
+  // Save step to localStorage when it changes
+  React.useEffect(() => {
+    localStorage.setItem('quoteBuilderStep', step);
+  }, [step]);
 
   // Patient info update handler
   const handlePatientInfoUpdate = (field: string, value: string) => {
@@ -66,19 +79,6 @@ const BasicQuotePage: React.FC = () => {
     }
   };
 
-  // Store the current step in localStorage to persist it
-  React.useEffect(() => {
-    const savedStep = localStorage.getItem('quoteBuilderStep');
-    if (savedStep) {
-      setStep(savedStep as QuoteStep);
-    }
-  }, []);
-
-  // Save step to localStorage when it changes
-  React.useEffect(() => {
-    localStorage.setItem('quoteBuilderStep', step);
-  }, [step]);
-
   // Apply promo code
   const handleApplyPromoCode = async () => {
     if (!promoCodeInput.trim()) {
@@ -93,10 +93,15 @@ const BasicQuotePage: React.FC = () => {
     setValidatingPromo(true);
     
     try {
-      // Save current step before applying promo code
+      // Important: Save current step BEFORE making async call
       const currentStep = step;
       
       const success = await quoteStore.applyPromoCode(promoCodeInput.trim());
+      
+      // This ensures we always restore back to the correct step
+      setTimeout(() => {
+        setStep(currentStep);
+      }, 10);
       
       if (success) {
         toast({
@@ -104,11 +109,6 @@ const BasicQuotePage: React.FC = () => {
           description: `Applied discount with code ${promoCodeInput}`,
           variant: "default"
         });
-        
-        // Make sure we stay on the same step after promo code is applied
-        setTimeout(() => {
-          setStep(currentStep);
-        }, 0);
       } else {
         toast({
           title: "Invalid Code",
