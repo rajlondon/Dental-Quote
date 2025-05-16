@@ -146,7 +146,7 @@ export const useQuoteStore = create<QuoteState>()(
         
         try {
           // Try the API endpoint
-          const response = await fetch('/api/quotes-api/promo-codes/apply', {
+          const response = await fetch('/api/quotes/promo-codes/validate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code })
@@ -242,10 +242,11 @@ export const useQuoteStore = create<QuoteState>()(
         set({ loading: { ...state.loading, saving: true } });
         
         try {
-          const response = await fetch('/api/quotes-api/quotes', {
+          const response = await fetch('/api/quotes/save', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              patientInfo: state.patientInfo,
               treatments: state.treatments,
               promoCode: state.promoCode,
               discountPercent: state.discountPercent,

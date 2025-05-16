@@ -246,6 +246,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register file upload/management routes with upload rate limiting
   app.use('/api/files', uploadRateLimit, fileRoutes);
   
+  // Register enhanced quote system routes
+  app.use('/api/quotes', quoteRoutes);
+  
   // Register the canonical v1 APIs (these are the single source of truth)
   console.log('[DEBUG] Mounting CANONICAL treatmentLinesRouter at /api/v1/treatment-lines');
   app.use('/api/v1/treatment-lines', treatmentLinesRouter);
