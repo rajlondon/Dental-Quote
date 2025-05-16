@@ -597,7 +597,7 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
       };
       
       // Call API to save quote
-      const response = await fetch('/api/quotes/save', {
+      const response = await fetch('/api/quotes-api/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -666,7 +666,7 @@ const StandaloneQuoteBuilder: React.FC<StandaloneQuoteBuilderProps> = ({
       }
       
       // Call API to email the quote
-      const response = await fetch('/api/quotes/email', {
+      const response = await fetch('/api/quotes-api/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
