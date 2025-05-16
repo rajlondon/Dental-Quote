@@ -161,5 +161,23 @@ class EmailService {
   }
 }
 
+  // Start an email sequence for a quote (for follow-up emails)
+  async startEmailSequence(quote: Quote): Promise<boolean> {
+    try {
+      // In a real implementation, this would set up a series of follow-up emails
+      // For demo purposes, we'll simulate success
+      
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      console.log(`Started email sequence for quote ${quote.id}`);
+      return true;
+    } catch (error) {
+      console.error('Failed to start email sequence:', error);
+      return false;
+    }
+  }
+}
+
 // Export a singleton instance
 export const emailService = new EmailService();
