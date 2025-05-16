@@ -9,11 +9,11 @@ import { ThemeToggle } from './ThemeToggle';
 // Navigation items
 const navItems = [
   { label: 'Home', href: '/' },
-  { label: 'Dental Services', href: '/services' },
+  { label: 'Dental Services', href: '/dental-services' },
   { label: 'Patient Portal', href: '/patient-portal' },
   { label: 'Clinic Login', href: '/clinic-login' },
   { label: 'Blog', href: '/blog' },
-  { label: 'Contact', href: '/contact' }
+  { label: 'Contact', href: '/contact-us' }
 ];
 
 export function Navbar() {
@@ -46,7 +46,6 @@ export function Navbar() {
             ))}
           </nav>
           <div className="flex items-center space-x-4">
-            <ThemeToggle />
             <Link href="/quote-builder">
               <Button size="sm" className="bg-primary text-primary-foreground">
                 Get a Quote
@@ -54,8 +53,28 @@ export function Navbar() {
             </Link>
             <div className="flex items-center">
               <Link href="/language" className="flex items-center space-x-1">
-                <span className="text-sm">🇬🇧</span>
-                <span className="text-sm font-medium">English</span>
+                <div className="relative group">
+                  <div className="flex items-center space-x-1">
+                    <span className="text-sm">🇬🇧</span>
+                    <span className="text-sm font-medium">English</span>
+                  </div>
+                  <div className="absolute right-0 mt-2 w-40 rounded-md shadow-lg bg-background border border-border hidden group-hover:block z-50">
+                    <div className="py-1">
+                      <Link href="/language?lang=tr" className="flex items-center px-4 py-2 hover:bg-accent">
+                        <span className="text-sm mr-2">🇹🇷</span>
+                        <span className="text-sm">Türkçe</span>
+                      </Link>
+                      <Link href="/language?lang=de" className="flex items-center px-4 py-2 hover:bg-accent">
+                        <span className="text-sm mr-2">🇩🇪</span>
+                        <span className="text-sm">Deutsch</span>
+                      </Link>
+                      <Link href="/language?lang=fr" className="flex items-center px-4 py-2 hover:bg-accent">
+                        <span className="text-sm mr-2">🇫🇷</span>
+                        <span className="text-sm">Français</span>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
               </Link>
             </div>
           </div>
@@ -63,9 +82,6 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <div className="flex flex-1 items-center justify-end md:hidden">
-          <div className="mr-2">
-            <ThemeToggle />
-          </div>
           <Link href="/quote-builder" className="mr-2">
             <Button size="sm" className="bg-primary text-primary-foreground">
               Get a Quote
@@ -97,11 +113,26 @@ export function Navbar() {
                 {item.label}
               </Link>
             ))}
-            <div className="mt-2 flex items-center px-3">
-              <Link href="/language" className="flex items-center space-x-1">
-                <span className="text-sm">🇬🇧</span>
-                <span className="text-sm font-medium">English</span>
-              </Link>
+            <div className="mt-4 px-3">
+              <div className="text-sm font-medium mb-2">Language</div>
+              <div className="space-y-2">
+                <Link href="/language?lang=en" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                  <span className="text-sm">🇬🇧</span>
+                  <span className="text-sm">English</span>
+                </Link>
+                <Link href="/language?lang=tr" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                  <span className="text-sm">🇹🇷</span>
+                  <span className="text-sm">Türkçe</span>
+                </Link>
+                <Link href="/language?lang=de" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                  <span className="text-sm">🇩🇪</span>
+                  <span className="text-sm">Deutsch</span>
+                </Link>
+                <Link href="/language?lang=fr" className="flex items-center space-x-2 rounded-md px-2 py-1 hover:bg-accent">
+                  <span className="text-sm">🇫🇷</span>
+                  <span className="text-sm">Français</span>
+                </Link>
+              </div>
             </div>
           </nav>
         </div>
