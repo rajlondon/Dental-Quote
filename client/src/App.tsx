@@ -868,6 +868,9 @@ function Router() {
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
       
+      {/* Comprehensive Quote Builder */}
+      <Route path="/comprehensive-quote" component={React.lazy(() => import("@/pages/ComprehensiveQuotePage"))} />
+      
       {/* Canonical route for patient quote details - redirect from /patient/quotes/:id */}
       <Route path="/portal/quotes/:id">
         {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
