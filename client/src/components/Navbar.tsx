@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link } from 'wouter';
-import { Menu, X, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../hooks/use-theme';
+import { Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import Logo from './Logo';
+import { ThemeToggle } from './ThemeToggle';
 
 // Navigation items
 const navItems = [
@@ -17,15 +17,10 @@ const navItems = [
 ];
 
 export function Navbar() {
-  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -51,10 +46,7 @@ export function Navbar() {
             ))}
           </nav>
           <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={toggleTheme}>
-              {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              <span className="sr-only">Toggle theme</span>
-            </Button>
+            <ThemeToggle />
             <Link href="/quote-builder">
               <Button size="sm" className="bg-primary text-primary-foreground">
                 Get a Quote
@@ -71,10 +63,9 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <div className="flex flex-1 items-center justify-end md:hidden">
-          <Button variant="outline" size="sm" onClick={toggleTheme} className="mr-2">
-            {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            <span className="sr-only">Toggle theme</span>
-          </Button>
+          <div className="mr-2">
+            <ThemeToggle />
+          </div>
           <Link href="/quote-builder" className="mr-2">
             <Button size="sm" className="bg-primary text-primary-foreground">
               Get a Quote
