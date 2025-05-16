@@ -159,8 +159,7 @@ class EmailService {
       });
     }
   }
-}
-
+  
   // Start an email sequence for a quote (for follow-up emails)
   async startEmailSequence(quote: Quote): Promise<boolean> {
     try {

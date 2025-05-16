@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from '@/hooks/use-toast';
-import { quoteService } from '@/services/quote-service';
-import { formatCurrency } from '@/utils/currency-formatter';
+import { quoteService } from '../services/quote-service';
+import { emailService } from '../services/email-service';
 import MainLayout from '@/components/layout/MainLayout';
+import { formatCurrency } from '@/utils/currency-formatter';
 
+// Define types
 interface Treatment {
   id: string;
   name: string;
@@ -18,300 +19,444 @@ interface Treatment {
   quantity: number;
 }
 
-function QuickQuote() {
+interface QuoteState {
+  treatments: Treatment[];
+  promoCode: string | null;
+  discount: number;
+  subtotal: number;
+  total: number;
+}
+
+export default function QuickQuote() {
   const [, navigate] = useLocation();
   
   // Available treatments
-  const availableTreatments = [
-    { id: '1', name: 'Dental Cleaning', description: 'Professional teeth cleaning', price: 100, quantity: 1 },
-    { id: '2', name: 'Teeth Whitening', description: 'Professional whitening treatment', price: 250, quantity: 1 },
-    { id: '3', name: 'Dental Filling', description: 'Composite filling for cavities', price: 150, quantity: 1 },
-    { id: '4', name: 'Root Canal', description: 'Root canal therapy', price: 800, quantity: 1 },
-    { id: '5', name: 'Dental Crown', description: 'Porcelain crown', price: 1200, quantity: 1 },
+  const availableTreatments: Treatment[] = [
+    { id: 'clean', name: 'Dental Cleaning', description: 'Professional teeth cleaning', price: 100, quantity: 1 },
+    { id: 'whitening', name: 'Teeth Whitening', description: 'Professional whitening treatment', price: 250, quantity: 1 },
+    { id: 'filling', name: 'Dental Filling', description: 'Composite filling for cavities', price: 150, quantity: 1 },
+    { id: 'root', name: 'Root Canal', description: 'Root canal therapy', price: 800, quantity: 1 },
+    { id: 'crown', name: 'Dental Crown', description: 'Porcelain crown', price: 1200, quantity: 1 },
+    { id: 'implant', name: 'Dental Implant', description: 'Titanium implant with crown', price: 2500, quantity: 1 },
   ];
   
-  // Available promo codes
-  const promoCodes = {
-    'DENTAL10': 10,
-    'SMILE20': 20,
-    'DISCOUNT30': 30
+  // Promo codes
+  const promoCodes: Record<string, { type: 'percentage' | 'fixed', value: number }> = {
+    'DENTAL10': { type: 'percentage', value: 10 },
+    'SMILE20': { type: 'percentage', value: 20 },
+    'DISCOUNT30': { type: 'percentage', value: 30 },
+    'NEWSMILE': { type: 'fixed', value: 100 },
   };
   
   // State
-  const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>([]);
-  const [promoCode, setPromoCode] = useState('');
-  const [appliedPromoCode, setAppliedPromoCode] = useState<string | null>(null);
-  const [discountPercent, setDiscountPercent] = useState(0);
-  const [patientInfoOpen, setPatientInfoOpen] = useState(false);
-  const [patientInfo, setPatientInfo] = useState({
-    name: '',
-    email: '',
-    phone: ''
+  const [quote, setQuote] = useState<QuoteState>({
+    treatments: [],
+    promoCode: null,
+    discount: 0,
+    subtotal: 0,
+    total: 0
   });
   
-  // Calculations
-  const subtotal = selectedTreatments.reduce((sum, t) => sum + t.price, 0);
-  const discount = subtotal * (discountPercent / 100);
-  const total = Math.max(0, subtotal - discount);
+  const [promoInput, setPromoInput] = useState('');
+  const [showPatientForm, setShowPatientForm] = useState(false);
+  const [patientInfo, setPatientInfo] = useState({ name: '', email: '', phone: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   
-  // Add treatment
-  const addTreatment = (treatment: Treatment) => {
-    setSelectedTreatments(prev => [...prev, { ...treatment }]);
-  };
+  // Calculate totals whenever treatments or promo code changes
+  useEffect(() => {
+    const subtotal = quote.treatments.reduce((sum, t) => sum + t.price, 0);
+    let discount = 0;
+    
+    if (quote.promoCode && promoCodes[quote.promoCode]) {
+      const promoDetails = promoCodes[quote.promoCode];
+      if (promoDetails.type === 'percentage') {
+        discount = subtotal * (promoDetails.value / 100);
+      } else {
+        discount = promoDetails.value;
+      }
+    }
+    
+    const total = Math.max(0, subtotal - discount);
+    
+    setQuote(prev => ({
+      ...prev,
+      subtotal,
+      discount,
+      total
+    }));
+  }, [quote.treatments, quote.promoCode]);
   
-  // Remove treatment
-  const removeTreatment = (index: number) => {
-    setSelectedTreatments(prev => prev.filter((_, i) => i !== index));
+  // Toggle treatment selection
+  const toggleTreatment = (treatment: Treatment) => {
+    setQuote(prev => {
+      const exists = prev.treatments.find(t => t.id === treatment.id);
+      
+      if (exists) {
+        // Remove treatment
+        return {
+          ...prev,
+          treatments: prev.treatments.filter(t => t.id !== treatment.id)
+        };
+      } else {
+        // Add treatment
+        return {
+          ...prev,
+          treatments: [...prev.treatments, {...treatment, quantity: 1}]
+        };
+      }
+    });
   };
   
   // Apply promo code
   const applyPromoCode = () => {
-    const enteredCode = promoCode.trim().toUpperCase();
-    const validCodes = Object.keys(promoCodes);
+    const code = promoInput.trim().toUpperCase();
     
-    if (validCodes.includes(enteredCode)) {
-      const discountPercent = promoCodes[enteredCode as keyof typeof promoCodes];
-      setAppliedPromoCode(enteredCode);
-      setDiscountPercent(discountPercent);
-      
+    if (!code) {
       toast({
-        title: 'Promo Code Applied',
-        description: `${enteredCode} has been applied with ${discountPercent}% discount.`,
+        title: 'Error',
+        description: 'Please enter a promo code',
+        variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Invalid Promo Code',
-        description: 'Please enter a valid promo code.',
-        variant: 'destructive'
-      });
+      return;
     }
+    
+    if (!promoCodes[code]) {
+      toast({
+        title: 'Invalid Code',
+        description: 'The promo code you entered is not valid',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setQuote(prev => ({
+      ...prev,
+      promoCode: code
+    }));
+    
+    setPromoInput('');
+    
+    toast({
+      title: 'Promo Code Applied',
+      description: `${code} has been applied to your quote`,
+    });
+  };
+  
+  // Remove promo code
+  const removePromoCode = () => {
+    setQuote(prev => ({
+      ...prev,
+      promoCode: null
+    }));
+    
+    toast({
+      title: 'Promo Code Removed',
+      description: 'The promo code has been removed from your quote',
+    });
+  };
+  
+  // Reset quote
+  const resetQuote = () => {
+    setQuote({
+      treatments: [],
+      promoCode: null,
+      discount: 0,
+      subtotal: 0,
+      total: 0
+    });
+    
+    setPromoInput('');
+    
+    toast({
+      title: 'Quote Reset',
+      description: 'Your quote has been reset',
+    });
   };
   
   // Handle patient info change
   const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setPatientInfo({ ...patientInfo, [name]: value });
+    setPatientInfo(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
   
   // Save quote
-  const saveQuote = () => {
-    if (!patientInfo.name || !patientInfo.email) {
+  const handleSaveQuote = async () => {
+    if (quote.treatments.length === 0) {
       toast({
-        title: 'Information Required',
-        description: 'Please provide your name and email.',
-        variant: 'destructive'
+        title: 'No Treatments Selected',
+        description: 'Please select at least one treatment',
+        variant: 'destructive',
       });
       return;
     }
     
+    if (!patientInfo.name || !patientInfo.email) {
+      setShowPatientForm(true);
+      return;
+    }
+    
+    setIsSaving(true);
+    
     try {
-      const quote = quoteService.saveQuote({
+      const savedQuote = quoteService.saveQuote({
         patientName: patientInfo.name,
         patientEmail: patientInfo.email,
         patientPhone: patientInfo.phone,
-        treatments: selectedTreatments,
-        promoCode: appliedPromoCode,
-        subtotal: subtotal,
-        savings: discount,
-        total: total
+        treatments: quote.treatments,
+        selectedPackage: null,
+        appliedOffer: null,
+        promoCode: quote.promoCode,
+        subtotal: quote.subtotal,
+        savings: quote.discount,
+        total: quote.total
       });
       
       toast({
         title: 'Quote Saved',
-        description: `Quote #${quote.id} has been saved successfully.`,
+        description: 'Your quote has been saved successfully',
       });
       
-      // Navigate to saved quote
-      setPatientInfoOpen(false);
-      setTimeout(() => {
-        navigate(`/quotes/${quote.id}`);
-      }, 1000);
+      // Navigate to quote detail
+      navigate(`/quotes/${savedQuote.id}`);
     } catch (error) {
-      console.error('Failed to save quote:', error);
+      console.error('Error saving quote:', error);
       toast({
-        title: 'Error',
-        description: 'Failed to save quote. Please try again.',
-        variant: 'destructive'
+        title: 'Save Failed',
+        description: 'There was an error saving your quote',
+        variant: 'destructive',
       });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  // Send quote via email
+  const handleSendEmail = async () => {
+    if (quote.treatments.length === 0) {
+      toast({
+        title: 'No Treatments Selected',
+        description: 'Please select at least one treatment',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!patientInfo.name || !patientInfo.email) {
+      setShowPatientForm(true);
+      return;
+    }
+    
+    setIsSendingEmail(true);
+    
+    try {
+      // First save the quote if not already saved
+      const savedQuote = quoteService.saveQuote({
+        patientName: patientInfo.name,
+        patientEmail: patientInfo.email,
+        patientPhone: patientInfo.phone,
+        treatments: quote.treatments,
+        selectedPackage: null,
+        appliedOffer: null,
+        promoCode: quote.promoCode,
+        subtotal: quote.subtotal,
+        savings: quote.discount,
+        total: quote.total
+      });
+      
+      // Send the email
+      await emailService.sendQuoteEmail(savedQuote);
+      
+      // Start email sequence
+      await emailService.startEmailSequence(savedQuote);
+      
+      toast({
+        title: 'Email Sent',
+        description: `Quote has been emailed to ${patientInfo.email}`,
+      });
+      
+      // Navigate to quote detail
+      navigate(`/quotes/${savedQuote.id}`);
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: 'Email Failed',
+        description: 'There was an error sending the email',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSendingEmail(false);
     }
   };
   
   return (
     <MainLayout>
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Quick Dental Quote</h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Treatment selection */}
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Available Treatments</CardTitle>
-                <CardDescription>Select treatments to add to your quote</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {availableTreatments.map(treatment => (
-                  <div 
-                    key={treatment.id} 
-                    className="flex justify-between items-center p-4 border rounded hover:bg-gray-50 cursor-pointer"
-                    onClick={() => addTreatment(treatment)}
-                  >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left column - Treatments */}
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Available Treatments</h2>
+            <div className="space-y-4 mb-6">
+              {availableTreatments.map(treatment => (
+                <Card key={treatment.id} className={`cursor-pointer transition-colors ${
+                  quote.treatments.some(t => t.id === treatment.id) 
+                    ? 'border-blue-500 bg-blue-50' 
+                    : 'hover:border-gray-300'
+                }`} onClick={() => toggleTreatment(treatment)}>
+                  <CardContent className="p-4 flex justify-between items-center">
                     <div>
                       <h3 className="font-medium">{treatment.name}</h3>
                       <p className="text-sm text-gray-500">{treatment.description}</p>
                     </div>
-                    <div className="font-medium">{formatCurrency(treatment.price)}</div>
+                    <div className="text-lg font-semibold">{formatCurrency(treatment.price)}</div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+            
+            <div className="bg-gray-100 p-4 rounded-lg mb-6">
+              <h2 className="text-lg font-semibold mb-2">Promo Code</h2>
+              <div className="flex gap-2">
+                <Input 
+                  value={promoInput} 
+                  onChange={e => setPromoInput(e.target.value)} 
+                  placeholder="Enter promo code"
+                />
+                <Button onClick={applyPromoCode}>Apply</Button>
+              </div>
+              {quote.promoCode && (
+                <div className="mt-2 flex justify-between items-center">
+                  <div className="text-sm">
+                    <span className="font-medium">{quote.promoCode}</span> applied: 
+                    <span className="text-green-600 ml-1">{formatCurrency(quote.discount)} discount</span>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
+                  <Button variant="outline" size="sm" onClick={removePromoCode}>Remove</Button>
+                </div>
+              )}
+              <div className="mt-2 text-xs text-gray-500">
+                Try: DENTAL10 (10% off), SMILE20 (20% off), DISCOUNT30 (30% off), NEWSMILE (£100 off)
+              </div>
+            </div>
+            
+            <Button variant="outline" onClick={resetQuote}>Reset Quote</Button>
           </div>
           
-          {/* Quote summary */}
+          {/* Right column - Summary */}
           <div>
+            <h2 className="text-xl font-semibold mb-4">Quote Summary</h2>
             <Card>
-              <CardHeader>
-                <CardTitle>Your Quote</CardTitle>
-                <CardDescription>Summary of selected treatments</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {selectedTreatments.length === 0 ? (
-                  <div className="text-center py-6 text-gray-500">
-                    Your quote is empty. Select treatments from the list.
+              <CardContent className="p-6">
+                {quote.treatments.length === 0 ? (
+                  <div className="py-8 text-center text-gray-500">
+                    <p>Your quote is empty.</p>
+                    <p>Select treatments to get started.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {/* Selected treatments */}
-                    <div className="space-y-3">
-                      {selectedTreatments.map((treatment, index) => (
-                        <div key={index} className="flex justify-between items-center border-b pb-2">
-                          <div>
-                            <p className="font-medium">{treatment.name}</p>
-                            <p className="text-sm text-gray-500">{formatCurrency(treatment.price)}</p>
-                          </div>
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => removeTreatment(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            Remove
-                          </Button>
+                  <>
+                    <h3 className="font-medium mb-4">Selected Treatments</h3>
+                    <div className="space-y-2 mb-6">
+                      {quote.treatments.map((treatment, index) => (
+                        <div key={index} className="flex justify-between">
+                          <span>{treatment.name}</span>
+                          <span>{formatCurrency(treatment.price)}</span>
                         </div>
                       ))}
                     </div>
                     
-                    {/* Promo code section */}
-                    <div className="mt-4 pt-4 border-t">
-                      <Label htmlFor="promo">Promo Code</Label>
-                      <div className="flex gap-2 mt-1">
-                        <Input 
-                          id="promo"
-                          value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                          placeholder="Enter code"
-                        />
-                        <Button onClick={applyPromoCode}>Apply</Button>
-                      </div>
-                      {appliedPromoCode && (
-                        <p className="text-sm text-green-600 mt-1">
-                          Code {appliedPromoCode} applied ({discountPercent}% off)
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Try: DENTAL10, SMILE20, DISCOUNT30
-                      </p>
-                    </div>
-                    
-                    {/* Price summary */}
-                    <div className="mt-4 pt-4 border-t space-y-2">
-                      <div className="flex justify-between">
-                        <span>Subtotal:</span>
-                        <span>{formatCurrency(subtotal)}</span>
+                    <div className="border-t pt-4 mb-4">
+                      <div className="flex justify-between mb-2">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(quote.subtotal)}</span>
                       </div>
                       
-                      {discount > 0 && (
-                        <div className="flex justify-between text-green-600">
-                          <span>Discount:</span>
-                          <span>-{formatCurrency(discount)}</span>
+                      {quote.discount > 0 && (
+                        <div className="flex justify-between mb-2 text-green-600">
+                          <span>Discount</span>
+                          <span>-{formatCurrency(quote.discount)}</span>
                         </div>
                       )}
                       
-                      <div className="flex justify-between font-bold text-lg pt-2 border-t">
-                        <span>Total:</span>
-                        <span>{formatCurrency(total)}</span>
+                      <div className="flex justify-between font-bold text-lg">
+                        <span>Total</span>
+                        <span>{formatCurrency(quote.total)}</span>
                       </div>
                     </div>
-                  </div>
+                    
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full" 
+                        onClick={handleSaveQuote}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? 'Saving...' : 'Save Quote'}
+                      </Button>
+                      
+                      <Button 
+                        className="w-full" 
+                        variant="outline"
+                        onClick={handleSendEmail}
+                        disabled={isSendingEmail}
+                      >
+                        {isSendingEmail ? 'Sending...' : 'Email Quote'}
+                      </Button>
+                    </div>
+                  </>
                 )}
               </CardContent>
-              <CardFooter className="flex flex-col space-y-2">
-                <Button 
-                  className="w-full" 
-                  disabled={selectedTreatments.length === 0}
-                  onClick={() => setPatientInfoOpen(true)}
-                >
-                  Save Quote
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  disabled={selectedTreatments.length === 0}
-                >
-                  Request Appointment
-                </Button>
-              </CardFooter>
             </Card>
           </div>
         </div>
         
-        {/* Patient info dialog */}
-        <Dialog open={patientInfoOpen} onOpenChange={setPatientInfoOpen}>
+        {/* Patient information dialog */}
+        <Dialog open={showPatientForm} onOpenChange={setShowPatientForm}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Your Information</DialogTitle>
+              <DialogTitle>Patient Information</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Name <span className="text-red-500">*</span></Label>
-                <Input 
+                <label htmlFor="name" className="text-sm font-medium">Name</label>
+                <Input
                   id="name"
                   name="name"
                   value={patientInfo.name}
                   onChange={handlePatientInfoChange}
                   placeholder="Enter your full name"
+                  required
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                <Input 
+                <label htmlFor="email" className="text-sm font-medium">Email</label>
+                <Input
                   id="email"
                   name="email"
                   type="email"
                   value={patientInfo.email}
                   onChange={handlePatientInfoChange}
-                  placeholder="you@example.com"
+                  placeholder="Enter your email address"
+                  required
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input 
+                <label htmlFor="phone" className="text-sm font-medium">Phone (optional)</label>
+                <Input
                   id="phone"
                   name="phone"
                   value={patientInfo.phone}
                   onChange={handlePatientInfoChange}
-                  placeholder="+1 (555) 123-4567"
+                  placeholder="Enter your phone number"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setPatientInfoOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={saveQuote}>
-                Save Quote
+              <Button onClick={() => setShowPatientForm(false)}>Cancel</Button>
+              <Button onClick={isSendingEmail ? handleSendEmail : handleSaveQuote}>
+                {isSendingEmail ? 'Send Email' : 'Save Quote'}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -320,5 +465,3 @@ function QuickQuote() {
     </MainLayout>
   );
 }
-
-export default QuickQuote;
