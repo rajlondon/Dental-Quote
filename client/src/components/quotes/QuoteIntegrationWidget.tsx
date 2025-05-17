@@ -386,7 +386,7 @@ export function QuoteIntegrationWidget({
                         
                         {quote.status === 'in_progress' && (
                           <Button 
-                            onClick={() => quoteSystem.updateQuoteStatusMutation.mutate({ 
+                            onClick={() => quoteSystem.updateStatusMutation.mutate({ 
                               quoteId: quote.id, 
                               status: 'completed' 
                             })}

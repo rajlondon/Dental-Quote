@@ -487,5 +487,9 @@ def server_error(e):
     """500 Error handler"""
     return render_template('errors/500.html'), 500
 
+# Register the integration routes
+from routes.integration_routes import integration_bp
+app.register_blueprint(integration_bp)
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
