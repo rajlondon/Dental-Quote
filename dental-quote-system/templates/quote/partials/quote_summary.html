@@ -1,74 +1,28 @@
 <div class="quote-summary">
-    {% if selected_treatments %}
-    <div class="p-4 border-bottom">
+    <!-- Selected Treatments Section -->
+    <div class="p-3 border-bottom">
         <h6 class="fw-bold mb-3">Selected Treatments</h6>
-        <ul class="list-unstyled mb-0">
-            {% for treatment in selected_treatments %}
-            <li class="mb-3">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <p class="fw-medium mb-0">{{ treatment.name }}</p>
-                        <small class="text-muted">Qty: {{ treatment.quantity }}</small>
+        {% if selected_treatments %}
+            <ul class="list-unstyled mb-0">
+                {% for treatment in selected_treatments %}
+                <li class="mb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="mb-0 fw-medium">{{ treatment.name }}</p>
+                            <small class="text-muted">Qty: {{ treatment.quantity }}</small>
+                        </div>
+                        <span class="fw-bold">€{{ "%.2f"|format(treatment.total_price) }}</span>
                     </div>
-                    <div class="text-end">
-                        <p class="fw-bold mb-0">€{{ "%.2f"|format(treatment.total_price) }}</p>
-                        <small class="text-muted">€{{ "%.2f"|format(treatment.price) }} each</small>
-                    </div>
-                </div>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    
-    <!-- Promo Code Input -->
-    <div class="p-4 border-bottom">
-        <h6 class="fw-bold mb-3">Promo Code</h6>
-        
-        {% if promo_code %}
-        <div class="alert alert-success mb-3 p-2" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle me-2"></i>
-                <div>
-                    <small class="fw-bold">{{ promo_code.code }} applied</small>
-                    <br>
-                    <small>
-                        {% if promo_code.discount_type == 'percentage' %}
-                        {{ promo_code.discount_value }}% off
-                        {% elif promo_code.discount_type == 'fixed_amount' %}
-                        €{{ promo_code.discount_value }} off
-                        {% else %}
-                        Special offer applied
-                        {% endif %}
-                    </small>
-                </div>
-                <a href="#" id="removePromoLink" class="ms-auto text-danger">
-                    <i class="fas fa-times"></i>
-                </a>
-            </div>
-        </div>
+                </li>
+                {% endfor %}
+            </ul>
         {% else %}
-        <div class="mb-3">
-            <div class="input-group">
-                <input type="text" class="form-control" id="promoCode" placeholder="Enter code" value="{{ promo_code_input|default('') }}">
-                <button class="btn btn-outline-primary" type="button" id="applyPromoBtn">Apply</button>
-            </div>
-            <div class="text-danger small mt-1 d-none" id="promoError"></div>
-            <div class="text-success small mt-1 d-none" id="promoSuccess">Promo code applied successfully!</div>
-        </div>
-        
-        {% if available_promo_codes %}
-        <div class="small text-muted mb-0">
-            <span class="fst-italic">Available codes:</span>
-            {% for code in available_promo_codes %}
-            <a href="#" class="text-decoration-none quick-apply-code">{{ code }}</a>{% if not loop.last %}, {% endif %}
-            {% endfor %}
-        </div>
-        {% endif %}
+            <p class="text-muted mb-0">No treatments selected yet</p>
         {% endif %}
     </div>
     
-    <!-- Price Summary -->
-    <div class="p-4">
+    <!-- Price Calculation Section -->
+    <div class="p-3 border-bottom">
         <div class="d-flex justify-content-between mb-2">
             <span>Subtotal</span>
             <span class="fw-bold">€{{ "%.2f"|format(subtotal) }}</span>
@@ -76,63 +30,133 @@
         
         {% if discount_amount > 0 %}
         <div class="d-flex justify-content-between mb-2 text-success">
-            <span>Discount</span>
+            <span>
+                {% if promo_code %}
+                    Discount ({{ promo_code.code }})
+                {% else %}
+                    Discount
+                {% endif %}
+            </span>
             <span class="fw-bold">-€{{ "%.2f"|format(discount_amount) }}</span>
         </div>
         {% endif %}
         
-        <div class="d-flex justify-content-between mb-2">
-            <span>VAT ({{ vat_rate }}%)</span>
-            <span class="fw-bold">€{{ "%.2f"|format(vat_amount) }}</span>
-        </div>
-        
-        <hr>
-        
-        <div class="d-flex justify-content-between mb-4">
+        <div class="d-flex justify-content-between mt-3">
             <span class="fw-bold">Total</span>
             <span class="fw-bold fs-5">€{{ "%.2f"|format(total) }}</span>
         </div>
-        
-        <div class="alert alert-primary mb-0" role="alert">
-            <div class="d-flex">
-                <div class="flex-shrink-0">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <div class="ms-3 small">
-                    <p class="mb-0">This quote includes all treatments, materials, and appointments. Additional costs may apply based on individual needs and will be discussed during your consultation.</p>
+    </div>
+    
+    <!-- Promo Code Section -->
+    <div class="p-3">
+        {% if promo_code %}
+            <div class="alert alert-success mb-3" role="alert">
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tag"></i>
+                    </div>
+                    <div class="ms-2">
+                        <p class="fw-bold mb-0">{{ promo_code.code }}</p>
+                        <p class="small mb-0">
+                            {% if promo_code.discount_type == 'percentage' %}
+                                {{ promo_code.discount_value }}% discount applied
+                            {% elif promo_code.discount_type == 'fixed_amount' %}
+                                €{{ promo_code.discount_value }} discount applied
+                            {% else %}
+                                Special offer applied
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="ms-auto">
+                        <a href="{{ url_for('remove_promo_code') }}" class="btn btn-sm btn-outline-danger remove-promo-code">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
+        {% endif %}
+        
+        <div id="promoCodeSection" {% if promo_code %}class="d-none"{% endif %}>
+            <h6 class="fw-bold mb-2">Have a promo code?</h6>
+            <form id="promoCodeForm" action="{{ url_for('apply_promo_code') }}" method="POST">
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Enter code" name="promo_code" id="promoCodeInput" required>
+                    <button class="btn btn-primary" type="submit" id="applyPromoCode">Apply</button>
+                </div>
+            </form>
         </div>
-    </div>
-    {% else %}
-    <div class="p-4 text-center">
-        <div class="py-5">
-            <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
-            <h6 class="fw-bold">Your Quote is Empty</h6>
-            <p class="text-muted small mb-4">Please select treatments to build your quote.</p>
-            
-            {% if previous_quote %}
-            <a href="{{ url_for('restore_quote', quote_id=previous_quote.id) }}" class="btn btn-outline-primary btn-sm">
-                <i class="fas fa-history me-2"></i> Restore Previous Quote
+        
+        <div class="text-center mt-3">
+            <a href="{{ url_for('special_offers') }}" class="text-decoration-none">
+                <i class="fas fa-gift me-1"></i> View Special Offers
             </a>
-            {% endif %}
         </div>
     </div>
-    {% endif %}
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Quick apply promo code links
-        const quickApplyLinks = document.querySelectorAll('.quick-apply-code');
-        if (quickApplyLinks.length > 0) {
-            quickApplyLinks.forEach(function(link) {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    document.getElementById('promoCode').value = this.textContent.trim();
-                    document.getElementById('applyPromoBtn').click();
-                });
+document.addEventListener('DOMContentLoaded', function() {
+    const promoCodeForm = document.getElementById('promoCodeForm');
+    
+    if (promoCodeForm) {
+        promoCodeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const promoCode = document.getElementById('promoCodeInput').value.trim();
+            if (!promoCode) return;
+            
+            // Use fetch API for AJAX request
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: new URLSearchParams(new FormData(this))
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh the page to show updated pricing
+                    window.location.reload();
+                } else {
+                    // Show error message
+                    alert(data.message || 'Invalid promo code. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error applying promo code:', error);
+                alert('An error occurred while applying the promo code. Please try again.');
             });
-        }
+        });
+    }
+    
+    // Handle remove promo code button
+    const removePromoButtons = document.querySelectorAll('.remove-promo-code');
+    removePromoButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            fetch(this.href, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Refresh the page to show updated pricing
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Could not remove promo code. Please try again.');
+                }
+            })
+            .catch(error => {
+                console.error('Error removing promo code:', error);
+                alert('An error occurred while removing the promo code. Please try again.');
+            });
+        });
     });
+});
 </script>
