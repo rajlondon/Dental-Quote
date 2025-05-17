@@ -877,6 +877,9 @@ function Router() {
       {/* Improved Quote Builder with Zustand Persistence */}
       <Route path="/improved-quote" component={React.lazy(() => import("@/pages/ImprovedQuotePage"))} />
       
+      {/* Robust Quote Builder with Enhanced Error Handling */}
+      <Route path="/robust-quote" component={React.lazy(() => import("@/pages/RobustQuoteBuilderPage"))} />
+      
       {/* Canonical route for patient quote details - redirect from /patient/quotes/:id */}
       <Route path="/portal/quotes/:id">
         {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
