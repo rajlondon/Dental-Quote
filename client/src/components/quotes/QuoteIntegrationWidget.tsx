@@ -729,4 +729,5 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
   );
 };
 
+export { QuoteIntegrationWidget };
 export default QuoteIntegrationWidget;
