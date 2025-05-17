@@ -6,6 +6,22 @@ import {
   formatPriceInCurrency,
   CurrencyCode
 } from '@/utils/format-utils';
+import TreatmentPackageService, { 
+  TreatmentPackage, 
+  AdditionalService 
+} from '@/services/treatment-package-service';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Check, Package, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface Treatment {
   id: string;
@@ -16,6 +32,7 @@ interface Treatment {
   clinicId?: string;
   clinicName?: string;
   imageUrl?: string;
+  quantity?: number;
 }
 
 interface PromoValidationResult {
@@ -24,6 +41,8 @@ interface PromoValidationResult {
   message: string;
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
+  isPackage?: boolean;
+  packageId?: string;
 }
 
 interface QuoteIntegrationWidgetProps {
@@ -48,6 +67,10 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>(initialTreatments);
   const [loadingTreatments, setLoadingTreatments] = useState<boolean>(true);
+  const [currentPackage, setCurrentPackage] = useState<TreatmentPackage | null>(null);
+  const [additionalServices, setAdditionalServices] = useState<AdditionalService[]>([]);
+  const [showPackageDialog, setShowPackageDialog] = useState<boolean>(false);
+  const [pendingPackage, setPendingPackage] = useState<TreatmentPackage | null>(null);
   const [promoCode, setPromoCode] = useState<string | null>(initialPromoCode || null);
   const [promoInput, setPromoInput] = useState<string>('');
   const [isValidatingPromo, setIsValidatingPromo] = useState<boolean>(false);
