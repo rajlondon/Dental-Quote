@@ -901,13 +901,12 @@ function Router() {
         {(params) => <PatientTreatmentPlanPage />}
       </Route>
       
-      {/* Patient quotes section */}
+      {/* Patient quotes section - Enhanced with Flask integration */}
       <Route path="/patient/quotes" component={() => {
-        // Use dynamic import to avoid circular dependency issues
-        const PatientQuotesWrapper = React.lazy(() => import("@/components/patient/PatientQuotesWrapper"));
+        // Use our enhanced PatientQuotesPage that integrates with Flask backend
         return (
-          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading...</div>}>
-            <PatientQuotesWrapper />
+          <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading quotes...</div>}>
+            <PatientQuotesPage />
           </Suspense>
         );
       }} />
@@ -927,9 +926,9 @@ function Router() {
       {/* Patient Quote Detail Page */}
       <Route path="/patient/quotes/:id">
         {(params) => {
-          const PatientQuoteDetailPage = React.lazy(() => import("@/pages/patient/PatientQuoteDetailPage"));
+          // Import our enhanced PatientQuoteDetailPage that uses the QuoteIntegrationWidget
           return (
-            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading details...</div>}>
+            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading quote details...</div>}>
               <PatientQuoteDetailPage />
             </Suspense>
           );
