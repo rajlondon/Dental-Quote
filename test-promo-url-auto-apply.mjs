@@ -6,210 +6,261 @@
  * 2. Invalid promo code shows error message
  * 3. Promo code persists throughout quote flow
  */
+
 import fetch from 'node-fetch';
-import { v4 as uuidv4 } from 'uuid';
-import 'dotenv/config';
+import { JSDOM } from 'jsdom';
 
 // Configuration
-const API_BASE_URL = 'http://localhost:5000/api';
-const TEST_PROMO_CODE = 'TESTPROMO25';
-const INVALID_PROMO_CODE = 'INVALIDCODE';
+const API_BASE_URL = 'http://localhost:3000/api/quote/integration';
+const APP_URL = 'http://localhost:3000/quote-builder?code=';
 
-// Utility functions
+// Utility for console logging
 function log(message, type = 'info') {
-  const prefix = type === 'error' ? '❌ ERROR:' : 
-                 type === 'success' ? '✅ SUCCESS:' : 
-                 'ℹ️ INFO:';
-  console.log(`${prefix} ${message}`);
+  const colors = {
+    info: '\x1b[36m', // Cyan
+    success: '\x1b[32m', // Green
+    error: '\x1b[31m', // Red
+    warning: '\x1b[33m', // Yellow
+    reset: '\x1b[0m' // Reset
+  };
+  
+  console.log(`${colors[type]}${message}${colors.reset}`);
 }
 
-// Create a test quote for applying promos
+// Create a test quote with a treatment
 async function createTestQuote() {
   try {
-    const quoteData = {
-      patientId: 1,
-      clinicId: "1",
-      status: "draft",
-      totalPrice: 1000,
-      currency: "GBP",
-      subtotal: 1000,
-      total: 1000
-    };
-    
-    const response = await fetch(`${API_BASE_URL}/quotes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(quoteData)
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to create test quote: ${response.statusText}`);
-    }
-    
-    const quote = await response.json();
-    log(`Created test quote with ID: ${quote.id}`, 'success');
-    return quote.id;
-  } catch (error) {
-    log(`Error creating test quote: ${error.message}`, 'error');
-    // Generate a fallback UUID if we can't create a real quote
-    const fallbackId = uuidv4();
-    log(`Using fallback quote ID: ${fallbackId}`, 'info');
-    return fallbackId;
-  }
-}
-
-// Test valid promo code application via URL
-async function testValidPromoCode() {
-  try {
-    log('Testing valid promo code application via URL', 'info');
-    
-    // Create a test quote
-    const quoteId = await createTestQuote();
-    
-    // Simulate request that would happen when user visits URL with code parameter
-    const response = await fetch(`${API_BASE_URL}/promo/apply/${quoteId}?code=${TEST_PROMO_CODE}`, {
+    // Initialize a new quote
+    log('Initializing a new quote session...', 'info');
+    const initResponse = await fetch(`${API_BASE_URL}/initialize`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
     
-    if (!response.ok) {
-      throw new Error(`Failed to apply promo code: ${response.statusText}`);
+    if (!initResponse.ok) {
+      throw new Error(`Failed to initialize quote: ${initResponse.statusText}`);
     }
     
-    const result = await response.json();
+    log('✓ Successfully initialized quote session', 'success');
     
-    if (result.success && result.discount > 0) {
-      log(`Promo code ${TEST_PROMO_CODE} successfully applied with discount: ${result.discount}`, 'success');
-      return true;
-    } else {
-      log(`Promo code application did not return expected discount`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`Error testing valid promo code: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Test invalid promo code via URL
-async function testInvalidPromoCode() {
-  try {
-    log('Testing invalid promo code rejection', 'info');
-    
-    // Create a test quote
-    const quoteId = await createTestQuote();
-    
-    // Simulate request with invalid code
-    const response = await fetch(`${API_BASE_URL}/promo/apply/${quoteId}?code=${INVALID_PROMO_CODE}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    // For invalid codes, we expect a 400 or similar error response
-    if (response.status >= 400) {
-      log(`Invalid promo code correctly rejected with status: ${response.status}`, 'success');
-      return true;
-    } else {
-      const result = await response.json();
-      log(`Invalid promo code was not properly rejected: ${JSON.stringify(result)}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    // In this case, an error means our test passed (invalid code was rejected)
-    log(`Expected error received for invalid code: ${error.message}`, 'success');
-    return true;
-  }
-}
-
-// Test persistence of promo code throughout quote flow
-async function testPromoCodePersistence() {
-  try {
-    log('Testing promo code persistence through quote flow', 'info');
-    
-    // Create a test quote
-    const quoteId = await createTestQuote();
-    
-    // Apply a valid promo code
-    const applyResponse = await fetch(`${API_BASE_URL}/promo/apply/${quoteId}?code=${TEST_PROMO_CODE}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    if (!applyResponse.ok) {
-      throw new Error(`Failed to apply promo code: ${applyResponse.statusText}`);
-    }
-    
-    // Now retrieve the quote to check if the promo code was persisted
-    const getResponse = await fetch(`${API_BASE_URL}/quotes/${quoteId}`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' }
-    });
-    
-    if (!getResponse.ok) {
-      throw new Error(`Failed to retrieve quote: ${getResponse.statusText}`);
-    }
-    
-    const quote = await getResponse.json();
-    
-    // Verify the promo code was saved to the quote
-    if (quote.promoCode === TEST_PROMO_CODE) {
-      log(`Promo code correctly persisted in quote: ${quote.promoCode}`, 'success');
-      return true;
-    } else {
-      log(`Promo code not persisted correctly. Expected: ${TEST_PROMO_CODE}, Got: ${quote.promoCode || 'null'}`, 'error');
-      return false;
-    }
-  } catch (error) {
-    log(`Error testing promo code persistence: ${error.message}`, 'error');
-    return false;
-  }
-}
-
-// Main test function
-async function runTests() {
-  log('Starting URL Auto-Apply promo code tests', 'info');
-  
-  // Ensure the test promo code exists
-  try {
-    const createPromoResponse = await fetch(`${API_BASE_URL}/promo/codes`, {
+    // Add a test treatment to the quote
+    log('Adding a test treatment to the quote...', 'info');
+    const addTreatmentResponse = await fetch(`${API_BASE_URL}/add-treatment`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        code: TEST_PROMO_CODE,
-        discountType: 'percentage',
-        discountValue: 25,
-        maxUses: 100,
-        expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days from now
-        isActive: true
+        treatmentId: 'dental_implant_standard',
+        quantity: 1
       })
     });
     
-    if (createPromoResponse.ok) {
-      log(`Test promo code ${TEST_PROMO_CODE} created successfully`, 'success');
-    } else if (createPromoResponse.status === 409) {
-      log(`Test promo code ${TEST_PROMO_CODE} already exists, continuing with tests`, 'info');
-    } else {
-      throw new Error(`Failed to create test promo code: ${createPromoResponse.statusText}`);
+    if (!addTreatmentResponse.ok) {
+      throw new Error(`Failed to add treatment: ${addTreatmentResponse.statusText}`);
     }
+    
+    const addTreatmentData = await addTreatmentResponse.json();
+    log(`✓ Successfully added treatment, subtotal: ${addTreatmentData.subtotal}`, 'success');
+    
+    return addTreatmentData;
   } catch (error) {
-    log(`Error setting up test promo code: ${error.message}`, 'error');
-    // Continue with tests anyway, the code might already exist
+    log(`Error creating test quote: ${error.message}`, 'error');
+    throw error;
   }
-  
-  // Run all tests
-  const validPromoResult = await testValidPromoCode();
-  const invalidPromoResult = await testInvalidPromoCode();
-  const persistenceResult = await testPromoCodePersistence();
-  
-  // Summarize results
-  log('\n===== TEST RESULTS =====', 'info');
-  log(`Valid Promo Code Test: ${validPromoResult ? 'PASSED ✅' : 'FAILED ❌'}`, validPromoResult ? 'success' : 'error');
-  log(`Invalid Promo Code Test: ${invalidPromoResult ? 'PASSED ✅' : 'FAILED ❌'}`, invalidPromoResult ? 'success' : 'error');
-  log(`Persistence Test: ${persistenceResult ? 'PASSED ✅' : 'FAILED ❌'}`, persistenceResult ? 'success' : 'error');
-  
-  const allPassed = validPromoResult && invalidPromoResult && persistenceResult;
-  log(`\nOverall Test Result: ${allPassed ? 'ALL TESTS PASSED ✅' : 'SOME TESTS FAILED ❌'}`, allPassed ? 'success' : 'error');
 }
 
-// Run the tests
+// Test valid promo code in URL
+async function testValidPromoCode() {
+  log('=== Testing Valid Promo Code in URL ===', 'info');
+  
+  try {
+    // Create a test quote with a treatment
+    await createTestQuote();
+    
+    // Simulate accessing the URL with a valid promo code
+    const validPromoCode = 'DENTAL25';
+    log(`Simulating URL access with valid promo code: ${validPromoCode}`, 'info');
+    
+    // Simulate the auto-apply functionality by directly applying the promo code
+    const applyPromoResponse = await fetch(`${API_BASE_URL}/apply-promo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoCode: validPromoCode })
+    });
+    
+    if (!applyPromoResponse.ok) {
+      throw new Error(`Failed to apply promo code: ${applyPromoResponse.statusText}`);
+    }
+    
+    const promoData = await applyPromoResponse.json();
+    
+    if (promoData.promoCode === validPromoCode) {
+      log(`✓ Successfully auto-applied promo code "${validPromoCode}" from URL`, 'success');
+      log(`  Subtotal: ${promoData.subtotal}`, 'info');
+      log(`  Discount: ${promoData.discountAmount}`, 'info');
+      log(`  Total: ${promoData.total}`, 'info');
+      return true;
+    } else {
+      throw new Error(`Promo code was not properly applied from URL. Applied: ${promoData.promoCode}`);
+    }
+  } catch (error) {
+    log(`Error in testValidPromoCode: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Test invalid promo code in URL
+async function testInvalidPromoCode() {
+  log('=== Testing Invalid Promo Code in URL ===', 'info');
+  
+  try {
+    // Create a test quote with a treatment
+    await createTestQuote();
+    
+    // Simulate accessing the URL with an invalid promo code
+    const invalidPromoCode = 'INVALID123';
+    log(`Simulating URL access with invalid promo code: ${invalidPromoCode}`, 'info');
+    
+    // Simulate the auto-apply functionality by directly applying the promo code
+    const applyPromoResponse = await fetch(`${API_BASE_URL}/apply-promo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoCode: invalidPromoCode })
+    });
+    
+    if (applyPromoResponse.status === 400 || applyPromoResponse.status === 404) {
+      log(`✓ Successfully rejected invalid promo code with status: ${applyPromoResponse.status}`, 'success');
+      return true;
+    } else if (applyPromoResponse.ok) {
+      throw new Error(`Invalid promo code "${invalidPromoCode}" was incorrectly accepted.`);
+    } else {
+      throw new Error(`Unexpected response: ${applyPromoResponse.statusText}`);
+    }
+  } catch (error) {
+    log(`Error in testInvalidPromoCode: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Test promo code persistence throughout quote flow
+async function testPromoCodePersistence() {
+  log('=== Testing Promo Code Persistence ===', 'info');
+  
+  try {
+    // Create a test quote with a treatment
+    await createTestQuote();
+    
+    // Apply a promo code to simulate URL auto-apply
+    const promoCode = 'DENTAL25';
+    log(`Applying promo code "${promoCode}" to simulate URL auto-apply`, 'info');
+    
+    const applyPromoResponse = await fetch(`${API_BASE_URL}/apply-promo`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ promoCode })
+    });
+    
+    if (!applyPromoResponse.ok) {
+      throw new Error(`Failed to apply promo code: ${applyPromoResponse.statusText}`);
+    }
+    
+    // Check the state to confirm promo code is applied
+    log('Checking quote state to verify promo code is applied', 'info');
+    const stateResponse = await fetch(`${API_BASE_URL}/state`, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    if (!stateResponse.ok) {
+      throw new Error(`Failed to get quote state: ${stateResponse.statusText}`);
+    }
+    
+    const stateData = await stateResponse.json();
+    
+    if (stateData.promoCode === promoCode) {
+      log(`✓ Promo code "${promoCode}" is correctly stored in quote state`, 'success');
+      
+      // Add another treatment to simulate user interaction
+      log('Adding another treatment to simulate user interaction', 'info');
+      const addTreatmentResponse = await fetch(`${API_BASE_URL}/add-treatment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          treatmentId: 'porcelain_veneers',
+          quantity: 2
+        })
+      });
+      
+      if (!addTreatmentResponse.ok) {
+        throw new Error(`Failed to add second treatment: ${addTreatmentResponse.statusText}`);
+      }
+      
+      // Check the state again to see if promo code is still applied
+      log('Checking quote state again to verify promo code persistence', 'info');
+      const secondStateResponse = await fetch(`${API_BASE_URL}/state`, {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!secondStateResponse.ok) {
+        throw new Error(`Failed to get second quote state: ${secondStateResponse.statusText}`);
+      }
+      
+      const secondStateData = await secondStateResponse.json();
+      
+      if (secondStateData.promoCode === promoCode) {
+        log(`✓ Promo code "${promoCode}" persists after user interaction`, 'success');
+        log(`  New subtotal: ${secondStateData.subtotal}`, 'info');
+        log(`  New discount: ${secondStateData.discountAmount}`, 'info');
+        log(`  New total: ${secondStateData.total}`, 'info');
+        return true;
+      } else {
+        throw new Error(`Promo code was lost after user interaction. Now: ${secondStateData.promoCode}`);
+      }
+    } else {
+      throw new Error(`Promo code was not properly stored in quote state. Found: ${stateData.promoCode}`);
+    }
+  } catch (error) {
+    log(`Error in testPromoCodePersistence: ${error.message}`, 'error');
+    return false;
+  }
+}
+
+// Run all tests
+async function runTests() {
+  log('Starting URL Auto-Apply Promo Code Tests...', 'info');
+  
+  let failures = 0;
+  
+  // Test 1: Valid promo code in URL
+  if (await testValidPromoCode()) {
+    log('Test 1 PASSED: Valid promo code in URL', 'success');
+  } else {
+    log('Test 1 FAILED: Valid promo code in URL', 'error');
+    failures++;
+  }
+  
+  // Test 2: Invalid promo code in URL
+  if (await testInvalidPromoCode()) {
+    log('Test 2 PASSED: Invalid promo code in URL', 'success');
+  } else {
+    log('Test 2 FAILED: Invalid promo code in URL', 'error');
+    failures++;
+  }
+  
+  // Test 3: Promo code persistence
+  if (await testPromoCodePersistence()) {
+    log('Test 3 PASSED: Promo code persistence', 'success');
+  } else {
+    log('Test 3 FAILED: Promo code persistence', 'error');
+    failures++;
+  }
+  
+  log(`\nTest Summary: ${failures} failures out of 3 tests`, failures > 0 ? 'error' : 'success');
+  
+  if (failures > 0) {
+    process.exit(1);
+  } else {
+    process.exit(0);
+  }
+}
+
+// Execute the tests
 runTests();
