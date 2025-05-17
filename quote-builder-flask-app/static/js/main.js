@@ -226,20 +226,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update UI without page refresh
-                const promoDisplayEl = document.querySelector('.promo-code-display');
-                if (promoDisplayEl) {
-                    promoDisplayEl.innerHTML = '';
-                    promoDisplayEl.style.display = 'none';
-                }
-                
-                const removePromoBtn = document.querySelector('.remove-promo-btn');
-                if (removePromoBtn) {
-                    removePromoBtn.style.display = 'none';
-                }
-                
-                // Update totals
-                updateTotals(data.totals);
+                // Reload the page to show the updated UI without the promo code
+                window.location.href = '/quote-builder';
             }
         })
         .catch(error => console.error('Error removing promo code:', error));
