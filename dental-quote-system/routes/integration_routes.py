@@ -1,161 +1,130 @@
 """
-Integration Routes for Dental Quote System
-Handles API endpoints for integration with other systems
+Integration Routes Module
+Handles integration with external systems for the dental quote system
 """
+from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
+import json
+import os
+import uuid
+from datetime import datetime
 
-from flask import Blueprint, request, jsonify, session
-from utils.session_manager import SessionManager
-from services.promo_service import PromoService
+# Import utilities
+from utils.session_manager import get_treatments, get_patient_info, calculate_totals
 
+# Create blueprint
 integration_routes = Blueprint('integration_routes', __name__)
 
-@integration_routes.route('/api/export-quote-data', methods=['GET'])
-def export_quote_data():
-    """
-    Export the current quote data for integration with other systems
+@integration_routes.route('/api/quote-data')
+def get_quote_data():
+    """API endpoint to get current quote data as JSON."""
+    # Get data from session
+    treatments = get_treatments()
+    patient_info = get_patient_info()
+    subtotal, discount, total = calculate_totals()
     
-    Returns:
-        JSON: The complete quote data including treatments, promo, and patient info
-    """
-    # Initialize session if needed
-    SessionManager.initialize_session()
-    
-    # Get all session data
-    treatments = SessionManager.get_treatments()
-    promo_details = SessionManager.get_promo_details()
-    patient_info = SessionManager.get_patient_info()
-    
-    # Generate quote reference if needed
-    quote_ref = session.get('quote_ref')
-    if not quote_ref:
-        import random
-        import string
-        quote_ref = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
-        session['quote_ref'] = quote_ref
-    
-    # If there's a special offer, get additional details
-    special_offer = None
-    if promo_details:
-        special_offer = PromoService.get_special_offer_by_promo_code(promo_details.get('code', ''))
-    
-    # Calculate totals
-    subtotal = sum(t.get('price', 0) for t in treatments)
-    discount = 0
-    
-    if promo_details:
-        if promo_details.get('type') == 'percentage':
-            discount = (subtotal * promo_details.get('value', 0)) / 100
-        else:
-            discount = min(promo_details.get('value', 0), subtotal)
-    
-    total = max(0, subtotal - discount)
-    
-    # Build response
-    response = {
-        'quote_ref': quote_ref,
-        'created_at': session.get('session_meta', {}).get('created'),
+    # Build response data
+    data = {
+        'quote_ref': session.get('quote_ref'),
         'treatments': treatments,
-        'promo': promo_details,
         'patient_info': patient_info,
-        'special_offer': special_offer,
-        'totals': {
+        'promo_code': session.get('promo_code'),
+        'promo_details': session.get('promo_details'),
+        'pricing': {
             'subtotal': subtotal,
             'discount': discount,
             'total': total
-        }
+        },
+        'created_at': session.get('created_at')
     }
     
-    return jsonify(response)
+    return jsonify(data)
 
-@integration_routes.route('/api/import-quote-data', methods=['POST'])
-def import_quote_data():
-    """
-    Import quote data from external systems
+@integration_routes.route('/api/save-quote', methods=['POST'])
+def save_quote():
+    """API endpoint to save quote to external system."""
+    # In a real implementation, this would connect to an external API
+    # or database to save the quote data
     
-    This endpoint accepts a JSON payload containing treatments, promo code, and patient info
+    # Get data from session
+    treatments = get_treatments()
+    patient_info = get_patient_info()
+    subtotal, discount, total = calculate_totals()
     
-    Returns:
-        JSON: Success status and imported data
-    """
-    # Initialize session if needed
-    SessionManager.initialize_session()
-    
-    # Get import data
-    import_data = request.get_json()
-    
-    if not import_data:
+    # Check if we have required data
+    if not treatments:
         return jsonify({
             'success': False,
-            'error': 'No data provided'
+            'message': 'Cannot save an empty quote. Please add at least one treatment.'
         }), 400
     
-    # Clear existing data
-    SessionManager.reset_session()
+    if not patient_info.get('name') or not patient_info.get('email'):
+        return jsonify({
+            'success': False,
+            'message': 'Patient information is incomplete. Please provide name and email.'
+        }), 400
     
-    # Import treatments
-    if 'treatments' in import_data:
-        for treatment in import_data['treatments']:
-            SessionManager.add_treatment(treatment)
-    
-    # Import promo code
-    if 'promo_code' in import_data and import_data['promo_code']:
-        promo_details = PromoService.validate_promo_code(import_data['promo_code'])
-        if promo_details:
-            SessionManager.apply_promo_code(promo_details)
-    
-    # Import patient info
-    if 'patient_info' in import_data:
-        SessionManager.update_patient_info(import_data['patient_info'])
-    
-    # Get current data to return
-    treatments = SessionManager.get_treatments()
-    promo_details = SessionManager.get_promo_details()
-    patient_info = SessionManager.get_patient_info()
-    
-    return jsonify({
-        'success': True,
-        'message': 'Quote data imported successfully',
-        'data': {
-            'treatments': treatments,
-            'promo': promo_details,
-            'patient_info': patient_info
-        }
-    })
-
-@integration_routes.route('/api/quote-summary', methods=['GET'])
-def quote_summary():
-    """
-    Get a summary of the current quote data
-    
-    Returns:
-        JSON: A summary of the quote data
-    """
-    # Initialize session if needed
-    SessionManager.initialize_session()
-    
-    # Get session data
-    treatments = SessionManager.get_treatments()
-    promo_details = SessionManager.get_promo_details()
-    
-    # Calculate totals
-    subtotal = sum(t.get('price', 0) for t in treatments)
-    discount = 0
-    
-    if promo_details:
-        if promo_details.get('type') == 'percentage':
-            discount = (subtotal * promo_details.get('value', 0)) / 100
-        else:
-            discount = min(promo_details.get('value', 0), subtotal)
-    
-    total = max(0, subtotal - discount)
-    
-    # Build response
-    response = {
-        'treatment_count': len(treatments),
-        'has_promo': promo_details is not None,
-        'subtotal': subtotal,
-        'discount': discount,
-        'total': total
+    # Build quote data for saving
+    quote_data = {
+        'quote_ref': session.get('quote_ref'),
+        'treatments': treatments,
+        'patient_info': patient_info,
+        'promo_code': session.get('promo_code'),
+        'promo_details': session.get('promo_details'),
+        'pricing': {
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total
+        },
+        'created_at': session.get('created_at'),
+        'saved_at': datetime.now().isoformat()
     }
     
-    return jsonify(response)
+    # In a real implementation, we would save this data to an external system
+    # For now, simulate a successful save
+    
+    # Return success response
+    return jsonify({
+        'success': True,
+        'message': 'Quote saved successfully!',
+        'quote_ref': session.get('quote_ref')
+    })
+
+@integration_routes.route('/api/send-quote-email', methods=['POST'])
+def send_quote_email():
+    """API endpoint to send quote via email."""
+    # In a real implementation, this would send an email with the quote details
+    
+    # Get data from session
+    patient_info = get_patient_info()
+    
+    # Check if we have required data
+    if not patient_info.get('email'):
+        return jsonify({
+            'success': False,
+            'message': 'Patient email is required to send the quote.'
+        }), 400
+    
+    # In a real implementation, we would send an email here
+    # For now, simulate a successful email send
+    
+    # Return success response
+    return jsonify({
+        'success': True,
+        'message': f'Quote sent to {patient_info.get("email")} successfully!',
+        'quote_ref': session.get('quote_ref')
+    })
+
+@integration_routes.route('/api/export-pdf')
+def export_pdf():
+    """API endpoint to export quote as PDF."""
+    # In a real implementation, this would generate a PDF and return it
+    
+    # Check if we have required data
+    treatments = get_treatments()
+    if not treatments:
+        flash('Cannot export an empty quote. Please add at least one treatment.', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # For now, just redirect to the review page with a success message
+    flash('PDF export feature will be available soon!', 'info')
+    return redirect(url_for('page_routes.review_quote'))
