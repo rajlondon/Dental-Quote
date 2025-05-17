@@ -1,113 +1,112 @@
-from flask import Flask, render_template, session
-import os
+"""
+Dental Quote System - Main Application
+Flask application for dental quote creation with special offers and promo codes
+"""
+
+from flask import Flask, render_template, request, redirect, url_for, session
 import uuid
-import datetime
+import os
+import logging
+from datetime import timedelta
+import random
 from routes.page_routes import page_routes
 from routes.promo_routes import promo_routes
 from routes.integration_routes import integration_routes
+from utils.session_manager import SessionManager
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 # Create Flask application
 app = Flask(__name__)
 
-# Configure application
+# Configure app
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', str(uuid.uuid4()))
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
-app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable caching for development
 
-# Custom Jinja2 template filters
-@app.template_filter('timestamp_to_date')
-def timestamp_to_date(timestamp):
-    """Convert a Unix timestamp to a formatted date string"""
-    if not timestamp:
-        return "N/A"
-    
-    try:
-        dt = datetime.datetime.fromtimestamp(timestamp)
-        return dt.strftime('%B %d, %Y')
-    except (ValueError, TypeError):
-        return "Invalid date"
+# Add Cache-Control headers for all responses
+@app.after_request
+def add_cache_control(response):
+    """Add Cache-Control headers to prevent caching issues"""
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
 
-@app.template_filter('format_currency')
-def format_currency(value):
-    """Format a number as currency with $ symbol"""
-    if not value:
-        return "$0.00"
-    
-    try:
-        return "${:,.2f}".format(float(value))
-    except (ValueError, TypeError):
-        return "$0.00"
-
-# Register blueprints
+# Register route blueprints
 app.register_blueprint(page_routes)
 app.register_blueprint(promo_routes)
 app.register_blueprint(integration_routes)
 
-# Home route
-@app.route('/')
-def index():
-    """Home page - redirects to quote builder"""
-    return render_template('index.html')
+# Custom Jinja2 filters
+@app.template_filter('currency')
+def currency_filter(value):
+    """Format a value as currency"""
+    if value is None:
+        return "$0.00"
+    return "${:,.2f}".format(value)
+
+@app.template_filter('session_id_short')
+def session_id_short_filter(value):
+    """Truncate session ID for display"""
+    if not value or len(value) < 8:
+        return value
+    return value[:8] + '...'
 
 # Error handlers
 @app.errorhandler(404)
-def not_found(error):
+def page_not_found(e):
+    """Handle 404 errors"""
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(500)
-def server_error(error):
+def server_error(e):
+    """Handle 500 errors"""
+    logger.error(f"Server error: {str(e)}")
     return render_template('errors/500.html'), 500
 
-# Special routes for health checks and testing
-@app.route('/health')
-def health_check():
-    """Health check endpoint"""
-    return {'status': 'healthy'}
-
-@app.route('/session-check')
-def session_check():
-    """Check if session is working"""
-    if 'visit_count' not in session:
-        session['visit_count'] = 1
-    else:
-        session['visit_count'] += 1
-    
+# API Route for session status
+@app.route('/api/session-status')
+def session_status():
+    """Return session status for frontend monitoring"""
+    SessionManager.update_activity()
+    metadata = SessionManager.get_session_metadata()
     return {
-        'session_working': True,
-        'visit_count': session['visit_count']
+        'success': True,
+        'data': metadata
     }
 
-@app.context_processor
-def utility_processor():
-    """Add utility functions to template context"""
-    def calculate_subtotal(treatments):
-        """Calculate the subtotal of all treatments"""
-        return sum(treatment.get('price', 0) for treatment in treatments)
-    
-    def calculate_discount(subtotal, discount_percent):
-        """Calculate the discount amount"""
-        if not discount_percent:
-            return 0
-        return (subtotal * discount_percent) / 100
-    
-    def calculate_total(subtotal, discount):
-        """Calculate the total after discount"""
-        return subtotal - discount
-    
-    return dict(
-        calculate_subtotal=calculate_subtotal,
-        calculate_discount=calculate_discount,
-        calculate_total=calculate_total
-    )
+# Setup route - only for initialization
+@app.route('/setup')
+def setup():
+    """Initialize application data"""
+    try:
+        # Create directories if they don't exist
+        os.makedirs('static/uploads', exist_ok=True)
+        
+        # Initialize random seed
+        random.seed()
+        
+        return {
+            'success': True,
+            'message': 'Application initialized successfully'
+        }
+    except Exception as e:
+        logger.error(f"Setup error: {str(e)}")
+        return {
+            'success': False,
+            'error': str(e)
+        }
 
 if __name__ == '__main__':
-    # Create required directories
-    os.makedirs('templates', exist_ok=True)
-    os.makedirs('static', exist_ok=True)
-    os.makedirs('templates/quote', exist_ok=True)
-    os.makedirs('templates/errors', exist_ok=True)
-    
-    # Run the application
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5001)), debug=True)
+    # Run Flask application
+    app.run(host='0.0.0.0', port=8080, debug=True)
