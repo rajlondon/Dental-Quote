@@ -42,9 +42,9 @@
                     {% if quote_data.discount > 0 %}
                     <div class="total-row discount">
                         <span>Discount - {{ quote_data.promo_code }} ({{ quote_data.discount }}%):</span>
-                        <span>
+                        <span class="discount-value">
                             -${{ "%.2f"|format(totals.discount_amount) }}
-                            <button class="remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px;">✕</button>
+                            <button class="btn remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px; background-color: #dc3545; color: white; border: none; border-radius: 4px;">Remove</button>
                         </span>
                     </div>
                     {% endif %}
@@ -173,9 +173,9 @@
                         {% if quote_data.discount > 0 %}
                         <div class="total-row discount">
                             <span>Discount - {{ quote_data.promo_code }} ({{ quote_data.discount }}%):</span>
-                            <span>
+                            <span class="discount-value">
                                 -${{ "%.2f"|format(totals.discount_amount) }}
-                                <button class="remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px;">✕</button>
+                                <button class="btn remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px; background-color: #dc3545; color: white; border: none; border-radius: 4px;">Remove</button>
                             </span>
                         </div>
                         {% endif %}
