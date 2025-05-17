@@ -1427,6 +1427,7 @@ function App() {
                         </NavigationProvider>
                       </PageTransitionProvider>
                     </SpecialOffersProvider>
+                  </PersistentQuoteProvider>
                   </QuoteFlowProvider>
                 </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
