@@ -44,31 +44,21 @@ export default function EnhancedQuotePage() {
   
   // Handle completion of treatment quiz
   const handleQuizComplete = (dentalChartData: any, quizTreatments: any[]) => {
-    setIsLoading(true);
-    setCompletedQuiz(true);
+    // Process treatment data - do this silently without loading indicators or toasts
+    // Add all treatments to the quote store
+    resetQuote(); // Clear any previous treatments
+    quizTreatments.forEach(treatment => {
+      addTreatment({
+        id: treatment.id || `treatment-${Math.random().toString(36).substring(2, 9)}`,
+        name: treatment.name,
+        description: treatment.description || '',
+        price: treatment.priceGBP || 0,
+        quantity: treatment.quantity || 1
+      });
+    });
     
-    // Process treatment data
-    setTimeout(() => {
-      // Add all treatments to the quote store
-      resetQuote(); // Clear any previous treatments
-      quizTreatments.forEach(treatment => {
-        addTreatment({
-          id: treatment.id || `treatment-${Math.random().toString(36).substring(2, 9)}`,
-          name: treatment.name,
-          description: treatment.description || '',
-          price: treatment.priceGBP || 0,
-          quantity: treatment.quantity || 1
-        });
-      });
-      
-      setCurrentStep('promo');
-      setIsLoading(false);
-      
-      toast({
-        title: "Treatment Plan Created",
-        description: "Your treatment plan has been created. Now let's see if you qualify for any special discounts!",
-      });
-    }, 1000);
+    // Set completed quiz flag for UI state
+    setCompletedQuiz(true);
   };
   
   // Handle promo code submission
