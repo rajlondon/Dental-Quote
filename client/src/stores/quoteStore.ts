@@ -444,7 +444,7 @@ export const useQuoteStore = create<QuoteState>()(
     }),
     {
       name: 'dental-quote-storage',
-      // Only persist essential data
+      // Persist all important data
       partialize: (state) => ({
         treatments: state.treatments,
         promoCode: state.promoCode,
@@ -452,8 +452,39 @@ export const useQuoteStore = create<QuoteState>()(
         patientInfo: state.patientInfo,
         currentStep: state.currentStep,
         selectedPackage: state.selectedPackage,
-        selectedOffer: state.selectedOffer
-      })
+        selectedOffer: state.selectedOffer,
+        subtotal: state.subtotal,
+        discount: state.discount,
+        total: state.total,
+        success: state.success
+      }),
+      // Ensure storage is set up before hydration
+      storage: {
+        getItem: (name) => {
+          try {
+            const str = localStorage.getItem(name);
+            if (!str) return null;
+            return JSON.parse(str);
+          } catch (e) {
+            console.error('Error retrieving quote state from localStorage:', e);
+            return null;
+          }
+        },
+        setItem: (name, value) => {
+          try {
+            localStorage.setItem(name, JSON.stringify(value));
+          } catch (e) {
+            console.error('Error storing quote state to localStorage:', e);
+          }
+        },
+        removeItem: (name) => {
+          try {
+            localStorage.removeItem(name);
+          } catch (e) {
+            console.error('Error removing quote state from localStorage:', e);
+          }
+        },
+      }
     }
   )
 );

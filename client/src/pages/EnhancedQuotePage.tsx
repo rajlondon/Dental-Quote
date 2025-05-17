@@ -136,8 +136,18 @@ export default function EnhancedQuotePage() {
   
   // Handle final quote submission
   const handleSubmitQuote = async () => {
-    // Save the quote
-    await saveQuote();
+    // Save the quote with current data
+    const quoteData = {
+      treatments,
+      subtotal: calculateSubtotal(),
+      discount: calculateDiscount(),
+      total: calculateTotal(),
+      promoCode,
+      patientInfo
+    };
+    
+    // Submit the quote
+    await saveQuote(quoteData);
     
     toast({
       title: "Quote Submitted",
