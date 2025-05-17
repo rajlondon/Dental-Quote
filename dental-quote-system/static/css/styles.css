@@ -1,28 +1,6 @@
-/* 
-Dental Quote System Styles
-Enhanced version with improved UI and responsive design
-*/
+/* Main Styles for Dental Quote System */
 
-/* Root Variables */
-:root {
-    --primary-color: #00a6c0;
-    --primary-dark: #0089a1;
-    --secondary-color: #5c6bc0;
-    --accent-color: #ff6e40;
-    --success-color: #4caf50;
-    --warning-color: #ffb74d;
-    --error-color: #f44336;
-    --text-color: #333;
-    --text-light: #777;
-    --bg-color: #fff;
-    --bg-light: #f5f5f5;
-    --border-color: #ddd;
-    --border-radius: 4px;
-    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
-}
-
-/* Global Styles */
+/* Reset and Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -30,568 +8,818 @@ Enhanced version with improved UI and responsive design
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Arial', sans-serif;
     line-height: 1.6;
-    color: var(--text-color);
-    background-color: var(--bg-light);
-    min-height: 100vh;
-}
-
-h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    color: var(--text-color);
-}
-
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-    transition: var(--transition);
-}
-
-a:hover {
-    color: var(--primary-dark);
+    color: #333;
+    background-color: #f5f7fa;
 }
 
 .container {
-    width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 20px;
 }
 
-/* Button Styles */
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.5em;
+    color: #1a365d;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+h4 {
+    font-size: 1.25rem;
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+/* Buttons */
 .btn {
     display: inline-block;
-    padding: 0.5rem 1.25rem;
-    font-size: 1rem;
-    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 600;
     text-align: center;
-    border: none;
-    border-radius: var(--border-radius);
+    text-decoration: none;
     cursor: pointer;
-    transition: var(--transition);
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    box-shadow: var(--shadow);
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    border: none;
 }
 
 .btn-primary {
-    background-color: var(--primary-color);
+    background-color: #3182ce;
     color: white;
 }
 
 .btn-primary:hover {
-    background-color: var(--primary-dark);
+    background-color: #2b6cb0;
 }
 
 .btn-secondary {
-    background-color: var(--secondary-color);
+    background-color: #718096;
     color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #4a5568;
 }
 
 .btn-accent {
-    background-color: var(--accent-color);
+    background-color: #e53e3e;
     color: white;
 }
 
-.btn-success {
-    background-color: var(--success-color);
+.btn-accent:hover {
+    background-color: #c53030;
+}
+
+.btn-add {
+    background-color: #38a169;
     color: white;
+    padding: 8px 16px;
+    font-size: 0.9rem;
 }
 
-.btn-warning {
-    background-color: var(--warning-color);
+.btn-add:hover {
+    background-color: #2f855a;
+}
+
+.btn-remove {
+    background-color: #e53e3e;
     color: white;
+    padding: 6px 12px;
+    font-size: 0.8rem;
 }
 
-.btn-error {
-    background-color: var(--error-color);
+.btn-remove:hover {
+    background-color: #c53030;
+}
+
+.btn-apply {
+    background-color: #3182ce;
     color: white;
+    padding: 8px 16px;
+    font-size: 0.9rem;
 }
 
-.btn-outline {
-    background-color: transparent;
-    border: 1px solid var(--primary-color);
-    color: var(--primary-color);
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
 }
 
-.btn-outline:hover {
-    background-color: var(--primary-color);
-    color: white;
-}
-
-.btn-small {
-    padding: 0.25rem 0.75rem;
-    font-size: 0.85rem;
-}
-
-.btn-large {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.1rem;
-}
-
-.btn-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.btn-icon i {
-    margin-right: 0.5rem;
-}
-
-.btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-
-/* Form Styles */
+/* Forms */
 .form-group {
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
-.form-label {
+label {
     display: block;
     margin-bottom: 0.5rem;
-    font-weight: 500;
+    font-weight: 600;
 }
 
-.form-control {
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+textarea,
+select {
     width: 100%;
-    padding: 0.75rem;
+    padding: 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
     font-size: 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--bg-color);
-    transition: var(--transition);
+    transition: border-color 0.3s ease;
 }
 
-.form-control:focus {
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+select:focus {
+    border-color: #3182ce;
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 166, 192, 0.2);
 }
 
-.form-error {
-    color: var(--error-color);
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+/* Header */
+.site-header {
+    background-color: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem 0;
 }
 
-.form-success {
-    color: var(--success-color);
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-}
-
-/* Flash Messages */
-.flash-messages {
-    margin-bottom: 1.5rem;
-}
-
-.flash-message {
-    padding: 0.75rem 1rem;
-    margin-bottom: 0.5rem;
-    border-radius: var(--border-radius);
-    border-left: 4px solid var(--primary-color);
-    background-color: var(--bg-color);
-    box-shadow: var(--shadow);
-}
-
-.flash-success {
-    border-left-color: var(--success-color);
-}
-
-.flash-warning {
-    border-left-color: var(--warning-color);
-}
-
-.flash-error {
-    border-left-color: var(--error-color);
-}
-
-/* Card Styles */
-.card {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
-    transition: var(--transition);
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-    padding: 1.25rem;
-    border-bottom: 1px solid var(--border-color);
-    background-color: var(--bg-light);
-}
-
-.card-body {
-    padding: 1.25rem;
-}
-
-.card-footer {
-    padding: 1.25rem;
-    border-top: 1px solid var(--border-color);
-    background-color: var(--bg-light);
-}
-
-.card-title {
-    margin-bottom: 0.5rem;
-    font-size: 1.25rem;
-}
-
-.card-text {
-    color: var(--text-light);
-}
-
-/* Error Pages */
-.error-container {
+.site-header .container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    min-height: 100vh;
-    padding: 2rem;
-    text-align: center;
 }
 
-.error-content {
-    max-width: 600px;
+.logo h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    color: #3182ce;
 }
 
-.error-content h1 {
-    font-size: 5rem;
-    color: var(--primary-color);
-    margin-bottom: 0.5rem;
-}
-
-.error-content h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
-
-.error-content p {
-    color: var(--text-light);
-    margin-bottom: 1.5rem;
-}
-
-/* Special Offers */
-.special-offers {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    margin: 2rem 0;
-}
-
-.offer-card {
-    position: relative;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    background-color: var(--bg-color);
-    transition: var(--transition);
-}
-
-.offer-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
-}
-
-.offer-image {
-    width: 100%;
-    height: 180px;
-    object-fit: cover;
-}
-
-.offer-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: var(--accent-color);
-    color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: 20px;
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.offer-content {
-    padding: 1.25rem;
-}
-
-.offer-title {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.offer-description {
-    color: var(--text-light);
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
-}
-
-.offer-terms {
-    font-size: 0.8rem;
-    color: var(--text-light);
-    margin-bottom: 1rem;
-    font-style: italic;
-}
-
-.offer-code {
-    display: inline-block;
-    padding: 0.5rem;
-    background-color: var(--bg-light);
-    border: 1px dashed var(--border-color);
-    border-radius: var(--border-radius);
-    font-family: monospace;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-
-/* Treatment Cards */
-.treatment-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.25rem;
-    margin: 1.5rem 0;
-}
-
-.treatment-card {
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    overflow: hidden;
-    transition: var(--transition);
-    display: flex;
-    flex-direction: column;
-}
-
-.treatment-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow);
-}
-
-.treatment-card.selected {
-    border-color: var(--primary-color);
-    background-color: rgba(0, 166, 192, 0.05);
-}
-
-.treatment-name {
-    padding: 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    font-weight: 600;
-}
-
-.treatment-details {
-    padding: 0.75rem;
-    flex-grow: 1;
-}
-
-.treatment-description {
-    color: var(--text-light);
+.logo p {
+    margin: 0;
     font-size: 0.9rem;
-    margin-bottom: 0.75rem;
+    color: #718096;
 }
 
-.treatment-price {
-    font-weight: 600;
-    color: var(--primary-color);
-    font-size: 1.1rem;
-}
-
-.treatment-category {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    background-color: var(--bg-light);
-    border-radius: 20px;
-    font-size: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.treatment-actions {
-    padding: 0.75rem;
-    border-top: 1px solid var(--border-color);
+.main-nav ul {
     display: flex;
-    justify-content: flex-end;
+    list-style: none;
 }
 
-/* Quote Summary */
-.quote-summary {
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    padding: 1.5rem;
+.main-nav li {
+    margin-left: 1.5rem;
+}
+
+.main-nav a {
+    text-decoration: none;
+    color: #4a5568;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.main-nav a:hover,
+.main-nav a.active {
+    color: #3182ce;
+}
+
+/* Footer */
+.site-footer {
+    background-color: #2d3748;
+    color: white;
+    padding: 2rem 0;
+    margin-top: 4rem;
+}
+
+/* Page Sections */
+.page-header {
+    background-color: #ebf4ff;
+    padding: 3rem 0;
+    text-align: center;
     margin-bottom: 2rem;
 }
 
-.quote-summary-title {
-    margin-bottom: 1.25rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border-color);
+.page-header h2 {
+    margin-bottom: 0.5rem;
 }
 
-.quote-summary-item {
+.page-header p {
+    max-width: 700px;
+    margin: 0 auto;
+    color: #4a5568;
+}
+
+/* Hero Section */
+.hero {
+    background-color: #ebf4ff;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+}
+
+.hero-content {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.hero h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #1a365d;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #4a5568;
+}
+
+.cta-buttons {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px dashed var(--border-color);
+    gap: 1rem;
+    justify-content: center;
 }
 
-.quote-summary-item:last-child {
-    border-bottom: none;
+/* Features Section */
+.features {
+    padding: 3rem 0;
 }
 
-.quote-summary-label {
-    font-weight: 500;
+.section-title {
+    text-align: center;
+    margin-bottom: 2.5rem;
 }
 
-.quote-summary-value {
-    font-weight: 600;
+.feature-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
 }
 
-.quote-total {
-    margin-top: 1.5rem;
-    padding-top: 1rem;
-    border-top: 2px solid var(--border-color);
+.feature-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    background-color: #3182ce;
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     display: flex;
-    justify-content: space-between;
-    font-size: 1.25rem;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    font-size: 1.5rem;
+    font-weight: bold;
 }
 
-.quote-total-label {
-    font-weight: 600;
+/* Promo Banner */
+.promo-banner {
+    background-color: #fed7d7;
+    padding: 3rem 0;
+    margin: 3rem 0;
 }
 
-.quote-total-value {
-    font-weight: 700;
-    color: var(--primary-color);
+.banner-content {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
 }
 
-.quote-discount {
-    color: var(--success-color);
+.banner-content h2 {
+    color: #e53e3e;
+    margin-bottom: 1rem;
 }
 
-/* Promo Code Section */
-.promo-section {
-    margin: 2rem 0;
+.banner-content p {
+    margin-bottom: 1.5rem;
+    font-size: 1.1rem;
+}
+
+/* Quote Builder */
+.quote-builder {
+    padding: 2rem 0;
+}
+
+.quote-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+@media (max-width: 768px) {
+    .quote-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.panel {
+    background-color: white;
+    border-radius: 8px;
     padding: 1.5rem;
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.treatment-selection .panel {
+    overflow-y: auto;
+    max-height: 800px;
+}
+
+.treatment-list {
+    margin-top: 1.5rem;
+}
+
+.treatment-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: border-color 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.treatment-item:hover {
+    border-color: #3182ce;
+}
+
+.treatment-info {
+    flex: 1;
+}
+
+.treatment-info h4 {
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.treatment-info p {
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-bottom: 0.75rem;
+}
+
+.category {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background-color: #ebf4ff;
+    color: #3182ce;
+    margin-right: 0.5rem;
+}
+
+.price {
+    font-weight: 700;
+    color: #1a365d;
+}
+
+/* Quote Summary */
+.selected-treatments {
+    margin-bottom: 2rem;
+}
+
+.selected-treatment {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.treatment-details {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+    padding-right: 1rem;
+}
+
+.promo-code-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background-color: #f7fafc;
+    border-radius: 6px;
+}
+
+.applied-promo {
+    padding: 0.75rem;
+    background-color: #e6fffa;
+    border-radius: 4px;
+    border-left: 4px solid #38b2ac;
 }
 
 .promo-form {
     display: flex;
-    gap: 0.75rem;
+    align-items: center;
 }
 
-.promo-input {
-    flex-grow: 1;
+.promo-form .form-group {
+    flex: 1;
+    margin-bottom: 0;
+    display: flex;
 }
 
-.promo-active {
-    margin-top: 1rem;
+.promo-form input {
+    border-radius: 4px 0 0 4px;
+}
+
+.promo-form button {
+    border-radius: 0 4px 4px 0;
+}
+
+.price-calculation {
+    margin-top: 2rem;
     padding: 1rem;
-    background-color: rgba(0, 166, 192, 0.1);
-    border-radius: var(--border-radius);
+    background-color: #f7fafc;
+    border-radius: 6px;
+}
+
+.price-line {
     display: flex;
     justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+}
+
+.price-line.discount {
+    color: #e53e3e;
+}
+
+.price-line.total {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.action-buttons {
+    margin-top: 2rem;
+    display: flex;
+    gap: 1rem;
+}
+
+.empty-quote {
+    padding: 3rem 1rem;
+    text-align: center;
+    color: #718096;
+}
+
+/* Patient Info Page */
+.patient-info {
+    padding: 2rem 0;
+}
+
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.quote-summary-box {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background-color: #f7fafc;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+}
+
+.quote-summary-box h3 {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .summary-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+.treatments-summary ul,
+.promo-summary ul {
+    list-style: none;
+    margin-top: 0.5rem;
+}
+
+.treatments-summary li {
+    padding: 0.5rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.price-summary {
+    grid-column: span 2;
+    padding-top: 1rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 768px) {
+    .price-summary {
+        grid-column: span 1;
+    }
+}
+
+/* Review Quote Page */
+.quote-review {
+    padding: 2rem 0;
+}
+
+.review-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.quote-card {
+    background-color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.quote-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.quote-logo {
+    text-align: right;
+}
+
+.quote-logo h2 {
+    color: #3182ce;
+    font-size: 2rem;
+    margin: 0;
+}
+
+.quote-ref {
+    color: #718096;
+    margin-bottom: 0.25rem;
+}
+
+.quote-date {
+    color: #718096;
+}
+
+.patient-section,
+.treatments-section,
+.pricing-section,
+.promo-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.patient-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-row {
+    margin-bottom: 0.5rem;
+}
+
+.detail-row .label {
+    font-weight: 600;
+    display: block;
+    color: #4a5568;
+    margin-bottom: 0.25rem;
+}
+
+.detail-row.notes {
+    grid-column: span 2;
+}
+
+.treatments-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+}
+
+.treatments-table th,
+.treatments-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.treatments-table th {
+    background-color: #f7fafc;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.treatments-table td.price {
+    text-align: right;
+}
+
+.promo-info {
+    padding: 1rem;
+    background-color: #e6fffa;
+    border-radius: 6px;
+    border-left: 4px solid #38b2ac;
+}
+
+.promo-code {
+    font-weight: 600;
+    margin-top: 0.5rem;
+    display: block;
+}
+
+.quote-footer {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+    text-align: center;
+}
+
+/* Special Offers Page */
+.offers-section {
+    padding: 2rem 0;
+}
+
+.offers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.offer-card {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.offer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+.offer-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.offer-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.offer-card:hover .offer-image img {
+    transform: scale(1.05);
+}
+
+.offer-content {
+    padding: 1.5rem;
+}
+
+.offer-content h3 {
+    margin-bottom: 0.5rem;
+    color: #2d3748;
+}
+
+.offer-clinic {
+    color: #718096;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.offer-desc {
+    margin-bottom: 1.5rem;
+}
+
+.offer-details {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.treatments h4 {
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.treatments ul {
+    list-style: disc;
+    padding-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.valid-until {
+    color: #718096;
+    font-style: italic;
+}
+
+.offer-cta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
     align-items: center;
 }
 
-.promo-details span {
-    font-weight: 600;
-    color: var(--primary-color);
+.promo-code {
+    font-size: 0.9rem;
+    color: #718096;
 }
 
-.promo-remove {
-    background: none;
-    border: none;
-    color: var(--error-color);
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.promo-remove:hover {
-    text-decoration: underline;
-}
-
-/* Session Status */
-.session-status {
-    position: fixed;
-    bottom: 1rem;
-    right: 1rem;
-    padding: 0.5rem 0.75rem;
-    background-color: var(--bg-color);
-    border-radius: var(--border-radius);
-    font-size: 0.75rem;
-    color: var(--text-light);
-    box-shadow: var(--shadow);
+/* Error Pages */
+.error-container {
+    min-height: 80vh;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
+    padding: 2rem;
 }
 
-.session-active {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--success-color);
+.error-content {
+    text-align: center;
+    max-width: 600px;
 }
 
-.session-inactive {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--error-color);
+.error-content h1 {
+    font-size: 8rem;
+    color: #3182ce;
+    margin-bottom: 0;
+    line-height: 1;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .treatment-cards {
-        grid-template-columns: 1fr;
+.error-content h2 {
+    margin-bottom: 1.5rem;
+}
+
+.error-content p {
+    margin-bottom: 2rem;
+    color: #4a5568;
+}
+
+/* Print Styles */
+@media print {
+    .site-header,
+    .site-footer,
+    .action-buttons {
+        display: none;
     }
     
-    .special-offers {
-        grid-template-columns: 1fr;
+    body {
+        background-color: white;
     }
     
-    .promo-form {
-        flex-direction: column;
+    .quote-card {
+        box-shadow: none;
+        padding: 0;
     }
     
-    .error-content h1 {
-        font-size: 3rem;
+    .page-header {
+        background-color: white;
+        padding: 1rem 0;
     }
-    
-    .error-content h2 {
-        font-size: 1.5rem;
-    }
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.animate-fade-in {
-    animation: fadeIn 0.3s ease forwards;
 }
