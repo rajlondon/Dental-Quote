@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Information | Dental Quote System</title>
+    <title>Patient Information | MyDentalFly</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -24,85 +24,112 @@
     </header>
 
     <main>
-        <section class="page-header">
-            <div class="container">
-                <h2>Patient Information</h2>
-                <p>Please provide your contact details for the quote.</p>
+        <div class="container">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
             </div>
-        </section>
 
-        <section class="patient-info">
-            <div class="container">
-                <div class="form-container">
-                    <form action="{{ url_for('page_routes.patient_info') }}" method="POST" class="patient-form">
-                        <div class="form-group">
-                            <label for="name">Full Name</label>
-                            <input type="text" id="name" name="name" value="{{ patient_info.name }}" required>
+            <div class="quote-progress mb-4">
+                <div class="progress-step">1. Select Treatments</div>
+                <div class="progress-step active">2. Patient Information</div>
+                <div class="progress-step">3. Review Quote</div>
+            </div>
+
+            <div class="row">
+                <div class="col">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2>Enter Your Information</h2>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="email">Email Address</label>
-                            <input type="email" id="email" name="email" value="{{ patient_info.email }}" required>
+                        <div class="card-body">
+                            <form action="{{ url_for('page_routes.patient_info') }}" method="POST" class="patient-info-form">
+                                <div class="form-group">
+                                    <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                                    <input type="text" id="name" name="name" class="form-control" value="{{ patient_info.name }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                    <input type="email" id="email" name="email" class="form-control" value="{{ patient_info.email }}" required>
+                                    <div class="form-text">We'll send your quote confirmation to this email address.</div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                    <input type="tel" id="phone" name="phone" class="form-control" value="{{ patient_info.phone }}" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="notes" class="form-label">Additional Notes</label>
+                                    <textarea id="notes" name="notes" class="form-control" rows="3">{{ patient_info.notes }}</textarea>
+                                    <div class="form-text">Include any questions or special requests you have about your dental treatments.</div>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-secondary">Back to Quote Builder</a>
+                                    <button type="submit" class="btn btn-primary">Continue to Review</button>
+                                </div>
+                            </form>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" value="{{ patient_info.phone }}" required>
+                    </div>
+                </div>
+                
+                <div class="col">
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h2>Quote Summary</h2>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="notes">Additional Notes</label>
-                            <textarea id="notes" name="notes" rows="4">{{ patient_info.notes }}</textarea>
-                        </div>
-                        
-                        <div class="quote-summary-box">
-                            <h3>Quote Summary</h3>
-                            <div class="summary-content">
-                                <div class="treatments-summary">
-                                    <h4>Selected Treatments</h4>
-                                    <ul>
-                                        {% for treatment in treatments %}
-                                        <li>{{ treatment.name }} - ${{ "%.2f"|format(treatment.price) }}</li>
-                                        {% endfor %}
-                                    </ul>
+                        <div class="card-body">
+                            <h3 class="mb-3">Selected Treatments</h3>
+                            <div class="summary-list">
+                                {% for treatment in treatments %}
+                                    <div class="summary-item">
+                                        <div class="summary-item-name">{{ treatment.name }}</div>
+                                        <div class="summary-item-price">${{ "%.2f"|format(treatment.price) }}</div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="summary-totals mt-3">
+                                <div class="summary-subtotal">
+                                    <div>Subtotal</div>
+                                    <div>${{ "%.2f"|format(subtotal) }}</div>
                                 </div>
                                 
                                 {% if promo_details %}
-                                <div class="promo-summary">
-                                    <h4>Applied Promo</h4>
-                                    <p>{{ promo_details.code }} - {{ promo_details.description }}</p>
-                                </div>
+                                    <div class="summary-discount">
+                                        <div>Discount ({{ promo_details.description }})</div>
+                                        <div>-${{ "%.2f"|format(discount) }}</div>
+                                    </div>
                                 {% endif %}
                                 
-                                <div class="price-summary">
-                                    <div class="price-line">
-                                        <span>Subtotal:</span>
-                                        <span>${{ "%.2f"|format(subtotal) }}</span>
-                                    </div>
-                                    
-                                    {% if discount > 0 %}
-                                    <div class="price-line discount">
-                                        <span>Discount:</span>
-                                        <span>-${{ "%.2f"|format(discount) }}</span>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    <div class="price-line total">
-                                        <span>Total:</span>
-                                        <span>${{ "%.2f"|format(total) }}</span>
-                                    </div>
+                                <div class="summary-total">
+                                    <div>Total</div>
+                                    <div>${{ "%.2f"|format(total) }}</div>
                                 </div>
                             </div>
+                            
+                            {% if promo_details %}
+                                <div class="applied-promo mt-3">
+                                    <div class="applied-promo-info">
+                                        <div>Applied promo: <span class="applied-promo-code">{{ promo_code }}</span></div>
+                                        <div class="applied-promo-description">{{ promo_details.description }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
-                        
-                        <div class="action-buttons">
-                            <button type="submit" class="btn btn-primary">Continue to Review</button>
-                            <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-secondary">Back to Quote Builder</a>
-                        </div>
-                    </form>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -110,7 +137,7 @@
             <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
         </div>
     </footer>
-
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
