@@ -10,3 +10,35 @@ import { twMerge } from "tailwind-merge"
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/**
+ * Formats a number as currency
+ * 
+ * @param amount - The amount to format
+ * @param currency - The currency code (defaults to 'USD')
+ * @returns Formatted currency string
+ */
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
+/**
+ * Formats a date
+ * 
+ * @param date - The date to format
+ * @param format - The format to use (defaults to 'MMM d, yyyy')
+ * @returns Formatted date string
+ */
+export function formatDate(date: string | Date, format: string = 'MMM d, yyyy'): string {
+  const d = new Date(date);
+  return d.toLocaleDateString('en-US', { 
+    year: 'numeric', 
+    month: 'short', 
+    day: 'numeric' 
+  });
+}
