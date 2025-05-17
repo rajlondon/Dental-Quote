@@ -42,7 +42,10 @@
                     {% if quote_data.discount > 0 %}
                     <div class="total-row discount">
                         <span>Discount - {{ quote_data.promo_code }} ({{ quote_data.discount }}%):</span>
-                        <span>-${{ "%.2f"|format(totals.discount_amount) }}</span>
+                        <span>
+                            -${{ "%.2f"|format(totals.discount_amount) }}
+                            <button class="remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px;">✕</button>
+                        </span>
                     </div>
                     {% endif %}
                     <div class="total-row grand-total">
@@ -169,8 +172,11 @@
                         </div>
                         {% if quote_data.discount > 0 %}
                         <div class="total-row discount">
-                            <span>Discount ({{ quote_data.discount }}%):</span>
-                            <span>-${{ "%.2f"|format(totals.discount_amount) }}</span>
+                            <span>Discount - {{ quote_data.promo_code }} ({{ quote_data.discount }}%):</span>
+                            <span>
+                                -${{ "%.2f"|format(totals.discount_amount) }}
+                                <button class="remove-promo-btn" style="margin-left: 8px; font-size: 12px; padding: 2px 6px;">✕</button>
+                            </span>
                         </div>
                         {% endif %}
                         <div class="total-row grand-total">
