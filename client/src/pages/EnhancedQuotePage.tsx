@@ -60,6 +60,9 @@ export default function EnhancedQuotePage() {
     
     // Set completed quiz flag for UI state
     setCompletedQuiz(true);
+    
+    // Automatically advance to the promo section
+    setCurrentStep('promo');
   };
   
   // Handle promo code submission
