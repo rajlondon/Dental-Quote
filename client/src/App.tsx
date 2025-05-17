@@ -294,6 +294,9 @@ function Router() {
         );
       }} />
       
+      {/* New Quote Integration Demo */}
+      <Route path="/quote-demo" component={QuoteDemoPage} />
+      
       {/* Simplified Quote Demo - has better performance */}
       <Route path="/simplified-quote-demo" component={() => {
         const SimplifiedQuoteDemo = React.lazy(() => import("./pages/SimplifiedQuoteDemo"));
