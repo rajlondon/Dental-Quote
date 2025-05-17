@@ -1,120 +1,152 @@
-from flask import Blueprint, render_template, redirect, url_for, request
+"""
+Page Routes for Dental Quote System
+Handles main page rendering and form submissions
+"""
+
+from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+import logging
+import time
 from utils.session_manager import SessionManager
 from services.promo_service import PromoService
 
+logger = logging.getLogger(__name__)
+
+# Create blueprint
 page_routes = Blueprint('page_routes', __name__)
 
 @page_routes.route('/quote-builder')
 def quote_builder():
     """Main quote builder page"""
-    # Get current quote data with fallback to initialized data
-    quote_data = SessionManager.get_quote_data()
+    # Initialize session if needed
+    SessionManager.initialize_session()
+    SessionManager.update_activity()
     
-    # Render the quote builder template with the current data
-    return render_template('quote/quote_builder.html', quote_data=quote_data)
+    # Get current data from session
+    treatments = SessionManager.get_treatments()
+    promo_details = SessionManager.get_promo_details()
+    patient_info = SessionManager.get_patient_info()
+    
+    # Create a backup of the current session
+    SessionManager.create_backup()
+    
+    # Calculate totals
+    subtotal = sum(treatment.get('price', 0) for treatment in treatments)
+    discount_percent = promo_details.get('discount_percent', 0)
+    discount_amount = (subtotal * discount_percent) / 100
+    total = subtotal - discount_amount
+    
+    # Get special offer details if a promo code is applied
+    promo_code = promo_details.get('promo_code')
+    special_offer = PromoService.get_special_offer_details(promo_code) if promo_code else None
+    
+    # Render the template
+    return render_template(
+        'quote/quote_builder.html',
+        treatments=treatments,
+        subtotal=subtotal,
+        discount_percent=discount_percent,
+        discount_amount=discount_amount,
+        total=total,
+        promo_code=promo_code,
+        special_offer=special_offer,
+        patient_info=patient_info
+    )
 
-@page_routes.route('/set-step/<step>', methods=['POST'])
-def set_step(step):
-    """Set the current step in the quote flow"""
-    # Get current quote data
-    quote_data = SessionManager.get_quote_data()
+@page_routes.route('/select-treatments', methods=['POST'])
+def select_treatments():
+    """Handle treatment selection"""
+    # Get treatments from form
+    selected_treatments = []
+    for key, value in request.form.items():
+        if key.startswith('treatment_') and value == 'on':
+            treatment_id = key.replace('treatment_', '')
+            price = request.form.get(f'price_{treatment_id}', 0)
+            name = request.form.get(f'name_{treatment_id}', 'Unknown Treatment')
+            selected_treatments.append({
+                'id': treatment_id,
+                'name': name,
+                'price': float(price) if price else 0
+            })
     
-    # Update step
-    quote_data['step'] = step
+    # Store treatments in session
+    SessionManager.store_treatments(selected_treatments)
     
-    # Save updated quote data
-    SessionManager.save_quote_data(quote_data)
-    
-    # Redirect back to quote builder
-    return redirect(url_for('page_routes.quote_builder'))
-
-@page_routes.route('/add-treatment', methods=['POST'])
-def add_treatment():
-    """Add a treatment to the quote"""
-    # Get form data
-    treatment_id = request.form.get('treatment_id')
-    treatment_name = request.form.get('treatment_name')
-    treatment_price = float(request.form.get('treatment_price', 0))
-    
-    if not treatment_id or not treatment_name:
-        # Error: missing required data
-        return redirect(url_for('page_routes.quote_builder'))
-    
-    # Get current quote data
-    quote_data = SessionManager.get_quote_data()
-    
-    # Check if treatment is already in the list
-    treatment_exists = False
-    for treatment in quote_data['treatments']:
-        if treatment.get('id') == treatment_id:
-            treatment_exists = True
-            break
-    
-    if not treatment_exists:
-        # Add treatment to list
-        quote_data['treatments'].append({
-            'id': treatment_id,
-            'name': treatment_name,
-            'price': treatment_price
-        })
-        
-        # Save updated quote data
-        SessionManager.save_quote_data(quote_data)
-    
-    # Redirect back to quote builder
-    return redirect(url_for('page_routes.quote_builder'))
-
-@page_routes.route('/remove-treatment/<treatment_id>', methods=['POST'])
-def remove_treatment(treatment_id):
-    """Remove a treatment from the quote"""
-    # Get current quote data
-    quote_data = SessionManager.get_quote_data()
-    
-    # Remove treatment from list
-    quote_data['treatments'] = [t for t in quote_data['treatments'] if t.get('id') != treatment_id]
-    
-    # Save updated quote data
-    SessionManager.save_quote_data(quote_data)
-    
-    # Redirect back to quote builder
+    # Redirect to quote builder
     return redirect(url_for('page_routes.quote_builder'))
 
 @page_routes.route('/save-patient-info', methods=['POST'])
 def save_patient_info():
     """Save patient information"""
-    # Get form data
-    patient_name = request.form.get('patient-name', '')
-    patient_email = request.form.get('patient-email', '')
-    patient_phone = request.form.get('patient-phone', '')
-    preferred_date = request.form.get('preferred-date', '')
-    patient_notes = request.form.get('patient-notes', '')
-    
-    # Get current quote data
-    quote_data = SessionManager.get_quote_data()
-    
-    # Update patient info
-    quote_data['patient_info'] = {
-        'name': patient_name,
-        'email': patient_email,
-        'phone': patient_phone,
-        'preferred_date': preferred_date,
-        'notes': patient_notes
+    # Get patient info from form
+    patient_info = {
+        'name': request.form.get('patient-name', ''),
+        'email': request.form.get('patient-email', ''),
+        'phone': request.form.get('patient-phone', ''),
+        'notes': request.form.get('patient-notes', '')
     }
     
-    # Move to next step
-    quote_data['step'] = 'review'
+    # Store patient info in session
+    SessionManager.store_patient_info(patient_info)
     
-    # Save updated quote data
-    SessionManager.save_quote_data(quote_data)
+    # Redirect to quote summary
+    return redirect(url_for('page_routes.quote_summary'))
+
+@page_routes.route('/quote-summary')
+def quote_summary():
+    """Quote summary page"""
+    # Get current data from session
+    treatments = SessionManager.get_treatments()
+    promo_details = SessionManager.get_promo_details()
+    patient_info = SessionManager.get_patient_info()
     
-    # Redirect back to quote builder
-    return redirect(url_for('page_routes.quote_builder'))
+    # Check if we have all necessary data
+    if not treatments:
+        flash("Please select at least one treatment.", "error")
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    if not patient_info.get('name') or not patient_info.get('email'):
+        flash("Please provide patient information.", "error")
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Calculate totals
+    subtotal = sum(treatment.get('price', 0) for treatment in treatments)
+    discount_percent = promo_details.get('discount_percent', 0)
+    discount_amount = (subtotal * discount_percent) / 100
+    total = subtotal - discount_amount
+    
+    # Get special offer details if a promo code is applied
+    promo_code = promo_details.get('promo_code')
+    special_offer = PromoService.get_special_offer_details(promo_code) if promo_code else None
+    
+    # Generate quote reference
+    quote_reference = f"Q{int(time.time())}"
+    
+    # Render the summary template
+    return render_template(
+        'quote/quote_summary.html',
+        treatments=treatments,
+        subtotal=subtotal,
+        discount_percent=discount_percent,
+        discount_amount=discount_amount,
+        total=total,
+        promo_code=promo_code,
+        special_offer=special_offer,
+        patient_info=patient_info,
+        quote_reference=quote_reference
+    )
 
 @page_routes.route('/reset-quote', methods=['POST'])
 def reset_quote():
-    """Reset the quote to empty state"""
-    # Clear all quote data
-    SessionManager.clear_quote_data()
+    """Reset the quote and start over"""
+    # Reset the session but keep the session ID
+    SessionManager.reset_session()
     
-    # Redirect back to quote builder
+    flash("Quote has been reset. You can start a new quote.", "info")
+    
+    # Redirect to quote builder
+    return redirect(url_for('page_routes.quote_builder'))
+
+@page_routes.route('/')
+def index():
+    """Home page - redirects to quote builder"""
     return redirect(url_for('page_routes.quote_builder'))
