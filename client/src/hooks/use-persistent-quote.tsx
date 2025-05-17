@@ -15,6 +15,7 @@ interface QuoteState {
   };
   step: number;
   currency: CurrencyCode;
+  clinicPreference: string | null;
 }
 
 interface PersistentQuoteContextType extends QuoteState {
@@ -37,6 +38,7 @@ const initialState: QuoteState = {
   },
   step: 1,
   currency: 'USD',
+  clinicPreference: null,
 };
 
 const PersistentQuoteContext = createContext<PersistentQuoteContextType | null>(null);

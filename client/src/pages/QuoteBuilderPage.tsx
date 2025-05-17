@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation } from 'wouter';
+import { useLocation, useSearch } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -141,32 +141,46 @@ const QuoteBuilderPage: React.FC = () => {
     patientInfo, 
     step, 
     currency,
-    resetState
+    resetState,
+    clinicPreference
   } = usePersistentQuote();
   
   const [promoInput, setPromoInput] = useState('');
   const [isPromoValid, setIsPromoValid] = useState<boolean | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isClinicPortal, setIsClinicPortal] = useState(false);
   
-  // Auto-apply promo code from URL if present
-  useAutoApplyCode((code) => {
-    // Check if the code is valid against our mock packages
-    const validPackage = PACKAGES.find(pkg => pkg.promoCode === code);
-    
-    if (validPackage) {
-      // If valid, apply the package and promo code
-      applyPackage(validPackage);
-      toast({
-        title: 'Special offer applied!',
-        description: `The ${validPackage.name} package has been added to your quote.`,
-        variant: 'default',
-      });
-    } else {
-      // If not a package, just set the promo code and validate
-      setPromoInput(code);
-      validatePromoCode(code);
-    }
-  });
+  // Function to handle clinic ID from URL
+  const handleClinicId = (clinicId: string) => {
+    console.log(`Setting clinic preference to ${clinicId}`);
+    updateState({ clinicPreference: clinicId });
+    setIsClinicPortal(true);
+  };
+
+  // Handle both promo codes and clinic IDs from URL
+  useAutoApplyCode(
+    // Promo code handler
+    (code) => {
+      // Check if the code is valid against our mock packages
+      const validPackage = PACKAGES.find(pkg => pkg.promoCode === code);
+      
+      if (validPackage) {
+        // If valid, apply the package and promo code
+        applyPackage(validPackage);
+        toast({
+          title: 'Special offer applied!',
+          description: `The ${validPackage.name} package has been added to your quote.`,
+          variant: 'default',
+        });
+      } else {
+        // If not a package, just set the promo code and validate
+        setPromoInput(code);
+        validatePromoCode(code);
+      }
+    },
+    // Clinic ID handler
+    handleClinicId
+  );
   
   // Function to validate a promo code
   const validatePromoCode = (code: string) => {
