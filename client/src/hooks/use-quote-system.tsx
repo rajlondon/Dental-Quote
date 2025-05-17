@@ -1,96 +1,81 @@
 import { useState, useCallback } from 'react';
-import { quoteIntegrationService, QuoteData, Treatment } from '@/services/quote-integration-service';
 import { useToast } from '@/hooks/use-toast';
+import { QuoteIntegrationService } from '@/services/quote-integration-service';
+import { Treatment } from '@/components/quotes/TreatmentList';
 
-// Re-export Treatment type for components that use this hook
-export type { Treatment };
+export interface QuoteData {
+  id: string;
+  status: string;
+  created_at: string;
+  patient_id?: string;
+  patient_name?: string;
+  patient_email?: string;
+  patient_phone?: string;
+  clinic_id?: string;
+  clinic_name?: string;
+  promo_code?: string;
+  discount_percent?: number;
+  subtotal: number;
+  discount_amount: number;
+  total: number;
+  treatments: Treatment[];
+}
+
+type PortalType = 'admin' | 'clinic' | 'patient';
 
 /**
- * Hook for interacting with the Quote System
- * 
- * Provides a unified interface for working with quotes across all portals
- * (admin, clinic, patient) with proper loading and error states.
+ * Hook for interacting with the quote system
+ * This hook provides a consistent interface for quote management across 
+ * admin, clinic, and patient portals
  */
-export function useQuoteSystem(
-  portalType: 'admin' | 'clinic' | 'patient',
-  userId?: string
-) {
+export function useQuoteSystem(portalType: PortalType) {
   const [quotes, setQuotes] = useState<QuoteData[]>([]);
   const [currentQuote, setCurrentQuote] = useState<QuoteData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  const quoteService = new QuoteIntegrationService(portalType);
 
-  // Load quotes for the current portal
+  // Load all quotes for the current portal
   const loadQuotes = useCallback(async () => {
-    if (!userId && portalType !== 'admin') {
-      setError('User ID is required for clinic and patient portals');
-      return;
-    }
-
     setLoading(true);
     setError(null);
     
     try {
-      let quotesData: QuoteData[] = [];
-      
-      if (portalType === 'admin') {
-        quotesData = await quoteIntegrationService.getAdminQuotes();
-      } else if (portalType === 'clinic' && userId) {
-        quotesData = await quoteIntegrationService.getClinicQuotes(userId);
-      } else if (portalType === 'patient' && userId) {
-        quotesData = await quoteIntegrationService.getPatientQuotes(userId);
-      }
-      
-      setQuotes(quotesData);
-    } catch (err) {
-      setError('Failed to load quotes. Please try again later.');
+      const data = await quoteService.getQuotes();
+      setQuotes(data);
+      return data;
+    } catch (err: any) {
+      setError('Failed to load quotes: ' + (err.message || 'Unknown error'));
       console.error('Error loading quotes:', err);
       toast({
         title: 'Error',
         description: 'Failed to load quotes',
         variant: 'destructive',
       });
+      return [];
     } finally {
       setLoading(false);
     }
-  }, [portalType, userId, toast]);
+  }, [quoteService, toast]);
 
-  // Load a single quote's details
+  // Load details for a specific quote
   const loadQuoteDetails = useCallback(async (quoteId: string) => {
     if (!quoteId) {
       setError('Quote ID is required');
-      return;
-    }
-
-    if (!userId && portalType !== 'admin') {
-      setError('User ID is required for clinic and patient portals');
-      return;
+      return null;
     }
 
     setLoading(true);
     setError(null);
     
     try {
-      let quoteData: QuoteData | null = null;
-      
-      if (portalType === 'admin') {
-        quoteData = await quoteIntegrationService.getAdminQuote(quoteId);
-      } else if (portalType === 'clinic' && userId) {
-        quoteData = await quoteIntegrationService.getClinicQuote(userId, quoteId);
-      } else if (portalType === 'patient' && userId) {
-        quoteData = await quoteIntegrationService.getPatientQuote(userId, quoteId);
-      }
-      
-      if (quoteData) {
-        setCurrentQuote(quoteData);
-        return quoteData;
-      } else {
-        setError('Quote not found');
-        return null;
-      }
-    } catch (err) {
-      setError('Failed to load quote details. Please try again later.');
+      const data = await quoteService.getQuoteDetails(quoteId);
+      setCurrentQuote(data);
+      return data;
+    } catch (err: any) {
+      setError('Failed to load quote details: ' + (err.message || 'Unknown error'));
       console.error('Error loading quote details:', err);
       toast({
         title: 'Error',
@@ -101,343 +86,255 @@ export function useQuoteSystem(
     } finally {
       setLoading(false);
     }
-  }, [portalType, userId, toast]);
+  }, [quoteService, toast]);
+
+  // Apply a promo code to a quote
+  const applyPromoCode = useCallback(async (quoteId: string, promoCode: string) => {
+    if (!quoteId || !promoCode) {
+      throw new Error('Quote ID and promo code are required');
+    }
+
+    setLoading(true);
+    
+    try {
+      const updatedQuote = await quoteService.applyPromoCode(quoteId, promoCode);
+      setCurrentQuote(updatedQuote);
+      return updatedQuote;
+    } catch (err: any) {
+      console.error('Error applying promo code:', err);
+      throw new Error(err.message || 'Failed to apply promo code');
+    } finally {
+      setLoading(false);
+    }
+  }, [quoteService]);
+
+  // Remove a promo code from a quote
+  const removePromoCode = useCallback(async (quoteId: string) => {
+    if (!quoteId) {
+      throw new Error('Quote ID is required');
+    }
+
+    setLoading(true);
+    
+    try {
+      const updatedQuote = await quoteService.removePromoCode(quoteId);
+      setCurrentQuote(updatedQuote);
+      return updatedQuote;
+    } catch (err: any) {
+      console.error('Error removing promo code:', err);
+      throw new Error(err.message || 'Failed to remove promo code');
+    } finally {
+      setLoading(false);
+    }
+  }, [quoteService]);
+
+  // Update treatment quantity in a quote
+  const updateTreatmentQuantity = useCallback(async (quoteId: string, treatmentId: string, quantity: number) => {
+    if (!quoteId || !treatmentId || quantity < 1) {
+      throw new Error('Quote ID, treatment ID, and valid quantity are required');
+    }
+
+    setLoading(true);
+    
+    try {
+      await quoteService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
+      
+      // Update local state by fetching the updated quote details
+      const updatedQuote = await quoteService.getQuoteDetails(quoteId);
+      setCurrentQuote(updatedQuote);
+      return updatedQuote;
+    } catch (err: any) {
+      console.error('Error updating treatment quantity:', err);
+      throw new Error(err.message || 'Failed to update treatment quantity');
+    } finally {
+      setLoading(false);
+    }
+  }, [quoteService]);
+
+  // Remove a treatment from a quote
+  const removeTreatment = useCallback(async (quoteId: string, treatmentId: string) => {
+    if (!quoteId || !treatmentId) {
+      throw new Error('Quote ID and treatment ID are required');
+    }
+
+    setLoading(true);
+    
+    try {
+      await quoteService.removeTreatment(quoteId, treatmentId);
+      
+      // Update local state by fetching the updated quote details
+      const updatedQuote = await quoteService.getQuoteDetails(quoteId);
+      setCurrentQuote(updatedQuote);
+      return updatedQuote;
+    } catch (err: any) {
+      console.error('Error removing treatment:', err);
+      throw new Error(err.message || 'Failed to remove treatment');
+    } finally {
+      setLoading(false);
+    }
+  }, [quoteService]);
 
   // Update quote status
   const updateQuoteStatus = useCallback(async (quoteId: string, status: string) => {
+    if (!quoteId || !status) {
+      throw new Error('Quote ID and status are required');
+    }
+
     setLoading(true);
     
     try {
-      await quoteIntegrationService.updateQuoteStatus(quoteId, status);
+      await quoteService.updateQuoteStatus(quoteId, status);
       
-      // Update the quote in state if it's the current quote
+      // Update local state
       if (currentQuote && currentQuote.id === quoteId) {
-        setCurrentQuote({ ...currentQuote, status });
+        setCurrentQuote({
+          ...currentQuote,
+          status
+        });
       }
       
-      // Update the quote in the list
-      setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, status } : q));
-      
-      toast({
-        title: 'Status updated',
-        description: `Quote status has been updated to ${status}`,
-      });
+      // Also update the quote in the quotes list
+      setQuotes(prevQuotes => 
+        prevQuotes.map(q => 
+          q.id === quoteId ? { ...q, status } : q
+        )
+      );
       
       return true;
-    } catch (err) {
-      toast({
-        title: 'Update failed',
-        description: 'Failed to update quote status',
-        variant: 'destructive',
-      });
-      return false;
+    } catch (err: any) {
+      console.error('Error updating quote status:', err);
+      throw new Error(err.message || 'Failed to update quote status');
     } finally {
       setLoading(false);
     }
-  }, [currentQuote, toast]);
+  }, [quoteService, currentQuote]);
 
-  // Download quote as PDF
+  // Download quote PDF
   const downloadQuotePdf = useCallback(async (quoteId: string) => {
+    if (!quoteId) {
+      throw new Error('Quote ID is required');
+    }
+
     setLoading(true);
     
     try {
-      const blob = await quoteIntegrationService.downloadQuotePdf(quoteId);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `quote-${quoteId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      toast({
-        title: 'Download successful',
-        description: 'The quote PDF has been downloaded',
-      });
-      
+      await quoteService.downloadQuotePdf(quoteId);
       return true;
-    } catch (err) {
-      toast({
-        title: 'Download failed',
-        description: 'Failed to download quote PDF',
-        variant: 'destructive',
-      });
-      return false;
+    } catch (err: any) {
+      console.error('Error downloading quote PDF:', err);
+      throw new Error(err.message || 'Failed to download quote PDF');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [quoteService]);
 
   // Send quote via email
   const sendQuoteEmail = useCallback(async (quoteId: string, email: string) => {
+    if (!quoteId || !email) {
+      throw new Error('Quote ID and email address are required');
+    }
+
     setLoading(true);
     
     try {
-      await quoteIntegrationService.sendQuoteEmail(quoteId, email);
-      
-      toast({
-        title: 'Email sent',
-        description: 'The quote has been sent to the provided email',
-      });
-      
+      await quoteService.sendQuoteEmail(quoteId, email);
       return true;
-    } catch (err) {
-      toast({
-        title: 'Email failed',
-        description: 'Failed to send email',
-        variant: 'destructive',
-      });
-      return false;
+    } catch (err: any) {
+      console.error('Error sending quote email:', err);
+      throw new Error(err.message || 'Failed to send quote email');
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [quoteService]);
 
   // Request appointment for a quote
   const requestAppointment = useCallback(async (quoteId: string) => {
-    setLoading(true);
-    
-    try {
-      await quoteIntegrationService.requestAppointment(quoteId);
-      
-      // Update the quote status in state
-      if (currentQuote && currentQuote.id === quoteId) {
-        setCurrentQuote({ ...currentQuote, status: 'appointment_requested' });
-      }
-      
-      // Update in the list
-      setQuotes(prev => prev.map(q => q.id === quoteId ? { ...q, status: 'appointment_requested' } : q));
-      
-      toast({
-        title: 'Appointment requested',
-        description: 'Your appointment request has been sent',
-      });
-      
-      return true;
-    } catch (err) {
-      toast({
-        title: 'Request failed',
-        description: 'Failed to request appointment',
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setLoading(false);
+    if (!quoteId) {
+      throw new Error('Quote ID is required');
     }
-  }, [currentQuote, toast]);
 
-  // Update treatment quantity
-  const updateTreatmentQuantity = useCallback(async (quoteId: string, treatmentId: string, quantity: number) => {
     setLoading(true);
     
     try {
-      await quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
+      await quoteService.requestAppointment(quoteId);
       
-      // Update the quote in state
-      if (currentQuote && currentQuote.id === quoteId && currentQuote.treatments) {
-        const updatedTreatments = currentQuote.treatments.map(t => 
-          t.id === treatmentId ? { ...t, quantity } : t
-        );
-        
+      // Update local state to reflect the appointment request
+      if (currentQuote && currentQuote.id === quoteId) {
         setCurrentQuote({
           ...currentQuote,
-          treatments: updatedTreatments,
+          status: 'appointment_requested'
         });
       }
       
-      toast({
-        title: 'Quantity updated',
-        description: 'Treatment quantity has been updated',
-      });
+      // Also update the quote in the quotes list
+      setQuotes(prevQuotes => 
+        prevQuotes.map(q => 
+          q.id === quoteId ? { ...q, status: 'appointment_requested' } : q
+        )
+      );
       
       return true;
-    } catch (err) {
-      toast({
-        title: 'Update failed',
-        description: 'Failed to update treatment quantity',
-        variant: 'destructive',
-      });
-      return false;
+    } catch (err: any) {
+      console.error('Error requesting appointment:', err);
+      throw new Error(err.message || 'Failed to request appointment');
     } finally {
       setLoading(false);
     }
-  }, [currentQuote, toast]);
+  }, [quoteService, currentQuote]);
 
-  // Remove treatment from quote
-  const removeTreatment = useCallback(async (quoteId: string, treatmentId: string) => {
-    setLoading(true);
-    
-    try {
-      await quoteIntegrationService.removeTreatment(quoteId, treatmentId);
-      
-      // Update the quote in state
-      if (currentQuote && currentQuote.id === quoteId && currentQuote.treatments) {
-        const updatedTreatments = currentQuote.treatments.filter(t => t.id !== treatmentId);
-        
-        setCurrentQuote({
-          ...currentQuote,
-          treatments: updatedTreatments,
-        });
-      }
-      
-      toast({
-        title: 'Treatment removed',
-        description: 'The treatment has been removed from your quote',
-      });
-      
-      return true;
-    } catch (err) {
-      toast({
-        title: 'Removal failed',
-        description: 'Failed to remove treatment',
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [currentQuote, toast]);
-
-  // Apply promo code
-  const applyPromoCode = useCallback(async (quoteId: string, promoCode: string) => {
-    setLoading(true);
-    
-    try {
-      const updatedQuote = await quoteIntegrationService.applyPromoCode(quoteId, promoCode);
-      
-      // Update the quote in state
-      if (currentQuote && currentQuote.id === quoteId) {
-        setCurrentQuote(updatedQuote);
-      }
-      
-      // Update in the list
-      setQuotes(prev => prev.map(q => q.id === quoteId ? updatedQuote : q));
-      
-      toast({
-        title: 'Promo code applied',
-        description: `Promo code ${promoCode} has been applied to your quote`,
-      });
-      
-      return updatedQuote;
-    } catch (err) {
-      toast({
-        title: 'Failed to apply promo code',
-        description: 'The promo code could not be applied',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [currentQuote, toast]);
-
-  // Remove promo code
-  const removePromoCode = useCallback(async (quoteId: string) => {
-    setLoading(true);
-    
-    try {
-      const updatedQuote = await quoteIntegrationService.removePromoCode(quoteId);
-      
-      // Update the quote in state
-      if (currentQuote && currentQuote.id === quoteId) {
-        setCurrentQuote(updatedQuote);
-      }
-      
-      // Update in the list
-      setQuotes(prev => prev.map(q => q.id === quoteId ? updatedQuote : q));
-      
-      toast({
-        title: 'Promo code removed',
-        description: 'The promo code has been removed from your quote',
-      });
-      
-      return updatedQuote;
-    } catch (err) {
-      toast({
-        title: 'Failed to remove promo code',
-        description: 'The promo code could not be removed',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [currentQuote, toast]);
-
-  // Admin-specific: Assign quote to clinic
+  // Admin-specific: Assign a quote to a clinic
   const assignQuoteToClinic = useCallback(async (quoteId: string, clinicId: string) => {
-    if (portalType !== 'admin') {
-      toast({
-        title: 'Permission denied',
-        description: 'Only administrators can assign quotes to clinics',
-        variant: 'destructive',
-      });
-      return false;
+    if (!quoteId || !clinicId) {
+      throw new Error('Quote ID and clinic ID are required');
     }
-    
-    setLoading(true);
-    
-    try {
-      await quoteIntegrationService.assignQuote(quoteId, clinicId);
-      
-      // Refresh quotes since the assignment might affect filtering
-      await loadQuotes();
-      
-      toast({
-        title: 'Quote assigned',
-        description: 'The quote has been assigned to the selected clinic',
-      });
-      
-      return true;
-    } catch (err) {
-      toast({
-        title: 'Assignment failed',
-        description: 'Failed to assign the quote to the clinic',
-        variant: 'destructive',
-      });
-      return false;
-    } finally {
-      setLoading(false);
-    }
-  }, [portalType, loadQuotes, toast]);
 
-  // Admin-specific: Unassign quote from clinic
-  const unassignQuoteFromClinic = useCallback(async (quoteId: string) => {
     if (portalType !== 'admin') {
-      toast({
-        title: 'Permission denied',
-        description: 'Only administrators can unassign quotes from clinics',
-        variant: 'destructive',
-      });
-      return false;
+      throw new Error('Only admin can assign quotes to clinics');
     }
-    
+
     setLoading(true);
     
     try {
-      await quoteIntegrationService.unassignQuote(quoteId);
+      await quoteService.assignQuoteToClinic(quoteId, clinicId);
       
-      // Refresh quotes since the unassignment might affect filtering
+      // Refresh quotes after assignment
       await loadQuotes();
       
-      toast({
-        title: 'Quote unassigned',
-        description: 'The quote has been unassigned from the clinic',
-      });
-      
       return true;
-    } catch (err) {
-      toast({
-        title: 'Unassignment failed',
-        description: 'Failed to unassign the quote from the clinic',
-        variant: 'destructive',
-      });
-      return false;
+    } catch (err: any) {
+      console.error('Error assigning quote to clinic:', err);
+      throw new Error(err.message || 'Failed to assign quote to clinic');
     } finally {
       setLoading(false);
     }
-  }, [portalType, loadQuotes, toast]);
+  }, [quoteService, portalType, loadQuotes]);
+
+  // Admin-specific: Unassign a quote from a clinic
+  const unassignQuoteFromClinic = useCallback(async (quoteId: string) => {
+    if (!quoteId) {
+      throw new Error('Quote ID is required');
+    }
+
+    if (portalType !== 'admin') {
+      throw new Error('Only admin can unassign quotes from clinics');
+    }
+
+    setLoading(true);
+    
+    try {
+      await quoteService.unassignQuoteFromClinic(quoteId);
+      
+      // Refresh quotes after unassignment
+      await loadQuotes();
+      
+      return true;
+    } catch (err: any) {
+      console.error('Error unassigning quote from clinic:', err);
+      throw new Error(err.message || 'Failed to unassign quote from clinic');
+    } finally {
+      setLoading(false);
+    }
+  }, [quoteService, portalType, loadQuotes]);
 
   return {
     quotes,
@@ -446,15 +343,15 @@ export function useQuoteSystem(
     error,
     loadQuotes,
     loadQuoteDetails,
+    applyPromoCode,
+    removePromoCode,
+    updateTreatmentQuantity,
+    removeTreatment,
     updateQuoteStatus,
     downloadQuotePdf,
     sendQuoteEmail,
     requestAppointment,
-    updateTreatmentQuantity,
-    removeTreatment,
-    applyPromoCode,
-    removePromoCode,
     assignQuoteToClinic,
-    unassignQuoteFromClinic,
+    unassignQuoteFromClinic
   };
 }

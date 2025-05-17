@@ -9,7 +9,7 @@ import { useQuoteSystem } from "@/hooks/use-quote-system";
 import { QuoteIntegrationWidget } from "@/components/quotes/QuoteIntegrationWidget";
 import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useClinicList } from "@/hooks/use-clinics";
+import { useClinics } from "@/hooks/use-clinics";
 
 export default function AdminQuotesPage() {
   const [, setLocation] = useLocation();
@@ -17,8 +17,8 @@ export default function AdminQuotesPage() {
   const quoteId = params?.id;
   
   // Use the new quote system hook for the admin portal
-  const quoteSystem = useQuoteSystem({ portalType: 'admin' });
-  const clinicsQuery = useClinicList();
+  const quoteSystem = useQuoteSystem('admin');
+  const { clinics, fetchMockClinics, loading: clinicsLoading } = useClinics();
   
   // Local state for dialogs
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "assigned" | "in_progress" | "completed">("all");
@@ -26,10 +26,11 @@ export default function AdminQuotesPage() {
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
   const [selectedQuoteForAssign, setSelectedQuoteForAssign] = useState<string>("");
 
-  // Load quotes when component mounts
+  // Load quotes and clinic data when component mounts
   useEffect(() => {
     quoteSystem.loadQuotes();
-  }, [quoteSystem]);
+    fetchMockClinics(); // Load mock clinics for testing
+  }, [quoteSystem, fetchMockClinics]);
 
   // Load quote details if we have a specific quote ID
   useEffect(() => {
@@ -207,10 +208,10 @@ export default function AdminQuotesPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  {clinicsQuery.isLoading ? (
+                  {clinicsLoading ? (
                     <SelectItem value="loading" disabled>Loading clinics...</SelectItem>
-                  ) : clinicsQuery.data?.length ? (
-                    clinicsQuery.data.map(clinic => (
+                  ) : clinics?.length ? (
+                    clinics.map(clinic => (
                       <SelectItem key={clinic.id} value={clinic.id.toString()}>
                         {clinic.name}
                       </SelectItem>
@@ -229,9 +230,9 @@ export default function AdminQuotesPage() {
             </Button>
             <Button 
               onClick={handleAssignQuote}
-              disabled={!selectedClinicId || quoteSystem.assignQuoteMutation.isPending}
+              disabled={!selectedClinicId || quoteSystem.loading}
             >
-              {quoteSystem.assignQuoteMutation.isPending ? (
+              {quoteSystem.loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Assigning...
