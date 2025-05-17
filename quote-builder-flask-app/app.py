@@ -154,7 +154,12 @@ def apply_promo():
     init_session()
     
     data = request.get_json()
-    promo_code = data.get("promo_code", "").upper()
+    promo_code = data.get("promo_code", "") 
+    if not promo_code and 'promo_code' in data:
+        promo_code = data["promo_code"]
+    
+    # Convert to uppercase for consistent matching
+    promo_code = promo_code.upper() if promo_code else ""
     
     if not promo_code:
         return jsonify({"success": False, "error": "No promo code provided"}), 400
@@ -166,7 +171,15 @@ def apply_promo():
         # Apply to session
         session["quote_data"]["promo_code"] = promo_code
         session["quote_data"]["discount"] = discount
+        
+        # Force session update - ensure it's saved
         session.modified = True
+        
+        # Make sure the session persists
+        from flask import Response
+        session.permanent = True
+        
+        app.logger.info(f"Promo code applied: {promo_code}. New session state: {session['quote_data']}")
         
         return jsonify({
             "success": True,
@@ -186,8 +199,11 @@ def remove_promo():
     session["quote_data"]["promo_code"] = ""
     session["quote_data"]["discount"] = 0
     
-    # Force session update
+    # Force session update - this is critical for persistence
     session.modified = True
+    
+    # Make sure the session persists
+    from flask import Response
     session.permanent = True
     
     # Calculate new totals with zeroed discount
