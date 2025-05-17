@@ -19,10 +19,13 @@ import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
 import { PageTransitionProvider, PageTransitionLoader } from "@/components/ui/page-transition-loader";
 import PromoDetector from "@/components/PromoDetector";
 import Home from "./pages/Home";
+import HomePage from "./pages/HomePage";
+import QuoteBuilderPage from "./pages/QuoteBuilderPage";
 import QuoteDemoPage from "@/pages/QuoteDemoPage";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 import { SpecialOffersProvider } from "@/components/SpecialOffersProvider";
+import { PersistentQuoteProvider } from "@/hooks/use-persistent-quote";
 import ClinicGuard from "@/components/ClinicGuard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
 import ClinicRouter from "@/pages/ClinicRouter";
@@ -1341,6 +1344,11 @@ function App() {
       console.warn('Missing required Google Analytics key: VITE_GA_MEASUREMENT_ID');
     } else {
       initGA();
+    }
+    
+    // Initialize preventReloads for better form handling
+    if (typeof initPreventReloads === 'function') {
+      initPreventReloads();
     }
   }, []);
   
