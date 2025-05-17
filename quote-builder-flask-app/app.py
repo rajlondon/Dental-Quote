@@ -61,11 +61,18 @@ def calculate_totals():
     discount_amount = (subtotal * quote_data["discount"]) / 100
     total = subtotal - discount_amount
     
-    return {
+    result = {
         "subtotal": subtotal,
         "discount_amount": discount_amount,
         "total": total
     }
+    
+    # Add promo code and discount percentage info if a promo is applied
+    if quote_data["promo_code"]:
+        result["promo_code"] = quote_data["promo_code"]
+        result["discount_percentage"] = quote_data["discount"]
+        
+    return result
 
 @app.route("/")
 def index():
