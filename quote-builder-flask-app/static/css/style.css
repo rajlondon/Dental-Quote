@@ -459,6 +459,27 @@ textarea {
     justify-content: center;
 }
 
+/* Saved Indicator */
+.saved-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: #38a169;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    animation: fadeInOut 2s ease-in-out;
+    z-index: 100;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
 /* Responsive Adjustments */
 @media (max-width: 768px) {
     .form-row {
