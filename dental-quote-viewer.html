@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Quote Builder</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            background-color: #1e88e5;
+            color: white;
+            padding: 10px;
+            text-align: center;
+        }
+        .content {
+            flex: 1;
+            display: flex;
+        }
+        iframe {
+            flex: 1;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Dental Quote Builder - Flask Implementation</h1>
+        </div>
+        <div class="content">
+            <iframe src="http://0.0.0.0:8080" allow="fullscreen"></iframe>
+        </div>
+    </div>
+</body>
+</html>
