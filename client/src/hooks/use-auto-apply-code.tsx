@@ -9,46 +9,20 @@ export const useAutoApplyCode = (applyCallback: (code: string) => void) => {
   const [location] = useLocation();
   
   useEffect(() => {
-    // Function to extract promo code from query parameters
-    const getPromoCodeFromUrl = () => {
-      if (typeof window === 'undefined') return null;
-      
-      const urlParams = new URLSearchParams(window.location.search);
-      
-      // Check for 'promo' parameter first (used in special offers)
-      const promoParam = urlParams.get('promo');
-      if (promoParam) return promoParam;
-      
-      // Alternative parameter names
-      const codeParam = urlParams.get('code');
-      if (codeParam) return codeParam;
-      
-      const couponParam = urlParams.get('coupon');
-      if (couponParam) return couponParam;
-      
-      return null;
-    };
+    // Extract promo code from URL query parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const promoCode = searchParams.get('promo');
     
-    // If we have a promo code in the URL, apply it
-    const promoCode = getPromoCodeFromUrl();
     if (promoCode) {
-      console.log('Auto-applying promo code from URL:', promoCode);
+      console.log('Auto-applying promo code:', promoCode);
       applyCallback(promoCode);
       
-      // Optionally, clear the promo parameter from the URL to prevent re-application
-      // on page refresh, but keep the rest of the query parameters
-      /* 
-      const urlParams = new URLSearchParams(window.location.search);
-      urlParams.delete('promo');
-      urlParams.delete('code');
-      urlParams.delete('coupon');
-      
-      const newUrl = window.location.pathname + 
-        (urlParams.toString() ? `?${urlParams.toString()}` : '') +
-        window.location.hash;
-      
-      window.history.replaceState({}, '', newUrl);
-      */
+      // Optionally remove the promo code from the URL to prevent reapplication
+      // on page refresh, but only if desired behavior
+      // const newUrl = window.location.pathname;
+      // window.history.replaceState({}, document.title, newUrl);
     }
   }, [location, applyCallback]);
+  
+  return null;
 };
