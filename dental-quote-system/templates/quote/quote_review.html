@@ -1,0 +1,344 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Your Dental Quote - MyDentalFly{% endblock %}
+
+{% block content %}
+<!-- Quote Review Header -->
+<section class="quote-review-header py-4 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="fw-bold text-primary mb-2">Review Your Quote</h1>
+                <p class="lead">Please review your quote details before proceeding</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="progress-container">
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">Step 3 of 4: Quote Review</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quote Review Content -->
+<section class="quote-review-content py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Quote Details -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-4">Selected Treatments</h2>
+                        
+                        {% if selected_treatments %}
+                            <div class="table-responsive mb-4">
+                                <table class="table table-striped">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Treatment</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-end">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for treatment in selected_treatments %}
+                                            <tr>
+                                                <td>
+                                                    <div class="fw-bold">{{ treatment.name }}</div>
+                                                    <div class="small text-muted">{{ treatment.description }}</div>
+                                                </td>
+                                                <td class="text-center">{{ treatment.quantity }}</td>
+                                                <td class="text-end">${{ treatment.price * treatment.quantity }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="2" class="text-end fw-bold">Subtotal:</td>
+                                            <td class="text-end fw-bold">${{ quote_totals.subtotal }}</td>
+                                        </tr>
+                                        {% if quote_totals.discount_amount > 0 %}
+                                            <tr class="text-success">
+                                                <td colspan="2" class="text-end fw-bold">Discount:</td>
+                                                <td class="text-end fw-bold">-${{ quote_totals.discount_amount }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        <tr class="table-primary">
+                                            <td colspan="2" class="text-end fw-bold">Total:</td>
+                                            <td class="text-end fw-bold">${{ quote_totals.total }}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            
+                            {% if promo_code %}
+                                <div class="alert alert-success">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-tag me-2"></i>
+                                        <div>
+                                            <strong>Promo Code Applied:</strong> {{ promo_code }}
+                                            {% if promo_details %}
+                                                <br>
+                                                <span class="small">{{ promo_details.description }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="treatments-edit-link mb-4">
+                                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-pen me-1"></i> Edit Treatments
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i> No treatments have been selected.
+                                <a href="{{ url_for('page_routes.quote_builder') }}">Select treatments</a> to build your quote.
+                            </div>
+                        {% endif %}
+
+                        <hr class="my-4">
+                        
+                        <h2 class="h4 mb-4">Patient Information</h2>
+                        
+                        {% if patient_info %}
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="personal-info-card p-3 border rounded h-100">
+                                        <h3 class="h5 mb-3">Personal Details</h3>
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2">
+                                                <span class="text-muted">Name:</span> 
+                                                <span class="fw-medium">{{ patient_info.first_name }} {{ patient_info.last_name }}</span>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Email:</span> 
+                                                <span class="fw-medium">{{ patient_info.email }}</span>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Phone:</span> 
+                                                <span class="fw-medium">{{ patient_info.phone }}</span>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Country:</span> 
+                                                <span class="fw-medium">{{ patient_info.country }}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="travel-info-card p-3 border rounded h-100">
+                                        <h3 class="h5 mb-3">Travel Details</h3>
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2">
+                                                <span class="text-muted">Preferred Travel Date:</span> 
+                                                <span class="fw-medium">{{ patient_info.preferred_travel_date or 'Not specified' }}</span>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Travel Flexibility:</span> 
+                                                <span class="fw-medium">{{ patient_info.travel_flexibility or 'Not specified' }}</span>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Travel Companions:</span> 
+                                                <span class="fw-medium">{{ patient_info.travel_companions }}</span>
+                                            </li>
+                                            <li>
+                                                <span class="text-muted">Assistance Required:</span> 
+                                                <ul class="list-unstyled ms-3 mb-0">
+                                                    <li>
+                                                        <i class="fas fa-{% if patient_info.accommodation_assistance %}check text-success{% else %}times text-muted{% endif %} me-1"></i> 
+                                                        Accommodation
+                                                    </li>
+                                                    <li>
+                                                        <i class="fas fa-{% if patient_info.transportation_assistance %}check text-success{% else %}times text-muted{% endif %} me-1"></i> 
+                                                        Local Transportation
+                                                    </li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="medical-info-card p-3 border rounded h-100">
+                                        <h3 class="h5 mb-3">Medical Information</h3>
+                                        <ul class="list-unstyled mb-0">
+                                            <li class="mb-2">
+                                                <span class="text-muted">Medical Conditions:</span> 
+                                                <p class="mb-1">{{ patient_info.medical_conditions or 'None specified' }}</p>
+                                            </li>
+                                            <li class="mb-2">
+                                                <span class="text-muted">Current Medications:</span> 
+                                                <p class="mb-1">{{ patient_info.current_medications or 'None specified' }}</p>
+                                            </li>
+                                            <li>
+                                                <span class="text-muted">Dental Anxiety:</span> 
+                                                <span class="fw-medium">{% if patient_info.dental_anxiety %}Yes{% else %}No{% endif %}</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="additional-info-card p-3 border rounded h-100">
+                                        <h3 class="h5 mb-3">Additional Information</h3>
+                                        <ul class="list-unstyled mb-0">
+                                            <li>
+                                                <span class="text-muted">Special Requests:</span> 
+                                                <p class="mb-0">{{ patient_info.special_requests or 'None specified' }}</p>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="patient-info-edit-link mt-4">
+                                <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-pen me-1"></i> Edit Patient Information
+                                </a>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Patient information is missing.
+                                <a href="{{ url_for('page_routes.patient_info') }}">Provide patient information</a> to complete your quote.
+                            </div>
+                        {% endif %}
+                        
+                        <hr class="my-4">
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i> Back
+                            </a>
+                            <a href="{{ url_for('page_routes.quote_confirmation') }}" class="btn btn-primary">
+                                Confirm & Complete Quote <i class="fas fa-arrow-right ms-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quote Summary -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 20px; z-index: 10;">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h3 class="h5 mb-0">Quote Summary</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="summary-section mb-4">
+                            <h4 class="h6 mb-3">Selected Treatments</h4>
+                            <ul class="list-group list-group-flush">
+                                {% for treatment in selected_treatments %}
+                                    <li class="list-group-item px-0 py-2 border-bottom">
+                                        <div class="d-flex justify-content-between">
+                                            <div>{{ treatment.name }} x{{ treatment.quantity }}</div>
+                                            <div>${{ treatment.price * treatment.quantity }}</div>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        
+                        {% if promo_code %}
+                            <div class="applied-promo mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>Promo Code:</span>
+                                    <span class="badge bg-success">{{ promo_code }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="quote-totals">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span>${{ quote_totals.subtotal }}</span>
+                            </div>
+                            
+                            {% if quote_totals.discount_amount > 0 %}
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Discount:</span>
+                                    <span>-${{ quote_totals.discount_amount }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between fw-bold border-top pt-2 mt-2">
+                                <span>Total:</span>
+                                <span>${{ quote_totals.total }}</span>
+                            </div>
+                        </div>
+                        
+                        <hr class="my-4">
+                        
+                        <div class="next-steps">
+                            <h4 class="h6 mb-3">What's Next?</h4>
+                            <div class="next-steps-list">
+                                <div class="d-flex mb-3">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-check-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <strong>Confirm Your Quote</strong>
+                                        <p class="small text-muted mb-0">Review and confirm your quote details</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex mb-3">
+                                    <div class="me-3 text-muted">
+                                        <i class="fas fa-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <strong>Receive Your Quote</strong>
+                                        <p class="small text-muted mb-0">Get your detailed quote via email</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex mb-3">
+                                    <div class="me-3 text-muted">
+                                        <i class="fas fa-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <strong>Consultation</strong>
+                                        <p class="small text-muted mb-0">Schedule a free consultation to discuss your treatment</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <div class="me-3 text-muted">
+                                        <i class="fas fa-circle fa-lg"></i>
+                                    </div>
+                                    <div>
+                                        <strong>Book Your Treatment</strong>
+                                        <p class="small text-muted mb-0">Finalize your booking when you're ready</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .sticky-top {
+        top: 20px;
+    }
+    
+    .next-steps-list .fas.fa-circle {
+        opacity: 0.5;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Nothing special needed for the quote review page
+    });
+</script>
+{% endblock %}

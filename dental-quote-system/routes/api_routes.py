@@ -1,246 +1,231 @@
 """
-API Routes for Dental Quote System
-Handles AJAX requests for quote functionality
+API routes for the MyDentalFly application.
+Handles AJAX requests from the frontend for dynamic updates.
 """
 
-from flask import Blueprint, request, jsonify
-from utils.session_manager import (
-    get_session_data, add_treatment, remove_treatment, 
-    update_treatment_quantity, apply_promo_code, remove_promo_code
-)
+import logging
+import json
+from flask import Blueprint, request, jsonify, session
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
 
-# Initialize blueprint
+# Create Blueprint
 api_routes = Blueprint('api_routes', __name__, url_prefix='/api')
 
-# Service instances
+# Initialize services
 treatment_service = TreatmentService()
 promo_service = PromoService()
 
+# Logger
+logger = logging.getLogger(__name__)
+
 @api_routes.route('/add-treatment', methods=['POST'])
-def add_treatment_to_quote():
-    """
-    Add a treatment to the current quote
-    """
-    data = request.json
+def add_treatment():
+    """Add a treatment to the quote."""
+    data = request.get_json()
     treatment_id = data.get('treatment_id')
     
-    # Validate treatment ID
     if not treatment_id:
-        return jsonify({
-            'success': False,
-            'message': 'Treatment ID is required'
-        }), 400
+        return jsonify({'error': 'Treatment ID is required'}), 400
     
-    # Get treatment data
+    # Get treatment details
     treatment = treatment_service.get_treatment_by_id(treatment_id)
-    
     if not treatment:
-        return jsonify({
-            'success': False,
-            'message': 'Treatment not found'
-        }), 404
+        return jsonify({'error': 'Treatment not found'}), 404
     
-    # Add treatment to quote in session
-    result = add_treatment(treatment)
+    # Initialize session if not present
+    if 'selected_treatments' not in session:
+        session['selected_treatments'] = []
+    
+    # Check if treatment is already in selected treatments
+    existing_treatment = next((t for t in session['selected_treatments'] if t['id'] == treatment_id), None)
+    
+    if existing_treatment:
+        # Increment quantity if already in quote
+        existing_treatment['quantity'] += 1
+    else:
+        # Add treatment to selected treatments
+        treatment['quantity'] = 1
+        session['selected_treatments'].append(treatment)
+    
+    # Calculate new totals
+    promo_code = session.get('promo_code')
+    quote_totals = calculate_quote_totals(session['selected_treatments'], promo_code)
     
     return jsonify({
-        'success': True,
-        'message': f"{treatment['name']} added to your quote",
-        'selected_treatments': result['selected_treatments'],
-        'totals': result['totals']
+        'selected_treatments': session['selected_treatments'],
+        'totals': quote_totals
     })
 
 @api_routes.route('/remove-treatment', methods=['POST'])
-def remove_treatment_from_quote():
-    """
-    Remove a treatment from the current quote
-    """
-    data = request.json
+def remove_treatment():
+    """Remove a treatment from the quote."""
+    data = request.get_json()
     treatment_id = data.get('treatment_id')
     
-    # Validate treatment ID
     if not treatment_id:
-        return jsonify({
-            'success': False,
-            'message': 'Treatment ID is required'
-        }), 400
+        return jsonify({'error': 'Treatment ID is required'}), 400
     
-    # Remove treatment from quote in session
-    result = remove_treatment(treatment_id)
+    # Ensure session is initialized
+    if 'selected_treatments' not in session:
+        session['selected_treatments'] = []
+    
+    # Remove treatment from selected treatments
+    session['selected_treatments'] = [t for t in session['selected_treatments'] if t['id'] != treatment_id]
+    
+    # Calculate new totals
+    promo_code = session.get('promo_code')
+    quote_totals = calculate_quote_totals(session['selected_treatments'], promo_code)
     
     return jsonify({
-        'success': True,
-        'message': 'Treatment removed from your quote',
-        'selected_treatments': result['selected_treatments'],
-        'totals': result['totals']
+        'selected_treatments': session['selected_treatments'],
+        'totals': quote_totals
     })
 
 @api_routes.route('/update-treatment-quantity', methods=['POST'])
-def update_treatment_quantity_in_quote():
-    """
-    Update the quantity of a treatment in the current quote
-    """
-    data = request.json
+def update_treatment_quantity():
+    """Update the quantity of a treatment in the quote."""
+    data = request.get_json()
     treatment_id = data.get('treatment_id')
     quantity = data.get('quantity')
     
-    # Validate input
-    if not treatment_id:
-        return jsonify({
-            'success': False,
-            'message': 'Treatment ID is required'
-        }), 400
+    if not treatment_id or not quantity:
+        return jsonify({'error': 'Treatment ID and quantity are required'}), 400
     
-    if not quantity or quantity < 1:
-        return jsonify({
-            'success': False,
-            'message': 'Quantity must be at least 1'
-        }), 400
+    try:
+        quantity = int(quantity)
+        if quantity <= 0:
+            return jsonify({'error': 'Quantity must be greater than 0'}), 400
+    except ValueError:
+        return jsonify({'error': 'Quantity must be a valid number'}), 400
     
-    # Update treatment quantity in session
-    result = update_treatment_quantity(treatment_id, quantity)
+    # Ensure session is initialized
+    if 'selected_treatments' not in session:
+        session['selected_treatments'] = []
+    
+    # Update quantity
+    treatment = next((t for t in session['selected_treatments'] if t['id'] == treatment_id), None)
+    if treatment:
+        treatment['quantity'] = quantity
+    
+    # Calculate new totals
+    promo_code = session.get('promo_code')
+    quote_totals = calculate_quote_totals(session['selected_treatments'], promo_code)
     
     return jsonify({
-        'success': True,
-        'message': 'Treatment quantity updated',
-        'selected_treatments': result['selected_treatments'],
-        'totals': result['totals']
+        'selected_treatments': session['selected_treatments'],
+        'totals': quote_totals
     })
 
 @api_routes.route('/apply-promo-code', methods=['POST'])
-def apply_promo_code_to_quote():
-    """
-    Apply a promotional code to the current quote
-    """
-    data = request.json
+def apply_promo_code():
+    """Apply a promo code to the quote."""
+    data = request.get_json()
     promo_code = data.get('promo_code')
     
-    # Validate promo code
     if not promo_code:
-        return jsonify({
-            'success': False,
-            'message': 'Promo code is required'
-        }), 400
+        return jsonify({'error': 'Promo code is required'}), 400
     
-    # Get current session data
-    session_data = get_session_data()
-    selected_treatments = session_data.get('selected_treatments', [])
+    # Validate promo code
+    valid, message = promo_service.validate_promo_code(promo_code)
+    if not valid:
+        return jsonify({'error': 'Invalid promo code', 'message': message}), 400
     
-    # Check if there are selected treatments
-    if not selected_treatments:
-        return jsonify({
-            'success': False,
-            'message': 'Please select at least one treatment before applying a promo code'
-        }), 400
+    # Apply promo code
+    session['promo_code'] = promo_code
     
-    # Check if the promo code is valid
-    if not promo_service.is_valid_promo_code(promo_code):
-        return jsonify({
-            'success': False,
-            'message': 'Invalid or expired promo code'
-        }), 400
-    
-    # Get promotion details
-    promotion = promo_service.get_promotion_by_code(promo_code)
-    
-    # Apply promo code to session
-    result = promo_service.apply_promo_code(promo_code, selected_treatments)
-    
-    if not result.get('success'):
-        return jsonify(result), 400
-    
-    # Apply promo code to session
-    totals = apply_promo_code(promo_code, promotion)
+    # Calculate new totals
+    selected_treatments = session.get('selected_treatments', [])
+    quote_totals = calculate_quote_totals(selected_treatments, promo_code)
     
     return jsonify({
-        'success': True,
-        'message': 'Promo code applied successfully',
-        'totals': totals
+        'selected_treatments': selected_treatments,
+        'promo_code': promo_code,
+        'totals': quote_totals,
+        'message': f'Promo code {promo_code} applied successfully'
     })
 
 @api_routes.route('/remove-promo-code', methods=['POST'])
-def remove_promo_code_from_quote():
-    """
-    Remove the promotional code from the current quote
-    """
-    # Remove promo code from session
-    totals = remove_promo_code()
+def remove_promo_code():
+    """Remove the applied promo code from the quote."""
+    # Remove promo code
+    session.pop('promo_code', None)
+    
+    # Calculate new totals
+    selected_treatments = session.get('selected_treatments', [])
+    quote_totals = calculate_quote_totals(selected_treatments, None)
     
     return jsonify({
-        'success': True,
-        'message': 'Promo code removed',
-        'totals': totals
+        'selected_treatments': selected_treatments,
+        'promo_code': None,
+        'totals': quote_totals,
+        'message': 'Promo code removed successfully'
     })
 
-@api_routes.route('/apply-special-offer', methods=['POST'])
-def apply_special_offer_to_quote():
-    """
-    Apply a special offer to the current quote
-    """
-    data = request.json
-    offer_id = data.get('offer_id')
+@api_routes.route('/get-quote-data', methods=['GET'])
+def get_quote_data():
+    """Get the current quote data."""
+    selected_treatments = session.get('selected_treatments', [])
+    promo_code = session.get('promo_code')
+    patient_info = session.get('patient_info', {})
     
-    # Validate offer ID
-    if not offer_id:
-        return jsonify({
-            'success': False,
-            'message': 'Offer ID is required'
-        }), 400
+    # Calculate totals
+    quote_totals = calculate_quote_totals(selected_treatments, promo_code)
     
-    # Get offer details
-    offer = promo_service.get_promotion_by_id(offer_id)
+    return jsonify({
+        'selected_treatments': selected_treatments,
+        'promo_code': promo_code,
+        'patient_info': patient_info,
+        'totals': quote_totals
+    })
+
+@api_routes.route('/treatments', methods=['GET'])
+def get_treatments():
+    """Get all available treatments."""
+    treatments = treatment_service.get_all_treatments()
+    return jsonify(treatments)
+
+@api_routes.route('/treatments/<treatment_id>', methods=['GET'])
+def get_treatment(treatment_id):
+    """Get a specific treatment by ID."""
+    treatment = treatment_service.get_treatment_by_id(treatment_id)
+    if treatment:
+        return jsonify(treatment)
+    return jsonify({'error': 'Treatment not found'}), 404
+
+@api_routes.route('/treatments/categories', methods=['GET'])
+def get_treatment_categories():
+    """Get all treatment categories."""
+    categories = treatment_service.get_treatment_categories()
+    return jsonify(categories)
+
+@api_routes.route('/promos', methods=['GET'])
+def get_promos():
+    """Get all active promotional offers."""
+    promos = promo_service.get_all_active_offers()
+    return jsonify(promos)
+
+@api_routes.route('/promos/<promo_id>', methods=['GET'])
+def get_promo(promo_id):
+    """Get a specific promotional offer by ID."""
+    promo = promo_service.get_offer_by_id(promo_id)
+    if promo:
+        return jsonify(promo)
+    return jsonify({'error': 'Promotion not found'}), 404
+
+def calculate_quote_totals(treatments, promo_code=None):
+    """Calculate quote totals with or without a promo code."""
+    subtotal = sum(treatment['price'] * treatment['quantity'] for treatment in treatments)
     
-    if not offer:
-        return jsonify({
-            'success': False,
-            'message': 'Offer not found'
-        }), 404
-    
-    # Get applicable treatments
-    applicable_treatments = offer.get('applicable_treatments', [])
-    treatments_to_add = []
-    
-    if applicable_treatments:
-        treatments_to_add = treatment_service.get_treatments_by_ids(applicable_treatments)
-    
-    # Add treatments to quote
-    session_data = get_session_data()
-    for treatment in treatments_to_add:
-        # Check if treatment is already in the quote
-        existing = next(
-            (t for t in session_data.get('selected_treatments', []) if t.get('id') == treatment.get('id')), 
-            None
-        )
-        
-        if not existing:
-            add_treatment(treatment)
-    
-    # Apply promo code from the offer
-    promo_code = offer.get('promo_code')
+    # Apply promo code discount if available
+    discount_amount = 0
     if promo_code:
-        apply_promo_code(promo_code, offer)
+        discount_amount = promo_service.calculate_discount(promo_code, treatments, subtotal)
     
-    return jsonify({
-        'success': True,
-        'message': 'Special offer applied successfully',
-        'redirect': '/quote-builder'
-    })
-
-@api_routes.route('/get-eligible-promotions', methods=['GET'])
-def get_eligible_promotions():
-    """
-    Get promotions eligible for the current quote
-    """
-    # Get current session data
-    session_data = get_session_data()
-    selected_treatments = session_data.get('selected_treatments', [])
+    total = subtotal - discount_amount
     
-    # Get eligible promotions
-    eligible_promotions = promo_service.get_eligible_promotions_for_treatments(selected_treatments)
-    
-    return jsonify({
-        'success': True,
-        'promotions': eligible_promotions
-    })
+    return {
+        'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'total': total
+    }
