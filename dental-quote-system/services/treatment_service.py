@@ -1,235 +1,277 @@
 """
 Treatment Service Module
-Provides functions and data for dental treatments
+Handles dental treatment data and operations
 """
 import logging
+import json
+import os
 
 logger = logging.getLogger(__name__)
 
-# Define available treatments
-TREATMENTS = {
-    "dental_implant_standard": {
-        "id": "dental_implant_standard",
-        "name": "Standard Dental Implant",
-        "description": "Titanium implant with abutment and crown, placed in a single surgical procedure.",
-        "price": 750,
-        "image": "/static/images/treatments/dental_implant.jpg",
-        "duration": "2-3 days",
-        "recovery": "3-5 days",
-        "category": "implants",
-        "popular": True,
-        "clinic_reference_code": "IMP-STD"
-    },
-    "dental_implant_premium": {
-        "id": "dental_implant_premium",
-        "name": "Premium Dental Implant",
-        "description": "Premium brand titanium implant with custom abutment and high-quality porcelain crown.",
-        "price": 950,
-        "image": "/static/images/treatments/premium_implant.jpg",
-        "duration": "2-3 days",
-        "recovery": "3-5 days",
-        "category": "implants",
-        "popular": False,
-        "clinic_reference_code": "IMP-PRE"
-    },
-    "all_on_4_implants": {
-        "id": "all_on_4_implants",
-        "name": "All-on-4 Dental Implants",
-        "description": "Full arch restoration using only 4 implants to support a fixed prosthesis.",
-        "price": 4500,
-        "image": "/static/images/treatments/all_on_4.jpg",
-        "duration": "5-7 days",
-        "recovery": "7-10 days",
-        "category": "implants",
-        "popular": True,
-        "clinic_reference_code": "AO4"
-    },
-    "all_on_6_implants": {
-        "id": "all_on_6_implants",
-        "name": "All-on-6 Dental Implants",
-        "description": "Full arch restoration using 6 implants for added stability and support.",
-        "price": 5500,
-        "image": "/static/images/treatments/all_on_6.jpg",
-        "duration": "5-7 days",
-        "recovery": "7-10 days",
-        "category": "implants",
-        "popular": False,
-        "clinic_reference_code": "AO6"
-    },
-    "dental_crowns": {
-        "id": "dental_crowns",
-        "name": "Dental Crowns",
-        "description": "Porcelain or zirconia crowns to restore damaged or decayed teeth.",
-        "price": 350,
-        "image": "/static/images/treatments/dental_crown.jpg",
-        "duration": "3-5 days",
-        "recovery": "1-2 days",
-        "category": "cosmetic",
-        "popular": True,
-        "clinic_reference_code": "CRW"
-    },
-    "porcelain_veneers": {
-        "id": "porcelain_veneers",
-        "name": "Porcelain Veneers",
-        "description": "Thin porcelain shells bonded to the front of teeth for a beautiful, natural-looking smile.",
-        "price": 400,
-        "image": "/static/images/treatments/veneers.jpg",
-        "duration": "5-7 days",
-        "recovery": "1-2 days",
-        "category": "cosmetic",
-        "popular": True,
-        "clinic_reference_code": "VEN"
-    },
-    "composite_veneers": {
-        "id": "composite_veneers",
-        "name": "Composite Veneers",
-        "description": "Tooth-colored resin applied directly to teeth for a cost-effective smile enhancement.",
-        "price": 200,
-        "image": "/static/images/treatments/composite_veneers.jpg",
-        "duration": "1-2 days",
-        "recovery": "None",
-        "category": "cosmetic",
-        "popular": False,
-        "clinic_reference_code": "VEN-C"
-    },
-    "teeth_whitening": {
-        "id": "teeth_whitening",
-        "name": "Professional Teeth Whitening",
-        "description": "In-office laser whitening treatment to brighten teeth by several shades.",
-        "price": 150,
-        "image": "/static/images/treatments/teeth_whitening.jpg",
-        "duration": "1 day",
-        "recovery": "None",
-        "category": "cosmetic",
-        "popular": True,
-        "clinic_reference_code": "WHT"
-    },
-    "dental_bridge": {
-        "id": "dental_bridge",
-        "name": "Dental Bridge",
-        "description": "Fixed prosthetic device to replace one or more missing teeth.",
-        "price": 600,
-        "image": "/static/images/treatments/dental_bridge.jpg",
-        "duration": "3-5 days",
-        "recovery": "1-2 days",
-        "category": "restorative",
-        "popular": False,
-        "clinic_reference_code": "BRG"
-    },
-    "root_canal": {
-        "id": "root_canal",
-        "name": "Root Canal Treatment",
-        "description": "Procedure to treat infection at the center of a tooth (root canal system).",
-        "price": 300,
-        "image": "/static/images/treatments/root_canal.jpg",
-        "duration": "1-2 days",
-        "recovery": "1-2 days",
-        "category": "restorative",
-        "popular": False,
-        "clinic_reference_code": "RCT"
-    },
-    "dental_cleaning": {
-        "id": "dental_cleaning",
-        "name": "Professional Dental Cleaning",
-        "description": "Deep cleaning to remove plaque and tartar build-up.",
-        "price": 75,
-        "image": "/static/images/treatments/dental_cleaning.jpg",
-        "duration": "1 day",
-        "recovery": "None",
-        "category": "preventive",
-        "popular": False,
-        "clinic_reference_code": "CLN"
-    },
-    "dental_bonding": {
-        "id": "dental_bonding",
-        "name": "Dental Bonding",
-        "description": "Application of tooth-colored resin to repair chipped, cracked, or discolored teeth.",
-        "price": 150,
-        "image": "/static/images/treatments/dental_bonding.jpg",
-        "duration": "1 day",
-        "recovery": "None",
-        "category": "cosmetic",
-        "popular": False,
-        "clinic_reference_code": "BND"
-    },
-    "dental_consultation": {
-        "id": "dental_consultation",
-        "name": "Dental Consultation",
-        "description": "Comprehensive evaluation by a specialist dentist to assess your dental needs.",
-        "price": 75,
-        "image": "/static/images/treatments/consultation.jpg",
-        "duration": "1 day",
-        "recovery": "None",
-        "category": "preventive",
-        "popular": False,
-        "clinic_reference_code": "CON"
-    },
-    "full_mouth_reconstruction": {
-        "id": "full_mouth_reconstruction",
-        "name": "Full Mouth Reconstruction",
-        "description": "Complete restoration of all teeth in both upper and lower jaws.",
-        "price": 7500,
-        "image": "/static/images/treatments/full_mouth.jpg",
-        "duration": "7-14 days",
-        "recovery": "10-14 days",
-        "category": "restorative",
-        "popular": False,
-        "clinic_reference_code": "FMR"
-    },
-    "dental_filling": {
-        "id": "dental_filling",
-        "name": "Dental Filling",
-        "description": "Tooth-colored composite filling to repair cavities or tooth decay.",
-        "price": 120,
-        "image": "/static/images/treatments/dental_filling.jpg",
-        "duration": "1 day",
-        "recovery": "None",
-        "category": "restorative",
-        "popular": False,
-        "clinic_reference_code": "FIL"
-    },
-    "hollywood_smile": {
-        "id": "hollywood_smile",
-        "name": "Hollywood Smile",
-        "description": "Comprehensive smile makeover with multiple veneers and/or crowns for a perfect smile.",
-        "price": 3500,
-        "image": "/static/images/treatments/hollywood_smile.jpg",
-        "duration": "7-10 days",
-        "recovery": "3-5 days",
-        "category": "cosmetic",
-        "popular": True,
-        "clinic_reference_code": "HWS"
-    }
-}
-
 def get_all_treatments():
-    """Get all available treatments"""
-    return list(TREATMENTS.values())
-
-def get_treatments_by_category(category):
-    """Get treatments by category"""
-    return [treatment for treatment in TREATMENTS.values() if treatment.get('category') == category]
-
-def get_popular_treatments():
-    """Get popular treatments"""
-    return [treatment for treatment in TREATMENTS.values() if treatment.get('popular')]
+    """Get all treatments
+    
+    Returns:
+        list: All treatments
+    """
+    return _load_treatments()
 
 def get_treatment_by_id(treatment_id):
-    """Get a treatment by its ID"""
-    return TREATMENTS.get(treatment_id)
-
-def calculate_treatments_total(treatments):
-    """Calculate the total price for a list of treatments"""
-    total = 0
-    item_count = 0
+    """Get a treatment by its ID
     
+    Args:
+        treatment_id (str): Treatment ID
+        
+    Returns:
+        dict: Treatment data or None
+    """
+    treatments = _load_treatments()
+    
+    # Find treatment by ID
     for treatment in treatments:
-        quantity = treatment.get('quantity', 1)
-        price = treatment.get('price', 0)
-        total += price * quantity
-        item_count += quantity
+        if treatment['id'] == treatment_id:
+            return treatment
     
-    return {
-        'subtotal': total,
-        'item_count': item_count
-    }
+    return None
+
+def get_popular_treatments(limit=6):
+    """Get popular treatments
+    
+    Args:
+        limit (int): Maximum number of treatments to return
+        
+    Returns:
+        list: Popular treatments
+    """
+    treatments = _load_treatments()
+    
+    # Filter for popular treatments
+    popular_treatments = [treatment for treatment in treatments if treatment.get('popular', False)]
+    
+    # Sort by popularity score (if available) or just return the first few
+    popular_treatments.sort(key=lambda x: x.get('popularity_score', 0), reverse=True)
+    
+    return popular_treatments[:limit]
+
+def get_treatments_by_category(category_id):
+    """Get treatments by category
+    
+    Args:
+        category_id (str): Category ID
+        
+    Returns:
+        list: Treatments in the category
+    """
+    treatments = _load_treatments()
+    
+    # Filter for treatments in the category
+    category_treatments = [
+        treatment for treatment in treatments 
+        if treatment.get('category_id') == category_id
+    ]
+    
+    return category_treatments
+
+def get_categorized_treatments():
+    """Get treatments categorized by category
+    
+    Returns:
+        dict: Categories with their treatments
+    """
+    treatments = _load_treatments()
+    categories = _load_categories()
+    
+    # Create dictionary for each category
+    categorized = {}
+    
+    for category in categories:
+        category_id = category['id']
+        categorized[category_id] = {
+            'id': category_id,
+            'name': category['name'],
+            'treatments': []
+        }
+    
+    # Add treatments to their categories
+    for treatment in treatments:
+        category_id = treatment.get('category_id')
+        if category_id and category_id in categorized:
+            categorized[category_id]['treatments'].append(treatment)
+    
+    return categorized
+
+def _load_treatments():
+    """Load treatments from data source
+    
+    Returns:
+        list: Treatments
+    """
+    # Use mock treatments for development and testing
+    treatments = [
+        {
+            "id": "dental_implant_standard",
+            "name": "Standard Dental Implant",
+            "description": "A titanium post surgically placed into the jawbone to serve as a replacement for a missing tooth root.",
+            "category_id": "implants",
+            "price": 750,
+            "duration": "2-3 hours",
+            "image": "/static/images/treatments/dental-implant.jpg",
+            "popular": True,
+            "popularity_score": 95
+        },
+        {
+            "id": "dental_implant_premium",
+            "name": "Premium Dental Implant",
+            "description": "Advanced dental implant using premium materials with lifetime warranty.",
+            "category_id": "implants",
+            "price": 1100,
+            "duration": "2-3 hours",
+            "image": "/static/images/treatments/premium-implant.jpg",
+            "popular": False,
+            "popularity_score": 75
+        },
+        {
+            "id": "all_on_4_implants",
+            "name": "All-on-4 Implants",
+            "description": "A full arch of prosthetic teeth supported by just four strategically placed implants.",
+            "category_id": "implants",
+            "price": 5500,
+            "duration": "1-2 days",
+            "image": "/static/images/treatments/all-on-4.jpg",
+            "popular": True,
+            "popularity_score": 90
+        },
+        {
+            "id": "porcelain_veneers",
+            "name": "Porcelain Veneers",
+            "description": "Thin shells of porcelain bonded to the front of teeth to improve appearance.",
+            "category_id": "cosmetic",
+            "price": 350,
+            "duration": "1-2 hours per tooth",
+            "image": "/static/images/treatments/veneers.jpg",
+            "popular": True,
+            "popularity_score": 92
+        },
+        {
+            "id": "composite_veneers",
+            "name": "Composite Veneers",
+            "description": "Tooth-colored resin applied to improve the appearance of teeth.",
+            "category_id": "cosmetic",
+            "price": 200,
+            "duration": "1 hour per tooth",
+            "image": "/static/images/treatments/composite-veneers.jpg",
+            "popular": False,
+            "popularity_score": 70
+        },
+        {
+            "id": "teeth_whitening",
+            "name": "Professional Teeth Whitening",
+            "description": "In-office whitening procedure to brighten and whiten teeth.",
+            "category_id": "cosmetic",
+            "price": 250,
+            "duration": "1-2 hours",
+            "image": "/static/images/treatments/teeth-whitening.jpg",
+            "popular": True,
+            "popularity_score": 88
+        },
+        {
+            "id": "dental_crowns",
+            "name": "Dental Crowns",
+            "description": "Custom-fitted caps placed over damaged or decayed teeth.",
+            "category_id": "restorative",
+            "price": 300,
+            "duration": "1-2 hours",
+            "image": "/static/images/treatments/crowns.jpg",
+            "popular": True,
+            "popularity_score": 85
+        },
+        {
+            "id": "dental_bridges",
+            "name": "Dental Bridges",
+            "description": "Fixed prosthetic devices to replace one or more missing teeth.",
+            "category_id": "restorative",
+            "price": 650,
+            "duration": "2-3 hours",
+            "image": "/static/images/treatments/bridges.jpg",
+            "popular": False,
+            "popularity_score": 72
+        },
+        {
+            "id": "root_canal",
+            "name": "Root Canal Treatment",
+            "description": "Procedure to treat infection at the center of a tooth.",
+            "category_id": "restorative",
+            "price": 350,
+            "duration": "1-2 hours",
+            "image": "/static/images/treatments/root-canal.jpg",
+            "popular": False,
+            "popularity_score": 60
+        },
+        {
+            "id": "dental_filling",
+            "name": "Dental Filling",
+            "description": "Material used to fill cavities or repair minor tooth fractures.",
+            "category_id": "restorative",
+            "price": 80,
+            "duration": "30-60 minutes",
+            "image": "/static/images/treatments/filling.jpg",
+            "popular": False,
+            "popularity_score": 65
+        },
+        {
+            "id": "full_mouth_reconstruction",
+            "name": "Full Mouth Reconstruction",
+            "description": "Comprehensive treatment to restore all teeth in both the upper and lower jaws.",
+            "category_id": "advanced",
+            "price": 8500,
+            "duration": "Multiple visits",
+            "image": "/static/images/treatments/full-mouth.jpg",
+            "popular": False,
+            "popularity_score": 50
+        },
+        {
+            "id": "hollywood_smile",
+            "name": "Hollywood Smile",
+            "description": "Combination of treatments to achieve a perfect smile with bright, aligned teeth.",
+            "category_id": "cosmetic",
+            "price": 3500,
+            "duration": "Multiple visits",
+            "image": "/static/images/treatments/hollywood-smile.jpg",
+            "popular": True,
+            "popularity_score": 95
+        }
+    ]
+    
+    return treatments
+
+def _load_categories():
+    """Load treatment categories
+    
+    Returns:
+        list: Categories
+    """
+    # Use mock categories for development and testing
+    categories = [
+        {
+            "id": "implants",
+            "name": "Dental Implants",
+            "description": "Permanent solutions for missing teeth"
+        },
+        {
+            "id": "cosmetic",
+            "name": "Cosmetic Dentistry",
+            "description": "Treatments to enhance your smile"
+        },
+        {
+            "id": "restorative",
+            "name": "Restorative Dentistry",
+            "description": "Repair damaged or decayed teeth"
+        },
+        {
+            "id": "advanced",
+            "name": "Advanced Procedures",
+            "description": "Complex dental treatments"
+        }
+    ]
+    
+    return categories

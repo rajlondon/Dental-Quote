@@ -1,184 +1,216 @@
 {% extends 'base.html' %}
 
-{% block title %}MyDentalFly - Special Offers{% endblock %}
+{% block title %}Special Offers - MyDentalFly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .promo-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('/static/images/promos/special-offers-bg.jpg');
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 80px 0;
+    }
+    
+    .promo-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+    
+    .promo-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .promo-image {
+        height: 200px;
+        background-size: cover;
+        background-position: center;
+    }
+    
+    .discount-badge {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        font-size: 1.2rem;
+        padding: 10px 15px;
+        border-radius: 50px;
+    }
+    
+    .promotion-level-featured {
+        border-top: 4px solid #dc3545;
+    }
+    
+    .promotion-level-premium {
+        border-top: 4px solid #007bff;
+    }
+    
+    .promotion-level-standard {
+        border-top: 4px solid #28a745;
+    }
+    
+    .terms-text {
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <!-- Page Header -->
-    <div class="text-center mb-5">
-        <h1 class="display-5 fw-bold mb-3">Special Offers & Promotions</h1>
-        <p class="lead text-muted mx-auto" style="max-width: 700px;">Take advantage of our limited-time special offers and save even more on your dental treatment in Turkey.</p>
+<!-- Hero Section -->
+<section class="promo-hero">
+    <div class="container text-center">
+        <h1 class="display-4 fw-bold mb-4">Special Offers & Promotions</h1>
+        <p class="lead mb-4">Save even more on your dental treatment with these exclusive limited-time offers.</p>
     </div>
-    
-    <!-- Promotions Grid -->
-    <div class="row g-4">
-        {% if promotions %}
+</section>
+
+<!-- Promotions Section -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-4">
             {% for promo in promotions %}
             <div class="col-md-6 col-lg-4">
-                <div class="card promo-card h-100">
-                    {% if promo.banner_image %}
-                    <img src="{{ promo.banner_image }}" class="card-img-top" alt="{{ promo.title }}">
+                <div class="card promo-card promotion-level-{{ promo.promotion_level if promo.promotion_level else 'standard' }}">
+                    {% if promo.discount_type == 'percentage' %}
+                    <span class="badge bg-danger discount-badge">{{ promo.discount_value }}% OFF</span>
                     {% else %}
-                    <img src="{{ url_for('static', filename='images/promos/default.jpg') }}" class="card-img-top" alt="{{ promo.title }}">
+                    <span class="badge bg-danger discount-badge">${{ promo.discount_value }} OFF</span>
                     {% endif %}
                     
+                    <div class="promo-image" style="background-image: url('{{ promo.banner_image }}')"></div>
                     <div class="card-body">
-                        <h2 class="card-title h5">{{ promo.title }}</h2>
+                        <h4 class="card-title">{{ promo.title }}</h4>
                         <p class="card-text">{{ promo.description }}</p>
-                        
-                        {% if promo.discount_type == 'percentage' %}
-                        <div class="mb-3">
-                            <span class="badge bg-primary">{{ promo.discount_value }}% Off</span>
-                        </div>
-                        {% else %}
-                        <div class="mb-3">
-                            <span class="badge bg-primary">${{ promo.discount_value }} Off</span>
-                        </div>
-                        {% endif %}
                         
                         {% if promo.applicable_treatments %}
                         <div class="mb-3">
-                            <p class="mb-1 fw-bold small">Applicable Treatments:</p>
-                            <ul class="small ps-3">
-                                {% for treatment in promo.applicable_treatments %}
-                                <li>{{ treatment }}</li>
+                            <h6 class="text-muted">Applicable Treatments:</h6>
+                            <div>
+                                {% for treatment_id in promo.applicable_treatments %}
+                                <span class="badge bg-light text-dark me-1 mb-1">{{ treatment_id | replace('_', ' ') | title }}</span>
                                 {% endfor %}
-                            </ul>
+                            </div>
                         </div>
                         {% endif %}
                         
-                        {% if promo.terms_conditions %}
-                        <div class="mb-3">
-                            <p class="small text-muted fst-italic">{{ promo.terms_conditions }}</p>
-                        </div>
+                        {% if promo.min_purchase > 0 %}
+                        <p class="small text-muted mb-2">
+                            <i class="fas fa-info-circle me-1"></i> Minimum purchase: ${{ promo.min_purchase }}
+                        </p>
                         {% endif %}
-                    </div>
-                    
-                    <div class="card-footer bg-white border-0">
-                        <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ promo.promo_code }}" class="btn btn-primary w-100">Get This Offer</a>
+                        
+                        <p class="terms-text mb-3">
+                            <i class="fas fa-gavel me-1"></i> {{ promo.terms_conditions }}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <p class="mb-0">
+                                    <strong>Code:</strong> <span class="text-primary">{{ promo.code }}</span>
+                                </p>
+                            </div>
+                            <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ promo.code }}" class="btn btn-outline-primary">
+                                Use This Offer
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
             {% endfor %}
-        {% else %}
-            <div class="col-12">
-                <div class="alert alert-info">
-                    <p class="mb-0">No special offers are currently available. Please check back later for new promotions.</p>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-    
-    <!-- How It Works Section -->
-    <div class="mt-5 pt-5">
-        <div class="text-center mb-5">
-            <h2>How to Redeem Your Special Offer</h2>
-            <p class="text-muted">Follow these simple steps to take advantage of our special offers.</p>
         </div>
         
-        <div class="row g-4">
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
-                            <span class="text-white fw-bold fs-4">1</span>
-                        </div>
-                        <h3 class="h5 mb-3">Select an Offer</h3>
-                        <p class="card-text text-muted small">Choose the special offer that best suits your dental needs.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
-                            <span class="text-white fw-bold fs-4">2</span>
-                        </div>
-                        <h3 class="h5 mb-3">Build Your Quote</h3>
-                        <p class="card-text text-muted small">Select your treatments in our interactive quote builder.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
-                            <span class="text-white fw-bold fs-4">3</span>
-                        </div>
-                        <h3 class="h5 mb-3">Add Your Details</h3>
-                        <p class="card-text text-muted small">Provide your contact information to complete your quote.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 60px; height: 60px;">
-                            <span class="text-white fw-bold fs-4">4</span>
-                        </div>
-                        <h3 class="h5 mb-3">Receive Your Quote</h3>
-                        <p class="card-text text-muted small">Review your personalized quote with the special offer discount applied.</p>
-                    </div>
-                </div>
-            </div>
+        <!-- No Promotions Message -->
+        {% if not promotions %}
+        <div class="text-center py-5">
+            <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+            <h3>No Current Promotions</h3>
+            <p>Check back soon for exciting new offers on dental treatments!</p>
+            <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary mt-3">Build a Quote Anyway</a>
         </div>
+        {% endif %}
     </div>
-    
-    <!-- FAQ Section -->
-    <div class="mt-5 pt-5">
-        <div class="text-center mb-5">
-            <h2>Frequently Asked Questions</h2>
-            <p class="text-muted">Find answers to common questions about our special offers.</p>
-        </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <h2 class="text-center mb-5">Frequently Asked Questions</h2>
         
         <div class="row">
             <div class="col-lg-10 mx-auto">
-                <div class="accordion" id="faqAccordion">
+                <div class="accordion" id="promoFaq">
                     <div class="accordion-item">
-                        <h3 class="accordion-header" id="faqHeading1">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse1" aria-expanded="true" aria-controls="faqCollapse1">
-                                Can I combine multiple offers?
+                        <h2 class="accordion-header" id="faq1">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqContent1" aria-expanded="true" aria-controls="faqContent1">
+                                How do I apply a promo code to my quote?
                             </button>
-                        </h3>
-                        <div id="faqCollapse1" class="accordion-collapse collapse show" aria-labelledby="faqHeading1" data-bs-parent="#faqAccordion">
+                        </h2>
+                        <div id="faqContent1" class="accordion-collapse collapse show" aria-labelledby="faq1" data-bs-parent="#promoFaq">
                             <div class="accordion-body">
-                                No, special offers cannot be combined with other promotions or discounts. Only one offer can be applied to a quote at a time.
+                                You can apply a promo code in the quote builder when reviewing your selected treatments. Simply enter the code in the "Promo Code" field and click "Apply". The discount will be automatically calculated and applied to your quote.
                             </div>
                         </div>
                     </div>
+                    
                     <div class="accordion-item">
-                        <h3 class="accordion-header" id="faqHeading2">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse2" aria-expanded="false" aria-controls="faqCollapse2">
-                                How long are these offers valid?
+                        <h2 class="accordion-header" id="faq2">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqContent2" aria-expanded="false" aria-controls="faqContent2">
+                                Can I combine multiple promo codes?
                             </button>
-                        </h3>
-                        <div id="faqCollapse2" class="accordion-collapse collapse" aria-labelledby="faqHeading2" data-bs-parent="#faqAccordion">
+                        </h2>
+                        <div id="faqContent2" class="accordion-collapse collapse" aria-labelledby="faq2" data-bs-parent="#promoFaq">
                             <div class="accordion-body">
-                                Each offer has its own validity period as indicated in the offer details. Some offers are available for a limited time only, so we recommend taking advantage of them as soon as possible.
+                                No, only one promo code can be applied to a quote at a time. Choose the promo code that gives you the best discount for your selected treatments.
                             </div>
                         </div>
                     </div>
+                    
                     <div class="accordion-item">
-                        <h3 class="accordion-header" id="faqHeading3">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse3" aria-expanded="false" aria-controls="faqCollapse3">
-                                Do I need to pay anything upfront?
+                        <h2 class="accordion-header" id="faq3">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqContent3" aria-expanded="false" aria-controls="faqContent3">
+                                How long are promo codes valid?
                             </button>
-                        </h3>
-                        <div id="faqCollapse3" class="accordion-collapse collapse" aria-labelledby="faqHeading3" data-bs-parent="#faqAccordion">
+                        </h2>
+                        <div id="faqContent3" class="accordion-collapse collapse" aria-labelledby="faq3" data-bs-parent="#promoFaq">
                             <div class="accordion-body">
-                                No, getting a quote with a special offer applied is completely free and with no obligation. You only pay when you decide to proceed with your treatment.
+                                Each promo code has its own expiration date. The validity period is displayed on the promo card. Once a promo code expires, it can no longer be used. We regularly update our promotions, so check back often for new offers.
                             </div>
                         </div>
                     </div>
+                    
                     <div class="accordion-item">
-                        <h3 class="accordion-header" id="faqHeading4">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse4" aria-expanded="false" aria-controls="faqCollapse4">
-                                What if I have a promo code instead?
+                        <h2 class="accordion-header" id="faq4">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqContent4" aria-expanded="false" aria-controls="faqContent4">
+                                Are there any restrictions on promo codes?
                             </button>
-                        </h3>
-                        <div id="faqCollapse4" class="accordion-collapse collapse" aria-labelledby="faqHeading4" data-bs-parent="#faqAccordion">
+                        </h2>
+                        <div id="faqContent4" class="accordion-collapse collapse" aria-labelledby="faq4" data-bs-parent="#promoFaq">
                             <div class="accordion-body">
-                                If you have a promo code, you can enter it directly in the quote builder page. The discount will be automatically applied to your quote.
+                                Yes, most promo codes have specific terms and conditions. These may include minimum purchase requirements, restrictions to specific treatments, or maximum discount caps. The specific restrictions for each promo code are listed on the promo card.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="faq5">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqContent5" aria-expanded="false" aria-controls="faqContent5">
+                                What if my promo code isn't working?
+                            </button>
+                        </h2>
+                        <div id="faqContent5" class="accordion-collapse collapse" aria-labelledby="faq5" data-bs-parent="#promoFaq">
+                            <div class="accordion-body">
+                                If your promo code isn't working, please check that:
+                                <ul>
+                                    <li>The code is entered correctly (codes are case-sensitive)</li>
+                                    <li>The promo code hasn't expired</li>
+                                    <li>Your selection meets any minimum purchase requirements</li>
+                                    <li>You've included applicable treatments in your quote</li>
+                                </ul>
+                                If you're still having issues, please contact our support team for assistance.
                             </div>
                         </div>
                     </div>
@@ -186,16 +218,14 @@
             </div>
         </div>
     </div>
-    
-    <!-- Call to Action -->
-    <div class="mt-5 pt-4 text-center">
-        <div class="card border-0 bg-primary text-white p-5 shadow">
-            <div class="card-body py-5">
-                <h2 class="mb-4">Don't Wait - These Offers Won't Last Forever!</h2>
-                <p class="lead mb-4">Take advantage of our special offers and start your journey to affordable, high-quality dental care in Turkey today.</p>
-                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-light btn-lg px-5">Build Your Quote Now</a>
-            </div>
-        </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <h2 class="mb-3">Ready to Save on Your Dental Treatment?</h2>
+        <p class="lead mb-4">Build your personalized quote and apply one of our special offers.</p>
+        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-light btn-lg">Start Building Your Quote</a>
     </div>
-</div>
+</section>
 {% endblock %}

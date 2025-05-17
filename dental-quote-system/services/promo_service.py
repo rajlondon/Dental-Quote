@@ -1,278 +1,341 @@
 """
 Promo Service Module
-Provides functions and data for handling promotional codes
+Handles promo code validation and processing
 """
 import logging
-from datetime import datetime
+import json
+import os
+import datetime
+from decimal import Decimal
 
 logger = logging.getLogger(__name__)
 
-# Define available promo codes
-PROMO_CODES = {
-    "SUMMER15": {
-        "code": "SUMMER15",
-        "discount_type": "percentage",
-        "discount_value": 15,
-        "min_purchase": 100,
-        "max_discount": 500,
-        "applicable_treatments": None,  # Applies to all treatments
-        "description": "15% off your dental treatment when spending $100 or more",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Summer Special Discount",
-        "banner_image": "/static/images/promos/summer.jpg",
-        "terms_conditions": "Cannot be combined with other offers. Valid once per patient."
-    },
-    "DENTAL25": {
-        "code": "DENTAL25",
-        "discount_type": "percentage",
-        "discount_value": 25,
-        "min_purchase": 1000,
-        "max_discount": 1000,
-        "applicable_treatments": None,  # Applies to all treatments
-        "description": "Save 25% on any dental treatment over $1,000",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Big Savings Discount",
-        "banner_image": "/static/images/promos/dental25.jpg",
-        "terms_conditions": "Cannot be combined with other offers. Valid on first visit only."
-    },
-    "NEWPATIENT": {
-        "code": "NEWPATIENT",
-        "discount_type": "percentage",
-        "discount_value": 20,
-        "min_purchase": 0,
-        "max_discount": 300,
-        "applicable_treatments": None,  # Applies to all treatments
-        "description": "20% discount for new patients on their first treatment",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "New Patient Welcome Discount",
-        "banner_image": "/static/images/promos/newpatient.jpg",
-        "terms_conditions": "For first-time patients only. Cannot be combined with other offers."
-    },
-    "TEST10": {
-        "code": "TEST10",
-        "discount_type": "percentage",
-        "discount_value": 10,
-        "min_purchase": 0,
-        "max_discount": 1000,
-        "applicable_treatments": None,  # Applies to all treatments
-        "description": "10% test discount code for any treatment",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Test Discount",
-        "banner_image": "/static/images/promos/default.jpg",
-        "terms_conditions": "Test purposes only."
-    },
-    "FREECONSULT": {
-        "code": "FREECONSULT",
-        "discount_type": "fixed_amount",
-        "discount_value": 75,
-        "min_purchase": 0,
-        "max_discount": 75,
-        "applicable_treatments": [
-            "dental_implant_standard", 
-            "porcelain_veneers", 
-            "full_mouth_reconstruction"
-        ],
-        "description": "Free consultation worth $75 with selected treatments",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Free Consultation Package",
-        "banner_image": "/static/images/promos/freeconsult.jpg",
-        "terms_conditions": "Applicable for new patients only. One consultation per patient."
-    },
-    "LUXHOTEL20": {
-        "code": "LUXHOTEL20",
-        "discount_type": "percentage",
-        "discount_value": 20,
-        "min_purchase": 1000,
-        "max_discount": 500,
-        "applicable_treatments": [
-            "dental_implant_standard", 
-            "porcelain_veneers", 
-            "dental_crowns"
-        ],
-        "description": "Save up to 20% on premium hotels with your dental treatment booking",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Premium Hotel Deal",
-        "banner_image": "/static/images/promos/luxhotel.jpg",
-        "terms_conditions": "Minimum treatment value of $1000 required. Subject to hotel availability."
-    },
-    "IMPLANTCROWN30": {
-        "code": "IMPLANTCROWN30",
-        "discount_type": "percentage",
-        "discount_value": 30,
-        "min_purchase": 0,
-        "max_discount": 1000,
-        "applicable_treatments": [
-            "dental_implant_standard", 
-            "dental_crowns"
-        ],
-        "description": "Get a special bundle price when combining dental implant with a crown",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Dental Implant + Crown Bundle",
-        "banner_image": "/static/images/promos/implantcrown.jpg",
-        "terms_conditions": "Valid for single tooth implant and crown combinations only."
-    },
-    "FREEWHITE": {
-        "code": "FREEWHITE",
-        "discount_type": "fixed_amount",
-        "discount_value": 150,
-        "min_purchase": 800,
-        "max_discount": 150,
-        "applicable_treatments": [
-            "porcelain_veneers", 
-            "dental_crowns", 
-            "hollywood_smile"
-        ],
-        "description": "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package",
-        "start_date": "2025-01-01",
-        "end_date": "2025-12-31",
-        "active": True,
-        "title": "Free Teeth Whitening",
-        "banner_image": "/static/images/promos/freewhite.jpg",
-        "terms_conditions": "Minimum of 4 veneers or crowns required. Not combinable with other offers."
-    }
-}
+def get_active_promotions():
+    """Get all active promotions
+    
+    Returns:
+        list: Active promotions
+    """
+    promotions = _load_promotions()
+    
+    # Filter for active promotions
+    current_date = datetime.datetime.now().isoformat()
+    
+    active_promotions = [
+        promo for promo in promotions 
+        if promo['is_active'] and 
+        promo['start_date'] <= current_date and 
+        promo['end_date'] >= current_date
+    ]
+    
+    return active_promotions
 
 def get_promotion_by_code(promo_code):
-    """Get a promotion by its code"""
-    if not promo_code:
-        return None
+    """Get a promotion by its code
     
-    # Standardize the code
-    promo_code = promo_code.strip().upper()
+    Args:
+        promo_code (str): Promotion code
+        
+    Returns:
+        dict: Promotion details or None
+    """
+    promotions = _load_promotions()
     
-    # Check if the code exists
-    promotion = PROMO_CODES.get(promo_code)
+    # Find the promotion with matching code
+    for promo in promotions:
+        if promo['promo_code'].upper() == promo_code.upper():
+            return promo
     
-    if not promotion:
-        return None
-    
-    # Check if the promotion is active
-    if not promotion.get('active', False):
-        return None
-    
-    # Check if the promotion is within date range
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    if promotion.get('start_date') and promotion.get('end_date'):
-        if current_date < promotion['start_date'] or current_date > promotion['end_date']:
-            return None
-    
-    return promotion
+    return None
 
-def validate_promo_code(promo_code, subtotal):
-    """Validate a promo code"""
-    # Get the promotion details
+def validate_promo_code(promo_code, subtotal=0):
+    """Validate a promo code
+    
+    Args:
+        promo_code (str): Promo code to validate
+        subtotal (float): Current quote subtotal
+        
+    Returns:
+        dict: Validation results with keys:
+            - valid: bool
+            - message: str
+            - promo_details: dict or None
+    """
+    # Make sure promo_code is a string
+    if not isinstance(promo_code, str):
+        return {
+            'valid': False,
+            'message': 'Invalid promo code format.',
+            'promo_details': None
+        }
+    
+    # Convert to uppercase for case-insensitive comparison
+    promo_code = promo_code.upper()
+    
+    # Get promotion by code
     promotion = get_promotion_by_code(promo_code)
     
-    # If no promotion found or not active
     if not promotion:
         return {
             'valid': False,
-            'message': f"Promo code '{promo_code}' is invalid or expired"
+            'message': f"Promo code '{promo_code}' not found.",
+            'promo_details': None
+        }
+    
+    # Check if promotion is active
+    current_date = datetime.datetime.now().isoformat()
+    
+    if not promotion['is_active']:
+        return {
+            'valid': False,
+            'message': f"Promo code '{promo_code}' is not active.",
+            'promo_details': None
+        }
+    
+    if promotion['start_date'] > current_date:
+        return {
+            'valid': False,
+            'message': f"Promo code '{promo_code}' is not yet valid.",
+            'promo_details': None
+        }
+    
+    if promotion['end_date'] < current_date:
+        return {
+            'valid': False,
+            'message': f"Promo code '{promo_code}' has expired.",
+            'promo_details': None
         }
     
     # Check minimum purchase requirement
     min_purchase = promotion.get('min_purchase', 0)
-    if subtotal < min_purchase:
+    if min_purchase > 0 and subtotal < min_purchase:
         return {
             'valid': False,
-            'message': f"This promo code requires a minimum purchase of ${min_purchase}"
+            'message': f"Minimum purchase of ${min_purchase} required to use this promo code.",
+            'promo_details': None
         }
+    
+    # If we got here, the promo code is valid
+    promo_details = {
+        'code': promo_code,
+        'discount_type': promotion['discount_type'],
+        'discount_value': promotion['discount_value'],
+        'description': promotion['description'],
+        'applicable_treatments': promotion.get('applicable_treatments', [])
+    }
     
     return {
         'valid': True,
-        'message': f"Promo code '{promo_code}' is valid",
-        'promotion': promotion
+        'message': f"Promo code '{promo_code}' is valid.",
+        'promo_details': promo_details
     }
 
-def calculate_discount(promo_code, treatments, subtotal):
-    """Calculate discount amount for a promo code"""
-    # Get the promotion details
-    promotion = get_promotion_by_code(promo_code)
+def calculate_discount(promo_code, treatments, subtotal=0):
+    """Calculate the discount amount for a promo code
     
-    # Default return values
-    result = {
-        'promo_code': promo_code,
-        'promo_details': promotion,
-        'discount_amount': 0,
-        'discount_type': promotion.get('discount_type') if promotion else None,
-        'applied_to': []
-    }
-    
-    # If no valid promotion or no treatments, return zero discount
-    if not promotion or not treatments:
-        return result
-    
-    # Get applicable treatments
-    applicable_treatments = promotion.get('applicable_treatments')
-    
-    # Calculate discount based on type
-    discount_type = promotion.get('discount_type')
-    discount_value = promotion.get('discount_value', 0)
-    max_discount = promotion.get('max_discount', float('inf'))
-    
-    # Filter treatments that are applicable for this promotion
-    eligible_items = []
-    eligible_subtotal = 0
-    
-    for treatment in treatments:
-        treatment_id = treatment.get('id')
+    Args:
+        promo_code (str): Promo code
+        treatments (list): List of treatments in the quote
+        subtotal (float): Current quote subtotal
         
-        # If no specific treatment restrictions or this treatment is applicable
-        if not applicable_treatments or treatment_id in applicable_treatments:
-            treatment_subtotal = treatment.get('price', 0) * treatment.get('quantity', 1)
-            eligible_items.append({
-                'id': treatment_id,
-                'name': treatment.get('name'),
-                'amount': treatment_subtotal
-            })
-            eligible_subtotal += treatment_subtotal
+    Returns:
+        dict: Discount calculation results with keys:
+            - success: bool
+            - message: str
+            - discount: float
+            - promo_details: dict or None
+    """
+    # Validate the promo code first
+    validation = validate_promo_code(promo_code, subtotal)
     
-    # Calculate discount amount
-    discount_amount = 0
+    if not validation['valid']:
+        return {
+            'success': False,
+            'message': validation['message'],
+            'discount': 0,
+            'promo_details': None
+        }
     
-    if discount_type == 'percentage':
-        discount_amount = (eligible_subtotal * discount_value) / 100
-    elif discount_type == 'fixed_amount':
-        discount_amount = discount_value if eligible_subtotal > 0 else 0
+    # Get the promo details
+    promo_details = validation['promo_details']
     
-    # Cap the discount at the maximum allowed
-    if discount_amount > max_discount:
-        discount_amount = max_discount
+    # Calculate discount based on discount type
+    discount = 0
     
-    # Round to 2 decimal places
-    discount_amount = round(discount_amount, 2)
+    if promo_details['discount_type'] == 'percentage':
+        discount = (subtotal * promo_details['discount_value']) / 100
+    else:  # fixed_amount
+        discount = min(subtotal, promo_details['discount_value'])  # Cap at subtotal
     
-    # Update result
-    result['discount_amount'] = discount_amount
-    result['applied_to'] = eligible_items
-    
-    logger.info(f"Calculated discount for {promo_code}: ${discount_amount}")
-    return result
+    return {
+        'success': True,
+        'message': f"Discount of ${discount:.2f} applied.",
+        'discount': round(float(discount), 2),
+        'promo_details': promo_details
+    }
 
-def get_active_promotions():
-    """Get all active promotions"""
-    current_date = datetime.now().strftime('%Y-%m-%d')
-    active_promos = []
+def _load_promotions():
+    """Load promotions from JSON file
     
-    for code, promo in PROMO_CODES.items():
-        # Check if the promotion is active and within date range
-        if (promo.get('active', False) and
-            current_date >= promo.get('start_date', '2000-01-01') and
-            current_date <= promo.get('end_date', '2100-12-31')):
-            active_promos.append(promo)
+    Returns:
+        list: Promotions
+    """
+    # Use mock promotions for development and testing
+    promotions = [
+        {
+            "id": "1",
+            "promo_code": "SUMMER15",
+            "title": "Summer Special",
+            "description": "Get 15% off on all dental treatments this summer.",
+            "discount_type": "percentage",
+            "discount_value": 15,
+            "min_purchase": 0,
+            "applicable_treatments": [],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/summer-special.jpg",
+            "terms_conditions": "Cannot be combined with other offers. Valid for all treatments.",
+            "promotion_level": "standard",
+            "code": "SUMMER15"
+        },
+        {
+            "id": "2",
+            "promo_code": "DENTAL25",
+            "title": "Premium Dental Package",
+            "description": "Save 25% on premium dental packages including implants and veneers.",
+            "discount_type": "percentage",
+            "discount_value": 25,
+            "min_purchase": 1000,
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers"],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/premium-package.jpg",
+            "terms_conditions": "Minimum purchase of $1,000 required. Valid for implants and veneers only.",
+            "promotion_level": "premium",
+            "code": "DENTAL25"
+        },
+        {
+            "id": "3",
+            "promo_code": "NEWPATIENT",
+            "title": "New Patient Discount",
+            "description": "New patients get 20% off their first treatment.",
+            "discount_type": "percentage",
+            "discount_value": 20,
+            "min_purchase": 0,
+            "applicable_treatments": [],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/new-patient.jpg",
+            "terms_conditions": "Valid for first-time patients only. One use per patient.",
+            "promotion_level": "standard",
+            "code": "NEWPATIENT"
+        },
+        {
+            "id": "4",
+            "promo_code": "TEST10",
+            "title": "Test Discount",
+            "description": "10% off for testing purposes.",
+            "discount_type": "percentage",
+            "discount_value": 10,
+            "min_purchase": 0,
+            "applicable_treatments": [],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/test-promo.jpg",
+            "terms_conditions": "For testing purposes only.",
+            "promotion_level": "standard",
+            "code": "TEST10"
+        },
+        {
+            "id": "5",
+            "promo_code": "FREECONSULT",
+            "title": "Free Consultation",
+            "description": "Book a dental treatment and get a free consultation with our specialists.",
+            "discount_type": "fixed_amount",
+            "discount_value": 75,
+            "min_purchase": 500,
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/free-consult.jpg",
+            "terms_conditions": "Minimum purchase of $500 required. One consultation per patient.",
+            "promotion_level": "premium",
+            "code": "FREECONSULT"
+        },
+        {
+            "id": "6",
+            "promo_code": "LUXHOTEL20",
+            "title": "Premium Hotel Deal",
+            "description": "Save 20% on premium hotels with your dental treatment booking.",
+            "discount_type": "percentage",
+            "discount_value": 20,
+            "min_purchase": 1000,
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/hotel-deal.jpg",
+            "terms_conditions": "Minimum treatment value of $1000 required. Subject to hotel availability.",
+            "promotion_level": "premium",
+            "code": "LUXHOTEL20"
+        },
+        {
+            "id": "7",
+            "promo_code": "IMPLANTCROWN30",
+            "title": "Implant + Crown Bundle",
+            "description": "Save 30% on combined dental implant and crown treatments.",
+            "discount_type": "percentage",
+            "discount_value": 30,
+            "min_purchase": 0,
+            "applicable_treatments": ["dental_implant_standard", "dental_crowns"],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/implant-crown.jpg",
+            "terms_conditions": "Valid only when both implant and crown services are selected.",
+            "promotion_level": "featured",
+            "code": "IMPLANTCROWN30"
+        },
+        {
+            "id": "8",
+            "promo_code": "FREEWHITE",
+            "title": "Free Teeth Whitening",
+            "description": "Get a free teeth whitening session with any veneer or crown package.",
+            "discount_type": "fixed_amount",
+            "discount_value": 150,
+            "min_purchase": 800,
+            "applicable_treatments": ["porcelain_veneers", "dental_crowns"],
+            "start_date": "2025-01-01T00:00:00.000Z",
+            "end_date": "2025-12-31T23:59:59.999Z",
+            "is_active": True,
+            "banner_image": "/static/images/promos/teeth-whitening.jpg",
+            "terms_conditions": "Minimum of 4 veneers or crowns required. Not combinable with other offers.",
+            "promotion_level": "standard",
+            "code": "FREEWHITE"
+        }
+    ]
     
-    return active_promos
+    return promotions
+
+def _save_promotions(promotions):
+    """Save promotions to JSON file
+    
+    Args:
+        promotions (list): Promotions to save
+        
+    Returns:
+        bool: Success
+    """
+    try:
+        promo_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'promotions.json')
+        with open(promo_file, 'w') as f:
+            json.dump(promotions, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving promotions: {e}")
+        return False
