@@ -3,296 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dental Quote Builder - MyDentalFly</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Dental Quote Builder | MyDentalFly</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <style>
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        }
-    </style>
 </head>
-<body class="bg-gray-50">
-    <header class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <div class="flex-shrink-0 flex items-center">
-                        <a href="/" class="text-2xl font-bold text-blue-600">MyDentalFly</a>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <a href="/special-offers" class="text-blue-600 hover:text-blue-800 font-medium">Special Offers</a>
-                </div>
-            </div>
-        </div>
-    </header>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dental Quote Builder</h1>
+            <p>Create your personalized dental treatment quote</p>
+            <nav>
+                <a href="{{ url_for('page_routes.index') }}">Home</a> |
+                <a href="{{ url_for('promo_routes.special_offers_page') }}">Special Offers</a>
+            </nav>
+        </header>
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Dental Treatment Quote Builder</h1>
-            <p class="mt-2 text-lg text-gray-600">Create your personalized dental treatment quote in a few simple steps</p>
-        </div>
-
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-6 p-4 rounded-md shadow-sm {% if category == 'error' %}bg-red-50 text-red-700{% elif category == 'success' %}bg-green-50 text-green-700{% else %}bg-blue-50 text-blue-700{% endif %}">
-                        <p>{{ message }}</p>
+        <main>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category|default('info') }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
                     </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <!-- Multi-step Form Container -->
-            <div class="quote-form-container">
-                <!-- Step 1: Treatment Selection -->
-                <div id="step-treatments" class="section-fade">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Step 1: Select Treatments</h2>
-                    
-                    <form action="/select-treatments" method="POST" class="space-y-6">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <!-- Treatment Items -->
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_dental_implant_standard" name="treatment_dental_implant_standard" class="mt-1">
-                                    <input type="hidden" name="name_dental_implant_standard" value="Dental Implant (Standard)">
-                                    <input type="hidden" name="price_dental_implant_standard" value="950.00">
-                                    <label for="treatment_dental_implant_standard" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Dental Implant (Standard)</span>
-                                        <span class="block text-sm text-gray-500 mt-1">Standard titanium dental implant including abutment</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$950.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_dental_crowns" name="treatment_dental_crowns" class="mt-1">
-                                    <input type="hidden" name="name_dental_crowns" value="Dental Crown (Porcelain)">
-                                    <input type="hidden" name="price_dental_crowns" value="650.00">
-                                    <label for="treatment_dental_crowns" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Dental Crown (Porcelain)</span>
-                                        <span class="block text-sm text-gray-500 mt-1">High-quality porcelain crown for single tooth</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$650.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_porcelain_veneers" name="treatment_porcelain_veneers" class="mt-1">
-                                    <input type="hidden" name="name_porcelain_veneers" value="Porcelain Veneers (Per Tooth)">
-                                    <input type="hidden" name="price_porcelain_veneers" value="550.00">
-                                    <label for="treatment_porcelain_veneers" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Porcelain Veneers (Per Tooth)</span>
-                                        <span class="block text-sm text-gray-500 mt-1">Custom-made porcelain veneer for a single tooth</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$550.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_teeth_whitening" name="treatment_teeth_whitening" class="mt-1">
-                                    <input type="hidden" name="name_teeth_whitening" value="Professional Teeth Whitening">
-                                    <input type="hidden" name="price_teeth_whitening" value="280.00">
-                                    <label for="treatment_teeth_whitening" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Professional Teeth Whitening</span>
-                                        <span class="block text-sm text-gray-500 mt-1">In-office professional teeth whitening treatment</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$280.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_root_canal" name="treatment_root_canal" class="mt-1">
-                                    <input type="hidden" name="name_root_canal" value="Root Canal Treatment">
-                                    <input type="hidden" name="price_root_canal" value="550.00">
-                                    <label for="treatment_root_canal" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Root Canal Treatment</span>
-                                        <span class="block text-sm text-gray-500 mt-1">Complete root canal treatment including temporary filling</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$550.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                            
-                            <div class="border rounded-md p-4 hover:shadow-md">
-                                <div class="flex items-start">
-                                    <input type="checkbox" id="treatment_full_mouth_reconstruction" name="treatment_full_mouth_reconstruction" class="mt-1">
-                                    <input type="hidden" name="name_full_mouth_reconstruction" value="Full Mouth Reconstruction">
-                                    <input type="hidden" name="price_full_mouth_reconstruction" value="8500.00">
-                                    <label for="treatment_full_mouth_reconstruction" class="ml-3 block">
-                                        <span class="text-lg font-medium text-gray-900">Full Mouth Reconstruction</span>
-                                        <span class="block text-sm text-gray-500 mt-1">Comprehensive treatment to restore all teeth in both jaws</span>
-                                        <span class="block text-base font-semibold text-blue-600 mt-2">$8,500.00</span>
-                                    </label>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex justify-end mt-6">
-                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Continue to Discounts
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                
-                <!-- Step 2: Selected Treatments & Promo Code -->
-                {% if treatments %}
-                <div id="step-promo" class="section-fade">
-                    <h2 class="text-xl font-semibold text-gray-800 mb-4">Step 2: Selected Treatments & Promo Code</h2>
-                    
-                    <!-- Selected Treatments Summary -->
-                    <div class="bg-gray-50 p-4 rounded-md mb-6">
-                        <h3 class="font-medium text-gray-700 mb-2">Selected Treatments</h3>
-                        <ul class="space-y-2">
-                            {% for treatment in treatments %}
-                            <li class="flex justify-between">
-                                <span>{{ treatment.name }}</span>
-                                <span class="font-medium">${{ "%.2f"|format(treatment.price) }}</span>
-                            </li>
-                            {% endfor %}
-                        </ul>
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <div class="flex justify-between">
-                                <span class="font-medium">Subtotal:</span>
-                                <span class="font-medium">${{ "%.2f"|format(subtotal) }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Promo Code Form -->
-                    <div class="bg-white border border-gray-200 rounded-md p-4 mb-6">
-                        <h3 class="font-medium text-gray-700 mb-2">Apply Promo Code</h3>
-                        
-                        {% if promo_code %}
-                        <!-- Applied Promo Code -->
-                        <div class="promo-animation bg-green-50 border border-green-200 rounded p-3 mb-4">
-                            <div class="flex justify-between items-center">
-                                <div>
-                                    <span class="promo-badge">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        <span class="promo-text">{{ promo_code }}</span>
-                                    </span>
-                                    <p class="text-sm text-green-700 mt-1">{{ discount_percent }}% discount applied</p>
-                                </div>
-                                <form action="/remove-promo-code" method="POST">
-                                    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Remove</button>
-                                </form>
-                            </div>
-                            
-                            {% if special_offer %}
-                            <div class="mt-3 pt-3 border-t border-green-200">
-                                <p class="text-sm font-medium text-green-700">{{ special_offer.name }}</p>
-                                <p class="text-xs text-green-600">{{ special_offer.description }}</p>
-                            </div>
-                            {% endif %}
-                        </div>
-                        {% else %}
-                        <!-- Promo Code Input Form -->
-                        <form action="/apply-promo-code" method="POST" class="flex space-x-2">
-                            <input type="text" name="promo_code" placeholder="Enter promo code" class="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                            <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Apply
-                            </button>
-                        </form>
-                        <p class="mt-2 text-xs text-gray-500">Try codes: SUMMER15, DENTAL25, NEWPATIENT, TEST10, FREECONSULT</p>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Price Summary -->
-                    <div class="bg-gray-50 p-4 rounded-md mb-6">
-                        <div class="flex justify-between mb-2">
-                            <span>Subtotal:</span>
-                            <span>${{ "%.2f"|format(subtotal) }}</span>
-                        </div>
-                        
-                        {% if discount_amount > 0 %}
-                        <div class="flex justify-between mb-2 text-green-600">
-                            <span>Discount ({{ discount_percent }}%):</span>
-                            <span>-${{ "%.2f"|format(discount_amount) }}</span>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="flex justify-between font-semibold text-lg border-t border-gray-200 pt-2 mt-2">
-                            <span>Total:</span>
-                            <span>${{ "%.2f"|format(total) }}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Patient Information Form -->
-                    <h3 class="font-medium text-gray-700 mb-2">Patient Information</h3>
-                    <form action="/save-patient-info" method="POST" class="space-y-4">
-                        <div>
-                            <label for="patient-name" class="block text-sm font-medium text-gray-700">Full Name *</label>
-                            <input type="text" id="patient-name" name="patient-name" required value="{{ patient_info.name or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label for="patient-email" class="block text-sm font-medium text-gray-700">Email Address *</label>
-                            <input type="email" id="patient-email" name="patient-email" required value="{{ patient_info.email or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label for="patient-phone" class="block text-sm font-medium text-gray-700">Phone Number</label>
-                            <input type="tel" id="patient-phone" name="patient-phone" value="{{ patient_info.phone or '' }}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        
-                        <div>
-                            <label for="patient-notes" class="block text-sm font-medium text-gray-700">Additional Notes</label>
-                            <textarea id="patient-notes" name="patient-notes" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">{{ patient_info.notes or '' }}</textarea>
-                        </div>
-                        
-                        <div class="flex justify-end space-x-3">
-                            <form id="back-form" action="/reset-quote" method="POST" class="inline">
-                                <button type="button" id="back-to-treatments" class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                    Start Over
-                                </button>
-                            </form>
-                            
-                            <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                                Generate Quote
-                            </button>
-                        </div>
-                    </form>
-                </div>
                 {% endif %}
-            </div>
-        </div>
-    </main>
+            {% endwith %}
 
-    <footer class="bg-white border-t border-gray-200 py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <p class="text-center text-gray-500 text-sm">&copy; {{ 2025 }} MyDentalFly. All rights reserved.</p>
-        </div>
-    </footer>
+            <section>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Build Your Dental Quote</h2>
+                        <p>Select the treatments you're interested in</p>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="step-indicator">
+                            <div class="step active">1. Select Treatments</div>
+                            <div class="step">2. Apply Promo</div>
+                            <div class="step">3. Patient Info</div>
+                            <div class="step">4. Review Quote</div>
+                        </div>
+                        
+                        <!-- Treatments selection -->
+                        <div class="treatment-cards">
+                            {% for treatment in available_treatments %}
+                                <div class="treatment-card {% if treatment.id in (treatments|map(attribute='id')|list) %}selected{% endif %}" 
+                                     data-id="{{ treatment.id }}" 
+                                     data-name="{{ treatment.name }}" 
+                                     data-price="{{ treatment.price }}">
+                                    <div class="treatment-name">{{ treatment.name }}</div>
+                                    <div class="treatment-details">
+                                        <span class="treatment-category">{{ treatment.category }}</span>
+                                        <p class="treatment-description">{{ treatment.description }}</p>
+                                        <div class="treatment-price">${{ treatment.price }}</div>
+                                    </div>
+                                    <div class="treatment-actions">
+                                        <button type="button" class="btn btn-small {% if treatment.id in (treatments|map(attribute='id')|list) %}btn-success{% else %}btn-primary{% endif %}">
+                                            {% if treatment.id in (treatments|map(attribute='id')|list) %}Selected{% else %}Select{% endif %}
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    <!-- Session persistence indicator -->
-    <div id="persistence-indicator" class="persistence-indicator">
-        <span id="persistence-status">Session active</span>
+            <!-- Promo code section -->
+            <section class="promo-section">
+                <h3>Apply Promo Code</h3>
+                <form id="promo-form" class="promo-form">
+                    <div class="form-group promo-input">
+                        <input type="text" id="promo-code" name="promo_code" class="form-control" placeholder="Enter your promo code" value="{{ promo_code or '' }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                </form>
+                <div id="promo-active-container">
+                    {% if promo_details %}
+                        <div class="promo-active">
+                            <div class="promo-details">
+                                <strong>Active Promo Code:</strong> <span>{{ promo_details.code }}</span>
+                                <p>{{ "{}% Off".format(promo_details.value) if promo_details.type == 'percentage' else "${} Off".format(promo_details.value) }}</p>
+                            </div>
+                            <button type="button" class="promo-remove" id="remove-promo">Remove</button>
+                        </div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- Quote summary -->
+            <section>
+                <div class="quote-summary" id="quote-summary">
+                    <h3 class="quote-summary-title">Quote Summary</h3>
+                    
+                    <div id="selected-treatments-list">
+                        {% for treatment in treatments %}
+                            <div class="quote-summary-item">
+                                <span class="quote-summary-label">{{ treatment.name }}</span>
+                                <span class="quote-summary-value">${{ treatment.price }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="quote-summary-item">
+                        <span class="quote-summary-label">Subtotal</span>
+                        <span class="quote-summary-value" id="subtotal-value">${{ treatments|sum(attribute='price')|default(0) }}</span>
+                    </div>
+                    
+                    {% if promo_details %}
+                        <div class="quote-summary-item">
+                            <span class="quote-summary-label">Discount ({{ promo_details.code }})</span>
+                            <span class="quote-summary-value quote-discount" id="discount-value">
+                                {% if promo_details.type == 'percentage' %}
+                                    -${{ (treatments|sum(attribute='price')|default(0) * promo_details.value / 100)|round(2) }}
+                                {% else %}
+                                    -${{ [promo_details.value, treatments|sum(attribute='price')|default(0)]|min }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    {% else %}
+                        <div class="quote-summary-item">
+                            <span class="quote-summary-label">Discount</span>
+                            <span class="quote-summary-value" id="discount-value">$0.00</span>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="quote-total">
+                        <span class="quote-total-label">Total</span>
+                        <span class="quote-total-value" id="total-value">
+                            {% if promo_details %}
+                                {% if promo_details.type == 'percentage' %}
+                                    ${{ (treatments|sum(attribute='price')|default(0) * (1 - promo_details.value / 100))|round(2) }}
+                                {% else %}
+                                    ${{ [0, (treatments|sum(attribute='price')|default(0) - promo_details.value)]|max|round(2) }}
+                                {% endif %}
+                            {% else %}
+                                ${{ treatments|sum(attribute='price')|default(0) }}
+                            {% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="quote-actions">
+                        <a href="{{ url_for('page_routes.reset_quote') }}" class="btn btn-outline">Reset Quote</a>
+                        <a href="{{ url_for('page_routes.review_quote') }}" class="btn btn-primary">Proceed to Review</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>© 2025 Dental Quote System | Powered by MyDentalFly</p>
+        </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script>
-        // Add custom functionality specific to this page
-        document.addEventListener('DOMContentLoaded', function() {
-            // Handle back button functionality
-            const backButton = document.getElementById('back-to-treatments');
-            const backForm = document.getElementById('back-form');
-            
-            if (backButton && backForm) {
-                backButton.addEventListener('click', function() {
-                    backForm.submit();
-                });
-            }
-        });
-    </script>
 </body>
 </html>

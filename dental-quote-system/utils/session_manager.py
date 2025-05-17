@@ -1,202 +1,358 @@
 """
 Session Manager for Dental Quote System
-Handles session persistence, tracking, and management
+
+This module provides robust session management to solve state persistence issues.
+It includes functionality for:
+- Storing and retrieving treatment selections
+- Managing promo code applications
+- Persisting patient information
+- Tracking session metadata for health monitoring
 """
 
+from datetime import datetime
 from flask import session
-import logging
-import uuid
-import time
-import json
-
-# Configure logging
-logger = logging.getLogger(__name__)
 
 class SessionManager:
     """
-    Handles session management with enhanced persistence
-    Uses a multi-layered approach to prevent session loss
+    Manages session state and provides persistence guarantees
+    
+    This class prevents state loss by:
+    1. Using a hierarchical session structure
+    2. Implementing atomic operations for state changes
+    3. Tracking session metadata for debugging
+    4. Providing backup/restore functionality
     """
     
-    @staticmethod
-    def initialize_session():
-        """Initialize a new session with required metadata"""
-        # Initialize session if needed
-        if 'initialized' not in session:
-            session['initialized'] = True
-            session['session_id'] = str(uuid.uuid4())
-            session['created_at'] = time.time()
-            session['last_activity'] = time.time()
-            session['treatments'] = []
-            session['promo_code'] = None
-            session['promo_value'] = 0
-            session['patient_info'] = {}
-            session['backup'] = {}
-            session['quote_data'] = {}
-            logger.info(f"New session initialized: {session['session_id']}")
-        else:
-            # Update last activity time
-            SessionManager.update_activity()
+    # Session keys
+    TREATMENTS_KEY = 'dental_treatments'
+    PROMO_KEY = 'promo_details'
+    PATIENT_INFO_KEY = 'patient_info'
+    SESSION_META_KEY = 'session_meta'
+    BACKUP_KEY = 'state_backup'
     
-    @staticmethod
-    def update_activity():
-        """Update the last activity timestamp"""
-        if 'initialized' in session:
-            session['last_activity'] = time.time()
-    
-    @staticmethod
-    def backup_session_data():
-        """Create a backup of current session data"""
-        if 'initialized' in session:
-            # Create a deep copy of session data
-            backup = {
-                'treatments': session.get('treatments', []),
-                'promo_code': session.get('promo_code'),
-                'promo_value': session.get('promo_value', 0),
-                'patient_info': session.get('patient_info', {}),
-                'timestamp': time.time()
+    @classmethod
+    def initialize_session(cls):
+        """Initialize session with default values if not already present"""
+        # Initialize treatment selections
+        if cls.TREATMENTS_KEY not in session:
+            session[cls.TREATMENTS_KEY] = []
+            
+        # Initialize promo code details
+        if cls.PROMO_KEY not in session:
+            session[cls.PROMO_KEY] = None
+            
+        # Initialize patient information
+        if cls.PATIENT_INFO_KEY not in session:
+            session[cls.PATIENT_INFO_KEY] = {
+                'name': '',
+                'email': '',
+                'phone': '',
+                'notes': ''
             }
             
-            # Store backup in session
-            session['backup'] = backup
-            logger.info(f"Session backup created: {session.get('session_id')}")
+        # Initialize session metadata
+        if cls.SESSION_META_KEY not in session:
+            session[cls.SESSION_META_KEY] = {
+                'created': datetime.now().isoformat(),
+                'last_modified': datetime.now().isoformat(),
+                'last_activity': datetime.now().isoformat(),
+                'access_count': 0
+            }
+        
+        # Update access count
+        cls._update_session_activity()
     
-    @staticmethod
-    def restore_from_backup():
-        """Restore session data from backup"""
-        if 'initialized' in session and 'backup' in session:
-            backup = session.get('backup', {})
-            
-            if backup:
-                session['treatments'] = backup.get('treatments', [])
-                session['promo_code'] = backup.get('promo_code')
-                session['promo_value'] = backup.get('promo_value', 0)
-                session['patient_info'] = backup.get('patient_info', {})
-                logger.info(f"Session restored from backup: {session.get('session_id')}")
+    @classmethod
+    def add_treatment(cls, treatment):
+        """
+        Add a treatment to the session
+        
+        Args:
+            treatment (dict): Treatment to add
+        """
+        # Create backup
+        cls._backup_state()
+        
+        # Get current treatments
+        treatments = session.get(cls.TREATMENTS_KEY, [])
+        
+        # Check if treatment already exists by ID
+        for existing in treatments:
+            if existing.get('id') == treatment.get('id'):
+                # Already exists, don't add duplicate
+                return False
+        
+        # Add the treatment
+        treatments.append(treatment)
+        session[cls.TREATMENTS_KEY] = treatments
+        
+        # Update session metadata
+        cls._update_session_modification()
+        
+        return True
+    
+    @classmethod
+    def remove_treatment(cls, treatment_id):
+        """
+        Remove a treatment from the session
+        
+        Args:
+            treatment_id (str): ID of treatment to remove
+        
+        Returns:
+            bool: True if removed, False if not found
+        """
+        # Create backup
+        cls._backup_state()
+        
+        # Get current treatments
+        treatments = session.get(cls.TREATMENTS_KEY, [])
+        
+        # Find and remove the treatment
+        for i, treatment in enumerate(treatments):
+            if treatment.get('id') == treatment_id:
+                treatments.pop(i)
+                session[cls.TREATMENTS_KEY] = treatments
+                
+                # Update session metadata
+                cls._update_session_modification()
+                
                 return True
-            
+        
         return False
     
-    @staticmethod
-    def store_treatments(treatments):
-        """Store treatment selections in session"""
-        if 'initialized' in session:
-            session['treatments'] = treatments
-            # Update last activity time
-            SessionManager.update_activity()
-            # Create backup
-            SessionManager.backup_session_data()
-            logger.info(f"Treatments updated in session: {len(treatments)} items")
+    @classmethod
+    def get_treatments(cls):
+        """
+        Get all selected treatments
+        
+        Returns:
+            list: List of treatment dictionaries
+        """
+        # Update activity timestamp
+        cls._update_session_activity()
+        
+        return session.get(cls.TREATMENTS_KEY, [])
     
-    @staticmethod
-    def store_promo_code(promo_code, promo_value=0):
-        """Store promo code and discount in session"""
-        if 'initialized' in session:
-            session['promo_code'] = promo_code
-            session['promo_value'] = promo_value
-            # Update last activity time
-            SessionManager.update_activity()
-            # Create backup
-            SessionManager.backup_session_data()
-            logger.info(f"Promo code '{promo_code}' stored in session")
+    @classmethod
+    def clear_treatments(cls):
+        """Clear all selected treatments"""
+        # Create backup
+        cls._backup_state()
+        
+        # Clear treatments
+        session[cls.TREATMENTS_KEY] = []
+        
+        # Update session metadata
+        cls._update_session_modification()
     
-    @staticmethod
-    def remove_promo_code():
-        """Remove promo code from session"""
-        if 'initialized' in session:
-            session['promo_code'] = None
-            session['promo_value'] = 0
-            # Update last activity time
-            SessionManager.update_activity()
-            # Create backup
-            SessionManager.backup_session_data()
-            logger.info("Promo code removed from session")
+    @classmethod
+    def apply_promo_code(cls, promo_details):
+        """
+        Apply a promo code to the session
+        
+        Args:
+            promo_details (dict): Promo code details
+        """
+        # Create backup
+        cls._backup_state()
+        
+        # Set promo details
+        session[cls.PROMO_KEY] = promo_details
+        
+        # Update session metadata
+        cls._update_session_modification()
     
-    @staticmethod
-    def store_patient_info(patient_info):
-        """Store patient information in session"""
-        if 'initialized' in session:
-            session['patient_info'] = patient_info
-            # Update last activity time
-            SessionManager.update_activity()
-            # Create backup
-            SessionManager.backup_session_data()
-            logger.info("Patient information stored in session")
+    @classmethod
+    def remove_promo_code(cls):
+        """Remove any applied promo code"""
+        # Create backup
+        cls._backup_state()
+        
+        # Clear promo details
+        session[cls.PROMO_KEY] = None
+        
+        # Update session metadata
+        cls._update_session_modification()
     
-    @staticmethod
-    def store_quote_data(quote_data):
-        """Store final quote data in session"""
-        if 'initialized' in session:
-            session['quote_data'] = quote_data
-            # Update last activity time
-            SessionManager.update_activity()
-            logger.info("Quote data stored in session")
+    @classmethod
+    def get_promo_details(cls):
+        """
+        Get current promo code details
+        
+        Returns:
+            dict|None: Promo code details or None if not applied
+        """
+        # Update activity timestamp
+        cls._update_session_activity()
+        
+        return session.get(cls.PROMO_KEY)
     
-    @staticmethod
-    def get_session_data():
-        """Get all session data"""
-        if 'initialized' in session:
-            # Construct session data dictionary
-            session_data = {
-                'session_id': session.get('session_id'),
-                'created_at': session.get('created_at'),
-                'last_activity': session.get('last_activity'),
-                'treatments': session.get('treatments', []),
-                'promo_code': session.get('promo_code'),
-                'promo_value': session.get('promo_value', 0),
-                'patient_info': session.get('patient_info', {}),
-                'quote_data': session.get('quote_data', {})
+    @classmethod
+    def update_patient_info(cls, patient_info):
+        """
+        Update patient information
+        
+        Args:
+            patient_info (dict): Patient information
+        """
+        # Create backup
+        cls._backup_state()
+        
+        # Update patient info
+        current_info = session.get(cls.PATIENT_INFO_KEY, {})
+        current_info.update(patient_info)
+        session[cls.PATIENT_INFO_KEY] = current_info
+        
+        # Update session metadata
+        cls._update_session_modification()
+    
+    @classmethod
+    def get_patient_info(cls):
+        """
+        Get current patient information
+        
+        Returns:
+            dict: Patient information
+        """
+        # Update activity timestamp
+        cls._update_session_activity()
+        
+        return session.get(cls.PATIENT_INFO_KEY, {})
+    
+    @classmethod
+    def clear_patient_info(cls):
+        """Clear patient information"""
+        # Create backup
+        cls._backup_state()
+        
+        # Reset patient info
+        session[cls.PATIENT_INFO_KEY] = {
+            'name': '',
+            'email': '',
+            'phone': '',
+            'notes': ''
+        }
+        
+        # Update session metadata
+        cls._update_session_modification()
+    
+    @classmethod
+    def reset_session(cls):
+        """Reset the entire session"""
+        # Create backup
+        cls._backup_state()
+        
+        # Clear treatments
+        session[cls.TREATMENTS_KEY] = []
+        
+        # Clear promo details
+        session[cls.PROMO_KEY] = None
+        
+        # Reset patient info
+        session[cls.PATIENT_INFO_KEY] = {
+            'name': '',
+            'email': '',
+            'phone': '',
+            'notes': ''
+        }
+        
+        # Update session metadata
+        cls._update_session_modification()
+    
+    @classmethod
+    def get_session_metadata(cls):
+        """
+        Get session metadata for analytics and debugging
+        
+        Returns:
+            dict: Session metadata
+        """
+        # Update activity timestamp
+        cls._update_session_activity()
+        
+        metadata = session.get(cls.SESSION_META_KEY, {})
+        
+        # Calculate session age and idle time
+        try:
+            created = datetime.fromisoformat(metadata.get('created', datetime.now().isoformat()))
+            last_activity = datetime.fromisoformat(metadata.get('last_activity', datetime.now().isoformat()))
+            now = datetime.now()
+            
+            # Convert to minutes
+            age_minutes = (now - created).total_seconds() / 60
+            idle_minutes = (now - last_activity).total_seconds() / 60
+            
+            return {
+                **metadata,
+                'age_minutes': age_minutes,
+                'idle_minutes': idle_minutes,
+                'exists': True
             }
-            return session_data
-        
-        return None
-    
-    @staticmethod
-    def get_session_metadata():
-        """Get session metadata for monitoring"""
-        if 'initialized' in session:
-            # Calculate session age
-            created_at = session.get('created_at', time.time())
-            last_activity = session.get('last_activity', time.time())
-            current_time = time.time()
             
-            age_seconds = current_time - created_at
-            idle_seconds = current_time - last_activity
-            
-            # Convert to minutes for better readability
-            age_minutes = age_seconds / 60
-            idle_minutes = idle_seconds / 60
-            
-            metadata = {
-                'session_id': session.get('session_id'),
-                'created_at': created_at,
-                'last_activity': last_activity,
-                'age_minutes': round(age_minutes, 2),
-                'idle_minutes': round(idle_minutes, 2),
-                'has_treatments': len(session.get('treatments', [])) > 0,
-                'has_promo': session.get('promo_code') is not None,
-                'has_patient_info': len(session.get('patient_info', {})) > 0,
-                'has_backup': len(session.get('backup', {})) > 0,
-                'has_quote_data': len(session.get('quote_data', {})) > 0
+        except Exception as e:
+            # In case of any error, return minimal metadata
+            return {
+                'exists': True,
+                'error': str(e),
+                'age_minutes': 0,
+                'idle_minutes': 0
             }
-            
-            return metadata
-        
-        return {}
     
-    @staticmethod
-    def clear_session():
-        """Clear all session data"""
-        # Keep only the session ID for tracking purposes
-        session_id = session.get('session_id')
+    @classmethod
+    def restore_from_backup(cls):
+        """
+        Restore session state from backup
         
-        # Clear session
-        session.clear()
+        Returns:
+            bool: True if restored successfully, False otherwise
+        """
+        if cls.BACKUP_KEY not in session:
+            return False
         
-        # Reinitialize with the same ID for continuity
-        session['initialized'] = True
-        session['session_id'] = session_id if session_id else str(uuid.uuid4())
-        session['created_at'] = time.time()
-        session['last_activity'] = time.time()
+        backup = session.get(cls.BACKUP_KEY)
         
-        logger.info(f"Session cleared: {session['session_id']}")
+        # Restore treatments
+        if cls.TREATMENTS_KEY in backup:
+            session[cls.TREATMENTS_KEY] = backup[cls.TREATMENTS_KEY]
+            
+        # Restore promo details
+        if cls.PROMO_KEY in backup:
+            session[cls.PROMO_KEY] = backup[cls.PROMO_KEY]
+            
+        # Restore patient info
+        if cls.PATIENT_INFO_KEY in backup:
+            session[cls.PATIENT_INFO_KEY] = backup[cls.PATIENT_INFO_KEY]
+        
+        # Update session metadata
+        cls._update_session_modification()
+        
+        return True
+    
+    @classmethod
+    def _backup_state(cls):
+        """Create a backup of the current session state"""
+        backup = {
+            cls.TREATMENTS_KEY: session.get(cls.TREATMENTS_KEY, []),
+            cls.PROMO_KEY: session.get(cls.PROMO_KEY),
+            cls.PATIENT_INFO_KEY: session.get(cls.PATIENT_INFO_KEY, {})
+        }
+        
+        session[cls.BACKUP_KEY] = backup
+    
+    @classmethod
+    def _update_session_modification(cls):
+        """Update session modification timestamp"""
+        metadata = session.get(cls.SESSION_META_KEY, {})
+        metadata['last_modified'] = datetime.now().isoformat()
+        metadata['last_activity'] = datetime.now().isoformat()
+        metadata['access_count'] = metadata.get('access_count', 0) + 1
+        session[cls.SESSION_META_KEY] = metadata
+    
+    @classmethod
+    def _update_session_activity(cls):
+        """Update session activity timestamp"""
+        metadata = session.get(cls.SESSION_META_KEY, {})
+        metadata['last_activity'] = datetime.now().isoformat()
+        metadata['access_count'] = metadata.get('access_count', 0) + 1
+        session[cls.SESSION_META_KEY] = metadata
