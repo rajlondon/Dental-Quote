@@ -1,129 +1,160 @@
 """
-SessionManager for dental quote system
-
-This module provides functionality for managing session data related to the dental quote system.
+Session Manager for Dental Quote System
+Handles session creation, treatment management, and promo code application
 """
-
+from flask import session
+import uuid
+from datetime import datetime
 
 class SessionManager:
     """
-    Handles session data operations for the dental quote system.
-    Provides methods for calculating totals, applying promo codes, and managing session state.
+    Manages user session data for the quote builder system
+    - Tracks selected treatments
+    - Manages promotional codes
+    - Stores patient information
     """
     
     @staticmethod
-    def get_subtotal(selected_treatments):
-        """
-        Calculate the subtotal price of all selected treatments
-        
-        Args:
-            selected_treatments: List of treatments in the quote
-            
-        Returns:
-            float: The subtotal price
-        """
-        subtotal = 0
-        for treatment in selected_treatments:
-            # Default to 1 if quantity is not specified
-            quantity = treatment.get('quantity', 1)
-            # Use USD price by default
-            price = treatment.get('price_usd', 0)
-            subtotal += price * quantity
-        
-        return round(subtotal, 2)
+    def initialize_session(reset=False):
+        """Initialize a new quote session or reset an existing one"""
+        if 'quote_session' not in session or reset:
+            session['quote_session'] = {
+                'session_id': str(uuid.uuid4()),
+                'created_at': datetime.now().isoformat(),
+                'selected_treatments': [],
+                'promo_code': None,
+                'promo_details': None,
+                'patient_info': None,
+                'quote_id': None
+            }
+        return session['quote_session']
     
     @staticmethod
-    def get_discount_amount(subtotal, promo_details):
-        """
-        Calculate the discount amount based on promo code details
-        
-        Args:
-            subtotal: The subtotal price before discount
-            promo_details: Dictionary containing promo code details
-            
-        Returns:
-            float: The discount amount
-        """
-        if not promo_details:
-            return 0
-        
-        discount_type = promo_details.get('discount_type')
-        discount_value = promo_details.get('discount_value', 0)
-        
-        if discount_type == 'percentage':
-            discount = subtotal * (discount_value / 100)
-        elif discount_type == 'fixed_amount':
-            discount = min(discount_value, subtotal)  # Don't exceed subtotal
-        else:
-            discount = 0
-        
-        return round(discount, 2)
+    def get_session():
+        """Get the current quote session"""
+        if 'quote_session' not in session:
+            return SessionManager.initialize_session()
+        return session['quote_session']
     
     @staticmethod
-    def get_total(subtotal, discount):
-        """
-        Calculate the total price after discount
+    def add_treatment(treatment):
+        """Add a treatment to the session"""
+        quote_session = SessionManager.get_session()
+        selected_treatments = quote_session['selected_treatments']
         
-        Args:
-            subtotal: The subtotal price before discount
-            discount: The discount amount
-            
-        Returns:
-            float: The total price
-        """
-        total = subtotal - discount
-        return round(max(0, total), 2)  # Ensure total is not negative
+        # Check if treatment already exists
+        for existing in selected_treatments:
+            if existing['id'] == treatment['id']:
+                existing['quantity'] += 1
+                session.modified = True
+                return quote_session
+        
+        # Add new treatment with quantity 1
+        treatment['quantity'] = 1
+        selected_treatments.append(treatment)
+        session.modified = True
+        return quote_session
     
     @staticmethod
-    def clear_promo_code(session):
-        """
-        Remove promo code and details from the session
-        
-        Args:
-            session: The Flask session object
-        """
-        if 'quote' in session:
-            session['quote']['promo_code'] = None
-            session['quote']['promo_details'] = None
-            session.modified = True
+    def remove_treatment(treatment_id):
+        """Remove a treatment from the session"""
+        quote_session = SessionManager.get_session()
+        quote_session['selected_treatments'] = [
+            t for t in quote_session['selected_treatments'] 
+            if t['id'] != treatment_id
+        ]
+        session.modified = True
+        return quote_session
     
     @staticmethod
-    def set_selected_offer(session, offer):
-        """
-        Set the selected special offer in the session
+    def update_treatment_quantity(treatment_id, quantity):
+        """Update the quantity of a treatment"""
+        if quantity < 1:
+            return SessionManager.remove_treatment(treatment_id)
         
-        Args:
-            session: The Flask session object
-            offer: Dictionary containing offer details
-        """
-        if 'quote' in session:
-            session['quote']['selected_offer'] = offer
-            session.modified = True
+        quote_session = SessionManager.get_session()
+        for treatment in quote_session['selected_treatments']:
+            if treatment['id'] == treatment_id:
+                treatment['quantity'] = quantity
+                session.modified = True
+                break
+        
+        return quote_session
     
     @staticmethod
-    def set_quote_id(session, quote_id):
-        """
-        Set the quote ID in the session after saving to database
-        
-        Args:
-            session: The Flask session object
-            quote_id: The unique identifier for the saved quote
-        """
-        if 'quote' in session:
-            session['quote']['quote_id'] = quote_id
-            session.modified = True
+    def get_selected_treatments():
+        """Get selected treatments from the session"""
+        quote_session = SessionManager.get_session()
+        return quote_session['selected_treatments']
     
     @staticmethod
-    def get_session_data(session):
-        """
-        Get all quote-related data from the session
-        
-        Args:
-            session: The Flask session object
-            
-        Returns:
-            dict: All quote data
-        """
-        if 'quote' in session:
-            return session['quote']
-        return None
+    def set_promo_code(promo_code, promo_details):
+        """Set promo code and details in the session"""
+        quote_session = SessionManager.get_session()
+        quote_session['promo_code'] = promo_code
+        quote_session['promo_details'] = promo_details
+        session.modified = True
+        return quote_session
+    
+    @staticmethod
+    def remove_promo_code():
+        """Remove promo code from the session"""
+        quote_session = SessionManager.get_session()
+        quote_session['promo_code'] = None
+        quote_session['promo_details'] = None
+        session.modified = True
+        return quote_session
+    
+    @staticmethod
+    def get_promo_code():
+        """Get promo code from the session"""
+        quote_session = SessionManager.get_session()
+        return quote_session.get('promo_code')
+    
+    @staticmethod
+    def get_promo_details():
+        """Get promo details from the session"""
+        quote_session = SessionManager.get_session()
+        return quote_session.get('promo_details')
+    
+    @staticmethod
+    def set_patient_info(patient_info):
+        """Set patient information in the session"""
+        quote_session = SessionManager.get_session()
+        quote_session['patient_info'] = patient_info
+        session.modified = True
+        return quote_session
+    
+    @staticmethod
+    def get_patient_info():
+        """Get patient information from the session"""
+        quote_session = SessionManager.get_session()
+        return quote_session.get('patient_info')
+    
+    @staticmethod
+    def set_quote_id(quote_id):
+        """Set quote ID in the session"""
+        quote_session = SessionManager.get_session()
+        quote_session['quote_id'] = quote_id
+        session.modified = True
+        return quote_session
+    
+    @staticmethod
+    def get_quote_id():
+        """Get quote ID from the session"""
+        quote_session = SessionManager.get_session()
+        return quote_session.get('quote_id')
+    
+    @staticmethod
+    def get_quote_data():
+        """Get complete quote data from the session"""
+        quote_session = SessionManager.get_session()
+        return {
+            'session_id': quote_session.get('session_id'),
+            'created_at': quote_session.get('created_at'),
+            'selected_treatments': quote_session.get('selected_treatments', []),
+            'promo_code': quote_session.get('promo_code'),
+            'promo_details': quote_session.get('promo_details'),
+            'patient_info': quote_session.get('patient_info'),
+            'quote_id': quote_session.get('quote_id')
+        }
