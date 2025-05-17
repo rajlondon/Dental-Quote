@@ -1,57 +1,176 @@
 {% extends 'base.html' %}
 
-{% block title %}Patient Information | MyDentalFly{% endblock %}
+{% block title %}Patient Information - MyDentalFly{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h1 class="mb-4">Patient Information</h1>
-        <div class="progress mb-4">
-            <div class="progress-bar bg-primary" role="progressbar" style="width: 50%;" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100">Step 2 of 4</div>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="section-title">Patient Information</h1>
+            <p class="lead">Please provide your contact information to complete your dental treatment quote.</p>
         </div>
     </div>
-</div>
 
-<div class="row">
-    <div class="col-md-8">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h2 class="h5 mb-0">Your Information</h2>
-            </div>
-            <div class="card-body">
-                <form action="{{ url_for('page_routes.patient_info') }}" method="POST">
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Full Name *</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ patient_info.name }}" required>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="patient-form">
+                <form id="patient-info-form" method="POST" action="{{ url_for('page_routes.submit_patient_info') }}">
+                    <!-- Personal Information -->
+                    <h4 class="mb-3">Personal Information</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">First Name *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number *</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" required>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email Address *</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ patient_info.email }}" required>
-                        <div class="form-text">We'll send your quote to this email address.</div>
+
+                    <!-- Travel Information -->
+                    <h4 class="mb-3">Travel & Treatment Information</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">Country of Residence *</label>
+                            <select class="form-select" id="country" name="country" required>
+                                <option value="" selected disabled>Select your country</option>
+                                <option value="US">United States</option>
+                                <option value="UK">United Kingdom</option>
+                                <option value="CA">Canada</option>
+                                <option value="AU">Australia</option>
+                                <option value="DE">Germany</option>
+                                <option value="FR">France</option>
+                                <option value="IT">Italy</option>
+                                <option value="ES">Spain</option>
+                                <option value="NL">Netherlands</option>
+                                <option value="SE">Sweden</option>
+                                <option value="NO">Norway</option>
+                                <option value="DK">Denmark</option>
+                                <option value="FI">Finland</option>
+                                <option value="IE">Ireland</option>
+                                <option value="CH">Switzerland</option>
+                                <option value="BE">Belgium</option>
+                                <option value="AT">Austria</option>
+                                <option value="PT">Portugal</option>
+                                <option value="GR">Greece</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="preferred_travel_date" class="form-label">Preferred Travel Date</label>
+                            <input type="date" class="form-control" id="preferred_travel_date" name="preferred_travel_date">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="travel_flexibility" class="form-label">Travel Flexibility</label>
+                            <select class="form-select" id="travel_flexibility" name="travel_flexibility">
+                                <option value="" selected disabled>Select your flexibility</option>
+                                <option value="fixed">Fixed dates</option>
+                                <option value="flexible_1week">Flexible (±1 week)</option>
+                                <option value="flexible_2weeks">Flexible (±2 weeks)</option>
+                                <option value="flexible_month">Flexible (±1 month)</option>
+                                <option value="very_flexible">Very flexible</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="travel_companions" class="form-label">Number of Travel Companions</label>
+                            <select class="form-select" id="travel_companions" name="travel_companions">
+                                <option value="0">Traveling alone</option>
+                                <option value="1">1 companion</option>
+                                <option value="2">2 companions</option>
+                                <option value="3">3 companions</option>
+                                <option value="4+">4+ companions</option>
+                            </select>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Phone Number *</label>
-                        <input type="tel" class="form-control" id="phone" name="phone" value="{{ patient_info.phone }}" required>
-                        <div class="form-text">Include country code (e.g., +44 for UK).</div>
+
+                    <!-- Medical Information -->
+                    <h4 class="mb-3">Medical Information</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-12 mb-3">
+                            <label for="medical_conditions" class="form-label">Relevant Medical Conditions</label>
+                            <textarea class="form-control" id="medical_conditions" name="medical_conditions" rows="3" placeholder="Please list any medical conditions that your dentist should be aware of (e.g., diabetes, heart conditions, allergies)"></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <label for="current_medications" class="form-label">Current Medications</label>
+                            <textarea class="form-control" id="current_medications" name="current_medications" rows="2" placeholder="Please list any medications you're currently taking"></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="dental_anxiety" name="dental_anxiety">
+                                <label class="form-check-label" for="dental_anxiety">
+                                    I experience dental anxiety or fear
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label for="notes" class="form-label">Additional Notes</label>
-                        <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Please share any specific concerns, questions, or requirements you may have.">{{ patient_info.notes }}</textarea>
+
+                    <!-- Additional Information -->
+                    <h4 class="mb-3">Additional Information</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-12 mb-3">
+                            <label for="special_requests" class="form-label">Special Requests or Comments</label>
+                            <textarea class="form-control" id="special_requests" name="special_requests" rows="3" placeholder="Any additional information or special requests regarding your dental treatment or travel"></textarea>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="accommodation_assistance" name="accommodation_assistance">
+                                <label class="form-check-label" for="accommodation_assistance">
+                                    I would like assistance with accommodation arrangements
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="transportation_assistance" name="transportation_assistance">
+                                <label class="form-check-label" for="transportation_assistance">
+                                    I would like assistance with local transportation arrangements
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="form-check mb-3">
-                        <input class="form-check-input" type="checkbox" id="privacy-policy" required>
-                        <label class="form-check-label" for="privacy-policy">
-                            I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#privacyModal">privacy policy</a> and consent to being contacted about my dental treatment.
-                        </label>
+
+                    <!-- Consent & Privacy -->
+                    <h4 class="mb-3">Consent & Privacy</h4>
+                    <div class="row mb-4">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="consent_contact" name="consent_contact" required>
+                                <label class="form-check-label" for="consent_contact">
+                                    I consent to be contacted by MyDentalFly and partner clinics regarding my dental treatment quote *
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="consent_privacy" name="consent_privacy" required>
+                                <label class="form-check-label" for="consent_privacy">
+                                    I agree to the <a href="#" target="_blank">Privacy Policy</a> and <a href="#" target="_blank">Terms of Service</a> *
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" value="1" id="subscribe_newsletter" name="subscribe_newsletter">
+                                <label class="form-check-label" for="subscribe_newsletter">
+                                    I would like to receive special offers and updates from MyDentalFly
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between">
+
+                    <!-- Submission Buttons -->
+                    <div class="d-flex justify-content-between align-items-center mt-4">
                         <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-outline-secondary">
-                            <i class="fas fa-arrow-left me-2"></i> Back to Treatments
+                            <i class="fas fa-arrow-left me-2"></i> Back to Quote Builder
                         </a>
                         <button type="submit" class="btn btn-primary">
                             Continue to Review <i class="fas fa-arrow-right ms-2"></i>
@@ -60,94 +179,137 @@
                 </form>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h3 class="h5 mb-0">Your Quote Summary</h3>
-            </div>
-            <div class="card-body">
-                <h4 class="mb-3">Selected Treatments</h4>
-                <ul class="list-group mb-4">
-                    {% for treatment in treatments %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ treatment.name }}
-                        <span class="badge bg-primary rounded-pill">${{ treatment.price }}</span>
-                    </li>
-                    {% endfor %}
-                </ul>
+
+        <!-- Quote Summary Sidebar -->
+        <div class="col-lg-4">
+            <div class="quote-summary">
+                <h3 class="quote-summary-title">Quote Summary</h3>
                 
-                {% if promo_code %}
-                <div class="alert alert-success mb-4">
-                    <p class="mb-0"><strong>{{ promo_code }}</strong> applied!</p>
-                    {% if promo_details %}
-                        <p class="mb-0 small">{{ promo_details.description }}</p>
+                <!-- Selected Treatments List -->
+                <div id="selected-treatments-list">
+                    {% if selected_treatments %}
+                        {% for treatment in selected_treatments %}
+                        <div class="quote-item">
+                            <div>
+                                <strong>{{ treatment.name }}</strong>
+                                <span class="d-block small">Qty: {{ treatment.quantity }}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="treatment-total">${{ (treatment.price * treatment.quantity) }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-muted">
+                            <p>Your quote is empty</p>
+                            <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-sm btn-outline-primary">Add Treatments</a>
+                        </div>
                     {% endif %}
+                </div>
+                
+                <!-- Promo Code Info -->
+                {% if promo_code %}
+                <div class="promo-code-applied">
+                    <div>
+                        <span>Applied: </span>
+                        <span class="code">{{ promo_code }}</span>
+                    </div>
                 </div>
                 {% endif %}
                 
-                <div class="card bg-light mb-4">
+                <!-- Quote Totals -->
+                <div class="quote-totals">
+                    <div class="quote-total-row">
+                        <span>Subtotal:</span>
+                        <span id="quote-subtotal">${{ "%.2f"|format(quote_totals.subtotal) }}</span>
+                    </div>
+                    
+                    {% if quote_totals.discount_amount %}
+                    <div class="quote-total-row" id="discount-row">
+                        <span>Discount:</span>
+                        <span id="quote-discount">-${{ "%.2f"|format(quote_totals.discount_amount) }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="quote-total-row quote-final-total">
+                        <span>Total:</span>
+                        <span id="quote-total">${{ "%.2f"|format(quote_totals.total) }}</span>
+                    </div>
+                </div>
+                
+                <!-- Need Help Box -->
+                <div class="card mt-4">
                     <div class="card-body">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
-                            <span>${{ subtotal }}</span>
-                        </div>
-                        {% if discount > 0 %}
-                        <div class="d-flex justify-content-between mb-2 text-success">
-                            <span>Discount:</span>
-                            <span>-${{ discount }}</span>
-                        </div>
-                        {% endif %}
-                        <div class="d-flex justify-content-between fw-bold">
-                            <span>Total:</span>
-                            <span>${{ total }}</span>
-                        </div>
+                        <h5 class="card-title">Need Assistance?</h5>
+                        <p class="card-text">Our dental tourism experts are ready to help you with any questions about treatments or travel arrangements.</p>
+                        <a href="#" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-comments me-2"></i> Live Chat
+                        </a>
+                        <p class="text-center mt-3 mb-0">or call us at</p>
+                        <p class="text-center fw-bold mb-0">+1 (555) 123-4567</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- Privacy Policy Modal -->
-<div class="modal fade" id="privacyModal" tabindex="-1" aria-labelledby="privacyModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="privacyModalLabel">Privacy Policy</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h6>Information We Collect</h6>
-                <p>We collect personal information that you provide to us, including your name, email address, phone number, and any additional information you share with us regarding your dental treatment requirements.</p>
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.getElementById('patient-info-form');
+        
+        form.addEventListener('submit', function(event) {
+            // Check required fields
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            // Check consent checkboxes
+            const consentFields = [
+                document.getElementById('consent_contact'),
+                document.getElementById('consent_privacy')
+            ];
+            
+            consentFields.forEach(field => {
+                if (!field.checked) {
+                    isValid = false;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                event.preventDefault();
                 
-                <h6>How We Use Your Information</h6>
-                <p>We use your information to:</p>
-                <ul>
-                    <li>Generate and provide your dental treatment quote</li>
-                    <li>Contact you regarding your quote and treatment options</li>
-                    <li>Connect you with appropriate dental clinics in Turkey</li>
-                    <li>Assist with travel arrangements if requested</li>
-                    <li>Improve our services and customer experience</li>
-                </ul>
+                // Show alert for missing fields
+                alert('Please fill in all required fields and provide the necessary consent.');
                 
-                <h6>Information Sharing</h6>
-                <p>We may share your information with our partner dental clinics in Turkey for the purpose of treatment planning and booking. We do not sell your personal information to third parties.</p>
-                
-                <h6>Data Security</h6>
-                <p>We implement appropriate security measures to protect your personal information from unauthorized access, alteration, or disclosure.</p>
-                
-                <h6>Your Rights</h6>
-                <p>You have the right to access, correct, or delete your personal information. You may also withdraw your consent at any time by contacting us.</p>
-                
-                <h6>Contact Us</h6>
-                <p>If you have any questions about our privacy policy, please contact us at privacy@mydentalfly.com.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
-            </div>
-        </div>
-    </div>
-</div>
+                // Scroll to the first invalid field
+                const firstInvalidField = form.querySelector('.is-invalid');
+                if (firstInvalidField) {
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
+        
+        // Clear validation styling on input
+        form.querySelectorAll('input, select, textarea').forEach(field => {
+            field.addEventListener('input', function() {
+                this.classList.remove('is-invalid');
+            });
+        });
+    });
+</script>
 {% endblock %}
