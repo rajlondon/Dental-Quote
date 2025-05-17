@@ -1,228 +1,101 @@
-/**
- * Utility functions for formatting and converting values
- */
+export type CurrencyCode = 'USD' | 'EUR' | 'GBP';
 
-export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'TRY';
-
-/**
- * Simple currency formatter (for compatibility with existing code)
- * 
- * @param amount - The amount to format
- * @param currency - Optional currency code (defaults to USD)
- * @returns Formatted currency string
- */
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(amount);
-}
-
-export interface CurrencyFormat {
+interface CurrencySettings {
   symbol: string;
+  rate: number; // Exchange rate from USD
   position: 'before' | 'after';
-  separator: string;
-  decimal: string;
-  precision: number;
+  spaceBetween: boolean;
 }
 
-export const CURRENCY_FORMATS: Record<CurrencyCode, CurrencyFormat> = {
-  USD: {
-    symbol: '$',
-    position: 'before',
-    separator: ',',
-    decimal: '.',
-    precision: 2
-  },
-  EUR: {
-    symbol: '€',
-    position: 'after',
-    separator: '.',
-    decimal: ',',
-    precision: 2
-  },
-  GBP: {
-    symbol: '£',
-    position: 'before',
-    separator: ',',
-    decimal: '.',
-    precision: 2
-  },
-  TRY: {
-    symbol: '₺',
-    position: 'after',
-    separator: '.',
-    decimal: ',',
-    precision: 2
-  }
-};
-
-// Exchange rates from base currency (USD)
-export const USD_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 1,
-  EUR: 0.92,
-  GBP: 0.79,
-  TRY: 31.85
-};
-
-// Exchange rates from EUR
-export const EUR_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 1.09,
-  EUR: 1,
-  GBP: 0.85,
-  TRY: 34.65
-};
-
-// Exchange rates from GBP
-export const GBP_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 1.27,
-  EUR: 1.18,
-  GBP: 1,
-  TRY: 40.48
-};
-
-// Exchange rates from TRY
-export const TRY_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 0.031,
-  EUR: 0.029,
-  GBP: 0.025,
-  TRY: 1
+const currencyMap: Record<CurrencyCode, CurrencySettings> = {
+  USD: { symbol: '$', rate: 1, position: 'before', spaceBetween: false },
+  EUR: { symbol: '€', rate: 0.92, position: 'before', spaceBetween: true },
+  GBP: { symbol: '£', rate: 0.78, position: 'before', spaceBetween: false },
 };
 
 /**
- * Formats a price according to the currency's format rules
+ * Format a price in the given currency with proper formatting
  * 
- * @param amount - The amount to format
- * @param currency - The currency code (USD, EUR, etc.)
+ * @param price - The price in the original currency (typically USD)
+ * @param currencyCode - The currency code to convert to
+ * @returns Formatted price string with currency symbol
+ */
+export function formatPriceInCurrency(price: number, currencyCode: CurrencyCode = 'USD'): string {
+  const currency = currencyMap[currencyCode];
+  
+  // Convert price to target currency
+  const convertedPrice = price * currency.rate;
+  
+  // Format the number with 2 decimal places
+  const formattedValue = convertedPrice.toFixed(2);
+  
+  // Apply currency formatting based on position
+  if (currency.position === 'before') {
+    return `${currency.symbol}${currency.spaceBetween ? ' ' : ''}${formattedValue}`;
+  } else {
+    return `${formattedValue}${currency.spaceBetween ? ' ' : ''}${currency.symbol}`;
+  }
+}
+
+/**
+ * Simple price formatter that uses the browser's Intl API
+ * 
+ * @param price - The price to format
+ * @param currencyCode - The currency code
  * @returns Formatted price string
  */
-export function formatPrice(amount: number, currency: CurrencyCode = 'USD'): string {
-  // Get the currency format
-  const format = CURRENCY_FORMATS[currency];
-  
-  // Format the number
-  const formattedNumber = amount.toFixed(format.precision)
-    .replace('.', format.decimal) // Replace decimal point
-    .replace(/\B(?=(\d{3})+(?!\d))/g, format.separator); // Add thousands separator
-  
-  // Apply the currency symbol based on position
-  if (format.position === 'before') {
-    return `${format.symbol}${formattedNumber}`;
-  } else {
-    return `${formattedNumber} ${format.symbol}`;
-  }
+export function formatPrice(price: number, currencyCode: CurrencyCode = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(price);
 }
 
 /**
- * Converts a price from one currency to another
+ * Convert a price from one currency to another
  * 
- * @param amount - The amount to convert
- * @param fromCurrency - The source currency
- * @param toCurrency - The target currency
- * @returns Converted amount
+ * @param price - The price in the source currency
+ * @param fromCurrency - The source currency code
+ * @param toCurrency - The target currency code
+ * @returns Converted price in target currency
  */
 export function convertCurrency(
-  amount: number, 
+  price: number, 
   fromCurrency: CurrencyCode = 'USD', 
   toCurrency: CurrencyCode = 'USD'
 ): number {
-  // If currencies are the same, no conversion needed
-  if (fromCurrency === toCurrency) {
-    return amount;
-  }
+  // First convert to USD if not already
+  const priceInUSD = fromCurrency === 'USD' 
+    ? price 
+    : price / currencyMap[fromCurrency].rate;
   
-  // Get the appropriate exchange rate matrix based on fromCurrency
-  let exchangeRates;
-  switch (fromCurrency) {
-    case 'USD':
-      exchangeRates = USD_EXCHANGE_RATES;
-      break;
-    case 'EUR':
-      exchangeRates = EUR_EXCHANGE_RATES;
-      break;
-    case 'GBP':
-      exchangeRates = GBP_EXCHANGE_RATES;
-      break;
-    case 'TRY':
-      exchangeRates = TRY_EXCHANGE_RATES;
-      break;
-    default:
-      exchangeRates = USD_EXCHANGE_RATES;
-  }
-  
-  // Convert to the target currency
-  const convertedAmount = amount * exchangeRates[toCurrency];
-  
-  // Round to 2 decimal places
-  return Math.round(convertedAmount * 100) / 100;
+  // Then convert from USD to target currency
+  return priceInUSD * currencyMap[toCurrency].rate;
 }
 
 /**
- * Formats a price in the specified currency, converting from USD if needed
+ * Get the exchange rate between two currencies
  * 
- * @param amount - The amount in USD
- * @param displayCurrency - The currency to display
- * @returns Formatted price string
+ * @param fromCurrency - The source currency code
+ * @param toCurrency - The target currency code
+ * @returns Exchange rate
  */
-export function formatPriceInCurrency(
-  amount: number, 
-  displayCurrency: CurrencyCode = 'USD'
-): string {
-  // Convert from USD to the display currency
-  const convertedAmount = convertCurrency(amount, 'USD', displayCurrency);
-  
-  // Format the converted amount
-  return formatPrice(convertedAmount, displayCurrency);
+export function getExchangeRate(
+  fromCurrency: CurrencyCode = 'USD',
+  toCurrency: CurrencyCode = 'USD'
+): number {
+  // Rate to convert 1 unit of fromCurrency to toCurrency
+  return currencyMap[toCurrency].rate / currencyMap[fromCurrency].rate;
 }
 
 /**
- * Formats a percentage with proper symbol
+ * Get currency symbol for a given currency code
  * 
- * @param value - The percentage value (e.g., 0.15 for 15%)
- * @returns Formatted percentage string
+ * @param currencyCode - The currency code
+ * @returns Currency symbol
  */
-export function formatPercentage(value: number): string {
-  // Check if value is already in percentage form (e.g., 15 vs 0.15)
-  const percentage = value > 1 ? value : value * 100;
-  return `${percentage.toFixed(0)}%`;
-}
-
-/**
- * Formats a date in a readable format
- * 
- * @param date - The date to format
- * @param format - Optional format style (defaults to 'medium')
- * @returns Formatted date string
- */
-export function formatDate(
-  date: Date | string,
-  format: 'short' | 'medium' | 'long' = 'medium'
-): string {
-  // Convert string to Date if needed
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  // Define format options based on requested style
-  let options: Intl.DateTimeFormatOptions;
-  
-  switch (format) {
-    case 'short':
-      options = { month: 'numeric', day: 'numeric', year: '2-digit' };
-      break;
-    case 'medium':
-      options = { month: 'short', day: 'numeric', year: 'numeric' };
-      break;
-    case 'long':
-      options = { 
-        weekday: 'long',
-        month: 'long', 
-        day: 'numeric', 
-        year: 'numeric'
-      };
-      break;
-  }
-  
-  // Return formatted date
-  return new Intl.DateTimeFormat('en-US', options).format(dateObj);
+export function getCurrencySymbol(currencyCode: CurrencyCode = 'USD'): string {
+  return currencyMap[currencyCode].symbol;
 }

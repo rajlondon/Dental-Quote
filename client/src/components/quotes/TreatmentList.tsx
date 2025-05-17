@@ -1,18 +1,14 @@
-import { useState } from 'react';
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow 
-} from '@/components/ui/table';
+import React, { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import {
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Search, Plus, Minus, Check } from 'lucide-react';
+import { 
   formatPriceInCurrency,
-  CurrencyCode
+  type CurrencyCode 
 } from '@/utils/format-utils';
-import { Loader2, Plus, Check } from 'lucide-react';
 
 interface Treatment {
   id: string;
@@ -20,189 +16,171 @@ interface Treatment {
   description: string;
   price: number;
   category: string;
-  clinicId?: string;
-  clinicName?: string;
-  imageUrl?: string;
 }
 
 interface TreatmentListProps {
   treatments: Treatment[];
-  onSelectTreatment?: (treatment: Treatment) => void;
-  onRemoveTreatment?: (treatmentId: string) => void;
   selectedTreatments?: Treatment[];
-  loading?: boolean;
+  onTreatmentSelect?: (treatment: Treatment) => void;
+  onTreatmentRemove?: (treatmentId: string) => void;
   currency?: CurrencyCode;
   showActions?: boolean;
-  showClinic?: boolean;
-  showCategory?: boolean;
+  showSelectedOnly?: boolean;
 }
 
-const TreatmentList = ({
+const TreatmentList: React.FC<TreatmentListProps> = ({
   treatments,
-  onSelectTreatment,
-  onRemoveTreatment,
   selectedTreatments = [],
-  loading = false,
+  onTreatmentSelect,
+  onTreatmentRemove,
   currency = 'USD',
   showActions = true,
-  showClinic = false,
-  showCategory = true
-}: TreatmentListProps) => {
-  const [categoryFilter, setCategoryFilter] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
+  showSelectedOnly = false
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   
-  // Get unique categories for filter dropdown
-  const categories = ['all', ...Array.from(new Set(treatments.map(t => t.category)))];
+  // Get all unique categories from treatments
+  const categories = ['all', ...new Set(treatments.map(t => t.category))];
   
-  // Filter treatments based on selected category and search query
+  // Filter treatments based on search term and active category
   const filteredTreatments = treatments.filter(treatment => {
-    const matchesCategory = categoryFilter === 'all' || treatment.category === categoryFilter;
-    const matchesSearch = searchQuery === '' || 
-      treatment.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      treatment.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = treatment.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         treatment.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = activeCategory === 'all' || treatment.category === activeCategory;
     
-    return matchesCategory && matchesSearch;
+    return matchesSearch && matchesCategory;
   });
   
-  // Check if a treatment is selected
+  // Check if a treatment is already selected
   const isTreatmentSelected = (treatmentId: string) => {
     return selectedTreatments.some(t => t.id === treatmentId);
   };
   
-  // Handle treatment selection
-  const handleSelectTreatment = (treatment: Treatment) => {
-    if (onSelectTreatment) {
-      onSelectTreatment(treatment);
-    }
-  };
-  
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2">Loading treatments...</span>
-      </div>
-    );
-  }
-  
-  if (treatments.length === 0) {
-    return (
-      <div className="text-center py-8 border rounded-md">
-        <p className="text-muted-foreground">No treatments available.</p>
-      </div>
-    );
-  }
-  
   return (
-    <div className="space-y-4">
-      {/* Filter Controls */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <input
-            type="text"
+    <div className="space-y-6">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             placeholder="Search treatments..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-3 py-2 border rounded-md"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
         </div>
         
-        {showCategory && (
-          <div>
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="px-3 py-2 border rounded-md"
-            >
-              {categories.map(category => (
-                <option key={category} value={category}>
-                  {category === 'all' ? 'All Categories' : category}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <Tabs value={activeCategory} className="w-full md:w-auto">
+          <TabsList className="h-auto p-1 grid grid-cols-3 md:flex md:space-x-2">
+            {categories.map((category) => (
+              <TabsTrigger
+                key={category}
+                value={category}
+                onClick={() => setActiveCategory(category)}
+                className="text-xs md:text-sm capitalize"
+              >
+                {category}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
       
-      {/* Treatments Table */}
-      <div className="border rounded-md overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Treatment</TableHead>
-              {showCategory && <TableHead>Category</TableHead>}
-              {showClinic && <TableHead>Clinic</TableHead>}
-              <TableHead className="text-right">Price</TableHead>
-              {showActions && <TableHead className="w-[100px]">Action</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredTreatments.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={showCategory ? 4 : 3} className="h-24 text-center">
-                  No treatments found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredTreatments.map(treatment => (
-                <TableRow key={treatment.id}>
-                  <TableCell>
-                    <div>
-                      <p className="font-medium">{treatment.name}</p>
-                      <p className="text-sm text-muted-foreground">{treatment.description}</p>
-                    </div>
-                  </TableCell>
-                  
-                  {showCategory && (
-                    <TableCell>
-                      <span className="inline-block px-2 py-1 text-xs font-medium bg-primary/10 text-primary rounded">
-                        {treatment.category}
-                      </span>
-                    </TableCell>
-                  )}
-                  
-                  {showClinic && (
-                    <TableCell>
-                      {treatment.clinicName || 'N/A'}
-                    </TableCell>
-                  )}
-                  
-                  <TableCell className="text-right font-medium">
-                    {formatPriceInCurrency(treatment.price, currency)}
-                  </TableCell>
-                  
-                  {showActions && (
-                    <TableCell>
-                      {isTreatmentSelected(treatment.id) ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full flex items-center justify-center text-success"
-                          disabled
-                        >
-                          <Check className="h-4 w-4 mr-1" />
-                          Added
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="w-full flex items-center justify-center"
-                          onClick={() => handleSelectTreatment(treatment)}
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add
-                        </Button>
-                      )}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      {showSelectedOnly && selectedTreatments.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4">
+          {selectedTreatments.map((treatment) => (
+            <TreatmentCard
+              key={treatment.id}
+              treatment={treatment}
+              isSelected={true}
+              currency={currency}
+              onAdd={() => {}}
+              onRemove={onTreatmentRemove ? () => onTreatmentRemove(treatment.id) : undefined}
+              showActions={showActions}
+            />
+          ))}
+        </div>
+      ) : filteredTreatments.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4">
+          {filteredTreatments.map((treatment) => (
+            <TreatmentCard
+              key={treatment.id}
+              treatment={treatment}
+              isSelected={isTreatmentSelected(treatment.id)}
+              currency={currency}
+              onAdd={onTreatmentSelect ? () => onTreatmentSelect(treatment) : undefined}
+              onRemove={onTreatmentRemove ? () => onTreatmentRemove(treatment.id) : undefined}
+              showActions={showActions}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>No treatments found matching your search.</p>
+        </div>
+      )}
     </div>
+  );
+};
+
+interface TreatmentCardProps {
+  treatment: Treatment;
+  isSelected: boolean;
+  currency: CurrencyCode;
+  onAdd?: () => void;
+  onRemove?: () => void;
+  showActions: boolean;
+}
+
+const TreatmentCard: React.FC<TreatmentCardProps> = ({
+  treatment,
+  isSelected,
+  currency,
+  onAdd,
+  onRemove,
+  showActions
+}) => {
+  return (
+    <Card className={`overflow-hidden transition-all ${isSelected ? 'border-primary bg-primary/5' : ''}`}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <h3 className="font-medium text-lg">{treatment.name}</h3>
+              <Badge variant="outline" className="capitalize">{treatment.category}</Badge>
+              {isSelected && (
+                <Badge variant="success" className="bg-green-100 text-green-800">
+                  <Check className="mr-1 h-3 w-3" /> Selected
+                </Badge>
+              )}
+            </div>
+            <p className="text-muted-foreground mt-1">{treatment.description}</p>
+          </div>
+          
+          <div className="flex flex-col items-end">
+            <div className="text-xl font-semibold">
+              {formatPriceInCurrency(treatment.price, currency)}
+            </div>
+            
+            {showActions && (
+              <div className="mt-2 flex gap-2">
+                {!isSelected && onAdd && (
+                  <Button size="sm" onClick={onAdd} className="flex items-center">
+                    <Plus className="mr-1 h-4 w-4" /> Add
+                  </Button>
+                )}
+                
+                {isSelected && onRemove && (
+                  <Button variant="outline" size="sm" onClick={onRemove} className="flex items-center">
+                    <Minus className="mr-1 h-4 w-4" /> Remove
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
