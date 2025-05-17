@@ -1,63 +1,206 @@
 """
-MyDentalFly Quote System Application
-Main application file for dental tourism quote system
+MyDentalFly Quote System - Main Application
+Flask application for dental treatment quotes with promo code integration
 """
+
+from flask import Flask, render_template, jsonify, request, session, redirect, url_for
 import os
-import logging
-from flask import Flask, session
+import json
+from datetime import datetime
+
+# Import utility modules and services
+from utils.session_manager import SessionManager
+from services.treatment_service import TreatmentService
+from services.promo_service import PromoService
+
+# Import route modules
 from routes.page_routes import page_routes
 from routes.promo_routes import promo_routes
 from routes.integration_routes import integration_routes
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Create Flask app
+app = Flask(__name__)
 
-def create_app():
-    """Create and configure the Flask application"""
-    app = Flask(__name__, 
-                static_folder='static',
-                template_folder='templates')
-    
-    # Configure the application
-    app.config.from_mapping(
-        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev_key_h37sk29fmxpal22'),
-        SESSION_TYPE='filesystem',
-        SESSION_PERMANENT=True,
-        PERMANENT_SESSION_LIFETIME=86400 * 30,  # 30 days in seconds
-    )
-    
-    # Register blueprints
-    app.register_blueprint(page_routes)
-    app.register_blueprint(promo_routes)
-    app.register_blueprint(integration_routes, url_prefix='/api')
-    
-    # Register error handlers
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('404.html'), 404
-    
-    @app.errorhandler(500)
-    def server_error(e):
-        return render_template('500.html'), 500
-    
-    # Create directories if they don't exist
-    os.makedirs('static/images', exist_ok=True)
-    os.makedirs('static/css', exist_ok=True)
-    os.makedirs('static/js', exist_ok=True)
-    
-    logger.info("Application initialized")
-    return app
+# Configure application
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mydentalfly-secret-key') 
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 
-# Create the Flask application instance
-app = create_app()
+# Initialize services
+session_manager = SessionManager(app)
+treatment_service = TreatmentService()
+promo_service = PromoService()
 
-# Import needed for error handlers
-from flask import render_template
+# Make services available to all templates
+@app.context_processor
+def inject_services():
+    return {
+        'treatment_service': treatment_service,
+        'promo_service': promo_service
+    }
 
+# Register blueprints
+app.register_blueprint(page_routes)
+app.register_blueprint(promo_routes, url_prefix='/promo')
+app.register_blueprint(integration_routes, url_prefix='/api')
+
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('error.html', error=str(e)), 500
+
+# AJAX route handlers
+@app.route('/add-treatment', methods=['POST'])
+def add_treatment():
+    """Add a treatment to the quote via AJAX"""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    treatment_id = request.form.get('treatment_id')
+    if not treatment_id:
+        return jsonify({'success': False, 'message': 'Treatment ID is required'})
+    
+    # Get treatment details
+    treatment = treatment_service.get_treatment_by_id(treatment_id)
+    if not treatment:
+        return jsonify({'success': False, 'message': 'Treatment not found'})
+    
+    # Add to session
+    session_manager.add_treatment_to_quote(treatment)
+    
+    # Get updated quote information
+    selected_treatments = session_manager.get_selected_treatments()
+    quote_totals = session_manager.calculate_quote_totals()
+    
+    return jsonify({
+        'success': True, 
+        'message': f'Added {treatment["name"]} to your quote',
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
+    })
+
+@app.route('/remove-treatment', methods=['POST'])
+def remove_treatment():
+    """Remove a treatment from the quote via AJAX"""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    treatment_id = request.form.get('treatment_id')
+    if not treatment_id:
+        return jsonify({'success': False, 'message': 'Treatment ID is required'})
+    
+    # Remove from session
+    removed = session_manager.remove_treatment_from_quote(treatment_id)
+    if not removed:
+        return jsonify({'success': False, 'message': 'Treatment not found in your quote'})
+    
+    # Get updated quote information
+    selected_treatments = session_manager.get_selected_treatments()
+    quote_totals = session_manager.calculate_quote_totals()
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Treatment removed from your quote',
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
+    })
+
+@app.route('/update-quantity', methods=['POST'])
+def update_quantity():
+    """Update treatment quantity via AJAX"""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    treatment_id = request.form.get('treatment_id')
+    quantity = request.form.get('quantity')
+    
+    if not treatment_id or not quantity:
+        return jsonify({'success': False, 'message': 'Treatment ID and quantity are required'})
+    
+    try:
+        quantity = int(quantity)
+        if quantity < 1:
+            quantity = 1
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Quantity must be a number'})
+    
+    # Update session
+    updated = session_manager.update_treatment_quantity(treatment_id, quantity)
+    if not updated:
+        return jsonify({'success': False, 'message': 'Treatment not found in your quote'})
+    
+    # Get updated quote information
+    selected_treatments = session_manager.get_selected_treatments()
+    quote_totals = session_manager.calculate_quote_totals()
+    
+    return jsonify({
+        'success': True,
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
+    })
+
+@app.route('/apply-promo', methods=['POST'])
+def apply_promo():
+    """Apply a promo code via AJAX"""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    promo_code = request.form.get('promo_code')
+    if not promo_code:
+        return jsonify({'success': False, 'message': 'Promo code is required'})
+    
+    # Validate promo code
+    promo_details = promo_service.validate_promo_code(promo_code)
+    if not promo_details:
+        return jsonify({'success': False, 'message': 'Invalid promo code'})
+    
+    # Check if treatments in quote are eligible for this promo
+    if not promo_service.check_promo_eligibility(promo_details, session_manager.get_selected_treatments()):
+        return jsonify({
+            'success': False, 
+            'message': 'This promo code is not applicable to your selected treatments'
+        })
+    
+    # Apply to session
+    session_manager.apply_promo_code(promo_code, promo_details)
+    
+    # Get updated quote information
+    quote_totals = session_manager.calculate_quote_totals()
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Promo code applied successfully!',
+        'promo_details': promo_details,
+        'totals': quote_totals
+    })
+
+@app.route('/remove-promo', methods=['POST'])
+def remove_promo():
+    """Remove promo code via AJAX"""
+    if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Remove from session
+    removed = session_manager.remove_promo_code()
+    if not removed:
+        return jsonify({'success': False, 'message': 'No promo code was applied'})
+    
+    # Get updated quote information
+    quote_totals = session_manager.calculate_quote_totals()
+    
+    return jsonify({
+        'success': True, 
+        'message': 'Promo code removed',
+        'totals': quote_totals
+    })
+
+# Run the application
 if __name__ == '__main__':
-    # Run the application in development mode
-    app.run(host='0.0.0.0', port=5005, debug=True)
+    if not os.path.exists(app.config['UPLOAD_FOLDER']):
+        os.makedirs(app.config['UPLOAD_FOLDER'])
+    app.run(host='0.0.0.0', port=5000, debug=True)

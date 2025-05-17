@@ -1,277 +1,239 @@
 """
-Treatment Service Module
-Handles dental treatment data and operations
+TreatmentService for Dental Quote System
+Manages treatment data and operations
 """
-import logging
+
 import json
 import os
 
-logger = logging.getLogger(__name__)
-
-def get_all_treatments():
-    """Get all treatments
-    
-    Returns:
-        list: All treatments
+class TreatmentService:
     """
-    return _load_treatments()
-
-def get_treatment_by_id(treatment_id):
-    """Get a treatment by its ID
+    Handles treatment-related operations
+    Provides treatment data, categories, and filtering
+    """
     
-    Args:
-        treatment_id (str): Treatment ID
+    def __init__(self):
+        self.treatments = self._load_treatments()
+        self.categories = self._generate_categories()
+    
+    def _load_treatments(self):
+        """Load treatment data from the data file"""
+        try:
+            # Use mock data for now, will be replaced with real data later
+            return [
+                {
+                    "id": "dental_implant_standard",
+                    "name": "Dental Implant (Standard)",
+                    "description": "Titanium root replacement for missing teeth, providing a strong foundation for fixed or removable replacement teeth.",
+                    "price": 950,
+                    "category": "implants",
+                    "image": "/static/images/treatments/dental_implant.jpg"
+                },
+                {
+                    "id": "dental_implant_premium",
+                    "name": "Dental Implant (Premium)",
+                    "description": "Premium implant with advanced technology and materials for enhanced aesthetics and integration.",
+                    "price": 1250,
+                    "category": "implants",
+                    "image": "/static/images/treatments/dental_implant_premium.jpg"
+                },
+                {
+                    "id": "dental_crowns",
+                    "name": "Dental Crown",
+                    "description": "Custom-made cap that covers a damaged tooth to restore its shape, size, strength, and appearance.",
+                    "price": 450,
+                    "category": "crowns_bridges",
+                    "image": "/static/images/treatments/dental_crown.jpg"
+                },
+                {
+                    "id": "porcelain_veneers",
+                    "name": "Porcelain Veneers",
+                    "description": "Thin shells of porcelain that are bonded to the front surface of teeth to improve their appearance.",
+                    "price": 550,
+                    "category": "cosmetic",
+                    "image": "/static/images/treatments/porcelain_veneers.jpg"
+                },
+                {
+                    "id": "zirconia_bridge",
+                    "name": "Zirconia Bridge",
+                    "description": "Strong, durable bridge made from zirconia, used to replace missing teeth by anchoring to adjacent natural teeth.",
+                    "price": 750,
+                    "category": "crowns_bridges",
+                    "image": "/static/images/treatments/zirconia_bridge.jpg"
+                },
+                {
+                    "id": "teeth_whitening",
+                    "name": "Professional Teeth Whitening",
+                    "description": "In-office whitening treatment that removes stains and discoloration for a brighter smile.",
+                    "price": 350,
+                    "category": "cosmetic",
+                    "image": "/static/images/treatments/teeth_whitening.jpg"
+                },
+                {
+                    "id": "root_canal",
+                    "name": "Root Canal Treatment",
+                    "description": "Procedure to treat infection in the root of a tooth, saving the natural tooth and preventing extraction.",
+                    "price": 550,
+                    "category": "endodontics",
+                    "image": "/static/images/treatments/root_canal.jpg"
+                },
+                {
+                    "id": "dental_cleaning",
+                    "name": "Professional Dental Cleaning",
+                    "description": "Thorough cleaning of teeth by a dental professional to remove plaque and tartar buildup.",
+                    "price": 120,
+                    "category": "preventive",
+                    "image": "/static/images/treatments/dental_cleaning.jpg"
+                },
+                {
+                    "id": "all_on_4_implants",
+                    "name": "All-on-4 Dental Implants",
+                    "description": "Revolutionary technique where an entire arch of teeth is supported by just four dental implants.",
+                    "price": 6500,
+                    "category": "implants",
+                    "image": "/static/images/treatments/all_on_4.jpg"
+                },
+                {
+                    "id": "ceramic_braces",
+                    "name": "Ceramic Braces",
+                    "description": "Less visible braces made of ceramic material that blends with the natural color of teeth.",
+                    "price": 2900,
+                    "category": "orthodontics",
+                    "image": "/static/images/treatments/ceramic_braces.jpg"
+                },
+                {
+                    "id": "clear_aligners",
+                    "name": "Clear Aligners",
+                    "description": "Transparent, removable alternatives to braces that gradually straighten teeth.",
+                    "price": 3500,
+                    "category": "orthodontics",
+                    "image": "/static/images/treatments/clear_aligners.jpg"
+                },
+                {
+                    "id": "hollywood_smile",
+                    "name": "Hollywood Smile Makeover",
+                    "description": "Comprehensive smile makeover with combination treatments for a perfect Hollywood smile.",
+                    "price": 4500,
+                    "category": "cosmetic",
+                    "image": "/static/images/treatments/hollywood_smile.jpg"
+                },
+                {
+                    "id": "dental_filling",
+                    "name": "Dental Filling",
+                    "description": "Restoration of a damaged tooth using material that resembles the natural tooth color.",
+                    "price": 120,
+                    "category": "restorative",
+                    "image": "/static/images/treatments/dental_filling.jpg"
+                },
+                {
+                    "id": "wisdom_tooth_extraction",
+                    "name": "Wisdom Tooth Extraction",
+                    "description": "Surgical removal of one or more wisdom teeth, the four permanent adult teeth at the back corners.",
+                    "price": 280,
+                    "category": "oral_surgery",
+                    "image": "/static/images/treatments/wisdom_tooth_extraction.jpg"
+                },
+                {
+                    "id": "gum_therapy",
+                    "name": "Gum Therapy",
+                    "description": "Non-surgical treatment for gum disease to restore gum health and prevent tooth loss.",
+                    "price": 380,
+                    "category": "periodontics",
+                    "image": "/static/images/treatments/gum_therapy.jpg"
+                },
+                {
+                    "id": "full_mouth_reconstruction",
+                    "name": "Full Mouth Reconstruction",
+                    "description": "Comprehensive treatment to rebuild or restore all teeth in both upper and lower jaws.",
+                    "price": 12000,
+                    "category": "restorative",
+                    "image": "/static/images/treatments/full_mouth_reconstruction.jpg"
+                }
+            ]
+        except Exception as e:
+            print(f"Error loading treatments: {e}")
+            return []
+    
+    def _generate_categories(self):
+        """Generate category structure from treatments"""
+        categories = {}
         
-    Returns:
-        dict: Treatment data or None
-    """
-    treatments = _load_treatments()
-    
-    # Find treatment by ID
-    for treatment in treatments:
-        if treatment['id'] == treatment_id:
-            return treatment
-    
-    return None
-
-def get_popular_treatments(limit=6):
-    """Get popular treatments
-    
-    Args:
-        limit (int): Maximum number of treatments to return
+        for treatment in self.treatments:
+            category_id = treatment.get('category', 'other')
+            
+            if category_id not in categories:
+                categories[category_id] = {
+                    'name': self._format_category_name(category_id),
+                    'treatments': []
+                }
+            
+            categories[category_id]['treatments'].append(treatment)
         
-    Returns:
-        list: Popular treatments
-    """
-    treatments = _load_treatments()
+        return categories
     
-    # Filter for popular treatments
-    popular_treatments = [treatment for treatment in treatments if treatment.get('popular', False)]
+    def _format_category_name(self, category_id):
+        """Format category ID into a readable name"""
+        return category_id.replace('_', ' ').title()
     
-    # Sort by popularity score (if available) or just return the first few
-    popular_treatments.sort(key=lambda x: x.get('popularity_score', 0), reverse=True)
+    def get_all_treatments(self):
+        """Get all available treatments"""
+        return self.treatments
     
-    return popular_treatments[:limit]
-
-def get_treatments_by_category(category_id):
-    """Get treatments by category
+    def get_treatment_by_id(self, treatment_id):
+        """Get a treatment by its ID"""
+        for treatment in self.treatments:
+            if treatment['id'] == treatment_id:
+                return treatment
+        return None
     
-    Args:
-        category_id (str): Category ID
+    def get_treatments_by_category(self, category_id):
+        """Get all treatments in a specific category"""
+        if category_id in self.categories:
+            return self.categories[category_id]['treatments']
+        return []
+    
+    def get_categorized_treatments(self):
+        """Get treatments organized by category"""
+        return self.categories
+    
+    def get_popular_treatments(self, limit=6):
+        """Get a subset of treatments marked as popular or frequently chosen"""
+        # In a real implementation, this would be based on actual popularity data
+        popular_treatments = [
+            t for t in self.treatments if t['id'] in [
+                'dental_implant_standard',
+                'porcelain_veneers',
+                'teeth_whitening',
+                'dental_crowns',
+                'clear_aligners',
+                'hollywood_smile'
+            ]
+        ]
         
-    Returns:
-        list: Treatments in the category
-    """
-    treatments = _load_treatments()
+        return popular_treatments[:limit]
     
-    # Filter for treatments in the category
-    category_treatments = [
-        treatment for treatment in treatments 
-        if treatment.get('category_id') == category_id
-    ]
-    
-    return category_treatments
-
-def get_categorized_treatments():
-    """Get treatments categorized by category
-    
-    Returns:
-        dict: Categories with their treatments
-    """
-    treatments = _load_treatments()
-    categories = _load_categories()
-    
-    # Create dictionary for each category
-    categorized = {}
-    
-    for category in categories:
-        category_id = category['id']
-        categorized[category_id] = {
-            'id': category_id,
-            'name': category['name'],
-            'treatments': []
-        }
-    
-    # Add treatments to their categories
-    for treatment in treatments:
-        category_id = treatment.get('category_id')
-        if category_id and category_id in categorized:
-            categorized[category_id]['treatments'].append(treatment)
-    
-    return categorized
-
-def _load_treatments():
-    """Load treatments from data source
-    
-    Returns:
-        list: Treatments
-    """
-    # Use mock treatments for development and testing
-    treatments = [
-        {
-            "id": "dental_implant_standard",
-            "name": "Standard Dental Implant",
-            "description": "A titanium post surgically placed into the jawbone to serve as a replacement for a missing tooth root.",
-            "category_id": "implants",
-            "price": 750,
-            "duration": "2-3 hours",
-            "image": "/static/images/treatments/dental-implant.jpg",
-            "popular": True,
-            "popularity_score": 95
-        },
-        {
-            "id": "dental_implant_premium",
-            "name": "Premium Dental Implant",
-            "description": "Advanced dental implant using premium materials with lifetime warranty.",
-            "category_id": "implants",
-            "price": 1100,
-            "duration": "2-3 hours",
-            "image": "/static/images/treatments/premium-implant.jpg",
-            "popular": False,
-            "popularity_score": 75
-        },
-        {
-            "id": "all_on_4_implants",
-            "name": "All-on-4 Implants",
-            "description": "A full arch of prosthetic teeth supported by just four strategically placed implants.",
-            "category_id": "implants",
-            "price": 5500,
-            "duration": "1-2 days",
-            "image": "/static/images/treatments/all-on-4.jpg",
-            "popular": True,
-            "popularity_score": 90
-        },
-        {
-            "id": "porcelain_veneers",
-            "name": "Porcelain Veneers",
-            "description": "Thin shells of porcelain bonded to the front of teeth to improve appearance.",
-            "category_id": "cosmetic",
-            "price": 350,
-            "duration": "1-2 hours per tooth",
-            "image": "/static/images/treatments/veneers.jpg",
-            "popular": True,
-            "popularity_score": 92
-        },
-        {
-            "id": "composite_veneers",
-            "name": "Composite Veneers",
-            "description": "Tooth-colored resin applied to improve the appearance of teeth.",
-            "category_id": "cosmetic",
-            "price": 200,
-            "duration": "1 hour per tooth",
-            "image": "/static/images/treatments/composite-veneers.jpg",
-            "popular": False,
-            "popularity_score": 70
-        },
-        {
-            "id": "teeth_whitening",
-            "name": "Professional Teeth Whitening",
-            "description": "In-office whitening procedure to brighten and whiten teeth.",
-            "category_id": "cosmetic",
-            "price": 250,
-            "duration": "1-2 hours",
-            "image": "/static/images/treatments/teeth-whitening.jpg",
-            "popular": True,
-            "popularity_score": 88
-        },
-        {
-            "id": "dental_crowns",
-            "name": "Dental Crowns",
-            "description": "Custom-fitted caps placed over damaged or decayed teeth.",
-            "category_id": "restorative",
-            "price": 300,
-            "duration": "1-2 hours",
-            "image": "/static/images/treatments/crowns.jpg",
-            "popular": True,
-            "popularity_score": 85
-        },
-        {
-            "id": "dental_bridges",
-            "name": "Dental Bridges",
-            "description": "Fixed prosthetic devices to replace one or more missing teeth.",
-            "category_id": "restorative",
-            "price": 650,
-            "duration": "2-3 hours",
-            "image": "/static/images/treatments/bridges.jpg",
-            "popular": False,
-            "popularity_score": 72
-        },
-        {
-            "id": "root_canal",
-            "name": "Root Canal Treatment",
-            "description": "Procedure to treat infection at the center of a tooth.",
-            "category_id": "restorative",
-            "price": 350,
-            "duration": "1-2 hours",
-            "image": "/static/images/treatments/root-canal.jpg",
-            "popular": False,
-            "popularity_score": 60
-        },
-        {
-            "id": "dental_filling",
-            "name": "Dental Filling",
-            "description": "Material used to fill cavities or repair minor tooth fractures.",
-            "category_id": "restorative",
-            "price": 80,
-            "duration": "30-60 minutes",
-            "image": "/static/images/treatments/filling.jpg",
-            "popular": False,
-            "popularity_score": 65
-        },
-        {
-            "id": "full_mouth_reconstruction",
-            "name": "Full Mouth Reconstruction",
-            "description": "Comprehensive treatment to restore all teeth in both the upper and lower jaws.",
-            "category_id": "advanced",
-            "price": 8500,
-            "duration": "Multiple visits",
-            "image": "/static/images/treatments/full-mouth.jpg",
-            "popular": False,
-            "popularity_score": 50
-        },
-        {
-            "id": "hollywood_smile",
-            "name": "Hollywood Smile",
-            "description": "Combination of treatments to achieve a perfect smile with bright, aligned teeth.",
-            "category_id": "cosmetic",
-            "price": 3500,
-            "duration": "Multiple visits",
-            "image": "/static/images/treatments/hollywood-smile.jpg",
-            "popular": True,
-            "popularity_score": 95
-        }
-    ]
-    
-    return treatments
-
-def _load_categories():
-    """Load treatment categories
-    
-    Returns:
-        list: Categories
-    """
-    # Use mock categories for development and testing
-    categories = [
-        {
-            "id": "implants",
-            "name": "Dental Implants",
-            "description": "Permanent solutions for missing teeth"
-        },
-        {
-            "id": "cosmetic",
-            "name": "Cosmetic Dentistry",
-            "description": "Treatments to enhance your smile"
-        },
-        {
-            "id": "restorative",
-            "name": "Restorative Dentistry",
-            "description": "Repair damaged or decayed teeth"
-        },
-        {
-            "id": "advanced",
-            "name": "Advanced Procedures",
-            "description": "Complex dental treatments"
-        }
-    ]
-    
-    return categories
+    def filter_treatments(self, search_term=None, min_price=None, max_price=None, category=None):
+        """Filter treatments based on criteria"""
+        filtered = self.treatments.copy()
+        
+        # Filter by search term
+        if search_term:
+            search_term = search_term.lower()
+            filtered = [
+                t for t in filtered if 
+                search_term in t['name'].lower() or 
+                search_term in t['description'].lower()
+            ]
+        
+        # Filter by price range
+        if min_price is not None:
+            filtered = [t for t in filtered if t['price'] >= min_price]
+        
+        if max_price is not None:
+            filtered = [t for t in filtered if t['price'] <= max_price]
+        
+        # Filter by category
+        if category:
+            filtered = [t for t in filtered if t['category'] == category]
+        
+        return filtered
