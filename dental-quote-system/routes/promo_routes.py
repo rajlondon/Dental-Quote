@@ -1,77 +1,152 @@
-"""
-Promotion routes for the MyDentalFly application.
-Handles special offers, promo codes, and related functionality.
-"""
-
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify, abort, session, flash
+
+from utils.session_manager import SessionManager
+from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
 
-# Create Blueprint
-promo_routes = Blueprint('promo_routes', __name__, url_prefix='/promo')
-
-# Initialize service
-promo_service = PromoService()
-
-# Logger
+# Initialize logger
 logger = logging.getLogger(__name__)
 
-@promo_routes.route('/special-offers')
-def special_offers():
-    """Render the special offers page."""
-    offers = promo_service.get_all_active_offers()
-    return render_template('promo/special_offers.html', offers=offers)
+# Initialize blueprint
+promo_routes_bp = Blueprint('promo_routes', __name__)
 
-@promo_routes.route('/offer/<offer_id>')
-def special_offer_redirect(offer_id):
-    """Handle clicks on special offers - adds relevant treatment and promo code to session."""
-    offer = promo_service.get_offer_by_id(offer_id)
+# Initialize services
+treatment_service = TreatmentService()
+promo_service = PromoService()
+
+# Route handlers
+@promo_routes_bp.route('/special-offers')
+def special_offers():
+    """Display a list of all active special offers."""
+    active_offers = promo_service.get_active_special_offers()
+    return render_template('promo/special_offers.html', offers=active_offers)
+
+@promo_routes_bp.route('/special-offer/<offer_id>')
+def special_offer_detail(offer_id):
+    """Display details for a specific special offer."""
+    offer = promo_service.get_special_offer_by_id(offer_id)
     
     if not offer:
-        flash("Special offer not found or no longer available.", "warning")
+        flash('Special offer not found.', 'error')
         return redirect(url_for('promo_routes.special_offers'))
     
-    # Reset session if starting a new quote
-    if 'selected_treatments' not in session:
-        session['selected_treatments'] = []
+    # Get applicable treatments for this offer
+    applicable_treatments = []
+    for treatment_id in offer.get('applicable_treatments', []):
+        treatment = treatment_service.get_treatment_by_id(treatment_id)
+        if treatment:
+            applicable_treatments.append(treatment)
     
-    # Add applicable treatments to session
-    from services.treatment_service import TreatmentService
-    treatment_service = TreatmentService()
+    return render_template('promo/special_offer_detail.html',
+                          offer=offer,
+                          applicable_treatments=applicable_treatments)
+
+@promo_routes_bp.route('/start-with-offer/<offer_id>')
+def start_with_offer(offer_id):
+    """
+    Start a new quote with a specific special offer.
+    This resets the session and adds the offer's treatments automatically.
+    """
+    # Reset the session to start fresh
+    SessionManager.reset_session()
     
-    if offer.get('applicable_treatments'):
-        for treatment_id in offer.get('applicable_treatments'):
-            treatment = treatment_service.get_treatment_by_id(treatment_id)
-            if treatment:
-                # Check if treatment is already selected
-                existing = next((t for t in session['selected_treatments'] if t['id'] == treatment_id), None)
-                if existing:
-                    # Increment quantity if already exists
-                    existing['quantity'] += 1
-                else:
-                    # Add new treatment with quantity 1
-                    treatment['quantity'] = 1
-                    session['selected_treatments'].append(treatment)
+    # Set the special offer ID in the session
+    SessionManager.set_special_offer_id(offer_id)
     
-    # Apply promo code if available
-    promo_code = offer.get('promo_code')
-    if promo_code:
-        session['promo_code'] = promo_code
-        flash(f"Promo code {promo_code} applied to your quote.", "success")
+    # Get the offer details
+    offer = promo_service.get_special_offer_by_id(offer_id)
     
-    flash(f"Special offer '{offer.get('title')}' applied to your quote.", "success")
+    if not offer:
+        flash('Special offer not found.', 'error')
+        return redirect(url_for('promo_routes.special_offers'))
     
-    # Redirect to quote builder
+    # Apply the promo code if there is one
+    if offer.get('promo_code'):
+        promo = promo_service.get_promo_code_by_code(offer['promo_code'])
+        if promo:
+            # Validate the promo code first - we'll skip subtotal check since it's a new quote
+            validation = promo_service.validate_promo_code(offer['promo_code'])
+            
+            if validation['valid']:
+                SessionManager.apply_promo_code(offer['promo_code'], 0)  # Start with 0 discount
+    
+    # Redirect to the quote builder
     return redirect(url_for('page_routes.quote_builder'))
 
-@promo_routes.route('/validate/<promo_code>')
-def validate_promo_code(promo_code):
-    """Validate a promo code and return JSON response."""
-    valid, message = promo_service.validate_promo_code(promo_code)
-    return {'valid': valid, 'message': message}
+@promo_routes_bp.route('/apply-promo', methods=['POST'])
+def apply_promo():
+    """Apply a promo code to the current quote."""
+    # Initialize session if needed
+    SessionManager.initialize_session()
+    
+    # Get the promo code from the form
+    promo_code = request.form.get('promo_code', '').strip()
+    
+    if not promo_code:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No promo code provided.'})
+        flash('Please enter a promo code.', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Get selected treatments
+    selected_treatments = SessionManager.get_selected_treatments()
+    treatment_ids = [t['id'] for t in selected_treatments]
+    
+    # Calculate subtotal
+    totals = SessionManager.calculate_totals()
+    subtotal = totals['subtotal']
+    
+    # Validate the promo code
+    validation = promo_service.validate_promo_code(promo_code, subtotal, treatment_ids)
+    
+    if validation['valid']:
+        promo = validation['promo']
+        
+        # Calculate discount
+        discount_amount = promo_service.calculate_discount(promo, subtotal)
+        
+        # Apply the promo code to the session
+        SessionManager.apply_promo_code(promo_code, discount_amount)
+        
+        # Increment usage count for the promo code
+        promo_service.increment_usage_count(promo['id'])
+        
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'success': True,
+                'message': 'Promo code applied successfully!',
+                'discount_amount': discount_amount,
+                'new_total': subtotal - discount_amount
+            })
+        
+        flash('Promo code applied successfully!', 'success')
+    else:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': validation['message']})
+        
+        flash(validation['message'], 'error')
+    
+    return redirect(url_for('page_routes.quote_builder'))
 
-@promo_routes.route('/codes')
-def promo_codes():
-    """Display all available promo codes (for testing/admin purposes)."""
-    codes = promo_service.get_all_promo_codes()
-    return render_template('promo/promo_codes.html', codes=codes)
+@promo_routes_bp.route('/remove-promo', methods=['POST'])
+def remove_promo():
+    """Remove the applied promo code from the current quote."""
+    # Initialize session if needed
+    SessionManager.initialize_session()
+    
+    # Remove the promo code from the session
+    SessionManager.remove_promo_code()
+    
+    # Recalculate totals
+    totals = SessionManager.calculate_totals()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'message': 'Promo code removed.',
+            'new_total': totals['total']
+        })
+    
+    flash('Promo code removed.', 'info')
+    return redirect(url_for('page_routes.quote_builder'))

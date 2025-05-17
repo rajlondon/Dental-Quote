@@ -1,227 +1,210 @@
-"""
-Page routes for the MyDentalFly application.
-Handles rendering of HTML pages and form submissions.
-"""
-
 import logging
+import os
 import uuid
 from datetime import datetime
-from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from utils.session_manager import save_session_data, check_treatments_selected, check_patient_info, reset_quote
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify, flash, abort
+
+from utils.session_manager import SessionManager
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
 
-# Create Blueprint
-page_routes = Blueprint('page_routes', __name__)
+# Initialize logger
+logger = logging.getLogger(__name__)
+
+# Initialize blueprint
+page_routes_bp = Blueprint('page_routes', __name__)
 
 # Initialize services
 treatment_service = TreatmentService()
 promo_service = PromoService()
 
-# Logger
-logger = logging.getLogger(__name__)
+# Helper functions
+def save_session_data():
+    """Ensure session data is saved by marking the session as modified."""
+    session.modified = True
 
-@page_routes.route('/')
+def check_treatments_selected():
+    """Check if any treatments have been selected, redirect if not."""
+    if not SessionManager.get_selected_treatments():
+        return redirect(url_for('page_routes.quote_builder'))
+    return None
+
+def check_patient_info():
+    """Check if patient info has been provided, redirect if not."""
+    if not SessionManager.get_patient_info():
+        return redirect(url_for('page_routes.patient_info'))
+    return None
+
+def reset_quote():
+    """Reset the quote session data."""
+    SessionManager.reset_session()
+
+# Route handlers
+@page_routes_bp.route('/')
 def index():
     """Render the homepage."""
-    # Get featured offers for homepage display
-    featured_offers = promo_service.get_featured_offers(limit=3)
-    
-    # Get popular treatments
+    # Get popular treatments for the homepage
     popular_treatments = treatment_service.get_popular_treatments()
     
-    return render_template(
-        'index.html',
-        featured_offers=featured_offers,
-        popular_treatments=popular_treatments
-    )
-
-@page_routes.route('/quote/start')
-def start_quote():
-    """Start a new quote by resetting session and redirecting to builder."""
-    # Reset quote data
-    reset_quote()
+    # Get featured special offers for the homepage
+    featured_offers = promo_service.get_featured_special_offers()
     
-    # Redirect to quote builder
+    return render_template('index.html', 
+                          popular_treatments=popular_treatments,
+                          featured_offers=featured_offers)
+
+@page_routes_bp.route('/start-quote')
+def start_quote():
+    """Start a new quote by resetting the session and redirecting to the quote builder."""
+    reset_quote()
     return redirect(url_for('page_routes.quote_builder'))
 
-@page_routes.route('/quote/builder', methods=['GET', 'POST'])
+@page_routes_bp.route('/quote-builder')
 def quote_builder():
-    """Render the quote builder page."""
-    if request.method == 'POST':
-        # Handle form submission
-        promo_code = request.form.get('promo_code')
-        
-        if promo_code:
-            # Validate promo code
-            valid, message = promo_service.validate_promo_code(promo_code)
-            
-            if valid:
-                # Save promo code to session
-                save_session_data('promo_code', promo_code)
-                flash(f"Promo code {promo_code} applied successfully.", "success")
-            else:
-                flash(message, "error")
-        
-        # Redirect to the same page to prevent form resubmission
-        return redirect(url_for('page_routes.quote_builder'))
+    """Render the quote builder page with treatment categories and selected treatments."""
+    # Initialize session if needed
+    SessionManager.initialize_session()
     
-    # Get data for template
+    # Get categorized treatments for the quote builder
     categorized_treatments = treatment_service.get_categorized_treatments()
-    selected_treatments = session.get('selected_treatments', [])
-    promo_code = session.get('promo_code')
     
-    # Calculate totals
-    subtotal = sum(treatment['price'] * treatment['quantity'] for treatment in selected_treatments)
-    discount_amount = 0
-    if promo_code:
-        discount_amount = promo_service.calculate_discount(promo_code, selected_treatments, subtotal)
-    total = subtotal - discount_amount
+    # Get selected treatments, promo code, and totals from session
+    selected_treatments = SessionManager.get_selected_treatments()
+    promo_code = SessionManager.get_promo_code()
+    totals = SessionManager.calculate_totals()
     
-    return render_template(
-        'quote/quote_builder.html',
-        categorized_treatments=categorized_treatments,
-        selected_treatments=selected_treatments,
-        promo_code=promo_code,
-        subtotal=subtotal,
-        discount_amount=discount_amount,
-        total=total
-    )
+    # Check if treatment_id was provided in the query parameters
+    # This allows direct addition of a treatment from elsewhere
+    treatment_id = request.args.get('treatment_id')
+    if treatment_id:
+        treatment = treatment_service.get_treatment_by_id(treatment_id)
+        if treatment:
+            SessionManager.add_treatment(treatment)
+            selected_treatments = SessionManager.get_selected_treatments()
+            totals = SessionManager.calculate_totals()
+    
+    return render_template('quote/quote_builder.html',
+                          categorized_treatments=categorized_treatments,
+                          selected_treatments=selected_treatments,
+                          promo_code=promo_code,
+                          subtotal=totals['subtotal'],
+                          discount_amount=totals['discount_amount'],
+                          total=totals['total'])
 
-@page_routes.route('/quote/patient-info', methods=['GET', 'POST'])
+@page_routes_bp.route('/patient-info', methods=['GET', 'POST'])
 def patient_info():
-    """Render the patient information form."""
+    """
+    Handle patient information form.
+    GET: Display the form with any existing data
+    POST: Process the submitted form data
+    """
     # Check if treatments are selected
-    if not check_treatments_selected():
-        flash("Please select at least one treatment before proceeding.", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+    redirect_response = check_treatments_selected()
+    if redirect_response:
+        return redirect_response
     
+    # If POST request, process form data
     if request.method == 'POST':
-        # Process form submission
+        # Get form data
         patient_data = {
             'first_name': request.form.get('first_name'),
             'last_name': request.form.get('last_name'),
             'email': request.form.get('email'),
             'phone': request.form.get('phone'),
-            'address': request.form.get('address', ''),
-            'city': request.form.get('city', ''),
-            'country': request.form.get('country', ''),
-            'preferred_date': request.form.get('preferred_date', ''),
-            'message': request.form.get('message', '')
+            'address': request.form.get('address'),
+            'city': request.form.get('city'),
+            'country': request.form.get('country'),
+            'preferred_date': request.form.get('preferred_date'),
+            'message': request.form.get('message')
         }
         
-        # Basic validation
-        required_fields = ['first_name', 'last_name', 'email', 'phone']
-        missing_fields = [field for field in required_fields if not patient_data[field]]
-        
-        if missing_fields:
-            flash(f"Please fill in all required fields: {', '.join(missing_fields)}", "error")
-            return render_template('quote/patient_info.html', patient=patient_data)
-        
         # Save patient info to session
-        save_session_data('patient_info', patient_data)
+        SessionManager.save_patient_info(patient_data)
         
-        # Proceed to quote review
+        # Redirect to review page
         return redirect(url_for('page_routes.quote_review'))
     
-    # Get existing patient info from session
-    patient_info = session.get('patient_info', {})
+    # GET request - display the form
+    patient = SessionManager.get_patient_info()
     
-    return render_template('quote/patient_info.html', patient=patient_info)
+    return render_template('quote/patient_info.html', patient=patient)
 
-@page_routes.route('/quote/review')
+@page_routes_bp.route('/quote-review')
 def quote_review():
-    """Render the quote review page."""
-    # Check if treatments are selected
-    if not check_treatments_selected():
-        flash("Please select at least one treatment before proceeding.", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+    """Render the quote review page with all quote information."""
+    # Check if treatments are selected and patient info is provided
+    redirect_response = check_treatments_selected()
+    if redirect_response:
+        return redirect_response
     
-    # Check if patient info is provided
-    if not check_patient_info():
-        flash("Please provide your contact information before proceeding.", "warning")
-        return redirect(url_for('page_routes.patient_info'))
+    redirect_response = check_patient_info()
+    if redirect_response:
+        return redirect_response
     
-    # Get session data
-    selected_treatments = session.get('selected_treatments', [])
-    promo_code = session.get('promo_code')
-    patient_info = session.get('patient_info', {})
+    # Get all necessary data from session
+    selected_treatments = SessionManager.get_selected_treatments()
+    patient = SessionManager.get_patient_info()
+    promo_code = SessionManager.get_promo_code()
+    totals = SessionManager.calculate_totals()
     
-    # Calculate totals
-    subtotal = sum(treatment['price'] * treatment['quantity'] for treatment in selected_treatments)
-    discount_amount = 0
-    if promo_code:
-        discount_amount = promo_service.calculate_discount(promo_code, selected_treatments, subtotal)
-    total = subtotal - discount_amount
-    
-    # Get promo details if applicable
-    promo_details = None
-    if promo_code:
-        promo_details = promo_service.get_promo_details(promo_code)
-    
-    return render_template(
-        'quote/quote_review.html',
-        selected_treatments=selected_treatments,
-        promo_code=promo_code,
-        promo_details=promo_details,
-        patient=patient_info,
-        subtotal=subtotal,
-        discount_amount=discount_amount,
-        total=total,
-        quote_id=session.get('quote_id', 'QUOTE-TEMP')
-    )
+    return render_template('quote/quote_review.html',
+                          selected_treatments=selected_treatments,
+                          patient=patient,
+                          promo_code=promo_code,
+                          subtotal=totals['subtotal'],
+                          discount_amount=totals['discount_amount'],
+                          total=totals['total'])
 
-@page_routes.route('/quote/confirm', methods=['POST'])
-def quote_confirm():
-    """Confirm and finalize the quote."""
-    # Check if treatments are selected
-    if not check_treatments_selected():
-        flash("Please select at least one treatment before proceeding.", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+@page_routes_bp.route('/finalize-quote', methods=['POST'])
+def finalize_quote():
+    """Finalize the quote and redirect to confirmation page."""
+    # Check if treatments are selected and patient info is provided
+    redirect_response = check_treatments_selected()
+    if redirect_response:
+        return redirect_response
     
-    # Check if patient info is provided
-    if not check_patient_info():
-        flash("Please provide your contact information before proceeding.", "warning")
-        return redirect(url_for('page_routes.patient_info'))
+    redirect_response = check_patient_info()
+    if redirect_response:
+        return redirect_response
     
-    # In a real application, we would save the quote to a database here
-    # and possibly trigger an email notification
+    # Get quote data for confirmation
+    quote_data = SessionManager.get_quote_data()
     
-    # For now, just generate a confirmation number and redirect
-    confirmation_number = f"CONF-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8]}"
-    save_session_data('confirmation_number', confirmation_number)
+    # Generate a reference number for the quote
+    quote_reference = f"Q{datetime.utcnow().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
     
-    return redirect(url_for('page_routes.quote_confirmation'))
+    # Here you would typically save the quote to a database
+    # and send confirmation emails, but that's beyond the scope of this example
+    
+    # For this demo, we'll just pass the reference to the confirmation page
+    return redirect(url_for('page_routes.quote_confirmation', reference=quote_reference))
 
-@page_routes.route('/quote/confirmation')
+@page_routes_bp.route('/quote-confirmation')
 def quote_confirmation():
     """Render the quote confirmation page."""
-    # Check if confirmation number exists
-    confirmation_number = session.get('confirmation_number')
-    if not confirmation_number:
-        flash("Please complete the quote process first.", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+    # Check if treatments are selected and patient info is provided
+    redirect_response = check_treatments_selected()
+    if redirect_response:
+        return redirect_response
     
-    # Get session data
-    selected_treatments = session.get('selected_treatments', [])
-    promo_code = session.get('promo_code')
-    patient_info = session.get('patient_info', {})
-    quote_id = session.get('quote_id', 'QUOTE-TEMP')
+    redirect_response = check_patient_info()
+    if redirect_response:
+        return redirect_response
     
-    # Calculate totals
-    subtotal = sum(treatment['price'] * treatment['quantity'] for treatment in selected_treatments)
-    discount_amount = 0
-    if promo_code:
-        discount_amount = promo_service.calculate_discount(promo_code, selected_treatments, subtotal)
-    total = subtotal - discount_amount
+    # Get quote reference from query parameters
+    quote_reference = request.args.get('reference')
     
-    return render_template(
-        'quote/quote_confirmation.html',
-        selected_treatments=selected_treatments,
-        patient=patient_info,
-        subtotal=subtotal,
-        discount_amount=discount_amount,
-        total=total,
-        quote_id=quote_id,
-        confirmation_number=confirmation_number
-    )
+    # Get all necessary data from session
+    selected_treatments = SessionManager.get_selected_treatments()
+    patient = SessionManager.get_patient_info()
+    promo_code = SessionManager.get_promo_code()
+    totals = SessionManager.calculate_totals()
+    
+    return render_template('quote/quote_confirmation.html',
+                          quote_reference=quote_reference,
+                          selected_treatments=selected_treatments,
+                          patient=patient,
+                          promo_code=promo_code,
+                          subtotal=totals['subtotal'],
+                          discount_amount=totals['discount_amount'],
+                          total=totals['total'])
