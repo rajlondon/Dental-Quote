@@ -1,129 +1,145 @@
 /**
- * Format utilities for the dental quote application
+ * Formatting utilities for displaying consistent data across the application
  */
 
-// Format a date to localized string
-export const formatDate = (dateString: string, format: 'short' | 'long' = 'long'): string => {
-  try {
-    const date = new Date(dateString);
-    
-    if (format === 'short') {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    }
-    
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  } catch (error) {
-    console.error('Date formatting error:', error);
-    return 'Invalid date';
+/**
+ * Format a price according to the selected currency
+ * @param price The price to format
+ * @param currency The currency to use (defaults to USD)
+ * @returns Formatted price string with currency symbol
+ */
+export const formatPrice = (price: number, currency: 'USD' | 'GBP' | 'EUR' = 'USD'): string => {
+  if (typeof price !== 'number' || isNaN(price)) {
+    return '—';
   }
+
+  const currencySymbols = {
+    USD: '$',
+    GBP: '£',
+    EUR: '€'
+  };
+
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+
+  return formatter.format(price);
 };
 
-// Format currency
-export const formatCurrency = (
-  amount: number,
-  currency: string = 'USD',
-  locale: string = 'en-US'
+/**
+ * Format a date to a human-readable string
+ * @param dateString The date string to format
+ * @param includeTime Whether to include the time in the output
+ * @returns Formatted date string
+ */
+export const formatDate = (
+  dateString: string | Date,
+  includeTime: boolean = false
 ): string => {
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount);
-  } catch (error) {
-    console.error('Currency formatting error:', error);
-    return `${currency} ${amount.toFixed(2)}`;
+  if (!dateString) return '—';
+  
+  const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+  
+  if (isNaN(date.getTime())) {
+    return '—';
   }
+  
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    ...(includeTime && {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    })
+  };
+  
+  return new Intl.DateTimeFormat('en-US', options).format(date);
 };
 
-// Format percentage
-export const formatPercentage = (
-  value: number,
-  locale: string = 'en-US',
-  minimumFractionDigits: number = 0,
-  maximumFractionDigits: number = 0
-): string => {
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: 'percent',
-      minimumFractionDigits,
-      maximumFractionDigits,
-    }).format(value / 100);
-  } catch (error) {
-    console.error('Percentage formatting error:', error);
-    return `${value}%`;
+/**
+ * Format a percentage value
+ * @param value The percentage value (e.g., 15 for 15%)
+ * @returns Formatted percentage string
+ */
+export const formatPercentage = (value: number): string => {
+  if (typeof value !== 'number' || isNaN(value)) {
+    return '—';
   }
+  
+  return `${value}%`;
 };
 
-// Truncate text with ellipsis
-export const truncateText = (text: string, maxLength: number = 100): string => {
-  if (text.length <= maxLength) return text;
-  return `${text.slice(0, maxLength)}...`;
-};
-
-// Format phone number (US format)
+/**
+ * Format a phone number for consistent display
+ * @param phoneNumber The phone number to format
+ * @returns Formatted phone number
+ */
 export const formatPhoneNumber = (phoneNumber: string): string => {
-  // Remove all non-digit characters
-  const cleaned = phoneNumber.replace(/\D/g, '');
+  if (!phoneNumber) return '—';
   
-  // Format: (XXX) XXX-XXXX
-  if (cleaned.length === 10) {
-    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  // Simple formatting for international numbers
+  return phoneNumber.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+};
+
+/**
+ * Get a status badge color based on quote status
+ * @param status The quote status
+ * @returns CSS color class for the status
+ */
+export const getStatusColor = (
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'completed'
+): string => {
+  const statusColors = {
+    draft: 'bg-amber-100 text-amber-800',
+    sent: 'bg-blue-100 text-blue-800',
+    accepted: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    completed: 'bg-purple-100 text-purple-800'
+  };
+  
+  return statusColors[status] || 'bg-gray-100 text-gray-800';
+};
+
+/**
+ * Format a discount display value
+ * @param type The discount type ('percentage' or 'fixed_amount')
+ * @param value The discount value
+ * @param currency The currency to use for fixed amount discounts
+ * @returns Formatted discount string
+ */
+export const formatDiscount = (
+  type: 'percentage' | 'fixed_amount' | undefined,
+  value: number | undefined,
+  currency: 'USD' | 'GBP' | 'EUR' = 'USD'
+): string => {
+  if (!type || typeof value !== 'number' || isNaN(value)) {
+    return '—';
   }
   
-  // Format: XXX-XXX-XXXX if exactly 10 digits
-  // Otherwise return the original value
-  return phoneNumber;
-};
-
-// Calculate discount amount
-export const calculateDiscount = (
-  subtotal: number,
-  discountType: 'percentage' | 'fixed_amount',
-  discountValue: number
-): number => {
-  if (discountType === 'percentage') {
-    return (subtotal * discountValue) / 100;
+  if (type === 'percentage') {
+    return `${value}%`;
+  } else {
+    return formatPrice(value, currency);
   }
-  return discountValue;
 };
 
-// Calculate total after discount
-export const calculateTotal = (
-  subtotal: number,
-  discountAmount: number
-): number => {
-  return Math.max(0, subtotal - discountAmount);
-};
-
-// Convert camelCase to Title Case with spaces
-export const camelCaseToTitleCase = (text: string): string => {
-  // Add space before capital letters and uppercase the first character
-  const result = text
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase());
+/**
+ * Truncate text with ellipsis if it exceeds the max length
+ * @param text The text to truncate
+ * @param maxLength Maximum allowed length
+ * @returns Truncated text with ellipsis if needed
+ */
+export const truncateText = (text: string, maxLength: number = 50): string => {
+  if (!text) return '';
   
-  return result;
-};
-
-// Slugify text for URLs
-export const slugify = (text: string): string => {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-') // Replace spaces with -
-    .replace(/&/g, '-and-') // Replace & with 'and'
-    .replace(/[^\w\-]+/g, '') // Remove all non-word characters
-    .replace(/\-\-+/g, '-'); // Replace multiple - with single -
+  if (text.length <= maxLength) {
+    return text;
+  }
+  
+  return `${text.substring(0, maxLength)}...`;
 };
