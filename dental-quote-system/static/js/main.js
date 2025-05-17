@@ -1,497 +1,447 @@
 /**
- * MyDentalFly - Main JavaScript
- * 
- * This file handles all client-side functionality including:
- * - AJAX treatment selection/removal
- * - Promo code application/removal
- * - Quote updates without page reloads
- * - Form validation
+ * MyDentalFly Quote System Main JavaScript
+ * Handles AJAX form submissions and UI interactions
  */
 
-// Initialize when document is ready
+// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
-    // Setup message container
-    initializeMessageSystem();
+    // Apply Promo Code via AJAX
+    setupPromoCodeForm();
     
-    // Setup treatment selection
-    initializeTreatmentSelection();
+    // Treatment Actions (Add, Remove, Update Quantity)
+    setupTreatmentForms();
     
-    // Setup promo code form
-    initializePromoCodeForms();
-    
-    // Setup treatment quantity changes
-    initializeQuantityControls();
-    
-    // Check for URL parameters (for direct promo code application)
-    checkUrlParameters();
+    // Auto-apply promo code from URL parameter
+    autoApplyPromoFromUrl();
 });
 
 /**
- * Message/Alert System
+ * Setup promo code form submission via AJAX
  */
-function initializeMessageSystem() {
-    // Create message container if it doesn't exist
-    if (!document.getElementById('messages-container')) {
-        const messagesContainer = document.createElement('div');
-        messagesContainer.id = 'messages-container';
-        messagesContainer.style.position = 'fixed';
-        messagesContainer.style.top = '20px';
-        messagesContainer.style.right = '20px';
-        messagesContainer.style.zIndex = '1050';
-        messagesContainer.style.width = '350px';
-        document.body.appendChild(messagesContainer);
-    }
-}
-
-/**
- * Show alert message
- */
-function showMessage(message, type = 'success', autoHide = true) {
-    const messagesContainer = document.getElementById('messages-container');
-    
-    // Create alert element
-    const alertElement = document.createElement('div');
-    alertElement.className = `alert alert-${type} alert-dismissible fade show`;
-    alertElement.role = 'alert';
-    
-    // Add message
-    alertElement.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    `;
-    
-    // Add to container
-    messagesContainer.appendChild(alertElement);
-    
-    // Auto hide after 5 seconds
-    if (autoHide) {
-        setTimeout(() => {
-            alertElement.classList.remove('show');
-            setTimeout(() => {
-                alertElement.remove();
-            }, 500);
-        }, 5000);
-    }
-    
-    return alertElement;
-}
-
-/**
- * Treatment Selection
- */
-function initializeTreatmentSelection() {
-    // Add treatment buttons
-    const addButtons = document.querySelectorAll('.add-treatment-btn');
-    
-    if (addButtons.length) {
-        addButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const treatmentId = this.getAttribute('data-treatment-id');
-                addTreatment(treatmentId);
-            });
-        });
-    }
-    
-    // Remove treatment buttons
-    const removeButtons = document.querySelectorAll('.remove-treatment-btn');
-    
-    if (removeButtons.length) {
-        removeButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-                const treatmentId = this.getAttribute('data-treatment-id');
-                removeTreatment(treatmentId);
-            });
-        });
-    }
-}
-
-/**
- * Add treatment via AJAX
- */
-function addTreatment(treatmentId) {
-    // Show loading state
-    const addButton = document.querySelector(`.add-treatment-btn[data-treatment-id="${treatmentId}"]`);
-    if (addButton) {
-        const originalText = addButton.innerHTML;
-        addButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
-        addButton.disabled = true;
-    }
-    
-    // Make AJAX request
-    $.ajax({
-        url: '/add-treatment',
-        type: 'POST',
-        data: {
-            treatment_id: treatmentId
-        },
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Show success message without causing jittery UI
-                if (response.added) {
-                    showMessage(response.message, 'success');
-                }
-                
-                // Update quote summary
-                updateQuoteSummary(response);
-                
-                // Enable continue button if there are treatments
-                const continueButton = document.querySelector('button[type="submit"]');
-                if (continueButton && response.selected_treatments.length > 0) {
-                    continueButton.disabled = false;
-                }
-            } else {
-                showMessage(response.message, 'danger');
-            }
-        },
-        error: function() {
-            showMessage('An error occurred while adding the treatment. Please try again.', 'danger');
-        },
-        complete: function() {
-            // Restore button
-            if (addButton) {
-                addButton.innerHTML = '<i class="fas fa-plus-circle me-1"></i> Add to Quote';
-                addButton.disabled = false;
-            }
-        }
-    });
-}
-
-/**
- * Remove treatment via AJAX
- */
-function removeTreatment(treatmentId) {
-    // Make AJAX request
-    $.ajax({
-        url: '/remove-treatment',
-        type: 'POST',
-        data: {
-            treatment_id: treatmentId
-        },
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Update quote summary
-                updateQuoteSummary(response);
-                
-                // Enable/disable continue button based on treatments
-                const continueButton = document.querySelector('button[type="submit"]');
-                if (continueButton) {
-                    continueButton.disabled = response.selected_treatments.length === 0;
-                }
-            } else {
-                showMessage(response.message, 'danger');
-            }
-        },
-        error: function() {
-            showMessage('An error occurred while removing the treatment. Please try again.', 'danger');
-        }
-    });
-}
-
-/**
- * Update quantity via AJAX
- */
-function updateQuantity(treatmentId, quantity) {
-    // Make AJAX request
-    $.ajax({
-        url: '/update-quantity',
-        type: 'POST',
-        data: {
-            treatment_id: treatmentId,
-            quantity: quantity
-        },
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Update quote summary silently (no message)
-                updateQuoteSummary(response, false);
-            } else {
-                showMessage(response.message, 'danger');
-            }
-        },
-        error: function() {
-            showMessage('An error occurred while updating the quantity. Please try again.', 'danger');
-        }
-    });
-}
-
-/**
- * Promo Code Forms
- */
-function initializePromoCodeForms() {
-    // Apply promo code form
-    const promoForm = document.querySelector('#promo-form form');
+function setupPromoCodeForm() {
+    const promoForm = document.getElementById('promoCodeForm');
+    const promoResult = document.getElementById('promoResult');
     
     if (promoForm) {
         promoForm.addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const promoCode = document.getElementById('promo-code').value.trim();
+            const formData = new FormData(promoForm);
             
-            if (!promoCode) {
-                showMessage('Please enter a promo code', 'warning');
-                return;
-            }
-            
-            applyPromoCode(promoCode);
-        });
-    }
-    
-    // Remove promo code button
-    const removePromoBtn = document.getElementById('remove-promo-btn');
-    
-    if (removePromoBtn) {
-        removePromoBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            removePromoCode();
-        });
-    }
-}
-
-/**
- * Apply promo code via AJAX
- */
-function applyPromoCode(promoCode) {
-    // Create loading state
-    const promoInput = document.getElementById('promo-code');
-    const applyButton = promoInput.nextElementSibling;
-    const originalButtonText = applyButton.innerHTML;
-    
-    applyButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Applying...';
-    applyButton.disabled = true;
-    
-    // Make AJAX request
-    $.ajax({
-        url: '/apply-promo',
-        type: 'POST',
-        data: {
-            promo_code: promoCode
-        },
-        headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Show success message
-                showMessage(response.message, 'success');
-                
-                // Update totals
-                updateTotals(response.totals);
-                
-                // Show promo display and hide promo form
-                document.getElementById('promo-form').style.display = 'none';
-                
-                const promoDisplay = document.getElementById('promo-display');
-                promoDisplay.style.display = 'block';
-                document.getElementById('promo-code-display').textContent = promoCode;
-                
-                if (response.promo_details && response.promo_details.description) {
-                    document.getElementById('promo-description').textContent = response.promo_details.description;
+            // Send AJAX request
+            fetch('/apply-promo', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-            } else {
-                showMessage(response.message, 'danger');
-            }
-        },
-        error: function() {
-            showMessage('An error occurred while applying the promo code. Please try again.', 'danger');
-        },
-        complete: function() {
-            // Restore button
-            applyButton.innerHTML = originalButtonText;
-            applyButton.disabled = false;
-            promoInput.value = '';
-        }
-    });
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update quote summary
+                    updateQuoteSummary(data.totals);
+                    
+                    // Show success message
+                    if (promoResult) {
+                        promoResult.innerHTML = `
+                            <div class="alert alert-success" role="alert">
+                                ${data.message}
+                            </div>
+                            <div class="applied-promo">
+                                <div><strong>Applied Code:</strong> ${data.promo_details.code}</div>
+                                <div><strong>Discount:</strong> 
+                                    ${data.promo_details.discount_type === 'percentage' 
+                                        ? data.promo_details.discount_value + '%' 
+                                        : '$' + data.promo_details.discount_value}
+                                </div>
+                                <div>${data.promo_details.description}</div>
+                                <button id="removePromoBtn" class="btn btn-sm btn-outline-danger mt-2">Remove</button>
+                            </div>
+                        `;
+                        
+                        // Setup remove promo button
+                        const removeBtn = document.getElementById('removePromoBtn');
+                        if (removeBtn) {
+                            removeBtn.addEventListener('click', removePromoCode);
+                        }
+                        
+                        // Hide the form
+                        promoForm.style.display = 'none';
+                    }
+                } else {
+                    // Show error message
+                    if (promoResult) {
+                        promoResult.innerHTML = `
+                            <div class="alert alert-danger" role="alert">
+                                ${data.message}
+                            </div>
+                        `;
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (promoResult) {
+                    promoResult.innerHTML = `
+                        <div class="alert alert-danger" role="alert">
+                            An error occurred while processing your request. Please try again.
+                        </div>
+                    `;
+                }
+            });
+        });
+    }
 }
 
 /**
  * Remove promo code via AJAX
  */
 function removePromoCode() {
-    // Make AJAX request
-    $.ajax({
-        url: '/remove-promo',
-        type: 'POST',
+    const promoForm = document.getElementById('promoCodeForm');
+    const promoResult = document.getElementById('promoResult');
+    
+    // Send AJAX request
+    fetch('/remove-promo', {
+        method: 'POST',
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
-        },
-        success: function(response) {
-            if (response.success) {
-                // Show success message
-                showMessage(response.message, 'success');
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update quote summary
+            updateQuoteSummary(data.totals);
+            
+            // Clear promo result
+            if (promoResult) {
+                promoResult.innerHTML = `
+                    <div class="alert alert-info" role="alert">
+                        ${data.message}
+                    </div>
+                `;
                 
-                // Update totals
-                updateTotals(response.totals);
-                
-                // Hide promo display and show promo form
-                document.getElementById('promo-display').style.display = 'none';
-                document.getElementById('promo-form').style.display = 'block';
-            } else {
-                showMessage(response.message, 'danger');
+                // Show the form again
+                if (promoForm) {
+                    promoForm.style.display = 'block';
+                    promoForm.reset();
+                }
             }
-        },
-        error: function() {
-            showMessage('An error occurred while removing the promo code. Please try again.', 'danger');
+        } else {
+            if (promoResult) {
+                promoResult.innerHTML = `
+                    <div class="alert alert-danger" role="alert">
+                        ${data.message}
+                    </div>
+                `;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (promoResult) {
+            promoResult.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    An error occurred while processing your request. Please try again.
+                </div>
+            `;
         }
     });
 }
 
 /**
- * Update quote summary with selected treatments
+ * Setup treatment forms for AJAX submission
  */
-function updateQuoteSummary(response, showMessage = true) {
-    if (!response || !response.selected_treatments) return;
-    
-    const selectedTreatmentsList = document.getElementById('selected-treatments-list');
-    
-    if (!selectedTreatmentsList) return;
-    
-    // Clear current list
-    selectedTreatmentsList.innerHTML = '';
-    
-    if (response.selected_treatments.length === 0) {
-        // No treatments selected
-        selectedTreatmentsList.innerHTML = `
-            <div class="alert alert-info">
-                No treatments selected yet. Browse treatments above to add them to your quote.
-            </div>
-        `;
-    } else {
-        // Add each treatment to the list
-        response.selected_treatments.forEach(treatment => {
-            const treatmentElement = document.createElement('div');
-            treatmentElement.className = 'card mb-3 selected-treatment';
-            treatmentElement.id = `treatment-${treatment.id}`;
+function setupTreatmentForms() {
+    // Add treatment forms
+    const addForms = document.querySelectorAll('.add-treatment-form');
+    addForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            treatmentElement.innerHTML = `
-                <div class="card-body p-3">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6 class="mb-1">${treatment.name}</h6>
-                            <p class="mb-0 text-muted small">
-                                <span class="unit-price" data-price="${treatment.price}">$${treatment.price} each</span>
-                            </p>
-                        </div>
-                        <div class="text-end">
-                            <div class="input-group quantity-control mb-2">
-                                <input type="number" class="form-control form-control-sm treatment-quantity" min="1" value="${treatment.quantity}" data-treatment-id="${treatment.id}">
-                            </div>
-                            <p class="mb-0 fw-bold total-price">$${treatment.price * treatment.quantity}</p>
-                        </div>
-                    </div>
-                    <button class="btn btn-sm btn-outline-danger mt-2 remove-treatment-btn" data-treatment-id="${treatment.id}">
-                        <i class="fas fa-trash-alt"></i> Remove
-                    </button>
-                </div>
-            `;
+            const formData = new FormData(form);
             
-            selectedTreatmentsList.appendChild(treatmentElement);
-        });
-        
-        // Reinitialize event listeners for new elements
-        initializeTreatmentSelection();
-        initializeQuantityControls();
-    }
-    
-    // Update totals
-    updateTotals(response.totals);
-}
-
-/**
- * Update totals in the summary
- */
-function updateTotals(totals) {
-    if (!totals) return;
-    
-    // Update subtotal
-    const subtotalElement = document.getElementById('quote-subtotal');
-    if (subtotalElement) {
-        subtotalElement.textContent = `$${totals.subtotal}`;
-    }
-    
-    // Update discount
-    const discountElement = document.getElementById('quote-discount');
-    const discountRow = document.getElementById('discount-row');
-    
-    if (discountElement && discountRow) {
-        if (totals.discount > 0) {
-            discountElement.textContent = `-$${totals.discount}`;
-            discountRow.style.display = 'table-row';
-        } else {
-            discountRow.style.display = 'none';
-        }
-    }
-    
-    // Update total
-    const totalElement = document.getElementById('quote-total');
-    if (totalElement) {
-        totalElement.textContent = `$${totals.total}`;
-    }
-}
-
-/**
- * Initialize quantity control inputs
- */
-function initializeQuantityControls() {
-    const quantityInputs = document.querySelectorAll('.treatment-quantity');
-    
-    if (quantityInputs.length) {
-        quantityInputs.forEach(input => {
-            // Remove existing event listener (to prevent duplicates)
-            const newInput = input.cloneNode(true);
-            input.parentNode.replaceChild(newInput, input);
-            
-            // Add event listener
-            newInput.addEventListener('change', function() {
-                const treatmentId = this.getAttribute('data-treatment-id');
-                const quantity = parseInt(this.value);
-                
-                // Validate quantity
-                if (isNaN(quantity) || quantity < 1) {
-                    this.value = 1;
-                    updateQuantity(treatmentId, 1);
-                    return;
+            // Send AJAX request
+            fetch('/add-treatment', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
                 }
-                
-                // Update quantity
-                updateQuantity(treatmentId, quantity);
-                
-                // Update treatment price display
-                const priceElement = this.closest('.card-body').querySelector('.total-price');
-                const unitPriceElement = this.closest('.card-body').querySelector('.unit-price');
-                
-                if (priceElement && unitPriceElement) {
-                    const unitPrice = parseFloat(unitPriceElement.getAttribute('data-price'));
-                    priceElement.textContent = `$${(unitPrice * quantity).toFixed(2)}`;
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update selected treatments list
+                    updateSelectedTreatments(data.selected_treatments);
+                    
+                    // Update quote summary
+                    updateQuoteSummary(data.totals);
+                    
+                    // Show success notification
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.message, 'danger');
                 }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred. Please try again.', 'danger');
             });
         });
+    });
+    
+    // Remove treatment buttons
+    setupRemoveTreatmentButtons();
+    
+    // Quantity controls
+    setupQuantityControls();
+}
+
+/**
+ * Setup event handlers for remove treatment buttons
+ */
+function setupRemoveTreatmentButtons() {
+    const removeBtns = document.querySelectorAll('.remove-treatment-btn');
+    
+    removeBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const treatmentId = this.getAttribute('data-id');
+            const formData = new FormData();
+            formData.append('treatment_id', treatmentId);
+            
+            // Send AJAX request
+            fetch('/remove-treatment', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update selected treatments list
+                    updateSelectedTreatments(data.selected_treatments);
+                    
+                    // Update quote summary
+                    updateQuoteSummary(data.totals);
+                    
+                    // Show success notification
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('An error occurred. Please try again.', 'danger');
+            });
+        });
+    });
+}
+
+/**
+ * Setup quantity control buttons and inputs
+ */
+function setupQuantityControls() {
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+    
+    quantityInputs.forEach(input => {
+        // Get associated controls
+        const decreaseBtn = input.previousElementSibling;
+        const increaseBtn = input.nextElementSibling;
+        const treatmentId = input.getAttribute('data-id');
+        
+        // Decrease button
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener('click', function() {
+                let quantity = parseInt(input.value);
+                if (quantity > 1) {
+                    quantity--;
+                    input.value = quantity;
+                    updateTreatmentQuantity(treatmentId, quantity);
+                }
+            });
+        }
+        
+        // Increase button
+        if (increaseBtn) {
+            increaseBtn.addEventListener('click', function() {
+                let quantity = parseInt(input.value);
+                quantity++;
+                input.value = quantity;
+                updateTreatmentQuantity(treatmentId, quantity);
+            });
+        }
+        
+        // Input change
+        input.addEventListener('change', function() {
+            let quantity = parseInt(input.value);
+            if (isNaN(quantity) || quantity < 1) {
+                quantity = 1;
+                input.value = quantity;
+            }
+            updateTreatmentQuantity(treatmentId, quantity);
+        });
+    });
+}
+
+/**
+ * Update treatment quantity via AJAX
+ */
+function updateTreatmentQuantity(treatmentId, quantity) {
+    const formData = new FormData();
+    formData.append('treatment_id', treatmentId);
+    formData.append('quantity', quantity);
+    
+    // Send AJAX request
+    fetch('/update-quantity', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update selected treatments list
+            updateSelectedTreatments(data.selected_treatments);
+            
+            // Update quote summary
+            updateQuoteSummary(data.totals);
+        } else {
+            showNotification(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('An error occurred. Please try again.', 'danger');
+    });
+}
+
+/**
+ * Update the quote summary with new totals
+ */
+function updateQuoteSummary(totals) {
+    const subtotalElem = document.getElementById('quote-subtotal');
+    const discountElem = document.getElementById('quote-discount');
+    const totalElem = document.getElementById('quote-total');
+    
+    if (subtotalElem) {
+        subtotalElem.textContent = '$' + totals.subtotal.toFixed(2);
+    }
+    
+    if (discountElem) {
+        discountElem.textContent = '$' + totals.discount.toFixed(2);
+    }
+    
+    if (totalElem) {
+        totalElem.textContent = '$' + totals.total.toFixed(2);
     }
 }
 
 /**
- * Check URL parameters for promo codes
+ * Update the selected treatments list
  */
-function checkUrlParameters() {
+function updateSelectedTreatments(treatments) {
+    const treatmentsList = document.getElementById('selected-treatments');
+    
+    if (treatmentsList) {
+        if (treatments.length === 0) {
+            treatmentsList.innerHTML = '<p class="text-muted">No treatments selected yet.</p>';
+            return;
+        }
+        
+        let html = '';
+        
+        treatments.forEach(treatment => {
+            const quantity = treatment.quantity || 1;
+            const itemTotal = treatment.price * quantity;
+            
+            html += `
+                <div class="treatment-item">
+                    <button class="btn btn-sm btn-outline-danger remove-btn remove-treatment-btn" data-id="${treatment.id}">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h5>${treatment.name}</h5>
+                            <p class="mb-2 text-muted">${treatment.description}</p>
+                            <div class="quantity-control">
+                                <button type="button" class="decrease-btn">-</button>
+                                <input type="number" class="quantity-input" value="${quantity}" min="1" data-id="${treatment.id}">
+                                <button type="button" class="increase-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="price-tag mb-2">$${treatment.price}</div>
+                            <div class="text-muted">Total: $${itemTotal.toFixed(2)}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        
+        treatmentsList.innerHTML = html;
+        
+        // Re-attach event handlers
+        setupRemoveTreatmentButtons();
+        setupQuantityControls();
+    }
+}
+
+/**
+ * Show a notification message
+ */
+function showNotification(message, type) {
+    const notificationsArea = document.getElementById('notifications');
+    
+    if (notificationsArea) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} alert-dismissible fade show`;
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        notificationsArea.appendChild(notification);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notificationsArea.removeChild(notification);
+            }, 150);
+        }, 5000);
+    }
+}
+
+/**
+ * Auto-apply promo code from URL parameter
+ */
+function autoApplyPromoFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const promoCode = urlParams.get('promo');
     
     if (promoCode) {
-        // Auto-apply promo code if found in URL
-        const promoInput = document.getElementById('promo-code');
+        const promoInput = document.getElementById('promoCodeInput');
+        const promoForm = document.getElementById('promoCodeForm');
         
-        if (promoInput) {
+        if (promoInput && promoForm) {
             promoInput.value = promoCode;
-            applyPromoCode(promoCode);
+            
+            // Submit the form
+            const event = new Event('submit', {
+                'bubbles': true,
+                'cancelable': true
+            });
+            
+            promoForm.dispatchEvent(event);
         }
     }
 }
