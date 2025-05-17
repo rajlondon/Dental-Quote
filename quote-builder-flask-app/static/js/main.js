@@ -206,15 +206,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Add explicit cache-busting headers
-        fetch('/api/quote/apply-promo', {
+        fetch('/api/quote/apply-promo?t=' + new Date().getTime(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
+                'Expires': '0'
             },
             body: JSON.stringify({ promo_code: promoCode }),
             cache: 'no-store', // Prevent caching
+            credentials: 'same-origin' // Include cookies
         })
         .then(response => response.json())
         .then(data => {
@@ -433,8 +435,16 @@ document.addEventListener('DOMContentLoaded', function() {
         // Make sure promo form is ready for new code
         const promoForm = document.querySelector('.promo-form');
         if (promoForm) {
-            promoForm.reset(); // Reset the form if it's an actual form
+            // Don't try to reset - it's a div, not a form element
             promoForm.style.display = 'block';
+            
+            // Instead, manually clear any input fields inside
+            const inputs = promoForm.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.value = '';
+                input.disabled = false;
+                input.readOnly = false;
+            });
         }
         
         // Ensure promo code entry section is visible
@@ -450,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // PHASE 2: Synchronize with server
-        fetch('/api/quote/remove-promo', {
+        fetch('/api/quote/remove-promo?t=' + new Date().getTime(), {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
