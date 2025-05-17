@@ -1,9 +1,19 @@
 import { useState, useCallback } from 'react';
-import axios from 'axios';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import quoteIntegrationService from '@/services/quote-integration-service';
 import { useToast } from '@/hooks/use-toast';
-import { Treatment } from '@/components/quotes/TreatmentList';
-import { QuoteDetails } from '@/components/quotes/QuoteIntegrationWidget';
 
+// Define the Treatment interface
+export interface Treatment {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  quantity: number;
+  category?: string;
+}
+
+// Define the QuoteData interface
 export interface QuoteData {
   id: string;
   createdAt: string;
@@ -20,320 +30,265 @@ export interface QuoteData {
   clinicName?: string;
 }
 
-export function useQuoteSystem(portalType: 'patient' | 'admin' | 'clinic') {
+/**
+ * Hook for interacting with the quote management system
+ * @param portalType The portal type (patient, admin, or clinic)
+ */
+export const useQuoteSystem = (portalType: 'patient' | 'admin' | 'clinic') => {
   const [quotes, setQuotes] = useState<QuoteData[]>([]);
   const [currentQuote, setCurrentQuote] = useState<QuoteData | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Base API endpoint based on portal type
-  const getBaseEndpoint = useCallback(() => {
-    switch (portalType) {
-      case 'patient':
-        return '/api/integration/patient/quotes';
-      case 'admin':
-        return '/api/integration/admin/quotes';
-      case 'clinic':
-        return '/api/integration/clinic/quotes';
-      default:
-        return '/api/integration/patient/quotes';
+  // Fetch all quotes
+  const { isLoading: loading, refetch: refetchQuotes } = useQuery({
+    queryKey: [`/api/integration/${portalType}/quotes`],
+    queryFn: async () => {
+      try {
+        const fetchedQuotes = await quoteIntegrationService.getQuotes(portalType);
+        setQuotes(fetchedQuotes);
+        setError(null);
+        return fetchedQuotes;
+      } catch (err: any) {
+        setError(err.message);
+        return [];
+      }
+    },
+  });
+
+  // Load a specific quote's details
+  const loadQuoteDetails = useCallback(async (quoteId: string) => {
+    try {
+      const quote = await quoteIntegrationService.getQuoteById(portalType, quoteId);
+      setCurrentQuote(quote);
+      setError(null);
+      return quote;
+    } catch (err: any) {
+      setError(err.message);
+      throw err;
     }
   }, [portalType]);
 
-  // Load all quotes for the current portal
-  const loadQuotes = useCallback(async (): Promise<QuoteData[]> => {
-    setLoading(true);
-    setError(null);
-
+  // Load all quotes (can be called manually)
+  const loadQuotes = useCallback(async () => {
     try {
-      const response = await axios.get(getBaseEndpoint());
-      
-      if (response.data.success) {
-        const fetchedQuotes = response.data.quotes || [];
-        setQuotes(fetchedQuotes);
-        return fetchedQuotes;
-      } else {
-        throw new Error(response.data.message || 'Failed to load quotes');
-      }
+      const fetchedQuotes = await quoteIntegrationService.getQuotes(portalType);
+      setQuotes(fetchedQuotes);
+      setError(null);
+      return fetchedQuotes;
     } catch (err: any) {
-      const errorMessage = 'Failed to load quotes: ' + (err.message || 'Unknown error');
-      setError(errorMessage);
-      console.error('Error loading quotes:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load quotes',
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [getBaseEndpoint, toast]);
-
-  // Load a specific quote by ID
-  const loadQuoteDetails = useCallback(async (quoteId: string): Promise<QuoteData> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await axios.get(`${getBaseEndpoint()}/${quoteId}`);
-      
-      if (response.data.success) {
-        const quoteData = response.data.quote;
-        setCurrentQuote(quoteData);
-        return quoteData;
-      } else {
-        throw new Error(response.data.message || 'Failed to load quote details');
-      }
-    } catch (err: any) {
-      const errorMessage = 'Failed to load quote details: ' + (err.message || 'Unknown error');
-      setError(errorMessage);
-      console.error('Error loading quote details:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load quote details',
-        variant: 'destructive',
-      });
+      setError(err.message);
       throw err;
-    } finally {
-      setLoading(false);
     }
-  }, [getBaseEndpoint, toast]);
+  }, [portalType]);
 
-  // Apply a promo code to a quote
-  const applyPromoCode = useCallback(async (quoteId: string, promoCode: string): Promise<QuoteData> => {
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/apply-promo`, { 
-        promoCode 
+  // Apply promo code mutation
+  const applyPromoMutation = useMutation({
+    mutationFn: async ({ quoteId, promoCode }: { quoteId: string; promoCode: string }) => {
+      return await quoteIntegrationService.applyPromoCode(portalType, quoteId, promoCode);
+    },
+    onSuccess: (updatedQuote) => {
+      setCurrentQuote(updatedQuote);
+      // Update the quote in the list as well
+      setQuotes((prevQuotes) => 
+        prevQuotes.map((q) => (q.id === updatedQuote.id ? updatedQuote : q))
+      );
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to apply promo code');
-      }
-    } catch (err: any) {
-      console.error('Error applying promo code:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to apply promo code');
-    }
-  }, [getBaseEndpoint]);
+    },
+  });
 
-  // Remove a promo code from a quote
-  const removePromoCode = useCallback(async (quoteId: string): Promise<QuoteData> => {
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/remove-promo`);
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to remove promo code');
-      }
-    } catch (err: any) {
-      console.error('Error removing promo code:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to remove promo code');
-    }
-  }, [getBaseEndpoint]);
+  // Remove promo code mutation
+  const removePromoMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      return await quoteIntegrationService.removePromoCode(portalType, quoteId);
+    },
+    onSuccess: (updatedQuote) => {
+      setCurrentQuote(updatedQuote);
+      // Update the quote in the list as well
+      setQuotes((prevQuotes) => 
+        prevQuotes.map((q) => (q.id === updatedQuote.id ? updatedQuote : q))
+      );
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
-  // Update treatment quantity
-  const updateTreatmentQuantity = useCallback(async (
-    quoteId: string, 
-    treatmentId: string, 
-    quantity: number
-  ): Promise<QuoteData> => {
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/update-treatment`, {
+  // Update treatment quantity mutation
+  const updateTreatmentMutation = useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      treatmentId, 
+      quantity 
+    }: { 
+      quoteId: string; 
+      treatmentId: string; 
+      quantity: number 
+    }) => {
+      return await quoteIntegrationService.updateTreatmentQuantity(
+        portalType,
+        quoteId,
         treatmentId,
         quantity
+      );
+    },
+    onSuccess: (updatedQuote) => {
+      setCurrentQuote(updatedQuote);
+      // Update the quote in the list as well
+      setQuotes((prevQuotes) => 
+        prevQuotes.map((q) => (q.id === updatedQuote.id ? updatedQuote : q))
+      );
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to update treatment quantity');
-      }
-    } catch (err: any) {
-      console.error('Error updating treatment quantity:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to update treatment quantity');
-    }
-  }, [getBaseEndpoint]);
+    },
+  });
 
-  // Remove treatment from quote
-  const removeTreatment = useCallback(async (
-    quoteId: string, 
-    treatmentId: string
-  ): Promise<QuoteData> => {
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/remove-treatment`, {
+  // Remove treatment mutation
+  const removeTreatmentMutation = useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      treatmentId 
+    }: { 
+      quoteId: string; 
+      treatmentId: string 
+    }) => {
+      return await quoteIntegrationService.removeTreatment(
+        portalType,
+        quoteId,
         treatmentId
+      );
+    },
+    onSuccess: (updatedQuote) => {
+      setCurrentQuote(updatedQuote);
+      // Update the quote in the list as well
+      setQuotes((prevQuotes) => 
+        prevQuotes.map((q) => (q.id === updatedQuote.id ? updatedQuote : q))
+      );
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to remove treatment');
-      }
-    } catch (err: any) {
-      console.error('Error removing treatment:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to remove treatment');
-    }
-  }, [getBaseEndpoint]);
+    },
+  });
 
-  // Download quote PDF
-  const downloadQuotePdf = useCallback(async (quoteId: string): Promise<void> => {
-    try {
-      const response = await axios.get(`${getBaseEndpoint()}/${quoteId}/pdf`, {
-        responseType: 'blob'
+  // Request appointment mutation
+  const requestAppointmentMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      return await quoteIntegrationService.requestAppointment(portalType, quoteId);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Appointment request submitted successfully',
+        variant: 'default',
       });
-      
-      // Create blob link to download
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `quote-${quoteId}.pdf`);
-      
-      // Append to html
-      document.body.appendChild(link);
-      
-      // Start download
-      link.click();
-      
-      // Clean up and remove the link
-      link.parentNode?.removeChild(link);
-    } catch (err: any) {
-      console.error('Error downloading PDF:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to download PDF');
-    }
-  }, [getBaseEndpoint]);
-
-  // Send quote by email
-  const sendQuoteByEmail = useCallback(async (quoteId: string): Promise<void> => {
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/send-email`);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to send email');
-      }
-    } catch (err: any) {
-      console.error('Error sending email:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to send email');
-    }
-  }, [getBaseEndpoint]);
-
-  // Request appointment (patient portal only)
-  const requestAppointment = useCallback(async (quoteId: string): Promise<void> => {
-    if (portalType !== 'patient') {
-      throw new Error('Appointment requests are only available in the patient portal');
-    }
-    
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/request-appointment`);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to request appointment');
-      }
-    } catch (err: any) {
-      console.error('Error requesting appointment:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to request appointment');
-    }
-  }, [getBaseEndpoint, portalType]);
-
-  // Assign quote to clinic (admin portal only)
-  const assignQuoteToClinic = useCallback(async (
-    quoteId: string, 
-    clinicId: string
-  ): Promise<QuoteData> => {
-    if (portalType !== 'admin') {
-      throw new Error('Assigning quotes to clinics is only available in the admin portal');
-    }
-    
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/assign-clinic`, {
-        clinicId
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
       });
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to assign quote to clinic');
-      }
-    } catch (err: any) {
-      console.error('Error assigning quote to clinic:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to assign quote to clinic');
-    }
-  }, [getBaseEndpoint, portalType]);
+    },
+  });
 
-  // Unassign quote from clinic (admin portal only)
-  const unassignQuoteFromClinic = useCallback(async (quoteId: string): Promise<QuoteData> => {
-    if (portalType !== 'admin') {
-      throw new Error('Unassigning quotes from clinics is only available in the admin portal');
-    }
-    
-    try {
-      const response = await axios.post(`${getBaseEndpoint()}/${quoteId}/unassign-clinic`);
-      
-      if (response.data.success) {
-        const updatedQuote = response.data.quote;
-        setCurrentQuote(updatedQuote);
-        
-        // Update in quotes list if it exists there
-        setQuotes(prevQuotes => 
-          prevQuotes.map(q => q.id === quoteId ? updatedQuote : q)
-        );
-        
-        return updatedQuote;
-      } else {
-        throw new Error(response.data.message || 'Failed to unassign quote from clinic');
-      }
-    } catch (err: any) {
-      console.error('Error unassigning quote from clinic:', err);
-      throw new Error(err.response?.data?.message || err.message || 'Failed to unassign quote from clinic');
-    }
-  }, [getBaseEndpoint, portalType]);
+  // Send quote email mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      return await quoteIntegrationService.sendQuoteEmail(portalType, quoteId);
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Success',
+        description: 'Quote sent via email successfully',
+        variant: 'default',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
-  // Functions specific to QuoteIntegrationWidget
-  const getQuote = loadQuoteDetails;
-  const updateQuote = updateTreatmentQuantity; // Alias for updateTreatmentQuantity to match expected interface
+  // Assign clinic to quote mutation (admin only)
+  const assignClinicMutation = useMutation({
+    mutationFn: async ({ quoteId, clinicId }: { quoteId: string; clinicId: string }) => {
+      return await quoteIntegrationService.assignClinicToQuote(quoteId, clinicId);
+    },
+    onSuccess: (updatedQuote) => {
+      setCurrentQuote(updatedQuote);
+      // Update the quote in the list as well
+      setQuotes((prevQuotes) => 
+        prevQuotes.map((q) => (q.id === updatedQuote.id ? updatedQuote : q))
+      );
+      toast({
+        title: 'Success',
+        description: 'Clinic assigned to quote successfully',
+        variant: 'default',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Wrapper functions for the mutations
+  const applyPromoCode = async (quoteId: string, promoCode: string) => {
+    return applyPromoMutation.mutateAsync({ quoteId, promoCode });
+  };
+
+  const removePromoCode = async (quoteId: string) => {
+    return removePromoMutation.mutateAsync(quoteId);
+  };
+
+  const updateTreatmentQuantity = async (quoteId: string, treatmentId: string, quantity: number) => {
+    return updateTreatmentMutation.mutateAsync({ quoteId, treatmentId, quantity });
+  };
+
+  const removeTreatment = async (quoteId: string, treatmentId: string) => {
+    return removeTreatmentMutation.mutateAsync({ quoteId, treatmentId });
+  };
+
+  const requestAppointment = async (quoteId: string) => {
+    return requestAppointmentMutation.mutateAsync(quoteId);
+  };
+
+  const sendQuoteEmail = async (quoteId: string) => {
+    return sendEmailMutation.mutateAsync(quoteId);
+  };
+
+  const assignClinicToQuote = async (quoteId: string, clinicId: string) => {
+    return assignClinicMutation.mutateAsync({ quoteId, clinicId });
+  };
+
+  const downloadQuotePdf = async (quoteId: string) => {
+    return quoteIntegrationService.downloadQuotePdf(portalType, quoteId);
+  };
 
   return {
     quotes,
@@ -347,14 +302,18 @@ export function useQuoteSystem(portalType: 'patient' | 'admin' | 'clinic') {
     updateTreatmentQuantity,
     removeTreatment,
     downloadQuotePdf,
-    sendQuoteByEmail,
     requestAppointment,
-    assignQuoteToClinic,
-    unassignQuoteFromClinic,
-    // Functions for QuoteIntegrationWidget
-    getQuote,
-    updateQuote
+    sendQuoteEmail,
+    assignClinicToQuote,
+    // For direct access to mutation state if needed
+    applyPromoMutation,
+    removePromoMutation,
+    updateTreatmentMutation,
+    removeTreatmentMutation,
+    requestAppointmentMutation,
+    sendEmailMutation,
+    assignClinicMutation,
+    // For refreshing the quotes list
+    refetchQuotes
   };
-}
-
-export default useQuoteSystem;
+};

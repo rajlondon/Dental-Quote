@@ -1,237 +1,173 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Clinic {
   id: string;
   name: string;
-  location: string;
+  address: string;
   city: string;
   country: string;
-  specialty?: string;
-  address?: string;
-  rating?: number;
-  logoUrl?: string;
-  bannerImageUrl?: string;
-  contactEmail?: string;
+  specialties: string[];
+  rating: number;
+  reviewCount: number;
+  imageUrl?: string;
   contactPhone?: string;
-  isActive: boolean;
+  contactEmail?: string;
+  websiteUrl?: string;
+  description?: string;
+  isVerified?: boolean;
 }
 
-export function useClinics() {
+/**
+ * Hook for managing clinic data in the admin and patient portals
+ */
+export const useClinics = () => {
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isLoadingClinic, setIsLoadingClinic] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Load all clinics
-  const loadClinics = useCallback(async (): Promise<Clinic[]> => {
-    setLoading(true);
-    setError(null);
-
-    try {
-      const response = await axios.get('/api/integration/admin/clinics');
-      
-      if (response.data.success) {
-        const fetchedClinics = response.data.clinics || [];
-        setClinics(fetchedClinics);
-        return fetchedClinics;
-      } else {
-        throw new Error(response.data.message || 'Failed to load clinics');
+  // Fetch all clinics
+  const { isLoading, refetch: refetchClinics } = useQuery({
+    queryKey: ['/api/integration/admin/clinics'],
+    queryFn: async () => {
+      try {
+        const response = await axios.get('/api/integration/admin/clinics');
+        
+        if (response.data.success) {
+          setClinics(response.data.clinics);
+          setError(null);
+          return response.data.clinics;
+        } else {
+          setError(response.data.message || 'Failed to load clinics');
+          return [];
+        }
+      } catch (err: any) {
+        setError(err.message || 'Error loading clinics');
+        return [];
       }
-    } catch (err: any) {
-      const errorMessage = 'Failed to load clinics: ' + (err.message || 'Unknown error');
-      setError(errorMessage);
-      console.error('Error loading clinics:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load clinics',
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+    },
+  });
 
-  // Load a specific clinic by ID
-  const loadClinicDetails = useCallback(async (clinicId: string): Promise<Clinic> => {
-    setLoading(true);
-    setError(null);
-
+  // Fetch clinic details
+  const fetchClinicDetails = async (clinicId: string) => {
+    setIsLoadingClinic(true);
     try {
       const response = await axios.get(`/api/integration/admin/clinics/${clinicId}`);
       
       if (response.data.success) {
-        const clinicData = response.data.clinic;
-        setSelectedClinic(clinicData);
-        return clinicData;
+        setSelectedClinic(response.data.clinic);
+        setError(null);
+        return response.data.clinic;
       } else {
-        throw new Error(response.data.message || 'Failed to load clinic details');
+        setError(response.data.message || 'Failed to load clinic details');
+        return null;
       }
     } catch (err: any) {
-      const errorMessage = 'Failed to load clinic details: ' + (err.message || 'Unknown error');
-      setError(errorMessage);
-      console.error('Error loading clinic details:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load clinic details',
-        variant: 'destructive',
-      });
-      throw err;
+      setError(err.message || 'Error loading clinic details');
+      return null;
     } finally {
-      setLoading(false);
+      setIsLoadingClinic(false);
     }
-  }, [toast]);
+  };
 
-  // Get active clinics (for dropdowns, etc.)
-  const getActiveClinics = useCallback(() => {
-    return clinics.filter(c => c.isActive);
-  }, [clinics]);
-
-  // Create new clinic
-  const createClinic = useCallback(async (clinicData: Omit<Clinic, 'id'>): Promise<Clinic> => {
-    try {
+  // Create clinic mutation
+  const createClinicMutation = useMutation({
+    mutationFn: async (clinicData: Omit<Clinic, 'id'>) => {
       const response = await axios.post('/api/integration/admin/clinics', clinicData);
       
       if (response.data.success) {
-        const newClinic = response.data.clinic;
-        setClinics(prevClinics => [...prevClinics, newClinic]);
-        toast({
-          title: 'Success',
-          description: 'Clinic created successfully',
-        });
-        return newClinic;
+        return response.data.clinic;
       } else {
         throw new Error(response.data.message || 'Failed to create clinic');
       }
-    } catch (err: any) {
-      console.error('Error creating clinic:', err);
+    },
+    onSuccess: (newClinic) => {
+      setClinics((prev) => [...prev, newClinic]);
+      toast({
+        title: 'Success',
+        description: 'Clinic created successfully',
+        variant: 'default',
+      });
+    },
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: 'Failed to create clinic: ' + (err.message || 'Unknown error'),
+        description: error.message,
         variant: 'destructive',
       });
-      throw err;
-    }
-  }, [toast]);
+    },
+  });
 
-  // Update existing clinic
-  const updateClinic = useCallback(async (clinicId: string, updateData: Partial<Clinic>): Promise<Clinic> => {
-    try {
-      const response = await axios.put(`/api/integration/admin/clinics/${clinicId}`, updateData);
+  // Update clinic mutation
+  const updateClinicMutation = useMutation({
+    mutationFn: async ({ clinicId, clinicData }: { clinicId: string; clinicData: Partial<Clinic> }) => {
+      const response = await axios.patch(`/api/integration/admin/clinics/${clinicId}`, clinicData);
       
       if (response.data.success) {
-        const updatedClinic = response.data.clinic;
-        setClinics(prevClinics => 
-          prevClinics.map(c => c.id === clinicId ? updatedClinic : c)
-        );
-        
-        if (selectedClinic?.id === clinicId) {
-          setSelectedClinic(updatedClinic);
-        }
-        
-        toast({
-          title: 'Success',
-          description: 'Clinic updated successfully',
-        });
-        
-        return updatedClinic;
+        return response.data.clinic;
       } else {
         throw new Error(response.data.message || 'Failed to update clinic');
       }
-    } catch (err: any) {
-      console.error('Error updating clinic:', err);
+    },
+    onSuccess: (updatedClinic) => {
+      setClinics((prev) => 
+        prev.map((clinic) => (clinic.id === updatedClinic.id ? updatedClinic : clinic))
+      );
+      setSelectedClinic(updatedClinic);
+      toast({
+        title: 'Success',
+        description: 'Clinic updated successfully',
+        variant: 'default',
+      });
+    },
+    onError: (error: Error) => {
       toast({
         title: 'Error',
-        description: 'Failed to update clinic: ' + (err.message || 'Unknown error'),
+        description: error.message,
         variant: 'destructive',
       });
-      throw err;
-    }
-  }, [toast, selectedClinic]);
+    },
+  });
 
-  // Toggle clinic active status
-  const toggleClinicStatus = useCallback(async (clinicId: string, isActive: boolean): Promise<Clinic> => {
-    try {
-      const response = await axios.patch(`/api/integration/admin/clinics/${clinicId}/status`, { 
-        isActive 
-      });
-      
-      if (response.data.success) {
-        const updatedClinic = response.data.clinic;
-        setClinics(prevClinics => 
-          prevClinics.map(c => c.id === clinicId ? updatedClinic : c)
-        );
-        
-        if (selectedClinic?.id === clinicId) {
-          setSelectedClinic(updatedClinic);
-        }
-        
-        toast({
-          title: 'Success',
-          description: `Clinic ${isActive ? 'activated' : 'deactivated'} successfully`,
-        });
-        
-        return updatedClinic;
-      } else {
-        throw new Error(response.data.message || 'Failed to update clinic status');
-      }
-    } catch (err: any) {
-      console.error('Error updating clinic status:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to update clinic status: ' + (err.message || 'Unknown error'),
-        variant: 'destructive',
-      });
-      throw err;
+  // Get clinic by ID (from local state if available, otherwise fetch from API)
+  const getClinicById = async (clinicId: string): Promise<Clinic | null> => {
+    // Check if we already have the clinic in our state
+    const existingClinic = clinics.find((c) => c.id === clinicId);
+    if (existingClinic) {
+      setSelectedClinic(existingClinic);
+      return existingClinic;
     }
-  }, [toast, selectedClinic]);
+    
+    // Otherwise fetch from API
+    return fetchClinicDetails(clinicId);
+  };
 
-  // Delete clinic
-  const deleteClinic = useCallback(async (clinicId: string): Promise<boolean> => {
-    try {
-      const response = await axios.delete(`/api/integration/admin/clinics/${clinicId}`);
-      
-      if (response.data.success) {
-        setClinics(prevClinics => prevClinics.filter(c => c.id !== clinicId));
-        
-        if (selectedClinic?.id === clinicId) {
-          setSelectedClinic(null);
-        }
-        
-        toast({
-          title: 'Success',
-          description: 'Clinic deleted successfully',
-        });
-        
-        return true;
-      } else {
-        throw new Error(response.data.message || 'Failed to delete clinic');
-      }
-    } catch (err: any) {
-      console.error('Error deleting clinic:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete clinic: ' + (err.message || 'Unknown error'),
-        variant: 'destructive',
-      });
-      throw err;
-    }
-  }, [toast, selectedClinic]);
+  // Create a new clinic
+  const createClinic = async (clinicData: Omit<Clinic, 'id'>) => {
+    return createClinicMutation.mutateAsync(clinicData);
+  };
+
+  // Update an existing clinic
+  const updateClinic = async (clinicId: string, clinicData: Partial<Clinic>) => {
+    return updateClinicMutation.mutateAsync({ clinicId, clinicData });
+  };
 
   return {
     clinics,
     selectedClinic,
-    loading,
+    isLoading,
+    isLoadingClinic,
     error,
-    loadClinics,
-    loadClinicDetails,
-    getActiveClinics,
+    getClinicById,
     createClinic,
     updateClinic,
-    toggleClinicStatus,
-    deleteClinic,
+    refetchClinics,
+    // For direct access to mutation state if needed
+    createClinicMutation,
+    updateClinicMutation,
   };
-}
+};
