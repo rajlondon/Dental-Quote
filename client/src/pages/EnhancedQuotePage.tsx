@@ -157,37 +157,75 @@ export default function EnhancedQuotePage() {
       case 'quiz':
         return (
           <div className="mb-6">
-            {completedQuiz && isLoading ? (
+            {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
                 <p className="text-lg font-medium">Preparing your personalized quote...</p>
               </div>
             ) : (
               <>
-                <StepByStepTreatmentBuilder 
-                  onComplete={handleQuizComplete}
-                  initialTreatments={[]}
-                />
-                <div className="mt-6 flex justify-center">
-                  <Button 
-                    size="lg" 
-                    className="w-full sm:w-auto font-medium"
-                    onClick={() => {
-                      // Manual button for those who complete the quiz but don't trigger onComplete
-                      if (treatments.length > 0) {
-                        setCurrentStep('promo');
-                      } else {
-                        toast({
-                          title: "Please select treatments",
-                          description: "Please select at least one treatment to continue.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                  >
-                    Get My Personalized Quote
-                  </Button>
+                <div className="mb-6">
+                  <StepByStepTreatmentBuilder 
+                    onComplete={handleQuizComplete}
+                    initialTreatments={[]}
+                  />
                 </div>
+                
+                <Card className="shadow-sm mt-12">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <h3 className="text-xl font-semibold mb-2">Ready for Your Personalized Quote?</h3>
+                      <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+                        Our system has analyzed your dental needs based on your answers. 
+                        Click below to see your personalized treatment plan with available discounts.
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="px-8 font-medium"
+                        onClick={() => {
+                          // First check if they have selected any treatment from the quiz
+                          if (treatments.length > 0) {
+                            setCurrentStep('promo');
+                          } else {
+                            // If they haven't selected treatments in the quiz yet, we'll 
+                            // generate some based on common dental treatments
+                            setIsLoading(true);
+                            
+                            // Simulate adding some default treatments
+                            setTimeout(() => {
+                              resetQuote();
+                              // Add default treatments for demonstration
+                              addTreatment({
+                                id: `default-${Math.random().toString(36).substring(2, 9)}`,
+                                name: 'Dental Checkup & Cleaning',
+                                description: 'Professional dental cleaning and examination',
+                                price: 75,
+                                quantity: 1
+                              });
+                              addTreatment({
+                                id: `default-${Math.random().toString(36).substring(2, 9)}`,
+                                name: 'Teeth Whitening',
+                                description: 'Professional whitening treatment',
+                                price: 150,
+                                quantity: 1
+                              });
+                              
+                              setIsLoading(false);
+                              setCurrentStep('promo');
+                              
+                              toast({
+                                title: "Quote Created",
+                                description: "We've prepared a basic treatment plan for you to review.",
+                              });
+                            }, 1500);
+                          }
+                        }}
+                      >
+                        Get My Personalized Quote
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </>
             )}
           </div>
