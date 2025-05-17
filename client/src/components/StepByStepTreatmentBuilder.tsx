@@ -179,7 +179,7 @@ const Question: React.FC<QuestionProps> = ({
           disabled={!canContinue}
           className="px-6"
         >
-          Continue <ArrowRight className="ml-2 h-4 w-4" />
+          {currentStep === 5 ? "Get My Personalized Quote" : "Continue"} <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>
