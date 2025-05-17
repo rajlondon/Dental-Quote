@@ -19,32 +19,32 @@ export function Layout({ children }: LayoutProps) {
           <div className="flex justify-between items-center">
             {/* Logo */}
             <Link href="/">
-              <a className="flex items-center">
+              <div className="flex items-center cursor-pointer">
                 <span className="text-xl font-bold text-primary">MyDentalFly</span>
-              </a>
+              </div>
             </Link>
             
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
               <Link href="/">
-                <a className="text-sm font-medium hover:text-primary transition">Home</a>
+                <span className="text-sm font-medium hover:text-primary transition cursor-pointer">Home</span>
               </Link>
               <Link href="/treatments">
-                <a className="text-sm font-medium hover:text-primary transition">Treatments</a>
+                <span className="text-sm font-medium hover:text-primary transition cursor-pointer">Treatments</span>
               </Link>
               <Link href="/pricing">
-                <a className="text-sm font-medium hover:text-primary transition">Pricing</a>
+                <span className="text-sm font-medium hover:text-primary transition cursor-pointer">Pricing</span>
               </Link>
               <Link href="/blog">
-                <a className="text-sm font-medium hover:text-primary transition">Blog</a>
+                <span className="text-sm font-medium hover:text-primary transition cursor-pointer">Blog</span>
               </Link>
               <Link href="/contact">
-                <a className="text-sm font-medium hover:text-primary transition">Contact</a>
+                <span className="text-sm font-medium hover:text-primary transition cursor-pointer">Contact</span>
               </Link>
               <Link href="/comprehensive-quote">
-                <a className="text-sm font-medium text-primary hover:text-primary/80 transition">
+                <span className="text-sm font-medium text-primary hover:text-primary/80 transition cursor-pointer">
                   Get Quote
-                </a>
+                </span>
               </Link>
             </nav>
             
