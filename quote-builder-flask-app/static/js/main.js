@@ -87,8 +87,26 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reload the page to reflect changes
-                window.location.reload();
+                // Update the UI without refreshing the page
+                updateTreatmentsList(data.treatments);
+                updateTotals(data.totals);
+                
+                // Show a success indicator on the treatment card
+                const card = document.querySelector(`.treatment-card[data-id="${treatmentId}"]`);
+                if (card) {
+                    card.classList.add('selected');
+                    setTimeout(() => {
+                        card.classList.remove('selected');
+                    }, 1000);
+                }
+                
+                // Enable the continue button if there are treatments
+                if (data.treatments.length > 0) {
+                    const nextBtn = document.querySelector('#treatments-step .next-btn');
+                    if (nextBtn) {
+                        nextBtn.style.display = 'block';
+                    }
+                }
             }
         })
         .catch(error => console.error('Error adding treatment:', error));
@@ -114,8 +132,17 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reload the page to reflect changes
-                window.location.reload();
+                // Update UI without page refresh
+                updateTreatmentsList(data.treatments);
+                updateTotals(data.totals);
+                
+                // Hide the continue button if no treatments
+                if (data.treatments.length === 0) {
+                    const nextBtn = document.querySelector('#treatments-step .next-btn');
+                    if (nextBtn) {
+                        nextBtn.style.display = 'none';
+                    }
+                }
             }
         })
         .catch(error => console.error('Error removing treatment:', error));
@@ -162,9 +189,15 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             if (data.success) {
                 showPromoMessage(`Promo code ${promoCode} applied successfully!`, true);
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
+                
+                // Update UI without page refresh
+                updatePromoCodeDisplay(promoCode, data.discount);
+                updateTotals(data.totals);
+                
+                // Clear input field
+                if (promoInput) {
+                    promoInput.value = '';
+                }
             } else {
                 showPromoMessage(data.error || 'Failed to apply promo code', false);
             }
@@ -193,10 +226,91 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                // Update UI without page refresh
+                const promoDisplayEl = document.querySelector('.promo-code-display');
+                if (promoDisplayEl) {
+                    promoDisplayEl.innerHTML = '';
+                    promoDisplayEl.style.display = 'none';
+                }
+                
+                const removePromoBtn = document.querySelector('.remove-promo-btn');
+                if (removePromoBtn) {
+                    removePromoBtn.style.display = 'none';
+                }
+                
+                // Update totals
+                updateTotals(data.totals);
             }
         })
         .catch(error => console.error('Error removing promo code:', error));
+    }
+    
+    // Helper functions for updating the UI without page refreshes
+    function updateTreatmentsList(treatments) {
+        const selectedTreatmentsEl = document.querySelector('.selected-treatments');
+        if (!selectedTreatmentsEl) return;
+        
+        // Clear existing treatments
+        selectedTreatmentsEl.innerHTML = '';
+        
+        if (treatments && treatments.length > 0) {
+            treatments.forEach(treatment => {
+                const treatmentItem = document.createElement('div');
+                treatmentItem.className = 'treatment-item';
+                treatmentItem.innerHTML = `
+                    <span>${treatment.name}</span>
+                    <span>$${treatment.price.toFixed(2)}</span>
+                    <button class="remove-btn" data-id="${treatment.instance_id}">Remove</button>
+                `;
+                selectedTreatmentsEl.appendChild(treatmentItem);
+                
+                // Add event listener to the new remove button
+                const removeBtn = treatmentItem.querySelector('.remove-btn');
+                removeBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const instanceId = removeBtn.getAttribute('data-id');
+                    removeTreatment(instanceId);
+                });
+            });
+        } else {
+            selectedTreatmentsEl.innerHTML = '<p>No treatments selected yet.</p>';
+        }
+    }
+    
+    function updateTotals(totals) {
+        if (!totals) return;
+        
+        const subtotalEl = document.getElementById('subtotal');
+        const discountEl = document.getElementById('discount');
+        const totalEl = document.getElementById('total');
+        
+        if (subtotalEl) subtotalEl.textContent = `$${totals.subtotal.toFixed(2)}`;
+        if (discountEl) discountEl.textContent = `$${totals.discount.toFixed(2)}`;
+        if (totalEl) totalEl.textContent = `$${totals.total.toFixed(2)}`;
+        
+        // Update review step totals as well if they exist
+        const reviewSubtotalEl = document.getElementById('review-subtotal');
+        const reviewDiscountEl = document.getElementById('review-discount');
+        const reviewTotalEl = document.getElementById('review-total');
+        
+        if (reviewSubtotalEl) reviewSubtotalEl.textContent = `$${totals.subtotal.toFixed(2)}`;
+        if (reviewDiscountEl) reviewDiscountEl.textContent = `$${totals.discount.toFixed(2)}`;
+        if (reviewTotalEl) reviewTotalEl.textContent = `$${totals.total.toFixed(2)}`;
+    }
+    
+    function updatePromoCodeDisplay(promoCode, discount) {
+        const promoDisplayEl = document.querySelector('.promo-code-display');
+        if (!promoDisplayEl) return;
+        
+        promoDisplayEl.innerHTML = `
+            <p>Applied Promo Code: <strong>${promoCode}</strong> (${discount}% off)</p>
+        `;
+        promoDisplayEl.style.display = 'block';
+        
+        const removePromoBtn = document.querySelector('.remove-promo-btn');
+        if (removePromoBtn) {
+            removePromoBtn.style.display = 'inline-block';
+        }
     }
     
     function showPromoMessage(message, isSuccess) {
