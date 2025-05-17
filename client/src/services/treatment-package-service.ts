@@ -1,4 +1,4 @@
-import { CurrencyCode } from "@/utils/format-utils";
+import { CurrencyCode } from '@/utils/format-utils';
 
 export interface Treatment {
   id: string;
@@ -36,314 +36,122 @@ export interface TreatmentPackage {
   terms?: string;
 }
 
-// Mock data for packages
-const mockPackages: TreatmentPackage[] = [
-  {
-    id: 'pkg-001',
-    name: 'Premium All-on-6 Implant Package',
-    description: 'Complete smile restoration with 6 dental implants and porcelain crowns',
-    treatments: [
-      {
-        id: 'treat-001',
-        name: 'Dental Implant',
-        description: 'Titanium dental implant placement',
-        price: 850,
-        category: 'implants',
-        quantity: 6,
-        clinicReferenceCode: 'IMP-TI-PRO'
-      },
-      {
-        id: 'treat-002',
-        name: 'Porcelain Crown',
-        description: 'Premium porcelain crown',
-        price: 450,
-        category: 'crowns',
-        quantity: 6,
-        clinicReferenceCode: 'CRN-POR-PRE'
-      },
-      {
-        id: 'treat-003',
-        name: 'CT Scan',
-        description: '3D CT scan for precise implant placement',
-        price: 200,
-        category: 'diagnostic',
-        quantity: 1,
-        clinicReferenceCode: 'DIAG-CT-3D'
-      },
-      {
-        id: 'treat-004',
-        name: 'Temporary Teeth',
-        description: 'Immediate load temporary prosthesis',
-        price: 800,
-        category: 'prosthetics',
-        quantity: 1,
-        clinicReferenceCode: 'PROT-TEMP-IL'
-      }
-    ],
-    additionalServices: [
-      {
-        id: 'svc-001',
-        name: '3-Night Luxury Hotel Stay',
-        description: 'Stay at a 5-star hotel during your treatment',
-        price: 600,
-        included: true,
-        type: 'accommodation'
-      },
-      {
-        id: 'svc-002',
-        name: 'Airport Transfer',
-        description: 'Round-trip airport transfers',
-        price: 120,
-        included: true,
-        type: 'transport'
-      },
-      {
-        id: 'svc-003',
-        name: 'City Tour',
-        description: 'Guided city tour with lunch',
-        price: 80,
-        included: false,
-        type: 'tourism'
-      }
-    ],
-    promoCode: 'IMPLANTCROWN30',
-    regularPrice: 12000,
-    discountedPrice: 8400,
-    currency: 'USD',
-    clinicId: 'clinic-001',
-    featured: true,
-    details: 'This premium package includes everything you need for a complete smile transformation with the All-on-6 technique. The procedure involves placing 6 dental implants that support a full arch of prosthetic teeth.',
-    terms: 'Valid for bookings until August 30, 2025. Includes 3-year warranty on implants and 2-year warranty on crowns. Additional procedures may incur extra costs.'
-  },
-  {
-    id: 'pkg-002',
-    name: 'VIP Smile Makeover Experience',
-    description: 'Transform your smile with premium veneers and professional whitening',
-    treatments: [
-      {
-        id: 'treat-005',
-        name: 'Porcelain Veneer',
-        description: 'Premium porcelain veneer',
-        price: 550,
-        category: 'cosmetic',
-        quantity: 8,
-        clinicReferenceCode: 'VEN-POR-PRE'
-      },
-      {
-        id: 'treat-006',
-        name: 'Professional Teeth Whitening',
-        description: 'In-office laser teeth whitening',
-        price: 400,
-        category: 'cosmetic',
-        quantity: 1,
-        clinicReferenceCode: 'WHT-LSR-PRO'
-      },
-      {
-        id: 'treat-007',
-        name: 'Digital Smile Design',
-        description: 'Customized digital smile design',
-        price: 350,
-        category: 'diagnostic',
-        quantity: 1,
-        clinicReferenceCode: 'DSD-PRO'
-      }
-    ],
-    additionalServices: [
-      {
-        id: 'svc-004',
-        name: '5-Night Luxury Hotel Stay',
-        description: 'Stay at a 5-star hotel during your treatment',
-        price: 800,
-        included: true,
-        type: 'accommodation'
-      },
-      {
-        id: 'svc-005',
-        name: 'VIP Airport Transfer',
-        description: 'Private VIP airport transfers',
-        price: 180,
-        included: true,
-        type: 'transport'
-      },
-      {
-        id: 'svc-006',
-        name: 'Spa Package',
-        description: 'Luxury spa day with facial and massage',
-        price: 220,
-        included: true,
-        type: 'wellness'
-      }
-    ],
-    promoCode: 'LUXHOTEL20',
-    regularPrice: 7550,
-    discountedPrice: 6040,
-    currency: 'USD',
-    clinicId: 'clinic-002',
-    featured: true,
-    details: 'Our VIP Smile Makeover transforms your smile with premium porcelain veneers and professional teeth whitening. The package includes a personalized smile design consultation and digital previews of your results.',
-    terms: 'Valid for bookings until July 15, 2025. Includes 2-year warranty on veneers. Follow-up whitening treatments available at discounted rates.'
-  },
-  {
-    id: 'pkg-003',
-    name: 'Dental Tourism Complete Package',
-    description: 'All-inclusive package with flights, hotel, and comprehensive dental treatment',
-    treatments: [
-      {
-        id: 'treat-008',
-        name: 'Dental Implant',
-        description: 'Titanium dental implant placement',
-        price: 850,
-        category: 'implants',
-        quantity: 2,
-        clinicReferenceCode: 'IMP-TI-STD'
-      },
-      {
-        id: 'treat-009',
-        name: 'Porcelain Crown',
-        description: 'Premium porcelain crown',
-        price: 450,
-        category: 'crowns',
-        quantity: 4,
-        clinicReferenceCode: 'CRN-POR-STD'
-      },
-      {
-        id: 'treat-010',
-        name: 'Root Canal Treatment',
-        description: 'Standard root canal treatment',
-        price: 350,
-        category: 'endodontics',
-        quantity: 2,
-        clinicReferenceCode: 'ENDO-RC-STD'
-      },
-      {
-        id: 'treat-011',
-        name: 'Professional Cleaning',
-        description: 'Deep cleaning and scaling',
-        price: 100,
-        category: 'hygiene',
-        quantity: 1,
-        clinicReferenceCode: 'HYG-CLN-DEP'
-      }
-    ],
-    additionalServices: [
-      {
-        id: 'svc-007',
-        name: 'Round-trip Flights',
-        description: 'Economy class round-trip flights',
-        price: 850,
-        included: true,
-        type: 'transport'
-      },
-      {
-        id: 'svc-008',
-        name: '7-Night Hotel Stay',
-        description: 'Stay at a 4-star hotel during your treatment',
-        price: 950,
-        included: true,
-        type: 'accommodation'
-      },
-      {
-        id: 'svc-009',
-        name: 'Airport Transfers',
-        description: 'Round-trip airport transfers',
-        price: 120,
-        included: true,
-        type: 'transport'
-      },
-      {
-        id: 'svc-010',
-        name: 'City Excursions Package',
-        description: 'Three guided city excursions with lunch',
-        price: 250,
-        included: true,
-        type: 'tourism'
-      }
-    ],
-    promoCode: 'LUXTRAVEL',
-    regularPrice: 8200,
-    discountedPrice: 6560,
-    currency: 'USD',
-    clinicId: 'clinic-003',
-    featured: true,
-    details: 'This comprehensive package includes everything from flights and accommodation to your complete dental treatment. It's the ultimate worry-free dental tourism experience with all logistics handled for you.',
-    terms: 'Valid for bookings until September 30, 2025. Flights from major European cities only. 2-year warranty on all dental work. Additional treatments can be added at special rates.'
-  }
-];
+class TreatmentPackageService {
+  // Mock packages for development
+  private mockPackages: TreatmentPackage[] = [
+    {
+      id: 'pkg-001',
+      name: 'Premium Implant Package',
+      description: 'Complete implant solution with premium porcelain crown',
+      treatments: [
+        { id: 'treat-001', name: 'Dental Implant', description: 'Titanium implant placement', price: 850, category: 'implants', quantity: 1 },
+        { id: 'treat-002', name: 'Porcelain Crown', description: 'Premium porcelain crown', price: 450, category: 'crowns', quantity: 1 },
+        { id: 'treat-003', name: 'Initial Consultation', description: 'Comprehensive examination', price: 100, category: 'consultation', quantity: 1 }
+      ],
+      additionalServices: [
+        { id: 'serv-001', name: 'Airport Transfer', description: 'Round-trip airport transfer', price: 50, included: true, type: 'transport' },
+        { id: 'serv-002', name: 'Hotel Booking Assistance', description: 'Help with accommodation booking', price: 0, included: true, type: 'accommodation' }
+      ],
+      promoCode: 'IMPLANTCROWN30',
+      regularPrice: 1500,
+      discountedPrice: 1050,
+      currency: 'USD',
+      featured: true,
+      clinicId: 'clinic-001'
+    },
+    {
+      id: 'pkg-002',
+      name: 'Smile Makeover Package',
+      description: 'Complete smile transformation with veneers and teeth whitening',
+      treatments: [
+        { id: 'treat-005', name: 'Porcelain Veneer', description: 'Premium porcelain veneer', price: 550, category: 'cosmetic', quantity: 4 },
+        { id: 'treat-004', name: 'Professional Teeth Whitening', description: 'In-office laser teeth whitening', price: 400, category: 'cosmetic', quantity: 1 }
+      ],
+      additionalServices: [
+        { id: 'serv-001', name: 'Airport Transfer', description: 'Round-trip airport transfer', price: 50, included: true, type: 'transport' },
+        { id: 'serv-003', name: 'Luxury Hotel Stay', description: '3 nights at 5-star hotel', price: 300, included: true, type: 'accommodation' }
+      ],
+      promoCode: 'LUXHOTEL20',
+      regularPrice: 2900,
+      discountedPrice: 2320,
+      currency: 'USD',
+      featured: true,
+      clinicId: 'clinic-002'
+    },
+    {
+      id: 'pkg-003',
+      name: 'Travel & Treatment Bundle',
+      description: 'All-inclusive dental vacation with sightseeing and premium care',
+      treatments: [
+        { id: 'treat-001', name: 'Dental Implant', description: 'Titanium implant placement', price: 850, category: 'implants', quantity: 2 },
+        { id: 'treat-002', name: 'Porcelain Crown', description: 'Premium porcelain crown', price: 450, category: 'crowns', quantity: 2 },
+        { id: 'treat-004', name: 'Professional Teeth Whitening', description: 'In-office laser teeth whitening', price: 400, category: 'cosmetic', quantity: 1 }
+      ],
+      additionalServices: [
+        { id: 'serv-004', name: 'VIP Airport Service', description: 'Premium airport transfer and fast-track', price: 100, included: true, type: 'transport' },
+        { id: 'serv-005', name: 'Deluxe Hotel Package', description: '5 nights at luxury hotel with spa access', price: 500, included: true, type: 'accommodation' },
+        { id: 'serv-006', name: 'Istanbul City Tour', description: 'Guided tour of Istanbul highlights', price: 150, included: true, type: 'tourism' }
+      ],
+      promoCode: 'LUXTRAVEL',
+      regularPrice: 4200,
+      discountedPrice: 3360,
+      currency: 'USD',
+      featured: true,
+      clinicId: 'clinic-003'
+    }
+  ];
 
-/**
- * Service for handling treatment packages and associated treatments
- */
-const TreatmentPackageService = {
   /**
    * Get all available treatment packages
    */
   async getAllPackages(): Promise<TreatmentPackage[]> {
-    // In a real application, this would be an API call
-    return new Promise((resolve) => {
-      // Simulate API delay
-      setTimeout(() => {
-        resolve(mockPackages);
-      }, 500);
-    });
-  },
+    // In a real app, we would fetch this from an API
+    return Promise.resolve(this.mockPackages);
+  }
 
   /**
    * Get a specific package by ID
    */
   async getPackageById(id: string): Promise<TreatmentPackage | null> {
-    // In a real application, this would be an API call
-    return new Promise((resolve) => {
-      // Simulate API delay
-      setTimeout(() => {
-        const pkg = mockPackages.find(p => p.id === id);
-        resolve(pkg || null);
-      }, 300);
-    });
-  },
+    // In a real app, we would fetch this from an API
+    const foundPackage = this.mockPackages.find(pkg => pkg.id === id);
+    return Promise.resolve(foundPackage || null);
+  }
 
   /**
    * Get a package by its promo code
    */
   async getPackageByPromoCode(code: string): Promise<TreatmentPackage | null> {
-    // In a real application, this would be an API call
-    return new Promise((resolve) => {
-      // Simulate API delay
-      setTimeout(() => {
-        const pkg = mockPackages.find(p => p.promoCode.toUpperCase() === code.toUpperCase());
-        resolve(pkg || null);
-      }, 300);
-    });
-  },
+    // In a real app, we would fetch this from an API
+    const foundPackage = this.mockPackages.find(pkg => 
+      pkg.promoCode.toLowerCase() === code.toLowerCase()
+    );
+    return Promise.resolve(foundPackage || null);
+  }
 
   /**
    * Calculate the total regular price of a package (without discount)
    */
   calculatePackageRegularPrice(pkg: TreatmentPackage): number {
-    let total = 0;
+    const treatmentsTotal = pkg.treatments.reduce((sum, treatment) => 
+      sum + (treatment.price * (treatment.quantity || 1)), 0);
     
-    // Add up treatment costs
-    pkg.treatments.forEach(treatment => {
-      total += treatment.price * (treatment.quantity || 1);
-    });
+    const additionalServicesTotal = pkg.additionalServices
+      .filter(service => service.included)
+      .reduce((sum, service) => sum + service.price, 0);
     
-    // Add up included additional services
-    pkg.additionalServices.forEach(service => {
-      if (service.included) {
-        total += service.price;
-      }
-    });
-    
-    return total;
-  },
+    return treatmentsTotal + additionalServicesTotal;
+  }
 
   /**
    * Calculate the discounted price based on a package
    */
   calculateDiscountedPrice(pkg: TreatmentPackage): number {
-    const regularPrice = this.calculatePackageRegularPrice(pkg);
-    return pkg.discountedPrice || regularPrice;
-  },
-  
+    // In a real app, this might involve complex discount rules
+    // For now, we'll just use the package's discounted price
+    return pkg.discountedPrice;
+  }
+
   /**
    * Get all treatments from a package as individual treatments
    * with quantities expanded (i.e., 2 implants becomes 2 separate treatment objects)
@@ -352,19 +160,18 @@ const TreatmentPackageService = {
     const expandedTreatments: Treatment[] = [];
     
     pkg.treatments.forEach(treatment => {
-      // Add the treatment the specified number of times based on quantity
       const quantity = treatment.quantity || 1;
       
       for (let i = 0; i < quantity; i++) {
         expandedTreatments.push({
           ...treatment,
-          quantity: 1  // Reset quantity to 1 as we're expanding them
+          quantity: 1 // Set quantity to 1 since we're expanding
         });
       }
     });
     
     return expandedTreatments;
   }
-};
+}
 
-export default TreatmentPackageService;
+export default new TreatmentPackageService();

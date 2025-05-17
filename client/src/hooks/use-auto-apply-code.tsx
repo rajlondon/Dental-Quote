@@ -1,111 +1,54 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useToast } from './use-toast';
-import SpecialOfferService from '@/services/special-offer-service';
-import TreatmentPackageService from '@/services/treatment-package-service';
 
 /**
- * Hook to automatically extract and apply promo codes from URL query parameters
- * This enables direct links from homepage special offers to the quote builder
+ * Hook to extract promo code from URL parameters and auto-apply it
+ * @param applyCallback Function to call when a promo code is found in the URL
  */
-export const useAutoApplyCode = (onApplyPromoCode: (code: string) => Promise<void>) => {
+export const useAutoApplyCode = (applyCallback: (code: string) => void) => {
   const [location] = useLocation();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [promoFromUrl, setPromoFromUrl] = useState<string | null>(null);
-  const [offerFromUrl, setOfferFromUrl] = useState<string | null>(null);
-  const { toast } = useToast();
-
-  // Extract query parameters from URL on mount
+  
   useEffect(() => {
-    const extractUrlParams = () => {
-      try {
-        const url = new URL(window.location.href);
-        const promoParam = url.searchParams.get('promo');
-        const offerParam = url.searchParams.get('offer');
-        
-        setPromoFromUrl(promoParam);
-        setOfferFromUrl(offerParam);
-      } catch (error) {
-        console.error('Error parsing URL parameters:', error);
-      }
-    };
-
-    extractUrlParams();
-  }, [location]);
-
-  // Apply promo code from URL if present
-  useEffect(() => {
-    const applyCodeFromUrl = async () => {
-      if (isProcessing) return;
+    // Function to extract promo code from query parameters
+    const getPromoCodeFromUrl = () => {
+      if (typeof window === 'undefined') return null;
       
-      try {
-        setIsProcessing(true);
-        
-        // Case 1: Direct promo code in URL
-        if (promoFromUrl) {
-          await onApplyPromoCode(promoFromUrl);
-          
-          toast({
-            title: 'Promo Code Applied',
-            description: `Promo code ${promoFromUrl} has been automatically applied.`,
-            variant: 'default',
-          });
-          
-          // Clear URL param without page refresh
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('promo');
-          window.history.replaceState({}, document.title, newUrl.toString());
-          setPromoFromUrl(null);
-        }
-        
-        // Case 2: Special offer ID in URL 
-        else if (offerFromUrl) {
-          const offer = await SpecialOfferService.getOfferById(offerFromUrl);
-          
-          if (offer && offer.promoCode) {
-            await onApplyPromoCode(offer.promoCode);
-            
-            toast({
-              title: 'Special Offer Applied',
-              description: `${offer.title} has been automatically applied.`,
-              variant: 'default',
-            });
-          } else {
-            toast({
-              title: 'Special Offer Not Found',
-              description: 'The requested special offer could not be found.',
-              variant: 'destructive',
-            });
-          }
-          
-          // Clear URL param without page refresh
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('offer');
-          window.history.replaceState({}, document.title, newUrl.toString());
-          setOfferFromUrl(null);
-        }
-      } catch (error) {
-        console.error('Error auto-applying promo code:', error);
-        toast({
-          title: 'Error',
-          description: 'There was a problem applying the promotion code.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsProcessing(false);
-      }
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // Check for 'promo' parameter first (used in special offers)
+      const promoParam = urlParams.get('promo');
+      if (promoParam) return promoParam;
+      
+      // Alternative parameter names
+      const codeParam = urlParams.get('code');
+      if (codeParam) return codeParam;
+      
+      const couponParam = urlParams.get('coupon');
+      if (couponParam) return couponParam;
+      
+      return null;
     };
-
-    if ((promoFromUrl || offerFromUrl) && !isProcessing) {
-      applyCodeFromUrl();
+    
+    // If we have a promo code in the URL, apply it
+    const promoCode = getPromoCodeFromUrl();
+    if (promoCode) {
+      console.log('Auto-applying promo code from URL:', promoCode);
+      applyCallback(promoCode);
+      
+      // Optionally, clear the promo parameter from the URL to prevent re-application
+      // on page refresh, but keep the rest of the query parameters
+      /* 
+      const urlParams = new URLSearchParams(window.location.search);
+      urlParams.delete('promo');
+      urlParams.delete('code');
+      urlParams.delete('coupon');
+      
+      const newUrl = window.location.pathname + 
+        (urlParams.toString() ? `?${urlParams.toString()}` : '') +
+        window.location.hash;
+      
+      window.history.replaceState({}, '', newUrl);
+      */
     }
-  }, [promoFromUrl, offerFromUrl, onApplyPromoCode, toast, isProcessing]);
-
-  return {
-    promoFromUrl,
-    offerFromUrl,
-    isProcessing
-  };
+  }, [location, applyCallback]);
 };
-
-export default useAutoApplyCode;
