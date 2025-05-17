@@ -1,324 +1,300 @@
 """
 Treatment Service Module
-Handles treatments and related functionality
+Provides data and functions for dental treatments
 """
-import json
-import os
 import logging
-from datetime import datetime
-import uuid
 
 logger = logging.getLogger(__name__)
 
-# Treatments data file path
-TREATMENTS_DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'treatments.json')
+# Define treatment categories
+TREATMENT_CATEGORIES = [
+    "Dental Implants",
+    "Cosmetic Dentistry",
+    "Orthodontics",
+    "Restorative Dentistry",
+    "General Dentistry",
+    "Oral Surgery"
+]
 
-def load_treatments():
-    """Load treatments from JSON file or generate sample data if file doesn't exist"""
-    # Create directory if it doesn't exist
-    os.makedirs(os.path.dirname(TREATMENTS_DATA_FILE), exist_ok=True)
-    
-    # If file doesn't exist, generate sample data
-    if not os.path.exists(TREATMENTS_DATA_FILE):
-        logger.info("Treatments data file not found. Generating sample data.")
-        treatments = generate_sample_treatments()
-        save_treatments(treatments)
-        return treatments
-    
-    # Load from file
-    try:
-        with open(TREATMENTS_DATA_FILE, 'r') as file:
-            treatments = json.load(file)
-        logger.info(f"Loaded {len(treatments)} treatments from file")
-        return treatments
-    except Exception as e:
-        logger.error(f"Error loading treatments from file: {e}")
-        treatments = generate_sample_treatments()
-        save_treatments(treatments)
-        return treatments
+# Define treatments data
+TREATMENTS = {
+    "dental_implant_standard": {
+        "id": "dental_implant_standard",
+        "name": "Standard Dental Implant",
+        "description": "Titanium dental implant with crown for a single missing tooth.",
+        "price": 750,
+        "category": "Dental Implants",
+        "image": "/static/images/treatments/dental_implant_standard.jpg",
+        "popular": True,
+        "procedure_time": "2-3 hours",
+        "recovery_time": "3-6 months",
+        "warranty": "5 years"
+    },
+    "dental_implant_premium": {
+        "id": "dental_implant_premium",
+        "name": "Premium Dental Implant",
+        "description": "Premium titanium implant with porcelain crown and lifetime warranty.",
+        "price": 950,
+        "category": "Dental Implants",
+        "image": "/static/images/treatments/dental_implant_premium.jpg",
+        "popular": False,
+        "procedure_time": "2-3 hours",
+        "recovery_time": "3-6 months",
+        "warranty": "Lifetime"
+    },
+    "all_on_4_implants": {
+        "id": "all_on_4_implants",
+        "name": "All-on-4 Dental Implants",
+        "description": "Complete arch restoration with only 4 implants, fixed in one day.",
+        "price": 4500,
+        "category": "Dental Implants",
+        "image": "/static/images/treatments/all_on_4_implants.jpg",
+        "popular": True,
+        "procedure_time": "4-6 hours",
+        "recovery_time": "3-6 months",
+        "warranty": "10 years"
+    },
+    "all_on_6_implants": {
+        "id": "all_on_6_implants",
+        "name": "All-on-6 Dental Implants",
+        "description": "Complete arch restoration with 6 implants for maximum stability.",
+        "price": 5500,
+        "category": "Dental Implants",
+        "image": "/static/images/treatments/all_on_6_implants.jpg",
+        "popular": False,
+        "procedure_time": "5-7 hours",
+        "recovery_time": "3-6 months",
+        "warranty": "10 years"
+    },
+    "porcelain_veneers": {
+        "id": "porcelain_veneers",
+        "name": "Porcelain Veneers",
+        "description": "Custom-made thin shells bonded to the front of teeth for a perfect smile.",
+        "price": 350,
+        "category": "Cosmetic Dentistry",
+        "image": "/static/images/treatments/porcelain_veneers.jpg",
+        "popular": True,
+        "procedure_time": "1-2 hours per tooth",
+        "recovery_time": "1-2 weeks",
+        "warranty": "5 years"
+    },
+    "composite_veneers": {
+        "id": "composite_veneers",
+        "name": "Composite Veneers",
+        "description": "Tooth-colored resin material bonded to teeth for an improved appearance.",
+        "price": 200,
+        "category": "Cosmetic Dentistry",
+        "image": "/static/images/treatments/composite_veneers.jpg",
+        "popular": False,
+        "procedure_time": "1 hour per tooth",
+        "recovery_time": "Immediate",
+        "warranty": "2 years"
+    },
+    "teeth_whitening": {
+        "id": "teeth_whitening",
+        "name": "Professional Teeth Whitening",
+        "description": "In-office laser teeth whitening for a brighter, whiter smile.",
+        "price": 250,
+        "category": "Cosmetic Dentistry",
+        "image": "/static/images/treatments/teeth_whitening.jpg",
+        "popular": True,
+        "procedure_time": "1-2 hours",
+        "recovery_time": "Immediate",
+        "warranty": "1 year"
+    },
+    "hollywood_smile": {
+        "id": "hollywood_smile",
+        "name": "Hollywood Smile",
+        "description": "Complete smile makeover with premium veneers and whitening.",
+        "price": 2800,
+        "category": "Cosmetic Dentistry",
+        "image": "/static/images/treatments/hollywood_smile.jpg",
+        "popular": True,
+        "procedure_time": "2-3 days",
+        "recovery_time": "1-2 weeks",
+        "warranty": "10 years"
+    },
+    "invisible_aligners": {
+        "id": "invisible_aligners",
+        "name": "Invisible Aligners",
+        "description": "Clear, removable aligners custom-made to gradually straighten teeth.",
+        "price": 1800,
+        "category": "Orthodontics",
+        "image": "/static/images/treatments/invisible_aligners.jpg",
+        "popular": True,
+        "procedure_time": "Multiple appointments",
+        "recovery_time": "12-18 months total",
+        "warranty": "Varies"
+    },
+    "ceramic_braces": {
+        "id": "ceramic_braces",
+        "name": "Ceramic Braces",
+        "description": "Tooth-colored brackets that blend with teeth for a more discreet look.",
+        "price": 1500,
+        "category": "Orthodontics",
+        "image": "/static/images/treatments/ceramic_braces.jpg",
+        "popular": False,
+        "procedure_time": "1-2 hours initial",
+        "recovery_time": "18-24 months total",
+        "warranty": "Varies"
+    },
+    "metal_braces": {
+        "id": "metal_braces",
+        "name": "Metal Braces",
+        "description": "Traditional metal brackets and wires to straighten teeth effectively.",
+        "price": 1200,
+        "category": "Orthodontics",
+        "image": "/static/images/treatments/metal_braces.jpg",
+        "popular": False,
+        "procedure_time": "1-2 hours initial",
+        "recovery_time": "18-24 months total",
+        "warranty": "Varies"
+    },
+    "lingual_braces": {
+        "id": "lingual_braces",
+        "name": "Lingual Braces",
+        "description": "Braces placed behind the teeth, completely hidden from view.",
+        "price": 2200,
+        "category": "Orthodontics",
+        "image": "/static/images/treatments/lingual_braces.jpg",
+        "popular": False,
+        "procedure_time": "1-2 hours initial",
+        "recovery_time": "18-24 months total",
+        "warranty": "Varies"
+    },
+    "dental_crowns": {
+        "id": "dental_crowns",
+        "name": "Dental Crowns",
+        "description": "Tooth-shaped cap placed over a damaged tooth to restore function and appearance.",
+        "price": 300,
+        "category": "Restorative Dentistry",
+        "image": "/static/images/treatments/dental_crowns.jpg",
+        "popular": True,
+        "procedure_time": "1-2 hours",
+        "recovery_time": "1-2 weeks",
+        "warranty": "5 years"
+    },
+    "dental_bridges": {
+        "id": "dental_bridges",
+        "name": "Dental Bridges",
+        "description": "Fixed replacement for one or more missing teeth, anchored to adjacent teeth.",
+        "price": 550,
+        "category": "Restorative Dentistry",
+        "image": "/static/images/treatments/dental_bridges.jpg",
+        "popular": False,
+        "procedure_time": "2-3 hours",
+        "recovery_time": "2-4 weeks",
+        "warranty": "5 years"
+    },
+    "root_canal_treatment": {
+        "id": "root_canal_treatment",
+        "name": "Root Canal Treatment",
+        "description": "Procedure to remove infected pulp and save a severely infected tooth.",
+        "price": 250,
+        "category": "Restorative Dentistry",
+        "image": "/static/images/treatments/root_canal_treatment.jpg",
+        "popular": True,
+        "procedure_time": "1-2 hours",
+        "recovery_time": "1 week",
+        "warranty": "2 years"
+    },
+    "dental_fillings": {
+        "id": "dental_fillings",
+        "name": "Dental Fillings",
+        "description": "Material to fill cavities and restore damaged tooth structure.",
+        "price": 80,
+        "category": "Restorative Dentistry",
+        "image": "/static/images/treatments/dental_fillings.jpg",
+        "popular": True,
+        "procedure_time": "30-60 minutes",
+        "recovery_time": "Immediate",
+        "warranty": "2 years"
+    },
+    "dental_cleaning": {
+        "id": "dental_cleaning",
+        "name": "Professional Dental Cleaning",
+        "description": "Deep cleaning to remove plaque, tartar, and stains from teeth.",
+        "price": 70,
+        "category": "General Dentistry",
+        "image": "/static/images/treatments/dental_cleaning.jpg",
+        "popular": True,
+        "procedure_time": "30-60 minutes",
+        "recovery_time": "Immediate",
+        "warranty": "N/A"
+    },
+    "dental_checkup": {
+        "id": "dental_checkup",
+        "name": "Comprehensive Dental Checkup",
+        "description": "Complete examination including X-rays and oral cancer screening.",
+        "price": 50,
+        "category": "General Dentistry",
+        "image": "/static/images/treatments/dental_checkup.jpg",
+        "popular": True,
+        "procedure_time": "30-45 minutes",
+        "recovery_time": "Immediate",
+        "warranty": "N/A"
+    },
+    "wisdom_tooth_extraction": {
+        "id": "wisdom_tooth_extraction",
+        "name": "Wisdom Tooth Extraction",
+        "description": "Surgical removal of problematic wisdom teeth.",
+        "price": 180,
+        "category": "Oral Surgery",
+        "image": "/static/images/treatments/wisdom_tooth_extraction.jpg",
+        "popular": True,
+        "procedure_time": "30-60 minutes per tooth",
+        "recovery_time": "1-2 weeks",
+        "warranty": "N/A"
+    },
+    "bone_grafting": {
+        "id": "bone_grafting",
+        "name": "Bone Grafting",
+        "description": "Procedure to replace or augment missing bone in the jaw.",
+        "price": 550,
+        "category": "Oral Surgery",
+        "image": "/static/images/treatments/bone_grafting.jpg",
+        "popular": False,
+        "procedure_time": "1-2 hours",
+        "recovery_time": "3-6 months",
+        "warranty": "Varies"
+    },
+    "full_mouth_reconstruction": {
+        "id": "full_mouth_reconstruction",
+        "name": "Full Mouth Reconstruction",
+        "description": "Comprehensive treatment to rebuild or restore all teeth in upper and lower jaws.",
+        "price": 6500,
+        "category": "Restorative Dentistry",
+        "image": "/static/images/treatments/full_mouth_reconstruction.jpg",
+        "popular": False,
+        "procedure_time": "Multiple appointments",
+        "recovery_time": "3-6 months total",
+        "warranty": "10 years"
+    }
+}
 
-def save_treatments(treatments):
-    """Save treatments to JSON file"""
-    try:
-        with open(TREATMENTS_DATA_FILE, 'w') as file:
-            json.dump(treatments, file, indent=2)
-        logger.info(f"Saved {len(treatments)} treatments to file")
-        return True
-    except Exception as e:
-        logger.error(f"Error saving treatments to file: {e}")
-        return False
-
-def generate_sample_treatments():
-    """Generate sample treatments data"""
-    treatments = [
-        # Implants
-        {
-            "id": "dental_implant_standard",
-            "name": "Standard Dental Implant",
-            "category": "implants",
-            "description": "Titanium dental implant with abutment and crown. Includes surgery and follow-up care.",
-            "price": 750,
-            "currency": "USD",
-            "image": "/static/images/treatments/dental_implant.jpg",
-            "features": ["Titanium implant", "Abutment", "Porcelain crown", "Surgery", "Local anesthesia"],
-            "timeline": "3-6 months (requires multiple visits)",
-            "longevity": "15+ years with proper care"
-        },
-        {
-            "id": "dental_implant_premium",
-            "name": "Premium Dental Implant",
-            "category": "implants",
-            "description": "Premium implant system with enhanced aesthetics and longer warranty. Includes all necessary procedures.",
-            "price": 950,
-            "currency": "USD",
-            "image": "/static/images/treatments/premium_implant.jpg",
-            "features": ["Premium implant brand", "Custom abutment", "Zirconia crown", "Surgery", "Extended warranty"],
-            "timeline": "3-6 months (requires multiple visits)",
-            "longevity": "Lifetime warranty on implant"
-        },
-        {
-            "id": "all_on_4_implants",
-            "name": "All-on-4 Implants",
-            "category": "implants",
-            "description": "Full arch replacement using just 4 implants. Immediate loading possible with temporary prosthesis.",
-            "price": 4500,
-            "currency": "USD",
-            "image": "/static/images/treatments/all_on_4.jpg",
-            "features": ["4 dental implants", "Full arch prosthesis", "Same-day temporary teeth", "Permanent restoration"],
-            "timeline": "2-3 days for temporary, 4-6 months for permanent",
-            "longevity": "15+ years for implants, 10+ years for prosthesis"
-        },
-        
-        # Crowns & Bridges
-        {
-            "id": "dental_crowns",
-            "name": "Dental Crown",
-            "category": "crowns",
-            "description": "Porcelain or zirconia crown to restore damaged or decayed teeth. Natural appearance and high durability.",
-            "price": 350,
-            "currency": "USD",
-            "image": "/static/images/treatments/dental_crown.jpg",
-            "features": ["Porcelain/Zirconia material", "Custom shade matching", "Digital impressions"],
-            "timeline": "1-2 days with CAD/CAM technology",
-            "longevity": "10-15 years with proper care"
-        },
-        {
-            "id": "dental_bridge_3_unit",
-            "name": "3-Unit Dental Bridge",
-            "category": "crowns",
-            "description": "Fixed bridge to replace a missing tooth, supported by adjacent teeth. Natural-looking replacement.",
-            "price": 950,
-            "currency": "USD",
-            "image": "/static/images/treatments/dental_bridge.jpg",
-            "features": ["3-unit bridge", "Porcelain/Zirconia material", "Custom shade matching"],
-            "timeline": "2-3 days",
-            "longevity": "10-15 years with proper care"
-        },
-        
-        # Veneers
-        {
-            "id": "porcelain_veneers",
-            "name": "Porcelain Veneers",
-            "category": "veneers",
-            "description": "Thin porcelain shells bonded to front teeth to improve appearance. Stain-resistant and natural-looking.",
-            "price": 400,
-            "currency": "USD",
-            "image": "/static/images/treatments/porcelain_veneers.jpg",
-            "features": ["E-max porcelain", "Minimal tooth reduction", "Custom design"],
-            "timeline": "2-3 days",
-            "longevity": "10-15 years"
-        },
-        {
-            "id": "composite_veneers",
-            "name": "Composite Veneers",
-            "category": "veneers",
-            "description": "Direct application of composite resin to improve tooth appearance. More affordable alternative to porcelain.",
-            "price": 200,
-            "currency": "USD",
-            "image": "/static/images/treatments/composite_veneers.jpg",
-            "features": ["Composite resin material", "Single visit procedure", "Repairable"],
-            "timeline": "Same day",
-            "longevity": "5-7 years"
-        },
-        {
-            "id": "hollywood_smile",
-            "name": "Hollywood Smile",
-            "category": "veneers",
-            "description": "Complete smile makeover with 8-10 porcelain veneers. Creates a bright, uniform and attractive smile.",
-            "price": 3200,
-            "currency": "USD",
-            "image": "/static/images/treatments/hollywood_smile.jpg",
-            "features": ["8-10 porcelain veneers", "Smile design", "Temporary mock-up"],
-            "timeline": "3-5 days",
-            "longevity": "10-15 years"
-        },
-        
-        # Root Canal & Extractions
-        {
-            "id": "root_canal_treatment",
-            "name": "Root Canal Treatment",
-            "category": "endodontics",
-            "description": "Procedure to treat infected tooth pulp and save the natural tooth. Includes cleaning, filling and sealing.",
-            "price": 300,
-            "currency": "USD",
-            "image": "/static/images/treatments/root_canal.jpg",
-            "features": ["Removes infected pulp", "Prevents extraction", "Modern techniques"],
-            "timeline": "1-2 visits",
-            "longevity": "Lifetime with proper restoration"
-        },
-        {
-            "id": "tooth_extraction_simple",
-            "name": "Simple Tooth Extraction",
-            "category": "endodontics",
-            "description": "Removal of visible tooth that can be extracted with forceps. Includes local anesthesia.",
-            "price": 100,
-            "currency": "USD",
-            "image": "/static/images/treatments/extraction.jpg",
-            "features": ["Local anesthesia", "Simple procedure", "Post-extraction care"],
-            "timeline": "Single visit (30-60 minutes)",
-            "longevity": "N/A (extraction)"
-        },
-        {
-            "id": "tooth_extraction_surgical",
-            "name": "Surgical Tooth Extraction",
-            "category": "endodontics",
-            "description": "Removal of tooth that cannot be easily accessed, such as impacted wisdom teeth. Includes sedation options.",
-            "price": 200,
-            "currency": "USD",
-            "image": "/static/images/treatments/surgical_extraction.jpg",
-            "features": ["Surgical approach", "Sedation options", "Impacted tooth removal"],
-            "timeline": "Single visit (60-90 minutes)",
-            "longevity": "N/A (extraction)"
-        },
-        
-        # Whitening & Cleaning
-        {
-            "id": "teeth_whitening_in_office",
-            "name": "In-Office Teeth Whitening",
-            "category": "whitening",
-            "description": "Professional whitening treatment using high-concentration bleaching gel and special light. Immediate results.",
-            "price": 250,
-            "currency": "USD",
-            "image": "/static/images/treatments/teeth_whitening.jpg",
-            "features": ["Immediate results", "Professional strength gel", "LED activation"],
-            "timeline": "Single visit (60-90 minutes)",
-            "longevity": "1-2 years depending on habits"
-        },
-        {
-            "id": "teeth_whitening_take_home",
-            "name": "Take-Home Whitening Kit",
-            "category": "whitening",
-            "description": "Custom-fitted whitening trays with professional-grade whitening gel for use at home. Gradual results.",
-            "price": 150,
-            "currency": "USD",
-            "image": "/static/images/treatments/home_whitening.jpg",
-            "features": ["Custom trays", "Professional gel", "Convenient home use"],
-            "timeline": "2-3 weeks of daily use",
-            "longevity": "1-2 years with occasional touch-ups"
-        },
-        {
-            "id": "dental_cleaning",
-            "name": "Professional Dental Cleaning",
-            "category": "whitening",
-            "description": "Thorough cleaning by dental hygienist to remove plaque and tartar. Includes polishing and fluoride treatment.",
-            "price": 100,
-            "currency": "USD",
-            "image": "/static/images/treatments/dental_cleaning.jpg",
-            "features": ["Tartar removal", "Polishing", "Fluoride treatment"],
-            "timeline": "Single visit (45-60 minutes)",
-            "longevity": "Recommended every 6 months"
-        },
-        
-        # Complete Reconstructions
-        {
-            "id": "full_mouth_reconstruction",
-            "name": "Full Mouth Reconstruction",
-            "category": "reconstruction",
-            "description": "Comprehensive treatment to restore function and aesthetics to severely damaged dentition. Combines multiple procedures.",
-            "price": 8500,
-            "currency": "USD",
-            "image": "/static/images/treatments/full_mouth.jpg",
-            "features": ["Comprehensive treatment plan", "Multiple procedures", "Complete rehabilitation"],
-            "timeline": "Multiple visits over 1-3 weeks",
-            "longevity": "10-15 years for restorations"
-        },
-        {
-            "id": "smile_makeover",
-            "name": "Smile Makeover",
-            "category": "reconstruction",
-            "description": "Combination of cosmetic procedures to enhance your smile. Customized treatment plan based on your goals.",
-            "price": 3800,
-            "currency": "USD",
-            "image": "/static/images/treatments/smile_makeover.jpg",
-            "features": ["Customized treatment plan", "Combination of procedures", "Focus on aesthetics"],
-            "timeline": "Multiple visits over 1-2 weeks",
-            "longevity": "Varies by procedures"
-        }
-    ]
-    
-    return treatments
+def get_treatment_categories():
+    """Get all treatment categories"""
+    return TREATMENT_CATEGORIES
 
 def get_treatment_by_id(treatment_id):
     """Get a treatment by its ID"""
-    if not treatment_id:
-        return None
-    
-    treatments = load_treatments()
-    
-    for treatment in treatments:
-        if treatment.get('id') == treatment_id:
-            return treatment
-    
-    return None
+    return TREATMENTS.get(treatment_id)
+
+def get_all_treatments():
+    """Get all treatments as a list"""
+    return list(TREATMENTS.values())
+
+def get_treatments_by_category(category):
+    """Get all treatments in a specific category"""
+    return [treatment for treatment in TREATMENTS.values() if treatment['category'] == category]
+
+def get_popular_treatments():
+    """Get all popular treatments"""
+    return [treatment for treatment in TREATMENTS.values() if treatment.get('popular', False)]
 
 def get_categorized_treatments():
     """Get treatments organized by category"""
-    treatments = load_treatments()
-    
     categorized = {}
-    for treatment in treatments:
-        category = treatment.get('category', 'other')
-        if category not in categorized:
-            categorized[category] = []
-        categorized[category].append(treatment)
-    
+    for category in TREATMENT_CATEGORIES:
+        categorized[category] = get_treatments_by_category(category)
     return categorized
-
-def get_treatment_categories():
-    """Get a list of all treatment categories"""
-    categorized = get_categorized_treatments()
-    return list(categorized.keys())
-
-def calculate_totals(selected_treatments, promo_details=None):
-    """Calculate quote totals including any discounts from promo codes"""
-    subtotal = 0
-    discount = 0
-    
-    # Calculate the subtotal
-    for treatment in selected_treatments:
-        price = float(treatment.get('price', 0))
-        quantity = int(treatment.get('quantity', 1))
-        subtotal += price * quantity
-    
-    # Apply discount if promo code is provided
-    if promo_details:
-        discount_type = promo_details.get('discount_type')
-        discount_value = float(promo_details.get('discount_value', 0))
-        
-        if discount_type == 'percentage':
-            discount = subtotal * (discount_value / 100)
-        elif discount_type == 'fixed_amount':
-            discount = min(discount_value, subtotal)  # Don't allow negative totals
-    
-    # Calculate the total
-    total = subtotal - discount
-    
-    return {
-        'subtotal': subtotal,
-        'discount': discount,
-        'total': total
-    }
-
-def generate_quote_id():
-    """Generate a unique quote ID"""
-    return f"DQ-{datetime.now().strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"

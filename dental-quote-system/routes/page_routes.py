@@ -2,18 +2,14 @@
 Page Routes Module
 Handles page rendering and navigation
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from utils.session_manager import (
-    get_treatments, add_treatment, remove_treatment, update_treatment_quantity,
-    get_promo_code, get_promo_details, calculate_totals, set_patient_info, get_patient_info,
-    set_quote_id, get_quote_id, export_session_data, clear_session
-)
-from services.treatment_service import (
-    get_all_treatments, get_popular_treatments, get_treatment_by_id, 
-    get_treatment_categories, get_treatments_by_category
-)
-from services.promo_service import get_active_promotions
-import uuid
+from flask import Blueprint, request, redirect, url_for, render_template, jsonify, session
+from utils.session_manager import (initialize_session, add_treatment, remove_treatment, 
+                                  update_treatment_quantity, get_quote_totals, 
+                                  get_treatments, get_promo_code, clear_session,
+                                  save_patient_info)
+from services.treatment_service import (get_treatment_categories, get_categorized_treatments,
+                                       get_treatment_by_id)
+from services.promo_service import get_active_promotions, get_promotion_by_code
 import logging
 
 logger = logging.getLogger(__name__)
@@ -24,262 +20,201 @@ page_routes = Blueprint('page_routes', __name__)
 @page_routes.route('/')
 def index():
     """Render the homepage"""
-    # Get popular treatments for display
-    popular_treatments = get_popular_treatments()
+    # Initialize session if not already done
+    initialize_session()
     
-    return render_template('index.html', popular_treatments=popular_treatments)
+    # Get active promotions for the homepage carousel
+    promotions = get_active_promotions()
+    
+    # Get popular treatment categories
+    categories = get_treatment_categories()
+    categorized_treatments = get_categorized_treatments()
+    
+    # Prepare data for homepage
+    featured_categories = categories[:4]  # Show top 4 categories on homepage
+    featured_treatments = []
+    
+    # Get 2 treatments from each featured category
+    for category in featured_categories:
+        if category in categorized_treatments and len(categorized_treatments[category]) > 0:
+            featured_treatments.extend(categorized_treatments[category][:2])
+    
+    return render_template('index.html', 
+                          promotions=promotions,
+                          featured_categories=featured_categories,
+                          featured_treatments=featured_treatments)
 
 @page_routes.route('/quote-builder', methods=['GET', 'POST'])
 def quote_builder():
     """Render the quote builder page and handle treatment selection"""
-    # Get all treatments categorized
-    all_treatments = get_all_treatments()
-    categories = get_treatment_categories()
-    categorized_treatments = {}
+    # Initialize session if not already done
+    initialize_session()
     
-    for category in categories:
-        categorized_treatments[category] = get_treatments_by_category(category)
-    
-    # Get selected treatments and calculate totals
-    selected_treatments = get_treatments()
-    totals = calculate_totals()
-    
-    # Handle POST requests (treatment selection/removal)
+    # Handle POST requests (adding/removing treatments)
     if request.method == 'POST':
+        # Check if the request is AJAX
         is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
         
-        action = request.form.get('action')
         treatment_id = request.form.get('treatment_id')
+        action = request.form.get('action', 'add')
         
-        # Add treatment to quote
-        if action == 'add' and treatment_id:
-            treatment = get_treatment_by_id(treatment_id)
-            
-            if treatment:
-                # Set default quantity if not present
-                if 'quantity' not in treatment:
-                    treatment['quantity'] = 1
-                
-                # Add to session
-                success = add_treatment(treatment)
-                
-                if success:
-                    if is_ajax:
-                        return jsonify({
-                            'success': True, 
-                            'message': f"{treatment['name']} added to your quote",
-                            'treatment': treatment,
-                            'totals': calculate_totals()
-                        })
-                    
-                    flash(f"{treatment['name']} added to your quote", "success")
-                else:
-                    if is_ajax:
-                        return jsonify({
-                            'success': False, 
-                            'message': f"{treatment['name']} is already in your quote"
-                        })
-                    
-                    flash(f"{treatment['name']} is already in your quote", "info")
-            else:
-                if is_ajax:
-                    return jsonify({
-                        'success': False, 
-                        'message': "Treatment not found"
-                    })
-                
-                flash("Treatment not found", "danger")
-        
-        # Remove treatment from quote
-        elif action == 'remove' and treatment_id:
-            removed = remove_treatment(treatment_id)
-            
-            if removed:
-                # Recalculate totals
-                new_totals = calculate_totals()
-                
-                if is_ajax:
-                    return jsonify({
-                        'success': True, 
-                        'message': "Treatment removed from your quote",
-                        'totals': new_totals
-                    })
-                
-                flash("Treatment removed from your quote", "info")
-            else:
-                if is_ajax:
-                    return jsonify({
-                        'success': False, 
-                        'message': "Treatment not found in your quote"
-                    })
-                
-                flash("Treatment not found in your quote", "warning")
-        
-        # Update treatment quantity
-        elif action == 'update_quantity' and treatment_id:
+        if action == 'add':
+            success, message = add_treatment(treatment_id)
+        elif action == 'remove':
+            success, message = remove_treatment(treatment_id)
+        elif action == 'update_quantity':
             quantity = request.form.get('quantity', 1)
-            
-            try:
-                quantity = int(quantity)
-                if quantity < 1:
-                    quantity = 1
-            except:
-                quantity = 1
-            
-            updated = update_treatment_quantity(treatment_id, quantity)
-            
-            if updated:
-                # Recalculate totals
-                new_totals = calculate_totals()
-                
-                if is_ajax:
-                    return jsonify({
-                        'success': True, 
-                        'message': "Quantity updated",
-                        'totals': new_totals
-                    })
-                
-                flash("Quantity updated", "info")
-            else:
-                if is_ajax:
-                    return jsonify({
-                        'success': False, 
-                        'message': "Treatment not found in your quote"
-                    })
-                
-                flash("Treatment not found in your quote", "warning")
+            success, message = update_treatment_quantity(treatment_id, quantity)
         
-        # Redirect after non-AJAX form submission
-        if not is_ajax:
-            return redirect(url_for('page_routes.quote_builder'))
+        # For AJAX requests, return JSON response
+        if is_ajax:
+            return jsonify({
+                'success': success,
+                'message': message,
+                'totals': get_quote_totals()
+            })
     
-    # Get promo details for display
+    # Get treatment categories and treatments
+    categories = get_treatment_categories()
+    categorized_treatments = get_categorized_treatments()
+    
+    # Get currently selected treatments
+    selected_treatments = get_treatments()
+    
+    # Calculate totals
+    totals = get_quote_totals()
+    
+    # Get current promo code
     promo_code = get_promo_code()
-    promo_details = get_promo_details()
     
-    return render_template(
-        'quote/quote_builder.html',
-        categories=categories,
-        categorized_treatments=categorized_treatments,
-        selected_treatments=selected_treatments,
-        totals=totals,
-        promo_code=promo_code,
-        promo_details=promo_details
-    )
+    return render_template('quote/quote_builder.html',
+                          categories=categories,
+                          categorized_treatments=categorized_treatments,
+                          selected_treatments=selected_treatments,
+                          totals=totals,
+                          promo_code=promo_code)
 
 @page_routes.route('/special-offers')
 def special_offers():
     """Render the special offers page"""
+    # Initialize session if not already done
+    initialize_session()
+    
+    # Get active promotions/offers
     promotions = get_active_promotions()
     
-    return render_template(
-        'promo/special_offers.html',
-        promotions=promotions
-    )
+    return render_template('promo/special_offers.html', 
+                          promotions=promotions)
 
 @page_routes.route('/patient-info', methods=['GET', 'POST'])
 def patient_info():
     """Render the patient information form and handle submission"""
-    # Check if there are selected treatments
+    # Initialize session if not already done
+    initialize_session()
+    
+    # Get selected treatments
     selected_treatments = get_treatments()
     
+    # Redirect to quote builder if no treatments selected
     if not selected_treatments:
-        flash("Please select at least one treatment before proceeding", "warning")
         return redirect(url_for('page_routes.quote_builder'))
-    
-    # Get saved patient info if available
-    saved_info = get_patient_info()
     
     # Handle form submission
     if request.method == 'POST':
-        # Collect patient information
-        patient_info = {
-            'first_name': request.form.get('first_name', ''),
-            'last_name': request.form.get('last_name', ''),
-            'email': request.form.get('email', ''),
-            'phone': request.form.get('phone', ''),
-            'country': request.form.get('country', ''),
-            'preferred_date': request.form.get('preferred_date', ''),
-            'comments': request.form.get('comments', ''),
-            'contact_method': request.form.get('contact_method', 'email')
+        # Get form data
+        patient_data = {
+            'name': request.form.get('name'),
+            'email': request.form.get('email'),
+            'phone': request.form.get('phone'),
+            'country': request.form.get('country'),
+            'travel_month': request.form.get('travel_month'),
+            'message': request.form.get('message', '')
         }
         
-        # Save to session
-        set_patient_info(patient_info)
+        # Validate form data
+        errors = {}
+        if not patient_data['name']:
+            errors['name'] = 'Please enter your name'
+        if not patient_data['email']:
+            errors['email'] = 'Please enter your email'
+        if not patient_data['phone']:
+            errors['phone'] = 'Please enter your phone number'
         
-        # Generate a quote ID if not already present
-        if not get_quote_id():
-            set_quote_id(str(uuid.uuid4()))
+        if errors:
+            return render_template('quote/patient_info.html',
+                                  patient_data=patient_data,
+                                  errors=errors)
+        
+        # Save patient info to session
+        success, message = save_patient_info(patient_data)
         
         # Redirect to review page
-        return redirect(url_for('page_routes.review_quote'))
+        if success:
+            return redirect(url_for('page_routes.review_quote'))
     
-    # Calculate totals for display
-    totals = calculate_totals()
+    # Calculate totals
+    totals = get_quote_totals()
     
-    return render_template(
-        'quote/patient_info.html',
-        selected_treatments=selected_treatments,
-        totals=totals,
-        saved_info=saved_info
-    )
+    return render_template('quote/patient_info.html',
+                          selected_treatments=selected_treatments,
+                          totals=totals)
 
 @page_routes.route('/review-quote')
 def review_quote():
     """Render the quote review page"""
-    # Check if there are selected treatments and patient info
-    selected_treatments = get_treatments()
-    patient_info = get_patient_info()
+    # Initialize session if not already done
+    initialize_session()
     
+    # Get selected treatments
+    selected_treatments = get_treatments()
+    
+    # Redirect to quote builder if no treatments selected
     if not selected_treatments:
-        flash("Please select at least one treatment before proceeding", "warning")
         return redirect(url_for('page_routes.quote_builder'))
     
-    if not patient_info or not patient_info.get('email'):
-        flash("Please provide your contact information", "warning")
-        return redirect(url_for('page_routes.patient_info'))
+    # Calculate totals
+    totals = get_quote_totals()
     
-    # Get quote ID or generate a new one
-    quote_id = get_quote_id()
-    if not quote_id:
-        quote_id = str(uuid.uuid4())
-        set_quote_id(quote_id)
+    # Get patient info
+    patient_info = session.get('patient_info', {})
     
-    # Calculate totals for display
-    totals = calculate_totals()
+    # Get current promo code
+    promo_code = get_promo_code()
+    promo_details = None
+    if promo_code:
+        promo_details = get_promotion_by_code(promo_code)
     
-    return render_template(
-        'quote/review_quote.html',
-        quote_id=quote_id,
-        selected_treatments=selected_treatments,
-        patient_info=patient_info,
-        totals=totals
-    )
+    # Get quote ID
+    quote_id = session.get('quote_id')
+    
+    return render_template('quote/review_quote.html',
+                          selected_treatments=selected_treatments,
+                          totals=totals,
+                          patient_info=patient_info,
+                          promo_code=promo_code,
+                          promo_details=promo_details,
+                          quote_id=quote_id)
 
 @page_routes.route('/thank-you')
 def thank_you():
     """Render the thank you page after quote submission"""
-    # Get quote data for display
-    quote_id = get_quote_id()
-    patient_info = get_patient_info()
+    # Initialize session if not already done
+    initialize_session()
     
+    # Get quote ID and patient info
+    quote_id = session.get('quote_id')
+    patient_info = session.get('patient_info', {})
+    
+    # Redirect to homepage if no quote ID or patient info
     if not quote_id or not patient_info:
-        flash("Missing quote information", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+        return redirect(url_for('page_routes.index'))
     
-    # Clear session after displaying the thank you page
-    quote_data = export_session_data()
-    clear_session()
-    
-    return render_template(
-        'quote/thank_you.html',
-        quote_id=quote_id,
-        patient_info=patient_info
-    )
+    return render_template('quote/thank_you.html',
+                          quote_id=quote_id,
+                          patient_info=patient_info)
 
 @page_routes.route('/restart-quote')
 def restart_quote():
     """Clear the session and start a new quote"""
-    clear_session()
-    flash("Your quote has been reset. You can start a new one.", "info")
+    success, message = clear_session()
     return redirect(url_for('page_routes.quote_builder'))
