@@ -3,124 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MyDentalFly - Dental Tourism Platform{% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="shortcut icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <title>{% block title %}MyDentalFly{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Font Awesome -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <!-- Custom CSS -->
-    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('page_routes.index') }}">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyDentalFly Logo" height="40">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="MyDentalFly" height="40">
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == url_for('page_routes.index') %}active{% endif %}" href="{{ url_for('page_routes.index') }}">Home</a>
+                        <a class="nav-link" href="{{ url_for('page_routes.index') }}">Home</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == url_for('page_routes.quote_builder') %}active{% endif %}" href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a>
+                        <a class="nav-link" href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if request.path == url_for('page_routes.special_offers') %}active{% endif %}" href="{{ url_for('page_routes.special_offers') }}">Special Offers</a>
+                        <a class="nav-link" href="{{ url_for('page_routes.special_offers') }}">Special Offers</a>
                     </li>
                 </ul>
-                
-                <!-- Quote Status -->
-                {% if session.get('selected_treatments') %}
-                <div class="d-flex align-items-center">
-                    <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-outline-primary position-relative">
-                        <i class="fas fa-clipboard-list me-1"></i> Your Quote
-                        <span id="treatment-counter" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                            {{ session.get('selected_treatments')|length }}
-                        </span>
-                    </a>
+                <div class="ms-3">
+                    <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary">Get Your Quote</a>
                 </div>
-                {% endif %}
             </div>
         </div>
     </nav>
-    
+
     <!-- Main Content -->
-    <main class="container py-4">
+    <main>
         {% block content %}{% endblock %}
     </main>
-    
+
     <!-- Footer -->
-    <footer class="bg-light py-5 mt-5">
+    <footer class="bg-dark text-white py-5 mt-5">
         <div class="container">
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <h5>MyDentalFly</h5>
-                    <p>Your trusted partner for dental tourism in Turkey. We connect you with top clinics for affordable, high-quality dental care.</p>
-                    <div class="social-icons mt-3">
-                        <a href="#" class="me-2"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="me-2"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="me-2"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h4 class="mb-4">MyDentalFly</h4>
+                    <p>Your trusted partner for high-quality, affordable dental care in Turkey. We connect you with premier dental clinics offering world-class treatments at a fraction of UK, US, and European prices.</p>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5 class="mb-3">Links</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><a href="{{ url_for('page_routes.index') }}" class="text-white">Home</a></li>
+                        <li class="mb-2"><a href="{{ url_for('page_routes.quote_builder') }}" class="text-white">Quote Builder</a></li>
+                        <li class="mb-2"><a href="{{ url_for('page_routes.special_offers') }}" class="text-white">Special Offers</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5 class="mb-3">Contact</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-2"><i class="fas fa-envelope me-2"></i> info@mydentalfly.com</li>
+                        <li class="mb-2"><i class="fas fa-phone me-2"></i> +44 20 1234 5678</li>
+                        <li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> London, UK</li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-3">Follow Us</h5>
+                    <div class="d-flex">
+                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f fa-lg"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-instagram fa-lg"></i></a>
+                        <a href="#" class="text-white me-3"><i class="fab fa-twitter fa-lg"></i></a>
+                        <a href="#" class="text-white"><i class="fab fa-linkedin-in fa-lg"></i></a>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-outline-light">Get Your Quote</a>
                     </div>
                 </div>
-                <div class="col-md-2 mb-4">
-                    <h5>Quick Links</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
-                        <li><a href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a></li>
-                        <li><a href="{{ url_for('page_routes.special_offers') }}">Special Offers</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <h5>Popular Treatments</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ url_for('page_routes.quote_builder') }}#category-implants">Dental Implants</a></li>
-                        <li><a href="{{ url_for('page_routes.quote_builder') }}#category-veneers">Porcelain Veneers</a></li>
-                        <li><a href="{{ url_for('page_routes.quote_builder') }}#category-crowns">Dental Crowns</a></li>
-                        <li><a href="{{ url_for('page_routes.quote_builder') }}#category-whitening">Teeth Whitening</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <h5>Contact Information</h5>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-map-marker-alt me-2"></i> Istanbul, Turkey</li>
-                        <li><i class="fas fa-phone me-2"></i> +90 (555) 123-4567</li>
-                        <li><i class="fas fa-envelope me-2"></i> info@mydentalfly.com</li>
-                    </ul>
-                </div>
             </div>
-            <hr>
-            <div class="text-center">
-                <p class="mb-0">&copy; 2025 MyDentalFly. All rights reserved.</p>
+            <div class="border-top border-secondary pt-4 mt-4">
+                <div class="row">
+                    <div class="col-md-6 text-center text-md-start">
+                        <p class="mb-0">&copy; 2025 MyDentalFly. All rights reserved.</p>
+                    </div>
+                    <div class="col-md-6 text-center text-md-end">
+                        <a href="#" class="text-white me-3">Privacy Policy</a>
+                        <a href="#" class="text-white">Terms of Service</a>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
-    
-    <!-- Scroll to Top Button -->
-    <button id="scroll-to-top" title="Go to top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
-    
+
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- Custom JavaScript -->
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
     {% block extra_js %}{% endblock %}
