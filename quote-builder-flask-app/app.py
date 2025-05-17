@@ -192,19 +192,29 @@ def apply_promo():
 
 @app.route("/api/quote/remove-promo", methods=["POST"])
 def remove_promo():
-    """Remove the applied promo code"""
+    """Remove the applied promo code and ensure session state is completely reset"""
     init_session()
     
     # Completely reset the promo code state
     session["quote_data"]["promo_code"] = ""
     session["quote_data"]["discount"] = 0
+    session["quote_data"]["discount_type"] = None
+    session["quote_data"]["discount_percentage"] = 0
     
-    # Force session update - this is critical for persistence
+    # Also clear any hidden cached promo data that might be lurking
+    if "promo_applied" in session["quote_data"]:
+        del session["quote_data"]["promo_applied"]
+    
+    if "previous_promo_code" in session["quote_data"]:
+        del session["quote_data"]["previous_promo_code"]
+    
+    # Force session update and make it permanent
     session.modified = True
-    
-    # Make sure the session persists
-    from flask import Response
     session.permanent = True
+    
+    # Set a very long session lifetime to avoid timeouts
+    from datetime import timedelta
+    app.permanent_session_lifetime = timedelta(days=1)
     
     # Calculate new totals with zeroed discount
     new_totals = calculate_totals()
