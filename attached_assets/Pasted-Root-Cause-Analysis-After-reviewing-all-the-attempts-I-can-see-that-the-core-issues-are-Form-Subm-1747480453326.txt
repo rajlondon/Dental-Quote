@@ -1,0 +1,642 @@
+Root Cause Analysis
+After reviewing all the attempts, I can see that the core issues are:
+
+Form Submission Interference: Hidden form submissions are likely resetting your state
+Complex Component Structure: Nested components creating unpredictable re-renders
+Asynchronous State Updates: Race conditions between state updates and navigation
+Insufficient Persistence: Current persistence implementation isn't robust enough
+Comprehensive Solution
+Here's a complete solution that addresses all these issues:
+
+1. Create a Robust Zustand Store
+// client/src/stores/robustQuoteStore.ts
+import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
+
+export const useRobustQuoteStore = create(
+  persist(
+    (set, get) => ({
+      // Core state
+      currentStep: 'quiz', // 'quiz', 'promo', 'patient-info', 'review'
+      selectedTreatments: [],
+      promoCode: '',
+      discount: 0,
+      patientInfo: {
+        name: '',
+        email: '',
+        phone: '',
+        preferredDate: '',
+        notes: ''
+      },
+      
+      // UI state
+      isLoading: false,
+      error: null,
+      
+      // Actions with thorough error handling
+      setStep: (step) => {
+        console.log(`Setting step to: ${step}`);
+        // Save current state to localStorage before changing step
+        localStorage.setItem('quote-step-backup', JSON.stringify({
+          step: get().currentStep,
+          treatments: get().selectedTreatments,
+          promo: get().promoCode,
+          discount: get().discount
+        }));
+        set({ currentStep: step });
+      },
+      
+      addTreatment: (treatment) => {
+        const currentTreatments = get().selectedTreatments;
+        console.log(`Adding treatment: ${treatment.name}`);
+        set({ 
+          selectedTreatments: [...currentTreatments, treatment] 
+        });
+      },
+      
+      removeTreatment: (treatmentId) => {
+        const currentTreatments = get().selectedTreatments;
+        console.log(`Removing treatment: ${treatmentId}`);
+        set({ 
+          selectedTreatments: currentTreatments.filter(t => t.id !== treatmentId) 
+        });
+      },
+      
+      applyPromoCode: async (code) => {
+        try {
+          console.log(`Applying promo code: ${code}`);
+          set({ isLoading: true, error: null });
+          
+          // Create backup before attempting promo application
+          const backup = {
+            treatments: get().selectedTreatments,
+            step: get().currentStep
+          };
+          localStorage.setItem('promo-backup', JSON.stringify(backup));
+          
+          // Simulate API call with timeout
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Hard-coded validation for testing
+          const validCodes = {
+            'SUMMER15': 15,
+            'DENTAL25': 25,
+            'TEST10': 10
+          };
+          
+          if (validCodes[code]) {
+            set({ 
+              promoCode: code, 
+              discount: validCodes[code],
+              isLoading: false 
+            });
+            return { success: true };
+          } else {
+            set({ 
+              isLoading: false, 
+              error: 'Invalid promo code'
+            });
+            return { success: false, message: 'Invalid promo code' };
+          }
+        } catch (error) {
+          console.error('Error applying promo code:', error);
+          
+          // Restore from backup on error
+          const backup = JSON.parse(localStorage.getItem('promo-backup') || '{}');
+          if (backup.treatments) {
+            set({ 
+              selectedTreatments: backup.treatments,
+              currentStep: backup.step,
+              isLoading: false,
+              error: 'Error applying promo code. Please try again.'
+            });
+          }
+          
+          return { 
+            success: false, 
+            message: 'Error applying promo code. Please try again.'
+          };
+        }
+      },
+      
+      updatePatientInfo: (info) => {
+        set({ patientInfo: { ...get().patientInfo, ...info } });
+      },
+      
+      resetQuote: () => {
+        console.log('Resetting quote');
+        set({ 
+          currentStep: 'quiz',
+          selectedTreatments: [],
+          promoCode: '',
+          discount: 0,
+          patientInfo: {
+            name: '',
+            email: '',
+            phone: '',
+            preferredDate: '',
+            notes: ''
+          },
+          error: null
+        });
+      },
+      
+      // Recovery method if state gets corrupted
+      recoverFromBackup: () => {
+        try {
+          const backup = JSON.parse(localStorage.getItem('quote-step-backup') || '{}');
+          if (backup.treatments) {
+            set({
+              currentStep: backup.step || 'quiz',
+              selectedTreatments: backup.treatments || [],
+              promoCode: backup.promo || '',
+              discount: backup.discount || 0
+            });
+            return true;
+          }
+          return false;
+        } catch (e) {
+          console.error('Failed to recover from backup', e);
+          return false;
+        }
+      }
+    }),
+    {
+      name: 'robust-quote-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist essential data
+      partialize: (state) => ({
+        currentStep: state.currentStep,
+        selectedTreatments: state.selectedTreatments,
+        promoCode: state.promoCode,
+        discount: state.discount,
+        patientInfo: state.patientInfo
+      }),
+    }
+  )
+)
+2. Create a Minimal Quote Component
+// client/src/pages/RobustQuoteBuilder.tsx
+import React, { useEffect, useState } from 'react';
+import { useRobustQuoteStore } from '../stores/robustQuoteStore';
+
+export const RobustQuoteBuilder = () => {
+  // Get everything we need from the store
+  const { 
+    currentStep, 
+    selectedTreatments,
+    promoCode,
+    discount,
+    patientInfo,
+    isLoading,
+    error,
+    
+    setStep,
+    addTreatment,
+    removeTreatment,
+    applyPromoCode,
+    updatePatientInfo,
+    resetQuote,
+    recoverFromBackup
+  } = useRobustQuoteStore();
+  
+  // Local state for form inputs
+  const [promoInput, setPromoInput] = useState('');
+  const [treatmentName, setTreatmentName] = useState('');
+  const [treatmentPrice, setTreatmentPrice] = useState('');
+  
+  // Sample treatments for testing
+  const availableTreatments = [
+    { id: 1, name: 'Teeth Whitening', price: 250 },
+    { id: 2, name: 'Root Canal', price: 800 },
+    { id: 3, name: 'Dental Crown', price: 1200 },
+    { id: 4, name: 'Dental Implant', price: 3000 },
+    { id: 5, name: 'Teeth Cleaning', price: 120 }
+  ];
+  
+  // Try to recover on initial load if needed
+  useEffect(() => {
+    if (selectedTreatments.length === 0 && currentStep !== 'quiz') {
+      recoverFromBackup();
+    }
+  }, []);
+  
+  // Calculate totals
+  const subtotal = selectedTreatments.reduce((sum, t) => sum + t.price, 0);
+  const discountAmount = subtotal * (discount / 100);
+  const total = subtotal - discountAmount;
+  
+  // Handlers with anti-form-submission protection
+  const handleAddTreatment = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (treatmentName && treatmentPrice) {
+      const newTreatment = {
+        id: Date.now(),
+        name: treatmentName,
+        price: parseFloat(treatmentPrice)
+      };
+      addTreatment(newTreatment);
+      setTreatmentName('');
+      setTreatmentPrice('');
+    }
+  };
+  
+  const handlePromoSubmit = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    if (promoInput) {
+      applyPromoCode(promoInput);
+    }
+  };
+  
+  const handlePatientInfoUpdate = (field, value) => {
+    updatePatientInfo({ [field]: value });
+  };
+  
+  // Render the appropriate step
+  const renderQuizStep = () => (
+    <div className="p-4 border rounded shadow-sm mb-4">
+      <h2 className="text-xl font-bold mb-4">Select Treatments</h2>
+      
+      <div className="mb-4">
+        <h3 className="font-medium mb-2">Available Treatments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {availableTreatments.map(treatment => (
+            <button
+              key={treatment.id}
+              type="button"
+              className="p-2 border rounded hover:bg-gray-100 text-left"
+              onClick={(e) => {
+                e.preventDefault();
+                addTreatment(treatment);
+              }}
+            >
+              {treatment.name} - ${treatment.price}
+            </button>
+          ))}
+        </div>
+      </div>
+      
+      <div className="mb-4">
+        <h3 className="font-medium mb-2">Add Custom Treatment</h3>
+        <div className="flex gap-2 mb-2">
+          <input
+            type="text"
+            placeholder="Treatment name"
+            className="p-2 border rounded flex-1"
+            value={treatmentName}
+            onChange={(e) => setTreatmentName(e.target.value)}
+          />
+          <input
+            type="number"
+            placeholder="Price"
+            className="p-2 border rounded w-24"
+            value={treatmentPrice}
+            onChange={(e) => setTreatmentPrice(e.target.value)}
+          />
+          <button
+            type="button"
+            className="p-2 bg-blue-500 text-white rounded"
+            onClick={handleAddTreatment}
+          >
+            Add
+          </button>
+        </div>
+      </div>
+      
+      {selectedTreatments.length > 0 && (
+        <button
+          type="button"
+          className="p-2 bg-green-500 text-white rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('promo');
+          }}
+        >
+          Continue to Promo Code
+        </button>
+      )}
+    </div>
+  );
+  
+  const renderPromoStep = () => (
+    <div className="p-4 border rounded shadow-sm mb-4">
+      <h2 className="text-xl font-bold mb-4">Apply Promo Code</h2>
+      
+      <div className="mb-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Enter promo code"
+            className="p-2 border rounded flex-1"
+            value={promoInput}
+            onChange={(e) => setPromoInput(e.target.value)}
+          />
+          <button
+            type="button"
+            disabled={isLoading}
+            className="p-2 bg-blue-500 text-white rounded disabled:bg-blue-300"
+            onClick={handlePromoSubmit}
+          >
+            {isLoading ? 'Applying...' : 'Apply Code'}
+          </button>
+        </div>
+        {error && <p className="text-red-500 mt-2">{error}</p>}
+        {promoCode && (
+          <p className="text-green-500 mt-2">
+            Promo code {promoCode} applied for {discount}% discount
+          </p>
+        )}
+      </div>
+      
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="p-2 bg-gray-300 rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('quiz');
+          }}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="p-2 bg-green-500 text-white rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('patient-info');
+          }}
+        >
+          Continue to Patient Info
+        </button>
+      </div>
+    </div>
+  );
+  
+  const renderPatientInfoStep = () => (
+    <div className="p-4 border rounded shadow-sm mb-4">
+      <h2 className="text-xl font-bold mb-4">Patient Information</h2>
+      
+      <div className="space-y-3 mb-4">
+        <div>
+          <label className="block mb-1">Name</label>
+          <input
+            type="text"
+            className="p-2 border rounded w-full"
+            value={patientInfo.name}
+            onChange={(e) => handlePatientInfoUpdate('name', e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <label className="block mb-1">Email</label>
+          <input
+            type="email"
+            className="p-2 border rounded w-full"
+            value={patientInfo.email}
+            onChange={(e) => handlePatientInfoUpdate('email', e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <label className="block mb-1">Phone</label>
+          <input
+            type="tel"
+            className="p-2 border rounded w-full"
+            value={patientInfo.phone}
+            onChange={(e) => handlePatientInfoUpdate('phone', e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <label className="block mb-1">Preferred Date</label>
+          <input
+            type="date"
+            className="p-2 border rounded w-full"
+            value={patientInfo.preferredDate}
+            onChange={(e) => handlePatientInfoUpdate('preferredDate', e.target.value)}
+          />
+        </div>
+        
+        <div>
+          <label className="block mb-1">Notes</label>
+          <textarea
+            className="p-2 border rounded w-full"
+            value={patientInfo.notes}
+            onChange={(e) => handlePatientInfoUpdate('notes', e.target.value)}
+          />
+        </div>
+      </div>
+      
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="p-2 bg-gray-300 rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('promo');
+          }}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="p-2 bg-green-500 text-white rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('review');
+          }}
+        >
+          Review Quote
+        </button>
+      </div>
+    </div>
+  );
+  
+  const renderReviewStep = () => (
+    <div className="p-4 border rounded shadow-sm mb-4">
+      <h2 className="text-xl font-bold mb-4">Quote Summary</h2>
+      
+      <div className="mb-4">
+        <h3 className="font-medium mb-2">Selected Treatments</h3>
+        {selectedTreatments.length > 0 ? (
+          <ul className="list-disc pl-5">
+            {selectedTreatments.map(treatment => (
+              <li key={treatment.id} className="mb-1">
+                {treatment.name} - ${treatment.price.toFixed(2)}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>No treatments selected</p>
+        )}
+      </div>
+      
+      {promoCode && (
+        <div className="mb-4">
+          <h3 className="font-medium mb-2">Applied Promo</h3>
+          <p>{promoCode} ({discount}% discount)</p>
+        </div>
+      )}
+      
+      <div className="mb-4">
+        <h3 className="font-medium mb-2">Patient Information</h3>
+        <p><strong>Name:</strong> {patientInfo.name || 'Not provided'}</p>
+        <p><strong>Email:</strong> {patientInfo.email || 'Not provided'}</p>
+        <p><strong>Phone:</strong> {patientInfo.phone || 'Not provided'}</p>
+        <p><strong>Preferred Date:</strong> {patientInfo.preferredDate || 'Not provided'}</p>
+        {patientInfo.notes && (
+          <p><strong>Notes:</strong> {patientInfo.notes}</p>
+        )}
+      </div>
+      
+      <div className="mb-4 border-t pt-2">
+        <p><strong>Subtotal:</strong> ${subtotal.toFixed(2)}</p>
+        {discount > 0 && (
+          <p><strong>Discount:</strong> -${discountAmount.toFixed(2)}</p>
+        )}
+        <p className="font-bold text-lg">
+          <strong>Total:</strong> ${total.toFixed(2)}
+        </p>
+      </div>
+      
+      <div className="flex gap-2">
+        <button
+          type="button"
+          className="p-2 bg-gray-300 rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            setStep('patient-info');
+          }}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="p-2 bg-blue-500 text-white rounded"
+          onClick={(e) => {
+            e.preventDefault();
+            alert('Quote submitted successfully!');
+            resetQuote();
+            setStep('quiz');
+          }}
+        >
+          Submit Quote
+        </button>
+      </div>
+    </div>
+  );
+  
+  return (
+    <div className="max-w-3xl mx-auto py-8">
+      <h1 className="text-2xl font-bold mb-6">Dental Quote Builder</h1>
+      
+      {/* Progress indicator */}
+      <div className="flex mb-6">
+        {['quiz', 'promo', 'patient-info', 'review'].map((step, index) => (
+          <div 
+            key={step}
+            className={`flex-1 text-center p-2 ${
+              currentStep === step ? 'bg-blue-500 text-white' : 'bg-gray-200'
+            } ${index === 0 ? 'rounded-l' : ''} ${
+              index === 3 ? 'rounded-r' : ''
+            }`}
+          >
+            {step.split('-').map(word => 
+              word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ')}
+          </div>
+        ))}
+      </div>
+      
+      {/* Always show selected treatments */}
+      <div className="p-4 border rounded shadow-sm mb-4">
+        <h2 className="text-xl font-bold mb-2">Your Quote</h2>
+        {selectedTreatments.length > 0 ? (
+          <div>
+            <ul className="mb-2">
+              {selectedTreatments.map(treatment => (
+                <li key={treatment.id} className="flex justify-between mb-1">
+                  <span>{treatment.name}</span>
+                  <div className="flex items-center">
+                    <span className="mr-2">${treatment.price.toFixed(2)}</span>
+                    <button
+                      type="button"
+                      className="text-red-500"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        removeTreatment(treatment.id);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div className="border-t pt-2">
+              <div className="flex justify-between">
+                <span>Subtotal:</span>
+                <span>${subtotal.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount ({discount}%):</span>
+                  <span>-${discountAmount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold">
+                <span>Total:</span>
+                <span>${total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <p>No treatments selected yet.</p>
+        )}
+      </div>
+      
+      {/* Current step */}
+      {currentStep === 'quiz' && renderQuizStep()}
+      {currentStep === 'promo' && renderPromoStep()}
+      {currentStep === 'patient-info' && renderPatientInfoStep()}
+      {currentStep === 'review' && renderReviewStep()}
+    </div>
+  );
+};
+
+export default RobustQuoteBuilder;
+3. Register the Component in App.tsx
+// Add to your imports
+import { lazy, Suspense } from 'react';
+const RobustQuoteBuilder = lazy(() => import('./pages/RobustQuoteBuilder'));
+
+// Add to your routes
+<Route 
+  path="/robust-quote" 
+  element={
+    <Suspense fallback={<div>Loading...</div>}>
+      <RobustQuoteBuilder />
+    </Suspense>
+  } 
+/>
+Why This Will Solve Your Issues
+Double Backup System: State is stored in both Zustand and a separate backup in localStorage
+Complete Form Hijacking Prevention: Every button is type="button" with preventDefault() and stopPropagation()
+Simplified Component Structure: Everything in one component to prevent re-render issues
+Explicit State Transition: State only changes when explicitly commanded, not as side effects
+Detailed Logging: Console logs for every state change to help debugging
+Always Visible Quote Summary: Users always see their current selections
+Recovery Mechanism: Can recover from corrupted state
+Implementation Strategy
+Create these files exactly as shown
+Add the route to your App.tsx
+Test the flow at /robust-quote
