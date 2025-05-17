@@ -1,14 +1,7 @@
-/**
- * TreatmentList Component
- * 
- * This component displays the list of treatments in a quote
- * and provides functionality for managing treatment quantities
- */
 import React from 'react';
-import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Plus, Minus, Trash2 } from 'lucide-react';
+import { PlusIcon, MinusIcon, Trash2Icon } from 'lucide-react';
 
 export interface Treatment {
   id: string;
@@ -34,104 +27,108 @@ export function TreatmentList({
   onRemoveTreatment,
   showClinicReferences = false,
 }: TreatmentListProps) {
-  // Format currency properly
-  const formatCurrency = (amount: number, currency: string = 'EUR') => {
+  if (!treatments || treatments.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <p className="text-center text-muted-foreground">No treatments added to this quote.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const formatCurrency = (amount: number, currency: string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency,
+      currency: currency || 'USD',
     }).format(amount);
   };
 
-  const handleQuantityChange = (treatmentId: string, newQuantity: number) => {
-    if (newQuantity >= 0 && onUpdateQuantity) {
-      onUpdateQuantity(treatmentId, newQuantity);
+  const handleIncrement = (treatmentId: string, currentQuantity: number) => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(treatmentId, currentQuantity + 1);
     }
   };
 
-  if (!treatments || treatments.length === 0) {
-    return <div className="text-center py-6">No treatments in this quote.</div>;
-  }
+  const handleDecrement = (treatmentId: string, currentQuantity: number) => {
+    if (currentQuantity > 1 && onUpdateQuantity) {
+      onUpdateQuantity(treatmentId, currentQuantity - 1);
+    }
+  };
+
+  const handleRemove = (treatmentId: string) => {
+    if (onRemoveTreatment) {
+      onRemoveTreatment(treatmentId);
+    }
+  };
 
   return (
-    <Table>
-      <TableCaption>Treatment details for this quote.</TableCaption>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Treatment</TableHead>
-          {showClinicReferences && <TableHead>Clinic Reference</TableHead>}
-          <TableHead className="text-right">Price</TableHead>
-          <TableHead className="text-center">Quantity</TableHead>
-          <TableHead className="text-right">Total</TableHead>
-          {editable && <TableHead className="w-[100px]">Actions</TableHead>}
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {treatments.map((treatment) => (
-          <TableRow key={treatment.id}>
-            <TableCell className="font-medium">{treatment.name}</TableCell>
-            {showClinicReferences && (
-              <TableCell>{treatment.clinic_ref_code || 'N/A'}</TableCell>
-            )}
-            <TableCell className="text-right">
-              {formatCurrency(treatment.price, treatment.currency)}
-            </TableCell>
-            <TableCell className="text-center">
-              {editable ? (
-                <div className="flex items-center justify-center">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleQuantityChange(treatment.id, treatment.quantity - 1)}
-                    disabled={treatment.quantity <= 0}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Input
-                    type="number"
-                    value={treatment.quantity}
-                    onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      if (!isNaN(value)) {
-                        handleQuantityChange(treatment.id, value);
-                      }
-                    }}
-                    className="h-8 w-16 mx-2 text-center"
-                    min="0"
-                  />
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => handleQuantityChange(treatment.id, treatment.quantity + 1)}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+    <div className="flex flex-col space-y-4">
+      {treatments.map((treatment) => (
+        <Card key={treatment.id} className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex flex-col sm:flex-row justify-between items-start p-4 gap-2">
+              <div className="flex-1">
+                <div className="flex flex-col">
+                  <h3 className="font-medium">{treatment.name}</h3>
+                  {showClinicReferences && treatment.clinic_ref_code && (
+                    <span className="text-xs text-muted-foreground mt-1">
+                      Clinic Reference: {treatment.clinic_ref_code}
+                    </span>
+                  )}
                 </div>
-              ) : (
-                treatment.quantity
-              )}
-            </TableCell>
-            <TableCell className="text-right">
-              {formatCurrency(treatment.price * treatment.quantity, treatment.currency)}
-            </TableCell>
-            {editable && (
-              <TableCell>
-                {onRemoveTreatment && (
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => onRemoveTreatment(treatment.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                {editable ? (
+                  <div className="flex items-center">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleDecrement(treatment.id, treatment.quantity)}
+                      disabled={treatment.quantity <= 1}
+                    >
+                      <MinusIcon className="h-3 w-3" />
+                    </Button>
+                    <span className="mx-2 min-w-[2rem] text-center">{treatment.quantity}</span>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => handleIncrement(treatment.id, treatment.quantity)}
+                    >
+                      <PlusIcon className="h-3 w-3" />
+                    </Button>
+                  </div>
+                ) : (
+                  <span className="text-sm font-medium">
+                    {treatment.quantity > 1 ? `${treatment.quantity} × ` : ''}
+                    {formatCurrency(treatment.price, treatment.currency)}
+                  </span>
                 )}
-              </TableCell>
-            )}
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
+                
+                <div className="min-w-[5rem] text-right">
+                  <div className="font-medium">
+                    {formatCurrency(treatment.price * treatment.quantity, treatment.currency)}
+                  </div>
+                  {editable && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => handleRemove(treatment.id)}
+                    >
+                      <Trash2Icon className="h-3 w-3 mr-1" />
+                      <span className="text-xs">Remove</span>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   );
 }
