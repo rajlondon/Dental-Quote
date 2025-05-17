@@ -110,23 +110,27 @@ class QuoteIntegrationService {
   // Clinic Portal Functions
   async getClinicQuotes(clinicId: string): Promise<QuoteData[]> {
     const response = await apiRequest('GET', `/api/integration/clinic/${clinicId}/quotes`);
-    return response.json();
+    const data = await response.json();
+    return data.map((quote: any) => new QuoteData(quote));
   }
 
   async getClinicQuote(clinicId: string, quoteId: string): Promise<QuoteData> {
     const response = await apiRequest('GET', `/api/integration/clinic/${clinicId}/quote/${quoteId}`);
-    return response.json();
+    const data = await response.json();
+    return new QuoteData(data);
   }
 
   // Patient Portal Functions
   async getPatientQuotes(patientId: string): Promise<QuoteData[]> {
     const response = await apiRequest('GET', `/api/integration/patient/${patientId}/quotes`);
-    return response.json();
+    const data = await response.json();
+    return data.map((quote: any) => new QuoteData(quote));
   }
 
   async getPatientQuote(patientId: string, quoteId: string): Promise<QuoteData> {
     const response = await apiRequest('GET', `/api/integration/patient/${patientId}/quote/${quoteId}`);
-    return response.json();
+    const data = await response.json();
+    return new QuoteData(data);
   }
 
   // Common Functions

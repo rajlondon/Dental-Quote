@@ -2,177 +2,148 @@
  * Hook for accessing the quote system across all portals
  * This hook provides unified access to quote data for the admin, clinic, and patient portals
  */
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QuoteData, Treatment, quoteIntegrationService } from '@/services/quote-integration-service';
+import { useQuery, useMutation, QueryClient } from '@tanstack/react-query';
+import { quoteIntegrationService, QuoteData } from '@/services/quote-integration-service';
 import { useToast } from '@/hooks/use-toast';
 
-// Admin Portal hooks
+// Admin Portal Hooks
 export function useAdminQuotes() {
   return useQuery({
-    queryKey: ['/api/admin/quotes'],
-    queryFn: async () => {
-      return await quoteIntegrationService.getAdminQuotes();
-    }
+    queryKey: ['/api/integration/admin/quotes'],
+    queryFn: async () => quoteIntegrationService.getAdminQuotes(),
   });
 }
 
 export function useAdminQuote(quoteId: string | undefined) {
   return useQuery({
-    queryKey: ['/api/admin/quotes', quoteId],
+    queryKey: ['/api/integration/admin/quote', quoteId],
     queryFn: async () => {
-      if (!quoteId) return null;
-      return await quoteIntegrationService.getAdminQuote(quoteId);
+      if (!quoteId) throw new Error('Quote ID is required');
+      return quoteIntegrationService.getAdminQuote(quoteId);
     },
-    enabled: !!quoteId
+    enabled: !!quoteId,
   });
 }
 
-// Clinic Portal hooks
+// Clinic Portal Hooks
 export function useClinicQuotes(clinicId: string | undefined) {
   return useQuery({
-    queryKey: ['/api/clinic/quotes', clinicId],
+    queryKey: ['/api/integration/clinic/quotes', clinicId],
     queryFn: async () => {
-      if (!clinicId) return [];
-      return await quoteIntegrationService.getClinicQuotes(clinicId);
+      if (!clinicId) throw new Error('Clinic ID is required');
+      return quoteIntegrationService.getClinicQuotes(clinicId);
     },
-    enabled: !!clinicId
+    enabled: !!clinicId,
   });
 }
 
 export function useClinicQuote(clinicId: string | undefined, quoteId: string | undefined) {
   return useQuery({
-    queryKey: ['/api/clinic/quotes', clinicId, quoteId],
+    queryKey: ['/api/integration/clinic/quote', clinicId, quoteId],
     queryFn: async () => {
-      if (!clinicId || !quoteId) return null;
-      return await quoteIntegrationService.getClinicQuote(clinicId, quoteId);
+      if (!clinicId) throw new Error('Clinic ID is required');
+      if (!quoteId) throw new Error('Quote ID is required');
+      return quoteIntegrationService.getClinicQuote(clinicId, quoteId);
     },
-    enabled: !!clinicId && !!quoteId
+    enabled: !!clinicId && !!quoteId,
   });
 }
 
-// Patient Portal hooks
+// Patient Portal Hooks
 export function usePatientQuotes(patientId: string | undefined) {
   return useQuery({
-    queryKey: ['/api/patient/quotes', patientId],
+    queryKey: ['/api/integration/patient/quotes', patientId],
     queryFn: async () => {
-      if (!patientId) return [];
-      return await quoteIntegrationService.getPatientQuotes(patientId);
+      if (!patientId) throw new Error('Patient ID is required');
+      return quoteIntegrationService.getPatientQuotes(patientId);
     },
-    enabled: !!patientId
+    enabled: !!patientId,
   });
 }
 
 export function usePatientQuote(patientId: string | undefined, quoteId: string | undefined) {
   return useQuery({
-    queryKey: ['/api/patient/quotes', patientId, quoteId],
+    queryKey: ['/api/integration/patient/quote', patientId, quoteId],
     queryFn: async () => {
-      if (!patientId || !quoteId) return null;
-      return await quoteIntegrationService.getPatientQuote(patientId, quoteId);
+      if (!patientId) throw new Error('Patient ID is required');
+      if (!quoteId) throw new Error('Quote ID is required');
+      return quoteIntegrationService.getPatientQuote(patientId, quoteId);
     },
-    enabled: !!patientId && !!quoteId
+    enabled: !!patientId && !!quoteId,
   });
 }
 
-// Shared hooks for all portals
+// Mutation Hooks (Common across portals)
 export function useUpdateQuoteStatus() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId, 
-      status 
-    }: { 
-      quoteId: string; 
-      status: string;
-    }) => {
-      return await quoteIntegrationService.updateQuoteStatus(quoteId, status);
+    mutationFn: async ({ quoteId, status }: { quoteId: string; status: string }) => {
+      return quoteIntegrationService.updateQuoteStatus(quoteId, status);
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Quote status updated successfully",
+        title: 'Quote Status Updated',
+        description: 'The quote status has been updated successfully.',
       });
-      
-      // Invalidate all quote queries to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes'] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to update quote status: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Update Quote Status',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
 export function useAssignQuote() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId, 
-      clinicId 
-    }: { 
-      quoteId: string; 
-      clinicId: string;
-    }) => {
-      return await quoteIntegrationService.assignQuote(quoteId, clinicId);
+    mutationFn: async ({ quoteId, clinicId }: { quoteId: string; clinicId: string }) => {
+      return quoteIntegrationService.assignQuote(quoteId, clinicId);
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Quote assigned to clinic successfully",
+        title: 'Quote Assigned',
+        description: 'The quote has been assigned to the clinic successfully.',
       });
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to assign quote: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Assign Quote',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
 export function useUnassignQuote() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId 
-    }: { 
-      quoteId: string; 
-    }) => {
-      return await quoteIntegrationService.unassignQuote(quoteId);
+    mutationFn: async ({ quoteId }: { quoteId: string }) => {
+      return quoteIntegrationService.unassignQuote(quoteId);
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Quote unassigned successfully",
+        title: 'Quote Unassigned',
+        description: 'The quote has been unassigned from the clinic.',
       });
-      
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to unassign quote: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Unassign Quote',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
 export function useUpdateTreatmentQuantity() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
@@ -183,63 +154,46 @@ export function useUpdateTreatmentQuantity() {
     }: { 
       quoteId: string; 
       treatmentId: string; 
-      quantity: number;
+      quantity: number 
     }) => {
-      return await quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
+      return quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Treatment quantity updated",
+        title: 'Treatment Updated',
+        description: 'The treatment quantity has been updated successfully.',
       });
-      
-      // Invalidate specific quote
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes', variables.quoteId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes', , variables.quoteId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to update treatment: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Update Treatment',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
 export function useRemoveTreatment() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId, 
-      treatmentId 
-    }: { 
-      quoteId: string; 
-      treatmentId: string;
-    }) => {
-      return await quoteIntegrationService.removeTreatment(quoteId, treatmentId);
+    mutationFn: async ({ quoteId, treatmentId }: { quoteId: string; treatmentId: string }) => {
+      return quoteIntegrationService.removeTreatment(quoteId, treatmentId);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Treatment removed from quote",
+        title: 'Treatment Removed',
+        description: 'The treatment has been removed from the quote.',
       });
-      
-      // Invalidate specific quote
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes', variables.quoteId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes', , variables.quoteId] });
-      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to remove treatment: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Remove Treatment',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
@@ -247,59 +201,45 @@ export function useSendQuoteEmail() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId, 
-      email 
-    }: { 
-      quoteId: string; 
-      email: string;
-    }) => {
-      return await quoteIntegrationService.sendQuoteEmail(quoteId, email);
+    mutationFn: async ({ quoteId, email }: { quoteId: string; email: string }) => {
+      return quoteIntegrationService.sendQuoteEmail(quoteId, email);
     },
     onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Quote sent by email successfully",
+        title: 'Email Sent',
+        description: 'The quote has been sent to the email successfully.',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to send email: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Send Email',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
 export function useRequestAppointment() {
-  const queryClient = useQueryClient();
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId 
-    }: { 
-      quoteId: string;
-    }) => {
-      return await quoteIntegrationService.requestAppointment(quoteId);
+    mutationFn: async ({ quoteId }: { quoteId: string }) => {
+      return quoteIntegrationService.requestAppointment(quoteId);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       toast({
-        title: "Success",
-        description: "Appointment request submitted successfully",
+        title: 'Appointment Requested',
+        description: 'Your appointment request has been sent successfully.',
       });
-      
-      // Invalidate all related quotes
-      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to request appointment: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Request Appointment',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
 
@@ -307,35 +247,31 @@ export function useDownloadQuotePdf() {
   const { toast } = useToast();
   
   return useMutation({
-    mutationFn: async ({ 
-      quoteId 
-    }: { 
-      quoteId: string;
-    }) => {
-      return await quoteIntegrationService.downloadQuotePdf(quoteId);
+    mutationFn: async ({ quoteId }: { quoteId: string }) => {
+      return quoteIntegrationService.downloadQuotePdf(quoteId);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (blob: Blob) => {
       // Create a download link for the PDF
-      const url = URL.createObjectURL(data);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `quote-${variables.quoteId}.pdf`;
+      a.download = `quote_${Date.now()}.pdf`;
       document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       
       toast({
-        title: "Success",
-        description: "Quote PDF downloaded",
+        title: 'PDF Downloaded',
+        description: 'The quote PDF has been downloaded successfully.',
       });
     },
     onError: (error: Error) => {
       toast({
-        title: "Error",
-        description: `Failed to download PDF: ${error.message}`,
-        variant: "destructive",
+        title: 'Failed to Download PDF',
+        description: error.message,
+        variant: 'destructive',
       });
-    }
+    },
   });
 }
