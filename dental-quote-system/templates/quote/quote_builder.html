@@ -1,163 +1,343 @@
 {% extends 'base.html' %}
 
-{% block title %}MyDentalFly - Quote Builder{% endblock %}
+{% block title %}Dental Quote Builder - MyDentalFly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .treatment-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .treatment-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-img-top {
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .category-nav .nav-link {
+        border-radius: 30px;
+        padding: 10px 20px;
+        margin-right: 10px;
+        transition: all 0.2s ease;
+    }
+    
+    .category-nav .nav-link:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .category-nav .nav-link.active {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .selected-treatment {
+        border-left: 4px solid #007bff;
+    }
+    
+    .quantity-control {
+        width: 80px;
+    }
+    
+    .quote-summary {
+        position: sticky;
+        top: 20px;
+    }
+    
+    .promo-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+    
+    #messages-container {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1050;
+        width: 350px;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="quote-builder">
-    <div class="row">
-        <div class="col-md-8">
-            <h1 class="mb-4">Build Your Dental Treatment Quote</h1>
-            <p class="lead mb-4">Select treatments from the categories below to build your personalized quote for dental treatment in Turkey.</p>
-            
-            <!-- Treatment Categories -->
-            <div class="treatment-categories">
-                {% for category in categories %}
-                <div class="treatment-category" id="category-{{ category }}">
-                    <h2 class="category-title text-capitalize">{{ category }}</h2>
-                    <div class="row g-4">
-                        {% for treatment in categorized_treatments[category] %}
-                        <div class="col-md-6 col-lg-4">
-                            <div class="card treatment-card h-100">
-                                <img src="{{ treatment.image }}" class="card-img-top" alt="{{ treatment.name }}">
-                                <div class="card-body">
-                                    <h3 class="card-title h5">{{ treatment.name }}</h3>
-                                    <p class="card-text small">{{ treatment.description }}</p>
-                                    <div class="d-flex justify-content-between align-items-center mt-3">
-                                        <span class="card-price">${{ treatment.price }}</span>
-                                        <form action="{{ url_for('page_routes.quote_builder') }}" method="POST" class="ajax-form">
-                                            <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                            <input type="hidden" name="action" value="add">
-                                            <button type="submit" class="btn btn-sm btn-outline-primary">Add to Quote</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
+<!-- Page Header -->
+<section class="bg-light py-5">
+    <div class="container">
+        <h1 class="mb-3">Build Your Dental Quote</h1>
+        <p class="lead">Select treatments below to create your personalized dental quote.</p>
         
-        <div class="col-md-4">
-            <div class="selected-treatments">
-                <h3 class="mb-3">Your Quote Summary</h3>
-                
-                {% if selected_treatments %}
-                <div class="selected-treatments-list mb-4">
-                    {% for treatment in selected_treatments %}
-                    <div class="selected-treatment-item">
-                        <div>
-                            <div class="treatment-name">{{ treatment.name }}</div>
-                            <div class="d-flex align-items-center mt-1">
-                                <form id="update-form-{{ treatment.id }}" action="{{ url_for('page_routes.quote_builder') }}" method="POST" class="ajax-form d-flex align-items-center">
-                                    <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                    <input type="hidden" name="action" value="update_quantity">
-                                    <div class="input-group input-group-sm" style="width: 100px;">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity('{{ treatment.id }}', -1)">-</button>
-                                        <input type="number" id="quantity-{{ treatment.id }}" name="quantity" class="form-control text-center" value="{{ treatment.quantity|default(1) }}" min="1" max="10">
-                                        <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity('{{ treatment.id }}', 1)">+</button>
-                                    </div>
-                                </form>
-                                <div class="ms-3">
-                                    <form action="{{ url_for('page_routes.quote_builder') }}" method="POST" class="ajax-form">
-                                        <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                        <input type="hidden" name="action" value="remove">
-                                        <button type="submit" class="btn btn-sm text-danger" title="Remove">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="treatment-price">${{ (treatment.price * treatment.quantity|default(1))|round(2) }}</div>
+        <!-- Progress Steps -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span class="fw-bold">1</span>
                     </div>
-                    {% endfor %}
-                </div>
-                
-                <!-- Promo Code Form -->
-                <div class="promo-code-form">
-                    <h4 class="mb-2">Have a Promo Code?</h4>
-                    <form id="promo-form" action="{{ url_for('promo_routes.apply_promo') }}" method="POST">
-                        <div class="input-group mb-2">
-                            <input type="text" name="promo_code" class="form-control" placeholder="Enter code" {% if promo_code %}value="{{ promo_code }}"{% endif %}>
-                            <button type="submit" class="btn btn-primary">Apply</button>
-                        </div>
-                    </form>
-                    
-                    <!-- Promo Details (shown when a promo is applied) -->
-                    <div id="promo-details" class="alert alert-success p-2 mb-3 {% if not promo_code %}d-none{% endif %}">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong>Applied:</strong> <span id="applied-promo-code">{{ promo_code }}</span>
-                            </div>
-                            <button id="remove-promo-btn" class="btn btn-sm btn-outline-danger" data-url="{{ url_for('promo_routes.remove_promo') }}" {% if not promo_code %}style="display: none;"{% endif %}>
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold text-primary">Select Treatments</h6>
                     </div>
                 </div>
-                
-                <!-- Quote Totals -->
-                <div class="quote-totals">
-                    <div class="total-line">
-                        <span>Subtotal:</span>
-                        <span id="subtotal-amount">${{ totals.subtotal|round(2) }}</span>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span class="fw-bold text-muted">2</span>
                     </div>
-                    <div class="total-line {% if totals.discount <= 0 %}d-none{% endif %}">
-                        <span>Discount:</span>
-                        <span id="discount-amount" class="text-success">-${{ totals.discount|round(2) }}</span>
-                    </div>
-                    <div class="total-line final">
-                        <span>Total:</span>
-                        <span id="total-amount">${{ totals.total|round(2) }}</span>
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold text-muted">Patient Information</h6>
                     </div>
                 </div>
-                
-                <!-- Actions -->
-                <div class="mt-4">
-                    <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary w-100">
-                        Continue to Patient Info
-                    </a>
-                    <button type="button" class="btn btn-outline-secondary w-100 mt-2" onclick="window.location.href='{{ url_for('page_routes.restart_quote') }}'">
-                        Start Over
-                    </button>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span class="fw-bold text-muted">3</span>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold text-muted">Review Quote</h6>
+                    </div>
                 </div>
-                {% else %}
-                <div class="alert alert-info">
-                    <p>Your quote is empty. Please select treatments to include in your quote.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="bg-light border rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                        <span class="fw-bold text-muted">4</span>
+                    </div>
+                    <div class="ms-3">
+                        <h6 class="mb-0 fw-bold text-muted">Book Consultation</h6>
+                    </div>
                 </div>
-                <div class="text-center mt-4">
-                    <a href="#category-{{ categories[0] }}" class="btn btn-primary">
-                        Browse Treatments
-                    </a>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
-</div>
+</section>
+
+<!-- Messages Container -->
+<div id="messages-container"></div>
+
+<!-- Main Content -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Treatments Column -->
+            <div class="col-lg-8">
+                <!-- Category Navigation -->
+                <nav class="category-nav mb-4">
+                    <div class="nav nav-pills flex-nowrap overflow-auto pb-2">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#all-treatments">All Treatments</a>
+                        {% for category_id, category in categorized_treatments.items() %}
+                        <a class="nav-link" data-bs-toggle="tab" href="#{{ category_id }}">{{ category.name }}</a>
+                        {% endfor %}
+                    </div>
+                </nav>
+                
+                <!-- Tab Content -->
+                <div class="tab-content">
+                    <!-- All Treatments Tab -->
+                    <div class="tab-pane fade show active" id="all-treatments">
+                        <div class="row g-4">
+                            {% for category_id, category in categorized_treatments.items() %}
+                                {% for treatment in category.treatments %}
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="card h-100 treatment-card">
+                                        {% if treatment.popular %}
+                                        <span class="badge bg-danger promo-badge">Popular</span>
+                                        {% endif %}
+                                        <img src="{{ treatment.image }}" class="card-img-top" alt="{{ treatment.name }}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ treatment.name }}</h5>
+                                            <p class="card-text small">{{ treatment.description }}</p>
+                                            <p class="card-text">
+                                                <strong class="text-primary">${{ treatment.price }}</strong>
+                                                <span class="badge bg-light text-dark ms-2">{{ treatment.duration }}</span>
+                                            </p>
+                                        </div>
+                                        <div class="card-footer bg-white border-0">
+                                            <button class="btn btn-primary w-100 add-treatment-btn" data-treatment-id="{{ treatment.id }}">
+                                                <i class="fas fa-plus-circle me-1"></i> Add to Quote
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Category Tabs -->
+                    {% for category_id, category in categorized_treatments.items() %}
+                    <div class="tab-pane fade" id="{{ category_id }}">
+                        <div class="row g-4">
+                            {% for treatment in category.treatments %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card h-100 treatment-card">
+                                    {% if treatment.popular %}
+                                    <span class="badge bg-danger promo-badge">Popular</span>
+                                    {% endif %}
+                                    <img src="{{ treatment.image }}" class="card-img-top" alt="{{ treatment.name }}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text small">{{ treatment.description }}</p>
+                                        <p class="card-text">
+                                            <strong class="text-primary">${{ treatment.price }}</strong>
+                                            <span class="badge bg-light text-dark ms-2">{{ treatment.duration }}</span>
+                                        </p>
+                                    </div>
+                                    <div class="card-footer bg-white border-0">
+                                        <button class="btn btn-primary w-100 add-treatment-btn" data-treatment-id="{{ treatment.id }}">
+                                            <i class="fas fa-plus-circle me-1"></i> Add to Quote
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Quote Summary Column -->
+            <div class="col-lg-4">
+                <div class="card quote-summary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Your Quote Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Selected Treatments -->
+                        <h6 class="mb-3">Selected Treatments</h6>
+                        <div id="selected-treatments-list">
+                            {% if selected_treatments %}
+                                {% for treatment in selected_treatments %}
+                                <div class="card mb-3 selected-treatment" id="treatment-{{ treatment.id }}">
+                                    <div class="card-body p-3">
+                                        <div class="d-flex justify-content-between">
+                                            <div>
+                                                <h6 class="mb-1">{{ treatment.name }}</h6>
+                                                <p class="mb-0 text-muted small">
+                                                    <span class="unit-price" data-price="{{ treatment.price }}">${{ treatment.price }} each</span>
+                                                </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="input-group quantity-control mb-2">
+                                                    <input type="number" class="form-control form-control-sm treatment-quantity" min="1" value="{{ treatment.quantity }}" data-treatment-id="{{ treatment.id }}">
+                                                </div>
+                                                <p class="mb-0 fw-bold total-price">${{ treatment.price * treatment.quantity }}</p>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger mt-2 remove-treatment-btn" data-treatment-id="{{ treatment.id }}">
+                                            <i class="fas fa-trash-alt"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    No treatments selected yet. Browse treatments above to add them to your quote.
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Promo Code Section -->
+                        <div class="mt-4" id="promo-section">
+                            {% if promo_code %}
+                                <div id="promo-display">
+                                    <h6 class="mb-3">Applied Promo Code</h6>
+                                    <div class="alert alert-success d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <p class="mb-0"><strong id="promo-code-display">{{ promo_code }}</strong></p>
+                                            <p class="mb-0 small" id="promo-description">{{ promo_details.description }}</p>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger ms-2" id="remove-promo-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="promo-form" style="display: none;">
+                                    <h6 class="mb-3">Have a Promo Code?</h6>
+                                    <form class="mb-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="promo-code" placeholder="Enter promo code">
+                                            <button class="btn btn-outline-primary" type="submit">Apply</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% else %}
+                                <div id="promo-display" style="display: none;">
+                                    <h6 class="mb-3">Applied Promo Code</h6>
+                                    <div class="alert alert-success d-flex align-items-center">
+                                        <div class="flex-grow-1">
+                                            <p class="mb-0"><strong id="promo-code-display"></strong></p>
+                                            <p class="mb-0 small" id="promo-description"></p>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger ms-2" id="remove-promo-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="promo-form">
+                                    <h6 class="mb-3">Have a Promo Code?</h6>
+                                    <form class="mb-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="promo-code" placeholder="Enter promo code">
+                                            <button class="btn btn-outline-primary" type="submit">Apply</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Price Breakdown -->
+                        <div class="mt-4">
+                            <h6 class="mb-3">Price Breakdown</h6>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td>Subtotal</td>
+                                    <td class="text-end" id="quote-subtotal">${{ quote_totals.subtotal }}</td>
+                                </tr>
+                                <tr id="discount-row" {% if quote_totals.discount == 0 %}style="display: none;"{% endif %}>
+                                    <td>Discount</td>
+                                    <td class="text-end text-success" id="quote-discount">-${{ quote_totals.discount }}</td>
+                                </tr>
+                                <tr class="fw-bold">
+                                    <td>Total</td>
+                                    <td class="text-end" id="quote-total">${{ quote_totals.total }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <!-- Continue Button -->
+                        <div class="mt-4">
+                            <form action="{{ url_for('page_routes.patient_info') }}" method="GET">
+                                <button type="submit" class="btn btn-primary w-100 btn-lg" {% if not selected_treatments %}disabled{% endif %}>
+                                    Continue to Patient Information
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Special Offers Link -->
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('page_routes.special_offers') }}" class="text-decoration-none">
+                                <i class="fas fa-percentage me-1"></i> View Special Offers
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Smooth scroll to treatment categories
-        const categoryLinks = document.querySelectorAll('a[href^="#category-"]');
-        categoryLinks.forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 100,
-                        behavior: 'smooth'
-                    });
-                }
-            });
-        });
-    });
+    // Alert will be initialized by main.js
 </script>
 {% endblock %}

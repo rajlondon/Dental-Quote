@@ -1,64 +1,65 @@
 """
-Dental Quote System - Main Application File
-Flask web application for dental treatment quote generation
+Main Flask application for MyDentalFly Dental Quote System
 """
-from flask import Flask, session
-import logging
 import os
-from datetime import timedelta
-
-# Import route blueprints
+import logging
+from flask import Flask, session
 from routes.page_routes import page_routes
 from routes.promo_routes import promo_routes
 from routes.integration_routes import integration_routes
 
-# Configure logging
+# Set up logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
 
-def create_app():
-    """Create and configure the Flask application"""
-    # Create app instance
-    app = Flask(__name__)
-    
-    # Configure app
-    app.config.update(
-        SECRET_KEY=os.environ.get('SECRET_KEY', 'dev-secret-key'),
-        SESSION_TYPE='filesystem',
-        SESSION_PERMANENT=True,
-        PERMANENT_SESSION_LIFETIME=timedelta(days=1),
-        TEMPLATES_AUTO_RELOAD=True
-    )
-    
-    # Register blueprints
-    app.register_blueprint(page_routes)
-    app.register_blueprint(promo_routes, url_prefix='/promo')
-    app.register_blueprint(integration_routes, url_prefix='/api')
-    
-    # Error handlers
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('error/404.html'), 404
-    
-    @app.errorhandler(500)
-    def internal_server_error(e):
-        return render_template('error/500.html'), 500
-    
-    # Log app startup
-    logger.info("Dental Quote System application started")
-    
-    return app
+# Create Flask application
+app = Flask(__name__)
 
-# Create the app instance
-app = create_app()
+# Configure application
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'mydentalfly-secure-key-2025')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
-# Import missing dependencies
-from flask import render_template
+# Register blueprints
+app.register_blueprint(page_routes)
+app.register_blueprint(promo_routes, url_prefix='/promo')
+app.register_blueprint(integration_routes, url_prefix='/api')
 
-if __name__ == '__main__':
-    # Run the app
-    port = int(os.environ.get('PORT', 5005))
-    app.run(host='0.0.0.0', port=port, debug=True)
+@app.before_request
+def initialize_session():
+    """Initialize session data if not already present"""
+    if 'treatments' not in session:
+        session['treatments'] = []
+    if 'promo_code' not in session:
+        session['promo_code'] = None
+    if 'patient_info' not in session:
+        session['patient_info'] = {}
+    if 'quote_totals' not in session:
+        session['quote_totals'] = {
+            'subtotal': 0,
+            'discount': 0,
+            'total': 0,
+            'item_count': 0
+        }
+
+@app.context_processor
+def inject_globals():
+    """Inject global variables into templates"""
+    return {
+        'quote_totals': session.get('quote_totals', {
+            'subtotal': 0,
+            'discount': 0,
+            'total': 0,
+            'item_count': 0
+        }),
+        'promo_code': session.get('promo_code'),
+        'treatment_count': len(session.get('treatments', []))
+    }
+
+# Uncomment for direct execution if not using run.py
+# if __name__ == '__main__':
+#     app.run(host='0.0.0.0', port=5005, debug=True)

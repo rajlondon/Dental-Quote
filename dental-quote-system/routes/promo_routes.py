@@ -1,120 +1,92 @@
 """
 Promo Routes Module
-Handles promotional code operations
+Defines the routes for promotion and promo code handling
 """
-from flask import Blueprint, request, jsonify, render_template
-from utils.session_manager import apply_promo_code, remove_promo_code, get_quote_totals
-from services.promo_service import get_active_promotions, get_promotion_by_code
 import logging
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
+from services.promo_service import get_active_promotions, get_promotion_by_code
+from utils.session_manager import apply_promo_code, remove_promo_code, get_quote_totals, get_promo_details
 
 logger = logging.getLogger(__name__)
 
-# Create Blueprint
+# Create blueprint
 promo_routes = Blueprint('promo_routes', __name__)
+
+@promo_routes.route('/special-offers')
+def special_offers():
+    """Render the special offers page"""
+    # Get active promotions
+    promotions = get_active_promotions()
+    
+    return render_template(
+        'promo/special_offers.html',
+        promotions=promotions
+    )
 
 @promo_routes.route('/apply-promo', methods=['POST'])
 def apply_promo():
-    """Apply a promo code to the current quote"""
-    # Check if the request is AJAX
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    """Apply a promo code"""
+    # Check if AJAX request
+    is_ajax_request = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
-    # Get the promo code from the form data
-    promo_code = request.form.get('promo_code', '').strip().upper()
+    # Get promo code from form
+    promo_code = request.form.get('promo_code')
     
     if not promo_code:
-        if is_ajax:
+        if is_ajax_request:
             return jsonify({
                 'success': False,
                 'message': 'Please enter a promo code'
             })
-        return render_template('quote/quote_builder.html', error='Please enter a promo code')
+        return redirect(url_for('page_routes.quote_builder'))
     
-    # Try to apply the promo code
-    result = apply_promo_code(promo_code)
+    # Apply promo code
+    success, message = apply_promo_code(promo_code)
     
-    if len(result) == 3:  # Success case returns 3 values
-        success, message, promo_result = result
-        
-        # Calculate the updated totals
-        totals = get_quote_totals()
-        
-        if is_ajax:
-            return jsonify({
-                'success': True,
-                'message': message,
-                'promo_details': promo_result.get('promo_details'),
-                'discount_amount': promo_result.get('discount_amount'),
-                'totals': totals
-            })
-    else:
-        success, message = result
-        
-        if is_ajax:
-            return jsonify({
-                'success': False,
-                'message': message
-            })
+    # Get promo details for the response
+    promo_details = get_promo_details() if success else None
     
-    # For non-AJAX requests, redirect back to the quote builder page
-    return render_template('quote/quote_builder.html', 
-                          success_message=message if success else None, 
-                          error=message if not success else None)
-
-@promo_routes.route('/remove-promo', methods=['POST'])
-def remove_promo():
-    """Remove the applied promo code from the current quote"""
-    # Check if the request is AJAX
-    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
-    
-    # Try to remove the promo code
-    success, message = remove_promo_code()
-    
-    # Calculate the updated totals
-    totals = get_quote_totals()
-    
-    if is_ajax:
+    if is_ajax_request:
         return jsonify({
             'success': success,
             'message': message,
-            'totals': totals
+            'promo_details': promo_details,
+            'totals': get_quote_totals()
         })
     
-    # For non-AJAX requests, redirect back to the quote builder page
-    return render_template('quote/quote_builder.html', 
-                          success_message=message if success else None, 
-                          error=message if not success else None)
-                          
-@promo_routes.route('/check-promo', methods=['GET'])
-def check_promo():
-    """Check if a promo code is valid without applying it"""
-    promo_code = request.args.get('code', '').strip().upper()
+    # Redirect to quote builder
+    return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes.route('/remove-promo', methods=['POST'])
+def remove_promo():
+    """Remove a promo code"""
+    # Check if AJAX request
+    is_ajax_request = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
-    if not promo_code:
+    # Remove promo code
+    success, message = remove_promo_code()
+    
+    if is_ajax_request:
         return jsonify({
-            'valid': False,
-            'message': 'No promo code provided'
+            'success': success,
+            'message': message,
+            'totals': get_quote_totals()
         })
     
+    # Redirect to quote builder
+    return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes.route('/promotion/<promo_code>')
+def view_promotion(promo_code):
+    """View a specific promotion"""
+    # Get the promotion details
     promotion = get_promotion_by_code(promo_code)
     
-    if promotion:
-        return jsonify({
-            'valid': True,
-            'message': 'Valid promo code',
-            'promo_details': promotion
-        })
-    else:
-        return jsonify({
-            'valid': False,
-            'message': f"Promo code '{promo_code}' is invalid or expired"
-        })
-
-@promo_routes.route('/active-promotions', methods=['GET'])
-def get_promotions():
-    """Get a list of all active promotions"""
-    promotions = get_active_promotions()
+    if not promotion:
+        # Promotion not found, redirect to special offers
+        return redirect(url_for('promo_routes.special_offers'))
     
-    return jsonify({
-        'success': True,
-        'promotions': promotions
-    })
+    return render_template(
+        'promo/promotion_details.html',
+        promotion=promotion
+    )

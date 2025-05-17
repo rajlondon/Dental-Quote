@@ -1,256 +1,243 @@
 """
-Session Manager Utility
-Handles session management for the dental quote application
+Session Manager Module
+Provides utility functions for managing session data
 """
-from flask import session
-from services.treatment_service import get_treatment_by_id
-from services.promo_service import validate_promo_code, calculate_discount
-import uuid
 import logging
+from flask import session
+from services.treatment_service import get_treatment_by_id, calculate_treatments_total
+from services.promo_service import get_promotion_by_code, calculate_discount
 
 logger = logging.getLogger(__name__)
 
-def initialize_session():
-    """Initialize or reset the session"""
-    if 'initialized' not in session:
-        session['initialized'] = True
-        session['treatments'] = {}
-        session['promo_code'] = None
-        session['discount_amount'] = 0
-        session['quote_id'] = None
-        session['patient_info'] = {}
-        logger.info("Session initialized")
+def get_session_treatments():
+    """Get treatments from session"""
+    return session.get('treatments', [])
 
-def add_treatment(treatment_id):
-    """Add a treatment to the session"""
-    # Make sure the session is initialized
-    initialize_session()
-    
+def add_treatment_to_session(treatment_id, quantity=1):
+    """
+    Add a treatment to the session
+    Returns (success, message)
+    """
     # Get the treatment details
     treatment = get_treatment_by_id(treatment_id)
     
     if not treatment:
-        return False, f"Treatment with ID {treatment_id} not found"
+        logger.warning(f"Treatment not found: {treatment_id}")
+        return False, f"Treatment not found: {treatment_id}"
     
-    # Add or update the treatment in the session
-    treatments = session.get('treatments', {})
+    # Check if the treatment is already in the session
+    treatments = get_session_treatments()
     
-    if treatment_id in treatments:
-        # Increment quantity if already in cart
-        treatments[treatment_id]['quantity'] += 1
-        message = f"{treatment['name']} quantity increased"
-    else:
-        # Add new treatment with quantity 1
-        treatments[treatment_id] = {
-            'id': treatment_id,
-            'name': treatment['name'],
-            'price': treatment['price'],
-            'category': treatment['category'],
-            'quantity': 1,
-            'description': treatment['description'],
-            'image': treatment.get('image', '')
-        }
-        message = f"{treatment['name']} added to quote"
+    for existing_treatment in treatments:
+        if existing_treatment.get('id') == treatment_id:
+            # Update quantity if already in cart
+            existing_treatment['quantity'] = existing_treatment.get('quantity', 1) + quantity
+            session['treatments'] = treatments
+            session.modified = True
+            
+            # Update totals
+            update_quote_totals()
+            
+            logger.info(f"Updated quantity for treatment: {treatment_id}")
+            return True, f"Updated quantity for {treatment.get('name')}"
     
-    # Update the session
+    # Add new treatment to session
+    treatment_copy = treatment.copy()
+    treatment_copy['quantity'] = quantity
+    
+    treatments.append(treatment_copy)
     session['treatments'] = treatments
+    session.modified = True
     
-    # Recalculate any discount if there's a promo code applied
-    if session.get('promo_code'):
-        apply_promo_code(session['promo_code'])
+    # Update totals
+    update_quote_totals()
     
-    logger.info(f"Treatment added: {treatment_id}")
-    return True, message
+    logger.info(f"Added treatment to session: {treatment_id}")
+    return True, f"Added {treatment.get('name')} to your quote"
 
-def remove_treatment(treatment_id):
-    """Remove a treatment from the session"""
-    # Make sure the session is initialized
-    initialize_session()
+def remove_treatment_from_session(treatment_id):
+    """
+    Remove a treatment from the session
+    Returns (success, message)
+    """
+    treatments = get_session_treatments()
     
-    # Get the treatments from the session
-    treatments = session.get('treatments', {})
+    # Find the treatment in the session
+    for i, treatment in enumerate(treatments):
+        if treatment.get('id') == treatment_id:
+            # Remove the treatment
+            removed_treatment = treatments.pop(i)
+            session['treatments'] = treatments
+            session.modified = True
+            
+            # Update totals
+            update_quote_totals()
+            
+            logger.info(f"Removed treatment from session: {treatment_id}")
+            return True, f"Removed {removed_treatment.get('name')} from your quote"
     
-    if treatment_id not in treatments:
-        return False, f"Treatment with ID {treatment_id} not in quote"
-    
-    # Get the treatment name before removing
-    treatment_name = treatments[treatment_id]['name']
-    
-    # Remove the treatment
-    del treatments[treatment_id]
-    
-    # Update the session
-    session['treatments'] = treatments
-    
-    # Recalculate any discount if there's a promo code applied
-    if session.get('promo_code'):
-        apply_promo_code(session['promo_code'])
-    
-    logger.info(f"Treatment removed: {treatment_id}")
-    return True, f"{treatment_name} removed from quote"
+    logger.warning(f"Treatment not found in session: {treatment_id}")
+    return False, f"Treatment not found in your quote"
 
 def update_treatment_quantity(treatment_id, quantity):
-    """Update the quantity of a treatment in the session"""
-    # Make sure the session is initialized
-    initialize_session()
-    
-    # Get the treatments from the session
-    treatments = session.get('treatments', {})
-    
-    if treatment_id not in treatments:
-        return False, f"Treatment with ID {treatment_id} not in quote"
-    
+    """
+    Update treatment quantity in the session
+    Returns (success, message)
+    """
+    # Convert quantity to int
     try:
         quantity = int(quantity)
-        if quantity <= 0:
-            return remove_treatment(treatment_id)
-        
-        treatments[treatment_id]['quantity'] = quantity
-        
-        # Update the session
-        session['treatments'] = treatments
-        
-        # Recalculate any discount if there's a promo code applied
-        if session.get('promo_code'):
-            apply_promo_code(session['promo_code'])
-        
-        logger.info(f"Treatment quantity updated: {treatment_id} -> {quantity}")
-        return True, f"Quantity updated for {treatments[treatment_id]['name']}"
+    except (ValueError, TypeError):
+        logger.warning(f"Invalid quantity: {quantity}")
+        return False, "Invalid quantity"
     
-    except ValueError:
-        return False, "Invalid quantity value"
-
-def get_treatments():
-    """Get all treatments from the session"""
-    # Make sure the session is initialized
-    initialize_session()
+    # Check for valid quantity
+    if quantity <= 0:
+        return remove_treatment_from_session(treatment_id)
     
-    # Get the treatments from the session
-    treatments = session.get('treatments', {})
+    treatments = get_session_treatments()
     
-    # Convert the dictionary to a list
-    treatment_list = list(treatments.values())
+    # Find the treatment in the session
+    for treatment in treatments:
+        if treatment.get('id') == treatment_id:
+            # Update quantity
+            treatment['quantity'] = quantity
+            session['treatments'] = treatments
+            session.modified = True
+            
+            # Update totals
+            update_quote_totals()
+            
+            logger.info(f"Updated quantity for treatment: {treatment_id}")
+            return True, f"Updated quantity for {treatment.get('name')}"
     
-    return treatment_list
-
-def get_quote_totals():
-    """Calculate the quote totals"""
-    # Make sure the session is initialized
-    initialize_session()
-    
-    # Get the treatments from the session
-    treatments = session.get('treatments', {})
-    
-    # Calculate the subtotal
-    subtotal = 0
-    for treatment_id, treatment in treatments.items():
-        subtotal += treatment['price'] * treatment['quantity']
-    
-    # Get the discount amount
-    discount_amount = session.get('discount_amount', 0)
-    
-    # Calculate the total
-    total = subtotal - discount_amount
-    if total < 0:
-        total = 0
-    
-    return {
-        'subtotal': subtotal,
-        'discount': discount_amount,
-        'total': total,
-        'item_count': len(treatments),
-        'total_items': sum(t['quantity'] for t in treatments.values())
-    }
+    logger.warning(f"Treatment not found in session: {treatment_id}")
+    return False, f"Treatment not found in your quote"
 
 def apply_promo_code(promo_code):
-    """Apply a promo code to the quote"""
-    # Make sure the session is initialized
-    initialize_session()
+    """
+    Apply a promo code to the session
+    Returns (success, message)
+    """
+    if not promo_code:
+        logger.warning("No promo code provided")
+        return False, "Please enter a promo code"
     
-    # Standardize the promo code
-    promo_code = promo_code.strip().upper()
-    
-    # Get the treatments from the session
-    treatments = get_treatments()
-    
-    # Calculate the subtotal
-    subtotal = sum(treatment['price'] * treatment['quantity'] for treatment in treatments)
-    
-    # No treatments, no discount
-    if not treatments:
-        session['promo_code'] = None
-        session['discount_amount'] = 0
-        return False, "No treatments in quote. Add treatments before applying a promo code."
+    # Get total amount
+    totals = get_quote_totals()
+    subtotal = totals.get('subtotal', 0)
     
     # Validate the promo code
     validation_result = validate_promo_code(promo_code, subtotal)
     
     if not validation_result['valid']:
-        session['promo_code'] = None
-        session['discount_amount'] = 0
+        logger.warning(f"Invalid promo code: {promo_code}")
         return False, validation_result['message']
     
-    # Calculate the discount
-    discount_result = calculate_discount(promo_code, treatments, subtotal)
-    
-    # Apply the discount
+    # Store promo code in session
     session['promo_code'] = promo_code
-    session['discount_amount'] = discount_result['discount_amount']
+    session.modified = True
     
-    logger.info(f"Promo code applied: {promo_code}, Discount: {discount_result['discount_amount']}")
-    return True, f"Promo code '{promo_code}' applied successfully!", discount_result
-
-def get_promo_code():
-    """Get the currently applied promo code"""
-    # Make sure the session is initialized
-    initialize_session()
+    # Update totals
+    update_quote_totals()
     
-    return session.get('promo_code')
+    logger.info(f"Applied promo code: {promo_code}")
+    return True, f"Promo code '{promo_code}' applied successfully"
 
 def remove_promo_code():
-    """Remove the currently applied promo code"""
-    # Make sure the session is initialized
-    initialize_session()
+    """
+    Remove the promo code from the session
+    Returns (success, message)
+    """
+    if 'promo_code' not in session or not session['promo_code']:
+        logger.warning("No promo code in session")
+        return False, "No promo code to remove"
     
-    if not session.get('promo_code'):
-        return False, "No promo code currently applied"
-    
-    promo_code = session.get('promo_code')
+    promo_code = session['promo_code']
     session['promo_code'] = None
-    session['discount_amount'] = 0
+    session.modified = True
     
-    logger.info(f"Promo code removed: {promo_code}")
-    return True, "Promo code removed successfully"
+    # Update totals
+    update_quote_totals()
+    
+    logger.info(f"Removed promo code: {promo_code}")
+    return True, f"Promo code '{promo_code}' removed successfully"
 
-def save_patient_info(patient_data):
-    """Save patient information to the session"""
-    # Make sure the session is initialized
-    initialize_session()
-    
-    # Validate required fields
-    required_fields = ['name', 'email', 'phone']
-    for field in required_fields:
-        if field not in patient_data or not patient_data[field]:
-            return False, f"Missing required field: {field}"
-    
-    # Save the patient info
-    session['patient_info'] = patient_data
-    
-    # Generate a quote ID if not already present
-    if not session.get('quote_id'):
-        session['quote_id'] = generate_quote_id()
-    
-    logger.info(f"Patient info saved: {patient_data['name']}")
-    return True, "Patient information saved successfully"
+def get_applied_promo_code():
+    """Get the applied promo code from session"""
+    return session.get('promo_code')
 
-def generate_quote_id():
-    """Generate a unique quote ID"""
-    return str(uuid.uuid4())
+def get_promo_details():
+    """Get the details of the applied promo code"""
+    promo_code = get_applied_promo_code()
+    
+    if not promo_code:
+        return None
+    
+    return get_promotion_by_code(promo_code)
+
+def update_quote_totals():
+    """Update quote totals in the session"""
+    treatments = get_session_treatments()
+    
+    # Calculate subtotal
+    treatment_totals = calculate_treatments_total(treatments)
+    subtotal = treatment_totals.get('subtotal', 0)
+    item_count = treatment_totals.get('item_count', 0)
+    
+    # Calculate discount if promo code is applied
+    promo_code = get_applied_promo_code()
+    discount = 0
+    
+    if promo_code:
+        discount_result = calculate_discount(promo_code, treatments, subtotal)
+        discount = discount_result.get('discount_amount', 0)
+    
+    # Calculate total
+    total = subtotal - discount
+    if total < 0:
+        total = 0
+    
+    # Update session
+    session['quote_totals'] = {
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total,
+        'item_count': item_count
+    }
+    session.modified = True
+    
+    logger.info(f"Updated quote totals: subtotal=${subtotal}, discount=${discount}, total=${total}")
+    return session['quote_totals']
+
+def get_quote_totals():
+    """Get quote totals from session"""
+    return session.get('quote_totals', {
+        'subtotal': 0,
+        'discount': 0,
+        'total': 0,
+        'item_count': 0
+    })
 
 def clear_session():
-    """Clear the session data"""
+    """Clear all session data"""
     session.clear()
-    initialize_session()
-    
-    logger.info("Session cleared")
-    return True, "Quote restarted"
+    session.modified = True
+    logger.info("Cleared session data")
+    return True, "Session data cleared"
+
+def validate_promo_code(promo_code, subtotal):
+    """Validate a promo code"""
+    from services.promo_service import validate_promo_code as validate_promo
+    return validate_promo(promo_code, subtotal)
+
+def get_patient_info():
+    """Get patient info from session"""
+    return session.get('patient_info', {})
+
+def update_patient_info(patient_data):
+    """Update patient info in session"""
+    session['patient_info'] = patient_data
+    session.modified = True
+    logger.info("Updated patient info")
+    return True, "Patient information updated"
