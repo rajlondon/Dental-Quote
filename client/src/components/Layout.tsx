@@ -72,24 +72,24 @@ export function Layout({ children }: LayoutProps) {
             <div className="md:hidden py-4 mt-2">
               <nav className="flex flex-col space-y-3">
                 <Link href="/">
-                  <a className="text-sm font-medium hover:text-primary transition py-2">Home</a>
+                  <span className="text-sm font-medium hover:text-primary transition py-2 block">Home</span>
                 </Link>
                 <Link href="/treatments">
-                  <a className="text-sm font-medium hover:text-primary transition py-2">Treatments</a>
+                  <span className="text-sm font-medium hover:text-primary transition py-2 block">Treatments</span>
                 </Link>
                 <Link href="/pricing">
-                  <a className="text-sm font-medium hover:text-primary transition py-2">Pricing</a>
+                  <span className="text-sm font-medium hover:text-primary transition py-2 block">Pricing</span>
                 </Link>
                 <Link href="/blog">
-                  <a className="text-sm font-medium hover:text-primary transition py-2">Blog</a>
+                  <span className="text-sm font-medium hover:text-primary transition py-2 block">Blog</span>
                 </Link>
                 <Link href="/contact">
-                  <a className="text-sm font-medium hover:text-primary transition py-2">Contact</a>
+                  <span className="text-sm font-medium hover:text-primary transition py-2 block">Contact</span>
                 </Link>
                 <Link href="/comprehensive-quote">
-                  <a className="text-sm font-medium text-primary hover:text-primary/80 transition py-2">
+                  <span className="text-sm font-medium text-primary hover:text-primary/80 transition py-2 block">
                     Get Quote
-                  </a>
+                  </span>
                 </Link>
                 <div className="flex items-center gap-2 pt-4">
                   <Button variant="outline" size="sm" className="w-full" asChild>
@@ -126,22 +126,22 @@ export function Layout({ children }: LayoutProps) {
               <ul className="space-y-2">
                 <li>
                   <Link href="/about">
-                    <a className="text-sm text-gray-600 hover:text-primary">About Us</a>
+                    <span className="text-sm text-gray-600 hover:text-primary cursor-pointer">About Us</span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/treatments">
-                    <a className="text-sm text-gray-600 hover:text-primary">Treatments</a>
+                    <span className="text-sm text-gray-600 hover:text-primary cursor-pointer">Treatments</span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/clinics">
-                    <a className="text-sm text-gray-600 hover:text-primary">Clinics</a>
+                    <span className="text-sm text-gray-600 hover:text-primary cursor-pointer">Clinics</span>
                   </Link>
                 </li>
                 <li>
                   <Link href="/faq">
-                    <a className="text-sm text-gray-600 hover:text-primary">FAQ</a>
+                    <span className="text-sm text-gray-600 hover:text-primary cursor-pointer">FAQ</span>
                   </Link>
                 </li>
               </ul>
