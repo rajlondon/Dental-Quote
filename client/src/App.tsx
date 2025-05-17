@@ -360,6 +360,19 @@ function Router() {
         );
       }} />
       
+      {/* Enhanced Quote Builder - with promo codes and special offers support */}
+      <Route path="/enhanced-quote" component={() => {
+        return (
+          <React.Suspense fallback={<div className="flex justify-center items-center min-h-screen">Loading enhanced quote builder...</div>}>
+            <SpecialOffersProvider>
+              <PersistentQuoteProvider>
+                <QuoteBuilderPage />
+              </PersistentQuoteProvider>
+            </SpecialOffersProvider>
+          </React.Suspense>
+        );
+      }} />
+      
       {/* Comprehensive Quote Builder - Integrates dental chart with special offers and packages */}
       <Route path="/comprehensive-quote" component={() => {
         const ComprehensiveQuotePage = React.lazy(() => import("./pages/ComprehensiveQuotePage"));
