@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Layout } from '../components/Layout';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, SendIcon } from 'lucide-react';
@@ -23,6 +23,7 @@ export default function EnhancedQuotePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
   const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
+  const [completedQuiz, setCompletedQuiz] = useState(false);
   
   // Use quote store for state management
   const {
@@ -44,6 +45,7 @@ export default function EnhancedQuotePage() {
   // Handle completion of treatment quiz
   const handleQuizComplete = (dentalChartData: any, quizTreatments: any[]) => {
     setIsLoading(true);
+    setCompletedQuiz(true);
     
     // Process treatment data
     setTimeout(() => {
@@ -155,10 +157,39 @@ export default function EnhancedQuotePage() {
       case 'quiz':
         return (
           <div className="mb-6">
-            <StepByStepTreatmentBuilder 
-              onComplete={handleQuizComplete}
-              initialTreatments={[]}
-            />
+            {completedQuiz && isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+                <p className="text-lg font-medium">Preparing your personalized quote...</p>
+              </div>
+            ) : (
+              <>
+                <StepByStepTreatmentBuilder 
+                  onComplete={handleQuizComplete}
+                  initialTreatments={[]}
+                />
+                <div className="mt-6 flex justify-center">
+                  <Button 
+                    size="lg" 
+                    className="w-full sm:w-auto font-medium"
+                    onClick={() => {
+                      // Manual button for those who complete the quiz but don't trigger onComplete
+                      if (treatments.length > 0) {
+                        setCurrentStep('promo');
+                      } else {
+                        toast({
+                          title: "Please select treatments",
+                          description: "Please select at least one treatment to continue.",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                  >
+                    Get My Personalized Quote
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         );
         
