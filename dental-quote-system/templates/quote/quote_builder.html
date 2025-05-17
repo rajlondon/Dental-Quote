@@ -1,589 +1,478 @@
 {% extends 'base.html' %}
 
-{% block title %}Quote Builder - MyDentalFly{% endblock %}
+{% block title %}Build Your Dental Quote - MyDentalFly{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="section-title">Build Your Dental Treatment Quote</h1>
-            <p class="lead">Select treatments, customize quantities, and add promotional codes to get your personalized dental treatment quote.</p>
+<!-- Quote Builder Header -->
+<section class="quote-builder-header py-4 bg-light">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8">
+                <h1 class="fw-bold text-primary mb-2">Build Your Dental Quote</h1>
+                <p class="lead">Select the treatments you're interested in to build your personalized quote</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <div class="progress-container">
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">Step 1 of 4: Select Treatments</small>
+                </div>
+            </div>
         </div>
     </div>
+</section>
 
-    <div class="row">
-        <!-- Treatments Selection Column -->
-        <div class="col-lg-8">
-            <!-- Treatment Categories Tabs -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">Select Treatments</h5>
-                </div>
-                <div class="card-body">
-                    <ul class="nav nav-tabs mb-4" id="treatmentTabs" role="tablist">
-                        {% for category_id, category in categorized_treatments.items() %}
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if loop.first %}active{% endif %}" 
-                                    id="tab-{{ category_id }}" 
-                                    data-bs-toggle="tab" 
-                                    data-bs-target="#pane-{{ category_id }}" 
-                                    type="button" 
-                                    role="tab" 
-                                    aria-controls="pane-{{ category_id }}" 
-                                    aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
-                                {{ category.name }}
-                            </button>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    
-                    <div class="tab-content" id="treatmentTabsContent">
-                        {% for category_id, category in categorized_treatments.items() %}
-                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-                             id="pane-{{ category_id }}" 
-                             role="tabpanel" 
-                             aria-labelledby="tab-{{ category_id }}">
-                            
-                            <div class="row">
-                                {% for treatment in category.treatments %}
-                                <div class="col-md-6 mb-4">
-                                    <div class="treatment-card h-100">
-                                        <div class="treatment-card-header d-flex justify-content-between align-items-center">
-                                            <h5 class="mb-0">{{ treatment.name }}</h5>
-                                        </div>
-                                        <div class="treatment-card-body d-flex flex-column">
-                                            <p class="treatment-price mb-2">${{ treatment.price }}</p>
-                                            <p class="mb-3">{{ treatment.description }}</p>
+<!-- Quote Builder Content -->
+<section class="quote-builder-content py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Treatments Selection -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-4">Select Your Treatments</h2>
+                        
+                        <div class="accordion" id="treatmentCategories">
+                            {% for category_id, category in categorized_treatments.items() %}
+                                <div class="accordion-item border-0 mb-3 shadow-sm">
+                                    <h2 class="accordion-header" id="heading{{ category_id }}">
+                                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ category_id }}" aria-expanded="{% if loop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ category_id }}">
+                                            {{ category.name }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ category_id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading{{ category_id }}" data-bs-parent="#treatmentCategories">
+                                        <div class="accordion-body">
+                                            <p class="text-muted mb-3">{{ category.description }}</p>
                                             
-                                            <div class="mt-auto">
-                                                <button class="btn btn-primary add-treatment-btn" data-treatment-id="{{ treatment.id }}">
-                                                    <i class="fas fa-plus-circle me-1"></i> Add to Quote
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-primary ms-2 treatment-info-btn" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#treatmentModal" 
-                                                        data-treatment-id="{{ treatment.id }}"
-                                                        data-treatment-name="{{ treatment.name }}"
-                                                        data-treatment-description="{{ treatment.description }}"
-                                                        data-treatment-price="{{ treatment.price }}"
-                                                        data-treatment-details="{{ treatment.details }}">
-                                                    <i class="fas fa-info-circle"></i>
-                                                </button>
+                                            <div class="row g-3">
+                                                {% for treatment in category.treatments %}
+                                                    <div class="col-md-6">
+                                                        <div class="card h-100 treatment-card" id="treatment-{{ treatment.id }}">
+                                                            <div class="card-body">
+                                                                <h5 class="card-title">{{ treatment.name }}</h5>
+                                                                <p class="card-text">{{ treatment.description }}</p>
+                                                                <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                                                <button class="btn btn-primary add-treatment-btn" data-treatment-id="{{ treatment.id }}">Add to Quote</button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                {% endfor %}
-                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Quote Summary Column -->
-        <div class="col-lg-4">
-            <div class="quote-summary">
-                <h3 class="quote-summary-title">Quote Summary</h3>
-                
-                <!-- Selected Treatments List -->
-                <div id="selected-treatments-list">
-                    {% if selected_treatments %}
-                        {% for treatment in selected_treatments %}
-                        <div class="quote-item" id="quote-item-{{ treatment.id }}">
-                            <div>
-                                <strong>{{ treatment.name }}</strong>
-                                <div class="d-flex align-items-center mt-1">
-                                    <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="decrease" data-treatment-id="{{ treatment.id }}">-</button>
-                                    <span class="mx-2 treatment-quantity" data-treatment-id="{{ treatment.id }}">{{ treatment.quantity }}</span>
-                                    <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="increase" data-treatment-id="{{ treatment.id }}">+</button>
+            
+            <!-- Quote Summary -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm sticky-top" style="top: 20px; z-index: 10;">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h3 class="h5 mb-0">Your Quote Summary</h3>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="selected-treatments-container">
+                            {% if selected_treatments %}
+                                <div class="selected-treatments mb-4">
+                                    <h4 class="h6 mb-3">Selected Treatments</h4>
+                                    <ul class="list-group list-group-flush" id="selected-treatments-list">
+                                        {% for treatment in selected_treatments %}
+                                            <li class="list-group-item px-0 py-2 border-bottom" data-treatment-id="{{ treatment.id }}">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <h5 class="h6 mb-1">{{ treatment.name }}</h5>
+                                                        <div class="d-flex align-items-center quantity-control">
+                                                            <button class="btn btn-sm btn-outline-secondary decrease-quantity" data-treatment-id="{{ treatment.id }}">-</button>
+                                                            <span class="quantity mx-2">{{ treatment.quantity }}</span>
+                                                            <button class="btn btn-sm btn-outline-secondary increase-quantity" data-treatment-id="{{ treatment.id }}">+</button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <div class="fw-bold">${{ treatment.price * treatment.quantity }}</div>
+                                                        <button class="btn btn-sm text-danger remove-treatment" data-treatment-id="{{ treatment.id }}">
+                                                            <i class="fas fa-trash-alt"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
                                 </div>
+                            {% else %}
+                                <div class="empty-quote text-center py-4">
+                                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                    <h4 class="h6">Your quote is empty</h4>
+                                    <p class="text-muted small">Select treatments to build your quote</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Promo Code Section -->
+                        <div class="promo-code-section mb-4">
+                            <h4 class="h6 mb-3">Promo Code</h4>
+                            {% if promo_code %}
+                                <div class="applied-promo alert alert-success mb-0">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <strong>{{ promo_code }}</strong> applied
+                                        </div>
+                                        <button class="btn btn-sm btn-link text-danger p-0" id="remove-promo-btn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="promo-code-input" placeholder="Enter promo code">
+                                    <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">Apply</button>
+                                </div>
+                                <div id="promo-message" class="mt-2 small"></div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Quote Totals -->
+                        <div class="quote-totals">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span class="subtotal">${{ quote_totals.subtotal }}</span>
                             </div>
-                            <div class="text-end">
-                                <span class="treatment-total" data-treatment-id="{{ treatment.id }}">${{ (treatment.price * treatment.quantity) }}</span>
-                                <button class="btn btn-sm text-danger remove-treatment-btn" data-treatment-id="{{ treatment.id }}">
-                                    <i class="fas fa-times"></i>
-                                </button>
+                            
+                            {% if quote_totals.discount_amount > 0 %}
+                                <div class="d-flex justify-content-between mb-2 text-success">
+                                    <span>Discount:</span>
+                                    <span class="discount">-${{ quote_totals.discount_amount }}</span>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="d-flex justify-content-between fw-bold mb-3">
+                                <span>Total:</span>
+                                <span class="total">${{ quote_totals.total }}</span>
                             </div>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-4 text-muted">
-                            <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                            <p>Your quote is empty</p>
-                            <p class="small">Select treatments to build your quote</p>
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <!-- Promo Code Form -->
-                <div class="promo-code-form">
-                    <h5>Promotional Code</h5>
-                    
-                    {% if promo_code %}
-                    <div class="promo-code-applied" id="promo-code-applied">
-                        <div>
-                            <span>Applied: </span>
-                            <span class="code">{{ promo_code }}</span>
-                        </div>
-                        <button type="button" class="btn btn-sm btn-outline-danger" id="remove-promo-btn">
-                            <i class="fas fa-times"></i>
-                        </button>
+                        
+                        <!-- CTA Button -->
+                        <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary w-100 {% if not selected_treatments %}disabled{% endif %}" id="continue-btn">
+                            Continue to Patient Information
+                        </a>
                     </div>
-                    {% else %}
-                    <div class="input-group mb-3" id="promo-code-form">
-                        <input type="text" class="form-control" id="promo-code-input" placeholder="Enter promo code">
-                        <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">Apply</button>
-                    </div>
-                    <div class="invalid-feedback" id="promo-code-error"></div>
-                    {% endif %}
-                </div>
-                
-                <!-- Quote Totals -->
-                <div class="quote-totals">
-                    <div class="quote-total-row">
-                        <span>Subtotal:</span>
-                        <span id="quote-subtotal">${{ "%.2f"|format(quote_totals.subtotal) }}</span>
-                    </div>
-                    
-                    <div class="quote-total-row{% if not quote_totals.discount_amount %} d-none{% endif %}" id="discount-row">
-                        <span>Discount:</span>
-                        <span id="quote-discount">-${{ "%.2f"|format(quote_totals.discount_amount) }}</span>
-                    </div>
-                    
-                    <div class="quote-total-row quote-final-total">
-                        <span>Total:</span>
-                        <span id="quote-total">${{ "%.2f"|format(quote_totals.total) }}</span>
-                    </div>
-                </div>
-                
-                <!-- Continue Button -->
-                <div class="mt-4">
-                    <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary w-100 {% if not selected_treatments %}disabled{% endif %}" id="continue-btn">
-                        Continue to Patient Information
-                    </a>
-                </div>
-                
-                <!-- Special Offers -->
-                <div class="mt-4">
-                    <h5>Special Offers</h5>
-                    <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary w-100">
-                        <i class="fas fa-tag me-2"></i> View Special Offers
-                    </a>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+{% endblock %}
 
-<!-- Treatment Info Modal -->
-<div class="modal fade" id="treatmentModal" tabindex="-1" aria-labelledby="treatmentModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="treatmentModalLabel">Treatment Details</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <h4 id="modal-treatment-name"></h4>
-                <p class="treatment-price" id="modal-treatment-price"></p>
-                <p id="modal-treatment-description"></p>
-                <div id="modal-treatment-details" class="mt-3">
-                    <h5>Details</h5>
-                    <p id="modal-treatment-details-text"></p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary add-treatment-btn" id="modal-add-btn" data-treatment-id="">
-                    <i class="fas fa-plus-circle me-1"></i> Add to Quote
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+{% block extra_css %}
+<style>
+    .treatment-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .treatment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    }
+    
+    .selected-treatment {
+        border-left: 3px solid #0d6efd;
+    }
+    
+    .sticky-top {
+        top: 20px;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: rgba(0,0,0,.125);
+    }
+    
+    .quantity-control {
+        max-width: 120px;
+    }
+    
+    .treatment-selected {
+        background-color: rgba(13, 110, 253, 0.1);
+        border: 1px solid #0d6efd;
+    }
+    
+    .treatment-selected .btn-primary {
+        background-color: #198754;
+        border-color: #198754;
+    }
+</style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Treatment Info Modal
-        const treatmentModal = document.getElementById('treatmentModal');
-        treatmentModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const treatmentId = button.getAttribute('data-treatment-id');
-            const treatmentName = button.getAttribute('data-treatment-name');
-            const treatmentDescription = button.getAttribute('data-treatment-description');
-            const treatmentPrice = button.getAttribute('data-treatment-price');
-            const treatmentDetails = button.getAttribute('data-treatment-details');
+    $(document).ready(function() {
+        // Mark selected treatments
+        function markSelectedTreatments() {
+            $('.treatment-card').removeClass('treatment-selected');
+            $('#selected-treatments-list li').each(function() {
+                const treatmentId = $(this).data('treatment-id');
+                $(`#treatment-${treatmentId}`).addClass('treatment-selected');
+                $(`#treatment-${treatmentId} .add-treatment-btn`).text('Added to Quote');
+            });
+        }
+        
+        // Initialize - mark already selected treatments
+        markSelectedTreatments();
+        
+        // Add treatment to quote
+        $('.add-treatment-btn').click(function() {
+            const treatmentId = $(this).data('treatment-id');
             
-            document.getElementById('modal-treatment-name').textContent = treatmentName;
-            document.getElementById('modal-treatment-price').textContent = `$${treatmentPrice}`;
-            document.getElementById('modal-treatment-description').textContent = treatmentDescription;
-            document.getElementById('modal-treatment-details-text').textContent = treatmentDetails;
-            document.getElementById('modal-add-btn').setAttribute('data-treatment-id', treatmentId);
-        });
-        
-        // Add Treatment to Quote
-        document.querySelectorAll('.add-treatment-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.getAttribute('data-treatment-id');
-                
-                fetch('/api/add-treatment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ treatment_id: treatmentId }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the quote summary
-                        updateQuoteSummary(data.selected_treatments, data.totals);
-                        
-                        // Close the modal if open
-                        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('treatmentModal'));
-                        if (modalInstance) {
-                            modalInstance.hide();
-                        }
-                    } else {
-                        alert(data.message || 'Failed to add treatment');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
-            });
-        });
-        
-        // Remove Treatment from Quote
-        document.querySelectorAll('.remove-treatment-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.getAttribute('data-treatment-id');
-                
-                fetch('/api/remove-treatment', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ treatment_id: treatmentId }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the quote summary
-                        updateQuoteSummary(data.selected_treatments, data.totals);
-                    } else {
-                        alert(data.message || 'Failed to remove treatment');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
-            });
-        });
-        
-        // Update Treatment Quantity
-        document.querySelectorAll('.quantity-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.getAttribute('data-treatment-id');
-                const action = this.getAttribute('data-action');
-                const quantityElement = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-                let quantity = parseInt(quantityElement.textContent);
-                
-                if (action === 'increase') {
-                    quantity += 1;
-                } else if (action === 'decrease' && quantity > 1) {
-                    quantity -= 1;
-                }
-                
-                fetch('/api/update-treatment-quantity', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ 
-                        treatment_id: treatmentId,
-                        quantity: quantity
-                    }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Update the quote summary
-                        updateQuoteSummary(data.selected_treatments, data.totals);
-                    } else {
-                        alert(data.message || 'Failed to update quantity');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
-            });
-        });
-        
-        // Apply Promo Code
-        const applyPromoBtn = document.getElementById('apply-promo-btn');
-        if (applyPromoBtn) {
-            applyPromoBtn.addEventListener('click', function() {
-                const promoCode = document.getElementById('promo-code-input').value.trim();
-                
-                if (!promoCode) {
-                    document.getElementById('promo-code-error').textContent = 'Please enter a promo code';
-                    document.getElementById('promo-code-input').classList.add('is-invalid');
-                    return;
-                }
-                
-                fetch('/api/apply-promo-code', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ promo_code: promoCode }),
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Create applied promo element
-                        const promoForm = document.getElementById('promo-code-form');
-                        const promoApplied = document.createElement('div');
-                        promoApplied.id = 'promo-code-applied';
-                        promoApplied.className = 'promo-code-applied';
-                        promoApplied.innerHTML = `
-                            <div>
-                                <span>Applied: </span>
-                                <span class="code">${promoCode}</span>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger" id="remove-promo-btn">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        `;
-                        
-                        // Replace form with applied promo
-                        promoForm.parentNode.replaceChild(promoApplied, promoForm);
-                        
-                        // Add event listener to remove button
-                        document.getElementById('remove-promo-btn').addEventListener('click', removePromoCode);
-                        
-                        // Update totals
-                        updateTotals(data.totals);
-                    } else {
-                        document.getElementById('promo-code-error').textContent = data.message || 'Invalid promo code';
-                        document.getElementById('promo-code-input').classList.add('is-invalid');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                });
-            });
-        }
-        
-        // Remove Promo Code
-        const removePromoBtn = document.getElementById('remove-promo-btn');
-        if (removePromoBtn) {
-            removePromoBtn.addEventListener('click', removePromoCode);
-        }
-        
-        function removePromoCode() {
-            fetch('/api/remove-promo-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
+            // Check if treatment is already in the quote
+            if ($(`#selected-treatments-list li[data-treatment-id="${treatmentId}"]`).length > 0) {
+                // Treatment already in quote, just increase quantity
+                $(`#selected-treatments-list li[data-treatment-id="${treatmentId}"] .increase-quantity`).click();
+                return;
+            }
+            
+            // Add loading indicator
+            $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...');
+            
+            // Make AJAX request to add treatment
+            $.ajax({
+                url: '/api/add-treatment',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ treatment_id: treatmentId }),
+                success: function(response) {
+                    // Update the selected treatments list
+                    updateSelectedTreatmentsAndTotals(response);
+                    
+                    // Enable continue button
+                    $('#continue-btn').removeClass('disabled');
                 },
-                body: JSON.stringify({}),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Create promo form element
-                    const promoApplied = document.getElementById('promo-code-applied');
-                    const promoForm = document.createElement('div');
-                    promoForm.id = 'promo-code-form';
-                    promoForm.className = 'input-group mb-3';
-                    promoForm.innerHTML = `
-                        <input type="text" class="form-control" id="promo-code-input" placeholder="Enter promo code">
-                        <button class="btn btn-outline-primary" type="button" id="apply-promo-btn">Apply</button>
-                        <div class="invalid-feedback" id="promo-code-error"></div>
-                    `;
+                error: function(xhr) {
+                    console.error('Error adding treatment:', xhr.responseText);
                     
-                    // Replace applied promo with form
-                    promoApplied.parentNode.replaceChild(promoForm, promoApplied);
-                    
-                    // Add event listener to apply button
-                    document.getElementById('apply-promo-btn').addEventListener('click', function() {
-                        const promoCode = document.getElementById('promo-code-input').value.trim();
-                        
-                        if (!promoCode) {
-                            document.getElementById('promo-code-error').textContent = 'Please enter a promo code';
-                            document.getElementById('promo-code-input').classList.add('is-invalid');
-                            return;
-                        }
-                        
-                        // Call the apply promo code API
-                        // (Code omitted for brevity - it's the same as the apply promo code handler above)
-                    });
-                    
-                    // Update totals
-                    updateTotals(data.totals);
-                } else {
-                    alert(data.message || 'Failed to remove promo code');
+                    // Reset button
+                    $(`.add-treatment-btn[data-treatment-id="${treatmentId}"]`).text('Add to Quote');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+            });
+        });
+        
+        // Event delegation for dynamically added elements
+        $(document).on('click', '.remove-treatment', function() {
+            const treatmentId = $(this).data('treatment-id');
+            
+            // Make AJAX request to remove treatment
+            $.ajax({
+                url: '/api/remove-treatment',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ treatment_id: treatmentId }),
+                success: function(response) {
+                    // Update the selected treatments list
+                    updateSelectedTreatmentsAndTotals(response);
+                    
+                    // Update the add button text
+                    $(`#treatment-${treatmentId} .add-treatment-btn`).text('Add to Quote');
+                    $(`#treatment-${treatmentId}`).removeClass('treatment-selected');
+                    
+                    // Disable continue button if no treatments selected
+                    if (response.selected_treatments.length === 0) {
+                        $('#continue-btn').addClass('disabled');
+                    }
+                },
+                error: function(xhr) {
+                    console.error('Error removing treatment:', xhr.responseText);
+                }
+            });
+        });
+        
+        // Increase quantity
+        $(document).on('click', '.increase-quantity', function() {
+            const treatmentId = $(this).data('treatment-id');
+            const quantityElement = $(this).siblings('.quantity');
+            const currentQuantity = parseInt(quantityElement.text());
+            const newQuantity = currentQuantity + 1;
+            
+            updateTreatmentQuantity(treatmentId, newQuantity);
+        });
+        
+        // Decrease quantity
+        $(document).on('click', '.decrease-quantity', function() {
+            const treatmentId = $(this).data('treatment-id');
+            const quantityElement = $(this).siblings('.quantity');
+            const currentQuantity = parseInt(quantityElement.text());
+            
+            if (currentQuantity > 1) {
+                const newQuantity = currentQuantity - 1;
+                updateTreatmentQuantity(treatmentId, newQuantity);
+            } else {
+                // If quantity would be 0, remove the treatment
+                $(this).closest('li').find('.remove-treatment').click();
+            }
+        });
+        
+        // Apply promo code
+        $('#apply-promo-btn').click(function() {
+            const promoCode = $('#promo-code-input').val().trim();
+            
+            if (promoCode === '') {
+                $('#promo-message').html('<span class="text-danger">Please enter a promo code</span>');
+                return;
+            }
+            
+            // Check if there are treatments in the quote
+            if ($('#selected-treatments-list li').length === 0) {
+                $('#promo-message').html('<span class="text-danger">Please add at least one treatment before applying a promo code</span>');
+                return;
+            }
+            
+            // Apply loading indicator
+            $(this).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+            
+            // Make AJAX request to apply promo code
+            $.ajax({
+                url: '/api/apply-promo-code',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ promo_code: promoCode }),
+                success: function(response) {
+                    // Refresh the page to update everything
+                    location.reload();
+                },
+                error: function(xhr) {
+                    // Reset button
+                    $('#apply-promo-btn').text('Apply');
+                    
+                    // Parse error message
+                    try {
+                        const error = JSON.parse(xhr.responseText);
+                        $('#promo-message').html(`<span class="text-danger">${error.message}</span>`);
+                    } catch (e) {
+                        $('#promo-message').html('<span class="text-danger">Invalid or expired promo code</span>');
+                    }
+                }
+            });
+        });
+        
+        // Remove promo code
+        $('#remove-promo-btn').click(function() {
+            // Make AJAX request to remove promo code
+            $.ajax({
+                url: '/api/remove-promo-code',
+                type: 'POST',
+                contentType: 'application/json',
+                success: function(response) {
+                    // Refresh the page to update everything
+                    location.reload();
+                },
+                error: function(xhr) {
+                    console.error('Error removing promo code:', xhr.responseText);
+                }
+            });
+        });
+        
+        // Helper function to update treatment quantity
+        function updateTreatmentQuantity(treatmentId, quantity) {
+            // Make AJAX request to update quantity
+            $.ajax({
+                url: '/api/update-treatment-quantity',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ 
+                    treatment_id: treatmentId,
+                    quantity: quantity
+                }),
+                success: function(response) {
+                    // Update the selected treatments list
+                    updateSelectedTreatmentsAndTotals(response);
+                },
+                error: function(xhr) {
+                    console.error('Error updating quantity:', xhr.responseText);
+                }
             });
         }
         
-        // Helper: Update Quote Summary
-        function updateQuoteSummary(treatments, totals) {
-            const treatmentsList = document.getElementById('selected-treatments-list');
-            const continueBtn = document.getElementById('continue-btn');
+        // Helper function to update the UI with selected treatments and totals
+        function updateSelectedTreatmentsAndTotals(response) {
+            // Clear the current list
+            $('#selected-treatments-list').empty();
             
-            // Clear the list
-            treatmentsList.innerHTML = '';
-            
-            if (treatments.length > 0) {
+            // Check if we have treatments
+            if (response.selected_treatments.length === 0) {
+                $('#selected-treatments-container').html(`
+                    <div class="empty-quote text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h4 class="h6">Your quote is empty</h4>
+                        <p class="text-muted small">Select treatments to build your quote</p>
+                    </div>
+                `);
+            } else {
+                // If previously empty, restore the structure
+                if ($('#selected-treatments-container .empty-quote').length > 0) {
+                    $('#selected-treatments-container').html(`
+                        <div class="selected-treatments mb-4">
+                            <h4 class="h6 mb-3">Selected Treatments</h4>
+                            <ul class="list-group list-group-flush" id="selected-treatments-list"></ul>
+                        </div>
+                    `);
+                }
+                
                 // Add each treatment to the list
-                treatments.forEach(treatment => {
-                    const item = document.createElement('div');
-                    item.className = 'quote-item';
-                    item.id = `quote-item-${treatment.id}`;
-                    
-                    item.innerHTML = `
-                        <div>
-                            <strong>${treatment.name}</strong>
-                            <div class="d-flex align-items-center mt-1">
-                                <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="decrease" data-treatment-id="${treatment.id}">-</button>
-                                <span class="mx-2 treatment-quantity" data-treatment-id="${treatment.id}">${treatment.quantity}</span>
-                                <button class="btn btn-sm btn-outline-secondary quantity-btn" data-action="increase" data-treatment-id="${treatment.id}">+</button>
+                response.selected_treatments.forEach(function(treatment) {
+                    $('#selected-treatments-list').append(`
+                        <li class="list-group-item px-0 py-2 border-bottom" data-treatment-id="${treatment.id}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="h6 mb-1">${treatment.name}</h5>
+                                    <div class="d-flex align-items-center quantity-control">
+                                        <button class="btn btn-sm btn-outline-secondary decrease-quantity" data-treatment-id="${treatment.id}">-</button>
+                                        <span class="quantity mx-2">${treatment.quantity}</span>
+                                        <button class="btn btn-sm btn-outline-secondary increase-quantity" data-treatment-id="${treatment.id}">+</button>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">$${treatment.price * treatment.quantity}</div>
+                                    <button class="btn btn-sm text-danger remove-treatment" data-treatment-id="${treatment.id}">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="text-end">
-                            <span class="treatment-total" data-treatment-id="${treatment.id}">$${(treatment.price * treatment.quantity).toFixed(2)}</span>
-                            <button class="btn btn-sm text-danger remove-treatment-btn" data-treatment-id="${treatment.id}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    `;
-                    
-                    treatmentsList.appendChild(item);
-                    
-                    // Add event listeners to new buttons
-                    item.querySelector('.remove-treatment-btn').addEventListener('click', function() {
-                        const treatmentId = this.getAttribute('data-treatment-id');
-                        
-                        fetch('/api/remove-treatment', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({ treatment_id: treatmentId }),
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                updateQuoteSummary(data.selected_treatments, data.totals);
-                            } else {
-                                alert(data.message || 'Failed to remove treatment');
-                            }
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                            alert('An error occurred. Please try again.');
-                        });
-                    });
-                    
-                    item.querySelectorAll('.quantity-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const treatmentId = this.getAttribute('data-treatment-id');
-                            const action = this.getAttribute('data-action');
-                            const quantityElement = item.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-                            let quantity = parseInt(quantityElement.textContent);
-                            
-                            if (action === 'increase') {
-                                quantity += 1;
-                            } else if (action === 'decrease' && quantity > 1) {
-                                quantity -= 1;
-                            }
-                            
-                            fetch('/api/update-treatment-quantity', {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({ 
-                                    treatment_id: treatmentId,
-                                    quantity: quantity
-                                }),
-                            })
-                            .then(response => response.json())
-                            .then(data => {
-                                if (data.success) {
-                                    updateQuoteSummary(data.selected_treatments, data.totals);
-                                } else {
-                                    alert(data.message || 'Failed to update quantity');
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                alert('An error occurred. Please try again.');
-                            });
-                        });
-                    });
+                        </li>
+                    `);
                 });
                 
-                // Enable continue button
-                continueBtn.classList.remove('disabled');
-            } else {
-                // Show empty state
-                treatmentsList.innerHTML = `
-                    <div class="text-center py-4 text-muted">
-                        <i class="fas fa-shopping-cart fa-3x mb-3"></i>
-                        <p>Your quote is empty</p>
-                        <p class="small">Select treatments to build your quote</p>
-                    </div>
-                `;
-                
-                // Disable continue button
-                continueBtn.classList.add('disabled');
+                // Mark selected treatments in the treatment list
+                markSelectedTreatments();
             }
             
             // Update totals
-            updateTotals(totals);
+            $('.subtotal').text('$' + response.totals.subtotal);
             
-            // Update navbar cart count
-            document.querySelector('.quote-count').textContent = treatments.length;
-            
-            // Update navbar cart total
-            const quoteTotal = document.querySelector('.quote-total');
-            if (treatments.length > 0) {
-                quoteTotal.textContent = '$' + totals.total.toFixed(2);
-                quoteTotal.classList.remove('d-none');
+            if (response.totals.discount_amount > 0) {
+                // Ensure discount row exists
+                if ($('.discount').length === 0) {
+                    $('.subtotal').parent().after(`
+                        <div class="d-flex justify-content-between mb-2 text-success">
+                            <span>Discount:</span>
+                            <span class="discount">-$${response.totals.discount_amount}</span>
+                        </div>
+                    `);
+                } else {
+                    $('.discount').text('-$' + response.totals.discount_amount);
+                }
             } else {
-                quoteTotal.classList.add('d-none');
+                // Remove discount row if it exists
+                $('.discount').parent().remove();
             }
-        }
-        
-        // Helper: Update Totals
-        function updateTotals(totals) {
-            document.getElementById('quote-subtotal').textContent = '$' + totals.subtotal.toFixed(2);
-            document.getElementById('quote-discount').textContent = '-$' + totals.discount_amount.toFixed(2);
-            document.getElementById('quote-total').textContent = '$' + totals.total.toFixed(2);
             
-            // Show/hide discount row
-            const discountRow = document.getElementById('discount-row');
-            if (totals.discount_amount > 0) {
-                discountRow.classList.remove('d-none');
-            } else {
-                discountRow.classList.add('d-none');
-            }
+            $('.total').text('$' + response.totals.total);
         }
     });
 </script>
