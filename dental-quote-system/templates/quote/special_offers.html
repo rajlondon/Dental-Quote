@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+
+{% block title %}Special Offers | MyDentalFly{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <h1 class="fw-bold">Special Offers</h1>
+            <p class="lead">Exclusive dental packages and promotional deals for your treatment abroad</p>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+            <a href="{{ url_for('quote_builder') }}" class="btn btn-outline-primary">
+                <i class="fas fa-clipboard-list me-2"></i> Build Custom Quote
+            </a>
+        </div>
+    </div>
+    
+    <!-- Special Offers List -->
+    <div class="row g-4">
+        {% if special_offers %}
+            {% for offer in special_offers %}
+                <div class="col-lg-4 col-md-6">
+                    <div class="card h-100 shadow-sm offer-card">
+                        {% if offer.banner_image %}
+                            <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 200px; object-fit: cover;">
+                        {% else %}
+                            <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="fas fa-image fa-3x"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="badge bg-primary">
+                                    {% if offer.discount_type == 'percentage' %}
+                                        {{ offer.discount_value }}% OFF
+                                    {% else %}
+                                        ${{ offer.discount_value }} OFF
+                                    {% endif %}
+                                </span>
+                                <span class="text-muted small">Code: {{ offer.promo_code }}</span>
+                            </div>
+                            <h5 class="card-title">{{ offer.title }}</h5>
+                            <p class="card-text">{{ offer.description }}</p>
+                            
+                            {% if offer.applicable_treatments %}
+                                <div class="mb-3">
+                                    <h6 class="small text-muted mb-2">Applicable Treatments:</h6>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% for treatment_id in offer.applicable_treatments %}
+                                            <span class="badge bg-light text-dark">{{ treatment_id|replace('_', ' ')|title }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if offer.terms_conditions %}
+                                <p class="small text-muted">
+                                    <i class="fas fa-info-circle me-1"></i> 
+                                    {{ offer.terms_conditions }}
+                                </p>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer bg-white border-0">
+                            <div class="d-grid">
+                                <a href="{{ url_for('apply_special_offer', offer_id=offer.id) }}" class="btn btn-primary">
+                                    Apply Offer
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-tag fa-3x text-muted mb-3"></i>
+                        <h5>No Special Offers Available</h5>
+                        <p class="mb-0 text-muted">Check back later for exclusive deals and promotions.</p>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Promotional Codes Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Have a Promotional Code?</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8 mb-3 mb-md-0">
+                            <p class="mb-0">If you have a promotional code, you can apply it during the quote building process. Start building your custom quote and enter your code at checkout.</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a href="{{ url_for('quote_builder') }}" class="btn btn-primary">
+                                Start Building Quote
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Why Choose Us Section -->
+    <div class="row mt-5">
+        <div class="col-12 mb-4">
+            <h2 class="fw-bold">Why Choose MyDentalFly for Dental Tourism?</h2>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
+                        <i class="fas fa-piggy-bank fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Significant Savings</h5>
+                    <p class="card-text">Save up to 70% on dental procedures without compromising on quality.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
+                        <i class="fas fa-user-md fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Verified Clinics</h5>
+                    <p class="card-text">All clinics are vetted with international certifications and standards.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
+                        <i class="fas fa-concierge-bell fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Concierge Service</h5>
+                    <p class="card-text">Personal assistance with travel, accommodation, and treatment planning.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
+                        <i class="fas fa-shield-alt fa-2x"></i>
+                    </div>
+                    <h5 class="card-title">Treatment Guarantee</h5>
+                    <p class="card-text">Many procedures come with extended guarantees for your peace of mind.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- FAQ Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Frequently Asked Questions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="specialOffersAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    How do special offers work?
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#specialOffersAccordion">
+                                <div class="accordion-body">
+                                    Special offers provide discounts on specific treatments or packages. When you select a special offer, the applicable treatments will be automatically added to your quote with the discount applied. You can also apply promotional codes during the checkout process.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    Can I combine multiple offers?
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#specialOffersAccordion">
+                                <div class="accordion-body">
+                                    Generally, special offers cannot be combined with other offers or promotional codes unless explicitly stated. Each quote can have only one promotional discount applied to ensure transparent pricing.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    How long are special offers valid?
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#specialOffersAccordion">
+                                <div class="accordion-body">
+                                    Each special offer has its own validity period. The expiration date is typically displayed on the offer details. Once an offer expires, it will no longer be available for selection. However, if you've already applied an offer to your quote, the discount will be honored as long as you complete your booking within the specified timeframe.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    What if I need to modify my treatment plan after applying an offer?
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#specialOffersAccordion">
+                                <div class="accordion-body">
+                                    You can always modify your treatment selections after applying a special offer. However, please note that if you remove treatments that are required for the offer to be valid, the promotional discount may be automatically removed. You're free to apply a different offer or promotional code if your new selections qualify.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add hover effect to offer cards
+        const offerCards = document.querySelectorAll('.offer-card');
+        offerCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.classList.add('shadow');
+                this.style.transform = 'translateY(-5px)';
+                this.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow');
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

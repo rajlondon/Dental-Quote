@@ -1,0 +1,92 @@
+<!-- Selected Treatments -->
+<div class="mb-4">
+    <h6 class="fw-bold mb-3">Selected Treatments</h6>
+    
+    <!-- No treatments message -->
+    <div id="noTreatmentsMessage" class="text-center py-3 {% if selected_treatments %}d-none{% endif %}">
+        <i class="far fa-clipboard fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-0">No treatments selected yet.<br>Browse treatments and add them to your quote.</p>
+    </div>
+    
+    <!-- List of selected treatments -->
+    <div id="selectedTreatmentsList">
+        {% if selected_treatments %}
+            {% for treatment in selected_treatments %}
+                <div class="selected-treatment-item d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="mb-0">{{ treatment.name }}</h6>
+                        <span class="text-muted small">${{ treatment.price }} each</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="input-group input-group-sm quantity-control me-2">
+                            <input type="number" class="form-control quantity-input" value="{{ treatment.quantity }}" min="1" 
+                                   data-treatment-id="{{ treatment.id }}">
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger remove-treatment-btn" 
+                                data-treatment-id="{{ treatment.id }}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+</div>
+
+<!-- Promo Code Application -->
+<div class="mb-4">
+    <h6 class="fw-bold mb-3">Promotional Code</h6>
+    
+    <!-- Promo code alert for feedback -->
+    <div id="promoCodeAlert" class="alert d-none mb-3"></div>
+    
+    <!-- Applied promo code display -->
+    <div id="promoCodeSection" class="{% if not promo_code %}d-none{% endif %}">
+        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+            <div>
+                <strong id="promoCodeDisplay">{{ promo_code }}</strong>
+                {% if promo_details %}
+                    <div class="small text-success">{{ promo_details.description }}</div>
+                {% endif %}
+            </div>
+            <button id="removePromoBtn" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    
+    <!-- Promo code form -->
+    <form id="promoCodeForm" class="{% if promo_code %}d-none{% endif %}">
+        <div class="input-group mb-2">
+            <input type="text" class="form-control" id="promoCodeInput" name="promo_code" 
+                   placeholder="Enter promo code">
+            <button class="btn btn-outline-primary" type="submit">Apply</button>
+        </div>
+        <div class="small text-muted">Have a promotional code? Enter it here to receive special discounts.</div>
+    </form>
+</div>
+
+<!-- Pricing -->
+<div class="mb-4">
+    <h6 class="fw-bold mb-3">Pricing</h6>
+    <div class="d-flex justify-content-between mb-2">
+        <span>Subtotal:</span>
+        <span id="subtotalValue">${{ subtotal }}</span>
+    </div>
+    <div id="discountRow" class="d-flex justify-content-between mb-2 {% if discount == 0 %}d-none{% endif %}">
+        <span>Discount:</span>
+        <span id="discountValue" class="text-success">-${{ discount }}</span>
+    </div>
+    <div class="d-flex justify-content-between fw-bold">
+        <span>Total:</span>
+        <span id="totalValue">${{ total }}</span>
+    </div>
+</div>
+
+<!-- Continue Button -->
+<div class="d-grid">
+    <a href="{{ url_for('patient_info') }}" id="continueBtn" class="btn btn-primary {% if not selected_treatments %}disabled{% endif %}" 
+       {% if not selected_treatments %}disabled{% endif %}>
+        Continue to Patient Info
+    </a>
+</div>

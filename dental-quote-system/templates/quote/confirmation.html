@@ -1,178 +1,93 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Quote Submitted - Dental Quote System{% endblock %}
+{% block title %}Quote Confirmation | MyDentalFly{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="h2 mb-3">Quote Confirmation</h1>
-    
-    <!-- Progress Steps -->
-    <div class="step-container mb-5">
-        <div class="step-line"></div>
-        <div class="row text-center">
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check text-success"></i>
-                    </div>
-                    <p class="mb-0">1. Select Treatments</p>
-                </div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="bg-success bg-opacity-10 p-4 rounded-circle d-inline-flex align-items-center justify-content-center mb-4" style="width: 100px; height: 100px;">
+                <i class="fas fa-check-circle text-success fa-4x"></i>
             </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check text-success"></i>
+            <h1 class="fw-bold mb-3">Quote Confirmed!</h1>
+            <p class="lead mb-4">Thank you for your dental quote request. Your quote has been successfully submitted.</p>
+            
+            <!-- Quote Reference -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <h5 class="mb-3">Your Quote Reference</h5>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <span class="h4 fw-bold">{{ quote_reference }}</span>
                     </div>
-                    <p class="mb-0">2. Your Information</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check text-success"></i>
-                    </div>
-                    <p class="mb-0">3. Review Quote</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-file-invoice"></i>
-                    </div>
-                    <p class="mb-0 fw-bold">4. Confirmation</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-body confirmation-box text-center">
-                    <div class="confirmation-icon">
-                        <i class="fas fa-check-circle text-success"></i>
-                    </div>
-                    <h2 class="h3 mb-3">Your Quote Has Been Submitted!</h2>
-                    <p class="lead mb-4">Thank you for requesting a quote through MyDentalFly.</p>
-                    <div class="alert alert-success mb-4">
-                        <p class="mb-0">Your quote reference number is: <strong>{{ quote_reference }}</strong></p>
-                    </div>
-                    <p>We've sent a confirmation email to <strong>{{ patient_info.email }}</strong> with your quote details.</p>
+                    <p class="mb-0 text-muted">Please keep this reference number for future communications.</p>
                 </div>
             </div>
             
-            <div class="card mb-4">
+            <!-- Next Steps -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">What Happens Next?</h3>
+                    <h5 class="mb-0">What Happens Next?</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                        <i class="fas fa-envelope"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="h6 mb-1">Email Confirmation</h4>
-                                    <p class="mb-0 small">You'll receive a detailed quote confirmation email within the next few minutes.</p>
-                                </div>
+                        <div class="col-md-4 mb-4 mb-md-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                                <i class="fas fa-envelope fa-2x"></i>
                             </div>
+                            <h6>Email Confirmation</h6>
+                            <p class="text-muted small">You'll receive a detailed quote confirmation email shortly.</p>
                         </div>
-                        
-                        <div class="col-md-6 mb-4">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                        <i class="fas fa-phone-alt"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="h6 mb-1">Personal Follow-up</h4>
-                                    <p class="mb-0 small">A dental tourism specialist will contact you within 24 hours to discuss your quote.</p>
-                                </div>
+                        <div class="col-md-4 mb-4 mb-md-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                                <i class="fas fa-phone-alt fa-2x"></i>
                             </div>
+                            <h6>Personal Consultation</h6>
+                            <p class="text-muted small">Our team will contact you within 24 hours to discuss your treatment options.</p>
                         </div>
-                        
-                        <div class="col-md-6 mb-4">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                        <i class="fas fa-comments"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="h6 mb-1">Free Consultation</h4>
-                                    <p class="mb-0 small">Schedule your free online consultation with a dental specialist to discuss your treatment plan.</p>
-                                </div>
+                        <div class="col-md-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 70px; height: 70px;">
+                                <i class="fas fa-calendar-check fa-2x"></i>
                             </div>
+                            <h6>Treatment Planning</h6>
+                            <p class="text-muted small">We'll help you plan your treatment timeline and travel arrangements.</p>
                         </div>
-                        
-                        <div class="col-md-6 mb-4">
-                            <div class="d-flex">
-                                <div class="me-3">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
-                                        <i class="fas fa-calendar-check"></i>
-                                    </div>
-                                </div>
-                                <div>
-                                    <h4 class="h6 mb-1">Treatment Booking</h4>
-                                    <p class="mb-0 small">Once you're ready, we'll help you secure your treatment dates and travel arrangements.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="alert alert-info mt-2">
-                        <p class="mb-0"><i class="fas fa-info-circle me-2"></i> Our team typically responds within 24 hours during business days.</p>
                     </div>
                 </div>
             </div>
             
-            <div class="card mb-4">
+            <!-- Quote Summary -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Your Quote Summary</h3>
+                    <h5 class="mb-0">Quote Summary</h5>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Treatment</th>
-                                    <th class="text-center">Qty</th>
-                                    <th class="text-end">Price</th>
-                                </tr>
-                            </thead>
+                        <table class="table table-borderless mb-0">
                             <tbody>
                                 {% for treatment in selected_treatments %}
-                                    <tr>
-                                        <td>{{ treatment.name }}</td>
-                                        <td class="text-center">{{ treatment.quantity }}</td>
-                                        <td class="text-end">${{ treatment.price * treatment.quantity }}</td>
-                                    </tr>
+                                <tr>
+                                    <td class="text-start">
+                                        <span>{{ treatment.name }}</span>
+                                        <small class="d-block text-muted">Qty: {{ treatment.quantity }}</small>
+                                    </td>
+                                    <td class="text-end">${{ treatment.price * treatment.quantity }}</td>
+                                </tr>
                                 {% endfor %}
                             </tbody>
-                            <tfoot>
+                            <tfoot class="border-top">
                                 <tr>
-                                    <td colspan="2" class="text-end"><strong>Subtotal:</strong></td>
+                                    <td class="text-start">Subtotal:</td>
                                     <td class="text-end">${{ subtotal }}</td>
                                 </tr>
                                 {% if discount > 0 %}
-                                    <tr>
-                                        <td colspan="2" class="text-end text-success">
-                                            <strong>Discount 
-                                                {% if promo_code %}
-                                                    ({{ promo_code }})
-                                                {% endif %}:
-                                            </strong>
-                                        </td>
-                                        <td class="text-end text-success">-${{ discount }}</td>
-                                    </tr>
+                                <tr>
+                                    <td class="text-start">Discount {% if promo_code %}({{ promo_code }}){% endif %}:</td>
+                                    <td class="text-end text-success">-${{ discount }}</td>
+                                </tr>
                                 {% endif %}
                                 <tr>
-                                    <td colspan="2" class="text-end"><strong>Total:</strong></td>
-                                    <td class="text-end"><strong>${{ total }}</strong></td>
+                                    <td class="text-start fw-bold">Total:</td>
+                                    <td class="text-end fw-bold">${{ total }}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -180,114 +95,30 @@
                 </div>
             </div>
             
-            <div class="d-grid gap-2 mt-4">
-                <a href="{{ url_for('pages.index') }}" class="btn btn-primary">
-                    Back to Homepage
-                </a>
-            </div>
-        </div>
-        
-        <div class="col-lg-4">
-            <div class="card mb-4">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Need Help?</h3>
-                </div>
+            <!-- Additional Information -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-body">
-                    <p>If you have any questions about your quote or the booking process, our team is ready to assist you:</p>
-                    
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-phone-alt me-3 text-primary"></i>
-                        <div>
-                            <p class="mb-0"><strong>Phone Support</strong></p>
-                            <p class="mb-0 small">+44 20 7123 4567</p>
+                    <h5 class="mb-3">Need More Information?</h5>
+                    <p class="mb-4">If you have any questions or need additional information, please don't hesitate to contact us.</p>
+                    <div class="row">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <a href="#" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-question-circle me-2"></i> FAQ
+                            </a>
                         </div>
-                    </div>
-                    
-                    <div class="d-flex align-items-center mb-3">
-                        <i class="fas fa-envelope me-3 text-primary"></i>
-                        <div>
-                            <p class="mb-0"><strong>Email Support</strong></p>
-                            <p class="mb-0 small">support@mydentalfly.com</p>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-comment-dots me-3 text-primary"></i>
-                        <div>
-                            <p class="mb-0"><strong>Live Chat</strong></p>
-                            <p class="mb-0 small">Available 24/7</p>
+                        <div class="col-md-6">
+                            <a href="#" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-headset me-2"></i> Contact Support
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="card mb-4">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Your Patient Portal</h3>
-                </div>
-                <div class="card-body">
-                    <p>We've created a patient portal account for you where you can:</p>
-                    
-                    <ul class="mb-3">
-                        <li>View and download your quote</li>
-                        <li>Schedule your free consultation</li>
-                        <li>Communicate with your dental specialist</li>
-                        <li>Access treatment information</li>
-                        <li>Manage your appointments</li>
-                    </ul>
-                    
-                    <p class="small mb-3">We've sent login instructions to your email. Simply follow the link to set up your password.</p>
-                    
-                    <div class="d-grid">
-                        <a href="#" class="btn btn-outline-primary">
-                            <i class="fas fa-user-circle me-1"></i> Access Patient Portal
-                        </a>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Recommended Next Steps</h3>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex mb-3">
-                        <div class="me-3 text-primary">
-                            <i class="fas fa-book-medical"></i>
-                        </div>
-                        <div>
-                            <a href="#" class="text-decoration-none">Read about your treatment</a>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex mb-3">
-                        <div class="me-3 text-primary">
-                            <i class="fas fa-clinic-medical"></i>
-                        </div>
-                        <div>
-                            <a href="#" class="text-decoration-none">Explore our partner clinics</a>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex mb-3">
-                        <div class="me-3 text-primary">
-                            <i class="fas fa-plane"></i>
-                        </div>
-                        <div>
-                            <a href="#" class="text-decoration-none">Learn about travel arrangements</a>
-                        </div>
-                    </div>
-                    
-                    <div class="d-flex">
-                        <div class="me-3 text-primary">
-                            <i class="fas fa-question-circle"></i>
-                        </div>
-                        <div>
-                            <a href="#" class="text-decoration-none">Frequently asked questions</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Return to Homepage -->
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                Return to Homepage
+            </a>
         </div>
     </div>
 </div>
