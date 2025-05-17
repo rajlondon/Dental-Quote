@@ -904,6 +904,7 @@ function Router() {
       {/* Patient quotes section - Enhanced with Flask integration */}
       <Route path="/patient/quotes" component={() => {
         // Use our enhanced PatientQuotesPage that integrates with Flask backend
+        const PatientQuotesPage = React.lazy(() => import("@/pages/patient/PatientQuotesPage"));
         return (
           <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading quotes...</div>}>
             <PatientQuotesPage />
