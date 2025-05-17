@@ -4,187 +4,286 @@ Handles promotional offers and discount codes
 """
 import json
 import os
-from pathlib import Path
+import logging
 from datetime import datetime
 
-# Get the promotions data path
-PROMOTIONS_DATA_PATH = Path(__file__).parent.parent / "data" / "promotions.json"
+logger = logging.getLogger(__name__)
+
+# Promotions data file path
+PROMOTIONS_DATA_FILE = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'promotions.json')
 
 def load_promotions():
-    """Load promotions from JSON file"""
+    """Load promotions from JSON file or generate sample data if file doesn't exist"""
+    # Create directory if it doesn't exist
+    os.makedirs(os.path.dirname(PROMOTIONS_DATA_FILE), exist_ok=True)
+    
+    # If file doesn't exist, generate sample data
+    if not os.path.exists(PROMOTIONS_DATA_FILE):
+        logger.info("Promotions data file not found. Generating sample data.")
+        promotions = generate_sample_promotions()
+        save_promotions(promotions)
+        return promotions
+    
+    # Load from file
     try:
-        # Create data directory if it doesn't exist
-        os.makedirs(os.path.dirname(PROMOTIONS_DATA_PATH), exist_ok=True)
-        
-        # Check if the file exists, if not create a sample one
-        if not os.path.exists(PROMOTIONS_DATA_PATH):
-            sample_promos = generate_sample_promotions()
-            with open(PROMOTIONS_DATA_PATH, 'w') as f:
-                json.dump(sample_promos, f, indent=2)
-            return sample_promos
-        
-        # Load the file if it exists
-        with open(PROMOTIONS_DATA_PATH, 'r') as f:
-            return json.load(f)
+        with open(PROMOTIONS_DATA_FILE, 'r') as file:
+            promotions = json.load(file)
+        logger.info(f"Loaded {len(promotions)} promotions from file")
+        return promotions
     except Exception as e:
-        print(f"Error loading promotions: {e}")
-        return generate_sample_promotions()
+        logger.error(f"Error loading promotions from file: {e}")
+        promotions = generate_sample_promotions()
+        save_promotions(promotions)
+        return promotions
+
+def save_promotions(promotions):
+    """Save promotions to JSON file"""
+    try:
+        with open(PROMOTIONS_DATA_FILE, 'w') as file:
+            json.dump(promotions, file, indent=2)
+        logger.info(f"Saved {len(promotions)} promotions to file")
+        return True
+    except Exception as e:
+        logger.error(f"Error saving promotions to file: {e}")
+        return False
 
 def generate_sample_promotions():
     """Generate sample promotions data"""
-    current_date = datetime.now().isoformat()
+    now = datetime.now().isoformat()
     
-    return [
+    promotions = [
         {
-            "id": "summer_special",
-            "promo_code": "SUMMER15",
-            "title": "Summer Special Discount",
-            "description": "Get 15% off on all dental treatments this summer",
+            "id": "summer15",
+            "code": "SUMMER15",
+            "description": "Summer Special: 15% off all dental treatments",
             "discount_type": "percentage",
             "discount_value": 15,
-            "start_date": current_date,
-            "end_date": "2025-09-30T00:00:00Z",
             "minimum_order": 0,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
             "is_active": True,
-            "clinic_name": "All Partner Clinics",
-            "treatments": ["All treatments"],
-            "valid_until": "September 30, 2025",
-            "image": "/static/images/promos/summer_special.jpg"
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": []  # Empty array means applicable to all treatments
         },
         {
-            "id": "new_patient",
-            "promo_code": "NEWPATIENT",
-            "title": "New Patient Offer",
-            "description": "First-time patients receive 20% off any treatment package",
-            "discount_type": "percentage", 
-            "discount_value": 20,
-            "start_date": current_date,
-            "end_date": "2025-12-31T00:00:00Z",
-            "minimum_order": 500,
-            "is_active": True,
-            "clinic_name": "DentSpa Istanbul",
-            "treatments": ["All treatments"],
-            "valid_until": "December 31, 2025",
-            "image": "/static/images/promos/new_patient.jpg"
-        },
-        {
-            "id": "dental_crown",
-            "promo_code": "DENTAL25",
-            "title": "Dental Crown Special",
-            "description": "25% discount on all dental crown treatments",
+            "id": "dental25",
+            "code": "DENTAL25",
+            "description": "Dental Tourism Discount: 25% off for international patients",
             "discount_type": "percentage",
             "discount_value": 25,
-            "start_date": current_date,
-            "end_date": "2025-08-31T00:00:00Z",
-            "minimum_order": 0,
-            "is_active": True,
-            "clinic_name": "Crown Specialists",
-            "treatments": ["Dental Crown", "Full Porcelain Crown", "Zirconia Crown"],
-            "valid_until": "August 31, 2025",
-            "image": "/static/images/promos/dental_crown.jpg"
-        },
-        {
-            "id": "test_code",
-            "promo_code": "TEST10",
-            "title": "Test Promotion",
-            "description": "10% off for testing purposes",
-            "discount_type": "percentage",
-            "discount_value": 10,
-            "start_date": current_date,
-            "end_date": "2025-12-31T00:00:00Z",
-            "minimum_order": 0,
-            "is_active": True,
-            "clinic_name": "Test Clinic",
-            "treatments": ["All treatments"],
-            "valid_until": "December 31, 2025",
-            "image": "/static/images/promos/test_promo.jpg"
-        },
-        {
-            "id": "free_consultation",
-            "promo_code": "FREECONSULT",
-            "title": "Free Consultation Package",
-            "description": "Book a dental treatment and get free pre-consultation and aftercare support",
-            "discount_type": "fixed_amount",
-            "discount_value": 150,
-            "start_date": current_date,
-            "end_date": "2025-12-31T00:00:00Z",
             "minimum_order": 1000,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
             "is_active": True,
-            "clinic_name": "Premium Dental Istanbul",
-            "treatments": ["Dental Implant", "Veneers", "Full Mouth Reconstruction"],
-            "valid_until": "December 31, 2025",
-            "image": "/static/images/promos/free_consultation.jpg"
+            "max_uses": 100,
+            "current_uses": 0,
+            "applicable_treatments": []
         },
         {
-            "id": "hotel_discount",
-            "promo_code": "LUXHOTEL20",
-            "title": "Premium Hotel Deal",
-            "description": "20% off on premium hotels with your dental treatment booking",
+            "id": "newpatient",
+            "code": "NEWPATIENT",
+            "description": "New Patient Special: 20% off your first treatment",
             "discount_type": "percentage",
             "discount_value": 20,
-            "start_date": current_date,
-            "end_date": "2025-10-31T00:00:00Z",
-            "minimum_order": 1000,
+            "minimum_order": 0,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
             "is_active": True,
-            "clinic_name": "Luxury Dental",
-            "treatments": ["Dental Implant", "Veneers", "Crowns"],
-            "valid_until": "October 31, 2025",
-            "image": "/static/images/promos/hotel_discount.jpg"
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": []
         },
         {
-            "id": "implant_crown_bundle",
-            "promo_code": "IMPLANTCROWN30",
-            "title": "Implant + Crown Bundle",
-            "description": "30% off when combining dental implant with crown treatment",
+            "id": "test10",
+            "code": "TEST10",
+            "description": "Test promotion code: 10% off all treatments",
+            "discount_type": "percentage",
+            "discount_value": 10,
+            "minimum_order": 0,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "is_active": True,
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": []
+        },
+        {
+            "id": "freeconsult",
+            "code": "FREECONSULT",
+            "description": "Free dental consultation with any treatment",
+            "discount_type": "fixed_amount",
+            "discount_value": 100,
+            "minimum_order": 500,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "is_active": True,
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": []
+        },
+        {
+            "id": "luxhotel20",
+            "code": "LUXHOTEL20",
+            "description": "20% off luxury hotel stay with dental treatment",
+            "discount_type": "percentage",
+            "discount_value": 20,
+            "minimum_order": 1000,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "is_active": True,
+            "max_uses": 50,
+            "current_uses": 0,
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "dental_crowns"]
+        },
+        {
+            "id": "implantcrown30",
+            "code": "IMPLANTCROWN30",
+            "description": "30% off when combining dental implant with crown",
             "discount_type": "percentage",
             "discount_value": 30,
-            "start_date": current_date,
-            "end_date": "2025-09-30T00:00:00Z",
             "minimum_order": 0,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
             "is_active": True,
-            "clinic_name": "Implant Center Istanbul",
-            "treatments": ["Dental Implant", "Dental Crown"],
-            "valid_until": "September 30, 2025",
-            "image": "/static/images/promos/implant_crown.jpg"
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": ["dental_implant_standard", "dental_crowns"]
         },
         {
-            "id": "free_whitening",
-            "promo_code": "FREEWHITE",
-            "title": "Free Teeth Whitening",
-            "description": "Free professional teeth whitening with any veneer or crown package",
+            "id": "freewhite",
+            "code": "FREEWHITE",
+            "description": "Free teeth whitening with veneer or crown package",
             "discount_type": "fixed_amount",
             "discount_value": 200,
-            "start_date": current_date,
-            "end_date": "2025-08-31T00:00:00Z",
-            "minimum_order": 1000,
+            "minimum_order": 1200,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
             "is_active": True,
-            "clinic_name": "White Smile Dental",
-            "treatments": ["Veneers", "Crowns", "Hollywood Smile"],
-            "valid_until": "August 31, 2025",
-            "image": "/static/images/promos/free_whitening.jpg"
+            "max_uses": 0,
+            "current_uses": 0,
+            "applicable_treatments": ["porcelain_veneers", "dental_crowns", "hollywood_smile"]
         }
     ]
+    
+    # Add special offers (used for displaying promotions on the special offers page)
+    special_offers = [
+        {
+            "id": "special_offer_1",
+            "title": "Free Consultation Package",
+            "description": "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
+            "promo_code": "FREECONSULT",
+            "discount_type": "fixed_amount",
+            "discount_value": 100,
+            "banner_image": "/static/images/promos/free_consultation.jpg",
+            "is_active": True,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "terms_conditions": "Applicable for new patients only. One consultation per patient.",
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"]
+        },
+        {
+            "id": "special_offer_2",
+            "title": "Premium Hotel Deal",
+            "description": "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
+            "promo_code": "LUXHOTEL20",
+            "discount_type": "percentage",
+            "discount_value": 20,
+            "banner_image": "/static/images/promos/luxury_hotel.jpg",
+            "is_active": True,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "terms_conditions": "Minimum treatment value of $1000 required. Subject to hotel availability.",
+            "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "dental_crowns"]
+        },
+        {
+            "id": "special_offer_3",
+            "title": "Dental Implant + Crown Bundle",
+            "description": "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
+            "promo_code": "IMPLANTCROWN30",
+            "discount_type": "percentage",
+            "discount_value": 30,
+            "banner_image": "/static/images/promos/implant_crown_bundle.jpg",
+            "is_active": True,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "terms_conditions": "Valid for single tooth implant and crown combinations only.",
+            "applicable_treatments": ["dental_implant_standard", "dental_crowns"]
+        },
+        {
+            "id": "special_offer_4",
+            "title": "Free Teeth Whitening",
+            "description": "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.",
+            "promo_code": "FREEWHITE",
+            "discount_type": "fixed_amount",
+            "discount_value": 200,
+            "banner_image": "/static/images/promos/free_whitening.jpg",
+            "is_active": True,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "terms_conditions": "Minimum of 4 veneers or crowns required. Not combinable with other offers.",
+            "applicable_treatments": ["porcelain_veneers", "dental_crowns", "hollywood_smile"]
+        },
+        {
+            "id": "special_offer_5",
+            "title": "Luxury Airport Transfer",
+            "description": "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
+            "promo_code": "LUXTRAVEL",
+            "discount_type": "fixed_amount",
+            "discount_value": 80,
+            "banner_image": "/static/images/promos/airport_transfer.jpg",
+            "is_active": True,
+            "start_date": now,
+            "end_date": "2025-12-31T00:00:00",
+            "terms_conditions": "Minimum treatment value of $2000 required. 48-hour advance booking required for transfers.",
+            "applicable_treatments": ["full_mouth_reconstruction", "hollywood_smile", "all_on_4_implants"]
+        }
+    ]
+    
+    # Combine promotions and special offers
+    all_promotions = {
+        "promo_codes": promotions,
+        "special_offers": special_offers
+    }
+    
+    return all_promotions
 
 def get_active_promotions():
     """Get all active promotions"""
     promotions = load_promotions()
     
-    # Filter for active promotions only
-    active = [promo for promo in promotions if promo.get('is_active', False)]
+    # Handle the case where promotions might be a dictionary with keys
+    if isinstance(promotions, dict) and 'special_offers' in promotions:
+        offers = promotions.get('special_offers', [])
+        return [offer for offer in offers if offer.get('is_active', False)]
     
-    return active
+    # Handle direct list of promotions (older format)
+    return [promo for promo in promotions if promo.get('is_active', False)]
 
 def get_promotion_by_code(promo_code):
     """Get a promotion by its promo code"""
     if not promo_code:
         return None
-        
+    
     promotions = load_promotions()
     
-    # Find the matching promo code (case insensitive)
-    for promo in promotions:
-        if promo.get('promo_code', '').upper() == promo_code.upper() and promo.get('is_active', False):
-            return promo
+    # Handle the case where promotions might be a dictionary with keys
+    if isinstance(promotions, dict):
+        # Check promo_codes first
+        for promo in promotions.get('promo_codes', []):
+            if promo.get('code', '').upper() == promo_code.upper() and promo.get('is_active', False):
+                return promo
+        
+        # Then check special_offers
+        for offer in promotions.get('special_offers', []):
+            if offer.get('promo_code', '').upper() == promo_code.upper() and offer.get('is_active', False):
+                return offer
+    else:
+        # Handle direct list of promotions (older format)
+        for promo in promotions:
+            if (promo.get('code', '').upper() == promo_code.upper() or 
+                promo.get('promo_code', '').upper() == promo_code.upper()) and promo.get('is_active', False):
+                return promo
     
     return None
 
@@ -241,7 +340,7 @@ def apply_promo_code(promo_code, subtotal=0):
     # Return success response
     return {
         'success': True,
-        'message': f"Promo code '{promo_code}' applied successfully",
+        'message': "Promo code applied successfully",
         'promo_details': promo_details,
-        'discount_amount': round(discount_amount, 2)
+        'discount_amount': discount_amount
     }
