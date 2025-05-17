@@ -1,0 +1,662 @@
+{% extends "base.html" %}
+
+{% block title %}{{ clinic.name }} | MyDentalFly{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Clinic Header -->
+    <div class="card shadow-sm mb-5">
+        <div class="row g-0">
+            <div class="col-md-4">
+                <img src="{{ clinic.image }}" class="img-fluid h-100" alt="{{ clinic.name }}" style="object-fit: cover; min-height: 300px;">
+            </div>
+            <div class="col-md-8">
+                <div class="card-body p-4">
+                    <nav aria-label="breadcrumb" class="mb-3">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ url_for('clinic_results') }}">Clinics</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ clinic.name }}</li>
+                        </ol>
+                    </nav>
+                    
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <h1 class="card-title fw-bold h2 mb-0">{{ clinic.name }}</h1>
+                        <div class="d-flex align-items-center">
+                            <div class="px-3 py-2 bg-primary text-white rounded-pill fw-bold me-2">
+                                <i class="fas fa-star me-1"></i> {{ clinic.rating }}
+                            </div>
+                            <div class="text-muted small">
+                                ({{ clinic.reviews_count }} reviews)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center text-muted mb-3">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span>{{ clinic.location }}</span>
+                    </div>
+                    
+                    <p class="card-text mb-4">{{ clinic.description_full }}</p>
+                    
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">Key Features</h5>
+                        <div class="row">
+                            {% for feature in clinic.features_list %}
+                            <div class="col-md-6 mb-2">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-check-circle text-primary me-2"></i>
+                                    <span>{{ feature }}</span>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <a href="{{ url_for('quote_builder', clinic_id=clinic.id) }}" class="btn btn-primary">
+                                <i class="fas fa-calculator me-2"></i> Get a Quote
+                            </a>
+                            <a href="#contact-form" class="btn btn-outline-primary ms-2">
+                                <i class="fas fa-envelope me-2"></i> Contact Clinic
+                            </a>
+                        </div>
+                        <div class="d-flex">
+                            <button class="btn btn-outline-secondary me-2">
+                                <i class="far fa-heart"></i> <span class="d-none d-md-inline ms-1">Save</span>
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-share-alt"></i> <span class="d-none d-md-inline ms-1">Share</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Clinic Info Tabs & Content -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Clinic Tabs -->
+            <ul class="nav nav-tabs mb-4" id="clinicTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="treatments-tab" data-bs-toggle="tab" data-bs-target="#treatments" type="button" role="tab" aria-controls="treatments" aria-selected="true">
+                        <i class="fas fa-tooth me-2 text-primary"></i> Treatments
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="facilities-tab" data-bs-toggle="tab" data-bs-target="#facilities" type="button" role="tab" aria-controls="facilities" aria-selected="false">
+                        <i class="fas fa-clinic-medical me-2 text-primary"></i> Facilities
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="doctors-tab" data-bs-toggle="tab" data-bs-target="#doctors" type="button" role="tab" aria-controls="doctors" aria-selected="false">
+                        <i class="fas fa-user-md me-2 text-primary"></i> Doctors
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab" aria-controls="reviews" aria-selected="false">
+                        <i class="fas fa-comments me-2 text-primary"></i> Reviews
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="faq-tab" data-bs-toggle="tab" data-bs-target="#faq" type="button" role="tab" aria-controls="faq" aria-selected="false">
+                        <i class="fas fa-question-circle me-2 text-primary"></i> FAQ
+                    </button>
+                </li>
+            </ul>
+            
+            <!-- Tab Content -->
+            <div class="tab-content mb-5" id="clinicTabsContent">
+                <!-- Treatments Tab -->
+                <div class="tab-pane fade show active" id="treatments" role="tabpanel" aria-labelledby="treatments-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold mb-4">Available Treatments</h4>
+                            
+                            <!-- Treatment Categories -->
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold mb-0">Dental Implants</h5>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#implantsList">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <div class="collapse show" id="implantsList">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Treatment</th>
+                                                    <th>Description</th>
+                                                    <th class="text-end">Price</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for treatment in clinic.treatments.implants %}
+                                                <tr>
+                                                    <td class="fw-medium">{{ treatment.name }}</td>
+                                                    <td>{{ treatment.description }}</td>
+                                                    <td class="fw-bold text-end">€{{ "%.2f"|format(treatment.price) }}</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-sm btn-primary add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                            <i class="fas fa-plus"></i> Add
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold mb-0">Cosmetic Dentistry</h5>
+                                    <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#cosmeticList">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                </div>
+                                <div class="collapse show" id="cosmeticList">
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>Treatment</th>
+                                                    <th>Description</th>
+                                                    <th class="text-end">Price</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for treatment in clinic.treatments.cosmetic %}
+                                                <tr>
+                                                    <td class="fw-medium">{{ treatment.name }}</td>
+                                                    <td>{{ treatment.description }}</td>
+                                                    <td class="fw-bold text-end">€{{ "%.2f"|format(treatment.price) }}</td>
+                                                    <td class="text-end">
+                                                        <button class="btn btn-sm btn-primary add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                            <i class="fas fa-plus"></i> Add
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info" role="alert">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-info-circle fa-lg"></i>
+                                    </div>
+                                    <div class="ms-3">
+                                        <p class="mb-0">All prices are in Euros (€) and include all materials, appointments, and aftercare. Additional costs may apply for specific cases. Please contact the clinic for a personalized treatment plan.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Facilities Tab -->
+                <div class="tab-pane fade" id="facilities" role="tabpanel" aria-labelledby="facilities-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold mb-4">Clinic Facilities</h4>
+                            
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <img src="{{ clinic.facility_images.reception }}" class="img-fluid rounded mb-3" alt="Reception Area">
+                                    <h6 class="fw-bold">Modern Reception Area</h6>
+                                    <p class="text-muted small">Our welcoming reception area is designed for your comfort with multilingual staff available to assist you.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <img src="{{ clinic.facility_images.treatment_room }}" class="img-fluid rounded mb-3" alt="Treatment Room">
+                                    <h6 class="fw-bold">State-of-the-Art Treatment Rooms</h6>
+                                    <p class="text-muted small">Our treatment rooms feature the latest dental technology to ensure precise and comfortable procedures.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <img src="{{ clinic.facility_images.tech }}" class="img-fluid rounded mb-3" alt="Technology">
+                                    <h6 class="fw-bold">Advanced Dental Technology</h6>
+                                    <p class="text-muted small">Our clinic is equipped with digital X-rays, 3D scanners, and CAD/CAM technology for optimal treatment planning.</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <img src="{{ clinic.facility_images.patient_area }}" class="img-fluid rounded mb-3" alt="Patient Area">
+                                    <h6 class="fw-bold">Comfortable Patient Lounge</h6>
+                                    <p class="text-muted small">Relax in our patient lounge with complimentary refreshments, WiFi, and entertainment options.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Doctors Tab -->
+                <div class="tab-pane fade" id="doctors" role="tabpanel" aria-labelledby="doctors-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold mb-4">Our Dental Specialists</h4>
+                            
+                            <div class="row">
+                                {% for doctor in clinic.doctors %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border-0 shadow-sm">
+                                        <div class="row g-0">
+                                            <div class="col-4">
+                                                <img src="{{ doctor.image }}" class="img-fluid rounded-start h-100" alt="{{ doctor.name }}" style="object-fit: cover;">
+                                            </div>
+                                            <div class="col-8">
+                                                <div class="card-body">
+                                                    <h5 class="card-title fw-bold">Dr. {{ doctor.name }}</h5>
+                                                    <p class="card-text small text-primary mb-1">{{ doctor.specialty }}</p>
+                                                    <p class="card-text small text-muted mb-2">{{ doctor.experience }} years experience</p>
+                                                    <p class="card-text small">{{ doctor.bio }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reviews Tab -->
+                <div class="tab-pane fade" id="reviews" role="tabpanel" aria-labelledby="reviews-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h4 class="fw-bold mb-0">Patient Reviews</h4>
+                                <div class="d-flex align-items-center">
+                                    <div class="px-3 py-2 bg-primary text-white rounded-pill fw-bold">
+                                        <i class="fas fa-star me-1"></i> {{ clinic.rating }}
+                                    </div>
+                                    <span class="ms-2 text-muted">{{ clinic.reviews_count }} reviews</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <span class="fw-bold">5</span> <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ clinic.rating_breakdown.five_star }}%;" aria-valuenow="{{ clinic.rating_breakdown.five_star }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="ms-3 small text-muted">{{ clinic.rating_breakdown.five_star }}%</div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <span class="fw-bold">4</span> <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ clinic.rating_breakdown.four_star }}%;" aria-valuenow="{{ clinic.rating_breakdown.four_star }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="ms-3 small text-muted">{{ clinic.rating_breakdown.four_star }}%</div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <span class="fw-bold">3</span> <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ clinic.rating_breakdown.three_star }}%;" aria-valuenow="{{ clinic.rating_breakdown.three_star }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="ms-3 small text-muted">{{ clinic.rating_breakdown.three_star }}%</div>
+                                </div>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="me-3">
+                                        <span class="fw-bold">2</span> <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ clinic.rating_breakdown.two_star }}%;" aria-valuenow="{{ clinic.rating_breakdown.two_star }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="ms-3 small text-muted">{{ clinic.rating_breakdown.two_star }}%</div>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3">
+                                        <span class="fw-bold">1</span> <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <div class="progress flex-grow-1" style="height: 8px;">
+                                        <div class="progress-bar bg-danger" role="progressbar" style="width: {{ clinic.rating_breakdown.one_star }}%;" aria-valuenow="{{ clinic.rating_breakdown.one_star }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <div class="ms-3 small text-muted">{{ clinic.rating_breakdown.one_star }}%</div>
+                                </div>
+                            </div>
+                            
+                            <hr class="my-4">
+                            
+                            <!-- Patient Reviews -->
+                            {% for review in clinic.reviews %}
+                            <div class="mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                            <span class="fw-bold text-primary">{{ review.name|first }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h6 class="fw-bold mb-0">{{ review.name }}</h6>
+                                            <div class="badge bg-light text-dark ms-2">{{ review.country }}</div>
+                                        </div>
+                                        <div class="mb-2">
+                                            {% for i in range(1, 6) %}
+                                            <i class="fas fa-star {% if i <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                            {% endfor %}
+                                            <span class="small text-muted ms-2">{{ review.date }}</span>
+                                        </div>
+                                        <p class="mb-0">{{ review.comment }}</p>
+                                        
+                                        {% if review.clinic_response %}
+                                        <div class="mt-2 p-3 bg-light rounded">
+                                            <p class="small fw-bold mb-1">Response from {{ clinic.name }}</p>
+                                            <p class="small mb-0">{{ review.clinic_response }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="text-center mt-4">
+                                <button class="btn btn-outline-primary px-4">Load More Reviews</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- FAQ Tab -->
+                <div class="tab-pane fade" id="faq" role="tabpanel" aria-labelledby="faq-tab">
+                    <div class="card shadow-sm">
+                        <div class="card-body p-4">
+                            <h4 class="fw-bold mb-4">Frequently Asked Questions</h4>
+                            
+                            <div class="accordion" id="faqAccordion">
+                                {% for faq in clinic.faqs %}
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" id="heading{{ loop.index }}">
+                                        <button class="accordion-button {% if not loop.first %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}" aria-expanded="{{ 'true' if loop.first else 'false' }}" aria-controls="collapse{{ loop.index }}">
+                                            {{ faq.question }}
+                                        </button>
+                                    </h2>
+                                    <div id="collapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#faqAccordion">
+                                        <div class="accordion-body">
+                                            {{ faq.answer }}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div class="card shadow-sm mb-5" id="contact-form">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-4">Contact {{ clinic.name }}</h4>
+                    
+                    <form id="clinicContactForm">
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="contactName" class="form-label">Your Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="contactName" name="name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contactEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="contactEmail" name="email" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                <label for="contactPhone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="contactPhone" name="phone">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contactSubject" class="form-label">Subject <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="contactSubject" name="subject" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="contactMessage" class="form-label">Message <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="contactMessage" name="message" rows="5" required></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane me-2"></i> Send Message
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Quote Form -->
+            <div class="card shadow-sm mb-4 sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0">Get a Quick Quote</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="quickQuoteForm">
+                        <div class="mb-3">
+                            <label for="treatment" class="form-label fw-medium">Treatment Interest <span class="text-danger">*</span></label>
+                            <select class="form-select" id="treatment" name="treatment_interest" required>
+                                <option value="" selected disabled>Select Treatment</option>
+                                <option value="dental_implants">Dental Implants</option>
+                                <option value="veneers">Veneers</option>
+                                <option value="crowns">Crowns</option>
+                                <option value="whitening">Teeth Whitening</option>
+                                <option value="full_smile_makeover">Full Smile Makeover</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label fw-medium">Your Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="email" class="form-label fw-medium">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="message" class="form-label fw-medium">Additional Information</label>
+                            <textarea class="form-control" id="message" name="message" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                Request Quote
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Clinic Info -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light py-3">
+                    <h5 class="card-title mb-0">Clinic Information</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-1">Address</h6>
+                            <p class="small text-muted mb-0">{{ clinic.address }}<br>{{ clinic.location }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-1">Phone</h6>
+                            <p class="small text-muted mb-0">
+                                <a href="tel:{{ clinic.phone }}" class="text-decoration-none">{{ clinic.phone }}</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-1">Email</h6>
+                            <p class="small text-muted mb-0">
+                                <a href="mailto:{{ clinic.email }}" class="text-decoration-none">{{ clinic.email }}</a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                        </div>
+                        <div class="ms-3">
+                            <h6 class="fw-bold mb-1">Working Hours</h6>
+                            <p class="small text-muted mb-0">
+                                Monday - Friday: {{ clinic.working_hours.weekdays }}<br>
+                                Saturday: {{ clinic.working_hours.saturday }}<br>
+                                Sunday: {{ clinic.working_hours.sunday }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Map -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-0">
+                    <iframe src="{{ clinic.map_embed_url }}" width="100%" height="300" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                </div>
+            </div>
+            
+            <!-- Testimonial -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Patient Success Story</h5>
+                    <div class="text-center mb-3">
+                        <img src="{{ clinic.testimonial.image }}" class="img-fluid rounded-circle mb-3" alt="{{ clinic.testimonial.name }}" style="width: 100px; height: 100px; object-fit: cover;">
+                        <h6 class="fw-bold">{{ clinic.testimonial.name }}</h6>
+                        <p class="small text-muted">from {{ clinic.testimonial.country }}</p>
+                    </div>
+                    <p class="fst-italic mb-0">
+                        <i class="fas fa-quote-left text-primary me-2"></i>
+                        {{ clinic.testimonial.comment }}
+                        <i class="fas fa-quote-right text-primary ms-2"></i>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Contact Form
+        const contactForm = document.getElementById('clinicContactForm');
+        
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show success message (this would typically be an AJAX call)
+                alert('Your message has been sent. The clinic will contact you shortly.');
+                contactForm.reset();
+            });
+        }
+        
+        // Quick Quote Form
+        const quickQuoteForm = document.getElementById('quickQuoteForm');
+        
+        if (quickQuoteForm) {
+            quickQuoteForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show success message (this would typically be an AJAX call)
+                alert('Your quote request has been sent. We will contact you shortly with a personalized quote.');
+                quickQuoteForm.reset();
+            });
+        }
+        
+        // Add treatment buttons
+        const addTreatmentButtons = document.querySelectorAll('.add-treatment');
+        
+        addTreatmentButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                const treatmentId = this.dataset.treatmentId;
+                
+                // Send AJAX request to add treatment
+                fetch('/api/add_treatment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ treatment_id: treatmentId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Treatment added to your quote. You can view your quote and continue from the top right menu.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error adding treatment:', error);
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+.nav-tabs .nav-link {
+    color: var(--bs-dark);
+    border-bottom-width: 2px;
+}
+.nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+    border-bottom-color: var(--bs-primary);
+    font-weight: 500;
+}
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
+}
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+}
+{% endblock %}
