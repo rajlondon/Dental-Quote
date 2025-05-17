@@ -76,21 +76,34 @@ export default function EnhancedQuotePage() {
     }
     
     setIsSubmittingPromo(true);
+    setPromoCodeError(''); // Clear any previous errors
     
-    // Validate promo code
-    const validPromoCodes = ["SUMMER15", "DENTAL25", "NEWPATIENT", "TEST10", "FREECONSULT", "LUXHOTEL20", "IMPLANTCROWN30", "FREEWHITE"];
-      
-    if (validPromoCodes.includes(promoCodeInput.toUpperCase())) {
-      // Apply the promo code
-      applyPromoCode(promoCodeInput.toUpperCase());
-      // Advance to the next section
-      setCurrentStep('patient-info');
-    } else {
-      // Show error directly in the form
-      setPromoCodeError("The promo code you entered is invalid or expired.");
+    try {
+      // Validate promo code
+      const validPromoCodes = ["SUMMER15", "DENTAL25", "NEWPATIENT", "TEST10", "FREECONSULT", "LUXHOTEL20", "IMPLANTCROWN30", "FREEWHITE"];
+        
+      if (validPromoCodes.includes(promoCodeInput.toUpperCase())) {
+        // Apply the promo code without waiting for the result
+        // This prevents the page from refreshing/redirecting
+        try {
+          applyPromoCode(promoCodeInput.toUpperCase());
+        } catch (error) {
+          console.error("Error applying promo code:", error);
+          // Continue anyway since we already validated it client-side
+        }
+        
+        // Advance to the next section
+        setCurrentStep('patient-info');
+      } else {
+        // Show error directly in the form
+        setPromoCodeError("The promo code you entered is invalid or expired.");
+      }
+    } catch (error) {
+      console.error("Error in promo code submission:", error);
+      setPromoCodeError("There was a problem processing your promo code. You can continue without one.");
+    } finally {
+      setIsSubmittingPromo(false);
     }
-    
-    setIsSubmittingPromo(false);
   };
   
   // Handle patient info changes
