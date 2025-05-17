@@ -169,21 +169,19 @@ export default function EnhancedQuotePage() {
                         Our system has analyzed your dental needs based on your answers. 
                         Click below to see your personalized treatment plan with available discounts.
                       </p>
-                      <Button 
-                        size="lg" 
-                        className="px-8 font-medium"
-                        onClick={() => {
-                          // First check if they have selected any treatment from the quiz
-                          if (treatments.length > 0) {
-                            setCurrentStep('promo');
-                          } else {
-                            // If they haven't selected treatments in the quiz yet, we'll 
-                            // generate some based on common dental treatments
-                            setIsLoading(true);
-                            
-                            // Simulate adding some default treatments
-                            setTimeout(() => {
+                      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4 justify-center">
+                        <Button 
+                          size="lg" 
+                          className="px-8 font-medium"
+                          onClick={() => {
+                            // First check if they have selected any treatment from the quiz
+                            if (treatments.length > 0) {
+                              setCurrentStep('promo');
+                            } else {
+                              // If they haven't selected treatments in the quiz yet, we'll 
+                              // generate some based on common dental treatments
                               resetQuote();
+                              
                               // Add default treatments for demonstration
                               addTreatment({
                                 id: `default-${Math.random().toString(36).substring(2, 9)}`,
@@ -200,19 +198,25 @@ export default function EnhancedQuotePage() {
                                 quantity: 1
                               });
                               
-                              setIsLoading(false);
                               setCurrentStep('promo');
-                              
-                              toast({
-                                title: "Quote Created",
-                                description: "We've prepared a basic treatment plan for you to review.",
-                              });
-                            }, 1500);
-                          }
-                        }}
-                      >
-                        Get My Personalized Quote
-                      </Button>
+                            }
+                          }}
+                        >
+                          Get My Personalized Quote
+                        </Button>
+                        
+                        <Button 
+                          size="lg" 
+                          variant="outline"
+                          className="px-8"
+                          onClick={() => {
+                            // Reset to first step if they want to start over
+                            window.scrollTo(0, 0);
+                          }}
+                        >
+                          Edit My Dental Information
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
