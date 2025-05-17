@@ -1,101 +1,90 @@
-export type CurrencyCode = 'USD' | 'EUR' | 'GBP';
+export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'TRY';
 
-interface CurrencySettings {
-  symbol: string;
-  rate: number; // Exchange rate from USD
-  position: 'before' | 'after';
-  spaceBetween: boolean;
-}
+/**
+ * Format a price with the appropriate currency symbol
+ * @param price - The price to format
+ * @param currencyCode - The currency code (USD, EUR, GBP, TRY)
+ * @returns Formatted price string with currency symbol
+ */
+export const formatPriceInCurrency = (price: number, currencyCode: CurrencyCode = 'USD'): string => {
+  const currencyMap: Record<CurrencyCode, { symbol: string, locale: string }> = {
+    USD: { symbol: '$', locale: 'en-US' },
+    EUR: { symbol: '€', locale: 'de-DE' },
+    GBP: { symbol: '£', locale: 'en-GB' },
+    TRY: { symbol: '₺', locale: 'tr-TR' }
+  };
 
-const currencyMap: Record<CurrencyCode, CurrencySettings> = {
-  USD: { symbol: '$', rate: 1, position: 'before', spaceBetween: false },
-  EUR: { symbol: '€', rate: 0.92, position: 'before', spaceBetween: true },
-  GBP: { symbol: '£', rate: 0.78, position: 'before', spaceBetween: false },
+  const { symbol, locale } = currencyMap[currencyCode];
+  
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(price);
 };
 
 /**
- * Format a price in the given currency with proper formatting
- * 
- * @param price - The price in the original currency (typically USD)
- * @param currencyCode - The currency code to convert to
- * @returns Formatted price string with currency symbol
+ * Format a date string into a more readable format
+ * @param dateString - The date string to format
+ * @returns Formatted date string
  */
-export function formatPriceInCurrency(price: number, currencyCode: CurrencyCode = 'USD'): string {
-  const currency = currencyMap[currencyCode];
-  
-  // Convert price to target currency
-  const convertedPrice = price * currency.rate;
-  
-  // Format the number with 2 decimal places
-  const formattedValue = convertedPrice.toFixed(2);
-  
-  // Apply currency formatting based on position
-  if (currency.position === 'before') {
-    return `${currency.symbol}${currency.spaceBetween ? ' ' : ''}${formattedValue}`;
-  } else {
-    return `${formattedValue}${currency.spaceBetween ? ' ' : ''}${currency.symbol}`;
+export const formatDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+};
+
+/**
+ * Format a percentage value
+ * @param value - The percentage value (0-100)
+ * @returns Formatted percentage string
+ */
+export const formatPercentage = (value: number): string => {
+  return `${value}%`;
+};
+
+/**
+ * Convert a price from one currency to another based on exchange rates
+ * @param amount - The amount to convert
+ * @param fromCurrency - The source currency
+ * @param toCurrency - The target currency
+ * @returns Converted amount
+ */
+export const convertCurrency = (
+  amount: number, 
+  fromCurrency: CurrencyCode, 
+  toCurrency: CurrencyCode
+): number => {
+  // Current exchange rates (as of May 2025)
+  const exchangeRates: Record<CurrencyCode, Record<CurrencyCode, number>> = {
+    USD: { USD: 1, EUR: 0.93, GBP: 0.79, TRY: 32.14 },
+    EUR: { USD: 1.08, EUR: 1, GBP: 0.85, TRY: 34.81 },
+    GBP: { USD: 1.26, EUR: 1.17, GBP: 1, TRY: 40.78 },
+    TRY: { USD: 0.031, EUR: 0.029, GBP: 0.025, TRY: 1 }
+  };
+
+  // If currencies are the same, no conversion needed
+  if (fromCurrency === toCurrency) {
+    return amount;
   }
-}
+
+  // Convert using exchange rate
+  return amount * exchangeRates[fromCurrency][toCurrency];
+};
 
 /**
- * Simple price formatter that uses the browser's Intl API
- * 
- * @param price - The price to format
- * @param currencyCode - The currency code
- * @returns Formatted price string
+ * Truncate a string to a specified length and add an ellipsis if needed
+ * @param text - The text to truncate
+ * @param maxLength - Maximum length before truncation
+ * @returns Truncated text with ellipsis if needed
  */
-export function formatPrice(price: number, currencyCode: CurrencyCode = 'USD'): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  }).format(price);
-}
-
-/**
- * Convert a price from one currency to another
- * 
- * @param price - The price in the source currency
- * @param fromCurrency - The source currency code
- * @param toCurrency - The target currency code
- * @returns Converted price in target currency
- */
-export function convertCurrency(
-  price: number, 
-  fromCurrency: CurrencyCode = 'USD', 
-  toCurrency: CurrencyCode = 'USD'
-): number {
-  // First convert to USD if not already
-  const priceInUSD = fromCurrency === 'USD' 
-    ? price 
-    : price / currencyMap[fromCurrency].rate;
-  
-  // Then convert from USD to target currency
-  return priceInUSD * currencyMap[toCurrency].rate;
-}
-
-/**
- * Get the exchange rate between two currencies
- * 
- * @param fromCurrency - The source currency code
- * @param toCurrency - The target currency code
- * @returns Exchange rate
- */
-export function getExchangeRate(
-  fromCurrency: CurrencyCode = 'USD',
-  toCurrency: CurrencyCode = 'USD'
-): number {
-  // Rate to convert 1 unit of fromCurrency to toCurrency
-  return currencyMap[toCurrency].rate / currencyMap[fromCurrency].rate;
-}
-
-/**
- * Get currency symbol for a given currency code
- * 
- * @param currencyCode - The currency code
- * @returns Currency symbol
- */
-export function getCurrencySymbol(currencyCode: CurrencyCode = 'USD'): string {
-  return currencyMap[currencyCode].symbol;
-}
+export const truncateText = (text: string, maxLength: number): string => {
+  if (text.length <= maxLength) {
+    return text;
+  }
+  return text.slice(0, maxLength) + '...';
+};

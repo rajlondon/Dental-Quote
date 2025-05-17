@@ -1,174 +1,154 @@
-import React from 'react';
-import { Link } from 'wouter';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, CheckCircle, ListChecks, Layers, FileStack } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { ArrowRight, CheckCircle2, Gem, Globe, HeartPulse, Star } from "lucide-react";
+import SpecialOffersSection from "@/components/home/SpecialOffersSection";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4 text-primary">MyDentalFly Quote System</h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            A comprehensive dental treatment quote system with multiple implementations
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Enhanced Quote Builder */}
-          <Card className="border-2 border-primary/50 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <FileStack className="h-5 w-5 mr-2 text-primary" />
-                Enhanced Quote Builder
-              </CardTitle>
-              <CardDescription>
-                Multi-step workflow with comprehensive features
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
-                Complete solution with patient information collection, treatment categorization, 
-                and detailed quote review.
+    <div className="flex flex-col min-h-screen">
+      {/* Hero Section */}
+      <section className="bg-gradient-to-r from-primary/10 to-primary/5 py-16 md:py-24">
+        <div className="container px-4 md:px-6">
+          <div className="grid gap-6 md:grid-cols-2 md:gap-12 items-center">
+            <div className="flex flex-col gap-4">
+              <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+                Your <span className="text-primary">Smile Transformation</span> Starts Here
+              </h1>
+              <p className="text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Compare top-rated dental clinics in Turkey. Get personalized treatment plans,
+                transparent pricing, and dedicated support throughout your journey.
               </p>
-              <div className="space-y-2">
+              <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                <Link href="/quote-builder">
+                  <Button className="flex-1" size="lg">
+                    Get Your Quote <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/clinics">
+                  <Button variant="outline" className="flex-1" size="lg">
+                    Browse Clinics
+                  </Button>
+                </Link>
+              </div>
+              <div className="flex gap-1 md:gap-2 text-sm text-muted-foreground mt-2">
                 <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Multi-step workflow</span>
+                  <CheckCircle2 className="mr-1 h-4 w-4 text-primary" />
+                  <span>Free Consultations</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Treatment categories</span>
+                  <CheckCircle2 className="mr-1 h-4 w-4 text-primary" />
+                  <span>Clear Pricing</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Patient information collection</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Zustand state with persistence</span>
+                  <CheckCircle2 className="mr-1 h-4 w-4 text-primary" />
+                  <span>Multi-currency</span>
                 </div>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Link href="/enhanced-quote">
-                <Button className="w-full flex items-center justify-center">
-                  Try Enhanced Builder
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-          
-          {/* Documented Quote Builder */}
-          <Card className="border border-gray-200 shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <ListChecks className="h-5 w-5 mr-2 text-primary" />
-                Documented Quote Builder
-              </CardTitle>
-              <CardDescription>
-                Reliable solution with inline status messages
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
-                A clean, well-documented implementation that uses Zustand for state management 
-                with localStorage persistence.
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Zustand state management</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">LocalStorage persistence</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Inline status messages</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Comprehensive error handling</span>
+            </div>
+            <div className="mx-auto flex items-center justify-center">
+              <div className="relative">
+                <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full bg-primary/20 blur-xl"></div>
+                <div className="absolute -bottom-6 -right-6 h-24 w-24 rounded-full bg-primary/20 blur-xl"></div>
+                <div className="relative rounded-lg border bg-background p-8 shadow-xl">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <span className="ml-2 text-sm">4.9/5 (120+ reviews)</span>
+                    </div>
+                    <blockquote className="text-sm/6 italic">
+                      "MyDentalFly made my dental tourism experience absolutely seamless. From comparing clinics to
+                      finalizing my treatment plan, everything was transparent and hassle-free."
+                    </blockquote>
+                    <div className="flex items-center gap-2">
+                      <div className="h-10 w-10 rounded-full bg-muted"></div>
+                      <div>
+                        <div className="font-semibold">Sarah Thompson</div>
+                        <div className="text-xs text-muted-foreground">London, UK</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Link href="/documented-quote">
-                <Button variant="outline" className="w-full flex items-center justify-center">
-                  Try Documented Builder
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-          
-          {/* Emergency Quote Builder */}
-          <Card className="border border-gray-200 shadow-md">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Layers className="h-5 w-5 mr-2 text-primary" />
-                Emergency Quote Builder
-              </CardTitle>
-              <CardDescription>
-                Standalone solution with minimal dependencies
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600 mb-4">
-                A simplified, self-contained implementation that uses only local component state 
-                to ensure maximum reliability.
-              </p>
-              <div className="space-y-2">
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Local component state</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">No external dependencies</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Simple UI with minimal complexity</span>
-                </div>
-                <div className="flex items-center">
-                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                  <span className="text-sm">Fallback API simulation</span>
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Link href="/emergency-quote">
-                <Button variant="outline" className="w-full flex items-center justify-center">
-                  Try Emergency Builder
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </CardFooter>
-          </Card>
-        </div>
-        
-        <div className="mt-16 max-w-2xl mx-auto text-center">
-          <h2 className="text-2xl font-bold mb-4">About the Implementation</h2>
-          <p className="text-gray-600 mb-6">
-            We've created multiple quote builder implementations to demonstrate different approaches to state management 
-            and form handling. Each approach has its own strengths and use cases.
-          </p>
-          <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 text-left">
-            <h3 className="font-medium text-blue-800 mb-2">Implementation Notes</h3>
-            <ul className="list-disc pl-5 text-sm text-blue-700 space-y-1">
-              <li>The Enhanced Builder uses a multi-step workflow with treatment categories and patient information collection</li>
-              <li>The Documented Builder focuses on reliable state management with inline status messages</li>
-              <li>The Emergency Builder uses local component state for maximum reliability</li>
-              <li>All implementations include fallback mechanisms for API failures</li>
-            </ul>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Special Offers Section */}
+      <SpecialOffersSection />
+
+      {/* How It Works */}
+      <section className="py-12 md:py-16">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">How It Works</h2>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl/relaxed">
+                Simple steps to find the perfect dental treatment in Turkey
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-3 md:gap-12 pt-8">
+            <div className="flex flex-col items-center space-y-2 border rounded-lg p-6 shadow-sm">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Gem className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Build Your Quote</h3>
+              <p className="text-center text-muted-foreground text-sm">
+                Select your treatments and get an instant quote with multiple currency options
+              </p>
+            </div>
+            <div className="flex flex-col items-center space-y-2 border rounded-lg p-6 shadow-sm">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <HeartPulse className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Compare Clinics</h3>
+              <p className="text-center text-muted-foreground text-sm">
+                Browse clinics, check reviews, credentials, and facilities to find your perfect match
+              </p>
+            </div>
+            <div className="flex flex-col items-center space-y-2 border rounded-lg p-6 shadow-sm">
+              <div className="bg-primary/10 p-3 rounded-full">
+                <Globe className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold">Travel & Treatment</h3>
+              <p className="text-center text-muted-foreground text-sm">
+                Get support with travel arrangements and enjoy your dental treatment with confidence
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-primary/5 py-12 md:py-16">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter">Ready to Transform Your Smile?</h2>
+              <p className="mx-auto max-w-[600px] text-muted-foreground">
+                Get a personalized quote today and start your journey to affordable, quality dental care
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 min-[400px]:flex-row">
+              <Link href="/quote-builder">
+                <Button className="flex-1" size="lg">
+                  Get Your Free Quote <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button variant="outline" className="flex-1" size="lg">
+                  Free Consultation
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
