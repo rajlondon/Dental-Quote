@@ -1,0 +1,507 @@
+Session persistence issues in Replit's environment
+Promo code management - specifically the inability to remove and add different codes
+Development environment limitations with Replit
+Moving Forward: A Complete Solution
+Rather than continuing to struggle with Replit, let's create a more robust solution that you can run locally or deploy to a more stable environment.
+
+Enhanced Flask Application Structure
+Here's an improved structure for our Flask application that addresses the persistence issues:
+
+dental-quote-system/
+├── app.py                 # Main application file
+├── config.py              # Configuration settings
+├── models/                # Data models
+│   ├── __init__.py
+│   ├── quote.py           # Quote model
+│   ├── treatment.py       # Treatment model
+│   └── promo.py           # Promo code model
+├── services/              # Business logic
+│   ├── __init__.py
+│   ├── quote_service.py   # Quote management
+│   ├── promo_service.py   # Promo code handling
+│   └── pdf_service.py     # PDF generation
+├── routes/                # API and page routes
+│   ├── __init__.py
+│   ├── quote_routes.py    # Quote management routes
+│   ├── promo_routes.py    # Promo code routes
+│   └── page_routes.py     # Page rendering routes
+├── static/                # Static assets
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── templates/             # Jinja2 templates
+│   ├── base.html
+│   ├── quote/
+│   │   ├── step1.html     # Treatment selection
+│   │   ├── step2.html     # Promo code
+│   │   ├── step3.html     # Patient info
+│   │   └── review.html    # Quote review
+│   └── email_templates/
+├── utils/                 # Utility functions
+│   ├── __init__.py
+│   ├── session_manager.py # Enhanced session management
+│   └── validators.py      # Input validation
+├── requirements.txt       # Dependencies
+└── README.md              # Documentation
+Key Improvements
+Let's implement these specific improvements to address your issues:
+
+1. Enhanced Session Management
+# utils/session_manager.py
+import json
+import time
+from flask import session, request
+
+class SessionManager:
+    """Enhanced session management with backup and recovery"""
+    
+    @staticmethod
+    def get_quote_data():
+        """Get quote data with fallback to backup if main is corrupted"""
+        try:
+            if 'quote_data' in session:
+                # Try to access and validate quote data
+                treatments = session['quote_data'].get('treatments', [])
+                if not isinstance(treatments, list):
+                    raise ValueError("Invalid treatment data structure")
+                
+                return session['quote_data']
+            elif 'quote_data_backup' in session:
+                # Restore from backup
+                print("Restoring quote data from backup")
+                session['quote_data'] = session['quote_data_backup']
+                return session['quote_data']
+        except Exception as e:
+            print(f"Session error: {str(e)}")
+            if 'quote_data_backup' in session:
+                # Restore from backup on error
+                try:
+                    session['quote_data'] = session['quote_data_backup']
+                    return session['quote_data']
+                except:
+                    pass
+        
+        # Initialize new if no valid data exists
+        return SessionManager.initialize_quote_data()
+    
+    @staticmethod
+    def save_quote_data(quote_data):
+        """Save quote data with backup"""
+        # First create a backup of current state
+        if 'quote_data' in session:
+            session['quote_data_backup'] = session['quote_data']
+        
+        # Then update with new data
+        session['quote_data'] = quote_data
+        
+        # Also store a timestamped backup for recovery
+        backup_key = f'quote_backup_{int(time.time())}'
+        session[backup_key] = quote_data
+        
+        # Keep only the 5 most recent backups
+        backup_keys = [k for k in session.keys() if k.startswith('quote_backup_')]
+        backup_keys.sort(reverse=True)
+        
+        for key in backup_keys[5:]:
+            session.pop(key, None)
+    
+    @staticmethod
+    def initialize_quote_data():
+        """Create a new empty quote structure"""
+        quote_data = {
+            'treatments': [],
+            'promo_code': None,
+            'discount': 0,
+            'step': 'treatments',
+            'patient_info': {
+                'name': '',
+                'email': '',
+                'phone': '',
+                'preferred_date': '',
+                'notes': ''
+            },
+            'created_at': time.time()
+        }
+        
+        session['quote_data'] = quote_data
+        session['quote_data_backup'] = quote_data.copy()
+        return quote_data
+    
+    @staticmethod
+    def clear_quote_data():
+        """Clear all quote data"""
+        # Save final backup before clearing
+        if 'quote_data' in session:
+            final_backup_key = f'quote_final_{int(time.time())}'
+            session[final_backup_key] = session['quote_data']
+            
+        # Remove current data
+        session.pop('quote_data', None)
+        session.pop('quote_data_backup', None)
+2. Improved Promo Code Management
+# services/promo_service.py
+from utils.session_manager import SessionManager
+
+class PromoService:
+    """Service for managing promo codes"""
+    
+    # Valid promo codes and their discount percentages
+    VALID_PROMO_CODES = {
+        "SUMMER15": 15,
+        "DENTAL25": 25,
+        "NEWPATIENT": 20,
+        "TEST10": 10
+    }
+    
+    @staticmethod
+    def apply_promo_code(code):
+        """Apply a promo code to the current quote"""
+        # Standardize code format
+        code = code.strip().upper()
+        
+        # Get current quote data
+        quote_data = SessionManager.get_quote_data()
+        
+        # Check if code is valid
+        if code not in PromoService.VALID_PROMO_CODES:
+            return {
+                "success": False,
+                "error": "Invalid promo code"
+            }
+        
+        # Get discount percentage
+        discount = PromoService.VALID_PROMO_CODES[code]
+        
+        # Create a backup before modifying
+        previous_promo = {
+            "code": quote_data.get("promo_code"),
+            "discount": quote_data.get("discount", 0)
+        }
+        quote_data["previous_promo"] = previous_promo
+        
+        # Apply promo code
+        quote_data["promo_code"] = code
+        quote_data["discount"] = discount
+        
+        # Save updated quote data
+        SessionManager.save_quote_data(quote_data)
+        
+        return {
+            "success": True,
+            "promo_code": code,
+            "discount": discount
+        }
+    
+    @staticmethod
+    def remove_promo_code():
+        """Remove the currently applied promo code"""
+        # Get current quote data
+        quote_data = SessionManager.get_quote_data()
+        
+        # Create a backup before modifying
+        previous_promo = {
+            "code": quote_data.get("promo_code"),
+            "discount": quote_data.get("discount", 0)
+        }
+        quote_data["previous_promo"] = previous_promo
+        
+        # Remove promo code
+        quote_data["promo_code"] = None
+        quote_data["discount"] = 0
+        
+        # Save updated quote data
+        SessionManager.save_quote_data(quote_data)
+        
+        return {
+            "success": True
+        }
+    
+    @staticmethod
+    def get_applied_promo():
+        """Get information about the currently applied promo code"""
+        quote_data = SessionManager.get_quote_data()
+        
+        promo_code = quote_data.get("promo_code")
+        discount = quote_data.get("discount", 0)
+        
+        if not promo_code:
+            return None
+        
+        return {
+            "code": promo_code,
+            "discount": discount
+        }
+    
+    @staticmethod
+    def restore_previous_promo():
+        """Restore the previously applied promo code (if any)"""
+        quote_data = SessionManager.get_quote_data()
+        
+        if "previous_promo" not in quote_data:
+            return {
+                "success": False,
+                "error": "No previous promo code found"
+            }
+        
+        previous_promo = quote_data["previous_promo"]
+        
+        if previous_promo["code"]:
+            quote_data["promo_code"] = previous_promo["code"]
+            quote_data["discount"] = previous_promo["discount"]
+        else:
+            quote_data["promo_code"] = None
+            quote_data["discount"] = 0
+        
+        # Remove previous promo data
+        quote_data.pop("previous_promo", None)
+        
+        # Save updated quote data
+        SessionManager.save_quote_data(quote_data)
+        
+        return {
+            "success": True,
+            "promo_code": quote_data["promo_code"],
+            "discount": quote_data["discount"]
+        }
+3. Promo Code Routes
+# routes/promo_routes.py
+from flask import Blueprint, request, jsonify
+from services.promo_service import PromoService
+
+promo_routes = Blueprint('promo_routes', __name__)
+
+@promo_routes.route('/api/promo-codes/apply', methods=['POST'])
+def apply_promo_code():
+    """Apply a promo code to the current quote"""
+    data = request.get_json()
+    
+    if not data or 'promo_code' not in data:
+        return jsonify({
+            "success": False,
+            "error": "Promo code is required"
+        }), 400
+    
+    result = PromoService.apply_promo_code(data['promo_code'])
+    
+    if result["success"]:
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+
+@promo_routes.route('/api/promo-codes/remove', methods=['POST'])
+def remove_promo_code():
+    """Remove the currently applied promo code"""
+    result = PromoService.remove_promo_code()
+    return jsonify(result)
+
+@promo_routes.route('/api/promo-codes/current', methods=['GET'])
+def get_current_promo():
+    """Get information about the currently applied promo code"""
+    promo = PromoService.get_applied_promo()
+    
+    if promo:
+        return jsonify({
+            "success": True,
+            "promo_code": promo["code"],
+            "discount": promo["discount"]
+        })
+    else:
+        return jsonify({
+            "success": True,
+            "promo_code": None,
+            "discount": 0
+        })
+
+@promo_routes.route('/api/promo-codes/restore-previous', methods=['POST'])
+def restore_previous_promo():
+    """Restore the previously applied promo code"""
+    result = PromoService.restore_previous_promo()
+    
+    if result["success"]:
+        return jsonify(result)
+    else:
+        return jsonify(result), 400
+4. Main Application File
+# app.py
+from flask import Flask, render_template, redirect, url_for, session
+from flask_session import Session
+import os
+import tempfile
+from datetime import timedelta
+
+# Import routes
+from routes.page_routes import page_routes
+from routes.quote_routes import quote_routes
+from routes.promo_routes import promo_routes
+
+# Create Flask application
+app = Flask(__name__)
+
+# Configure session
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key-change-this")
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_FILE_DIR"] = tempfile.mkdtemp()
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
+app.config["SESSION_USE_SIGNER"] = True
+
+# Initialize session
+Session(app)
+
+# Register blueprints
+app.register_blueprint(page_routes)
+app.register_blueprint(quote_routes)
+app.register_blueprint(promo_routes)
+
+# Root route
+@app.route('/')
+def index():
+    return redirect(url_for('page_routes.quote_builder'))
+
+# Error handlers
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('error.html', error="Page not found"), 404
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('error.html', error="Server error"), 500
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+Incorporating the Old Quote Management System
+To integrate your old quote management system with this new Flask application:
+
+1. Data Export Bridge
+We can create an export endpoint that formats the quote data to match your existing system:
+
+# routes/integration_routes.py
+from flask import Blueprint, jsonify, redirect, url_for
+from utils.session_manager import SessionManager
+import json
+import requests
+
+integration_routes = Blueprint('integration_routes', __name__)
+
+@integration_routes.route('/api/export-to-legacy-system', methods=['POST'])
+def export_to_legacy_system():
+    """Export the current quote to the legacy system"""
+    quote_data = SessionManager.get_quote_data()
+    
+    # Transform data to match legacy system format
+    legacy_format = {
+        "treatments": [
+            {
+                "id": treatment.get("id"),
+                "name": treatment.get("name"),
+                "price": treatment.get("price"),
+                "quantity": 1  # Default quantity
+            }
+            for treatment in quote_data.get("treatments", [])
+        ],
+        "patient": quote_data.get("patient_info", {}),
+        "promoCode": quote_data.get("promo_code"),
+        "discount": quote_data.get("discount", 0)
+    }
+    
+    # In a real implementation, you would send this to your legacy system
+    # For example:
+    # response = requests.post("[https://your-legacy-api.com/quotes",](https://your-legacy-api.com/quotes",) json=legacy_format)
+    # quote_id = response.json().get("quote_id")
+    
+    # For demonstration, just return the formatted data
+    return jsonify({
+        "success": True,
+        "legacy_format": legacy_format,
+        "message": "Quote formatted for legacy system"
+    })
+
+@integration_routes.route('/export-and-redirect', methods=['GET'])
+def export_and_redirect():
+    """Export quote and redirect to legacy system"""
+    quote_data = SessionManager.get_quote_data()
+    
+    # Transform data (same as above)
+    legacy_format = {
+        "treatments": [
+            {
+                "id": treatment.get("id"),
+                "name": treatment.get("name"),
+                "price": treatment.get("price"),
+                "quantity": 1
+            }
+            for treatment in quote_data.get("treatments", [])
+        ],
+        "patient": quote_data.get("patient_info", {}),
+        "promoCode": quote_data.get("promo_code"),
+        "discount": quote_data.get("discount", 0)
+    }
+    
+    # Store in session for the legacy system to access
+    session["legacy_quote_data"] = legacy_format
+    
+    # Redirect to legacy system with a parameter
+    return redirect("[https://your-legacy-system.com/import-quote?source=flask-app")](https://your-legacy-system.com/import-quote?source=flask-app"))
+2. Database Integration
+If your old system uses a database, we can write directly to it:
+
+# services/legacy_integration.py
+import sqlite3  # or any other DB connector your legacy system uses
+
+class LegacyIntegration:
+    @staticmethod
+    def save_to_legacy_db(quote_data):
+        """Save quote data to the legacy system database"""
+        try:
+            # Connect to legacy database
+            conn = sqlite3.connect('/path/to/legacy/database.db')
+            cursor = conn.cursor()
+            
+            # Insert quote header
+            cursor.execute('''
+                INSERT INTO quotes (promo_code, discount, customer_name, customer_email, customer_phone)
+                VALUES (?, ?, ?, ?, ?)
+            ''', (
+                quote_data.get("promo_code"),
+                quote_data.get("discount", 0),
+                quote_data.get("patient_info", {}).get("name", ""),
+                quote_data.get("patient_info", {}).get("email", ""),
+                quote_data.get("patient_info", {}).get("phone", "")
+            ))
+            
+            quote_id = cursor.lastrowid
+            
+            # Insert quote items
+            for treatment in quote_data.get("treatments", []):
+                cursor.execute('''
+                    INSERT INTO quote_items (quote_id, treatment_id, treatment_name, price)
+                    VALUES (?, ?, ?, ?)
+                ''', (
+                    quote_id,
+                    treatment.get("id"),
+                    treatment.get("name"),
+                    treatment.get("price")
+                ))
+            
+            # Commit changes
+            conn.commit()
+            conn.close()
+            
+            return {
+                "success": True,
+                "quote_id": quote_id
+            }
+            
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e)
+            }
+Next Steps
+To move forward effectively:
+
+Implement the core Flask app with the enhanced session management
+Focus on the promo code functionality to ensure it works reliably
+Create a simple integration path to your existing system
+Test thoroughly with different scenarios
+This approach will give you a much more stable and reliable quote management system that can easily integrate with your existing infrastructure.
