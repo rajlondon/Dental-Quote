@@ -5,11 +5,11 @@
 {% block content %}
 <div class="container py-5">
     <div class="row">
-        <!-- Patient Information Form -->
+        <!-- Patient Information Form Section -->
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-body p-4">
-                    <h2 class="card-title fw-bold mb-4">Your Information</h2>
+                    <h2 class="card-title fw-bold mb-4">Patient Information</h2>
                     
                     <!-- Progress Indicator -->
                     <div class="progress mb-5" style="height: 8px;">
@@ -42,63 +42,175 @@
                         </div>
                     </div>
                     
-                    <form id="patientInfoForm" method="POST" action="{{ url_for('patient_info') }}">
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label fw-medium">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" value="{{ patient_info.first_name or '' }}" required>
+                    <!-- Patient Information Form -->
+                    <form id="patientInfoForm" method="POST" action="{{ url_for('review_quote') }}">
+                        <!-- Personal Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-3">
+                                <h5 class="mb-0 fw-bold">Personal Information</h5>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label fw-medium">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" value="{{ patient_info.last_name or '' }}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label fw-medium">Email Address <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" value="{{ patient_info.email or '' }}" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label fw-medium">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ patient_info.phone or '' }}" required>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-4">
-                            <div class="col-md-6 mb-3">
-                                <label for="country" class="form-label fw-medium">Country <span class="text-danger">*</span></label>
-                                <select class="form-select" id="country" name="country" required>
-                                    <option value="" disabled {% if not patient_info.country %}selected{% endif %}>Select your country</option>
-                                    {% for country in countries %}
-                                    <option value="{{ country }}" {% if patient_info.country == country %}selected{% endif %}>{{ country }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="preferred_dates" class="form-label fw-medium">Preferred Treatment Dates</label>
-                                <input type="text" class="form-control" id="preferred_dates" name="preferred_dates" placeholder="e.g., June 15-25" value="{{ patient_info.preferred_dates or '' }}">
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <div class="fw-medium mb-2">Travel Preferences</div>
-                            <div class="form-check form-check-inline mb-2">
-                                <input class="form-check-input" type="checkbox" id="accommodation_needed" name="accommodation_needed" {% if patient_info.accommodation_needed %}checked{% endif %}>
-                                <label class="form-check-label" for="accommodation_needed">I need assistance with accommodation</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="checkbox" id="airport_transfer_needed" name="airport_transfer_needed" {% if patient_info.airport_transfer_needed %}checked{% endif %}>
-                                <label class="form-check-label" for="airport_transfer_needed">I need airport transfer</label>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="firstName" class="form-label">First Name *</label>
+                                        <input type="text" class="form-control" id="firstName" name="first_name" required value="{{ patient_info.first_name if patient_info else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="lastName" class="form-label">Last Name *</label>
+                                        <input type="text" class="form-control" id="lastName" name="last_name" required value="{{ patient_info.last_name if patient_info else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="email" class="form-label">Email Address *</label>
+                                        <input type="email" class="form-control" id="email" name="email" required value="{{ patient_info.email if patient_info else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="phone" class="form-label">Phone Number *</label>
+                                        <input type="tel" class="form-control" id="phone" name="phone" required value="{{ patient_info.phone if patient_info else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="country" class="form-label">Country *</label>
+                                        <select class="form-select" id="country" name="country" required>
+                                            <option value="" selected disabled>Select your country</option>
+                                            {% for country in countries %}
+                                            <option value="{{ country.code }}" {% if patient_info and patient_info.country == country.code %}selected{% endif %}>{{ country.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="city" class="form-label">City</label>
+                                        <input type="text" class="form-control" id="city" name="city" value="{{ patient_info.city if patient_info else '' }}">
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="mb-4">
-                            <label for="additional_notes" class="form-label fw-medium">Additional Notes or Questions</label>
-                            <textarea class="form-control" id="additional_notes" name="additional_notes" rows="3">{{ patient_info.additional_notes or '' }}</textarea>
+                        <!-- Travel Preferences -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-3">
+                                <h5 class="mb-0 fw-bold">Travel Preferences</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="preferredTravelDate" class="form-label">Preferred Travel Date</label>
+                                        <input type="date" class="form-control" id="preferredTravelDate" name="preferred_travel_date" value="{{ patient_info.preferred_travel_date if patient_info else '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="travelFlexibility" class="form-label">Travel Flexibility</label>
+                                        <select class="form-select" id="travelFlexibility" name="travel_flexibility">
+                                            <option value="" selected disabled>Select your flexibility</option>
+                                            <option value="very_flexible" {% if patient_info and patient_info.travel_flexibility == 'very_flexible' %}selected{% endif %}>Very Flexible (±3 months)</option>
+                                            <option value="flexible" {% if patient_info and patient_info.travel_flexibility == 'flexible' %}selected{% endif %}>Flexible (±1 month)</option>
+                                            <option value="somewhat_flexible" {% if patient_info and patient_info.travel_flexibility == 'somewhat_flexible' %}selected{% endif %}>Somewhat Flexible (±2 weeks)</option>
+                                            <option value="specific_dates" {% if patient_info and patient_info.travel_flexibility == 'specific_dates' %}selected{% endif %}>Specific Dates Only</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="preferredClinic" class="form-label">Preferred Clinic (if any)</label>
+                                        <select class="form-select" id="preferredClinic" name="preferred_clinic">
+                                            <option value="" selected>No preference</option>
+                                            {% for clinic in clinics %}
+                                            <option value="{{ clinic.id }}" {% if patient_info and patient_info.preferred_clinic == clinic.id|string %}selected{% endif %}>{{ clinic.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label d-block">Traveling With Companion *</label>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="travel_with_companion" id="companionYes" value="yes" {% if patient_info and patient_info.travel_with_companion == 'yes' %}checked{% endif %} required>
+                                            <label class="form-check-label" for="companionYes">Yes</label>
+                                        </div>
+                                        <div class="form-check form-check-inline">
+                                            <input class="form-check-input" type="radio" name="travel_with_companion" id="companionNo" value="no" {% if patient_info and patient_info.travel_with_companion == 'no' %}checked{% endif %} required>
+                                            <label class="form-check-label" for="companionNo">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         
-                        <div class="d-flex justify-content-between mt-5">
+                        <!-- Communication Preferences -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-3">
+                                <h5 class="mb-0 fw-bold">Communication Preferences</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="preferredContact" class="form-label">Preferred Contact Method</label>
+                                        <select class="form-select" id="preferredContact" name="preferred_contact">
+                                            <option value="" selected disabled>Select contact method</option>
+                                            <option value="email" {% if patient_info and patient_info.preferred_contact == 'email' %}selected{% endif %}>Email</option>
+                                            <option value="phone" {% if patient_info and patient_info.preferred_contact == 'phone' %}selected{% endif %}>Phone</option>
+                                            <option value="whatsapp" {% if patient_info and patient_info.preferred_contact == 'whatsapp' %}selected{% endif %}>WhatsApp</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="preferredLanguage" class="form-label">Preferred Language</label>
+                                        <select class="form-select" id="preferredLanguage" name="preferred_language">
+                                            <option value="" selected disabled>Select language</option>
+                                            <option value="english" {% if patient_info and patient_info.preferred_language == 'english' %}selected{% endif %}>English</option>
+                                            <option value="german" {% if patient_info and patient_info.preferred_language == 'german' %}selected{% endif %}>German</option>
+                                            <option value="french" {% if patient_info and patient_info.preferred_language == 'french' %}selected{% endif %}>French</option>
+                                            <option value="spanish" {% if patient_info and patient_info.preferred_language == 'spanish' %}selected{% endif %}>Spanish</option>
+                                            <option value="turkish" {% if patient_info and patient_info.preferred_language == 'turkish' %}selected{% endif %}>Turkish</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Medical Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-3">
+                                <h5 class="mb-0 fw-bold">Medical Information</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="medicalConditions" class="form-label">Medical Conditions</label>
+                                        <textarea class="form-control" id="medicalConditions" name="medical_conditions" rows="3" placeholder="Please list any relevant medical conditions, allergies, or medications">{{ patient_info.medical_conditions if patient_info else '' }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <label for="dentalHistory" class="form-label">Dental History/Concerns</label>
+                                        <textarea class="form-control" id="dentalHistory" name="dental_history" rows="3" placeholder="Please describe your dental history and any specific concerns">{{ patient_info.dental_history if patient_info else '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Information -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light py-3">
+                                <h5 class="mb-0 fw-bold">Additional Information</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label for="additionalNotes" class="form-label">Additional Notes</label>
+                                        <textarea class="form-control" id="additionalNotes" name="additional_notes" rows="3" placeholder="Please provide any additional information or questions">{{ patient_info.additional_notes if patient_info else '' }}</textarea>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="privacyConsent" name="privacy_consent" required {% if patient_info and patient_info.privacy_consent %}checked{% endif %}>
+                                            <label class="form-check-label" for="privacyConsent">
+                                                I consent to the processing of my personal data in accordance with the <a href="#" target="_blank">Privacy Policy</a> *
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="marketingConsent" name="marketing_consent" {% if patient_info and patient_info.marketing_consent %}checked{% endif %}>
+                                            <label class="form-check-label" for="marketingConsent">
+                                                I would like to receive promotional emails and offers about dental treatments and services
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
                             <a href="{{ url_for('quote_builder') }}" class="btn btn-outline-secondary">
                                 <i class="fas fa-arrow-left me-2"></i> Back
                             </a>
@@ -110,33 +222,11 @@
                 </div>
             </div>
             
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light py-3">
-                    <h5 class="card-title mb-0">Information Security</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex mb-3">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fas fa-shield-alt fa-lg"></i>
-                            </div>
-                        </div>
-                        <div class="ms-3">
-                            <h6 class="fw-bold mb-1">Your Data is Secure</h6>
-                            <p class="small text-muted mb-0">We use industry-standard encryption to protect your personal information. Your data is never shared with third parties without your explicit consent.</p>
-                        </div>
-                    </div>
-                    <div class="d-flex">
-                        <div class="flex-shrink-0">
-                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                <i class="fas fa-headset fa-lg"></i>
-                            </div>
-                        </div>
-                        <div class="ms-3">
-                            <h6 class="fw-bold mb-1">Personalized Support</h6>
-                            <p class="small text-muted mb-0">Our team will contact you shortly after submission to discuss your treatment options and answer any questions you may have.</p>
-                        </div>
-                    </div>
+            <!-- Privacy Information -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="fw-bold mb-3">Your Privacy Matters</h5>
+                    <p class="text-muted mb-0">Your personal and medical information is securely stored and only shared with your selected dental clinic when you confirm your quote. We implement industry-standard encryption and security measures to protect your data. You can request the deletion of your information at any time by contacting our customer support team.</p>
                 </div>
             </div>
         </div>
@@ -145,7 +235,7 @@
         <div class="col-lg-4">
             <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
                 <div class="card-header bg-primary text-white py-3">
-                    <h5 class="card-title mb-0">Your Quote Summary</h5>
+                    <h5 class="card-title mb-0">Quote Summary</h5>
                 </div>
                 <div class="card-body p-0">
                     {% include 'quote/partials/quote_summary.html' %}
@@ -159,65 +249,41 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Form validation
-        const form = document.getElementById('patientInfoForm');
+        const patientInfoForm = document.getElementById('patientInfoForm');
         
-        form.addEventListener('submit', function(event) {
-            let valid = true;
-            
-            // Check required fields
-            const requiredFields = form.querySelectorAll('[required]');
-            requiredFields.forEach(function(field) {
-                if (!field.value.trim()) {
-                    valid = false;
-                    field.classList.add('is-invalid');
-                } else {
-                    field.classList.remove('is-invalid');
-                }
-            });
-            
-            // Check email format
-            const emailField = document.getElementById('email');
-            const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (emailField.value.trim() && !emailPattern.test(emailField.value)) {
-                valid = false;
-                emailField.classList.add('is-invalid');
-                if (!emailField.nextElementSibling || !emailField.nextElementSibling.classList.contains('invalid-feedback')) {
-                    const feedback = document.createElement('div');
-                    feedback.className = 'invalid-feedback';
-                    feedback.textContent = 'Please enter a valid email address';
-                    emailField.parentNode.appendChild(feedback);
-                }
-            }
-            
-            if (!valid) {
+        patientInfoForm.addEventListener('submit', function(event) {
+            // Basic form validation
+            if (!patientInfoForm.checkValidity()) {
                 event.preventDefault();
+                event.stopPropagation();
+                
+                // Find the first invalid input and scroll to it
+                const firstInvalidInput = patientInfoForm.querySelector(':invalid');
+                if (firstInvalidInput) {
+                    firstInvalidInput.focus();
+                    
+                    // Scroll to the first invalid input with smooth behavior
+                    const parentCard = firstInvalidInput.closest('.card');
+                    if (parentCard) {
+                        parentCard.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'center'
+                        });
+                    }
+                }
+                
+                return false;
             }
-        });
-        
-        // Remove validation styling on input
-        form.querySelectorAll('input, select, textarea').forEach(function(field) {
-            field.addEventListener('input', function() {
-                this.classList.remove('is-invalid');
-            });
+            
+            return true;
         });
     });
 </script>
 {% endblock %}
 
 {% block extra_css %}
-.form-control:focus,
-.form-select:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
-}
-.form-control.is-invalid,
-.form-select.is-invalid {
-    border-color: #dc3545;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right calc(0.375em + 0.1875rem) center;
-    background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
 }
 .sticky-top {
     position: -webkit-sticky;

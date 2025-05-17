@@ -4,234 +4,208 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="row">
-        <div class="col-lg-12">
-            <h1 class="fw-bold mb-2">Special Offers</h1>
-            <p class="lead text-muted mb-5">Discover exclusive deals on dental treatments from our partner clinics in Turkey.</p>
-            
-            <!-- Offer Filters -->
-            <div class="card shadow-sm mb-5">
+    <!-- Header Section -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="fw-bold mb-3">Special Dental Treatment Offers</h1>
+            <p class="lead text-muted mb-0">Exclusive limited-time deals from our partner clinics in Turkey</p>
+        </div>
+    </div>
+    
+    <!-- Featured Special Offer Banner -->
+    {% if featured_offer %}
+    <div class="card shadow-sm mb-5 border-0 overflow-hidden">
+        <div class="card-body p-0">
+            <div class="row g-0">
+                <div class="col-lg-5 position-relative">
+                    <img src="{{ featured_offer.banner_image }}" alt="{{ featured_offer.title }}" class="img-fluid h-100" style="object-fit: cover; min-height: 300px;">
+                    <div class="position-absolute bottom-0 start-0 p-3 bg-primary text-white">
+                        <span class="fw-bold">
+                            {% if featured_offer.discount_type == 'percentage' %}
+                            {{ featured_offer.discount_value }}% OFF
+                            {% elif featured_offer.discount_type == 'fixed_amount' %}
+                            €{{ featured_offer.discount_value }} OFF
+                            {% else %}
+                            SPECIAL OFFER
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-7">
+                    <div class="card-body p-4 p-lg-5">
+                        <div class="mb-3">
+                            <span class="badge bg-primary mb-2">FEATURED OFFER</span>
+                            <span class="badge bg-light text-dark mb-2">{{ featured_offer.promo_code }}</span>
+                        </div>
+                        <h3 class="fw-bold mb-3">{{ featured_offer.title }}</h3>
+                        <p class="text-muted mb-4">{{ featured_offer.description }}</p>
+                        
+                        <div class="d-flex flex-wrap mb-4">
+                            <div class="me-4 mb-3">
+                                <h6 class="text-muted mb-1">Valid Until</h6>
+                                <p class="fw-bold mb-0">{{ featured_offer.end_date }}</p>
+                            </div>
+                            <div class="me-4 mb-3">
+                                <h6 class="text-muted mb-1">Clinic</h6>
+                                <p class="fw-bold mb-0">{{ featured_offer.clinic_name }}</p>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-muted mb-1">Treatment Value</h6>
+                                <p class="fw-bold mb-0">From €{{ featured_offer.treatment_price_gbp }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-light p-3 mb-4">
+                            <strong>Terms:</strong> {{ featured_offer.terms_conditions }}
+                        </div>
+                        
+                        <div class="d-flex">
+                            <a href="{{ url_for('quote_builder', promo_code=featured_offer.promo_code) }}" class="btn btn-primary me-2">
+                                <i class="fas fa-calculator me-2"></i> Get Quote With This Offer
+                            </a>
+                            <a href="{{ url_for('offer_detail', offer_id=featured_offer.id) }}" class="btn btn-outline-primary">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Special Offers Filters -->
+    <div class="card shadow-sm mb-5">
+        <div class="card-body p-4">
+            <form id="filterForm" class="row g-3">
+                <div class="col-md-3">
+                    <label for="treatmentType" class="form-label fw-medium">Treatment Type</label>
+                    <select class="form-select" id="treatmentType" name="treatment_type">
+                        <option value="all" selected>All Treatments</option>
+                        <option value="implants">Dental Implants</option>
+                        <option value="veneers">Veneers</option>
+                        <option value="crowns">Crowns</option>
+                        <option value="whitening">Whitening</option>
+                        <option value="orthodontics">Orthodontics</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="clinic" class="form-label fw-medium">Clinic</label>
+                    <select class="form-select" id="clinic" name="clinic">
+                        <option value="all" selected>All Clinics</option>
+                        {% for clinic in clinics %}
+                        <option value="{{ clinic.id }}">{{ clinic.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="discountType" class="form-label fw-medium">Discount Type</label>
+                    <select class="form-select" id="discountType" name="discount_type">
+                        <option value="all" selected>All Types</option>
+                        <option value="percentage">Percentage Off</option>
+                        <option value="fixed_amount">Fixed Amount Off</option>
+                        <option value="free_service">Free Service</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i> Filter Offers
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Special Offers Grid -->
+    <div class="row mb-5">
+        {% for offer in offers %}
+        <div class="col-lg-4 col-md-6 mb-4 special-offer-card">
+            <div class="card h-100 shadow-sm border-0 overflow-hidden">
+                <div class="position-relative">
+                    <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 180px; object-fit: cover;">
+                    <div class="position-absolute bottom-0 start-0 p-2 bg-primary text-white">
+                        <span class="fw-bold">
+                            {% if offer.discount_type == 'percentage' %}
+                            {{ offer.discount_value }}% OFF
+                            {% elif offer.discount_type == 'fixed_amount' %}
+                            €{{ offer.discount_value }} OFF
+                            {% else %}
+                            SPECIAL OFFER
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
                 <div class="card-body p-4">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h5 class="fw-bold mb-0">Filter Offers</h5>
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-light text-dark mb-2">{{ offer.promo_code }}</span>
+                            <h5 class="card-title fw-bold mb-0">{{ offer.title }}</h5>
                         </div>
-                        <div class="col-md-4">
-                            <div class="input-group">
-                                <input type="text" class="form-control" id="offerSearch" placeholder="Search offers...">
-                                <button class="btn btn-outline-secondary" type="button" id="searchButton">
-                                    <i class="fas fa-search"></i>
-                                </button>
-                            </div>
+                        <span class="badge bg-primary rounded-pill">
+                            <i class="fas fa-star me-1"></i> {{ offer.clinic_rating }}
+                        </span>
+                    </div>
+                    
+                    <p class="card-text text-muted mb-3">{{ offer.description }}</p>
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <p class="mb-0 small text-muted">Clinic: <span class="fw-medium">{{ offer.clinic_name }}</span></p>
+                            <p class="mb-0 small text-muted">Valid until: <span class="fw-medium">{{ offer.end_date }}</span></p>
                         </div>
                     </div>
                     
-                    <hr class="my-3">
-                    
-                    <div class="row">
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <label for="treatmentType" class="form-label fw-medium">Treatment Type</label>
-                            <select class="form-select" id="treatmentType">
-                                <option value="all" selected>All Treatments</option>
-                                <option value="implants">Dental Implants</option>
-                                <option value="veneers">Veneers</option>
-                                <option value="crowns">Crowns</option>
-                                <option value="whitening">Teeth Whitening</option>
-                                <option value="orthodontics">Orthodontics</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4 mb-3 mb-md-0">
-                            <label for="discountType" class="form-label fw-medium">Discount Type</label>
-                            <select class="form-select" id="discountType">
-                                <option value="all" selected>All Discounts</option>
-                                <option value="percentage">Percentage Off</option>
-                                <option value="fixed">Fixed Amount Off</option>
-                                <option value="free">Free Add-ons</option>
-                            </select>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="sortBy" class="form-label fw-medium">Sort By</label>
-                            <select class="form-select" id="sortBy">
-                                <option value="featured" selected>Featured</option>
-                                <option value="highest">Highest Discount</option>
-                                <option value="newest">Newest</option>
-                                <option value="expiring">Expiring Soon</option>
-                            </select>
-                        </div>
+                    <div class="d-flex">
+                        <a href="{{ url_for('quote_builder', promo_code=offer.promo_code) }}" class="btn btn-primary me-2">
+                            Get Quote
+                        </a>
+                        <a href="{{ url_for('offer_detail', offer_id=offer.id) }}" class="btn btn-outline-secondary">
+                            Details
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav aria-label="Special offers pagination">
+        <ul class="pagination justify-content-center">
+            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('special_offers', page=current_page-1) if current_page > 1 else '#' }}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+            {% for p in range(1, total_pages + 1) %}
+            <li class="page-item {% if p == current_page %}active{% endif %}">
+                <a class="page-link" href="{{ url_for('special_offers', page=p) }}">{{ p }}</a>
+            </li>
+            {% endfor %}
+            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                <a class="page-link" href="{{ url_for('special_offers', page=current_page+1) if current_page < total_pages else '#' }}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+    {% endif %}
+    
+    <!-- Subscribe to Offers -->
+    <div class="card shadow-sm bg-light border-0">
+        <div class="card-body p-4 p-md-5 text-center">
+            <h3 class="fw-bold mb-3">Get Exclusive Dental Offers</h3>
+            <p class="text-muted mb-4">Subscribe to receive the latest special offers and dental treatment discounts directly to your inbox.</p>
             
-            <!-- Featured Offers -->
-            <div class="mb-5">
-                <h3 class="fw-bold mb-4">Featured Offers</h3>
-                <div class="row">
-                    {% for offer in featured_offers %}
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm offer-card">
-                            {% if offer.banner_image %}
-                            <div class="position-relative">
-                                <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 200px; object-fit: cover;">
-                                <div class="position-absolute top-0 end-0 m-3">
-                                    <span class="badge bg-primary">{{ offer.discount_type|capitalize }} Offer</span>
-                                </div>
-                            </div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold mb-2">{{ offer.title }}</h5>
-                                <p class="card-text text-muted mb-3">{{ offer.description }}</p>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0 me-2" style="width: 40px; height: 40px;">
-                                        {% if offer.discount_type == 'percentage' %}
-                                        <i class="fas fa-percent"></i>
-                                        {% elif offer.discount_type == 'fixed_amount' %}
-                                        <i class="fas fa-euro-sign"></i>
-                                        {% else %}
-                                        <i class="fas fa-gift"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <div class="small text-muted">Discount</div>
-                                        <div class="fw-bold">
-                                            {% if offer.discount_type == 'percentage' %}
-                                            {{ offer.discount_value }}% Off
-                                            {% elif offer.discount_type == 'fixed_amount' %}
-                                            €{{ offer.discount_value }} Off
-                                            {% else %}
-                                            {{ offer.title }}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="small text-muted mb-1">Applicable Treatments</div>
-                                    <div>
-                                        {% for treatment in offer.applicable_treatments[:3] %}
-                                        <span class="badge bg-light text-dark me-1 mb-1">{{ treatment|replace('_', ' ')|capitalize }}</span>
-                                        {% endfor %}
-                                        {% if offer.applicable_treatments|length > 3 %}
-                                        <span class="badge bg-light text-dark mb-1">+{{ offer.applicable_treatments|length - 3 }} more</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% if offer.terms_conditions %}
-                                <div class="small text-muted mb-3">
-                                    <i class="fas fa-info-circle me-1"></i> {{ offer.terms_conditions|truncate(80) }}
-                                </div>
-                                {% endif %}
-                                <a href="{{ url_for('apply_offer', offer_id=offer.id) }}" class="btn btn-primary w-100">
-                                    Get This Offer
-                                </a>
-                            </div>
-                            <div class="card-footer bg-white">
-                                <div class="d-flex justify-content-between align-items-center small text-muted">
-                                    <span>
-                                        <i class="far fa-clock me-1"></i> 
-                                        Expires: {{ (offer.end_date or 'N/A')|truncate(10, True, '') }}
-                                    </span>
-                                    <span>
-                                        <i class="fas fa-tag me-1"></i> {{ offer.promo_code }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <form id="subscribeForm" class="d-flex">
+                        <input type="email" class="form-control me-2" placeholder="Your email address" required>
+                        <button type="submit" class="btn btn-primary">Subscribe</button>
+                    </form>
                 </div>
             </div>
-            
-            <!-- All Offers -->
-            <div>
-                <h3 class="fw-bold mb-4">All Special Offers</h3>
-                <div class="row">
-                    {% for offer in special_offers %}
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card h-100 shadow-sm offer-card">
-                            {% if offer.banner_image %}
-                            <div class="position-relative">
-                                <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 200px; object-fit: cover;">
-                                <div class="position-absolute top-0 end-0 m-3">
-                                    <span class="badge bg-primary">{{ offer.discount_type|capitalize }} Offer</span>
-                                </div>
-                            </div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title fw-bold mb-2">{{ offer.title }}</h5>
-                                <p class="card-text text-muted mb-3">{{ offer.description }}</p>
-                                <div class="d-flex align-items-center mb-3">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center flex-shrink-0 me-2" style="width: 40px; height: 40px;">
-                                        {% if offer.discount_type == 'percentage' %}
-                                        <i class="fas fa-percent"></i>
-                                        {% elif offer.discount_type == 'fixed_amount' %}
-                                        <i class="fas fa-euro-sign"></i>
-                                        {% else %}
-                                        <i class="fas fa-gift"></i>
-                                        {% endif %}
-                                    </div>
-                                    <div>
-                                        <div class="small text-muted">Discount</div>
-                                        <div class="fw-bold">
-                                            {% if offer.discount_type == 'percentage' %}
-                                            {{ offer.discount_value }}% Off
-                                            {% elif offer.discount_type == 'fixed_amount' %}
-                                            €{{ offer.discount_value }} Off
-                                            {% else %}
-                                            {{ offer.title }}
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <div class="small text-muted mb-1">Applicable Treatments</div>
-                                    <div>
-                                        {% for treatment in offer.applicable_treatments[:3] %}
-                                        <span class="badge bg-light text-dark me-1 mb-1">{{ treatment|replace('_', ' ')|capitalize }}</span>
-                                        {% endfor %}
-                                        {% if offer.applicable_treatments|length > 3 %}
-                                        <span class="badge bg-light text-dark mb-1">+{{ offer.applicable_treatments|length - 3 }} more</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                {% if offer.terms_conditions %}
-                                <div class="small text-muted mb-3">
-                                    <i class="fas fa-info-circle me-1"></i> {{ offer.terms_conditions|truncate(80) }}
-                                </div>
-                                {% endif %}
-                                <a href="{{ url_for('apply_offer', offer_id=offer.id) }}" class="btn btn-primary w-100">
-                                    Get This Offer
-                                </a>
-                            </div>
-                            <div class="card-footer bg-white">
-                                <div class="d-flex justify-content-between align-items-center small text-muted">
-                                    <span>
-                                        <i class="far fa-clock me-1"></i> 
-                                        Expires: {{ (offer.end_date or 'N/A')|truncate(10, True, '') }}
-                                    </span>
-                                    <span>
-                                        <i class="fas fa-tag me-1"></i> {{ offer.promo_code }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Pagination -->
-            <nav aria-label="Page navigation" class="mt-5">
-                <ul class="pagination justify-content-center">
-                    <li class="page-item disabled">
-                        <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
-                    </li>
-                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                    <li class="page-item"><a class="page-link" href="#">2</a></li>
-                    <li class="page-item"><a class="page-link" href="#">3</a></li>
-                    <li class="page-item">
-                        <a class="page-link" href="#">Next</a>
-                    </li>
-                </ul>
-            </nav>
         </div>
     </div>
 </div>
@@ -240,60 +214,48 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Filter functionality
-        const searchInput = document.getElementById('offerSearch');
-        const treatmentSelect = document.getElementById('treatmentType');
-        const discountSelect = document.getElementById('discountType');
-        const sortSelect = document.getElementById('sortBy');
-        const searchButton = document.getElementById('searchButton');
-        const offerCards = document.querySelectorAll('.offer-card');
+        // Filter form submission
+        const filterForm = document.getElementById('filterForm');
         
-        // Simple search and filter (client-side for demo)
-        function filterOffers() {
-            const searchTerm = searchInput.value.toLowerCase();
-            const treatmentFilter = treatmentSelect.value;
-            const discountFilter = discountSelect.value;
+        filterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            offerCards.forEach(function(card) {
-                const title = card.querySelector('.card-title').textContent.toLowerCase();
-                const description = card.querySelector('.card-text').textContent.toLowerCase();
-                
-                // Simple search logic - this would be server-side in a real implementation
-                if (title.includes(searchTerm) || description.includes(searchTerm)) {
-                    card.parentElement.style.display = 'block';
-                } else {
-                    card.parentElement.style.display = 'none';
-                }
-            });
-        }
-        
-        searchButton.addEventListener('click', filterOffers);
-        searchInput.addEventListener('keyup', function(e) {
-            if (e.key === 'Enter') {
-                filterOffers();
+            // In a real implementation, this would submit the form or use AJAX
+            // For now, let's just log the filter values
+            const formData = new FormData(filterForm);
+            const filters = {};
+            
+            for (let [key, value] of formData.entries()) {
+                filters[key] = value;
             }
+            
+            console.log('Applied filters:', filters);
+            
+            // This would normally redirect or update the results via AJAX
+            // For demo purposes, we'll reload the page
+            // window.location.href = '/special-offers?' + new URLSearchParams(filters).toString();
         });
         
-        treatmentSelect.addEventListener('change', filterOffers);
-        discountSelect.addEventListener('change', filterOffers);
-        sortSelect.addEventListener('change', filterOffers);
+        // Subscribe form
+        const subscribeForm = document.getElementById('subscribeForm');
+        
+        subscribeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // This would normally send the subscription request to the server
+            alert('Thank you for subscribing to our special offers!');
+            subscribeForm.reset();
+        });
     });
 </script>
 {% endblock %}
 
 {% block extra_css %}
-.bg-opacity-10 {
-    --bs-bg-opacity: 0.1;
+.special-offer-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.offer-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.offer-card:hover {
+.special-offer-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-.card-img-top {
-    border-top-left-radius: calc(0.5rem - 1px);
-    border-top-right-radius: calc(0.5rem - 1px);
 }
 {% endblock %}
