@@ -1,127 +1,140 @@
-from utils.session_manager import SessionManager
+"""
+Promo Code Service for Dental Quote System
+Handles promo code validation, application and persistence
+"""
+
+import logging
+import time
+
+logger = logging.getLogger(__name__)
+
+# Available promo codes and their discount percentages
+PROMO_CODES = {
+    'SUMMER15': 15,
+    'DENTAL25': 25,
+    'NEWPATIENT': 20,
+    'TEST10': 10,
+    'FREECONSULT': 100,  # Special code for free consultation
+    'LUXHOTEL20': 20,    # Hotel package discount
+    'IMPLANTCROWN30': 30, # Implant+Crown package discount
+    'FREEWHITE': 100     # Free whitening with other treatments
+}
 
 class PromoService:
-    """Service for managing promo codes"""
-    
-    # Valid promo codes and their discount percentages
-    VALID_PROMO_CODES = {
-        "SUMMER15": 15,
-        "DENTAL25": 25,
-        "NEWPATIENT": 20,
-        "TEST10": 10,
-        "FREECONSULT": 100,
-        "LUXHOTEL20": 20,
-        "IMPLANTCROWN30": 30,
-        "FREEWHITE": 100
-    }
+    """Service to handle promo code operations"""
     
     @staticmethod
-    def apply_promo_code(code):
-        """Apply a promo code to the current quote"""
-        # Standardize code format
-        code = code.strip().upper()
+    def validate_promo_code(promo_code):
+        """
+        Validate a promo code and return the discount percentage
         
-        # Get current quote data
-        quote_data = SessionManager.get_quote_data()
+        Args:
+            promo_code (str): Promo code to validate
+            
+        Returns:
+            tuple: (is_valid, discount_percentage, error_message)
+        """
+        if not promo_code:
+            return False, 0, "No promo code provided"
         
-        # Check if code is valid
-        if code not in PromoService.VALID_PROMO_CODES:
-            return {
-                "success": False,
-                "error": "Invalid promo code"
-            }
+        # Convert to uppercase for case-insensitive comparison
+        normalized_code = promo_code.strip().upper()
         
-        # Get discount percentage
-        discount = PromoService.VALID_PROMO_CODES[code]
-        
-        # Create a backup before modifying
-        previous_promo = {
-            "code": quote_data.get("promo_code"),
-            "discount": quote_data.get("discount", 0)
-        }
-        quote_data["previous_promo"] = previous_promo
-        
-        # Apply promo code
-        quote_data["promo_code"] = code
-        quote_data["discount"] = discount
-        
-        # Save updated quote data
-        SessionManager.save_quote_data(quote_data)
-        
-        return {
-            "success": True,
-            "promo_code": code,
-            "discount": discount
-        }
+        if normalized_code in PROMO_CODES:
+            discount = PROMO_CODES[normalized_code]
+            logger.info(f"Valid promo code: {normalized_code} with {discount}% discount")
+            return True, discount, None
+        else:
+            logger.warning(f"Invalid promo code attempted: {normalized_code}")
+            return False, 0, "Invalid promo code"
     
     @staticmethod
-    def remove_promo_code():
-        """Remove the currently applied promo code"""
-        # Get current quote data
-        quote_data = SessionManager.get_quote_data()
+    def get_special_offer_details(promo_code):
+        """
+        Get special offer details for the promo code, like free consultation or hotel package
         
-        # Create a backup before modifying
-        previous_promo = {
-            "code": quote_data.get("promo_code"),
-            "discount": quote_data.get("discount", 0)
-        }
-        quote_data["previous_promo"] = previous_promo
-        
-        # Remove promo code
-        quote_data["promo_code"] = None
-        quote_data["discount"] = 0
-        
-        # Save updated quote data
-        SessionManager.save_quote_data(quote_data)
-        
-        return {
-            "success": True
-        }
-    
-    @staticmethod
-    def get_applied_promo():
-        """Get information about the currently applied promo code"""
-        quote_data = SessionManager.get_quote_data()
-        
-        promo_code = quote_data.get("promo_code")
-        discount = quote_data.get("discount", 0)
-        
+        Args:
+            promo_code (str): Promo code to check
+            
+        Returns:
+            dict: Special offer details or None
+        """
         if not promo_code:
             return None
+            
+        normalized_code = promo_code.strip().upper()
         
-        return {
-            "code": promo_code,
-            "discount": discount
+        special_offers = {
+            'FREECONSULT': {
+                'type': 'service',
+                'name': 'Free Consultation',
+                'description': 'Includes pre-treatment consultation and post-treatment check-up'
+            },
+            'LUXHOTEL20': {
+                'type': 'accommodation',
+                'name': 'Premium Hotel Deal',
+                'description': 'Save 20% on premium hotels with your dental treatment'
+            },
+            'IMPLANTCROWN30': {
+                'type': 'package',
+                'name': 'Implant + Crown Bundle',
+                'description': 'Special bundle price for dental implant with crown'
+            },
+            'FREEWHITE': {
+                'type': 'treatment',
+                'name': 'Free Teeth Whitening',
+                'description': 'Complimentary teeth whitening with veneer or crown package'
+            }
         }
+        
+        return special_offers.get(normalized_code)
     
     @staticmethod
-    def restore_previous_promo():
-        """Restore the previously applied promo code (if any)"""
-        quote_data = SessionManager.get_quote_data()
+    def calculate_discount(subtotal, discount_percent):
+        """
+        Calculate the discount amount based on subtotal and discount percentage
         
-        if "previous_promo" not in quote_data:
-            return {
-                "success": False,
-                "error": "No previous promo code found"
-            }
+        Args:
+            subtotal (float): Total amount before discount
+            discount_percent (float): Discount percentage
+            
+        Returns:
+            float: Discount amount
+        """
+        if not discount_percent:
+            return 0
+            
+        return (subtotal * discount_percent) / 100
+    
+    @staticmethod
+    def apply_discount(subtotal, discount_amount):
+        """
+        Apply the discount to get the final total
         
-        previous_promo = quote_data["previous_promo"]
+        Args:
+            subtotal (float): Total amount before discount
+            discount_amount (float): Discount amount
+            
+        Returns:
+            float: Final total after discount
+        """
+        return max(0, subtotal - discount_amount)
+    
+    @staticmethod
+    def is_package_promo(promo_code):
+        """
+        Check if the promo code is for a treatment package
         
-        if previous_promo["code"]:
-            quote_data["promo_code"] = previous_promo["code"]
-            quote_data["discount"] = previous_promo["discount"]
-        else:
-            quote_data["promo_code"] = None
-            quote_data["discount"] = 0
+        Args:
+            promo_code (str): Promo code to check
+            
+        Returns:
+            bool: True if it's a package promo
+        """
+        if not promo_code:
+            return False
+            
+        package_promos = ['IMPLANTCROWN30', 'LUXHOTEL20', 'FREEWHITE']
+        normalized_code = promo_code.strip().upper()
         
-        # Remove previous promo data
-        quote_data.pop("previous_promo", None)
-        
-        # Save updated quote data
-        SessionManager.save_quote_data(quote_data)
-        
-        return {
-            "success": True,
-            "promo_code": quote_data["promo_code"],
-            "discount": quote_data["discount"]
-        }
+        return normalized_code in package_promos
