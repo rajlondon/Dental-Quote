@@ -254,63 +254,118 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedTreatmentsEl.innerHTML = '';
         
         if (treatments && treatments.length > 0) {
+            const treatmentList = document.createElement('ul');
+            treatmentList.className = 'treatment-list';
+            
             treatments.forEach(treatment => {
-                const treatmentItem = document.createElement('div');
+                const treatmentItem = document.createElement('li');
                 treatmentItem.className = 'treatment-item';
                 treatmentItem.innerHTML = `
                     <span>${treatment.name}</span>
-                    <span>$${treatment.price.toFixed(2)}</span>
-                    <button class="remove-btn" data-id="${treatment.instance_id}">Remove</button>
+                    <div>
+                        <span>$${treatment.price.toFixed(2)}</span>
+                        <button class="remove-btn" data-instance-id="${treatment.instance_id}">✕</button>
+                    </div>
                 `;
-                selectedTreatmentsEl.appendChild(treatmentItem);
+                treatmentList.appendChild(treatmentItem);
                 
                 // Add event listener to the new remove button
                 const removeBtn = treatmentItem.querySelector('.remove-btn');
                 removeBtn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const instanceId = removeBtn.getAttribute('data-id');
+                    const instanceId = removeBtn.getAttribute('data-instance-id');
                     removeTreatment(instanceId);
                 });
             });
+            
+            selectedTreatmentsEl.appendChild(treatmentList);
+            
+            // Show the continue button in the treatments step
+            const nextBtn = document.querySelector('#treatments-step .next-btn');
+            if (nextBtn) {
+                nextBtn.style.display = 'block';
+            }
         } else {
-            selectedTreatmentsEl.innerHTML = '<p>No treatments selected yet.</p>';
+            selectedTreatmentsEl.innerHTML = '<p class="empty-message">No treatments selected yet</p>';
+            
+            // Hide the continue button if no treatments
+            const nextBtn = document.querySelector('#treatments-step .next-btn');
+            if (nextBtn) {
+                nextBtn.style.display = 'none';
+            }
         }
     }
     
     function updateTotals(totals) {
         if (!totals) return;
         
-        const subtotalEl = document.getElementById('subtotal');
-        const discountEl = document.getElementById('discount');
-        const totalEl = document.getElementById('total');
+        // Update the totals in the selected treatments panel
+        const totalRows = document.querySelectorAll('.total-row');
+        if (totalRows.length > 0) {
+            // Find the subtotal row
+            const subtotalRow = document.querySelector('.total-row:not(.discount):not(.grand-total)');
+            if (subtotalRow) {
+                const subtotalValueEl = subtotalRow.querySelector('span:last-child');
+                if (subtotalValueEl) {
+                    subtotalValueEl.textContent = `$${totals.subtotal.toFixed(2)}`;
+                }
+            }
+            
+            // Find the discount row
+            const discountRow = document.querySelector('.total-row.discount');
+            if (discountRow) {
+                const discountValueEl = discountRow.querySelector('span:last-child');
+                if (discountValueEl) {
+                    discountValueEl.textContent = `-$${totals.discount_amount.toFixed(2)}`;
+                }
+            }
+            
+            // Find the total row
+            const totalRow = document.querySelector('.total-row.grand-total');
+            if (totalRow) {
+                const totalValueEl = totalRow.querySelector('span:last-child');
+                if (totalValueEl) {
+                    totalValueEl.textContent = `$${totals.total.toFixed(2)}`;
+                }
+            }
+        }
         
-        if (subtotalEl) subtotalEl.textContent = `$${totals.subtotal.toFixed(2)}`;
-        if (discountEl) discountEl.textContent = `$${totals.discount.toFixed(2)}`;
-        if (totalEl) totalEl.textContent = `$${totals.total.toFixed(2)}`;
-        
-        // Update review step totals as well if they exist
-        const reviewSubtotalEl = document.getElementById('review-subtotal');
-        const reviewDiscountEl = document.getElementById('review-discount');
-        const reviewTotalEl = document.getElementById('review-total');
-        
-        if (reviewSubtotalEl) reviewSubtotalEl.textContent = `$${totals.subtotal.toFixed(2)}`;
-        if (reviewDiscountEl) reviewDiscountEl.textContent = `$${totals.discount.toFixed(2)}`;
-        if (reviewTotalEl) reviewTotalEl.textContent = `$${totals.total.toFixed(2)}`;
+        // Update the review step totals as well if they exist
+        const reviewTotals = document.querySelector('.review-totals');
+        if (reviewTotals) {
+            // Find the subtotal row in review
+            const reviewSubtotalRow = reviewTotals.querySelector('.total-row:not(.discount):not(.grand-total)');
+            if (reviewSubtotalRow) {
+                const reviewSubtotalValueEl = reviewSubtotalRow.querySelector('span:last-child');
+                if (reviewSubtotalValueEl) {
+                    reviewSubtotalValueEl.textContent = `$${totals.subtotal.toFixed(2)}`;
+                }
+            }
+            
+            // Find the discount row in review
+            const reviewDiscountRow = reviewTotals.querySelector('.total-row.discount');
+            if (reviewDiscountRow) {
+                const reviewDiscountValueEl = reviewDiscountRow.querySelector('span:last-child');
+                if (reviewDiscountValueEl) {
+                    reviewDiscountValueEl.textContent = `-$${totals.discount_amount.toFixed(2)}`;
+                }
+            }
+            
+            // Find the total row in review
+            const reviewTotalRow = reviewTotals.querySelector('.total-row.grand-total');
+            if (reviewTotalRow) {
+                const reviewTotalValueEl = reviewTotalRow.querySelector('span:last-child');
+                if (reviewTotalValueEl) {
+                    reviewTotalValueEl.textContent = `$${totals.total.toFixed(2)}`;
+                }
+            }
+        }
     }
     
     function updatePromoCodeDisplay(promoCode, discount) {
-        const promoDisplayEl = document.querySelector('.promo-code-display');
-        if (!promoDisplayEl) return;
-        
-        promoDisplayEl.innerHTML = `
-            <p>Applied Promo Code: <strong>${promoCode}</strong> (${discount}% off)</p>
-        `;
-        promoDisplayEl.style.display = 'block';
-        
-        const removePromoBtn = document.querySelector('.remove-promo-btn');
-        if (removePromoBtn) {
-            removePromoBtn.style.display = 'inline-block';
-        }
+        // Reload the page to show the applied promo code
+        // This ensures the server-side template gets updated
+        window.location.href = '/quote-builder';
     }
     
     function showPromoMessage(message, isSuccess) {
@@ -358,6 +413,20 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             console.log('Patient info updated:', data.success);
+            
+            // Add visual feedback that data was saved
+            const formEl = document.getElementById('patient-info-form');
+            if (formEl) {
+                const savedIndicator = document.createElement('div');
+                savedIndicator.className = 'saved-indicator';
+                savedIndicator.textContent = 'Information Saved';
+                formEl.appendChild(savedIndicator);
+                
+                // Remove the indicator after 2 seconds
+                setTimeout(() => {
+                    formEl.removeChild(savedIndicator);
+                }, 2000);
+            }
         })
         .catch(error => console.error('Error updating patient info:', error));
     }, 500);
