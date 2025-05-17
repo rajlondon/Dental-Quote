@@ -253,27 +253,103 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function removePromoCodeThenApplyNew(newPromoCode) {
-        // First remove the existing promo code
+        console.log('Removing existing promo code before applying new one:', newPromoCode);
+        
+        // First hide any existing promo form to prevent duplicate elements
+        const promoForm = document.getElementById('promo-code-entry');
+        if (promoForm) {
+            promoForm.style.display = 'none';
+        }
+        
+        // Show a temporary message
+        showPromoMessage('Removing previous code...', true);
+        
+        // Disable any apply buttons
+        const applyBtn = document.querySelector('.apply-promo-btn');
+        if (applyBtn) {
+            applyBtn.disabled = true;
+        }
+        
+        // First remove the existing promo code with an explicit cache-busting request
         fetch('/api/quote/remove-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
             },
+            cache: 'no-store',
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Now that the old promo is removed, apply the new one
+                console.log('Successfully removed previous promo code');
+                
+                // Make sure UI is properly reset
+                const discountRows = document.querySelectorAll('.total-row.discount');
+                discountRows.forEach(row => {
+                    row.remove();
+                });
+                
+                // Hide any applied promo display
+                const promoDisplay = document.querySelector('.promo-code-display');
+                if (promoDisplay) {
+                    promoDisplay.style.display = 'none';
+                    promoDisplay.textContent = '';
+                }
+                
+                // Make sure any "applied-promo" sections are hidden
+                const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
+                appliedPromoSections.forEach(section => {
+                    section.style.display = 'none';
+                });
+                
+                // Reset the promo input field
+                const promoCodeInput = document.getElementById('promo-code');
+                if (promoCodeInput) {
+                    promoCodeInput.value = newPromoCode;
+                }
+                
+                // Make sure form is visible again for applying the new code
+                if (promoForm) {
+                    promoForm.style.display = 'block';
+                }
+                
+                // Show message about applying new code
+                showPromoMessage('Applying new code...', true);
+                
+                // Now that the old promo is removed, apply the new one after a delay
                 setTimeout(() => {
                     applyPromoCode(newPromoCode);
-                }, 300); // Add a small delay to ensure removal is complete
+                }, 500); // Add a small delay to ensure removal is complete
             } else {
+                console.error('Failed to remove previous promo code:', data);
                 showPromoMessage('Error removing previous promo code', false);
+                
+                // Re-enable any apply buttons
+                if (applyBtn) {
+                    applyBtn.disabled = false;
+                }
+                
+                // Show the promo form again
+                if (promoForm) {
+                    promoForm.style.display = 'block';
+                }
             }
         })
         .catch(error => {
-            console.error('Error removing previous promo code:', error);
+            console.error('Error removing promo code:', error);
             showPromoMessage('An error occurred. Please try again.', false);
+            
+            // Re-enable any apply buttons
+            if (applyBtn) {
+                applyBtn.disabled = false;
+            }
+            
+            // Show the promo form again
+            if (promoForm) {
+                promoForm.style.display = 'block';
+            }
         });
     }
     
