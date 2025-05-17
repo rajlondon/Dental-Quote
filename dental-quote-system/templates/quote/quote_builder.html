@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quote Builder | Dental Quote System</title>
+    <title>Quote Builder | MyDentalFly</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -24,135 +24,120 @@
     </header>
 
     <main>
-        <section class="page-header">
-            <div class="container">
-                <h2>Build Your Dental Treatment Quote</h2>
-                <p>Select treatments, apply a promo code, and get an instant quote for your dental work.</p>
-            </div>
-        </section>
-
-        <section class="quote-builder">
-            <div class="container">
-                <div class="quote-grid">
-                    <!-- Treatment Selection Panel -->
-                    <div class="treatment-selection">
-                        <div class="panel">
-                            <h3>Available Treatments</h3>
-                            <div class="treatment-list">
-                                {% for treatment in available_treatments %}
-                                <div class="treatment-item">
-                                    <div class="treatment-info">
-                                        <h4>{{ treatment.name }}</h4>
-                                        <p>{{ treatment.description }}</p>
-                                        <span class="category">{{ treatment.category }}</span>
-                                        <span class="price">${{ "%.2f"|format(treatment.price) }}</span>
-                                    </div>
-                                    <form action="{{ url_for('page_routes.add_treatment') }}" method="POST">
-                                        <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                        <button type="submit" class="btn btn-add">Add to Quote</button>
-                                    </form>
-                                </div>
-                                {% endfor %}
+        <div class="container">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
                             </div>
-                        </div>
-                    </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
 
-                    <!-- Quote Summary Panel -->
-                    <div class="quote-summary">
-                        <div class="panel">
-                            <h3>Your Quote</h3>
-                            
-                            {% if treatments %}
-                                <div class="selected-treatments">
-                                    <h4>Selected Treatments</h4>
-                                    <ul class="treatment-list">
-                                        {% for treatment in treatments %}
-                                        <li class="selected-treatment">
-                                            <div class="treatment-details">
-                                                <span class="name">{{ treatment.name }}</span>
-                                                <span class="price">${{ "%.2f"|format(treatment.price) }}</span>
-                                            </div>
-                                            <form action="{{ url_for('page_routes.remove_treatment') }}" method="POST">
-                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                                <button type="submit" class="btn btn-remove">Remove</button>
-                                            </form>
-                                        </li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-
-                                <!-- Promo Code Section -->
-                                <div class="promo-code-section">
-                                    <h4>Promo Code</h4>
-                                    {% if promo_details %}
-                                        <div class="applied-promo">
-                                            <p>Applied: <strong>{{ promo_details.code }}</strong></p>
-                                            <p>{{ promo_details.description }}</p>
-                                            <form action="{{ url_for('promo_routes.remove_promo_code') }}" method="POST">
-                                                <button type="submit" class="btn btn-sm btn-remove">Remove</button>
-                                            </form>
-                                        </div>
-                                    {% else %}
-                                        <form action="{{ url_for('promo_routes.apply_promo_code') }}" method="POST" class="promo-form">
-                                            <div class="form-group">
-                                                <input type="text" name="promo_code" id="promo_code" placeholder="Enter promo code" value="{{ promo_code }}" required>
-                                                <button type="submit" class="btn btn-apply">Apply</button>
-                                            </div>
+            <h1 class="mb-4">Dental Treatment Quote Builder</h1>
+            
+            <div class="quote-builder-container">
+                <div class="treatments-section">
+                    <h2 class="mb-3">Available Treatments</h2>
+                    <p class="mb-3">Select treatments to include in your quote:</p>
+                    
+                    <div class="treatment-list">
+                        {% for treatment in available_treatments %}
+                            <div class="card treatment-card">
+                                <div class="card-body">
+                                    <div class="treatment-category">{{ treatment.category }}</div>
+                                    <h3 class="card-title">{{ treatment.name }}</h3>
+                                    <p class="card-text">{{ treatment.description }}</p>
+                                    <div class="treatment-price mb-2">${{ "%.2f"|format(treatment.price) }}</div>
+                                    <div class="treatment-actions">
+                                        <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST">
+                                            <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                            <button type="submit" class="btn btn-primary btn-sm">Add to Quote</button>
                                         </form>
-                                    {% endif %}
-                                </div>
-
-                                <!-- Price Calculation -->
-                                <div class="price-calculation">
-                                    {% set subtotal = 0 %}
-                                    {% for treatment in treatments %}
-                                        {% set subtotal = subtotal + treatment.price %}
-                                    {% endfor %}
-                                    
-                                    {% set discount = 0 %}
-                                    {% if promo_details %}
-                                        {% if promo_details.type == 'percentage' %}
-                                            {% set discount = (subtotal * promo_details.value) / 100 %}
-                                        {% elif promo_details.type == 'fixed' %}
-                                            {% set discount = [promo_details.value, subtotal]|min %}
-                                        {% endif %}
-                                    {% endif %}
-                                    
-                                    {% set total = subtotal - discount %}
-                                    
-                                    <div class="price-line">
-                                        <span>Subtotal:</span>
-                                        <span>${{ "%.2f"|format(subtotal) }}</span>
-                                    </div>
-                                    
-                                    {% if discount > 0 %}
-                                    <div class="price-line discount">
-                                        <span>Discount:</span>
-                                        <span>-${{ "%.2f"|format(discount) }}</span>
-                                    </div>
-                                    {% endif %}
-                                    
-                                    <div class="price-line total">
-                                        <span>Total:</span>
-                                        <span>${{ "%.2f"|format(total) }}</span>
                                     </div>
                                 </div>
-
-                                <!-- Continue Button -->
-                                <div class="action-buttons">
-                                    <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary">Continue to Patient Info</a>
-                                    <a href="{{ url_for('page_routes.reset_quote') }}" class="btn btn-secondary">Reset Quote</a>
-                                </div>
-                            {% else %}
-                                <div class="empty-quote">
-                                    <p>Your quote is empty. Please select treatments from the list.</p>
-                                </div>
-                            {% endif %}
-                        </div>
+                            </div>
+                        {% endfor %}
                     </div>
                 </div>
+                
+                <div class="quote-summary">
+                    <h2 class="summary-title">Your Quote</h2>
+                    
+                    {% if treatments %}
+                        <div class="summary-list">
+                            {% for treatment in treatments %}
+                                <div class="summary-item">
+                                    <div class="summary-item-name">{{ treatment.name }}</div>
+                                    <div class="summary-item-price">${{ "%.2f"|format(treatment.price) }}</div>
+                                    <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                        <button type="submit" class="summary-item-remove" title="Remove">&times;</button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="summary-totals">
+                            <div class="summary-subtotal">
+                                <div>Subtotal</div>
+                                <div>${{ "%.2f"|format(subtotal) }}</div>
+                            </div>
+                            
+                            {% if promo_details %}
+                                <div class="summary-discount">
+                                    <div>Discount ({{ promo_details.description }})</div>
+                                    <div>-${{ "%.2f"|format(discount) }}</div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="summary-total">
+                                <div>Total</div>
+                                <div>${{ "%.2f"|format(total) }}</div>
+                            </div>
+                        </div>
+
+                        {% if promo_details %}
+                            <div class="applied-promo">
+                                <div class="applied-promo-info">
+                                    <div>Applied promo: <span class="applied-promo-code">{{ promo_code }}</span></div>
+                                    <div class="applied-promo-description">{{ promo_details.description }}</div>
+                                </div>
+                                <form action="{{ url_for('promo_routes.remove_promo_code_route') }}" method="POST">
+                                    <button type="submit" class="applied-promo-remove" title="Remove promo code">&times;</button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <form class="promo-form" action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST">
+                                <h3 class="mb-2">Promotional Code</h3>
+                                <div class="input-group">
+                                    <input type="text" id="promo_code" name="promo_code" class="form-control" placeholder="Enter promo code">
+                                    <button type="submit" class="btn btn-primary">Apply</button>
+                                </div>
+                            </form>
+                        {% endif %}
+                        
+                        <div class="mt-4">
+                            <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary btn-block">Continue to Patient Info</a>
+                            <a href="{{ url_for('page_routes.reset_quote_route') }}" class="btn btn-outline-danger btn-block mt-2">Reset Quote</a>
+                        </div>
+                    {% else %}
+                        <p class="text-center mb-3">Your quote is empty. Select treatments from the left to build your quote.</p>
+                        
+                        <form class="promo-form" action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST">
+                            <h3 class="mb-2">Promotional Code</h3>
+                            <div class="input-group">
+                                <input type="text" id="promo_code" name="promo_code" class="form-control" placeholder="Enter promo code">
+                                <button type="submit" class="btn btn-primary">Apply</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -160,7 +145,7 @@
             <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
         </div>
     </footer>
-
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

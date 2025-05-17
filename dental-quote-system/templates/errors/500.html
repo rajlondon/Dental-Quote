@@ -7,13 +7,39 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
-    <div class="error-container">
-        <div class="error-content">
-            <h1>500</h1>
-            <h2>Server Error</h2>
-            <p>Sorry, something went wrong on our end. We're working to fix the issue.</p>
-            <a href="{{ url_for('page_routes.index') }}" class="btn btn-primary">Return to Home</a>
+    <header class="site-header">
+        <div class="container">
+            <div class="logo">
+                <h1>MyDentalFly</h1>
+                <p>Dental Quote System</p>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
+                    <li><a href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a></li>
+                    <li><a href="{{ url_for('promo_routes.special_offers_page') }}">Special Offers</a></li>
+                </ul>
+            </nav>
         </div>
-    </div>
+    </header>
+
+    <main>
+        <div class="error-container">
+            <div class="error-content">
+                <h1>500</h1>
+                <h2>Server Error</h2>
+                <p>Something went wrong on our end. We're working to fix the issue. Please try again later.</p>
+                <a href="{{ url_for('page_routes.index') }}" class="btn btn-primary">Return to Homepage</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <div class="container">
+            <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

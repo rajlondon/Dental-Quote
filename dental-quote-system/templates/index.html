@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home | Dental Quote System</title>
+    <title>MyDentalFly - Dental Quote System</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -24,88 +24,71 @@
     </header>
 
     <main>
-        <section class="hero">
-            <div class="container">
-                <div class="hero-content">
-                    <h2>Get an Instant Quote for Your Dental Treatment</h2>
-                    <p>Compare prices, apply promotional codes, and save on your dental procedures with our dental tourism platform.</p>
-                    <div class="cta-buttons">
+        <div class="container">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <section class="hero mb-5">
+                <div class="text-center p-4 bg-white rounded shadow">
+                    <h1 class="mb-3">Welcome to MyDentalFly Dental Quote System</h1>
+                    <p class="mb-4">Build custom dental treatment quotes with our easy-to-use quote builder. Apply promotional codes for special discounts and get instant price estimates.</p>
+                    <div class="mt-4">
+                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">Start Building Your Quote</a>
+                        <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary btn-lg ml-3">View Special Offers</a>
+                    </div>
+                </div>
+            </section>
+
+            <section class="features mb-5">
+                <h2 class="text-center mb-4">Features</h2>
+                <div class="row">
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Easy Quote Building</h3>
+                                <p class="card-text">Select from a variety of dental treatments to build your personalized quote in just a few clicks.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Special Offers</h3>
+                                <p class="card-text">Browse our special offers and apply promotional codes to save on your dental treatments.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card">
+                            <div class="card-body">
+                                <h3 class="card-title">Instant Pricing</h3>
+                                <p class="card-text">Get instant price estimates and see how promotional discounts affect your total cost.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="cta mb-5">
+                <div class="text-center p-4 bg-white rounded shadow">
+                    <h2 class="mb-3">Ready to Get Started?</h2>
+                    <p class="mb-4">Build your custom dental treatment quote now or browse our special offers for extra savings.</p>
+                    <div class="mt-4">
                         <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary">Build Your Quote</a>
-                        <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-secondary">View Special Offers</a>
+                        <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-secondary ml-3">View Special Offers</a>
                     </div>
                 </div>
-            </div>
-        </section>
-
-        <section class="features">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Why Choose Our Dental Quote System</h2>
-                    <p>Simple, transparent pricing with exclusive offers for top-quality dental treatments</p>
-                </div>
-                <div class="feature-cards">
-                    <div class="feature-card">
-                        <div class="card-icon">1</div>
-                        <h3>Instant Quotes</h3>
-                        <p>Get immediate pricing for a variety of dental treatments without waiting.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="card-icon">2</div>
-                        <h3>Special Discounts</h3>
-                        <p>Apply promotional codes to save on your dental procedures.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="card-icon">3</div>
-                        <h3>Transparent Pricing</h3>
-                        <p>See exactly what you're paying for with detailed breakdowns of all treatments.</p>
-                    </div>
-                    <div class="feature-card">
-                        <div class="card-icon">4</div>
-                        <h3>Printable Quotes</h3>
-                        <p>Save or print your quotes for easy reference and comparison.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="promo-banner">
-            <div class="container">
-                <div class="banner-content">
-                    <h2>Special Summer Discount!</h2>
-                    <p>Get 15% off all dental treatments with promo code: <strong>SUMMER15</strong></p>
-                    <a href="{{ url_for('page_routes.quote_builder') }}?promo=SUMMER15" class="btn btn-primary">Claim Offer</a>
-                </div>
-            </div>
-        </section>
-
-        <section class="featured-packages">
-            <div class="container">
-                <div class="section-title">
-                    <h2>Popular Treatment Packages</h2>
-                    <p>Our most requested dental treatments at competitive prices</p>
-                </div>
-                <div class="feature-cards">
-                    <div class="feature-card">
-                        <h3>Complete Smile Makeover</h3>
-                        <p>Dental cleaning, teeth whitening, and up to 4 porcelain veneers.</p>
-                        <p class="package-price">Starting at $1,200</p>
-                        <a href="{{ url_for('page_routes.quote_builder') }}?package=smile-makeover" class="btn btn-secondary">Get Quote</a>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Dental Implant Package</h3>
-                        <p>Single dental implant with abutment and crown.</p>
-                        <p class="package-price">Starting at $950</p>
-                        <a href="{{ url_for('page_routes.quote_builder') }}?package=implant-package" class="btn btn-secondary">Get Quote</a>
-                    </div>
-                    <div class="feature-card">
-                        <h3>Full Mouth Restoration</h3>
-                        <p>Comprehensive treatment for severely damaged teeth.</p>
-                        <p class="package-price">Starting at $3,500</p>
-                        <a href="{{ url_for('page_routes.quote_builder') }}?package=full-restoration" class="btn btn-secondary">Get Quote</a>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -113,7 +96,7 @@
             <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
         </div>
     </footer>
-
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
