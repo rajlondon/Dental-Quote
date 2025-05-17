@@ -1,146 +1,127 @@
 """
 Integration Routes Module
-Handles API endpoints for integration with external systems
+Defines the API routes for integration with other systems
 """
+import logging
+import uuid
+import json
 from flask import Blueprint, request, jsonify, session
 from utils.session_manager import (
-    get_treatments, get_quote_totals, get_promo_code, 
-    save_patient_info, generate_quote_id
+    get_session_treatments, get_quote_totals, 
+    get_applied_promo_code, get_promo_details, get_patient_info
 )
-import logging
-import json
-import uuid
 
 logger = logging.getLogger(__name__)
 
-# Create Blueprint
+# Create blueprint
 integration_routes = Blueprint('integration_routes', __name__)
 
-@integration_routes.route('/get-quote-data', methods=['GET'])
+@integration_routes.route('/quote-data', methods=['GET'])
 def get_quote_data():
-    """Get all quote data from the current session"""
-    # Get selected treatments
-    selected_treatments = get_treatments()
+    """Get the current quote data as JSON"""
+    treatments = get_session_treatments()
+    quote_totals = get_quote_totals()
+    promo_code = get_applied_promo_code()
+    promo_details = get_promo_details()
+    patient_info = get_patient_info()
     
-    # Get quote totals
-    totals = get_quote_totals()
+    # Generate a unique ID for this quote
+    quote_id = str(uuid.uuid4())
     
-    # Get promo code
-    promo_code = get_promo_code()
-    
-    # Get patient info
-    patient_info = session.get('patient_info', {})
-    
-    # Get quote ID
-    quote_id = session.get('quote_id')
-    
-    # Return all data
-    return jsonify({
-        'success': True,
+    # Build the response
+    response = {
         'quote_id': quote_id,
-        'treatments': selected_treatments,
-        'totals': totals,
+        'date_created': session.get('date_created', ''),
+        'treatments': treatments,
+        'totals': quote_totals,
         'promo_code': promo_code,
+        'promo_details': promo_details,
         'patient_info': patient_info
-    })
-
-@integration_routes.route('/submit-quote', methods=['POST'])
-def submit_quote():
-    """Submit quote to external system and get quote ID"""
-    # Get selected treatments
-    selected_treatments = get_treatments()
-    
-    # Check if there are any treatments selected
-    if not selected_treatments:
-        return jsonify({
-            'success': False,
-            'message': 'No treatments selected'
-        }), 400
-    
-    # Get patient info
-    patient_info = session.get('patient_info', {})
-    
-    # Check if patient info is complete
-    if not patient_info or not all(k in patient_info for k in ['name', 'email', 'phone']):
-        return jsonify({
-            'success': False,
-            'message': 'Patient information is incomplete'
-        }), 400
-    
-    # Get totals
-    totals = get_quote_totals()
-    
-    # Get promo code
-    promo_code = get_promo_code()
-    
-    # Generate a unique quote ID if not already present
-    quote_id = session.get('quote_id')
-    if not quote_id:
-        quote_id = str(uuid.uuid4())
-        session['quote_id'] = quote_id
-    
-    # Prepare quote data
-    quote_data = {
-        'quote_id': quote_id,
-        'treatments': selected_treatments,
-        'totals': totals,
-        'promo_code': promo_code,
-        'patient_info': patient_info,
-        'quote_date': str(datetime.datetime.now())
     }
     
-    # For demo purposes, return success without sending to external service
-    # In a production environment, this would connect to CRM, email service, etc.
+    return jsonify(response)
+
+@integration_routes.route('/export-quote', methods=['GET'])
+def export_quote():
+    """Export the current quote as JSON file"""
+    treatments = get_session_treatments()
+    quote_totals = get_quote_totals()
+    promo_code = get_applied_promo_code()
+    promo_details = get_promo_details()
+    patient_info = get_patient_info()
     
-    return jsonify({
-        'success': True,
-        'message': 'Quote submitted successfully',
+    # Generate a unique ID for this quote
+    quote_id = str(uuid.uuid4())
+    
+    # Build the response
+    response = {
         'quote_id': quote_id,
-        'quote_data': quote_data
-    })
+        'date_created': session.get('date_created', ''),
+        'treatments': treatments,
+        'totals': quote_totals,
+        'promo_code': promo_code,
+        'promo_details': promo_details,
+        'patient_info': patient_info
+    }
+    
+    # Return the data with appropriate headers for file download
+    return jsonify(response)
 
-@integration_routes.route('/auto-apply-promo', methods=['GET'])
-def auto_apply_promo():
-    """
-    Auto-apply promo code from URL parameter
-    This endpoint is used for special offer landing pages and marketing campaigns
-    """
-    from services.promo_service import get_promotion_by_code
-    from utils.session_manager import apply_promo_code
+@integration_routes.route('/treatments', methods=['GET'])
+def get_all_treatments_api():
+    """API endpoint to get all treatments"""
+    from services.treatment_service import get_all_treatments
     
-    promo_code = request.args.get('code', '').strip().upper()
+    treatments = get_all_treatments()
     
-    if not promo_code:
-        return jsonify({
-            'success': False,
-            'message': 'No promo code provided'
-        })
-    
-    # Check if the promo code is valid
-    promotion = get_promotion_by_code(promo_code)
-    
-    if not promotion:
-        return jsonify({
-            'success': False,
-            'message': f"Promo code '{promo_code}' is invalid or expired"
-        })
-    
-    # Try to apply the promo code
-    result = apply_promo_code(promo_code)
-    
-    if len(result) == 3:  # Success case returns 3 values
-        success, message, promo_result = result
-        return jsonify({
-            'success': True,
-            'message': message,
-            'promo_details': promo_result.get('promo_details')
-        })
-    else:
-        success, message = result
-        return jsonify({
-            'success': False,
-            'message': message
-        })
+    return jsonify(treatments)
 
-# Import missing dependencies
-import datetime
+@integration_routes.route('/promotions', methods=['GET'])
+def get_all_promotions_api():
+    """API endpoint to get all active promotions"""
+    from services.promo_service import get_active_promotions
+    
+    promotions = get_active_promotions()
+    
+    return jsonify(promotions)
+
+@integration_routes.route('/validate-promo', methods=['POST'])
+def validate_promo_api():
+    """API endpoint to validate a promo code"""
+    from services.promo_service import validate_promo_code
+    
+    data = request.json
+    
+    if not data or 'promo_code' not in data:
+        return jsonify({
+            'success': False,
+            'message': 'Missing promo_code parameter'
+        }), 400
+    
+    promo_code = data.get('promo_code')
+    subtotal = data.get('subtotal', 0)
+    
+    result = validate_promo_code(promo_code, subtotal)
+    
+    return jsonify(result)
+
+@integration_routes.route('/calculate-discount', methods=['POST'])
+def calculate_discount_api():
+    """API endpoint to calculate discount for a promo code"""
+    from services.promo_service import calculate_discount
+    
+    data = request.json
+    
+    if not data or 'promo_code' not in data or 'treatments' not in data:
+        return jsonify({
+            'success': False,
+            'message': 'Missing required parameters'
+        }), 400
+    
+    promo_code = data.get('promo_code')
+    treatments = data.get('treatments', [])
+    subtotal = data.get('subtotal', 0)
+    
+    result = calculate_discount(promo_code, treatments, subtotal)
+    
+    return jsonify(result)
