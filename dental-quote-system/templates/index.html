@@ -1,327 +1,521 @@
 {% extends "base.html" %}
 
-{% block title %}MyDentalFly - Affordable Dental Care Abroad{% endblock %}
+{% block title %}MyDentalFly - Affordable Dental Tourism{% endblock %}
 
 {% block content %}
 <!-- Hero Section -->
-<section class="hero bg-light">
-    <div class="container py-5">
-        <div class="row align-items-center">
-            <div class="col-lg-6 mb-5 mb-lg-0">
-                <h1 class="display-4 fw-bold mb-3">Quality Dental Care at <span class="text-primary">Affordable Prices</span></h1>
-                <p class="lead mb-4">Compare top-rated dental clinics abroad and get personalized quotes for your dental treatments. Save up to 70% on dental procedures without compromising on quality.</p>
-                <div class="d-flex flex-wrap gap-2">
-                    <a href="{{ url_for('quote_builder') }}" class="btn btn-primary btn-lg">Get Your Quote</a>
-                    <a href="{{ url_for('special_offers') }}" class="btn btn-outline-primary btn-lg">View Special Offers</a>
-                </div>
-                <div class="mt-4">
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        <span>Trusted network of certified dental clinics</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2 mb-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        <span>Transparent pricing with no hidden fees</span>
-                    </div>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fas fa-check-circle text-success"></i>
-                        <span>Personalized treatment plans and quotes</span>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <img src="{{ url_for('static', filename='img/hero-image.jpg') }}" alt="Dental Treatment Abroad" class="img-fluid rounded-4 shadow">
-            </div>
+<section class="hero position-relative">
+  <div class="position-absolute w-100 h-100" style="background-color: rgba(37, 99, 235, 0.05);"></div>
+  <div class="container py-5">
+    <div class="row align-items-center py-lg-5">
+      <div class="col-lg-6 py-4">
+        <h1 class="display-4 fw-bold mb-4">Get affordable dental care abroad</h1>
+        <p class="lead mb-4">Compare prices from top dental clinics in Turkey and save up to 70% on your dental treatments.</p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('quote_builder') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-clipboard-list me-2"></i> Get Your Free Quote
+          </a>
+          <a href="{{ url_for('special_offers') }}" class="btn btn-outline-primary btn-lg">
+            <i class="fas fa-tag me-2"></i> Special Offers
+          </a>
         </div>
+        <div class="d-flex flex-wrap gap-3 mt-4">
+          <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle text-primary me-2"></i>
+            <span>No obligation</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle text-primary me-2"></i>
+            <span>Free quote</span>
+          </div>
+          <div class="d-flex align-items-center">
+            <i class="fas fa-check-circle text-primary me-2"></i>
+            <span>Top-rated clinics</span>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 py-4">
+        <div class="position-relative">
+          <img src="/static/img/hero-image.jpg" alt="Dental Tourism" class="img-fluid rounded-4 shadow">
+          <div class="position-absolute bottom-0 end-0 p-3 bg-white rounded-start-3 shadow-sm" style="transform: translateY(25%);">
+            <div class="d-flex align-items-center gap-3">
+              <div class="text-center">
+                <h2 class="fw-bold text-primary m-0">70%</h2>
+                <p class="small text-muted m-0">Cost Savings</p>
+              </div>
+              <div class="text-center">
+                <h2 class="fw-bold text-primary m-0">100+</h2>
+                <p class="small text-muted m-0">Verified Clinics</p>
+              </div>
+              <div class="text-center">
+                <h2 class="fw-bold text-primary m-0">5000+</h2>
+                <p class="small text-muted m-0">Happy Patients</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-</section>
-
-<!-- How It Works Section -->
-<section class="how-it-works py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">How MyDentalFly Works</h2>
-            <p class="lead">Simple steps to get your dental treatment abroad</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <i class="fas fa-clipboard-list fa-2x"></i>
-                        </div>
-                        <h4 class="card-title">1. Build Your Quote</h4>
-                        <p class="card-text">Select your desired dental treatments and apply any promotional codes to get an instant quote.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <i class="fas fa-comments fa-2x"></i>
-                        </div>
-                        <h4 class="card-title">2. Free Consultation</h4>
-                        <p class="card-text">Connect with our dental specialists who will answer your questions and provide personalized advice.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
-                            <i class="fas fa-plane-departure fa-2x"></i>
-                        </div>
-                        <h4 class="card-title">3. Book & Travel</h4>
-                        <p class="card-text">Finalize your treatment plan, book your appointment, and we'll help coordinate your dental journey.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="text-center mt-4">
-            <a href="{{ url_for('quote_builder') }}" class="btn btn-primary btn-lg">Start Your Quote Now</a>
-        </div>
-    </div>
+  </div>
 </section>
 
 <!-- Special Offers Section -->
-{% if special_offers %}
-<section class="special-offers py-5 bg-light">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">Featured Special Offers</h2>
-            <p class="lead">Exclusive deals and packages for dental treatments abroad</p>
-        </div>
-        <div class="row g-4">
-            {% for offer in special_offers[:3] %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    {% if offer.banner_image %}
-                    <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 200px; object-fit: cover;">
-                    {% else %}
-                    <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
-                        <i class="fas fa-image fa-3x"></i>
-                    </div>
-                    {% endif %}
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-primary">{{ offer.discount_value }}{% if offer.discount_type == 'percentage' %}%{% else %}€{% endif %} OFF</span>
-                            <span class="text-muted small">Code: {{ offer.promo_code }}</span>
-                        </div>
-                        <h5 class="card-title">{{ offer.title }}</h5>
-                        <p class="card-text">{{ offer.description }}</p>
-                    </div>
-                    <div class="card-footer bg-white border-0 pt-0">
-                        <a href="{{ url_for('apply_special_offer', offer_id=offer.id) }}" class="btn btn-outline-primary w-100">Apply Offer</a>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-        <div class="text-center mt-4">
-            <a href="{{ url_for('special_offers') }}" class="btn btn-outline-primary">View All Special Offers</a>
-        </div>
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h2 class="fw-bold">Special Offers</h2>
+        <p class="lead">Exclusive deals and packages for your dental treatment abroad</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('special_offers') }}" class="btn btn-outline-primary">
+          View All Offers <i class="fas fa-arrow-right ms-2"></i>
+        </a>
+      </div>
     </div>
+    
+    <div class="row g-4">
+      {% if special_offers %}
+        {% for offer in special_offers %}
+          <div class="col-lg-4 col-md-6">
+            <div class="card h-100 shadow-sm hover-scale">
+              {% if offer.banner_image %}
+                <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" style="height: 180px; object-fit: cover;">
+              {% else %}
+                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 180px;">
+                  <i class="fas fa-image fa-3x"></i>
+                </div>
+              {% endif %}
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="badge bg-primary">
+                    {% if offer.discount_type == 'percentage' %}
+                      {{ offer.discount_value }}% OFF
+                    {% else %}
+                      ${{ offer.discount_value }} OFF
+                    {% endif %}
+                  </span>
+                  <small class="text-muted">Code: {{ offer.promo_code }}</small>
+                </div>
+                <h5 class="card-title">{{ offer.title }}</h5>
+                <p class="card-text">{{ offer.description }}</p>
+              </div>
+              <div class="card-footer bg-white border-0">
+                <div class="d-grid">
+                  <a href="{{ url_for('apply_special_offer', offer_id=offer.id) }}" class="btn btn-primary">
+                    Apply Offer
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-info">
+            No special offers available at the moment. Check back soon!
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </section>
-{% endif %}
+
+<!-- How It Works Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">How It Works</h2>
+      <p class="lead">Get your dental treatment abroad in 4 simple steps</p>
+    </div>
+    
+    <div class="row g-4">
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm text-center hover-scale">
+          <div class="card-body p-4">
+            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+              <i class="fas fa-clipboard-list fa-2x"></i>
+            </div>
+            <h5 class="card-title">1. Get a Quote</h5>
+            <p class="card-text text-muted">
+              Build your personalized treatment quote using our easy quote builder or select from our special offers.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm text-center hover-scale">
+          <div class="card-body p-4">
+            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+              <i class="fas fa-comments fa-2x"></i>
+            </div>
+            <h5 class="card-title">2. Free Consultation</h5>
+            <p class="card-text text-muted">
+              Receive free virtual consultation with the clinic of your choice to discuss your treatment plan.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm text-center hover-scale">
+          <div class="card-body p-4">
+            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+              <i class="fas fa-plane-departure fa-2x"></i>
+            </div>
+            <h5 class="card-title">3. Travel & Treatment</h5>
+            <p class="card-text text-muted">
+              Travel to your chosen destination with our support for accommodations, transfers, and translations.
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm text-center hover-scale">
+          <div class="card-body p-4">
+            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 80px; height: 80px;">
+              <i class="fas fa-smile fa-2x"></i>
+            </div>
+            <h5 class="card-title">4. Enjoy Results</h5>
+            <p class="card-text text-muted">
+              Return home with your new smile! Most treatments include follow-up care and extended guarantees.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- Popular Treatments Section -->
-{% if popular_treatments %}
-<section class="popular-treatments py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">Popular Dental Treatments</h2>
-            <p class="lead">Most sought-after procedures with significant savings</p>
-        </div>
-        <div class="row g-4">
-            {% for treatment in popular_treatments %}
-            <div class="col-lg-4 col-md-6">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ treatment.name }}</h5>
-                        <p class="card-text">{{ treatment.description }}</p>
-                        <div class="d-flex justify-content-between align-items-center mt-3">
-                            <span class="fw-bold text-primary">${{ treatment.price }}</span>
-                            <form action="{{ url_for('add_treatment') }}" method="post">
-                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                <button type="submit" class="btn btn-sm btn-primary">Add to Quote</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row mb-4">
+      <div class="col-md-8">
+        <h2 class="fw-bold">Popular Treatments</h2>
+        <p class="lead">Most sought-after dental procedures with significant savings</p>
+      </div>
+      <div class="col-md-4 text-md-end">
+        <a href="{{ url_for('quote_builder') }}" class="btn btn-outline-primary">
+          All Treatments <i class="fas fa-arrow-right ms-2"></i>
+        </a>
+      </div>
     </div>
+    
+    <div class="row g-4">
+      {% if popular_treatments %}
+        {% for treatment in popular_treatments %}
+          <div class="col-lg-4 col-md-6">
+            <div class="card h-100 shadow-sm hover-scale">
+              {% if treatment.image %}
+                <img src="{{ treatment.image }}" class="card-img-top" alt="{{ treatment.name }}" style="height: 180px; object-fit: cover;">
+              {% else %}
+                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 180px;">
+                  <i class="fas fa-tooth fa-3x"></i>
+                </div>
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title">{{ treatment.name }}</h5>
+                <p class="card-text">{{ treatment.description }}</p>
+                <div class="d-flex justify-content-between mt-3">
+                  <div>
+                    <p class="mb-0 text-muted small">Starting from</p>
+                    <p class="fw-bold text-primary mb-0">${{ treatment.price_usd }}</p>
+                  </div>
+                  <form action="{{ url_for('add_treatment') }}" method="POST" class="d-flex align-items-end">
+                    <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                    <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="col-12">
+          <div class="alert alert-info">
+            No treatments available at the moment. Please check back soon!
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
 </section>
-{% endif %}
 
-<!-- Benefits Section -->
-<section class="benefits py-5 bg-light">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">Why Choose Dental Tourism?</h2>
-            <p class="lead">The smart choice for quality dental care at a fraction of the cost</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
-                            <i class="fas fa-piggy-bank fa-2x"></i>
-                        </div>
-                        <h4 class="card-title h5">Cost Savings</h4>
-                        <p class="card-text">Save 50-70% on dental procedures compared to UK prices without sacrificing quality.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
-                            <i class="fas fa-user-md fa-2x"></i>
-                        </div>
-                        <h4 class="card-title h5">Expert Dentists</h4>
-                        <p class="card-text">Highly qualified professionals with international training and certifications.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
-                            <i class="fas fa-stethoscope fa-2x"></i>
-                        </div>
-                        <h4 class="card-title h5">Modern Facilities</h4>
-                        <p class="card-text">State-of-the-art clinics with the latest dental technology and equipment.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 col-lg-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body text-center p-4">
-                        <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-4" style="width: 70px; height: 70px;">
-                            <i class="fas fa-globe fa-2x"></i>
-                        </div>
-                        <h4 class="card-title h5">Vacation & Treatment</h4>
-                        <p class="card-text">Combine your dental care with a relaxing holiday in beautiful destinations.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Why Choose Us Section -->
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">Why Choose MyDentalFly</h2>
+      <p class="lead">The trusted dental tourism platform for European patients</p>
     </div>
+    
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-piggy-bank fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Significant Savings</h5>
+            <p class="text-muted">Save up to 70% on dental treatments compared to prices in the UK and other European countries.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-certificate fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Verified Clinics</h5>
+            <p class="text-muted">All clinics are personally vetted with international certifications and English-speaking staff.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-headset fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Personal Support</h5>
+            <p class="text-muted">Get personalized assistance with your treatment plan, travel arrangements, and aftercare.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-shield-alt fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Treatment Guarantee</h5>
+            <p class="text-muted">Many procedures come with extended guarantees for your peace of mind and long-term satisfaction.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-map-marked-alt fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Travel Assistance</h5>
+            <p class="text-muted">Our concierge service helps with flights, accommodation, airport transfers, and local transportation.</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="d-flex">
+          <div class="flex-shrink-0">
+            <div class="bg-primary bg-opacity-10 rounded-circle p-3 text-primary">
+              <i class="fas fa-language fa-2x"></i>
+            </div>
+          </div>
+          <div class="flex-grow-1 ms-4">
+            <h5 class="fw-bold">Language Support</h5>
+            <p class="text-muted">Translation services available to ensure clear communication between you and your dental team.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-5 bg-primary text-white">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-8 mb-4 mb-lg-0">
+        <h2 class="fw-bold">Ready to transform your smile?</h2>
+        <p class="lead mb-0">Get your personalized dental treatment quote today and start saving!</p>
+      </div>
+      <div class="col-lg-4 text-lg-end">
+        <a href="{{ url_for('quote_builder') }}" class="btn btn-light btn-lg">
+          <i class="fas fa-clipboard-list me-2"></i> Build Your Quote
+        </a>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- Testimonials Section -->
-<section class="testimonials py-5">
-    <div class="container">
-        <div class="text-center mb-5">
-            <h2 class="fw-bold">What Our Clients Say</h2>
-            <p class="lead">Real experiences from satisfied patients</p>
-        </div>
-        <div class="row">
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="card-text">"I saved over £4,000 on my dental implants while enjoying a week in Istanbul. The clinic was modern, the staff professional, and the results exceeded my expectations!"</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="flex-shrink-0">
-                                <img src="{{ url_for('static', filename='img/testimonial-1.jpg') }}" alt="Sarah M." class="rounded-circle" width="50" height="50">
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0">Sarah M.</h6>
-                                <small class="text-muted">London, UK</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4 mb-4 mb-lg-0">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="card-text">"MyDentalFly made the entire process so easy. From building my quote to arranging transportation and accommodation. My veneers look fantastic and cost a fraction of UK prices!"</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="flex-shrink-0">
-                                <img src="{{ url_for('static', filename='img/testimonial-2.jpg') }}" alt="David P." class="rounded-circle" width="50" height="50">
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0">David P.</h6>
-                                <small class="text-muted">Manchester, UK</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <div class="mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                        </div>
-                        <p class="card-text">"I was nervous about dental tourism, but the team at MyDentalFly guided me through every step. My crown treatment was excellent, and the LUXHOTEL20 promo code saved me even more!"</p>
-                        <div class="d-flex align-items-center mt-4">
-                            <div class="flex-shrink-0">
-                                <img src="{{ url_for('static', filename='img/testimonial-3.jpg') }}" alt="Emma L." class="rounded-circle" width="50" height="50">
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="mb-0">Emma L.</h6>
-                                <small class="text-muted">Leeds, UK</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<section class="py-5">
+  <div class="container">
+    <div class="text-center mb-5">
+      <h2 class="fw-bold">What Our Patients Say</h2>
+      <p class="lead">Real stories from satisfied patients who chose MyDentalFly</p>
     </div>
+    
+    <div class="row g-4">
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body p-4">
+            <div class="mb-3 text-warning">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="card-text fst-italic">"I saved over £8000 on my dental implants and had a lovely holiday in Turkey at the same time. The clinic was state-of-the-art and the staff was incredibly professional."</p>
+            <div class="d-flex align-items-center">
+              <img src="/static/img/testimonials/sarah.jpg" alt="Sarah J." class="rounded-circle" width="50" height="50">
+              <div class="ms-3">
+                <h6 class="mb-0">Sarah J.</h6>
+                <small class="text-muted">London, UK</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body p-4">
+            <div class="mb-3 text-warning">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="card-text fst-italic">"The entire process was seamless from start to finish. MyDentalFly arranged everything - from airport pickup to hotel and clinic transfers. My veneers look amazing, and I paid less than half of what I was quoted back home."</p>
+            <div class="d-flex align-items-center">
+              <img src="/static/img/testimonials/michael.jpg" alt="Michael T." class="rounded-circle" width="50" height="50">
+              <div class="ms-3">
+                <h6 class="mb-0">Michael T.</h6>
+                <small class="text-muted">Berlin, Germany</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4 col-md-6">
+        <div class="card h-100 shadow-sm">
+          <div class="card-body p-4">
+            <div class="mb-3 text-warning">
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+              <i class="fas fa-star"></i>
+            </div>
+            <p class="card-text fst-italic">"I was skeptical at first about dental tourism, but MyDentalFly made me feel comfortable throughout the entire journey. The quality of care I received was exceptional, and I saved a significant amount of money."</p>
+            <div class="d-flex align-items-center">
+              <img src="/static/img/testimonials/emma.jpg" alt="Emma L." class="rounded-circle" width="50" height="50">
+              <div class="ms-3">
+                <h6 class="mb-0">Emma L.</h6>
+                <small class="text-muted">Amsterdam, Netherlands</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
+{% endblock %}
 
-<!-- CTA Section -->
-<section class="cta py-5 bg-primary text-white">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8 mb-4 mb-lg-0">
-                <h2 class="fw-bold">Ready to Save on Your Dental Treatment?</h2>
-                <p class="lead mb-0">Get your personalized quote now and start your journey to affordable dental care.</p>
-            </div>
-            <div class="col-lg-4 text-lg-end">
-                <a href="{{ url_for('quote_builder') }}" class="btn btn-light btn-lg">Build Your Quote</a>
-            </div>
-        </div>
-    </div>
-</section>
+{% block extra_css %}
+.hover-scale {
+  transition: transform 0.3s ease;
+}
+.hover-scale:hover {
+  transform: translateY(-5px);
+}
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
-            });
-        });
+document.addEventListener('DOMContentLoaded', function() {
+  // Add AJAX functionality to the "Add to Quote" buttons
+  const addToQuoteForms = document.querySelectorAll('form[action*="add-treatment"]');
+  
+  addToQuoteForms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      const submitButton = form.querySelector('button[type="submit"]');
+      const originalText = submitButton.innerText;
+      
+      // Change button text to indicate loading
+      submitButton.innerText = 'Adding...';
+      submitButton.disabled = true;
+      
+      fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Change button text to indicate success
+          submitButton.innerText = 'Added!';
+          submitButton.classList.remove('btn-outline-primary');
+          submitButton.classList.add('btn-success');
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            submitButton.innerText = originalText;
+            submitButton.classList.remove('btn-success');
+            submitButton.classList.add('btn-outline-primary');
+            submitButton.disabled = false;
+          }, 2000);
+        } else {
+          // Show error message
+          submitButton.innerText = 'Error!';
+          submitButton.classList.remove('btn-outline-primary');
+          submitButton.classList.add('btn-danger');
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            submitButton.innerText = originalText;
+            submitButton.classList.remove('btn-danger');
+            submitButton.classList.add('btn-outline-primary');
+            submitButton.disabled = false;
+          }, 2000);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        submitButton.innerText = 'Error!';
+        submitButton.classList.remove('btn-outline-primary');
+        submitButton.classList.add('btn-danger');
+        
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          submitButton.innerText = originalText;
+          submitButton.classList.remove('btn-danger');
+          submitButton.classList.add('btn-outline-primary');
+          submitButton.disabled = false;
+        }, 2000);
+      });
     });
+  });
+});
 </script>
 {% endblock %}
