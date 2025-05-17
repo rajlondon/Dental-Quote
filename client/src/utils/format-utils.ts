@@ -1,140 +1,213 @@
 /**
- * Utils for formatting data in the dental tourism platform
+ * Utility functions for formatting values in the UI
  */
 
-/**
- * Available currency codes for the application
- */
+// Define currency types and interfaces
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'TRY';
 
+export interface CurrencyFormat {
+  symbol: string;
+  position: 'before' | 'after';
+  separator: string;
+  decimal: string;
+  precision: number;
+}
+
+// Currency formatting configurations
+export const CURRENCY_FORMATS: Record<CurrencyCode, CurrencyFormat> = {
+  USD: {
+    symbol: '$',
+    position: 'before',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+  },
+  EUR: {
+    symbol: '€',
+    position: 'after',
+    separator: '.',
+    decimal: ',',
+    precision: 2,
+  },
+  GBP: {
+    symbol: '£',
+    position: 'before',
+    separator: ',',
+    decimal: '.',
+    precision: 2,
+  },
+  TRY: {
+    symbol: '₺',
+    position: 'after',
+    separator: '.',
+    decimal: ',',
+    precision: 2,
+  },
+};
+
+// Approximate exchange rates (as of May 2025)
+export const USD_EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  USD: 1,
+  EUR: 0.91,
+  GBP: 0.78,
+  TRY: 31.45,
+};
+
+export const EUR_EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  USD: 1.10,
+  EUR: 1,
+  GBP: 0.86,
+  TRY: 34.56,
+};
+
+export const GBP_EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  USD: 1.28,
+  EUR: 1.16,
+  GBP: 1,
+  TRY: 40.32,
+};
+
+export const TRY_EXCHANGE_RATES: Record<CurrencyCode, number> = {
+  USD: 0.032,
+  EUR: 0.029,
+  GBP: 0.025,
+  TRY: 1,
+};
+
 /**
- * Format a number as currency with the specified currency code
+ * Formats a price according to the currency's format rules
  * 
- * @param amount The amount to format
- * @param currencyCode The currency code to use (default: USD)
- * @param locale The locale to use for formatting (default: en-US)
- * @returns Formatted currency string
+ * @param amount - The amount to format
+ * @param currency - The currency code (USD, EUR, etc.)
+ * @returns Formatted price string
  */
-export function formatCurrency(
-  amount: number, 
-  currencyCode: CurrencyCode = 'USD',
-  locale: string = 'en-US'
-): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+export function formatPrice(amount: number, currency: CurrencyCode = 'USD'): string {
+  if (amount === null || amount === undefined) {
+    return 'N/A';
+  }
+
+  const format = CURRENCY_FORMATS[currency];
+  
+  // Round to the specified precision
+  const roundedAmount = Math.round(amount * Math.pow(10, format.precision)) / Math.pow(10, format.precision);
+  
+  // Format the number with appropriate separators
+  let [integerPart, decimalPart] = roundedAmount.toFixed(format.precision).split('.');
+  
+  // Add thousand separators
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, format.separator);
+  
+  // Combine parts with appropriate decimal separator
+  const formattedNumber = decimalPart ? `${integerPart}${format.decimal}${decimalPart}` : integerPart;
+  
+  // Apply symbol in the correct position
+  return format.position === 'before' 
+    ? `${format.symbol}${formattedNumber}` 
+    : `${formattedNumber} ${format.symbol}`;
 }
 
 /**
- * Format a percentage value
+ * Converts a price from one currency to another
  * 
- * @param value The percentage value (0-100)
- * @param decimalPlaces Number of decimal places to show
- * @returns Formatted percentage string
- */
-export function formatPercentage(
-  value: number,
-  decimalPlaces: number = 0
-): string {
-  return `${value.toFixed(decimalPlaces)}%`;
-}
-
-/**
- * Convert currency amount between different currencies
- * Uses approximate exchange rates (for demo purposes)
- * 
- * @param amount The amount to convert
- * @param fromCurrency The source currency code
- * @param toCurrency The target currency code
- * @returns The converted amount
+ * @param amount - The amount to convert
+ * @param fromCurrency - The source currency
+ * @param toCurrency - The target currency
+ * @returns Converted amount
  */
 export function convertCurrency(
-  amount: number,
-  fromCurrency: CurrencyCode,
-  toCurrency: CurrencyCode
+  amount: number, 
+  fromCurrency: CurrencyCode = 'USD', 
+  toCurrency: CurrencyCode = 'USD'
 ): number {
-  // Exchange rates (approximate)
-  const rates: Record<CurrencyCode, Record<CurrencyCode, number>> = {
-    USD: { USD: 1, EUR: 0.93, GBP: 0.79, TRY: 32.18 },
-    EUR: { USD: 1.08, EUR: 1, GBP: 0.85, TRY: 34.74 },
-    GBP: { USD: 1.27, EUR: 1.17, GBP: 1, TRY: 40.73 },
-    TRY: { USD: 0.031, EUR: 0.029, GBP: 0.025, TRY: 1 }
-  };
-  
-  return amount * rates[fromCurrency][toCurrency];
-}
-
-/**
- * Format a treatment name for display
- * 
- * @param name The treatment name to format
- * @returns Formatted treatment name
- */
-export function formatTreatmentName(name: string): string {
-  // Split on camel case, underscore, or hyphen
-  const words = name.split(/([A-Z][a-z]+)|_|-/).filter(Boolean);
-  
-  // Capitalize each word and join with spaces
-  return words
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
-}
-
-/**
- * Format a discount for display
- * 
- * @param discount The discount amount or percentage
- * @param isPercentage Whether the discount is a percentage
- * @returns Formatted discount string
- */
-export function formatDiscount(
-  discount: number,
-  isPercentage: boolean = true
-): string {
-  if (isPercentage) {
-    return formatPercentage(discount);
-  } else {
-    return formatCurrency(discount);
+  if (fromCurrency === toCurrency) {
+    return amount;
   }
+  
+  let exchangeRate = 1;
+  
+  // Select the appropriate exchange rate table based on from currency
+  switch (fromCurrency) {
+    case 'USD':
+      exchangeRate = USD_EXCHANGE_RATES[toCurrency];
+      break;
+    case 'EUR':
+      exchangeRate = EUR_EXCHANGE_RATES[toCurrency];
+      break;
+    case 'GBP':
+      exchangeRate = GBP_EXCHANGE_RATES[toCurrency];
+      break;
+    case 'TRY':
+      exchangeRate = TRY_EXCHANGE_RATES[toCurrency];
+      break;
+  }
+  
+  return amount * exchangeRate;
 }
 
 /**
- * Format a date for display in the dental tourism context
+ * Formats a price in the specified currency, converting from USD if needed
  * 
- * @param date The date to format
+ * @param amount - The amount in USD
+ * @param displayCurrency - The currency to display
+ * @returns Formatted price string
+ */
+export function formatPriceInCurrency(
+  amount: number,
+  displayCurrency: CurrencyCode = 'USD'
+): string {
+  if (amount === null || amount === undefined) {
+    return 'N/A';
+  }
+  
+  const convertedAmount = convertCurrency(amount, 'USD', displayCurrency);
+  return formatPrice(convertedAmount, displayCurrency);
+}
+
+/**
+ * Formats a percentage with proper symbol
+ * 
+ * @param value - The percentage value (e.g., 0.15 for 15%)
+ * @returns Formatted percentage string
+ */
+export function formatPercentage(value: number): string {
+  if (value === null || value === undefined) {
+    return 'N/A';
+  }
+  
+  // Multiply by 100 if the value is in decimal form (0.xx)
+  const displayValue = value <= 1 ? value * 100 : value;
+  return `${displayValue.toFixed(0)}%`;
+}
+
+/**
+ * Formats a date in a readable format
+ * 
+ * @param date - The date to format
+ * @param format - Optional format style (defaults to 'medium')
  * @returns Formatted date string
  */
-export function formatTreatmentDate(date: Date | string): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  
-  return new Intl.DateTimeFormat('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }).format(dateObj);
-}
-
-/**
- * Format a phone number for display
- * 
- * @param phoneNumber The phone number to format
- * @returns Formatted phone number
- */
-export function formatPhoneNumber(phoneNumber: string): string {
-  // Simple formatting for international numbers
-  const cleaned = phoneNumber.replace(/\D/g, '');
-  
-  if (cleaned.length === 10) {
-    // US format: (XXX) XXX-XXXX
-    return `(${cleaned.substring(0, 3)}) ${cleaned.substring(3, 6)}-${cleaned.substring(6)}`;
-  } else if (cleaned.length > 10) {
-    // International format: +X XXX XXX XXXX
-    return `+${cleaned.substring(0, cleaned.length - 10)} ${cleaned.substring(cleaned.length - 10, cleaned.length - 7)} ${cleaned.substring(cleaned.length - 7, cleaned.length - 4)} ${cleaned.substring(cleaned.length - 4)}`;
+export function formatDate(
+  date: Date | string | number,
+  format: 'short' | 'medium' | 'long' = 'medium'
+): string {
+  if (!date) {
+    return 'N/A';
   }
   
-  // Return as-is if it doesn't match expected formats
-  return phoneNumber;
+  const dateObj = typeof date === 'string' || typeof date === 'number' 
+    ? new Date(date) 
+    : date;
+  
+  const options: Intl.DateTimeFormatOptions = { 
+    year: 'numeric', 
+    month: format === 'short' ? 'short' : 'long', 
+    day: 'numeric' 
+  };
+  
+  if (format === 'long') {
+    options.hour = '2-digit';
+    options.minute = '2-digit';
+  }
+  
+  return new Intl.DateTimeFormat('en-US', options).format(dateObj);
 }
