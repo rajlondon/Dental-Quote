@@ -1,578 +1,549 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'wouter';
-import { TreatmentList, Treatment } from './TreatmentList';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { FileDownIcon, ClockIcon, CheckCircleIcon, RefreshCwIcon } from 'lucide-react';
-import { toast } from '@/hooks/use-toast';
-import { quoteIntegrationService, QuoteData } from '@/services/quote-integration-service';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Loader2, FileText, Printer, Mail, Calendar, Check, X, ArrowRight, ExternalLink } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { TreatmentList } from './TreatmentList';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { useQuoteSystem, type QuoteData } from '@/hooks/use-quote-system';
 
 export interface QuoteIntegrationWidgetProps {
   portalType: 'admin' | 'clinic' | 'patient';
+  quoteId?: string;
   patientId?: string;
   clinicId?: string;
   onQuoteAction?: (action: string, quoteId: string) => void;
 }
 
-export function QuoteIntegrationWidget({
-  portalType,
-  patientId,
+export function QuoteIntegrationWidget({ 
+  portalType, 
+  quoteId, 
+  patientId, 
   clinicId,
-  onQuoteAction,
+  onQuoteAction 
 }: QuoteIntegrationWidgetProps) {
-  const { quoteId } = useParams();
-  const [activeTab, setActiveTab] = useState('list');
-  const [quotes, setQuotes] = useState<QuoteData[]>([]);
-  const [quote, setQuote] = useState<QuoteData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [updating, setUpdating] = useState(false);
+  const quoteSystem = useQuoteSystem({ portalType, patientId, clinicId });
+  const [activeTab, setActiveTab] = useState('details');
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
 
-  // Function to format dates for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  };
-
-  // Function to get status badge color
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'draft': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
-      case 'sent': return 'bg-blue-100 text-blue-800 border-blue-300';
-      case 'viewed': return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'accepted': return 'bg-green-100 text-green-800 border-green-300';
-      case 'rejected': return 'bg-red-100 text-red-800 border-red-300';
-      case 'expired': return 'bg-gray-100 text-gray-800 border-gray-300';
-      default: return 'bg-gray-100 text-gray-800 border-gray-300';
-    }
-  };
-
-  // Function to display currency values
-  const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: currency || 'USD',
-    }).format(amount);
-  };
-
-  // Load quotes based on portal type
   useEffect(() => {
-    const fetchQuotes = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        let fetchedQuotes: QuoteData[] = [];
-
-        if (portalType === 'admin') {
-          fetchedQuotes = await quoteIntegrationService.getAdminQuotes();
-        } else if (portalType === 'clinic' && clinicId) {
-          fetchedQuotes = await quoteIntegrationService.getClinicQuotes(clinicId);
-        } else if (portalType === 'patient' && patientId) {
-          fetchedQuotes = await quoteIntegrationService.getPatientQuotes(patientId);
-        }
-
-        setQuotes(fetchedQuotes);
-
-        // If we have a quoteId, fetch that specific quote
-        if (quoteId) {
-          await fetchQuoteDetails(quoteId);
-          setActiveTab('details');
-        }
-      } catch (err: any) {
-        console.error('Error fetching quotes:', err);
-        setError(err.message || 'Failed to load quotes');
-        toast({
-          title: 'Error',
-          description: 'Failed to load quotes. Please try again.',
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchQuotes();
-  }, [portalType, patientId, clinicId, quoteId]);
-
-  // Function to fetch a specific quote
-  const fetchQuoteDetails = async (id: string) => {
-    try {
-      setLoading(true);
-      
-      let fetchedQuote: QuoteData;
-
-      if (portalType === 'admin') {
-        fetchedQuote = await quoteIntegrationService.getAdminQuote(id);
-      } else if (portalType === 'clinic' && clinicId) {
-        fetchedQuote = await quoteIntegrationService.getClinicQuote(clinicId, id);
-      } else if (portalType === 'patient' && patientId) {
-        fetchedQuote = await quoteIntegrationService.getPatientQuote(patientId, id);
-      } else {
-        throw new Error('Invalid portal configuration');
-      }
-
-      setQuote(fetchedQuote);
-    } catch (err: any) {
-      console.error('Error fetching quote details:', err);
-      setError(err.message || 'Failed to load quote details');
-      toast({
-        title: 'Error',
-        description: 'Failed to load quote details. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
+    // If we have a specific quote ID, load that quote's details
+    if (quoteId) {
+      quoteSystem.loadQuoteDetails(quoteId);
+    } 
+    // Otherwise, load all quotes for this portal
+    else {
+      quoteSystem.loadQuotes();
     }
-  };
+  }, [quoteId, quoteSystem]);
 
-  // Function to handle quote actions
-  const handleAction = async (action: string, id: string) => {
-    try {
-      setUpdating(true);
-      
-      switch (action) {
-        case 'download-pdf':
-          const pdfBlob = await quoteIntegrationService.downloadQuotePdf(id);
-          const url = window.URL.createObjectURL(pdfBlob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `quote-${id}.pdf`;
-          document.body.appendChild(a);
-          a.click();
-          window.URL.revokeObjectURL(url);
-          document.body.removeChild(a);
-          toast({
-            title: 'Success',
-            description: 'Quote PDF downloaded successfully',
-          });
-          break;
-          
-        case 'update-status':
-          // This would typically open a modal for status selection
-          // For now, we'll just toggle between 'draft' and 'sent'
-          const newStatus = quote?.status === 'draft' ? 'sent' : 'draft';
-          await quoteIntegrationService.updateQuoteStatus(id, newStatus);
-          
-          // Refresh the quote after update
-          await fetchQuoteDetails(id);
-          
-          toast({
-            title: 'Status Updated',
-            description: `Quote status changed to ${newStatus}`,
-          });
-          break;
-          
-        case 'send-email':
-          // For demo purposes, we'll just prompt for an email
-          const email = prompt('Enter email address to send quote:');
-          if (email) {
-            await quoteIntegrationService.sendQuoteEmail(id, email);
-            toast({
-              title: 'Email Sent',
-              description: `Quote sent to ${email}`,
-            });
-          }
-          break;
-          
-        case 'request-appointment':
-          await quoteIntegrationService.requestAppointment(id);
-          toast({
-            title: 'Appointment Requested',
-            description: 'Your appointment request has been submitted',
-          });
-          break;
-          
-        default:
-          // Pass other actions to parent component
-          if (onQuoteAction) {
-            onQuoteAction(action, id);
-          }
-      }
-    } catch (err: any) {
-      console.error(`Error performing action ${action}:`, err);
-      toast({
-        title: 'Action Failed',
-        description: err.message || `Failed to ${action}. Please try again.`,
-        variant: 'destructive',
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Function to handle treatment quantity updates
-  const handleUpdateQuantity = async (treatmentId: string, quantity: number) => {
-    if (!quoteId || !quote) return;
-    
-    try {
-      setUpdating(true);
-      await quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
-      
-      // Refresh the quote to get updated totals
-      await fetchQuoteDetails(quoteId);
-      
-      toast({
-        title: 'Quantity Updated',
-        description: 'Treatment quantity has been updated',
-      });
-    } catch (err: any) {
-      console.error('Error updating treatment quantity:', err);
-      toast({
-        title: 'Update Failed',
-        description: err.message || 'Failed to update quantity. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Function to handle treatment removal
-  const handleRemoveTreatment = async (treatmentId: string) => {
-    if (!quoteId || !quote) return;
-    
-    if (!confirm('Are you sure you want to remove this treatment?')) {
-      return;
-    }
-    
-    try {
-      setUpdating(true);
-      await quoteIntegrationService.removeTreatment(quoteId, treatmentId);
-      
-      // Refresh the quote to get updated list and totals
-      await fetchQuoteDetails(quoteId);
-      
-      toast({
-        title: 'Treatment Removed',
-        description: 'Treatment has been removed from the quote',
-      });
-    } catch (err: any) {
-      console.error('Error removing treatment:', err);
-      toast({
-        title: 'Removal Failed',
-        description: err.message || 'Failed to remove treatment. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-  // Render loading state
-  if (loading) {
+  // If we're loading a specific quote and it's still loading
+  if (quoteId && quoteSystem.loading && !quoteSystem.currentQuote) {
     return (
-      <div className="flex justify-center items-center p-8">
-        <div className="animate-spin h-8 w-8 border-t-2 border-b-2 border-gray-900 rounded-full"></div>
+      <div className="w-full flex justify-center items-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Render error state
-  if (error) {
+  // If we're showing a specific quote
+  if (quoteId && quoteSystem.currentQuote) {
+    const quote = quoteSystem.currentQuote;
+    const statusColors: Record<string, string> = {
+      pending: 'bg-yellow-100 text-yellow-800',
+      assigned: 'bg-blue-100 text-blue-800',
+      in_progress: 'bg-indigo-100 text-indigo-800',
+      sent: 'bg-purple-100 text-purple-800',
+      accepted: 'bg-green-100 text-green-800',
+      rejected: 'bg-red-100 text-red-800',
+      completed: 'bg-emerald-100 text-emerald-800',
+      cancelled: 'bg-gray-100 text-gray-800',
+      expired: 'bg-orange-100 text-orange-800'
+    };
+
+    const handleUpdateStatus = (status: string) => {
+      quoteSystem.updateQuoteStatus(quoteId, status);
+    };
+
+    const handleSendEmail = () => {
+      if (recipientEmail.trim()) {
+        quoteSystem.sendQuoteEmail(quoteId, recipientEmail.trim())
+          .then(() => {
+            setEmailDialogOpen(false);
+            setRecipientEmail('');
+          });
+      }
+    };
+
+    const handleRequestAppointment = () => {
+      quoteSystem.requestAppointment(quoteId)
+        .then(() => {
+          setAppointmentDialogOpen(false);
+        });
+    };
+
+    const handleDownloadPdf = () => {
+      quoteSystem.downloadQuotePdf(quoteId);
+    };
+
     return (
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-red-600">Error</CardTitle>
+        <CardHeader className="pb-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl">Quote #{quote.id}</CardTitle>
+              <CardDescription>
+                Created {quote.created_at ? formatDistanceToNow(new Date(quote.created_at), { addSuffix: true }) : 'recently'}
+              </CardDescription>
+            </div>
+            <Badge className={statusColors[quote.status || 'pending']}>
+              {quote.status?.toUpperCase() || 'PENDING'}
+            </Badge>
+          </div>
         </CardHeader>
-        <CardContent>
-          <p>{error}</p>
-          <Button 
-            className="mt-4" 
-            onClick={() => window.location.reload()}
-          >
-            <RefreshCwIcon className="h-4 w-4 mr-2" />
-            Retry
+
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="px-6">
+          <TabsList className="grid w-full sm:w-auto sm:inline-grid grid-cols-2 sm:grid-cols-3">
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="treatments">Treatments</TabsTrigger>
+            {portalType !== 'patient' && <TabsTrigger value="actions">Actions</TabsTrigger>}
+          </TabsList>
+
+          <TabsContent value="details" className="pt-4">
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Patient Information</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Name:</span> {quote.patient_name || 'Not provided'}</p>
+                  <p><span className="font-medium">Email:</span> {quote.patient_email || 'Not provided'}</p>
+                  <p><span className="font-medium">Phone:</span> {quote.patient_phone || 'Not provided'}</p>
+                  {quote.patient_notes && (
+                    <div>
+                      <span className="font-medium">Notes:</span>
+                      <p className="mt-1 text-sm text-gray-600">{quote.patient_notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Quote Information</h3>
+                <div className="space-y-2">
+                  <p><span className="font-medium">Created:</span> {quote.created_at ? new Date(quote.created_at).toLocaleString() : 'N/A'}</p>
+                  <p><span className="font-medium">Updated:</span> {quote.updated_at ? new Date(quote.updated_at).toLocaleString() : 'N/A'}</p>
+                  <p><span className="font-medium">Promo Code:</span> {quote.promo_code || 'None'}</p>
+                  <p><span className="font-medium">Discount:</span> {quote.discount_percent ? `${quote.discount_percent}%` : 'None'}</p>
+                  {portalType !== 'patient' && quote.clinic_name && (
+                    <p><span className="font-medium">Assigned to:</span> {quote.clinic_name}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-6" />
+
+            <div>
+              <h3 className="text-sm font-medium text-gray-500 mb-4">Financial Summary</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Description</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Subtotal</TableCell>
+                    <TableCell className="text-right">${quote.subtotal?.toFixed(2) || '0.00'}</TableCell>
+                  </TableRow>
+                  {quote.discount_amount > 0 && (
+                    <TableRow>
+                      <TableCell>Discount {quote.promo_code && `(${quote.promo_code})`}</TableCell>
+                      <TableCell className="text-right text-red-600">-${quote.discount_amount?.toFixed(2) || '0.00'}</TableCell>
+                    </TableRow>
+                  )}
+                  <TableRow className="font-bold">
+                    <TableCell>Total</TableCell>
+                    <TableCell className="text-right">${quote.total?.toFixed(2) || '0.00'}</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="treatments" className="pt-4">
+            <TreatmentList 
+              treatments={quote.treatments || []} 
+              readOnly={portalType === 'patient' || quote.status === 'completed' || quote.status === 'accepted'} 
+              onUpdateQuantity={(treatmentId, quantity) => 
+                quoteSystem.updateTreatmentQuantity(quoteId, treatmentId, quantity)
+              }
+              onRemoveTreatment={(treatmentId) => 
+                quoteSystem.removeTreatment(quoteId, treatmentId)
+              }
+            />
+          </TabsContent>
+
+          {portalType !== 'patient' && (
+            <TabsContent value="actions" className="pt-4">
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Update Status</h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {portalType === 'admin' && (
+                    <>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleUpdateStatus('pending')}
+                        disabled={quote.status === 'pending'}
+                      >
+                        Mark as Pending
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleUpdateStatus('assigned')}
+                        disabled={quote.status === 'assigned'}
+                      >
+                        Mark as Assigned
+                      </Button>
+                    </>
+                  )}
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleUpdateStatus('in_progress')}
+                    disabled={quote.status === 'in_progress'}
+                  >
+                    Mark as In Progress
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleUpdateStatus('sent')}
+                    disabled={quote.status === 'sent'}
+                  >
+                    Mark as Sent
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-green-50 text-green-700 hover:bg-green-100"
+                    onClick={() => handleUpdateStatus('accepted')}
+                    disabled={quote.status === 'accepted'}
+                  >
+                    <Check className="h-4 w-4 mr-2" /> Mark as Accepted
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="bg-red-50 text-red-700 hover:bg-red-100"
+                    onClick={() => handleUpdateStatus('rejected')}
+                    disabled={quote.status === 'rejected'}
+                  >
+                    <X className="h-4 w-4 mr-2" /> Mark as Rejected
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleUpdateStatus('completed')}
+                    disabled={quote.status === 'completed'}
+                  >
+                    Mark as Completed
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => handleUpdateStatus('cancelled')}
+                    disabled={quote.status === 'cancelled'}
+                  >
+                    Mark as Cancelled
+                  </Button>
+                </div>
+
+                <Separator className="my-4" />
+
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Actions</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center"
+                    onClick={() => setEmailDialogOpen(true)}
+                  >
+                    <Mail className="h-4 w-4 mr-2" /> Email Quote
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-center"
+                    onClick={handleDownloadPdf}
+                  >
+                    <Printer className="h-4 w-4 mr-2" /> Download PDF
+                  </Button>
+                  {portalType === 'clinic' && (
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center justify-center"
+                      onClick={() => setAppointmentDialogOpen(true)}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" /> Schedule Appointment
+                    </Button>
+                  )}
+                  {portalType === 'admin' && quote.clinic_id && (
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center justify-center text-red-600"
+                      onClick={() => quoteSystem.unassignQuoteFromClinic(quoteId)}
+                    >
+                      <X className="h-4 w-4 mr-2" /> Unassign from Clinic
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
+
+        <CardFooter className="flex justify-between pt-6">
+          <Button variant="outline" onClick={() => onQuoteAction && onQuoteAction('back', quoteId)}>
+            Back to List
           </Button>
-        </CardContent>
+          {portalType === 'patient' && (
+            <div className="space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadPdf}
+                className="flex items-center"
+              >
+                <FileText className="h-4 w-4 mr-2" /> Download PDF
+              </Button>
+              {quote.status !== 'accepted' && quote.status !== 'rejected' && (
+                <Button 
+                  onClick={() => setAppointmentDialogOpen(true)}
+                  className="flex items-center"
+                >
+                  <Calendar className="h-4 w-4 mr-2" /> Request Consultation
+                </Button>
+              )}
+            </div>
+          )}
+        </CardFooter>
+
+        {/* Email Dialog */}
+        <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Email Quote</DialogTitle>
+              <DialogDescription>
+                Send this quote to the patient or another recipient.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Recipient Email
+                </label>
+                <Input
+                  id="email"
+                  placeholder="email@example.com"
+                  value={recipientEmail}
+                  onChange={(e) => setRecipientEmail(e.target.value)}
+                  type="email"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEmailDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSendEmail} disabled={!recipientEmail.trim() || quoteSystem.loading}>
+                {quoteSystem.loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Mail className="h-4 w-4 mr-2" />
+                    Send Quote
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Appointment Dialog */}
+        <Dialog open={appointmentDialogOpen} onOpenChange={setAppointmentDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>
+                {portalType === 'patient' ? 'Request Consultation' : 'Schedule Appointment'}
+              </DialogTitle>
+              <DialogDescription>
+                {portalType === 'patient' 
+                  ? 'Request a free consultation to discuss your treatment options.'
+                  : 'Schedule an appointment with this patient.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-gray-500 mb-4">
+                {portalType === 'patient'
+                  ? 'The clinic will contact you within 24-48 hours to arrange a convenient time.'
+                  : 'This will mark the quote as "in progress" and notify the patient.'}
+              </p>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAppointmentDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleRequestAppointment}
+                disabled={quoteSystem.loading}
+              >
+                {quoteSystem.loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    {portalType === 'patient' ? 'Request Consultation' : 'Schedule Appointment'}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     );
   }
 
-  // Render quote list view
-  const renderQuoteList = () => {
-    if (quotes.length === 0) {
-      return (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">No quotes found.</p>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <div className="grid gap-4">
-        {quotes.map((quote) => (
-          <Card key={quote.id} className="overflow-hidden">
-            <CardContent className="p-0">
-              <div className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium text-lg">
-                      Quote #{quote.id.substring(0, 8)}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Created: {formatDate(quote.created_at)}
-                    </p>
-                    {quote.clinic_name && (
-                      <p className="text-sm mt-1">
-                        <span className="text-muted-foreground">Clinic: </span>
-                        {quote.clinic_name}
-                      </p>
-                    )}
-                    <p className="text-sm mt-1">
-                      <span className="text-muted-foreground">Patient: </span>
-                      {quote.patient_name}
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <Badge 
-                      className={`text-xs px-2 py-1 font-medium border ${getStatusColor(quote.status)}`}
-                    >
-                      {quote.status.toUpperCase()}
-                    </Badge>
-                    <p className="font-medium text-lg mt-2">
-                      {formatCurrency(quote.total, quote.currency)}
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex justify-between items-center mt-4 pt-4 border-t">
-                  <div className="text-sm">
-                    <span className="text-muted-foreground">Items: </span>
-                    {quote.treatments.length}
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleAction('view-details', quote.id)}
-                    >
-                      View Details
-                    </Button>
-                    
-                    {/* Render portal-specific action buttons */}
-                    {portalType === 'admin' && (
-                      <>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleAction('edit', quote.id)}
-                        >
-                          Edit
-                        </Button>
-                        {!quote.clinic_id && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleAction('assign', quote.id)}
-                          >
-                            Assign to Clinic
-                          </Button>
-                        )}
-                      </>
-                    )}
-                    
-                    {portalType === 'clinic' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAction('update-status', quote.id)}
-                      >
-                        Update Status
-                      </Button>
-                    )}
-                    
-                    {portalType === 'patient' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAction('download-pdf', quote.id)}
-                      >
-                        <FileDownIcon className="h-4 w-4 mr-1" />
-                        Download PDF
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  };
-
-  // Render quote detail view
-  const renderQuoteDetail = () => {
-    if (!quote) {
-      return (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">Select a quote to view details.</p>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    const isEditable = portalType === 'admin' || (portalType === 'clinic' && quote.status === 'draft');
-
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>Quote #{quote.id.substring(0, 8)}</CardTitle>
-                <CardDescription>Created on {formatDate(quote.created_at)}</CardDescription>
-              </div>
-              <Badge 
-                className={`text-xs px-2 py-1 font-medium border ${getStatusColor(quote.status)}`}
-              >
-                {quote.status.toUpperCase()}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">Patient Information</h3>
-                <p className="font-medium">{quote.patient_name}</p>
-                <p>{quote.patient_email}</p>
-                <p>{quote.patient_phone}</p>
-                <p>{quote.patient_country}</p>
-              </div>
-              
-              {quote.clinic_name && (
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground mb-2">Clinic Information</h3>
-                  <p className="font-medium">{quote.clinic_name}</p>
-                  {quote.clinic_location && <p>{quote.clinic_location}</p>}
-                  {quote.clinic_website && <p>{quote.clinic_website}</p>}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <div>
-          <h3 className="text-lg font-medium mb-3">Treatments</h3>
-          <TreatmentList 
-            treatments={quote.treatments} 
-            editable={isEditable}
-            onUpdateQuantity={isEditable ? handleUpdateQuantity : undefined}
-            onRemoveTreatment={isEditable ? handleRemoveTreatment : undefined}
-            showClinicReferences={portalType === 'clinic' || portalType === 'admin'}
-          />
-        </div>
-        
-        <Card>
-          <CardContent className="p-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Subtotal</span>
-                <span>{formatCurrency(quote.subtotal, quote.currency)}</span>
-              </div>
-              
-              {quote.discount_amount > 0 && (
-                <div className="flex justify-between text-sm">
-                  <span>Discount {quote.promo_code && `(${quote.promo_code})`}</span>
-                  <span className="text-green-600">
-                    -{formatCurrency(quote.discount_amount, quote.currency)}
-                  </span>
-                </div>
-              )}
-              
-              <Separator />
-              
-              <div className="flex justify-between font-medium text-lg pt-1">
-                <span>Total</span>
-                <span>{formatCurrency(quote.total, quote.currency)}</span>
-              </div>
-            </div>
-          </CardContent>
-          <CardFooter className="pt-0 flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => handleAction('download-pdf', quote.id)}
-              disabled={updating}
-            >
-              <FileDownIcon className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            
-            {/* Render portal-specific actions */}
-            {portalType === 'admin' && (
-              <Button
-                variant="default"
-                onClick={() => handleAction('update-status', quote.id)}
-                disabled={updating}
-              >
-                <CheckCircleIcon className="h-4 w-4 mr-2" />
-                Update Status
-              </Button>
-            )}
-            
-            {portalType === 'clinic' && (
-              <Button
-                variant="default"
-                onClick={() => handleAction('send-email', quote.id)}
-                disabled={updating}
-              >
-                Send to Patient
-              </Button>
-            )}
-            
-            {portalType === 'patient' && quote.status !== 'accepted' && (
-              <Button
-                variant="default"
-                onClick={() => handleAction('request-appointment', quote.id)}
-                disabled={updating}
-              >
-                <ClockIcon className="h-4 w-4 mr-2" />
-                Request Appointment
-              </Button>
-            )}
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  };
-
-  // Main component render
+  // If we're showing a list of quotes
   return (
-    <div className="w-full">
-      {quoteId ? (
-        // Single quote detail view
-        renderQuoteDetail()
+    <div className="space-y-6">
+      {quoteSystem.loading && quoteSystem.quotes.length === 0 ? (
+        <div className="w-full flex justify-center items-center p-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : quoteSystem.quotes.length === 0 ? (
+        <Card className="w-full">
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <FileText className="h-16 w-16 text-gray-300 mb-4" />
+            <h3 className="text-xl font-medium text-gray-700 mb-1">No Quotes Found</h3>
+            <p className="text-gray-500 mb-6 text-center max-w-md">
+              {portalType === 'admin' 
+                ? 'There are no quotes in the system yet.' 
+                : portalType === 'clinic'
+                  ? 'No quotes have been assigned to your clinic yet.'
+                  : 'You have not created any quotes yet.'}
+            </p>
+            {portalType === 'patient' && (
+              <Button onClick={() => onQuoteAction && onQuoteAction('create', '')}>
+                Get My Free Quote
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       ) : (
-        // Tab view for list and details
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-4">
-            <TabsTrigger value="list">Quote List</TabsTrigger>
-            <TabsTrigger value="details" disabled={!quote}>Quote Details</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="list" className="mt-0">
-            {renderQuoteList()}
-          </TabsContent>
-          
-          <TabsContent value="details" className="mt-0">
-            {renderQuoteDetail()}
-          </TabsContent>
-        </Tabs>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {quoteSystem.quotes.map((quote) => (
+              <QuoteCard 
+                key={quote.id} 
+                quote={quote} 
+                portalType={portalType}
+                onAction={onQuoteAction} 
+              />
+            ))}
+          </div>
+        </>
       )}
     </div>
+  );
+}
+
+interface QuoteCardProps {
+  quote: QuoteData;
+  portalType: 'admin' | 'clinic' | 'patient';
+  onAction?: (action: string, quoteId: string) => void;
+}
+
+function QuoteCard({ quote, portalType, onAction }: QuoteCardProps) {
+  const statusColors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-800',
+    assigned: 'bg-blue-100 text-blue-800',
+    in_progress: 'bg-indigo-100 text-indigo-800',
+    sent: 'bg-purple-100 text-purple-800',
+    accepted: 'bg-green-100 text-green-800',
+    rejected: 'bg-red-100 text-red-800',
+    completed: 'bg-emerald-100 text-emerald-800',
+    cancelled: 'bg-gray-100 text-gray-800',
+    expired: 'bg-orange-100 text-orange-800'
+  };
+
+  const formattedDate = quote.created_at 
+    ? formatDistanceToNow(new Date(quote.created_at), { addSuffix: true })
+    : 'recently';
+
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <CardTitle className="text-xl">Quote #{quote.id}</CardTitle>
+          <Badge className={statusColors[quote.status || 'pending']}>
+            {quote.status?.toUpperCase() || 'PENDING'}
+          </Badge>
+        </div>
+        <CardDescription>Created {formattedDate}</CardDescription>
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="space-y-2">
+          {portalType === 'admin' && (
+            <p className="text-sm">
+              <span className="font-medium">Patient:</span> {quote.patient_name || 'Unknown'}
+            </p>
+          )}
+          {(portalType === 'admin' || portalType === 'patient') && quote.clinic_name && (
+            <p className="text-sm">
+              <span className="font-medium">Clinic:</span> {quote.clinic_name}
+            </p>
+          )}
+          <p className="text-sm">
+            <span className="font-medium">Total:</span> ${quote.total?.toFixed(2) || '0.00'}
+          </p>
+          {quote.promo_code && (
+            <p className="text-sm">
+              <span className="font-medium">Promo:</span> {quote.promo_code} 
+              {quote.discount_percent && ` (${quote.discount_percent}% off)`}
+            </p>
+          )}
+          <p className="text-sm">
+            <span className="font-medium">Treatments:</span> {quote.treatments?.length || 0}
+          </p>
+        </div>
+      </CardContent>
+      <CardFooter className="pt-2">
+        <div className="w-full flex justify-between items-center">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onAction && onAction('view', quote.id)}
+            className="flex items-center"
+          >
+            View Details <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+          
+          {portalType === 'admin' && quote.status === 'pending' && (
+            <Button 
+              size="sm"
+              onClick={() => onAction && onAction('assign', quote.id)}
+            >
+              Assign to Clinic
+            </Button>
+          )}
+        </div>
+      </CardFooter>
+    </Card>
   );
 }

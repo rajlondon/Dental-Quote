@@ -17,20 +17,26 @@ export default function AdminQuotesPage() {
   const quoteId = params?.id;
   
   // Use the new quote system hook for the admin portal
-  const quoteSystem = useQuoteSystem('admin');
+  const quoteSystem = useQuoteSystem({ portalType: 'admin' });
   const clinicsQuery = useClinicList();
   
   // Local state for dialogs
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "assigned" | "in_progress" | "completed">("all");
   const [assignDialogOpen, setAssignDialogOpen] = useState(false);
   const [selectedClinicId, setSelectedClinicId] = useState<string>("");
+  const [selectedQuoteForAssign, setSelectedQuoteForAssign] = useState<string>("");
 
   // Load quotes when component mounts
   useEffect(() => {
+    quoteSystem.loadQuotes();
+  }, [quoteSystem]);
+
+  // Load quote details if we have a specific quote ID
+  useEffect(() => {
     if (quoteId) {
-      quoteSystem.setSelectedQuoteId(quoteId);
+      quoteSystem.loadQuoteDetails(quoteId);
     }
-  }, [quoteId]);
+  }, [quoteId, quoteSystem]);
 
   // Handle quote actions
   const handleQuoteAction = (action: string, quoteId: string) => {
@@ -39,7 +45,7 @@ export default function AdminQuotesPage() {
         setLocation(`/admin/quotes/${quoteId}`);
         break;
       case 'assign':
-        quoteSystem.setSelectedQuoteId(quoteId);
+        setSelectedQuoteForAssign(quoteId);
         setAssignDialogOpen(true);
         break;
       case 'create':
@@ -52,16 +58,16 @@ export default function AdminQuotesPage() {
 
   // Handle assigning quote to clinic
   const handleAssignQuote = () => {
-    if (quoteSystem.selectedQuoteId && selectedClinicId) {
-      quoteSystem.assignQuoteMutation.mutate({
-        quoteId: quoteSystem.selectedQuoteId,
-        clinicId: selectedClinicId
-      }, {
-        onSuccess: () => {
+    if (selectedQuoteForAssign && selectedClinicId) {
+      quoteSystem.assignQuoteToClinic(selectedQuoteForAssign, selectedClinicId)
+        .then(() => {
           setAssignDialogOpen(false);
           setSelectedClinicId("");
-        }
-      });
+          setSelectedQuoteForAssign("");
+        })
+        .catch(error => {
+          console.error("Error assigning quote:", error);
+        });
     }
   };
 
@@ -81,13 +87,13 @@ export default function AdminQuotesPage() {
   // Filter quotes by status based on active tab
   const filteredQuotes = quoteSystem.quotes?.filter(quote => {
     if (activeTab === "pending") {
-      return ["pending"].includes(quote.status);
+      return ["pending"].includes(quote.status || "");
     } else if (activeTab === "assigned") {
-      return ["assigned"].includes(quote.status);
+      return ["assigned"].includes(quote.status || "");
     } else if (activeTab === "in_progress") {
-      return ["in_progress", "sent"].includes(quote.status);
+      return ["in_progress", "sent"].includes(quote.status || "");
     } else if (activeTab === "completed") {
-      return ["accepted", "rejected", "completed", "cancelled", "expired"].includes(quote.status);
+      return ["accepted", "rejected", "completed", "cancelled", "expired"].includes(quote.status || "");
     }
     return true;
   }) || [];
@@ -97,8 +103,8 @@ export default function AdminQuotesPage() {
     total: quoteSystem.quotes?.length || 0,
     pending: quoteSystem.quotes?.filter(q => q.status === "pending").length || 0,
     assigned: quoteSystem.quotes?.filter(q => q.status === "assigned").length || 0,
-    inProgress: quoteSystem.quotes?.filter(q => ["in_progress", "sent"].includes(q.status)).length || 0,
-    completed: quoteSystem.quotes?.filter(q => ["accepted", "completed"].includes(q.status)).length || 0
+    inProgress: quoteSystem.quotes?.filter(q => ["in_progress", "sent"].includes(q.status || "")).length || 0,
+    completed: quoteSystem.quotes?.filter(q => ["accepted", "completed"].includes(q.status || "")).length || 0
   };
 
   return (
@@ -117,9 +123,10 @@ export default function AdminQuotesPage() {
             <Button 
               variant="outline" 
               className="flex items-center gap-2"
-              onClick={() => quoteSystem.allQuotesQuery.refetch()}
+              onClick={() => quoteSystem.loadQuotes()}
+              disabled={quoteSystem.loading}
             >
-              <RefreshCw className={`h-4 w-4 ${quoteSystem.allQuotesQuery.isRefetching ? 'animate-spin' : ''}`} /> 
+              <RefreshCw className={`h-4 w-4 ${quoteSystem.loading ? 'animate-spin' : ''}`} /> 
               Refresh
             </Button>
             <Button variant="outline" className="flex items-center gap-2">
