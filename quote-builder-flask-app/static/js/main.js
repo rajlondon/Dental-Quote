@@ -245,16 +245,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     messageEl.className = 'promo-message success-message';
                 }
                 
-                // Enable promo code input and apply button
+                // Reset promo code input
                 const promoCodeInput = document.getElementById('promo-code');
-                const applyPromoBtn = document.querySelector('.apply-promo-btn');
-                
                 if (promoCodeInput) {
-                    promoCodeInput.disabled = false;
-                }
-                
-                if (applyPromoBtn) {
-                    applyPromoBtn.disabled = false;
+                    promoCodeInput.value = '';
+                    promoCodeInput.placeholder = 'Enter promo code';
                 }
                 
                 // Update totals
@@ -451,16 +446,12 @@ document.addEventListener('DOMContentLoaded', function() {
             removePromoBtn.style.display = 'inline-block';
         }
         
-        // Disable promo code input and apply button
+        // Don't disable the promo code input and apply button
+        // This allows users to apply a different promo code
         const promoCodeInput = document.getElementById('promo-code');
-        const applyPromoBtn = document.querySelector('.apply-promo-btn');
-        
         if (promoCodeInput) {
-            promoCodeInput.disabled = true;
-        }
-        
-        if (applyPromoBtn) {
-            applyPromoBtn.disabled = true;
+            promoCodeInput.value = ''; // Clear the input for a new code
+            promoCodeInput.placeholder = 'Enter a different code...';
         }
     }
     
