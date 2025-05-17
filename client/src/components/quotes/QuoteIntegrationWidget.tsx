@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, Download, Send, Check, X } from 'lucide-react';
+import TreatmentList from './TreatmentList';
+import { useQuoteSystem, QuoteData } from '@/hooks/use-quote-system';
 import { useToast } from '@/hooks/use-toast';
-import { formatCurrency } from '@/utils/format-utils';
-import TreatmentList, { Treatment } from './TreatmentList';
-import { useQuoteSystem } from '@/hooks/use-quote-system';
-import { CalendarIcon, CheckCircleIcon, DownloadIcon, MailIcon, SendIcon, XCircleIcon } from 'lucide-react';
+import { formatDate } from '@/utils/format-utils';
 
 export interface QuoteDetails {
   id: string;
   createdAt: string;
   patientName: string;
   patientEmail: string;
-  treatments: Treatment[];
+  treatments: {
+    id: string;
+    name: string;
+    description?: string;
+    price: number;
+    quantity: number;
+    category?: string;
+  }[];
   subtotal: number;
   discount: number;
   total: number;
@@ -31,262 +37,243 @@ interface QuoteIntegrationWidgetProps {
   mode?: 'view' | 'edit';
 }
 
-export const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
+const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
   quoteId,
   portalType,
   onQuoteUpdated,
   mode = 'view'
 }) => {
-  const { toast } = useToast();
-  const { 
-    getQuote, 
-    updateQuote, 
-    applyPromoCode, 
-    removePromoCode, 
+  const {
+    currentQuote,
+    loading,
+    error,
+    loadQuoteDetails,
+    applyPromoCode,
+    removePromoCode,
     updateTreatmentQuantity,
     removeTreatment,
     downloadQuotePdf,
-    sendQuoteByEmail,
-    requestAppointment
+    requestAppointment,
+    sendQuoteEmail
   } = useQuoteSystem(portalType);
+  
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [applyingPromo, setApplyingPromo] = useState<boolean>(false);
+  const [removingPromo, setRemovingPromo] = useState<boolean>(false);
+  const [processingAction, setProcessingAction] = useState<boolean>(false);
+  const { toast } = useToast();
 
-  const [quote, setQuote] = useState<QuoteDetails | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [applyingPromo, setApplyingPromo] = useState(false);
-  const [emailSending, setEmailSending] = useState(false);
-  const [pdfDownloading, setPdfDownloading] = useState(false);
-
-  // Fetch quote data on initial load
+  // Load quote details on component mount or quoteId change
   useEffect(() => {
     if (quoteId) {
-      loadQuote();
-    }
-  }, [quoteId]);
-
-  const loadQuote = async () => {
-    if (!quoteId) return;
-
-    setLoading(true);
-    
-    try {
-      const data = await getQuote(quoteId);
-      setQuote(data);
-      if (onQuoteUpdated) {
-        onQuoteUpdated(data);
-      }
-    } catch (error) {
-      console.error('Error fetching quote:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load quote details',
-        variant: 'destructive',
+      loadQuoteDetails(quoteId).catch((err) => {
+        console.error('Error loading quote details:', err);
       });
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [quoteId, loadQuoteDetails]);
 
+  // Handle applying promo code
   const handleApplyPromoCode = async () => {
-    if (!quoteId || !promoCodeInput.trim() || !quote) return;
-
-    setApplyingPromo(true);
+    if (!promoCode || !currentQuote) return;
     
+    setApplyingPromo(true);
     try {
-      const updatedQuote = await applyPromoCode(quoteId, promoCodeInput);
-      setQuote(updatedQuote);
-      setPromoCodeInput('');
-      
+      await applyPromoCode(currentQuote.id, promoCode);
+      setPromoCode('');
       toast({
-        title: 'Promo code applied',
-        description: `Discount applied to your quote: ${formatCurrency(updatedQuote.discount, updatedQuote.currency)}`,
-        variant: 'success',
+        title: 'Promo Code Applied',
+        description: 'The promo code has been successfully applied to your quote.',
+        variant: 'success'
       });
-      
-      if (onQuoteUpdated) {
-        onQuoteUpdated(updatedQuote);
+      if (onQuoteUpdated && currentQuote) {
+        onQuoteUpdated(currentQuote);
       }
-    } catch (error) {
-      console.error('Error applying promo code:', error);
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Invalid promo code or cannot be applied to this quote',
-        variant: 'destructive',
+        description: err.message || 'Failed to apply promo code',
+        variant: 'destructive'
       });
     } finally {
       setApplyingPromo(false);
     }
   };
 
+  // Handle removing promo code
   const handleRemovePromoCode = async () => {
-    if (!quoteId || !quote) return;
+    if (!currentQuote || !currentQuote.promoCode) return;
     
+    setRemovingPromo(true);
     try {
-      const updatedQuote = await removePromoCode(quoteId);
-      setQuote(updatedQuote);
-      
+      await removePromoCode(currentQuote.id);
       toast({
-        title: 'Promo code removed',
-        description: 'The promo code has been removed from your quote',
-        variant: 'success',
+        title: 'Promo Code Removed',
+        description: 'The promo code has been removed from your quote.',
+        variant: 'success'
       });
-      
-      if (onQuoteUpdated) {
-        onQuoteUpdated(updatedQuote);
+      if (onQuoteUpdated && currentQuote) {
+        onQuoteUpdated(currentQuote);
       }
-    } catch (error) {
-      console.error('Error removing promo code:', error);
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to remove promo code',
-        variant: 'destructive',
+        description: err.message || 'Failed to remove promo code',
+        variant: 'destructive'
+      });
+    } finally {
+      setRemovingPromo(false);
+    }
+  };
+
+  // Handle updating treatment quantity
+  const handleUpdateQuantity = async (treatmentId: string, quantity: number) => {
+    if (!currentQuote) return;
+    
+    try {
+      await updateTreatmentQuantity(currentQuote.id, treatmentId, quantity);
+      if (onQuoteUpdated && currentQuote) {
+        onQuoteUpdated(currentQuote);
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to update treatment quantity',
+        variant: 'destructive'
       });
     }
   };
 
-  const handleQuantityChange = async (treatmentId: string, newQuantity: number) => {
-    if (!quoteId || !quote) return;
-    
-    try {
-      const updatedQuote = await updateTreatmentQuantity(quoteId, treatmentId, newQuantity);
-      setQuote(updatedQuote);
-      
-      toast({
-        title: 'Quantity updated',
-        description: 'Treatment quantity has been updated',
-        variant: 'success',
-      });
-      
-      if (onQuoteUpdated) {
-        onQuoteUpdated(updatedQuote);
-      }
-    } catch (error) {
-      console.error('Error updating treatment quantity:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update treatment quantity',
-        variant: 'destructive',
-      });
-    }
-  };
-
+  // Handle removing a treatment
   const handleRemoveTreatment = async (treatmentId: string) => {
-    if (!quoteId || !quote) return;
+    if (!currentQuote) return;
     
     try {
-      const updatedQuote = await removeTreatment(quoteId, treatmentId);
-      setQuote(updatedQuote);
-      
+      await removeTreatment(currentQuote.id, treatmentId);
       toast({
-        title: 'Treatment removed',
-        description: 'Treatment has been removed from your quote',
-        variant: 'success',
+        title: 'Treatment Removed',
+        description: 'The treatment has been removed from your quote.',
+        variant: 'success'
       });
-      
-      if (onQuoteUpdated) {
-        onQuoteUpdated(updatedQuote);
+      if (onQuoteUpdated && currentQuote) {
+        onQuoteUpdated(currentQuote);
       }
-    } catch (error) {
-      console.error('Error removing treatment:', error);
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to remove treatment',
-        variant: 'destructive',
+        description: err.message || 'Failed to remove treatment',
+        variant: 'destructive'
       });
     }
   };
 
+  // Handle downloading PDF
   const handleDownloadPdf = async () => {
-    if (!quoteId || !quote) return;
+    if (!currentQuote) return;
     
-    setPdfDownloading(true);
-    
+    setProcessingAction(true);
     try {
-      await downloadQuotePdf(quoteId);
-      
+      await downloadQuotePdf(currentQuote.id);
       toast({
         title: 'PDF Downloaded',
-        description: 'Your quote PDF has been downloaded',
-        variant: 'success',
+        description: 'The quote PDF has been downloaded successfully.',
+        variant: 'success'
       });
-    } catch (error) {
-      console.error('Error downloading PDF:', error);
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to download quote PDF',
-        variant: 'destructive',
+        description: err.message || 'Failed to download PDF',
+        variant: 'destructive'
       });
     } finally {
-      setPdfDownloading(false);
+      setProcessingAction(false);
     }
   };
 
-  const handleSendEmail = async () => {
-    if (!quoteId || !quote) return;
-    
-    setEmailSending(true);
-    
-    try {
-      await sendQuoteByEmail(quoteId);
-      
-      toast({
-        title: 'Email Sent',
-        description: `Quote has been sent to ${quote.patientEmail}`,
-        variant: 'success',
-      });
-    } catch (error) {
-      console.error('Error sending email:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to send quote email',
-        variant: 'destructive',
-      });
-    } finally {
-      setEmailSending(false);
-    }
-  };
-
+  // Handle requesting an appointment
   const handleRequestAppointment = async () => {
-    if (!quoteId || !quote) return;
+    if (!currentQuote) return;
     
+    setProcessingAction(true);
     try {
-      await requestAppointment(quoteId);
-      
+      await requestAppointment(currentQuote.id);
       toast({
         title: 'Appointment Requested',
-        description: 'Your appointment request has been submitted',
-        variant: 'success',
+        description: 'Your appointment request has been sent successfully.',
+        variant: 'success'
       });
-    } catch (error) {
-      console.error('Error requesting appointment:', error);
+    } catch (err: any) {
       toast({
         title: 'Error',
-        description: 'Failed to request appointment',
-        variant: 'destructive',
+        description: err.message || 'Failed to request appointment',
+        variant: 'destructive'
       });
+    } finally {
+      setProcessingAction(false);
     }
   };
 
+  // Handle sending quote via email
+  const handleSendEmail = async () => {
+    if (!currentQuote) return;
+    
+    setProcessingAction(true);
+    try {
+      await sendQuoteEmail(currentQuote.id);
+      toast({
+        title: 'Email Sent',
+        description: 'The quote has been sent via email successfully.',
+        variant: 'success'
+      });
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message || 'Failed to send email',
+        variant: 'destructive'
+      });
+    } finally {
+      setProcessingAction(false);
+    }
+  };
+
+  // Loading state
   if (loading) {
     return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center p-8">
-            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="mt-4 text-muted-foreground">Loading quote details...</p>
+      <div className="flex justify-center my-12">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="mt-4 text-muted-foreground">Loading quote details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <Card className="text-center py-8">
+        <CardContent>
+          <div className="flex flex-col items-center">
+            <X className="h-12 w-12 text-destructive mb-4" />
+            <h3 className="text-xl font-semibold mb-2">Error Loading Quote</h3>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <Button onClick={() => quoteId && loadQuoteDetails(quoteId)}>
+              Try Again
+            </Button>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  if (!quote) {
+  // No quote or quote not found
+  if (!currentQuote) {
     return (
-      <Card className="w-full">
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center justify-center p-8">
-            <XCircleIcon className="h-12 w-12 text-destructive" />
-            <p className="mt-4 text-muted-foreground">Quote not found or not accessible</p>
+      <Card className="text-center py-8">
+        <CardContent>
+          <div className="flex flex-col items-center">
+            <p className="text-muted-foreground">
+              {quoteId ? 'Quote not found' : 'No quote selected'}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -295,171 +282,156 @@ export const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-start flex-wrap gap-3">
           <div>
-            <CardTitle>Dental Treatment Quote</CardTitle>
-            <CardDescription>Created on {new Date(quote.createdAt).toLocaleDateString()}</CardDescription>
+            <CardTitle className="text-xl mb-1">
+              Dental Treatment Quote #{currentQuote.id}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Created on {formatDate(currentQuote.createdAt)}
+            </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className={`px-3 py-1 text-xs font-medium rounded-full ${
-              quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
-              quote.status === 'rejected' ? 'bg-red-100 text-red-800' :
-              quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
-              quote.status === 'completed' ? 'bg-purple-100 text-purple-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+            <div className={`px-3 py-1 rounded-full text-sm font-medium
+              ${currentQuote.status === 'accepted' ? 'bg-green-100 text-green-800' : 
+                currentQuote.status === 'rejected' ? 'bg-red-100 text-red-800' : 
+                currentQuote.status === 'sent' ? 'bg-blue-100 text-blue-800' : 
+                currentQuote.status === 'completed' ? 'bg-purple-100 text-purple-800' : 
+                'bg-gray-100 text-gray-800'}`
+            }>
+              {currentQuote.status.charAt(0).toUpperCase() + currentQuote.status.slice(1)}
             </div>
           </div>
         </div>
       </CardHeader>
-      
       <CardContent>
-        <div className="mb-6">
-          <div className="mb-4">
-            <Label className="text-sm text-muted-foreground">Patient Information</Label>
-            <div className="mt-1">
-              <p className="font-medium">{quote.patientName}</p>
-              <p className="text-sm text-muted-foreground">{quote.patientEmail}</p>
+        <div className="space-y-6">
+          {/* Patient Information */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h3 className="text-sm font-medium mb-2">Patient Information</h3>
+              <div className="space-y-1">
+                <p><span className="font-medium">Name:</span> {currentQuote.patientName}</p>
+                <p><span className="font-medium">Email:</span> {currentQuote.patientEmail}</p>
+              </div>
             </div>
+            {currentQuote.clinicName && (
+              <div>
+                <h3 className="text-sm font-medium mb-2">Assigned Clinic</h3>
+                <p>{currentQuote.clinicName}</p>
+              </div>
+            )}
           </div>
-          
-          <div className="mb-6">
-            <Label className="text-sm text-muted-foreground">Treatment List</Label>
-            <div className="mt-2">
-              <TreatmentList 
-                treatments={quote.treatments} 
-                currency={quote.currency} 
-                onQuantityChange={mode === 'edit' ? handleQuantityChange : undefined}
-                onRemoveTreatment={mode === 'edit' ? handleRemoveTreatment : undefined}
-                readOnly={mode !== 'edit'}
-                portalType={portalType}
-              />
-            </div>
+
+          {/* Treatments */}
+          <div>
+            <h3 className="text-sm font-medium mb-3">Treatments</h3>
+            <TreatmentList 
+              treatments={currentQuote.treatments}
+              onUpdateQuantity={mode === 'edit' ? handleUpdateQuantity : undefined}
+              onRemoveTreatment={mode === 'edit' ? handleRemoveTreatment : undefined}
+              readOnly={mode !== 'edit'}
+              currency={currentQuote.currency}
+            />
           </div>
-          
-          {mode === 'edit' && (
-            <div className="mb-6">
-              <Label htmlFor="promo-code">Promo Code</Label>
-              <div className="flex mt-1.5 gap-2">
-                <Input
-                  id="promo-code"
-                  placeholder="Enter promo code"
-                  value={promoCodeInput}
-                  onChange={(e) => setPromoCodeInput(e.target.value)}
-                  disabled={applyingPromo || !!quote.promoCode}
-                  className="w-full"
-                />
-                {quote.promoCode ? (
+
+          {/* Promo Code */}
+          <div>
+            <h3 className="text-sm font-medium mb-3">Promo Code</h3>
+            {currentQuote.promoCode ? (
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="font-medium">Applied Code:</span> {currentQuote.promoCode}
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {currentQuote.discount > 0 && (
+                      <>Savings: ${currentQuote.discount.toFixed(2)}</>
+                    )}
+                  </div>
+                </div>
+                {mode === 'edit' && (
                   <Button 
                     variant="outline" 
                     onClick={handleRemovePromoCode}
-                    className="whitespace-nowrap"
+                    disabled={removingPromo}
                   >
-                    <XCircleIcon className="mr-2 h-4 w-4" />
-                    Remove Code
-                  </Button>
-                ) : (
-                  <Button 
-                    onClick={handleApplyPromoCode}
-                    disabled={!promoCodeInput.trim() || applyingPromo}
-                    className="whitespace-nowrap"
-                  >
-                    {applyingPromo ? (
-                      <>
-                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2"></div>
-                        Applying...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircleIcon className="mr-2 h-4 w-4" />
-                        Apply Code
-                      </>
-                    )}
+                    {removingPromo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}
+                    Remove
                   </Button>
                 )}
               </div>
-              {quote.promoCode && (
-                <p className="mt-2 text-sm text-primary">Promo code <strong>{quote.promoCode}</strong> applied</p>
-              )}
+            ) : mode === 'edit' ? (
+              <div className="flex items-center gap-2">
+                <div className="flex-grow">
+                  <Input
+                    placeholder="Enter promo code"
+                    value={promoCode}
+                    onChange={(e) => setPromoCode(e.target.value)}
+                  />
+                </div>
+                <Button 
+                  onClick={handleApplyPromoCode} 
+                  disabled={!promoCode || applyingPromo}
+                >
+                  {applyingPromo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
+                  Apply
+                </Button>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">No promo code applied</p>
+            )}
+          </div>
+
+          {/* Summary */}
+          <div className="border-t pt-4">
+            <div className="flex justify-between mb-2">
+              <span>Subtotal</span>
+              <span>${currentQuote.subtotal.toFixed(2)}</span>
             </div>
-          )}
-          
-          <div className="rounded-md bg-muted p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Subtotal</span>
-              <span>{formatCurrency(quote.subtotal, quote.currency)}</span>
+            <div className="flex justify-between mb-2">
+              <span>Discount</span>
+              <span>${currentQuote.discount.toFixed(2)}</span>
             </div>
-            
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Discount</span>
-              <span className="text-primary">
-                {quote.discount > 0 
-                  ? `- ${formatCurrency(quote.discount, quote.currency)}`
-                  : formatCurrency(0, quote.currency)
-                }
-              </span>
-            </div>
-            
-            <Separator className="my-2" />
-            
-            <div className="flex justify-between font-medium">
+            <div className="flex justify-between font-bold text-lg">
               <span>Total</span>
-              <span>{formatCurrency(quote.total, quote.currency)}</span>
+              <span>${currentQuote.total.toFixed(2)}</span>
             </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap gap-3 justify-end pt-4">
+            <Button
+              variant="outline"
+              onClick={handleDownloadPdf}
+              disabled={processingAction}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </Button>
+            
+            {portalType === 'patient' && (
+              <Button
+                onClick={handleRequestAppointment}
+                disabled={processingAction}
+                className="bg-primary hover:bg-primary/90"
+              >
+                Request Appointment
+              </Button>
+            )}
+            
+            {portalType === 'clinic' && (
+              <Button
+                onClick={handleSendEmail}
+                disabled={processingAction}
+                className="bg-primary hover:bg-primary/90"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                Send to Patient
+              </Button>
+            )}
           </div>
         </div>
       </CardContent>
-      
-      <CardFooter className="flex flex-wrap gap-2 justify-end">
-        {portalType === 'patient' && (
-          <Button
-            variant="outline"
-            onClick={handleRequestAppointment}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            Request Appointment
-          </Button>
-        )}
-        
-        <Button
-          variant="outline"
-          onClick={handleDownloadPdf}
-          disabled={pdfDownloading}
-        >
-          {pdfDownloading ? (
-            <>
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></div>
-              Downloading...
-            </>
-          ) : (
-            <>
-              <DownloadIcon className="mr-2 h-4 w-4" />
-              Download PDF
-            </>
-          )}
-        </Button>
-        
-        {(portalType === 'admin' || portalType === 'clinic') && (
-          <Button
-            onClick={handleSendEmail}
-            disabled={emailSending}
-          >
-            {emailSending ? (
-              <>
-                <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2"></div>
-                Sending...
-              </>
-            ) : (
-              <>
-                <MailIcon className="mr-2 h-4 w-4" />
-                Send to Patient
-              </>
-            )}
-          </Button>
-        )}
-      </CardFooter>
     </Card>
   );
 };

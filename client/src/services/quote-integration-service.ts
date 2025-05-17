@@ -1,282 +1,256 @@
 import axios from 'axios';
-import { QuoteData } from '@/hooks/use-quote-system';
-import { Treatment } from '@/components/quotes/TreatmentList';
+import { Treatment, QuoteData } from '@/hooks/use-quote-system';
 
 /**
- * Service class for interacting with the Flask quote integration API
- * This class provides methods for all quote-related operations
+ * Service for interacting with the Quote Integration API
  */
-export class QuoteIntegrationService {
-  private portalType: 'admin' | 'clinic' | 'patient';
-  private baseUrl: string;
-
-  constructor(portalType: 'admin' | 'clinic' | 'patient') {
-    this.portalType = portalType;
-    this.baseUrl = '/api/integration';
-  }
-
+class QuoteIntegrationService {
   /**
-   * Helper method to transform API response to QuoteData
+   * Get all quotes for the current user based on portal type
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @returns Array of quotes
    */
-  private transformQuoteData(apiQuote: any): QuoteData {
-    // Map treatments from API format to our format
-    const treatments: Treatment[] = (apiQuote.treatments || []).map((t: any) => ({
-      id: t.id || t.treatment_id,
-      name: t.name,
-      description: t.description,
-      category: t.category,
-      price: Number(t.price) || 0,
-      quantity: Number(t.quantity) || 1
-    }));
-
-    // Return transformed quote
-    return {
-      id: apiQuote.id || apiQuote.quote_id,
-      status: apiQuote.status || 'pending',
-      created_at: apiQuote.created_at || new Date().toISOString(),
-      patient_id: apiQuote.patient_id,
-      patient_name: apiQuote.patient_name || apiQuote.patient?.name,
-      patient_email: apiQuote.patient_email || apiQuote.patient?.email,
-      patient_phone: apiQuote.patient_phone || apiQuote.patient?.phone,
-      clinic_id: apiQuote.clinic_id,
-      clinic_name: apiQuote.clinic_name || apiQuote.clinic?.name,
-      promo_code: apiQuote.promo_code,
-      discount_percent: apiQuote.discount_percent ? Number(apiQuote.discount_percent) : 0,
-      subtotal: Number(apiQuote.subtotal) || 0,
-      discount_amount: Number(apiQuote.discount_amount) || 0,
-      total: Number(apiQuote.total) || 0,
-      treatments
-    };
-  }
-
-  /**
-   * Get all quotes for the current portal type
-   */
-  async getQuotes(): Promise<QuoteData[]> {
+  async getQuotes(portalType: 'patient' | 'admin' | 'clinic'): Promise<QuoteData[]> {
     try {
-      const response = await axios.get(`${this.baseUrl}/${this.portalType}/quotes`);
+      const response = await axios.get(`/api/integration/${portalType}/quotes`);
       
       if (response.data.success) {
-        return (response.data.quotes || []).map((q: any) => this.transformQuoteData(q));
+        return this.transformQuotes(response.data.quotes);
       } else {
-        throw new Error(response.data.message || 'Failed to fetch quotes');
+        throw new Error(response.data.message || 'Failed to load quotes');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error loading quotes: ${error.message}`);
     }
   }
 
   /**
-   * Get details for a specific quote
+   * Get a specific quote by ID
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @returns Quote data
    */
-  async getQuoteDetails(quoteId: string): Promise<QuoteData> {
+  async getQuoteById(portalType: 'patient' | 'admin' | 'clinic', quoteId: string): Promise<QuoteData> {
     try {
-      const response = await axios.get(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}`);
+      const response = await axios.get(`/api/integration/${portalType}/quotes/${quoteId}`);
       
       if (response.data.success) {
-        return this.transformQuoteData(response.data.quote);
+        return this.transformQuote(response.data.quote);
       } else {
-        throw new Error(response.data.message || 'Failed to fetch quote details');
+        throw new Error(response.data.message || 'Failed to load quote details');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error loading quote details: ${error.message}`);
     }
   }
 
   /**
    * Apply a promo code to a quote
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @param promoCode The promo code to apply
+   * @returns Updated quote data
    */
-  async applyPromoCode(quoteId: string, promoCode: string): Promise<QuoteData> {
+  async applyPromoCode(portalType: 'patient' | 'admin' | 'clinic', quoteId: string, promoCode: string): Promise<QuoteData> {
     try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/apply-promo`, {
-        promo_code: promoCode
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/apply-promo`, {
+        promoCode
       });
       
       if (response.data.success) {
-        return this.transformQuoteData(response.data.quote);
+        return this.transformQuote(response.data.quote);
       } else {
         throw new Error(response.data.message || 'Failed to apply promo code');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error applying promo code: ${error.message}`);
     }
   }
 
   /**
    * Remove a promo code from a quote
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @returns Updated quote data
    */
-  async removePromoCode(quoteId: string): Promise<QuoteData> {
+  async removePromoCode(portalType: 'patient' | 'admin' | 'clinic', quoteId: string): Promise<QuoteData> {
     try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/remove-promo`);
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/remove-promo`);
       
       if (response.data.success) {
-        return this.transformQuoteData(response.data.quote);
+        return this.transformQuote(response.data.quote);
       } else {
         throw new Error(response.data.message || 'Failed to remove promo code');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error removing promo code: ${error.message}`);
     }
   }
 
   /**
-   * Update treatment quantity in a quote
+   * Update the quantity of a treatment in a quote
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @param treatmentId The treatment ID
+   * @param quantity The new quantity
+   * @returns Updated quote data
    */
-  async updateTreatmentQuantity(quoteId: string, treatmentId: string, quantity: number): Promise<void> {
+  async updateTreatmentQuantity(
+    portalType: 'patient' | 'admin' | 'clinic',
+    quoteId: string,
+    treatmentId: string,
+    quantity: number
+  ): Promise<QuoteData> {
     try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/update-quantity`, {
-        treatment_id: treatmentId,
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/update-treatment`, {
+        treatmentId,
         quantity
       });
       
-      if (!response.data.success) {
+      if (response.data.success) {
+        return this.transformQuote(response.data.quote);
+      } else {
         throw new Error(response.data.message || 'Failed to update treatment quantity');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error updating treatment quantity: ${error.message}`);
     }
   }
 
   /**
    * Remove a treatment from a quote
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @param treatmentId The treatment ID
+   * @returns Updated quote data
    */
-  async removeTreatment(quoteId: string, treatmentId: string): Promise<void> {
+  async removeTreatment(
+    portalType: 'patient' | 'admin' | 'clinic',
+    quoteId: string,
+    treatmentId: string
+  ): Promise<QuoteData> {
     try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/remove-treatment`, {
-        treatment_id: treatmentId
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/remove-treatment`, {
+        treatmentId
       });
       
-      if (!response.data.success) {
+      if (response.data.success) {
+        return this.transformQuote(response.data.quote);
+      } else {
         throw new Error(response.data.message || 'Failed to remove treatment');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error removing treatment: ${error.message}`);
     }
   }
 
   /**
-   * Update quote status
+   * Download a quote as a PDF
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
    */
-  async updateQuoteStatus(quoteId: string, status: string): Promise<void> {
+  async downloadQuotePdf(portalType: 'patient' | 'admin' | 'clinic', quoteId: string): Promise<void> {
     try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/update-status`, {
-        status
-      });
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to update quote status');
-      }
+      // Using window.open to trigger a download
+      window.open(`/api/integration/${portalType}/quotes/${quoteId}/pdf`, '_blank');
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error downloading PDF: ${error.message}`);
     }
   }
 
   /**
-   * Download quote PDF
+   * Request an appointment for a quote
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @returns Success message
    */
-  async downloadQuotePdf(quoteId: string): Promise<void> {
+  async requestAppointment(portalType: 'patient' | 'admin' | 'clinic', quoteId: string): Promise<{ message: string }> {
     try {
-      // Use window.open for direct download
-      window.open(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/pdf`, '_blank');
-    } catch (error: any) {
-      throw new Error('Failed to download PDF: ' + error.message);
-    }
-  }
-
-  /**
-   * Send quote via email
-   */
-  async sendQuoteEmail(quoteId: string, email: string): Promise<void> {
-    try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/send-email`, {
-        email
-      });
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/request-appointment`);
       
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to send email');
-      }
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Request appointment for a quote
-   */
-  async requestAppointment(quoteId: string): Promise<void> {
-    try {
-      const response = await axios.post(`${this.baseUrl}/${this.portalType}/quotes/${quoteId}/request-appointment`);
-      
-      if (!response.data.success) {
+      if (response.data.success) {
+        return { message: response.data.message || 'Appointment request submitted successfully' };
+      } else {
         throw new Error(response.data.message || 'Failed to request appointment');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error requesting appointment: ${error.message}`);
     }
   }
 
   /**
-   * Admin-specific: Assign a quote to a clinic
+   * Send a quote via email
+   * @param portalType The portal type (patient, admin, or clinic)
+   * @param quoteId The quote ID
+   * @returns Success message
    */
-  async assignQuoteToClinic(quoteId: string, clinicId: string): Promise<void> {
+  async sendQuoteEmail(portalType: 'patient' | 'admin' | 'clinic', quoteId: string): Promise<{ message: string }> {
     try {
-      const response = await axios.post(`${this.baseUrl}/admin/quotes/${quoteId}/assign`, {
-        clinic_id: clinicId
+      const response = await axios.post(`/api/integration/${portalType}/quotes/${quoteId}/send-email`);
+      
+      if (response.data.success) {
+        return { message: response.data.message || 'Quote sent via email successfully' };
+      } else {
+        throw new Error(response.data.message || 'Failed to send quote via email');
+      }
+    } catch (error: any) {
+      throw new Error(`Error sending quote via email: ${error.message}`);
+    }
+  }
+
+  /**
+   * Assign a clinic to a quote (admin portal only)
+   * @param quoteId The quote ID
+   * @param clinicId The clinic ID
+   * @returns Updated quote data
+   */
+  async assignClinicToQuote(quoteId: string, clinicId: string): Promise<QuoteData> {
+    try {
+      const response = await axios.post(`/api/integration/admin/quotes/${quoteId}/assign-clinic`, {
+        clinicId
       });
       
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to assign quote to clinic');
+      if (response.data.success) {
+        return this.transformQuote(response.data.quote);
+      } else {
+        throw new Error(response.data.message || 'Failed to assign clinic to quote');
       }
     } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
+      throw new Error(`Error assigning clinic to quote: ${error.message}`);
     }
   }
 
   /**
-   * Admin-specific: Unassign a quote from a clinic
+   * Transform an API quote to our frontend format
+   * @param apiQuote The quote from the API
+   * @returns Formatted quote data
    */
-  async unassignQuoteFromClinic(quoteId: string): Promise<void> {
-    try {
-      const response = await axios.post(`${this.baseUrl}/admin/quotes/${quoteId}/unassign`);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to unassign quote from clinic');
-      }
-    } catch (error: any) {
-      if (error.response) {
-        throw new Error(error.response.data.message || 'Server error');
-      }
-      throw error;
-    }
+  private transformQuote(apiQuote: any): QuoteData {
+    return {
+      id: apiQuote.id,
+      createdAt: apiQuote.createdAt || apiQuote.created_at,
+      patientName: apiQuote.patientName,
+      patientEmail: apiQuote.patientEmail,
+      treatments: apiQuote.treatments,
+      subtotal: apiQuote.subtotal,
+      discount: apiQuote.discount,
+      total: apiQuote.total,
+      promoCode: apiQuote.promoCode,
+      currency: apiQuote.currency || 'USD',
+      status: apiQuote.status || 'draft',
+      clinicId: apiQuote.clinicId,
+      clinicName: apiQuote.clinicName
+    };
+  }
+
+  /**
+   * Transform an array of API quotes to our frontend format
+   * @param apiQuotes Array of quotes from the API
+   * @returns Array of formatted quote data
+   */
+  private transformQuotes(apiQuotes: any[]): QuoteData[] {
+    return apiQuotes.map(quote => this.transformQuote(quote));
   }
 }
+
+export default new QuoteIntegrationService();
