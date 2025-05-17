@@ -173,7 +173,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            applyPromoCode(promoCode);
+            // Check if we already have a promo code applied
+            const currentPromoDisplay = document.querySelector('.promo-code-display');
+            if (currentPromoDisplay && currentPromoDisplay.textContent && currentPromoDisplay.style.display !== 'none') {
+                // Remove existing promo code first, then apply the new one
+                removePromoCodeThenApplyNew(promoCode);
+            } else {
+                // No existing promo, apply directly
+                applyPromoCode(promoCode);
+            }
         });
     }
     
@@ -204,6 +212,31 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
             console.error('Error applying promo code:', error);
+            showPromoMessage('An error occurred. Please try again.', false);
+        });
+    }
+    
+    function removePromoCodeThenApplyNew(newPromoCode) {
+        // First remove the existing promo code
+        fetch('/api/quote/remove-promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Now that the old promo is removed, apply the new one
+                setTimeout(() => {
+                    applyPromoCode(newPromoCode);
+                }, 300); // Add a small delay to ensure removal is complete
+            } else {
+                showPromoMessage('Error removing previous promo code', false);
+            }
+        })
+        .catch(error => {
+            console.error('Error removing previous promo code:', error);
             showPromoMessage('An error occurred. Please try again.', false);
         });
     }
@@ -243,6 +276,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (messageEl) {
                     messageEl.textContent = 'Promo code removed successfully';
                     messageEl.className = 'promo-message success-message';
+                    
+                    // Auto-hide message after 3 seconds
+                    setTimeout(() => {
+                        messageEl.textContent = '';
+                        messageEl.className = 'promo-message';
+                    }, 3000);
                 }
                 
                 // Reset promo code input
@@ -252,11 +291,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     promoCodeInput.placeholder = 'Enter promo code';
                 }
                 
-                // Update totals
+                // Find and remove discount row in totals if it exists
+                const discountRow = document.querySelector('.total-row.discount');
+                if (discountRow) {
+                    discountRow.remove();
+                }
+                
+                // Update totals with zeroed discount
                 updateTotals(data.totals);
             }
         })
-        .catch(error => console.error('Error removing promo code:', error));
+        .catch(error => {
+            console.error('Error removing promo code:', error);
+            showPromoMessage('Error removing promo code. Please try again.', false);
+        });
     }
     
     // Helper functions for updating the UI without page refreshes
