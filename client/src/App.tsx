@@ -9,6 +9,7 @@ import { AuthProvider } from "@/hooks/use-auth";
 import { AdminAuthProvider } from "@/hooks/use-admin-auth.tsx";
 import { NotificationsProvider } from "@/hooks/use-notifications";
 import { BookingsProvider } from "@/hooks/use-bookings";
+import { ClinicProvider } from "@/hooks/use-clinic";
 import { initGA } from "./lib/analytics";
 import { useAnalytics } from "./hooks/use-analytics";
 import { NotFoundPage } from "@/pages/ErrorPage";
@@ -1416,6 +1417,7 @@ function App() {
         <ThemeProvider defaultTheme="light">
         <AuthProvider>
           <AdminAuthProvider>
+            <ClinicProvider>
             <NotificationsProvider>
               <BookingsProvider>
                 <UnifiedTreatmentPlansProvider>
