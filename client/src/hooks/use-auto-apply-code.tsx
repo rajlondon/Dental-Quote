@@ -1,37 +1,50 @@
-import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
+import { useEffect, useState } from 'react';
 
 /**
- * Custom hook to automatically detect and apply promo codes from URL parameters
- * @param onCodeDetected Optional callback that runs when a code is detected
- * @returns The detected promo code or null if none is present
+ * Hook to automatically detect and apply promo codes from URL parameters
+ * 
+ * @param callback Function to call when a promo code is found in the URL
+ * @returns The detected promo code (if any)
  */
-export function useAutoApplyCode(onCodeDetected?: (code: string) => void) {
-  const [location] = useLocation();
+export function useAutoApplyCode(callback?: (code: string) => void): string | null {
   const [promoCode, setPromoCode] = useState<string | null>(null);
-  const { toast } = useToast();
-
+  
   useEffect(() => {
-    // Parse URL parameters to find promo code
-    const params = new URLSearchParams(window.location.search);
-    const codeParam = params.get('code');
-    
-    if (codeParam && codeParam !== promoCode) {
-      setPromoCode(codeParam);
+    // Extract promo code from URL parameters
+    const extractPromoCode = () => {
+      const urlParams = new URLSearchParams(window.location.search);
       
-      // Notify via callback if provided
-      if (onCodeDetected) {
-        onCodeDetected(codeParam);
-      } else {
-        // Default notification if no callback is provided
-        toast({
-          title: 'Promo Code Detected',
-          description: `The promo code "${codeParam}" has been detected in the URL.`,
-        });
+      // Check for different possible parameter names
+      const code = urlParams.get('promo') || 
+                  urlParams.get('code') || 
+                  urlParams.get('coupon') ||
+                  urlParams.get('discount');
+      
+      if (code) {
+        setPromoCode(code);
+        
+        // Call the callback if provided
+        if (callback) {
+          callback(code);
+        }
       }
-    }
-  }, [location, promoCode, toast, onCodeDetected]);
-
+    };
+    
+    // Extract promo code when component mounts
+    extractPromoCode();
+    
+    // Also listen for popstate events (for browser back/forward buttons)
+    const handlePopState = () => {
+      extractPromoCode();
+    };
+    
+    window.addEventListener('popstate', handlePopState);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [callback]);
+  
   return promoCode;
 }
