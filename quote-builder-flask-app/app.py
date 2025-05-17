@@ -182,13 +182,24 @@ def remove_promo():
     """Remove the applied promo code"""
     init_session()
     
-    session["quote_data"]["promo_code"] = None
+    # Completely reset the promo code state
+    session["quote_data"]["promo_code"] = ""
     session["quote_data"]["discount"] = 0
+    
+    # Force session update
     session.modified = True
+    session.permanent = True
+    
+    # Calculate new totals with zeroed discount
+    new_totals = calculate_totals()
+    
+    # Log the removal for debugging
+    app.logger.info(f"Promo code removed. New state: {session['quote_data']}")
     
     return jsonify({
         "success": True,
-        "totals": calculate_totals()
+        "promo_removed": True,
+        "totals": new_totals
     })
 
 @app.route("/api/quote/set-step", methods=["POST"])
