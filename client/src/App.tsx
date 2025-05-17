@@ -1358,20 +1358,25 @@ function App() {
     console.log('APP ENTRY POINT EXECUTED AT:', new Date().toISOString());
   }, []);
   
-  // Initialize reload prevention system
+  // Initialize reload prevention system - using a safer approach
   useEffect(() => {
     // Check if we're in the browser and not in server-side rendering
     if (typeof window !== 'undefined') {
-      // Only initialize for clinic portal path
-      if (window.location.pathname === '/clinic-portal') {
-        console.log('Initializing reload prevention for clinic portal');
-        try {
+      // Use a try-catch block for safety, regardless of path
+      try {
+        // Only log the current path, don't try to modify window.location properties
+        console.log('APP ENTRY POINT EXECUTED AT:', new Date().toISOString());
+        
+        // Only initialize for clinic portal path
+        if (window.location.pathname.includes('/clinic-portal') || 
+            window.location.pathname.includes('/clinic/')) {
+          console.log('Initializing reload prevention for clinic portal');
           initPreventReloads();
-        } catch (error) {
-          console.error('Failed to initialize reload prevention:', error);
+        } else {
+          console.log('Skipping reload prevention for non-clinic portal path:', window.location.pathname);
         }
-      } else {
-        console.log('Skipping reload prevention for non-clinic portal path:', window.location.pathname);
+      } catch (error) {
+        console.error('Error during app initialization:', error);
       }
     }
   }, []);
