@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Build Your Dental Quote | MyDentalFly{% endblock %}
+{% block title %}Quote Builder | MyDentalFly{% endblock %}
 
 {% block content %}
 <div class="container py-5">
@@ -9,7 +9,7 @@
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-body p-4">
-                    <h2 class="card-title fw-bold mb-4">Build Your Dental Quote</h2>
+                    <h2 class="card-title fw-bold mb-4">Build Your Dental Treatment Quote</h2>
                     
                     <!-- Progress Indicator -->
                     <div class="progress mb-5" style="height: 8px;">
@@ -42,291 +42,258 @@
                         </div>
                     </div>
                     
-                    <!-- Treatment Categories Tabs -->
+                    {% if selected_offer %}
+                    <div class="alert alert-primary mb-4" role="alert">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-tag fa-lg"></i>
+                            </div>
+                            <div class="ms-3">
+                                <h5 class="alert-heading mb-1">{{ selected_offer.title }}</h5>
+                                <p class="mb-0">{{ selected_offer.description }}</p>
+                                <div class="mt-2">
+                                    <span class="badge bg-primary">{{ selected_offer.promo_code }}</span>
+                                    <span class="badge bg-secondary">
+                                        {% if selected_offer.discount_type == 'percentage' %}
+                                        {{ selected_offer.discount_value }}% Off
+                                        {% elif selected_offer.discount_type == 'fixed_amount' %}
+                                        €{{ selected_offer.discount_value }} Off
+                                        {% else %}
+                                        Special Offer
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Treatment Navigation Tabs -->
                     <ul class="nav nav-tabs mb-4" id="treatmentTabs" role="tablist">
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="popular-tab" data-bs-toggle="tab" data-bs-target="#popular" type="button" role="tab" aria-controls="popular" aria-selected="true">Popular</button>
+                            <button class="nav-link active" id="popular-tab" data-bs-toggle="tab" data-bs-target="#popular" type="button" role="tab" aria-controls="popular" aria-selected="true">
+                                <i class="fas fa-star me-2 text-primary"></i> Popular
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="implants-tab" data-bs-toggle="tab" data-bs-target="#implants" type="button" role="tab" aria-controls="implants" aria-selected="false">Implants</button>
+                            <button class="nav-link" id="implants-tab" data-bs-toggle="tab" data-bs-target="#implants" type="button" role="tab" aria-controls="implants" aria-selected="false">
+                                <i class="fas fa-tooth me-2 text-primary"></i> Implants
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="cosmetic-tab" data-bs-toggle="tab" data-bs-target="#cosmetic" type="button" role="tab" aria-controls="cosmetic" aria-selected="false">Cosmetic</button>
+                            <button class="nav-link" id="cosmetic-tab" data-bs-toggle="tab" data-bs-target="#cosmetic" type="button" role="tab" aria-controls="cosmetic" aria-selected="false">
+                                <i class="fas fa-smile me-2 text-primary"></i> Cosmetic
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="restorative-tab" data-bs-toggle="tab" data-bs-target="#restorative" type="button" role="tab" aria-controls="restorative" aria-selected="false">Restorative</button>
+                            <button class="nav-link" id="restorative-tab" data-bs-toggle="tab" data-bs-target="#restorative" type="button" role="tab" aria-controls="restorative" aria-selected="false">
+                                <i class="fas fa-tools me-2 text-primary"></i> Restorative
+                            </button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="preventive-tab" data-bs-toggle="tab" data-bs-target="#preventive" type="button" role="tab" aria-controls="preventive" aria-selected="false">Preventive</button>
+                            <button class="nav-link" id="preventive-tab" data-bs-toggle="tab" data-bs-target="#preventive" type="button" role="tab" aria-controls="preventive" aria-selected="false">
+                                <i class="fas fa-shield-alt me-2 text-primary"></i> Preventive
+                            </button>
                         </li>
                     </ul>
                     
-                    <!-- Treatment Cards -->
+                    <!-- Treatment Content -->
                     <div class="tab-content" id="treatmentTabsContent">
                         <!-- Popular Treatments Tab -->
                         <div class="tab-pane fade show active" id="popular" role="tabpanel" aria-labelledby="popular-tab">
-                            <div class="row g-4">
-                                {% for treatment in treatments.popular %}
-                                    <div class="col-md-6">
-                                        <div class="card h-100 treatment-card" data-treatment-id="{{ treatment.id }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title fw-bold mb-0">{{ treatment.name }}</h5>
-                                                    <span class="badge bg-primary">€{{ "%.2f"|format(treatment.price) }}</span>
-                                                </div>
-                                                <p class="card-text small mb-3">{{ treatment.description }}</p>
-                                                <div class="d-flex justify-content-between align-items-end">
-                                                    <div class="treatment-quantity-controls {% if treatment.id in selected_treatment_ids %}d-flex{% else %}d-none{% endif %} align-items-center">
-                                                        <button class="btn btn-sm btn-outline-primary dec-quantity" data-treatment-id="{{ treatment.id }}">-</button>
-                                                        <span class="mx-3 fw-medium treatment-quantity" data-treatment-id="{{ treatment.id }}">
-                                                            {% for selected in selected_treatments %}
-                                                                {% if selected.id == treatment.id %}
-                                                                    {{ selected.quantity }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </span>
-                                                        <button class="btn btn-sm btn-outline-primary inc-quantity" data-treatment-id="{{ treatment.id }}">+</button>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-primary add-treatment {% if treatment.id in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-plus me-1"></i> Add
+                            <div class="row">
+                                {% for treatment in popular_treatments %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border {% if treatment.id in selected_treatment_ids %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold">{{ treatment.name }}</h5>
+                                            <p class="card-text text-muted">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">€{{ "%.2f"|format(treatment.price) }}</span>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm remove-treatment" data-treatment-id="{{ treatment.id }}" {% if treatment.id not in selected_treatment_ids %}disabled{% endif %}>
+                                                        <i class="fas fa-minus"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger remove-treatment {% if treatment.id not in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    <span class="btn btn-outline-secondary btn-sm treatment-quantity" data-treatment-id="{{ treatment.id }}">
+                                                        {{ treatment_quantities.get(treatment.id, 0) }}
+                                                    </span>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                         
-                        <!-- Implants Tab -->
+                        <!-- Implant Treatments Tab -->
                         <div class="tab-pane fade" id="implants" role="tabpanel" aria-labelledby="implants-tab">
-                            <div class="row g-4">
-                                {% for treatment in treatments.implants %}
-                                    <div class="col-md-6">
-                                        <div class="card h-100 treatment-card" data-treatment-id="{{ treatment.id }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title fw-bold mb-0">{{ treatment.name }}</h5>
-                                                    <span class="badge bg-primary">€{{ "%.2f"|format(treatment.price) }}</span>
-                                                </div>
-                                                <p class="card-text small mb-3">{{ treatment.description }}</p>
-                                                <div class="d-flex justify-content-between align-items-end">
-                                                    <div class="treatment-quantity-controls {% if treatment.id in selected_treatment_ids %}d-flex{% else %}d-none{% endif %} align-items-center">
-                                                        <button class="btn btn-sm btn-outline-primary dec-quantity" data-treatment-id="{{ treatment.id }}">-</button>
-                                                        <span class="mx-3 fw-medium treatment-quantity" data-treatment-id="{{ treatment.id }}">
-                                                            {% for selected in selected_treatments %}
-                                                                {% if selected.id == treatment.id %}
-                                                                    {{ selected.quantity }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </span>
-                                                        <button class="btn btn-sm btn-outline-primary inc-quantity" data-treatment-id="{{ treatment.id }}">+</button>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-primary add-treatment {% if treatment.id in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-plus me-1"></i> Add
+                            <div class="row">
+                                {% for treatment in implant_treatments %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border {% if treatment.id in selected_treatment_ids %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold">{{ treatment.name }}</h5>
+                                            <p class="card-text text-muted">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">€{{ "%.2f"|format(treatment.price) }}</span>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm remove-treatment" data-treatment-id="{{ treatment.id }}" {% if treatment.id not in selected_treatment_ids %}disabled{% endif %}>
+                                                        <i class="fas fa-minus"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger remove-treatment {% if treatment.id not in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    <span class="btn btn-outline-secondary btn-sm treatment-quantity" data-treatment-id="{{ treatment.id }}">
+                                                        {{ treatment_quantities.get(treatment.id, 0) }}
+                                                    </span>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                         
-                        <!-- Cosmetic Tab -->
+                        <!-- Cosmetic Treatments Tab -->
                         <div class="tab-pane fade" id="cosmetic" role="tabpanel" aria-labelledby="cosmetic-tab">
-                            <div class="row g-4">
-                                {% for treatment in treatments.cosmetic %}
-                                    <div class="col-md-6">
-                                        <div class="card h-100 treatment-card" data-treatment-id="{{ treatment.id }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title fw-bold mb-0">{{ treatment.name }}</h5>
-                                                    <span class="badge bg-primary">€{{ "%.2f"|format(treatment.price) }}</span>
-                                                </div>
-                                                <p class="card-text small mb-3">{{ treatment.description }}</p>
-                                                <div class="d-flex justify-content-between align-items-end">
-                                                    <div class="treatment-quantity-controls {% if treatment.id in selected_treatment_ids %}d-flex{% else %}d-none{% endif %} align-items-center">
-                                                        <button class="btn btn-sm btn-outline-primary dec-quantity" data-treatment-id="{{ treatment.id }}">-</button>
-                                                        <span class="mx-3 fw-medium treatment-quantity" data-treatment-id="{{ treatment.id }}">
-                                                            {% for selected in selected_treatments %}
-                                                                {% if selected.id == treatment.id %}
-                                                                    {{ selected.quantity }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </span>
-                                                        <button class="btn btn-sm btn-outline-primary inc-quantity" data-treatment-id="{{ treatment.id }}">+</button>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-primary add-treatment {% if treatment.id in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-plus me-1"></i> Add
+                            <div class="row">
+                                {% for treatment in cosmetic_treatments %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border {% if treatment.id in selected_treatment_ids %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold">{{ treatment.name }}</h5>
+                                            <p class="card-text text-muted">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">€{{ "%.2f"|format(treatment.price) }}</span>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm remove-treatment" data-treatment-id="{{ treatment.id }}" {% if treatment.id not in selected_treatment_ids %}disabled{% endif %}>
+                                                        <i class="fas fa-minus"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger remove-treatment {% if treatment.id not in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    <span class="btn btn-outline-secondary btn-sm treatment-quantity" data-treatment-id="{{ treatment.id }}">
+                                                        {{ treatment_quantities.get(treatment.id, 0) }}
+                                                    </span>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                         
-                        <!-- Restorative Tab -->
+                        <!-- Restorative Treatments Tab -->
                         <div class="tab-pane fade" id="restorative" role="tabpanel" aria-labelledby="restorative-tab">
-                            <div class="row g-4">
-                                {% for treatment in treatments.restorative %}
-                                    <div class="col-md-6">
-                                        <div class="card h-100 treatment-card" data-treatment-id="{{ treatment.id }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title fw-bold mb-0">{{ treatment.name }}</h5>
-                                                    <span class="badge bg-primary">€{{ "%.2f"|format(treatment.price) }}</span>
-                                                </div>
-                                                <p class="card-text small mb-3">{{ treatment.description }}</p>
-                                                <div class="d-flex justify-content-between align-items-end">
-                                                    <div class="treatment-quantity-controls {% if treatment.id in selected_treatment_ids %}d-flex{% else %}d-none{% endif %} align-items-center">
-                                                        <button class="btn btn-sm btn-outline-primary dec-quantity" data-treatment-id="{{ treatment.id }}">-</button>
-                                                        <span class="mx-3 fw-medium treatment-quantity" data-treatment-id="{{ treatment.id }}">
-                                                            {% for selected in selected_treatments %}
-                                                                {% if selected.id == treatment.id %}
-                                                                    {{ selected.quantity }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </span>
-                                                        <button class="btn btn-sm btn-outline-primary inc-quantity" data-treatment-id="{{ treatment.id }}">+</button>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-primary add-treatment {% if treatment.id in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-plus me-1"></i> Add
+                            <div class="row">
+                                {% for treatment in restorative_treatments %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border {% if treatment.id in selected_treatment_ids %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold">{{ treatment.name }}</h5>
+                                            <p class="card-text text-muted">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">€{{ "%.2f"|format(treatment.price) }}</span>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm remove-treatment" data-treatment-id="{{ treatment.id }}" {% if treatment.id not in selected_treatment_ids %}disabled{% endif %}>
+                                                        <i class="fas fa-minus"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger remove-treatment {% if treatment.id not in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    <span class="btn btn-outline-secondary btn-sm treatment-quantity" data-treatment-id="{{ treatment.id }}">
+                                                        {{ treatment_quantities.get(treatment.id, 0) }}
+                                                    </span>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                         
-                        <!-- Preventive Tab -->
+                        <!-- Preventive Treatments Tab -->
                         <div class="tab-pane fade" id="preventive" role="tabpanel" aria-labelledby="preventive-tab">
-                            <div class="row g-4">
-                                {% for treatment in treatments.preventive %}
-                                    <div class="col-md-6">
-                                        <div class="card h-100 treatment-card" data-treatment-id="{{ treatment.id }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                                    <h5 class="card-title fw-bold mb-0">{{ treatment.name }}</h5>
-                                                    <span class="badge bg-primary">€{{ "%.2f"|format(treatment.price) }}</span>
-                                                </div>
-                                                <p class="card-text small mb-3">{{ treatment.description }}</p>
-                                                <div class="d-flex justify-content-between align-items-end">
-                                                    <div class="treatment-quantity-controls {% if treatment.id in selected_treatment_ids %}d-flex{% else %}d-none{% endif %} align-items-center">
-                                                        <button class="btn btn-sm btn-outline-primary dec-quantity" data-treatment-id="{{ treatment.id }}">-</button>
-                                                        <span class="mx-3 fw-medium treatment-quantity" data-treatment-id="{{ treatment.id }}">
-                                                            {% for selected in selected_treatments %}
-                                                                {% if selected.id == treatment.id %}
-                                                                    {{ selected.quantity }}
-                                                                {% endif %}
-                                                            {% endfor %}
-                                                        </span>
-                                                        <button class="btn btn-sm btn-outline-primary inc-quantity" data-treatment-id="{{ treatment.id }}">+</button>
-                                                    </div>
-                                                    <button class="btn btn-sm btn-primary add-treatment {% if treatment.id in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-plus me-1"></i> Add
+                            <div class="row">
+                                {% for treatment in preventive_treatments %}
+                                <div class="col-md-6 mb-4">
+                                    <div class="card h-100 border {% if treatment.id in selected_treatment_ids %}border-primary{% endif %}">
+                                        <div class="card-body">
+                                            <h5 class="card-title fw-bold">{{ treatment.name }}</h5>
+                                            <p class="card-text text-muted">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="fw-bold">€{{ "%.2f"|format(treatment.price) }}</span>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-primary btn-sm remove-treatment" data-treatment-id="{{ treatment.id }}" {% if treatment.id not in selected_treatment_ids %}disabled{% endif %}>
+                                                        <i class="fas fa-minus"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger remove-treatment {% if treatment.id not in selected_treatment_ids %}d-none{% endif %}" data-treatment-id="{{ treatment.id }}">
-                                                        <i class="fas fa-trash me-1"></i> Remove
+                                                    <span class="btn btn-outline-secondary btn-sm treatment-quantity" data-treatment-id="{{ treatment.id }}">
+                                                        {{ treatment_quantities.get(treatment.id, 0) }}
+                                                    </span>
+                                                    <button type="button" class="btn btn-outline-primary btn-sm add-treatment" data-treatment-id="{{ treatment.id }}">
+                                                        <i class="fas fa-plus"></i>
                                                     </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
                                 {% endfor %}
                             </div>
                         </div>
                     </div>
                     
-                    <div class="mt-5 text-end">
-                        {% if selected_treatments and selected_treatments|length > 0 %}
-                            <a href="{{ url_for('patient_info') }}" class="btn btn-primary">
-                                Continue <i class="fas fa-arrow-right ms-2"></i>
-                            </a>
-                        {% else %}
-                            <button type="button" class="btn btn-primary" disabled>
-                                Continue <i class="fas fa-arrow-right ms-2"></i>
-                            </button>
-                            <div class="small text-muted mt-2">Please select at least one treatment to continue</div>
-                        {% endif %}
+                    <!-- Continue Button -->
+                    <div class="d-flex justify-content-between mt-5">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back to Home
+                        </a>
+                        <a href="{{ url_for('patient_info') }}" class="btn btn-primary" id="continueBtn" {% if not selected_treatments %}disabled{% endif %}>
+                            Continue <i class="fas fa-arrow-right ms-2"></i>
+                        </a>
                     </div>
                 </div>
             </div>
             
-            <!-- Treatment Information Panel -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light py-3">
-                    <h5 class="card-title mb-0">Why Choose MyDentalFly?</h5>
+            <!-- Key Benefits Section -->
+            <div class="row">
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-coins fa-2x"></i>
+                            </div>
+                            <h5 class="fw-bold mb-2">Save Up to 70%</h5>
+                            <p class="text-muted mb-0">Compared to dental treatment prices in the UK, USA, and Europe</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="d-flex mb-4">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="fas fa-certificate fa-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="fw-bold mb-1">Certified Clinics</h6>
-                                    <p class="small text-muted mb-0">All partner clinics are fully accredited and meet international standards.</p>
-                                </div>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-certificate fa-2x"></i>
                             </div>
+                            <h5 class="fw-bold mb-2">Certified Clinics</h5>
+                            <p class="text-muted mb-0">All our partner clinics are internationally accredited and certified</p>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex mb-4">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="fas fa-euro-sign fa-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="fw-bold mb-1">Substantial Savings</h6>
-                                    <p class="small text-muted mb-0">Save 50-70% compared to Western European prices.</p>
-                                </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-body text-center p-4">
+                            <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 60px; height: 60px;">
+                                <i class="fas fa-concierge-bell fa-2x"></i>
                             </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex mb-4">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="fas fa-calendar-check fa-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="fw-bold mb-1">Expedited Treatment</h6>
-                                    <p class="small text-muted mb-0">No waiting lists, get treated within days of arrival.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex mb-4">
-                                <div class="flex-shrink-0">
-                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                        <i class="fas fa-hands-helping fa-lg"></i>
-                                    </div>
-                                </div>
-                                <div class="ms-3">
-                                    <h6 class="fw-bold mb-1">Complete Support</h6>
-                                    <p class="small text-muted mb-0">Full assistance with travel, accommodation, and treatment.</p>
-                                </div>
-                            </div>
+                            <h5 class="fw-bold mb-2">Full Support</h5>
+                            <p class="text-muted mb-0">Personalized assistance with travel, accommodation, and treatment</p>
                         </div>
                     </div>
                 </div>
@@ -351,204 +318,224 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // References to buttons
-        const addButtons = document.querySelectorAll('.add-treatment');
-        const removeButtons = document.querySelectorAll('.remove-treatment');
-        const incButtons = document.querySelectorAll('.inc-quantity');
-        const decButtons = document.querySelectorAll('.dec-quantity');
+        const addTreatmentButtons = document.querySelectorAll('.add-treatment');
+        const removeTreatmentButtons = document.querySelectorAll('.remove-treatment');
+        const continueBtn = document.getElementById('continueBtn');
         
-        // Add treatment event
-        addButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.dataset.treatmentId;
-                addTreatment(treatmentId);
-            });
-        });
-        
-        // Remove treatment event
-        removeButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.dataset.treatmentId;
-                removeTreatment(treatmentId);
-            });
-        });
-        
-        // Increase quantity event
-        incButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.dataset.treatmentId;
-                changeQuantity(treatmentId, 1);
-            });
-        });
-        
-        // Decrease quantity event
-        decButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const treatmentId = this.dataset.treatmentId;
-                changeQuantity(treatmentId, -1);
-            });
-        });
-        
-        // Add treatment function
-        function addTreatment(treatmentId) {
-            // Show loading state
-            const addBtn = document.querySelector(`.add-treatment[data-treatment-id="${treatmentId}"]`);
-            const removeBtn = document.querySelector(`.remove-treatment[data-treatment-id="${treatmentId}"]`);
-            const quantityControls = document.querySelector(`.treatment-quantity-controls[data-treatment-id="${treatmentId}"]`);
+        // Function to update the Continue button state
+        function updateContinueButton() {
+            const quantities = document.querySelectorAll('.treatment-quantity');
+            let hasSelectedTreatments = false;
             
-            addBtn.disabled = true;
-            addBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Adding...';
+            quantities.forEach(function(qty) {
+                if (parseInt(qty.textContent.trim()) > 0) {
+                    hasSelectedTreatments = true;
+                }
+            });
+            
+            if (hasSelectedTreatments) {
+                continueBtn.removeAttribute('disabled');
+            } else {
+                continueBtn.setAttribute('disabled', 'disabled');
+            }
+        }
+        
+        // Function to handle adding a treatment
+        function handleAddTreatment(e) {
+            const treatmentId = e.currentTarget.dataset.treatmentId;
+            const quantityElement = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
+            const removeButton = document.querySelector(`.remove-treatment[data-treatment-id="${treatmentId}"]`);
+            const treatmentCard = e.currentTarget.closest('.card');
             
             // Send AJAX request to add treatment
-            fetch('/api/add-treatment', {
+            fetch('/api/add_treatment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ treatment_id: treatmentId }),
+                body: JSON.stringify({ treatment_id: treatmentId })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update UI
-                    addBtn.classList.add('d-none');
-                    removeBtn.classList.remove('d-none');
+                    // Update quantity in UI
+                    quantityElement.textContent = data.quantity;
                     
-                    // Show quantity controls
-                    quantityControls.classList.remove('d-none');
-                    quantityControls.classList.add('d-flex');
+                    // Enable remove button
+                    removeButton.removeAttribute('disabled');
                     
-                    // Set initial quantity
-                    const quantitySpan = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-                    quantitySpan.textContent = '1';
+                    // Add highlight to card
+                    treatmentCard.classList.add('border-primary');
                     
-                    // Update quote summary - reload the page
-                    window.location.reload();
-                } else {
-                    addBtn.disabled = false;
-                    addBtn.innerHTML = '<i class="fas fa-plus me-1"></i> Add';
-                    alert('Error adding treatment: ' + (data.message || 'Unknown error'));
+                    // Update prices in quote summary (without page refresh)
+                    document.querySelector('.quote-summary').outerHTML = data.quote_summary_html;
+                    
+                    // Re-attach event listeners to new elements
+                    attachPromoCodeEventListeners();
+                    
+                    // Update continue button state
+                    updateContinueButton();
                 }
             })
             .catch(error => {
                 console.error('Error adding treatment:', error);
-                addBtn.disabled = false;
-                addBtn.innerHTML = '<i class="fas fa-plus me-1"></i> Add';
-                alert('Error adding treatment. Please try again.');
             });
         }
         
-        // Remove treatment function
-        function removeTreatment(treatmentId) {
-            // Show loading state
-            const removeBtn = document.querySelector(`.remove-treatment[data-treatment-id="${treatmentId}"]`);
-            const addBtn = document.querySelector(`.add-treatment[data-treatment-id="${treatmentId}"]`);
-            const quantityControls = document.querySelector(`.treatment-quantity-controls[data-treatment-id="${treatmentId}"]`);
-            
-            removeBtn.disabled = true;
-            removeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Removing...';
+        // Function to handle removing a treatment
+        function handleRemoveTreatment(e) {
+            const treatmentId = e.currentTarget.dataset.treatmentId;
+            const quantityElement = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
+            const treatmentCard = e.currentTarget.closest('.card');
             
             // Send AJAX request to remove treatment
-            fetch('/api/remove-treatment', {
+            fetch('/api/remove_treatment', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify({ treatment_id: treatmentId }),
+                body: JSON.stringify({ treatment_id: treatmentId })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Update UI
-                    removeBtn.classList.add('d-none');
-                    addBtn.classList.remove('d-none');
+                    // Update quantity in UI
+                    quantityElement.textContent = data.quantity;
                     
-                    // Hide quantity controls
-                    quantityControls.classList.add('d-none');
-                    quantityControls.classList.remove('d-flex');
+                    // Disable remove button if quantity is 0
+                    if (data.quantity === 0) {
+                        e.currentTarget.setAttribute('disabled', 'disabled');
+                        treatmentCard.classList.remove('border-primary');
+                    }
                     
-                    // Update quote summary - reload the page
-                    window.location.reload();
-                } else {
-                    removeBtn.disabled = false;
-                    removeBtn.innerHTML = '<i class="fas fa-trash me-1"></i> Remove';
-                    alert('Error removing treatment: ' + (data.message || 'Unknown error'));
+                    // Update prices in quote summary (without page refresh)
+                    document.querySelector('.quote-summary').outerHTML = data.quote_summary_html;
+                    
+                    // Re-attach event listeners to new elements
+                    attachPromoCodeEventListeners();
+                    
+                    // Update continue button state
+                    updateContinueButton();
                 }
             })
             .catch(error => {
                 console.error('Error removing treatment:', error);
-                removeBtn.disabled = false;
-                removeBtn.innerHTML = '<i class="fas fa-trash me-1"></i> Remove';
-                alert('Error removing treatment. Please try again.');
             });
         }
         
-        // Change quantity function
-        function changeQuantity(treatmentId, change) {
-            const quantitySpan = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-            const currentQuantity = parseInt(quantitySpan.textContent);
-            const newQuantity = currentQuantity + change;
+        // Attach event listeners to promo code elements
+        function attachPromoCodeEventListeners() {
+            const applyPromoBtn = document.getElementById('applyPromoBtn');
+            const removePromoLink = document.getElementById('removePromoLink');
             
-            // Prevent negative quantity
-            if (newQuantity < 1) {
-                return;
+            if (applyPromoBtn) {
+                applyPromoBtn.addEventListener('click', function() {
+                    const promoInput = document.getElementById('promoCode');
+                    const promoCode = promoInput.value.trim();
+                    if (promoCode) {
+                        // Send AJAX request to apply promo code
+                        fetch('/api/apply_promo_code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({ promo_code: promoCode })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            const promoError = document.getElementById('promoError');
+                            const promoSuccess = document.getElementById('promoSuccess');
+                            
+                            if (data.success) {
+                                promoError.classList.add('d-none');
+                                promoSuccess.classList.remove('d-none');
+                                
+                                // Update quote summary with new HTML
+                                document.querySelector('.quote-summary').outerHTML = data.quote_summary_html;
+                                
+                                // Re-attach event listeners
+                                attachPromoCodeEventListeners();
+                            } else {
+                                promoSuccess.classList.add('d-none');
+                                promoError.classList.remove('d-none');
+                                promoError.textContent = data.message || 'Invalid promo code or cannot be applied to current items.';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error applying promo code:', error);
+                        });
+                    }
+                });
             }
             
-            // Show loading state
-            const incBtn = document.querySelector(`.inc-quantity[data-treatment-id="${treatmentId}"]`);
-            const decBtn = document.querySelector(`.dec-quantity[data-treatment-id="${treatmentId}"]`);
-            
-            incBtn.disabled = true;
-            decBtn.disabled = true;
-            
-            // Send AJAX request to update quantity
-            fetch('/api/update-quantity', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    treatment_id: treatmentId,
-                    quantity: newQuantity
-                }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Update UI with new quantity
-                    quantitySpan.textContent = newQuantity;
+            if (removePromoLink) {
+                removePromoLink.addEventListener('click', function(e) {
+                    e.preventDefault();
                     
-                    // Update quote summary - reload the page
-                    window.location.reload();
-                } else {
-                    incBtn.disabled = false;
-                    decBtn.disabled = false;
-                    alert('Error updating quantity: ' + (data.message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                console.error('Error updating quantity:', error);
-                incBtn.disabled = false;
-                decBtn.disabled = false;
-                alert('Error updating quantity. Please try again.');
-            });
+                    // Send AJAX request to remove promo code
+                    fetch('/api/remove_promo_code', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update quote summary with new HTML
+                            document.querySelector('.quote-summary').outerHTML = data.quote_summary_html;
+                            
+                            // Re-attach event listeners
+                            attachPromoCodeEventListeners();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error removing promo code:', error);
+                    });
+                });
+            }
         }
+        
+        // Add event listeners to treatment buttons
+        addTreatmentButtons.forEach(function(button) {
+            button.addEventListener('click', handleAddTreatment);
+        });
+        
+        removeTreatmentButtons.forEach(function(button) {
+            button.addEventListener('click', handleRemoveTreatment);
+        });
+        
+        // Initialize promo code event listeners
+        attachPromoCodeEventListeners();
+        
+        // Initialize continue button state
+        updateContinueButton();
     });
 </script>
 {% endblock %}
 
 {% block extra_css %}
-.treatment-card {
-    transition: all 0.3s ease;
-    border: 1px solid #e2e8f0;
+.nav-tabs .nav-link {
+    color: var(--bs-dark);
+    border-bottom-width: 2px;
 }
-.treatment-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    border-color: #dbeafe;
+.nav-tabs .nav-link.active {
+    color: var(--bs-primary);
+    border-bottom-color: var(--bs-primary);
+    font-weight: 500;
 }
 .sticky-top {
     position: -webkit-sticky;
     position: sticky;
+}
+.bg-opacity-10 {
+    --bs-bg-opacity: 0.1;
+}
+.card.border-primary {
+    border-width: 2px !important;
 }
 {% endblock %}

@@ -1,128 +1,257 @@
-<div class="p-3">
-    {% if selected_treatments and selected_treatments|length > 0 %}
-        <div class="mb-3">
-            <div class="fw-bold mb-2">Selected Treatments</div>
-            <ul class="list-group list-group-flush">
-                {% for treatment in selected_treatments %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2">
-                        <div>
-                            <div class="fw-medium">{{ treatment.name }}</div>
-                            <small class="text-muted">Qty: {{ treatment.quantity }}</small>
-                        </div>
-                        <span class="fw-medium">€{{ "%.2f"|format(treatment.price * treatment.quantity) }}</span>
-                    </li>
-                {% endfor %}
-            </ul>
+<div class="quote-summary">
+    <div class="p-4">
+        <h6 class="fw-bold mb-3">Selected Treatments</h6>
+        
+        {% if selected_treatments %}
+        <div class="mb-4">
+            {% for treatment in selected_treatments %}
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <div class="fw-medium">{{ treatment.name }}</div>
+                    <div class="small text-muted">
+                        {% if treatment.quantity > 1 %}
+                        {{ treatment.quantity }} × €{{ "%.2f"|format(treatment.price) }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="text-end fw-bold">€{{ "%.2f"|format(treatment.price * treatment.quantity) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="alert alert-info mb-4" role="alert">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <div class="ms-2 small">
+                    No treatments selected yet. Browse our treatments and add them to your quote.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <hr class="my-3">
+        
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Subtotal:</span>
+            <span>€{{ "%.2f"|format(subtotal) }}</span>
         </div>
         
-        <div class="border-top pt-3">
-            <div class="d-flex justify-content-between mb-2">
-                <span class="text-muted">Subtotal</span>
-                <span class="fw-medium">€{{ "%.2f"|format(subtotal) }}</span>
+        {% if promo_code %}
+        <div class="d-flex justify-content-between mb-2">
+            <div>
+                <span class="text-muted">Discount:</span>
+                <span class="badge bg-primary ms-1">{{ promo_code }}</span>
             </div>
-            
-            {% if promo_code %}
-                <div class="d-flex justify-content-between mb-2">
-                    <div>
-                        <span class="text-muted">Discount</span>
-                        <span class="badge bg-primary ms-2">{{ promo_code }}</span>
-                    </div>
-                    <span class="fw-medium text-danger">-€{{ "%.2f"|format(discount) }}</span>
-                </div>
-            {% endif %}
-            
-            <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
-                <span>Total</span>
-                <span>€{{ "%.2f"|format(total) }}</span>
-            </div>
-            
-            {% if promo_code %}
-                <div class="alert alert-success alert-dismissible fade show mb-0" role="alert">
-                    <small><i class="fas fa-check-circle me-1"></i> Promo code <strong>{{ promo_code }}</strong> applied successfully!</small>
-                    <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% else %}
-                <div class="input-group mb-3">
-                    <input type="text" id="promo-code-input" class="form-control" placeholder="Promo code">
-                    <button class="btn btn-primary" type="button" id="apply-promo-code-btn">Apply</button>
-                </div>
-                <div id="promo-code-message" class="small"></div>
-            {% endif %}
+            <span class="text-danger">-€{{ "%.2f"|format(discount) }}</span>
         </div>
-    {% else %}
-        <div class="text-center py-4">
-            <div class="mb-3 text-muted">
-                <i class="fas fa-clipboard-list fa-3x"></i>
-            </div>
-            <h6 class="fw-bold">No treatments selected</h6>
-            <p class="small text-muted mb-3">Add treatments to view your quote summary</p>
-            <a href="{{ url_for('quote_builder') }}" class="btn btn-sm btn-primary">Select Treatments</a>
+        {% endif %}
+        
+        <div class="d-flex justify-content-between fw-bold mb-3">
+            <span>Total:</span>
+            <span>€{{ "%.2f"|format(total) }}</span>
         </div>
+        
+        {% if promo_code %}
+        <div class="alert alert-success mb-0" role="alert">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="ms-2 small">
+                    <strong>{{ promo_code }}</strong> applied successfully!
+                    <a href="#" id="removePromoLink" class="text-decoration-none">Remove</a>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="mb-0">
+            <div class="mb-2">
+                <label for="promoCode" class="form-label small fw-medium">Promo Code</label>
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control" id="promoCode" placeholder="Enter promo code">
+                    <button class="btn btn-primary" type="button" id="applyPromoBtn">Apply</button>
+                </div>
+                <div id="promoError" class="invalid-feedback d-none">
+                    Invalid promo code or cannot be applied to current items.
+                </div>
+                <div id="promoSuccess" class="valid-feedback d-none">
+                    Promo code applied successfully!
+                </div>
+            </div>
+            <div class="small text-muted">
+                <a href="{{ url_for('special_offers') }}" class="text-decoration-none">
+                    <i class="fas fa-tag me-1"></i> View special offers
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Appointment Info (Only shown on review and patient info pages) -->
+    {% if show_appointment_info %}
+    <hr class="my-0">
+    <div class="p-4">
+        <h6 class="fw-bold mb-3">Treatment Location</h6>
+        <div class="d-flex mb-3">
+            <div class="flex-shrink-0">
+                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+            </div>
+            <div class="ms-3">
+                <div class="fw-medium">Istanbul Dental Center</div>
+                <div class="small text-muted">Maltepe, Istanbul, Turkey</div>
+            </div>
+        </div>
+        
+        <div class="alert alert-light mb-0">
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-primary"></i>
+                </div>
+                <div class="ms-2 small">
+                    After confirming your quote, our team will contact you to schedule your appointment at your preferred dates.
+                </div>
+            </div>
+        </div>
+    </div>
     {% endif %}
+    
+    <!-- Additional Services -->
+    <hr class="my-0">
+    <div class="p-4">
+        <h6 class="fw-bold mb-3">Additional Services</h6>
+        
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="accommodationCheck" {% if patient_info and patient_info.accommodation_needed %}checked{% endif %}>
+            <label class="form-check-label" for="accommodationCheck">
+                <span class="fw-medium">Hotel Accommodation</span>
+                <div class="small text-muted">Special rates at partner hotels</div>
+            </label>
+        </div>
+        
+        <div class="form-check mb-2">
+            <input class="form-check-input" type="checkbox" id="transferCheck" {% if patient_info and patient_info.airport_transfer_needed %}checked{% endif %}>
+            <label class="form-check-label" for="transferCheck">
+                <span class="fw-medium">Airport Transfer</span>
+                <div class="small text-muted">Pickup and drop-off service</div>
+            </label>
+        </div>
+        
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="translatorCheck">
+            <label class="form-check-label" for="translatorCheck">
+                <span class="fw-medium">Translator Services</span>
+                <div class="small text-muted">Professional translators available</div>
+            </label>
+        </div>
+    </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const applyPromoBtn = document.getElementById('apply-promo-code-btn');
-        const promoInput = document.getElementById('promo-code-input');
-        const messageDiv = document.getElementById('promo-code-message');
+        // Promo code application
+        const promoInput = document.getElementById('promoCode');
+        const applyPromoBtn = document.getElementById('applyPromoBtn');
+        const promoError = document.getElementById('promoError');
+        const promoSuccess = document.getElementById('promoSuccess');
+        const removePromoLink = document.getElementById('removePromoLink');
         
-        if (applyPromoBtn && promoInput) {
+        if (applyPromoBtn) {
             applyPromoBtn.addEventListener('click', function() {
-                applyPromoCode();
-            });
-            
-            promoInput.addEventListener('keydown', function(event) {
-                if (event.key === 'Enter') {
-                    event.preventDefault();
-                    applyPromoCode();
+                const promoCode = promoInput.value.trim();
+                if (promoCode) {
+                    // Send AJAX request to apply promo code
+                    fetch('/api/apply_promo_code', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({ promo_code: promoCode })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            promoError.classList.add('d-none');
+                            promoSuccess.classList.remove('d-none');
+                            // Refresh the page to show updated quote
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 1000);
+                        } else {
+                            promoSuccess.classList.add('d-none');
+                            promoError.classList.remove('d-none');
+                            promoError.textContent = data.message || 'Invalid promo code or cannot be applied to current items.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error applying promo code:', error);
+                        promoSuccess.classList.add('d-none');
+                        promoError.classList.remove('d-none');
+                        promoError.textContent = 'An error occurred. Please try again.';
+                    });
                 }
             });
         }
         
-        function applyPromoCode() {
-            const promoCode = promoInput.value.trim();
-            if (!promoCode) {
-                showMessage('Please enter a promo code.', 'text-danger');
-                return;
-            }
-            
-            // Show loading state
-            applyPromoBtn.disabled = true;
-            applyPromoBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Applying...';
-            
-            // Send AJAX request to apply promo code
-            fetch('/api/apply-promo-code', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ promo_code: promoCode }),
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Reload the page to show updated prices
-                    window.location.reload();
-                } else {
-                    showMessage(data.message || 'Invalid promo code. Please try again.', 'text-danger');
-                    applyPromoBtn.disabled = false;
-                    applyPromoBtn.innerHTML = 'Apply';
-                }
-            })
-            .catch(error => {
-                console.error('Error applying promo code:', error);
-                showMessage('An error occurred. Please try again.', 'text-danger');
-                applyPromoBtn.disabled = false;
-                applyPromoBtn.innerHTML = 'Apply';
+        // Remove promo code
+        if (removePromoLink) {
+            removePromoLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Send AJAX request to remove promo code
+                fetch('/api/remove_promo_code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Refresh the page to show updated quote
+                        window.location.reload();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error removing promo code:', error);
+                });
             });
         }
         
-        function showMessage(message, className) {
-            if (messageDiv) {
-                messageDiv.textContent = message;
-                messageDiv.className = 'small ' + className;
-            }
+        // Additional services checkboxes
+        const accommodationCheck = document.getElementById('accommodationCheck');
+        const transferCheck = document.getElementById('transferCheck');
+        const translatorCheck = document.getElementById('translatorCheck');
+        
+        // Save additional services selection to session if on patient info page
+        if (window.location.pathname.includes('patient_info')) {
+            const saveServicesToSession = function() {
+                fetch('/api/update_services', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        accommodation_needed: accommodationCheck.checked,
+                        airport_transfer_needed: transferCheck.checked,
+                        translator_needed: translatorCheck.checked
+                    })
+                })
+                .then(response => response.json())
+                .catch(error => {
+                    console.error('Error updating services:', error);
+                });
+            };
+            
+            if (accommodationCheck) accommodationCheck.addEventListener('change', saveServicesToSession);
+            if (transferCheck) transferCheck.addEventListener('change', saveServicesToSession);
+            if (translatorCheck) translatorCheck.addEventListener('change', saveServicesToSession);
         }
     });
 </script>
