@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Treatment Quote Builder - MyDentalFly</title>
+    <!-- Tailwind CSS from CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+        /* Custom styles for the steps indicator */
+        .step-connector {
+            width: 100%;
+            height: 2px;
+            background-color: #e5e7eb;
+            margin-top: 14px;
+        }
+        .step-connector.active {
+            background-color: #2563eb;
+        }
+        /* Added styles to prevent jump on form transitions */
+        .quote-form-container {
+            min-height: 500px;
+        }
+        /* Fade transition for sections */
+        .section-fade {
+            transition: opacity 0.3s ease-in-out;
+        }
+        /* Prevent flickering with hidden attribute */
+        [hidden] {
+            display: none !important;
+        }
+        /* Promo code animation */
+        @keyframes fadeInPromo {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .promo-animation {
+            animation: fadeInPromo 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <header class="bg-white shadow-sm">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="flex h-16 justify-between items-center">
+                <div class="flex">
+                    <a href="/" class="flex items-center">
+                        <img class="h-8 w-auto" src="{{ url_for('static', filename='images/logo.png') }}" alt="MyDentalFly">
+                        <span class="ml-2 text-xl font-semibold text-gray-900">MyDentalFly</span>
+                    </a>
+                </div>
+                <div>
+                    <a href="#" class="text-sm font-medium text-blue-600 hover:text-blue-500">
+                        Need Help? Contact Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <h1 class="text-2xl font-bold text-center text-gray-900 mb-8">Your Dental Treatment Quote</h1>
+            
+            <!-- Steps indicator -->
+            <div class="max-w-4xl mx-auto mb-10">
+                <div class="flex justify-between">
+                    <div class="text-center">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto {{ 'bg-blue-600 text-white' if quote_data.step == 'treatments' else 'bg-gray-200 text-gray-600' }}">
+                            1
+                        </div>
+                        <div class="text-xs mt-1 {{ 'text-blue-600 font-medium' if quote_data.step == 'treatments' else 'text-gray-500' }}">
+                            Treatments
+                        </div>
+                    </div>
+                    <div class="step-connector {{ 'active' if quote_data.step in ['promo', 'patient_info', 'review'] }}"></div>
+                    <div class="text-center">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto {{ 'bg-blue-600 text-white' if quote_data.step == 'promo' else 'bg-gray-200 text-gray-600' }}">
+                            2
+                        </div>
+                        <div class="text-xs mt-1 {{ 'text-blue-600 font-medium' if quote_data.step == 'promo' else 'text-gray-500' }}">
+                            Promo Code
+                        </div>
+                    </div>
+                    <div class="step-connector {{ 'active' if quote_data.step in ['patient_info', 'review'] }}"></div>
+                    <div class="text-center">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto {{ 'bg-blue-600 text-white' if quote_data.step == 'patient_info' else 'bg-gray-200 text-gray-600' }}">
+                            3
+                        </div>
+                        <div class="text-xs mt-1 {{ 'text-blue-600 font-medium' if quote_data.step == 'patient_info' else 'text-gray-500' }}">
+                            Your Info
+                        </div>
+                    </div>
+                    <div class="step-connector {{ 'active' if quote_data.step == 'review' }}"></div>
+                    <div class="text-center">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center mx-auto {{ 'bg-blue-600 text-white' if quote_data.step == 'review' else 'bg-gray-200 text-gray-600' }}">
+                            4
+                        </div>
+                        <div class="text-xs mt-1 {{ 'text-blue-600 font-medium' if quote_data.step == 'review' else 'text-gray-500' }}">
+                            Review
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form sections -->
+            <div class="quote-form-container">
+                <!-- Treatment selection section -->
+                <section id="treatments-section" class="section-fade" {{ 'hidden' if quote_data.step != 'treatments' else '' }}>
+                    <h2 class="text-xl font-semibold mb-4">Select Your Dental Treatments</h2>
+                    <p class="text-gray-600 mb-6">Choose the treatments you're interested in to get an accurate quote.</p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                        <!-- Treatment cards - these would be dynamically generated in a real app -->
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Dental Implant</h3>
+                            <p class="text-gray-600 text-sm mb-2">Standard titanium implant with abutment</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$950</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="implant_standard">
+                                    <input type="hidden" name="treatment_name" value="Dental Implant">
+                                    <input type="hidden" name="treatment_price" value="950">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Porcelain Veneer</h3>
+                            <p class="text-gray-600 text-sm mb-2">High-quality ceramic veneer, per tooth</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$450</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="veneer_porcelain">
+                                    <input type="hidden" name="treatment_name" value="Porcelain Veneer">
+                                    <input type="hidden" name="treatment_price" value="450">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Zirconia Crown</h3>
+                            <p class="text-gray-600 text-sm mb-2">Premium zirconia crown, per tooth</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$380</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="crown_zirconia">
+                                    <input type="hidden" name="treatment_name" value="Zirconia Crown">
+                                    <input type="hidden" name="treatment_price" value="380">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Teeth Whitening</h3>
+                            <p class="text-gray-600 text-sm mb-2">Professional in-clinic whitening session</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$250</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="whitening_pro">
+                                    <input type="hidden" name="treatment_name" value="Teeth Whitening">
+                                    <input type="hidden" name="treatment_price" value="250">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Root Canal Treatment</h3>
+                            <p class="text-gray-600 text-sm mb-2">Complete endodontic therapy</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$320</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="root_canal_standard">
+                                    <input type="hidden" name="treatment_name" value="Root Canal Treatment">
+                                    <input type="hidden" name="treatment_price" value="320">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <h3 class="font-medium text-lg">Consultation</h3>
+                            <p class="text-gray-600 text-sm mb-2">Comprehensive dental examination</p>
+                            <div class="flex justify-between items-center mt-4">
+                                <span class="font-semibold text-blue-600">$75</span>
+                                <form action="{{ url_for('page_routes.add_treatment') }}" method="POST" class="inline">
+                                    <input type="hidden" name="treatment_id" value="consult_standard">
+                                    <input type="hidden" name="treatment_name" value="Consultation">
+                                    <input type="hidden" name="treatment_price" value="75">
+                                    <button type="submit" class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">
+                                        Add
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected treatments -->
+                    <div class="border rounded-lg p-4 mb-6">
+                        <h3 class="font-medium mb-3">Selected Treatments</h3>
+                        
+                        {% if quote_data.treatments %}
+                            <ul class="divide-y">
+                                {% for treatment in quote_data.treatments %}
+                                    <li class="py-3 flex justify-between items-center">
+                                        <div>
+                                            <span class="font-medium">{{ treatment.name }}</span>
+                                            <span class="ml-2 text-gray-600">${{ treatment.price }}</span>
+                                        </div>
+                                        <form action="{{ url_for('page_routes.remove_treatment', treatment_id=treatment.id) }}" method="POST">
+                                            <button type="submit" class="text-red-600 hover:text-red-800">
+                                                <i class="fas fa-times"></i> Remove
+                                            </button>
+                                        </form>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                            
+                            <div class="mt-4 pt-3 border-t flex justify-between">
+                                <span class="font-medium">Subtotal:</span>
+                                <span class="font-semibold">${{ quote_data.treatments|sum(attribute='price') }}</span>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-500 italic">No treatments selected yet. Please select at least one treatment to continue.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <a href="/" class="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            Cancel
+                        </a>
+                        {% if quote_data.treatments %}
+                            <form action="{{ url_for('page_routes.set_step', step='promo') }}" method="POST">
+                                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    Continue <i class="fas fa-arrow-right ml-1"></i>
+                                </button>
+                            </form>
+                        {% else %}
+                            <button disabled class="px-5 py-2 bg-gray-300 text-gray-500 rounded-md cursor-not-allowed">
+                                Continue <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </section>
+
+                <!-- Promo code section -->
+                <section id="promo-section" class="section-fade" {{ 'hidden' if quote_data.step != 'promo' else '' }}>
+                    <h2 class="text-xl font-semibold mb-4">Apply a Promo Code</h2>
+                    <p class="text-gray-600 mb-6">If you have a promotional code, enter it below to receive a discount.</p>
+                    
+                    <div class="max-w-xl mx-auto">
+                        <!-- Current promo display -->
+                        {% if quote_data.promo_code %}
+                            <div class="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 promo-animation">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <span class="font-medium text-green-700">Code applied: {{ quote_data.promo_code }}</span>
+                                        <span class="ml-2 bg-green-100 text-green-800 text-xs py-1 px-2 rounded">
+                                            {{ quote_data.discount }}% off
+                                        </span>
+                                    </div>
+                                    <form action="{{ url_for('promo_routes.remove_promo_code') }}" method="POST" id="remove-promo-form">
+                                        <button type="submit" class="text-sm text-red-600 hover:text-red-800">
+                                            <i class="fas fa-times"></i> Remove
+                                        </button>
+                                    </form>
+                                </div>
+                                <p class="text-sm text-green-700 mt-1">
+                                    Your discount has been applied to your quote!
+                                </p>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Promo code input -->
+                        <div class="mb-8 rounded-lg border p-6">
+                            <form action="{{ url_for('promo_routes.apply_promo_code') }}" method="POST" id="promo-form" class="flex space-x-2">
+                                <input type="text" name="promo_code" id="promo_code" 
+                                       class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                       placeholder="Enter promo code (e.g., SUMMER15)">
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    Apply
+                                </button>
+                            </form>
+                            <div id="promo-error" class="text-red-600 text-sm mt-2 hidden"></div>
+                            <div id="promo-success" class="text-green-600 text-sm mt-2 hidden"></div>
+                            <div class="mt-4 text-sm text-gray-600">
+                                <p><strong>Available promo codes for testing:</strong></p>
+                                <ul class="list-disc pl-5 mt-1 space-y-1">
+                                    <li>SUMMER15 - 15% off your quote</li>
+                                    <li>DENTAL25 - 25% off your quote</li>
+                                    <li>NEWPATIENT - 20% off for new patients</li>
+                                    <li>FREECONSULT - Free consultation</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Quote summary -->
+                        <div class="rounded-lg border p-6 bg-gray-50">
+                            <h3 class="font-medium mb-3">Quote Summary</h3>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between">
+                                    <span>Subtotal:</span>
+                                    <span>${{ quote_data.treatments|sum(attribute='price') }}</span>
+                                </div>
+                                
+                                {% if quote_data.discount > 0 %}
+                                    <div class="flex justify-between text-green-600">
+                                        <span>Discount ({{ quote_data.discount }}%):</span>
+                                        <span>-${{ (quote_data.treatments|sum(attribute='price') * quote_data.discount / 100)|round|int }}</span>
+                                    </div>
+                                    <div class="flex justify-between font-semibold pt-2 border-t">
+                                        <span>Total:</span>
+                                        <span>${{ (quote_data.treatments|sum(attribute='price') * (1 - quote_data.discount / 100))|round|int }}</span>
+                                    </div>
+                                {% else %}
+                                    <div class="flex justify-between font-semibold pt-2 border-t">
+                                        <span>Total:</span>
+                                        <span>${{ quote_data.treatments|sum(attribute='price') }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between mt-8">
+                        <form action="{{ url_for('page_routes.set_step', step='treatments') }}" method="POST">
+                            <button type="submit" class="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                <i class="fas fa-arrow-left mr-1"></i> Back
+                            </button>
+                        </form>
+                        <form action="{{ url_for('page_routes.set_step', step='patient_info') }}" method="POST">
+                            <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                Continue <i class="fas fa-arrow-right ml-1"></i>
+                            </button>
+                        </form>
+                    </div>
+                </section>
+
+                <!-- Patient information section -->
+                <section id="patient-info-section" class="section-fade" {{ 'hidden' if quote_data.step != 'patient_info' else '' }}>
+                    <h2 class="text-xl font-semibold mb-4">Your Information</h2>
+                    <p class="text-gray-600 mb-6">Please provide your details so we can prepare your personalized quote.</p>
+                    
+                    <div class="max-w-2xl mx-auto">
+                        <form action="{{ url_for('page_routes.save_patient_info') }}" method="POST" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label for="patient-name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                                    <input type="text" id="patient-name" name="patient-name" required
+                                           value="{{ quote_data.patient_info.name }}"
+                                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label for="patient-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                                    <input type="email" id="patient-email" name="patient-email" required
+                                           value="{{ quote_data.patient_info.email }}"
+                                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label for="patient-phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                                    <input type="tel" id="patient-phone" name="patient-phone"
+                                           value="{{ quote_data.patient_info.phone }}"
+                                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                                
+                                <div>
+                                    <label for="preferred-date" class="block text-sm font-medium text-gray-700 mb-1">Preferred Treatment Date</label>
+                                    <input type="date" id="preferred-date" name="preferred-date"
+                                           value="{{ quote_data.patient_info.preferred_date }}"
+                                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label for="patient-notes" class="block text-sm font-medium text-gray-700 mb-1">Additional Notes</label>
+                                <textarea id="patient-notes" name="patient-notes" rows="4"
+                                          class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ quote_data.patient_info.notes }}</textarea>
+                            </div>
+                            
+                            <div class="flex justify-between mt-8">
+                                <button type="button" id="back-to-promo" class="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-arrow-left mr-1"></i> Back
+                                </button>
+                                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    Review Quote <i class="fas fa-arrow-right ml-1"></i>
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <form action="{{ url_for('page_routes.set_step', step='promo') }}" method="POST" id="back-form" class="hidden"></form>
+                    </div>
+                </section>
+
+                <!-- Review quote section -->
+                <section id="review-section" class="section-fade" {{ 'hidden' if quote_data.step != 'review' else '' }}>
+                    <div class="max-w-4xl mx-auto">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-semibold">Your Dental Treatment Quote</h2>
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">Quote ID: #{{ "%04d" | format(quote_data.created_at|int % 10000) }}</span>
+                        </div>
+                        
+                        <div class="mb-8 border rounded-lg overflow-hidden">
+                            <div class="bg-gray-50 p-4 border-b">
+                                <h3 class="font-medium">Treatment Details</h3>
+                            </div>
+                            <div class="p-4">
+                                <table class="w-full">
+                                    <thead class="text-left text-gray-600 text-sm">
+                                        <tr class="border-b">
+                                            <th class="pb-3">Treatment</th>
+                                            <th class="pb-3 text-right">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y">
+                                        {% for treatment in quote_data.treatments %}
+                                            <tr>
+                                                <td class="py-3">{{ treatment.name }}</td>
+                                                <td class="py-3 text-right">${{ treatment.price }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                        <tr class="font-medium">
+                                            <td class="py-3">Subtotal</td>
+                                            <td class="py-3 text-right">${{ quote_data.treatments|sum(attribute='price') }}</td>
+                                        </tr>
+                                        {% if quote_data.discount > 0 %}
+                                            <tr class="text-green-600">
+                                                <td class="py-3">
+                                                    Discount 
+                                                    {% if quote_data.promo_code %}
+                                                        ({{ quote_data.promo_code }}: {{ quote_data.discount }}%)
+                                                    {% else %}
+                                                        ({{ quote_data.discount }}%)
+                                                    {% endif %}
+                                                </td>
+                                                <td class="py-3 text-right">-${{ (quote_data.treatments|sum(attribute='price') * quote_data.discount / 100)|round|int }}</td>
+                                            </tr>
+                                        {% endif %}
+                                        <tr class="font-bold text-lg">
+                                            <td class="py-3">Total</td>
+                                            <td class="py-3 text-right">
+                                                {% if quote_data.discount > 0 %}
+                                                    ${{ (quote_data.treatments|sum(attribute='price') * (1 - quote_data.discount / 100))|round|int }}
+                                                {% else %}
+                                                    ${{ quote_data.treatments|sum(attribute='price') }}
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="bg-gray-50 p-4 border-b">
+                                    <h3 class="font-medium">Patient Information</h3>
+                                </div>
+                                <div class="p-4">
+                                    <dl class="divide-y">
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Name:</dt>
+                                            <dd class="col-span-2 font-medium">{{ quote_data.patient_info.name }}</dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Email:</dt>
+                                            <dd class="col-span-2">{{ quote_data.patient_info.email }}</dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Phone:</dt>
+                                            <dd class="col-span-2">{{ quote_data.patient_info.phone }}</dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Preferred Date:</dt>
+                                            <dd class="col-span-2">{{ quote_data.patient_info.preferred_date }}</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
+                            
+                            <div class="border rounded-lg overflow-hidden">
+                                <div class="bg-gray-50 p-4 border-b">
+                                    <h3 class="font-medium">Quote Information</h3>
+                                </div>
+                                <div class="p-4">
+                                    <dl class="divide-y">
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Quote Date:</dt>
+                                            <dd class="col-span-2">{{ quote_data.created_at|timestamp_to_date }}</dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Quote Status:</dt>
+                                            <dd class="col-span-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    Ready
+                                                </span>
+                                            </dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Valid Until:</dt>
+                                            <dd class="col-span-2">30 days from today</dd>
+                                        </div>
+                                        <div class="py-2 grid grid-cols-3 gap-4">
+                                            <dt class="text-gray-600">Currency:</dt>
+                                            <dd class="col-span-2">USD</dd>
+                                        </div>
+                                    </dl>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+                            <h3 class="text-lg font-medium text-blue-800 mb-2">Next Steps</h3>
+                            <p class="text-blue-700 mb-4">
+                                Thank you for building your dental treatment quote with MyDentalFly. Here's what happens next:
+                            </p>
+                            <ol class="list-decimal pl-5 space-y-2 text-blue-700">
+                                <li>Our dental specialists will review your quote and prepare a detailed treatment plan.</li>
+                                <li>We'll contact you via email within 24 hours to discuss your quote and answer any questions.</li>
+                                <li>If you decide to proceed, we'll help you schedule your treatment and arrange your visit to Turkey.</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="flex justify-between items-center mb-8">
+                            <form action="{{ url_for('page_routes.set_step', step='patient_info') }}" method="POST">
+                                <button type="submit" class="px-5 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                                    <i class="fas fa-arrow-left mr-1"></i> Back
+                                </button>
+                            </form>
+                            
+                            <div class="flex space-x-4">
+                                <a href="#" id="download-pdf" class="px-5 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50">
+                                    <i class="fas fa-download mr-1"></i> Download PDF
+                                </a>
+                                <a href="{{ url_for('integration_routes.export_and_redirect') }}" class="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    Complete <i class="fas fa-check ml-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-6">
+                            <form action="{{ url_for('page_routes.reset_quote') }}" method="POST" id="reset-form">
+                                <button type="submit" class="text-gray-500 hover:text-gray-700 text-sm flex items-center">
+                                    <i class="fas fa-redo mr-1"></i> Start a new quote
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+    
+    <footer class="bg-white mt-12 border-t">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <div class="md:flex md:items-center md:justify-between">
+                <div class="flex space-x-6 md:order-2">
+                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Help Center</span>
+                        <i class="fas fa-question-circle"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Terms of Service</span>
+                        <i class="fas fa-file-alt"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-gray-500">
+                        <span class="sr-only">Privacy Policy</span>
+                        <i class="fas fa-shield-alt"></i>
+                    </a>
+                </div>
+                <div class="mt-8 md:mt-0 md:order-1">
+                    <p class="text-center text-base text-gray-400">
+                        &copy; 2025 MyDentalFly. All rights reserved.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Client-side form submission with AJAX for promo code
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle promo code form submission
+            const promoForm = document.getElementById('promo-form');
+            if (promoForm) {
+                promoForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const promoCode = document.getElementById('promo_code').value.trim();
+                    const errorDiv = document.getElementById('promo-error');
+                    const successDiv = document.getElementById('promo-success');
+                    
+                    errorDiv.classList.add('hidden');
+                    successDiv.classList.add('hidden');
+                    
+                    // Simple validation
+                    if (!promoCode) {
+                        errorDiv.textContent = 'Please enter a promo code';
+                        errorDiv.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    // AJAX submission to prevent page refresh
+                    fetch('{{ url_for("promo_routes.apply_promo_code") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ promo_code: promoCode })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload page with a cache-busting parameter
+                            const timestamp = new Date().getTime();
+                            window.location.href = window.location.pathname + '?t=' + timestamp;
+                        } else {
+                            errorDiv.textContent = data.error || 'Failed to apply promo code';
+                            errorDiv.classList.remove('hidden');
+                        }
+                    })
+                    .catch(error => {
+                        errorDiv.textContent = 'An error occurred. Please try again.';
+                        errorDiv.classList.remove('hidden');
+                        console.error('Error:', error);
+                    });
+                });
+            }
+            
+            // Handle removal form submission
+            const removePromoForm = document.getElementById('remove-promo-form');
+            if (removePromoForm) {
+                removePromoForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    fetch('{{ url_for("promo_routes.remove_promo_code") }}', {
+                        method: 'POST'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload page with a cache-busting parameter
+                            const timestamp = new Date().getTime();
+                            window.location.href = window.location.pathname + '?t=' + timestamp;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                });
+            }
+            
+            // Back button for patient info form
+            const backToPromoBtn = document.getElementById('back-to-promo');
+            const backForm = document.getElementById('back-form');
+            
+            if (backToPromoBtn && backForm) {
+                backToPromoBtn.addEventListener('click', function() {
+                    backForm.submit();
+                });
+            }
+            
+            // Mock PDF download function
+            const downloadBtn = document.getElementById('download-pdf');
+            if (downloadBtn) {
+                downloadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    alert('PDF download feature will be implemented in the production version.');
+                });
+            }
+        });
+    </script>
+</body>
+</html>
