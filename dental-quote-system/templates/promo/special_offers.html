@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Special Offers | Dental Quote System</title>
+    <title>Special Offers | MyDentalFly</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -24,48 +24,57 @@
     </header>
 
     <main>
-        <section class="page-header">
-            <div class="container">
-                <h2>Special Offers</h2>
-                <p>Exclusive deals and promotions for dental treatments.</p>
+        <div class="container">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
             </div>
-        </section>
 
-        <section class="offers-section">
-            <div class="container">
-                <div class="offers-grid">
-                    {% for offer in offers %}
-                    <div class="offer-card">
-                        <div class="offer-image">
-                            <img src="{{ offer.image }}" alt="{{ offer.title }}" onerror="this.src='{{ url_for('static', filename='images/offer-placeholder.jpg') }}'">
+            <section class="special-offers-header mb-4">
+                <h1>Special Offers</h1>
+                <p>Take advantage of these special offers for your dental treatments. Click on an offer to apply the promo code to your quote.</p>
+            </section>
+
+            <section class="offers-container">
+                {% for offer in offers %}
+                    <div class="card offer-card">
+                        <img src="{{ offer.image }}" alt="{{ offer.title }}" class="card-img-top">
+                        <div class="card-body">
+                            <h2 class="card-title">{{ offer.title }}</h2>
+                            <p class="card-text">{{ offer.description }}</p>
+                            
+                            <p class="mb-2"><strong>Clinic:</strong> {{ offer.clinic_name }}</p>
+                            
+                            <h3 class="mb-1">Included Treatments:</h3>
+                            <ul class="offer-treatments">
+                                {% for treatment in offer.treatments %}
+                                    <li>{{ treatment }}</li>
+                                {% endfor %}
+                            </ul>
+                            
+                            <div class="mb-2">Promo Code: <span class="offer-code">{{ offer.promo_code }}</span></div>
+                            <div class="offer-valid">Valid until: {{ offer.valid_until }}</div>
                         </div>
-                        <div class="offer-content">
-                            <h3>{{ offer.title }}</h3>
-                            <p class="offer-clinic">{{ offer.clinic_name }}</p>
-                            <p class="offer-desc">{{ offer.description }}</p>
-                            <div class="offer-details">
-                                <div class="treatments">
-                                    <h4>Included Treatments:</h4>
-                                    <ul>
-                                        {% for treatment in offer.treatments %}
-                                        <li>{{ treatment }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                </div>
-                                <div class="valid-until">
-                                    <p>Valid until: {{ offer.valid_until }}</p>
-                                </div>
-                            </div>
-                            <div class="offer-cta">
-                                <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ offer.promo_code }}" class="btn btn-primary">Claim Offer</a>
-                                <span class="promo-code">Promo code: <strong>{{ offer.promo_code }}</strong></span>
-                            </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ offer.promo_code }}" class="btn btn-primary btn-block">Apply Offer</a>
                         </div>
                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </section>
+                {% endfor %}
+            </section>
+            
+            <section class="cta mt-5 mb-5 text-center">
+                <h2 class="mb-3">Ready to Build Your Dental Quote?</h2>
+                <p class="mb-4">Start building your custom dental treatment quote and apply one of these special offers.</p>
+                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">Build Your Quote</a>
+            </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -73,7 +82,7 @@
             <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
         </div>
     </footer>
-
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

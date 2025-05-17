@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Quote | Dental Quote System</title>
+    <title>Review Quote | MyDentalFly</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
@@ -24,130 +24,123 @@
     </header>
 
     <main>
-        <section class="page-header">
-            <div class="container">
-                <h2>Quote Review</h2>
-                <p>Review your personalized dental treatment quote.</p>
+        <div class="container">
+            <div class="flash-container">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message {{ category }}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
             </div>
-        </section>
 
-        <section class="quote-review">
-            <div class="container">
-                <div class="review-container">
-                    <div class="quote-card">
-                        <div class="quote-header">
-                            <div class="quote-meta">
-                                <h3>Dental Treatment Quote</h3>
-                                <p class="quote-ref">Reference: {{ quote_ref }}</p>
-                                <p class="quote-date">Date: {{ now().strftime('%B %d, %Y') }}</p>
-                            </div>
-                            <div class="quote-logo">
-                                <h2>MyDentalFly</h2>
-                            </div>
-                        </div>
-                        
-                        <div class="patient-section">
-                            <h4>Patient Information</h4>
-                            <div class="patient-details">
-                                <div class="detail-row">
-                                    <span class="label">Name:</span>
-                                    <span class="value">{{ patient_info.name }}</span>
+            <div class="quote-progress mb-4">
+                <div class="progress-step">1. Select Treatments</div>
+                <div class="progress-step">2. Patient Information</div>
+                <div class="progress-step active">3. Review Quote</div>
+            </div>
+
+            <div class="review-quote-container">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h1>Review Your Dental Quote</h1>
+                        <p>Quote Reference: {{ quote_ref }}</p>
+                    </div>
+                    <div class="card-body">
+                        <div class="review-section">
+                            <h2 class="review-section-title">Patient Information</h2>
+                            <div class="review-patient">
+                                <div>
+                                    <p><span class="review-patient-label">Name:</span> {{ patient_info.name }}</p>
+                                    <p><span class="review-patient-label">Email:</span> {{ patient_info.email }}</p>
                                 </div>
-                                <div class="detail-row">
-                                    <span class="label">Email:</span>
-                                    <span class="value">{{ patient_info.email }}</span>
+                                <div>
+                                    <p><span class="review-patient-label">Phone:</span> {{ patient_info.phone }}</p>
+                                    {% if patient_info.notes %}
+                                        <p><span class="review-patient-label">Notes:</span> {{ patient_info.notes }}</p>
+                                    {% endif %}
                                 </div>
-                                <div class="detail-row">
-                                    <span class="label">Phone:</span>
-                                    <span class="value">{{ patient_info.phone }}</span>
-                                </div>
-                                {% if patient_info.notes %}
-                                <div class="detail-row notes">
-                                    <span class="label">Notes:</span>
-                                    <span class="value">{{ patient_info.notes }}</span>
-                                </div>
-                                {% endif %}
                             </div>
                         </div>
-                        
-                        <div class="treatments-section">
-                            <h4>Selected Treatments</h4>
-                            <table class="treatments-table">
-                                <thead>
-                                    <tr>
-                                        <th>Treatment</th>
-                                        <th>Category</th>
-                                        <th>Price</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
+
+                        <div class="review-section">
+                            <h2 class="review-section-title">Selected Treatments</h2>
+                            <div class="review-treatments">
+                                <div class="summary-list">
                                     {% for treatment in treatments %}
-                                    <tr>
-                                        <td>{{ treatment.name }}</td>
-                                        <td>{{ treatment.category }}</td>
-                                        <td class="price">${{ "%.2f"|format(treatment.price) }}</td>
-                                    </tr>
+                                        <div class="summary-item">
+                                            <div class="summary-item-name">{{ treatment.name }}</div>
+                                            <div class="summary-item-price">${{ "%.2f"|format(treatment.price) }}</div>
+                                        </div>
                                     {% endfor %}
-                                </tbody>
-                            </table>
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div class="pricing-section">
-                            <div class="price-calculation">
-                                <div class="price-line">
-                                    <span class="label">Subtotal:</span>
-                                    <span class="amount">${{ "%.2f"|format(subtotal) }}</span>
+
+                        <div class="review-section">
+                            <h2 class="review-section-title">Pricing</h2>
+                            <div class="summary-totals">
+                                <div class="summary-subtotal">
+                                    <div>Subtotal</div>
+                                    <div>${{ "%.2f"|format(subtotal) }}</div>
                                 </div>
                                 
-                                {% if discount > 0 %}
-                                <div class="price-line discount">
-                                    <span class="label">
-                                        Discount
-                                        {% if promo_details %}
-                                            ({{ promo_details.code }}):
-                                        {% else %}
-                                            :
-                                        {% endif %}
-                                    </span>
-                                    <span class="amount">-${{ "%.2f"|format(discount) }}</span>
-                                </div>
+                                {% if promo_details %}
+                                    <div class="summary-discount">
+                                        <div>Discount ({{ promo_details.description }})</div>
+                                        <div>-${{ "%.2f"|format(discount) }}</div>
+                                    </div>
                                 {% endif %}
                                 
-                                <div class="price-line total">
-                                    <span class="label">Total:</span>
-                                    <span class="amount">${{ "%.2f"|format(total) }}</span>
+                                <div class="summary-total">
+                                    <div>Total</div>
+                                    <div>${{ "%.2f"|format(total) }}</div>
                                 </div>
                             </div>
+                            
+                            {% if promo_details %}
+                                <div class="applied-promo mt-3">
+                                    <div class="applied-promo-info">
+                                        <div>Applied promo: <span class="applied-promo-code">{{ promo_code }}</span></div>
+                                        <div class="applied-promo-description">{{ promo_details.description }}</div>
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
-                        
-                        {% if promo_details %}
-                        <div class="promo-section">
-                            <div class="promo-info">
-                                <h4>Applied Promotion</h4>
-                                <p>{{ promo_details.description }}</p>
-                                <p class="promo-code">Code: {{ promo_details.code }}</p>
+
+                        <div class="review-actions">
+                            <div>
+                                <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-secondary">Back to Patient Info</a>
                             </div>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="quote-footer">
-                            <p>This quote is valid for 30 days from the date of issue.</p>
-                            <p>For questions or to schedule an appointment, please contact us.</p>
+                            <div>
+                                <form action="{{ url_for('integration_routes.send_quote_email') }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-primary">Email Quote</button>
+                                </form>
+                                <a href="{{ url_for('integration_routes.export_pdf') }}" class="btn btn-primary ml-2">Export as PDF</a>
+                                <a href="{{ url_for('page_routes.reset_quote_route') }}" class="btn btn-outline-primary ml-2">Start New Quote</a>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="action-buttons">
-                        <button id="printQuote" class="btn btn-primary">Print Quote</button>
-                        <a href="{{ url_for('page_routes.reset_quote') }}" class="btn btn-secondary">Create New Quote</a>
-                        {% if promo_details %}
-                        <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ promo_details.code }}" class="btn btn-accent">Modify Quote</a>
-                        {% else %}
-                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-accent">Modify Quote</a>
-                        {% endif %}
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h2>Need Assistance?</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>If you have any questions about your quote or would like to discuss your dental treatment options, please contact us:</p>
+                        <ul>
+                            <li>Email: info@mydentalfly.com</li>
+                            <li>Phone: +1-555-DENTAL (336825)</li>
+                        </ul>
+                        <p>We're here to help you achieve the smile you deserve!</p>
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <footer class="site-footer">
@@ -155,13 +148,7 @@
             <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        // Print functionality
-        document.getElementById('printQuote').addEventListener('click', function() {
-            window.print();
-        });
-    </script>
+    
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
