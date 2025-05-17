@@ -1,105 +1,160 @@
 /**
- * Treatment List Component
+ * TreatmentList Component
  * 
- * This component displays a list of dental treatments with quantities and prices.
- * It can be made editable for admin and patient portals.
+ * This component displays the list of treatments in a quote
+ * and provides functionality for managing treatment quantities
  */
-import React from 'react';
-import { Treatment } from '@/services/quote-integration-service';
-import { Button } from '@/components/ui/button';
-import { Plus, Minus, X } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
+
+interface Treatment {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  currency: string;
+  clinic_ref_code?: string;
+}
 
 interface TreatmentListProps {
   treatments: Treatment[];
   editable?: boolean;
   onUpdateQuantity?: (treatmentId: string, quantity: number) => void;
   onRemoveTreatment?: (treatmentId: string) => void;
+  showClinicReferences?: boolean;
 }
 
 export function TreatmentList({
   treatments,
   editable = false,
   onUpdateQuantity,
-  onRemoveTreatment
+  onRemoveTreatment,
+  showClinicReferences = false,
 }: TreatmentListProps) {
-  if (!treatments || treatments.length === 0) {
-    return (
-      <div className="text-center py-4 border rounded-md">
-        <p className="text-muted-foreground">No treatments selected</p>
-      </div>
-    );
-  }
+  const [quantities, setQuantities] = useState<Record<string, number>>(
+    treatments.reduce((acc, treatment) => {
+      acc[treatment.id] = treatment.quantity;
+      return acc;
+    }, {} as Record<string, number>)
+  );
+
+  const handleQuantityChange = (treatmentId: string, value: string) => {
+    const quantity = parseInt(value, 10);
+    if (isNaN(quantity) || quantity < 1) return;
+
+    setQuantities((prev) => ({
+      ...prev,
+      [treatmentId]: quantity,
+    }));
+  };
+
+  const handleUpdateQuantity = (treatmentId: string) => {
+    if (onUpdateQuantity) {
+      onUpdateQuantity(treatmentId, quantities[treatmentId]);
+    }
+  };
+
+  // Calculate the total cost
+  const totalCost = treatments.reduce(
+    (sum, treatment) => sum + treatment.price * treatment.quantity,
+    0
+  );
 
   return (
-    <div className="border rounded-md overflow-hidden">
-      <div className="bg-muted px-4 py-2 font-medium grid grid-cols-12">
-        <div className="col-span-6">Treatment</div>
-        <div className="col-span-2 text-center">Quantity</div>
-        <div className="col-span-3 text-right">Price</div>
-        <div className="col-span-1"></div>
-      </div>
-      
-      <div className="divide-y">
-        {treatments.map((treatment) => (
-          <div key={treatment.id} className="px-4 py-3 grid grid-cols-12 items-center">
-            <div className="col-span-6">
-              <p className="font-medium">{treatment.name}</p>
-              {treatment.description && (
-                <p className="text-sm text-muted-foreground">{treatment.description}</p>
+    <div className="w-full">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[300px]">Treatment</TableHead>
+            {showClinicReferences && (
+              <TableHead>Clinic Reference</TableHead>
+            )}
+            <TableHead className="text-right">Unit Price</TableHead>
+            <TableHead className="text-center">Quantity</TableHead>
+            <TableHead className="text-right">Total</TableHead>
+            {editable && (
+              <TableHead className="text-right">Actions</TableHead>
+            )}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {treatments.map((treatment) => (
+            <TableRow key={treatment.id}>
+              <TableCell className="font-medium">{treatment.name}</TableCell>
+              {showClinicReferences && (
+                <TableCell>{treatment.clinic_ref_code || 'N/A'}</TableCell>
               )}
-            </div>
-            
-            <div className="col-span-2 flex items-center justify-center">
-              {editable ? (
-                <div className="flex items-center">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-r-none"
-                    onClick={() => onUpdateQuantity?.(treatment.id, Math.max(1, treatment.quantity - 1))}
-                    disabled={treatment.quantity <= 1}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <div className="h-8 px-3 flex items-center justify-center border-y">
-                    {treatment.quantity}
+              <TableCell className="text-right">
+                {formatCurrency(treatment.price, treatment.currency)}
+              </TableCell>
+              <TableCell className="text-center">
+                {editable ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <Input
+                      type="number"
+                      value={quantities[treatment.id]}
+                      min={1}
+                      className="w-16 text-center"
+                      onChange={(e) =>
+                        handleQuantityChange(treatment.id, e.target.value)
+                      }
+                    />
+                    {quantities[treatment.id] !== treatment.quantity && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleUpdateQuantity(treatment.id)}
+                      >
+                        Update
+                      </Button>
+                    )}
                   </div>
+                ) : (
+                  treatment.quantity
+                )}
+              </TableCell>
+              <TableCell className="text-right">
+                {formatCurrency(
+                  treatment.price * treatment.quantity,
+                  treatment.currency
+                )}
+              </TableCell>
+              {editable && (
+                <TableCell className="text-right">
                   <Button
-                    variant="outline"
-                    size="icon"
-                    className="h-8 w-8 rounded-l-none"
-                    onClick={() => onUpdateQuantity?.(treatment.id, treatment.quantity + 1)}
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onRemoveTreatment && onRemoveTreatment(treatment.id)}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                </div>
-              ) : (
-                <span>{treatment.quantity}</span>
+                </TableCell>
               )}
-            </div>
-            
-            <div className="col-span-3 text-right">
-              ${(treatment.price * treatment.quantity).toFixed(2)}
-              {treatment.quantity > 1 && (
-                <p className="text-xs text-muted-foreground">${treatment.price.toFixed(2)} each</p>
-              )}
-            </div>
-            
-            <div className="col-span-1 flex justify-end">
-              {editable && onRemoveTreatment && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                  onClick={() => onRemoveTreatment(treatment.id)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+            </TableRow>
+          ))}
+          <TableRow>
+            <TableCell colSpan={showClinicReferences ? 2 : 1} className="font-bold">
+              Total
+            </TableCell>
+            <TableCell colSpan={2}></TableCell>
+            <TableCell className="text-right font-bold">
+              {formatCurrency(totalCost, treatments[0]?.currency || 'USD')}
+            </TableCell>
+            {editable && <TableCell></TableCell>}
+          </TableRow>
+        </TableBody>
+      </Table>
     </div>
   );
 }
