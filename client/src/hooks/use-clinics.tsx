@@ -1,49 +1,43 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import axios from 'axios';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Clinic {
   id: string;
   name: string;
+  email?: string;
+  phone?: string;
   address?: string;
   city?: string;
   country?: string;
-  email?: string;
-  phone?: string;
-  website?: string;
-  description?: string;
-  image_url?: string;
-  rating?: number;
   specialties?: string[];
+  rating?: number;
+  imageUrl?: string;
 }
 
-/**
- * Hook for interacting with clinic data
- * This hook fetches and manages clinic information for the dental quote system
- */
 export function useClinics() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
-  const [currentClinic, setCurrentClinic] = useState<Clinic | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  // Fetch all clinics
-  const fetchClinics = useCallback(async () => {
+  // Function to load all available clinics
+  const loadClinics = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await fetch('/api/clinics');
+      const response = await axios.get('/api/integration/admin/clinics');
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      if (response.data.success) {
+        setClinics(response.data.clinics || []);
+        return response.data.clinics;
+      } else {
+        throw new Error(response.data.message || 'Failed to load clinics');
       }
-      
-      const data = await response.json();
-      setClinics(data.clinics || []);
-      return data.clinics || [];
-    } catch (err) {
-      setError('Failed to load clinics. Please try again later.');
+    } catch (err: any) {
+      const errorMessage = 'Failed to load clinics: ' + (err.message || 'Unknown error');
+      setError(errorMessage);
       console.error('Error loading clinics:', err);
       toast({
         title: 'Error',
@@ -56,173 +50,99 @@ export function useClinics() {
     }
   }, [toast]);
 
-  // Get a single clinic by ID
-  const getClinic = useCallback(async (clinicId: string) => {
-    if (!clinicId) {
-      setError('Clinic ID is required');
-      return null;
-    }
+  // Load clinics on initial render
+  useEffect(() => {
+    loadClinics();
+  }, [loadClinics]);
 
-    setLoading(true);
-    setError(null);
+  // Get clinic details by ID
+  const getClinicById = useCallback((clinicId: string): Clinic | undefined => {
+    return clinics.find(clinic => clinic.id === clinicId);
+  }, [clinics]);
+
+  // Search clinics by name or specialty
+  const searchClinics = useCallback((searchTerm: string): Clinic[] => {
+    if (!searchTerm.trim()) return clinics;
     
-    try {
-      const response = await fetch(`/api/clinics/${clinicId}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      setCurrentClinic(data.clinic);
-      return data.clinic;
-    } catch (err) {
-      setError('Failed to load clinic details. Please try again later.');
-      console.error('Error loading clinic details:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load clinic details',
-        variant: 'destructive',
-      });
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+    const lowercaseSearch = searchTerm.toLowerCase();
+    return clinics.filter(clinic => 
+      clinic.name.toLowerCase().includes(lowercaseSearch) || 
+      clinic.specialties?.some(specialty => 
+        specialty.toLowerCase().includes(lowercaseSearch)
+      )
+    );
+  }, [clinics]);
 
-  // Get clinics by country
-  const getClinicsByCountry = useCallback(async (country: string) => {
-    if (!country) {
-      setError('Country is required');
-      return [];
-    }
-
-    setLoading(true);
-    setError(null);
+  // Filter clinics by country
+  const filterClinicsByCountry = useCallback((country: string): Clinic[] => {
+    if (!country.trim()) return clinics;
     
-    try {
-      const response = await fetch(`/api/clinics/country/${country}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.clinics || [];
-    } catch (err) {
-      setError(`Failed to load clinics for ${country}. Please try again later.`);
-      console.error('Error loading clinics by country:', err);
-      toast({
-        title: 'Error',
-        description: `Failed to load clinics for ${country}`,
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+    return clinics.filter(clinic => 
+      clinic.country?.toLowerCase() === country.toLowerCase()
+    );
+  }, [clinics]);
 
-  // Get clinics by specialties
-  const getClinicsBySpecialties = useCallback(async (specialties: string[]) => {
-    if (!specialties.length) {
-      setError('At least one specialty is required');
-      return [];
-    }
-
-    setLoading(true);
-    setError(null);
+  // Filter clinics by city
+  const filterClinicsByCity = useCallback((city: string): Clinic[] => {
+    if (!city.trim()) return clinics;
     
-    try {
-      const response = await fetch('/api/clinics/specialties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ specialties }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      return data.clinics || [];
-    } catch (err) {
-      setError('Failed to load clinics by specialties. Please try again later.');
-      console.error('Error loading clinics by specialties:', err);
-      toast({
-        title: 'Error',
-        description: 'Failed to load clinics by specialties',
-        variant: 'destructive',
-      });
-      return [];
-    } finally {
-      setLoading(false);
-    }
-  }, [toast]);
+    return clinics.filter(clinic => 
+      clinic.city?.toLowerCase() === city.toLowerCase()
+    );
+  }, [clinics]);
 
-  // Fetch mock clinic data for testing when API endpoints are not yet available
-  const fetchMockClinics = useCallback(() => {
-    const mockClinics: Clinic[] = [
-      {
-        id: '1',
-        name: 'Istanbul Dental Center',
-        address: '123 Main Street',
-        city: 'Istanbul',
-        country: 'Turkey',
-        email: 'info@istanbuldentalcenter.com',
-        phone: '+90 212 555 1234',
-        website: 'https://istanbuldentalcenter.com',
-        description: 'Leading dental clinic in Istanbul specializing in implants and cosmetic dentistry.',
-        image_url: '/images/clinics/istanbul-dental.jpg',
-        rating: 4.8,
-        specialties: ['Implants', 'Cosmetic Dentistry', 'Orthodontics']
-      },
-      {
-        id: '2',
-        name: 'Antalya Smile Clinic',
-        address: '456 Beach Road',
-        city: 'Antalya',
-        country: 'Turkey',
-        email: 'contact@antalyasmile.com',
-        phone: '+90 242 555 6789',
-        website: 'https://antalyasmile.com',
-        description: 'Premium dental care in the heart of Antalya with a focus on dental tourism.',
-        image_url: '/images/clinics/antalya-smile.jpg',
-        rating: 4.7,
-        specialties: ['Veneers', 'Teeth Whitening', 'Full Mouth Rehabilitation']
-      },
-      {
-        id: '3',
-        name: 'Budapest Dental Solutions',
-        address: '789 River Street',
-        city: 'Budapest',
-        country: 'Hungary',
-        email: 'info@budapestdental.com',
-        phone: '+36 1 555 7890',
-        website: 'https://budapestdental.com',
-        description: 'Affordable and high-quality dental care in the center of Budapest.',
-        image_url: '/images/clinics/budapest-dental.jpg',
-        rating: 4.9,
-        specialties: ['Dental Implants', 'Root Canal', 'Crowns and Bridges']
+  // Get all available countries (for filters)
+  const getAvailableCountries = useCallback((): string[] => {
+    const countriesSet = new Set<string>();
+    
+    clinics.forEach(clinic => {
+      if (clinic.country) {
+        countriesSet.add(clinic.country);
       }
-    ];
+    });
+    
+    return Array.from(countriesSet).sort();
+  }, [clinics]);
 
-    setClinics(mockClinics);
-    setLoading(false);
-    return mockClinics;
-  }, []);
+  // Get all available cities (for filters)
+  const getAvailableCities = useCallback((): string[] => {
+    const citiesSet = new Set<string>();
+    
+    clinics.forEach(clinic => {
+      if (clinic.city) {
+        citiesSet.add(clinic.city);
+      }
+    });
+    
+    return Array.from(citiesSet).sort();
+  }, [clinics]);
+
+  // Get all available specialties (for filters)
+  const getAvailableSpecialties = useCallback((): string[] => {
+    const specialtiesSet = new Set<string>();
+    
+    clinics.forEach(clinic => {
+      if (clinic.specialties && clinic.specialties.length > 0) {
+        clinic.specialties.forEach(specialty => {
+          specialtiesSet.add(specialty);
+        });
+      }
+    });
+    
+    return Array.from(specialtiesSet).sort();
+  }, [clinics]);
 
   return {
     clinics,
-    currentClinic,
     loading,
     error,
-    fetchClinics,
-    getClinic,
-    getClinicsByCountry,
-    getClinicsBySpecialties,
-    fetchMockClinics
+    loadClinics,
+    getClinicById,
+    searchClinics,
+    filterClinicsByCountry,
+    filterClinicsByCity,
+    getAvailableCountries,
+    getAvailableCities,
+    getAvailableSpecialties
   };
 }
