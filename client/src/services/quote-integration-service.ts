@@ -1,352 +1,206 @@
-import axios from 'axios';
-import { Treatment } from '@/components/quotes/TreatmentList';
-import { Quote } from '@/hooks/use-quote-system';
-
 /**
- * Service for integrating with the Flask quote system
- * This service handles API communication between React frontend and Flask backend
+ * Quote Integration Service
+ * 
+ * This service handles communication between the React frontend and Flask backend
+ * for the quote system, including promo code application and treatment management.
  */
-export class QuoteIntegrationService {
+
+import { Treatment } from '@/components/quotes/TreatmentList';
+
+// Define the shape of the API responses for better type checking
+interface QuoteResponse {
+  success: boolean;
+  treatments: Treatment[];
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+  message?: string;
+  promoCode?: string;
+  discountType?: 'percentage' | 'fixed_amount';
+  discountValue?: number;
+}
+
+interface ErrorResponse {
+  success: boolean;
+  message: string;
+}
+
+class QuoteIntegrationService {
   private baseUrl: string;
   
-  constructor(baseUrl: string = '/api/integration') {
+  constructor(baseUrl: string = '/api/quote/integration') {
     this.baseUrl = baseUrl;
   }
-
+  
   /**
-   * Get all quotes for a specific portal
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @returns Array of quotes
+   * Generic method for making API requests
    */
-  async getQuotes(portalType: string): Promise<Quote[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/${portalType}/quotes`);
-      
-      if (response.data.success) {
-        return response.data.quotes || [];
-      } else {
-        throw new Error(response.data.message || 'Failed to load quotes');
-      }
-    } catch (error: any) {
-      console.error('Error loading quotes:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error loading quotes');
+  private async makeRequest<T>(
+    endpoint: string, 
+    method: 'GET' | 'POST' = 'GET', 
+    body?: any
+  ): Promise<T> {
+    const url = `${this.baseUrl}${endpoint}`;
+    
+    const options: RequestInit = {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    };
+    
+    if (body) {
+      options.body = JSON.stringify(body);
     }
+    
+    const response = await fetch(url, options);
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.message || 'An error occurred');
+    }
+    
+    return data as T;
   }
-
+  
   /**
-   * Get a specific quote by ID
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @returns Quote data
+   * Initialize a new quote session
    */
-  async getQuote(portalType: string, quoteId: string): Promise<Quote> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/${portalType}/quotes/${quoteId}`);
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Failed to load quote');
-      }
-    } catch (error: any) {
-      console.error('Error loading quote:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error loading quote');
-    }
+  async initializeQuote(): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/initialize', 'POST');
   }
-
+  
   /**
-   * Update treatment quantity in a quote
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @param treatmentId The ID of the treatment
-   * @param quantity The new quantity
-   * @returns Updated quote
+   * Get the current quote state
+   */
+  async getQuoteState(): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/state');
+  }
+  
+  /**
+   * Add a treatment to the quote
+   */
+  async addTreatment(treatmentId: string, quantity: number = 1): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/add-treatment', 'POST', {
+      treatmentId,
+      quantity,
+    });
+  }
+  
+  /**
+   * Update the quantity of a treatment in the quote
    */
   async updateTreatmentQuantity(
-    portalType: string, 
-    quoteId: string, 
     treatmentId: string, 
     quantity: number
-  ): Promise<Quote> {
+  ): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/update-treatment-quantity', 'POST', {
+      treatmentId,
+      quantity,
+    });
+  }
+  
+  /**
+   * Remove a treatment from the quote
+   */
+  async removeTreatment(treatmentId: string): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/remove-treatment', 'POST', {
+      treatmentId,
+    });
+  }
+  
+  /**
+   * Apply a promo code to the quote
+   */
+  async applyPromoCode(promoCode: string): Promise<QuoteResponse> {
     try {
-      const response = await axios.patch(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/treatments/${treatmentId}`,
-        { quantity }
-      );
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Failed to update treatment quantity');
-      }
-    } catch (error: any) {
-      console.error('Error updating treatment quantity:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error updating treatment quantity');
+      return await this.makeRequest<QuoteResponse>('/apply-promo', 'POST', {
+        promoCode,
+      });
+    } catch (error) {
+      // For better error handling, wrap the error in a standardized format
+      throw new Error(error.message || 'Failed to apply promo code');
     }
   }
-
+  
   /**
-   * Remove a treatment from a quote
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @param treatmentId The ID of the treatment
-   * @returns Updated quote
+   * Clear the applied promo code
    */
-  async removeTreatment(
-    portalType: string, 
-    quoteId: string, 
-    treatmentId: string
-  ): Promise<Quote> {
-    try {
-      const response = await axios.delete(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/treatments/${treatmentId}`
-      );
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Failed to remove treatment');
-      }
-    } catch (error: any) {
-      console.error('Error removing treatment:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error removing treatment');
-    }
+  async clearPromoCode(): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/clear-promo', 'POST');
   }
-
+  
   /**
-   * Apply a promo code to a quote
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @param promoCode The promo code to apply
-   * @returns Updated quote
+   * Process a special offer selection
    */
-  async applyPromoCode(
-    portalType: string, 
-    quoteId: string, 
-    promoCode: string
-  ): Promise<Quote> {
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/promo`,
-        { promoCode }
-      );
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Invalid promo code');
-      }
-    } catch (error: any) {
-      console.error('Error applying promo code:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error applying promo code');
-    }
+  async processSpecialOffer(offerId: string): Promise<QuoteResponse> {
+    return this.makeRequest<QuoteResponse>('/process-offer', 'POST', {
+      offerId,
+    });
   }
-
+  
   /**
-   * Remove a promo code from a quote
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @returns Updated quote
+   * Save the quote for later reference
    */
-  async removePromoCode(
-    portalType: string, 
-    quoteId: string
-  ): Promise<Quote> {
-    try {
-      const response = await axios.delete(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/promo`
-      );
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Failed to remove promo code');
-      }
-    } catch (error: any) {
-      console.error('Error removing promo code:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error removing promo code');
-    }
+  async saveQuote(patientData: {
+    name: string;
+    email: string;
+    phone?: string;
+    notes?: string;
+  }): Promise<{ quoteId: string; pdfUrl?: string }> {
+    return this.makeRequest<{ quoteId: string; pdfUrl?: string }>(
+      '/save-quote', 
+      'POST', 
+      patientData
+    );
   }
-
+  
   /**
-   * Get available treatment categories
-   * @returns Array of treatment categories
+   * Get available treatments for the quote builder
    */
-  async getTreatmentCategories(): Promise<string[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/treatments/categories`);
-      
-      if (response.data.success) {
-        return response.data.categories || [];
-      } else {
-        throw new Error(response.data.message || 'Failed to load treatment categories');
-      }
-    } catch (error: any) {
-      console.error('Error loading treatment categories:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error loading treatment categories');
+  async getAvailableTreatments(
+    categoryId?: string,
+    clinicId?: string
+  ): Promise<{ treatments: Treatment[] }> {
+    let endpoint = '/treatments';
+    const params = new URLSearchParams();
+    
+    if (categoryId) {
+      params.append('category', categoryId);
     }
-  }
-
-  /**
-   * Get treatments by category
-   * @param category The treatment category
-   * @returns Array of treatments
-   */
-  async getTreatmentsByCategory(category: string): Promise<Treatment[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/treatments/category/${category}`);
-      
-      if (response.data.success) {
-        return response.data.treatments || [];
-      } else {
-        throw new Error(response.data.message || 'Failed to load treatments');
-      }
-    } catch (error: any) {
-      console.error('Error loading treatments:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error loading treatments');
+    
+    if (clinicId) {
+      params.append('clinic', clinicId);
     }
-  }
-
-  /**
-   * Download a quote as PDF
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @returns Blob containing the PDF data
-   */
-  async downloadQuotePdf(portalType: string, quoteId: string): Promise<Blob> {
-    try {
-      const response = await axios.get(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/pdf`,
-        { responseType: 'blob' }
-      );
-      
-      return new Blob([response.data], { type: 'application/pdf' });
-    } catch (error: any) {
-      console.error('Error downloading PDF:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error downloading PDF');
+    
+    if (params.toString()) {
+      endpoint += `?${params.toString()}`;
     }
+    
+    return this.makeRequest<{ treatments: Treatment[] }>(endpoint);
   }
-
+  
   /**
-   * Email a quote to a recipient
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @param email The email address to send the quote to
-   * @returns Success status
+   * Get active special offers
    */
-  async emailQuote(portalType: string, quoteId: string, email: string): Promise<boolean> {
-    try {
-      const response = await axios.post(
-        `${this.baseUrl}/${portalType}/quotes/${quoteId}/email`,
-        { email }
-      );
-      
-      return response.data.success || false;
-    } catch (error: any) {
-      console.error('Error emailing quote:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error emailing quote');
-    }
-  }
-
-  /**
-   * Get quote print HTML
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteId The ID of the quote
-   * @returns HTML string for printing
-   */
-  async getQuotePrintHtml(portalType: string, quoteId: string): Promise<string> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/${portalType}/quotes/${quoteId}/print`);
-      
-      if (response.data.success) {
-        return response.data.html || '';
-      } else {
-        throw new Error(response.data.message || 'Failed to get print HTML');
-      }
-    } catch (error: any) {
-      console.error('Error getting print HTML:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error getting print HTML');
-    }
-  }
-
-  /**
-   * Create a new quote
-   * @param portalType The type of portal (patient, clinic, admin)
-   * @param quoteData The quote data
-   * @returns Created quote
-   */
-  async createQuote(portalType: string, quoteData: Partial<Quote>): Promise<Quote> {
-    try {
-      const response = await axios.post(`${this.baseUrl}/${portalType}/quotes`, quoteData);
-      
-      if (response.data.success) {
-        return response.data.quote;
-      } else {
-        throw new Error(response.data.message || 'Failed to create quote');
-      }
-    } catch (error: any) {
-      console.error('Error creating quote:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error creating quote');
-    }
-  }
-
-  /**
-   * Get available promo codes (for testing)
-   * @returns Array of promo codes
-   */
-  async getAvailablePromoCodes(): Promise<string[]> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/promo-codes`);
-      
-      if (response.data.success) {
-        return response.data.promoCodes || [];
-      } else {
-        throw new Error(response.data.message || 'Failed to load promo codes');
-      }
-    } catch (error: any) {
-      console.error('Error loading promo codes:', error);
-      throw new Error(error.response?.data?.message || error.message || 'Error loading promo codes');
-    }
-  }
-
-  /**
-   * Verify a promo code is valid without applying it
-   * @param promoCode The promo code to verify
-   * @returns Validation result with discount information
-   */
-  async verifyPromoCode(promoCode: string): Promise<{
-    valid: boolean;
-    discountType?: 'percentage' | 'fixed_amount';
-    discountValue?: number;
-    message?: string;
+  async getSpecialOffers(): Promise<{ 
+    offers: Array<{
+      id: string;
+      title: string;
+      description: string;
+      discountType: 'percentage' | 'fixed_amount';
+      discountValue: number;
+      promoCode: string;
+      bannerImage?: string;
+    }> 
   }> {
-    try {
-      const response = await axios.get(`${this.baseUrl}/promo-codes/verify/${promoCode}`);
-      
-      if (response.data.success) {
-        return {
-          valid: true,
-          discountType: response.data.discountType,
-          discountValue: response.data.discountValue
-        };
-      } else {
-        return {
-          valid: false,
-          message: response.data.message || 'Invalid promo code'
-        };
-      }
-    } catch (error: any) {
-      console.error('Error verifying promo code:', error);
-      return {
-        valid: false,
-        message: error.response?.data?.message || error.message || 'Error verifying promo code'
-      };
-    }
+    return this.makeRequest<{ offers: any[] }>('/special-offers');
   }
 }
 
-// Export a singleton instance
-export const quoteService = new QuoteIntegrationService();
+// Create a singleton instance with the default endpoint
+export const quoteIntegrationService = new QuoteIntegrationService();
 
-// Also export the class for testing or custom instantiation
+// Export the class for potential custom instantiations
 export default QuoteIntegrationService;
