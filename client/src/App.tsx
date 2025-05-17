@@ -1452,6 +1452,7 @@ function App() {
                 </UnifiedTreatmentPlansProvider>
               </BookingsProvider>
             </NotificationsProvider>
+            </ClinicProvider>
           </AdminAuthProvider>
         </AuthProvider>
         </ThemeProvider>
