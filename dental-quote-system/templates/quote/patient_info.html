@@ -1,249 +1,239 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Patient Information - Dental Quote System{% endblock %}
+{% block title %}Patient Information | MyDentalFly{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="h2 mb-3">Your Information</h1>
-    
-    <!-- Progress Steps -->
-    <div class="step-container mb-5">
-        <div class="step-line"></div>
-        <div class="row text-center">
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check text-success"></i>
-                    </div>
-                    <p class="mb-0">1. Select Treatments</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <p class="mb-0 fw-bold">2. Your Information</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <p class="mb-0">3. Review Quote</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-file-invoice"></i>
-                    </div>
-                    <p class="mb-0">4. Confirmation</p>
-                </div>
-            </div>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="fw-bold">Patient Information</h1>
+            <p class="lead">Please provide your details to complete your dental quote</p>
         </div>
     </div>
     
     <div class="row">
+        <!-- Main Content -->
         <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Tell Us About Yourself</h3>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('pages.patient_info') }}" class="patient-form needs-validation" novalidate>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="first_name" name="first_name" required 
-                                       value="{{ patient_info.first_name if patient_info else '' }}">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-4">
+                    <form id="patientInfoForm" action="{{ url_for('review_quote') }}" method="post" class="needs-validation" novalidate>
+                        <!-- Personal Information -->
+                        <h5 class="mb-4">Personal Information</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="firstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="firstName" name="first_name" 
+                                       value="{{ patient_info.first_name if patient_info else '' }}" required>
                                 <div class="invalid-feedback">
-                                    Please provide your first name.
+                                    First name is required.
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="last_name" name="last_name" required
-                                       value="{{ patient_info.last_name if patient_info else '' }}">
+                            <div class="col-md-6">
+                                <label for="lastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="lastName" name="last_name" 
+                                       value="{{ patient_info.last_name if patient_info else '' }}" required>
                                 <div class="invalid-feedback">
-                                    Please provide your last name.
+                                    Last name is required.
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" class="form-control" id="email" name="email" required
-                                       value="{{ patient_info.email if patient_info else '' }}">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ patient_info.email if patient_info else '' }}" required>
                                 <div class="invalid-feedback">
                                     Please provide a valid email address.
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label for="phone" class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" class="form-control" id="phone" name="phone" required
-                                       value="{{ patient_info.phone if patient_info else '' }}">
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ patient_info.phone if patient_info else '' }}" required>
                                 <div class="invalid-feedback">
-                                    Please provide your phone number.
+                                    Phone number is required.
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label for="country" class="form-label">Country of Residence</label>
+                                <select class="form-select" id="country" name="country" required>
+                                    <option value="" disabled selected>Select your country</option>
+                                    {% for country in countries %}
+                                    <option value="{{ country }}" {% if patient_info and patient_info.country == country %}selected{% endif %}>
+                                        {{ country }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select your country.
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="country" class="form-label">Country of Residence <span class="text-danger">*</span></label>
-                            <select class="form-select" id="country" name="country" required>
-                                <option value="" selected disabled>Select your country</option>
-                                {% for country in countries %}
-                                    <option value="{{ country.code }}" 
-                                            {% if patient_info and patient_info.country == country.code %}selected{% endif %}>
-                                        {{ country.name }}
-                                    </option>
-                                {% endfor %}
-                            </select>
-                            <div class="invalid-feedback">
-                                Please select your country.
+                        <!-- Treatment Preferences -->
+                        <h5 class="mb-4">Treatment Preferences</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label for="preferredMonth" class="form-label">Preferred Travel Month</label>
+                                <select class="form-select" id="preferredMonth" name="preferred_month">
+                                    <option value="" disabled selected>Select preferred month</option>
+                                    <option value="1" {% if patient_info and patient_info.preferred_month == '1' %}selected{% endif %}>January</option>
+                                    <option value="2" {% if patient_info and patient_info.preferred_month == '2' %}selected{% endif %}>February</option>
+                                    <option value="3" {% if patient_info and patient_info.preferred_month == '3' %}selected{% endif %}>March</option>
+                                    <option value="4" {% if patient_info and patient_info.preferred_month == '4' %}selected{% endif %}>April</option>
+                                    <option value="5" {% if patient_info and patient_info.preferred_month == '5' %}selected{% endif %}>May</option>
+                                    <option value="6" {% if patient_info and patient_info.preferred_month == '6' %}selected{% endif %}>June</option>
+                                    <option value="7" {% if patient_info and patient_info.preferred_month == '7' %}selected{% endif %}>July</option>
+                                    <option value="8" {% if patient_info and patient_info.preferred_month == '8' %}selected{% endif %}>August</option>
+                                    <option value="9" {% if patient_info and patient_info.preferred_month == '9' %}selected{% endif %}>September</option>
+                                    <option value="10" {% if patient_info and patient_info.preferred_month == '10' %}selected{% endif %}>October</option>
+                                    <option value="11" {% if patient_info and patient_info.preferred_month == '11' %}selected{% endif %}>November</option>
+                                    <option value="12" {% if patient_info and patient_info.preferred_month == '12' %}selected{% endif %}>December</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="stayDuration" class="form-label">Planned Stay Duration (Days)</label>
+                                <input type="number" class="form-control" id="stayDuration" name="stay_duration" min="1" 
+                                       value="{{ patient_info.stay_duration if patient_info else '' }}">
+                            </div>
+                            <div class="col-12">
+                                <label for="additionalServices" class="form-label">Interested in Additional Services</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="accommodationHelp" name="accommodation_help" 
+                                           {% if patient_info and patient_info.accommodation_help %}checked{% endif %}>
+                                    <label class="form-check-label" for="accommodationHelp">
+                                        Help with accommodation arrangements
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="transportHelp" name="transport_help" 
+                                           {% if patient_info and patient_info.transport_help %}checked{% endif %}>
+                                    <label class="form-check-label" for="transportHelp">
+                                        Airport transfer and local transportation
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="translatorHelp" name="translator_help" 
+                                           {% if patient_info and patient_info.translator_help %}checked{% endif %}>
+                                    <label class="form-check-label" for="translatorHelp">
+                                        Translator/interpreter services
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="mb-3">
-                            <label for="preferred_date" class="form-label">Preferred Treatment Date</label>
-                            <input type="date" class="form-control" id="preferred_date" name="preferred_date"
-                                   value="{{ patient_info.preferred_date if patient_info else '' }}"
-                                   min="{{ now.strftime('%Y-%m-%d') }}">
-                            <div class="form-text">
-                                When would you like to schedule your treatment? (Approximate date)
+                        <!-- Medical Information -->
+                        <h5 class="mb-4">Medical Information</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label for="allergies" class="form-label">Do you have any allergies or medical conditions?</label>
+                                <textarea class="form-control" id="allergies" name="allergies" rows="3" 
+                                          placeholder="Please list any allergies or medical conditions that our dental team should be aware of.">{{ patient_info.allergies if patient_info else '' }}</textarea>
+                            </div>
+                            <div class="col-12">
+                                <label for="medications" class="form-label">Are you currently taking any medications?</label>
+                                <textarea class="form-control" id="medications" name="medications" rows="3" 
+                                          placeholder="Please list any medications you are currently taking.">{{ patient_info.medications if patient_info else '' }}</textarea>
                             </div>
                         </div>
                         
-                        <div class="mb-4">
-                            <label for="notes" class="form-label">Additional Notes</label>
-                            <textarea class="form-control" id="notes" name="notes" rows="3">{{ patient_info.notes if patient_info else '' }}</textarea>
-                            <div class="form-text">
-                                Any specific requirements or questions about your treatment?
+                        <!-- Additional Comments -->
+                        <h5 class="mb-4">Additional Information</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <label for="comments" class="form-label">Additional Comments or Questions</label>
+                                <textarea class="form-control" id="comments" name="comments" rows="4" 
+                                          placeholder="Please provide any additional information or questions you have about your treatment.">{{ patient_info.comments if patient_info else '' }}</textarea>
                             </div>
                         </div>
                         
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="consent" name="consent" required>
-                            <label class="form-check-label" for="consent">
-                                I consent to the processing of my personal data for the purpose of receiving a dental treatment quote and follow-up communication. <span class="text-danger">*</span>
-                            </label>
-                            <div class="invalid-feedback">
-                                You must agree before submitting.
+                        <!-- Communication Preferences -->
+                        <h5 class="mb-4">Communication Preferences</h5>
+                        <div class="row g-3 mb-4">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="receiveUpdates" name="receive_updates" 
+                                           {% if patient_info and patient_info.receive_updates %}checked{% endif %}>
+                                    <label class="form-check-label" for="receiveUpdates">
+                                        I would like to receive updates about my quote and special offers
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="contactConsent" name="contact_consent" required 
+                                           {% if patient_info and patient_info.contact_consent %}checked{% endif %}>
+                                    <label class="form-check-label" for="contactConsent">
+                                        I consent to being contacted by MyDentalFly regarding my dental quote *
+                                    </label>
+                                    <div class="invalid-feedback">
+                                        You must consent to being contacted to proceed.
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('pages.quote_builder') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-1"></i> Back to Treatments
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                Review Your Quote <i class="fas fa-arrow-right ms-1"></i>
-                            </button>
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{{ url_for('quote_builder') }}" class="btn btn-outline-secondary">Back to Quote Builder</a>
+                            <button type="submit" class="btn btn-primary">Continue to Review</button>
                         </div>
                     </form>
                 </div>
             </div>
-            
-            <div class="card">
-                <div class="card-header bg-white">
-                    <h3 class="h5 mb-0">Your Privacy</h3>
-                </div>
-                <div class="card-body">
-                    <p>At MyDentalFly, we take your privacy seriously. Here's how we handle your information:</p>
-                    
-                    <ul class="mb-0">
-                        <li>Your personal data is securely stored and encrypted.</li>
-                        <li>We only share your information with the clinic you choose to book with.</li>
-                        <li>We will never sell your data to third parties.</li>
-                        <li>You can request deletion of your data at any time.</li>
-                        <li>For more details, please read our <a href="#">Privacy Policy</a>.</li>
-                    </ul>
-                </div>
-            </div>
         </div>
         
+        <!-- Quote Summary Sidebar -->
         <div class="col-lg-4">
-            <div class="card summary-panel">
+            <div class="card shadow-sm mb-4 sticky-top" style="top: 20px; z-index: 999;">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="h5 mb-0">Your Quote Summary</h3>
+                    <h5 class="mb-0">Your Quote Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div id="selected-treatments">
-                        {% if selected_treatments %}
+                    <!-- Selected Treatments -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Selected Treatments</h6>
+                        <ul class="list-group list-group-flush">
                             {% for treatment in selected_treatments %}
-                                <div class="cart-item p-3 mb-3 border rounded" data-treatment-id="{{ treatment.id }}">
-                                    <div class="d-flex justify-content-between">
-                                        <h4 class="h6 mb-1">{{ treatment.name }}</h4>
-                                        <span>x{{ treatment.quantity }}</span>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <span class="small text-muted">Unit price: ${{ treatment.price }}</span>
-                                        <div class="text-end">
-                                            <span class="treatment-price">${{ treatment.price * treatment.quantity }}</span>
-                                        </div>
-                                    </div>
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <div>
+                                    <span>{{ treatment.name }}</span>
+                                    <span class="d-block text-muted small">Quantity: {{ treatment.quantity }}</span>
                                 </div>
+                                <span class="fw-bold">${{ (treatment.price * treatment.quantity) }}</span>
+                            </li>
                             {% endfor %}
-                        {% else %}
-                            <div id="empty-cart" class="text-center py-4">
-                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-                                <p>Your quote is empty. Please go back and select at least one treatment.</p>
-                            </div>
-                        {% endif %}
+                        </ul>
                     </div>
                     
+                    <!-- Promo Code Applied -->
                     {% if promo_code %}
-                        <div class="alert alert-info">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-tag me-2"></i>
-                                <div>
-                                    <p class="mb-0"><strong>Promo: {{ promo_code }}</strong></p>
-                                    {% if promo_details %}
-                                        <p class="mb-0 small">{{ promo_details.description }}</p>
-                                    {% endif %}
-                                </div>
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Promotional Code</h6>
+                        <div class="d-flex justify-content-between p-3 bg-light rounded">
+                            <div>
+                                <strong>{{ promo_code }}</strong>
+                                {% if promo_details %}
+                                <div class="small text-success">{{ promo_details.description }}</div>
+                                {% endif %}
                             </div>
                         </div>
+                    </div>
                     {% endif %}
                     
-                    <hr>
-                    
-                    <!-- Pricing Summary -->
-                    <div class="pricing-summary">
+                    <!-- Pricing -->
+                    <div class="mb-4">
+                        <h6 class="fw-bold mb-3">Pricing</h6>
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <span id="subtotal">${{ subtotal }}</span>
+                            <span>${{ subtotal }}</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2 {% if discount == 0 %}d-none{% endif %}" id="discount-row">
+                        {% if discount > 0 %}
+                        <div class="d-flex justify-content-between mb-2">
                             <span>Discount:</span>
-                            <span id="discount">-${{ discount }}</span>
+                            <span class="text-success">-${{ discount }}</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2 fw-bold">
+                        {% endif %}
+                        <div class="d-flex justify-content-between fw-bold">
                             <span>Total:</span>
-                            <span id="total">${{ total }}</span>
+                            <span>${{ total }}</span>
                         </div>
                     </div>
-                    
-                    <div class="mt-4">
-                        <div class="alert alert-light border">
-                            <p class="mb-0 small"><i class="fas fa-info-circle me-1"></i> This is just a quote. No payment is required at this stage.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h4 class="h6 mb-3">Why choose MyDentalFly?</h4>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Save up to 70% on dental treatments</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> All clinics vetted for quality</li>
-                        <li class="mb-2"><i class="fas fa-check text-success me-2"></i> Treatment guarantee included</li>
-                        <li><i class="fas fa-check text-success me-2"></i> Dedicated support throughout</li>
-                    </ul>
                 </div>
             </div>
         </div>
@@ -254,32 +244,17 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Add current date to preferred_date min attribute
-        const dateInput = document.getElementById('preferred_date');
-        if (dateInput && !dateInput.getAttribute('min')) {
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            let mm = today.getMonth() + 1;
-            let dd = today.getDate();
-            
-            if (dd < 10) dd = '0' + dd;
-            if (mm < 10) mm = '0' + mm;
-            
-            const formattedToday = yyyy + '-' + mm + '-' + dd;
-            dateInput.setAttribute('min', formattedToday);
-            
-            // If no date is set, suggest a date 1 month from now
-            if (!dateInput.value) {
-                const nextMonth = new Date();
-                nextMonth.setMonth(nextMonth.getMonth() + 1);
-                
-                const nextMM = (nextMonth.getMonth() + 1).toString().padStart(2, '0');
-                const nextDD = nextMonth.getDate().toString().padStart(2, '0');
-                const nextYYYY = nextMonth.getFullYear();
-                
-                dateInput.value = `${nextYYYY}-${nextMM}-${nextDD}`;
+        // Form validation
+        const form = document.getElementById('patientInfoForm');
+        
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
-        }
+            
+            form.classList.add('was-validated');
+        });
     });
 </script>
 {% endblock %}
