@@ -1,0 +1,485 @@
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f5f8fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid #eaeaea;
+}
+
+h1 {
+    color: #1e88e5;
+}
+
+footer {
+    text-align: center;
+    margin-top: 2rem;
+    padding: 1rem 0;
+    border-top: 1px solid #eaeaea;
+    color: #777;
+    font-size: 0.9rem;
+}
+
+/* Quote Builder Styles */
+.quote-builder {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 2rem;
+}
+
+/* Step Navigation */
+.step-nav {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #eaeaea;
+}
+
+.step-btn {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 1rem;
+    font-size: 1rem;
+    color: #777;
+    cursor: pointer;
+    position: relative;
+    text-align: center;
+}
+
+.step-btn.active {
+    color: #1e88e5;
+    font-weight: bold;
+}
+
+.step-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #1e88e5;
+}
+
+/* Selected Treatments Panel */
+.selected-treatments-panel {
+    margin-bottom: 2rem;
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.selected-treatments-panel h2 {
+    background-color: #f5f8fa;
+    padding: 1rem;
+    border-bottom: 1px solid #eaeaea;
+    font-size: 1.2rem;
+}
+
+.selected-treatments {
+    padding: 1rem;
+}
+
+.treatment-list {
+    list-style: none;
+}
+
+.treatment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.treatment-item:last-child {
+    border-bottom: none;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #e53935;
+    cursor: pointer;
+    margin-left: 1rem;
+    font-size: 1.1rem;
+}
+
+.empty-message {
+    color: #999;
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.totals {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eaeaea;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.discount {
+    color: #43a047;
+}
+
+.grand-total {
+    font-weight: bold;
+    margin-top: 0.5rem;
+    font-size: 1.1rem;
+}
+
+/* Step Content */
+.step-panel {
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.step-panel.hidden {
+    display: none;
+}
+
+.step-panel h2 {
+    font-size: 1.4rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+/* Treatments Step */
+.treatments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.treatment-card {
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.treatment-card:hover {
+    border-color: #1e88e5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.treatment-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.price {
+    font-weight: bold;
+    color: #1e88e5;
+}
+
+/* Promo Step */
+.promo-section {
+    margin-bottom: 1.5rem;
+}
+
+.promo-form {
+    max-width: 500px;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.promo-input-group input {
+    flex: 1;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.promo-message {
+    margin-top: 0.5rem;
+    min-height: 1.5rem;
+}
+
+.success-message {
+    color: #43a047;
+}
+
+.error-message {
+    color: #e53935;
+}
+
+.available-promos {
+    margin-top: 1.5rem;
+}
+
+.available-promos h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.promo-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.promo-chip {
+    background-color: #f0f4f8;
+    padding: 0.5rem 0.75rem;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.promo-chip:hover {
+    background-color: #e3f2fd;
+}
+
+.applied-promo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #e8f5e9;
+    padding: 1rem;
+    border-radius: 6px;
+}
+
+/* Patient Info Step */
+.form-row {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+input, textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Review Step */
+.review-sections {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.review-section {
+    border: 1px solid #eaeaea;
+    border-radius: 6px;
+    padding: 1.5rem;
+}
+
+.review-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #eaeaea;
+    padding-bottom: 0.5rem;
+}
+
+.review-list {
+    list-style: none;
+    margin-bottom: 1.5rem;
+}
+
+.review-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.review-totals {
+    margin-top: 1rem;
+}
+
+.patient-info-review .info-row {
+    display: flex;
+    margin-bottom: 0.5rem;
+}
+
+.info-label {
+    font-weight: bold;
+    width: 120px;
+    color: #666;
+}
+
+/* Step Actions */
+.step-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eaeaea;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+}
+
+.next-btn, .submit-btn {
+    background-color: #1e88e5;
+    color: #fff;
+}
+
+.next-btn:hover, .submit-btn:hover {
+    background-color: #1976d2;
+}
+
+.back-btn {
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.back-btn:hover {
+    background-color: #eeeeee;
+}
+
+.apply-promo-btn {
+    background-color: #43a047;
+    color: #fff;
+}
+
+.apply-promo-btn:hover {
+    background-color: #388e3c;
+}
+
+.remove-promo-btn {
+    background-color: #f5f5f5;
+    color: #e53935;
+}
+
+.remove-promo-btn:hover {
+    background-color: #ffebee;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal.visible {
+    display: flex;
+}
+
+.modal-content {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 2rem;
+    max-width: 500px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.success-icon {
+    font-size: 3rem;
+    color: #43a047;
+    margin-bottom: 1rem;
+}
+
+.modal h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.modal p {
+    margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .treatments-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .step-nav {
+        flex-wrap: wrap;
+    }
+
+    .step-btn {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .review-sections {
+        grid-template-columns: 1fr;
+    }
+}
