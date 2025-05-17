@@ -1,201 +1,333 @@
-/* MyDentalFly - Global Styles */
+/* Main Styles for Dental Quote System */
 
-/* Custom Color Variables */
 :root {
-    --primary: #4e73df;
-    --primary-dark: #224abe;
-    --secondary: #858796;
-    --success: #1cc88a;
-    --info: #36b9cc;
-    --warning: #f6c23e;
-    --danger: #e74a3b;
-    --light: #f8f9fc;
-    --dark: #5a5c69;
+  --primary-color: #4e73df;
+  --secondary-color: #f8f9fc;
+  --accent-color: #36b9cc;
+  --success-color: #1cc88a;
+  --danger-color: #e74a3b;
+  --warning-color: #f6c23e;
+  --light-gray: #f8f9fc;
+  --dark-gray: #5a5c69;
+  --border-radius: 0.35rem;
+  --box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 
-/* Typography */
+/* General Styles */
 body {
-    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #6e707e;
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: #f8f9fc;
+  color: #5a5c69;
+}
+
+.container {
+  max-width: 1200px;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    color: #4e5079;
+  font-weight: 700;
+  color: #2e3451;
 }
 
-/* Section Styling */
-.section-title {
-    position: relative;
-    padding-bottom: 15px;
-    margin-bottom: 15px;
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: all 0.2s ease-in-out;
 }
 
-.section-title:after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 50px;
-    height: 3px;
-    background-color: var(--primary);
+a:hover {
+  color: #2e59d9;
+  text-decoration: none;
 }
 
-/* Cards */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #2e59d9;
+  border-color: #2653d4;
+}
+
+.bg-primary {
+  background-color: var(--primary-color) !important;
+}
+
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+/* Card Styles */
 .card {
-    border: none;
-    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.1);
-    border-radius: 0.35rem;
+  border: none;
+  box-shadow: var(--box-shadow);
+  border-radius: var(--border-radius);
+  margin-bottom: 1.5rem;
 }
 
 .card-header {
-    padding: 1rem 1.25rem;
-    margin-bottom: 0;
-    border-bottom: 1px solid #e3e6f0;
+  border-bottom: 1px solid #e3e6f0;
+  background-color: #f8f9fc;
+  padding: 1rem 1.25rem;
 }
 
-/* Quote Stepper */
-.quote-stepper {
-    margin-top: 30px;
+.card-body {
+  padding: 1.25rem;
 }
 
-.quote-steps {
-    display: flex;
-    justify-content: space-between;
-    margin-top: -12px;
+/* Navigation */
+.navbar {
+  padding: 0.75rem 1rem;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 
-.quote-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 25%;
-    position: relative;
+.navbar-brand {
+  font-weight: 800;
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
 }
 
-.step-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 8px;
-    z-index: 1;
+.navbar-brand span {
+  margin-left: 0.5rem;
 }
 
-.quote-step.active .step-icon {
-    background-color: var(--primary);
-    color: white;
-    border-color: var(--primary);
+.nav-link {
+  font-weight: 600;
+  color: #5a5c69;
+  padding: 0.5rem 1rem;
 }
 
-.quote-step.completed .step-icon {
-    background-color: var(--success);
-    color: white;
-    border-color: var(--success);
+.nav-link:hover {
+  color: var(--primary-color);
 }
 
-.step-label {
-    font-size: 0.8rem;
-    text-align: center;
+/* Hero Section */
+.hero {
+  padding: 4rem 0;
+  background-color: var(--secondary-color);
+  margin-bottom: 2rem;
 }
 
-/* Special Offer Cards */
-.special-offer-card {
-    transition: transform 0.3s;
-    position: relative;
-    overflow: hidden;
+.hero h1 {
+  color: #2e3451;
+  margin-bottom: 1rem;
 }
 
-.special-offer-card:hover {
-    transform: translateY(-5px);
+.hero .lead {
+  font-size: 1.2rem;
+  color: #5a5c69;
 }
 
-.discount-badge {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background-color: var(--danger);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: bold;
+/* Quote Builder */
+.treatment-card, .offer-card {
+  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-/* Treatment Cards */
-.treatment-card {
-    transition: transform 0.3s;
+.treatment-card:hover, .offer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15);
 }
 
-.treatment-card:hover {
-    transform: translateY(-5px);
+.card-img-top {
+  height: 200px;
+  object-fit: cover;
 }
 
-.treatment-icon {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: rgba(78, 115, 223, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
+.price-tag {
+  font-size: 1.1rem;
+  color: var(--primary-color);
 }
 
-/* Process Steps */
-.process-step {
-    padding: 20px;
-    height: 100%;
+.badge {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
 }
 
-.process-icon {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    background-color: rgba(78, 115, 223, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    color: var(--primary);
-    margin: 0 auto;
+/* Progress Steps */
+.quote-progress {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  position: relative;
 }
 
-/* Testimonial Cards */
-.testimonial-card {
-    border-left: 4px solid var(--primary);
+.quote-progress::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: #e9ecef;
+  z-index: 0;
 }
 
-/* Quote Selection */
-.selected-treatment {
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 5px;
-    background-color: #f8f9fa;
-    margin-bottom: 10px;
+.progress-step {
+  position: relative;
+  z-index: 1;
+  background-color: white;
+  padding: 0 10px;
+  text-align: center;
 }
 
-.treatment-quantity-controls .form-control {
-    max-width: 50px;
+.step-circle {
+  width: 30px;
+  height: 30px;
+  background-color: white;
+  border: 2px solid #e9ecef;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 10px;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .step-label {
-        font-size: 0.7rem;
-    }
-    
-    .quote-steps {
-        flex-wrap: wrap;
-    }
-    
-    .quote-step {
-        width: 50%;
-        margin-bottom: 15px;
-    }
+.progress-step.active .step-circle {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.progress-step p {
+  margin-bottom: 0;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Treatments and Offers Lists */
+.treatment-item, .offer-item {
+  border-radius: var(--border-radius);
+  border: 1px solid #e3e6f0;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.treatment-item:hover, .offer-item:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0.15rem 0.5rem rgba(78, 115, 223, 0.1);
+}
+
+/* Quote Summary */
+.summary-panel {
+  border-radius: var(--border-radius);
+}
+
+.cart-item {
+  border-radius: var(--border-radius);
+}
+
+.quantity-control {
+  max-width: 120px;
+}
+
+/* Tooltip Styling */
+.tooltip {
+  opacity: 0.9 !important;
+}
+
+.tooltip-inner {
+  background-color: var(--primary-color) !important;
+  padding: 0.5rem 1rem;
+  border-radius: var(--border-radius);
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 767.98px) {
+  .hero {
+    padding: 2rem 0;
+  }
+  
+  .card-img-top {
+    height: 150px;
+  }
+  
+  .progress-step p {
+    font-size: 0.75rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+/* Footer */
+footer {
+  background-color: #f8f9fc;
+  padding: 2rem 0;
+  margin-top: 3rem;
+}
+
+footer h5 {
+  color: #2e3451;
+  margin-bottom: 1rem;
+}
+
+footer a {
+  color: #5a5c69;
+}
+
+footer a:hover {
+  color: var(--primary-color);
+}
+
+/* Patient Info Form */
+.patient-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.patient-form label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Review Page */
+.review-section {
+  border-bottom: 1px solid #e3e6f0;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.review-section:last-child {
+  border-bottom: none;
+}
+
+/* Confirmation Page */
+.confirmation-box {
+  text-align: center;
+  padding: 3rem;
+  background-color: #f8f9fc;
+  border-radius: var(--border-radius);
+  margin-bottom: 2rem;
+}
+
+.confirmation-icon {
+  font-size: 4rem;
+  color: var(--success-color);
+  margin-bottom: 1.5rem;
+}
+
+/* Promo Code Section */
+.promo-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(78, 115, 223, 0.1);
+  color: var(--primary-color);
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Special Offers Page */
+.offer-list .offer-card {
+  height: 100%;
 }
