@@ -1,120 +1,121 @@
 /**
  * Quote Integration Service
  * 
- * This service provides the interface for communicating with the Flask quote builder API
- * It handles all the data fetching and mutations for quotes across all portals
+ * This service provides functions to interact with the Flask backend
+ * for quote management across all portals (admin, clinic, patient)
  */
 import { apiRequest } from '@/lib/queryClient';
 
+// Types
 export interface Treatment {
   id: string;
   name: string;
-  description?: string;
-  price: number;
   quantity: number;
-  clinic_reference_code?: string;
+  price: number;
+  currency: string;
+  clinic_ref_code?: string;
+}
+
+export interface PatientInfo {
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
 }
 
 export interface QuoteData {
   id: string;
-  patient_name: string;
-  patient_email: string;
-  patient_phone?: string;
   status: string;
+  created_at: string;
+  updated_at: string;
+  patient_info: PatientInfo;
+  treatments: Treatment[];
   subtotal: number;
   discount_amount: number;
   total: number;
+  currency: string;
   promo_code?: string;
-  notes?: string;
-  treatments: Treatment[];
-  created_at: string;
-  updated_at: string;
-  assigned_to?: string;
-  assigned_to_name?: string;
+  clinic_id?: string;
+  clinic_name?: string;
   clinic_logo?: string;
-  clinic_location?: string;
-  clinic_description?: string;
-  clinic_website?: string;
-  preferred_dates?: string;
-  preferred_contact_method?: string;
+  special_offer_id?: string;
+  special_offer_name?: string;
 }
 
 class QuoteIntegrationService {
-  // Admin Portal Endpoints
+  // Admin Portal Functions
   async getAdminQuotes(): Promise<QuoteData[]> {
     const response = await apiRequest('GET', '/api/integration/admin/quotes');
-    return await response.json();
+    return response.json();
   }
 
   async getAdminQuote(quoteId: string): Promise<QuoteData> {
-    const response = await apiRequest('GET', `/api/integration/admin/quotes/${quoteId}`);
-    return await response.json();
+    const response = await apiRequest('GET', `/api/integration/admin/quote/${quoteId}`);
+    return response.json();
   }
 
-  async assignQuote(quoteId: string, clinicId: string): Promise<void> {
-    await apiRequest('POST', `/api/integration/admin/quotes/${quoteId}/assign`, {
-      clinic_id: clinicId
-    });
+  async assignQuote(quoteId: string, clinicId: string): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/admin/quote/${quoteId}/assign`, { clinic_id: clinicId });
+    return response.json();
   }
 
-  async unassignQuote(quoteId: string): Promise<void> {
-    await apiRequest('POST', `/api/integration/admin/quotes/${quoteId}/unassign`);
+  async unassignQuote(quoteId: string): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/admin/quote/${quoteId}/unassign`);
+    return response.json();
   }
 
-  // Clinic Portal Endpoints
+  // Clinic Portal Functions
   async getClinicQuotes(clinicId: string): Promise<QuoteData[]> {
     const response = await apiRequest('GET', `/api/integration/clinic/${clinicId}/quotes`);
-    return await response.json();
+    return response.json();
   }
 
   async getClinicQuote(clinicId: string, quoteId: string): Promise<QuoteData> {
-    const response = await apiRequest('GET', `/api/integration/clinic/${clinicId}/quotes/${quoteId}`);
-    return await response.json();
+    const response = await apiRequest('GET', `/api/integration/clinic/${clinicId}/quote/${quoteId}`);
+    return response.json();
   }
 
-  async updateQuoteStatus(quoteId: string, status: string): Promise<void> {
-    await apiRequest('POST', `/api/integration/quotes/${quoteId}/status`, {
-      status
-    });
-  }
-
-  async sendQuoteEmail(quoteId: string, email: string): Promise<void> {
-    await apiRequest('POST', `/api/integration/quotes/${quoteId}/email`, {
-      email
-    });
-  }
-
-  // Patient Portal Endpoints
+  // Patient Portal Functions
   async getPatientQuotes(patientId: string): Promise<QuoteData[]> {
     const response = await apiRequest('GET', `/api/integration/patient/${patientId}/quotes`);
-    return await response.json();
+    return response.json();
   }
 
   async getPatientQuote(patientId: string, quoteId: string): Promise<QuoteData> {
-    const response = await apiRequest('GET', `/api/integration/patient/${patientId}/quotes/${quoteId}`);
-    return await response.json();
+    const response = await apiRequest('GET', `/api/integration/patient/${patientId}/quote/${quoteId}`);
+    return response.json();
   }
 
-  async requestAppointment(quoteId: string): Promise<void> {
-    await apiRequest('POST', `/api/integration/quotes/${quoteId}/request-appointment`);
+  // Common Functions
+  async updateQuoteStatus(quoteId: string, status: string): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/quote/${quoteId}/status`, { status });
+    return response.json();
   }
 
-  // Common Endpoints
-  async downloadQuotePdf(quoteId: string): Promise<void> {
-    // This will trigger a file download
-    window.open(`/api/integration/quotes/${quoteId}/pdf`, '_blank');
+  async sendQuoteEmail(quoteId: string, email: string): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/quote/${quoteId}/email`, { email });
+    return response.json();
   }
 
-  async updateTreatmentQuantity(quoteId: string, treatmentId: string, quantity: number): Promise<void> {
-    await apiRequest('POST', `/api/integration/quotes/${quoteId}/treatments/${treatmentId}`, {
-      quantity
-    });
+  async requestAppointment(quoteId: string): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/quote/${quoteId}/request-appointment`);
+    return response.json();
   }
 
-  async removeTreatment(quoteId: string, treatmentId: string): Promise<void> {
-    await apiRequest('DELETE', `/api/integration/quotes/${quoteId}/treatments/${treatmentId}`);
+  async downloadQuotePdf(quoteId: string): Promise<Blob> {
+    const response = await apiRequest('GET', `/api/integration/quote/${quoteId}/pdf`);
+    return response.blob();
+  }
+
+  async updateTreatmentQuantity(quoteId: string, treatmentId: string, quantity: number): Promise<any> {
+    const response = await apiRequest('POST', `/api/integration/quote/${quoteId}/treatment/${treatmentId}`, { quantity });
+    return response.json();
+  }
+
+  async removeTreatment(quoteId: string, treatmentId: string): Promise<any> {
+    const response = await apiRequest('DELETE', `/api/integration/quote/${quoteId}/treatment/${treatmentId}`);
+    return response.json();
   }
 }
 
-// Create a singleton instance
 export const quoteIntegrationService = new QuoteIntegrationService();

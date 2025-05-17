@@ -1,74 +1,148 @@
 import React, { useEffect, useState } from "react";
-import { useLocation } from "wouter";
-import { ROUTES } from "@/lib/routes";
-import { PageHeader } from "@/components/page-header";
-import { Plus, FileText, Loader2 } from "lucide-react";
+import { useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Loader2, RefreshCw, Download, Calendar } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuoteSystem } from "@/hooks/use-quote-system";
+import { QuoteIntegrationWidget } from "@/components/quotes/QuoteIntegrationWidget";
 
-/**
- * This is a completely simplified version of PatientQuotesPage that doesn't try
- * to do any complex rendering of quote details or lists. Instead, it acts as
- * a redirect component that sends users to the patient portal's quotes section.
- * 
- * This avoids the React hooks errors we were encountering.
- */
 export default function PatientQuotesPage() {
   const [, setLocation] = useLocation();
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const params = useParams();
+  const quoteId = params?.id;
+  
+  // Get the patient's ID from auth
+  const { user } = useAuth();
+  const patientId = user?.id.toString();
+  
+  // Use the quote system hook for the patient portal
+  const quoteSystem = useQuoteSystem('patient', patientId);
+  
+  // Local state
+  const [activeTab, setActiveTab] = useState<"all" | "active" | "completed">("all");
 
-  // On mount, redirect to the patient portal with the quotes section selected
+  // Load quotes when component mounts
   useEffect(() => {
-    if (!isRedirecting && typeof window !== 'undefined') {
-      setIsRedirecting(true);
-      // Store the current section in session storage so the portal knows which section to display
-      try {
-        sessionStorage.setItem('patient_portal_section', 'quotes');
-        // Redirect to the patient portal page
-        setLocation(ROUTES.PATIENT_PORTAL);
-      } catch (error) {
-        console.error("Failed to set session storage or navigate:", error);
-        setIsRedirecting(false);
-      }
+    if (quoteId) {
+      quoteSystem.setSelectedQuoteId(quoteId);
     }
-  }, [setLocation, isRedirecting]);
+  }, [quoteId]);
 
-  // While redirecting, show a simple loading message
-  if (isRedirecting) {
+  // Handle quote actions
+  const handleQuoteAction = (action: string, quoteId: string) => {
+    switch (action) {
+      case 'view':
+        setLocation(`/patient/quotes/${quoteId}`);
+        break;
+      case 'request-appointment':
+        quoteSystem.requestAppointmentMutation.mutate({ quoteId });
+        break;
+      default:
+        break;
+    }
+  };
+
+  // If showing a specific quote
+  if (quoteId) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Redirecting to quotes...</p>
+      <div className="container mx-auto py-6 px-4">
+        <QuoteIntegrationWidget
+          portalType="patient"
+          quoteId={quoteId}
+          userId={patientId}
+          onQuoteAction={handleQuoteAction}
+        />
       </div>
     );
   }
 
-  // This part should only show briefly before the redirect happens
+  // Filter quotes by status based on active tab
+  const filteredQuotes = quoteSystem.quotes?.filter(quote => {
+    if (activeTab === "active") {
+      return ["pending", "assigned", "in_progress"].includes(quote.status);
+    } else if (activeTab === "completed") {
+      return ["completed", "accepted"].includes(quote.status);
+    }
+    return true;
+  }) || [];
+
+  // Calculate statistics
+  const stats = {
+    total: quoteSystem.quotes?.length || 0,
+    active: quoteSystem.quotes?.filter(q => ["pending", "assigned", "in_progress"].includes(q.status)).length || 0,
+    completed: quoteSystem.quotes?.filter(q => ["completed", "accepted"].includes(q.status)).length || 0
+  };
+
   return (
     <div className="container mx-auto py-6 px-4">
       <PageHeader
         title="My Quotes"
-        description="View and manage your quote requests"
+        description="Track and manage your treatment quotes"
         actions={
-          <Button asChild>
-            <a href="/quote-request" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> New Quote Request
-            </a>
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => quoteSystem.refetchQuotes()}
+            >
+              <RefreshCw className={`h-4 w-4 ${quoteSystem.isRefetching ? 'animate-spin' : ''}`} /> 
+              Refresh
+            </Button>
+            <Button
+              className="flex items-center gap-2"
+              onClick={() => setLocation('/patient/request-quote')}
+            >
+              <Calendar className="h-4 w-4" />
+              New Quote Request
+            </Button>
+          </div>
         }
       />
-      
-      <Card className="mt-8">
-        <CardContent className="flex flex-col items-center text-center space-y-4 py-6">
-          <Loader2 className="h-16 w-16 text-primary animate-spin" />
-          <div className="max-w-md">
-            <h3 className="text-xl font-semibold mb-2">Loading Your Quotes</h3>
-            <p className="text-muted-foreground mb-6">
-              Please wait while we retrieve your dental treatment quotes.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+
+      {/* Quote Statistics */}
+      <div className="grid grid-cols-3 gap-4 mt-6">
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-muted-foreground">Total Quotes</p>
+            <p className="text-2xl font-bold">{stats.total}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-muted-foreground">Active Quotes</p>
+            <p className="text-2xl font-bold">{stats.active}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <p className="text-sm font-medium text-muted-foreground">Completed</p>
+            <p className="text-2xl font-bold">{stats.completed}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as any)}
+        className="mt-6"
+      >
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="all">All Quotes</TabsTrigger>
+          <TabsTrigger value="active">Active</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-6">
+          <QuoteIntegrationWidget
+            portalType="patient"
+            userId={patientId}
+            onQuoteAction={handleQuoteAction}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
