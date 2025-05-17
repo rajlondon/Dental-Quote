@@ -871,6 +871,9 @@ function Router() {
       {/* Comprehensive Quote Builder */}
       <Route path="/comprehensive-quote" component={React.lazy(() => import("@/pages/ComprehensiveQuotePage"))} />
       
+      {/* Enhanced Quote Builder with Original Dental Quiz + Special Offers */}
+      <Route path="/enhanced-quote" component={React.lazy(() => import("@/pages/EnhancedQuotePage"))} />
+      
       {/* Canonical route for patient quote details - redirect from /patient/quotes/:id */}
       <Route path="/portal/quotes/:id">
         {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
