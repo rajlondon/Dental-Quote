@@ -141,8 +141,9 @@ function Router() {
       <PromoDetector />
       <Switch>
         {/* Public Routes */}
-      <Route path="/" component={Home} />
-      <Route path="/home" component={Home} />
+      <Route path="/" component={HomePage} />
+      <Route path="/home" component={HomePage} />
+      <Route path="/quote-builder" component={QuoteBuilderPage} />
       <Route path="/index">
         {() => <Redirect to="/" />}
       </Route>
@@ -1401,9 +1402,10 @@ function App() {
               <BookingsProvider>
                 <UnifiedTreatmentPlansProvider>
                   <QuoteFlowProvider>
-                    <SpecialOffersProvider>
-                      <PageTransitionProvider>
-                        <NavigationProvider>
+                    <PersistentQuoteProvider>
+                      <SpecialOffersProvider>
+                        <PageTransitionProvider>
+                          <NavigationProvider>
                           <Suspense fallback={<div>Loading...</div>}>
                             <ScrollToTop />
                             {/* Only exclude ReloadTranslations on clinic portal path */}
