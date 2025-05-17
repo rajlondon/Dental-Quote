@@ -61,12 +61,22 @@ const treatmentCategories = [
   { id: 'Hygiene', name: 'Hygiene' }
 ];
 
-export function ComprehensiveQuoteBuilder() {
+interface ComprehensiveQuoteBuilderProps {
+  initialActiveTab?: string;
+  dentalChartData?: any; // Dental chart data from previous step
+  preSelectedTreatments?: string[]; // Treatment IDs from dental chart
+}
+
+export function ComprehensiveQuoteBuilder({
+  initialActiveTab = "quiz",
+  dentalChartData,
+  preSelectedTreatments = []
+}: ComprehensiveQuoteBuilderProps) {
   // State for selected category
   const [selectedCategory, setSelectedCategory] = useState('all');
   
   // State for active tab (quiz, treatments, packages, offers, info)
-  const [activeTab, setActiveTab] = useState('quiz');
+  const [activeTab, setActiveTab] = useState(initialActiveTab);
   
   // State for quiz progress
   const [quizStep, setQuizStep] = useState(0);
