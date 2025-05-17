@@ -115,8 +115,10 @@ import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
 import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
 import ContactWidget from "@/components/ContactWidget";
 import PatientTreatmentPlanPage from "@/pages/patient/PatientTreatmentPlanPage";
+import PatientQuotesPage from "@/pages/patient/PatientQuotesPage";
 import ClinicTreatmentPlanPage from "@/pages/clinic/ClinicTreatmentPlanPage";
 import AdminTreatmentPlansPage from "@/pages/admin/AdminTreatmentPlansPage";
+import AdminQuotesPage from "@/pages/admin/AdminQuotesPage";
 import { UnifiedTreatmentPlansProvider } from "@/hooks/use-unified-treatment-plans";
 import { QuoteFlowProvider } from "@/contexts/QuoteFlowContext";
 import { EnhancedQuoteFlowProvider } from "@/contexts/EnhancedQuoteFlowContext";
@@ -710,6 +712,22 @@ function Router() {
       </Route>
       <Route path="/patient-portal">
         {() => <PatientPortalPage />}
+      </Route>
+      
+      {/* Integrated Quote System Routes */}
+      <Route path="/quote-integration/patient">
+        {() => (
+          <NavigationErrorBoundary key="patient-quotes-integration">
+            <PatientQuotesPage />
+          </NavigationErrorBoundary>
+        )}
+      </Route>
+      <Route path="/quote-integration/admin">
+        {() => (
+          <NavigationErrorBoundary key="admin-quotes-integration">
+            <AdminQuotesPage />
+          </NavigationErrorBoundary>
+        )}
       </Route>
       
       {/* Special Offers Rebuild Testing Routes */}
