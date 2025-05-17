@@ -41,7 +41,7 @@
                     </div>
                     {% if quote_data.discount > 0 %}
                     <div class="total-row discount">
-                        <span>Discount ({{ quote_data.discount }}%):</span>
+                        <span>Discount - {{ quote_data.promo_code }} ({{ quote_data.discount }}%):</span>
                         <span>-${{ "%.2f"|format(totals.discount_amount) }}</span>
                     </div>
                     {% endif %}
