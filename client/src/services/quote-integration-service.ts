@@ -1,215 +1,161 @@
 /**
  * Quote Integration Service
  * 
- * This service provides functions to interact with the Flask backend
- * for quote management across all portals (admin, clinic, patient)
+ * This service handles communication between the React components and the 
+ * Flask-based Quote System backend. It transforms API responses into
+ * strongly-typed objects and provides methods for all quote-related operations.
  */
+
+// Base URL for the Flask API
+const FLASK_API_BASE_URL = 'http://localhost:5001/api';
 
 export interface Treatment {
   id: string;
   name: string;
-  quantity: number;
-  price: number;
-  currency: string;
-  clinic_ref_code?: string;
+  description?: string;
+  category?: string;
+  price?: number;
+  quantity?: number;
 }
 
-export interface PatientInfo {
-  name: string;
-  email: string;
-  phone: string;
-  country: string;
-}
-
-export class QuoteData {
+export interface QuoteData {
   id: string;
-  status: string;
-  created_at: string;
-  updated_at: string;
-  patient_info: PatientInfo;
-  treatments: Treatment[];
-  subtotal: number;
-  discount_amount: number;
-  total: number;
-  currency: string;
-  promo_code?: string;
+  status?: string;
+  created_at?: string;
+  updated_at?: string;
+  patient_id?: string;
+  patient_name?: string;
+  patient_email?: string;
+  patient_phone?: string;
+  patient_notes?: string;
   clinic_id?: string;
   clinic_name?: string;
-  clinic_logo?: string;
-  clinic_description?: string;
-  clinic_location?: string;
-  clinic_website?: string;
-  special_offer_id?: string;
-  special_offer_name?: string;
-  assigned_to?: string;
-  assigned_to_name?: string;
-  notes?: string;
-  preferred_dates?: string[];
-  preferred_contact_method?: string;
-
-  constructor(data: any) {
-    this.id = data.id || '';
-    this.status = data.status || 'draft';
-    this.created_at = data.created_at || new Date().toISOString();
-    this.updated_at = data.updated_at || new Date().toISOString();
-    this.patient_info = data.patient_info || { name: '', email: '', phone: '', country: '' };
-    this.treatments = data.treatments || [];
-    this.subtotal = data.subtotal || 0;
-    this.discount_amount = data.discount_amount || 0;
-    this.total = data.total || 0;
-    this.currency = data.currency || 'USD';
-    this.promo_code = data.promo_code;
-    this.clinic_id = data.clinic_id;
-    this.clinic_name = data.clinic_name;
-    this.clinic_logo = data.clinic_logo;
-    this.clinic_description = data.clinic_description;
-    this.clinic_location = data.clinic_location;
-    this.clinic_website = data.clinic_website;
-    this.special_offer_id = data.special_offer_id;
-    this.special_offer_name = data.special_offer_name;
-    this.assigned_to = data.assigned_to;
-    this.assigned_to_name = data.assigned_to_name;
-    this.notes = data.notes;
-    this.preferred_dates = data.preferred_dates;
-    this.preferred_contact_method = data.preferred_contact_method;
-  }
-
-  // Helper getter methods for easier access to nested properties
-  get patient_name(): string { return this.patient_info?.name || ''; }
-  get patient_email(): string { return this.patient_info?.email || ''; }
-  get patient_phone(): string { return this.patient_info?.phone || ''; }
-  get patient_country(): string { return this.patient_info?.country || ''; }
-
-  // Method to calculate the discount percentage if applicable
-  getDiscountPercentage(): number {
-    if (this.subtotal === 0) return 0;
-    return Math.round((this.discount_amount / this.subtotal) * 100);
-  }
+  promo_code?: string;
+  discount_percent?: number;
+  subtotal?: number;
+  discount_amount?: number;
+  total?: number;
+  treatments?: Treatment[];
 }
 
-class QuoteIntegrationService {
-  // Base API URL for Flask integration
-  private baseUrl = '/api/integration';
-
-  // General method to handle API requests
-  private async fetchApi(endpoint: string, options: RequestInit = {}): Promise<any> {
-    try {
-      const url = `${this.baseUrl}${endpoint}`;
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
-        throw new Error(errorData.message || `API error: ${response.status}`);
-      }
-
-      if (response.headers.get('Content-Type')?.includes('application/json')) {
-        return await response.json();
-      }
-
-      return response;
-    } catch (error: any) {
-      console.error('API request failed:', error);
-      throw error;
-    }
-  }
-
-  // ADMIN PORTAL METHODS
+// Utility function to fetch data from the API
+async function apiRequest(endpoint: string, method = 'GET', data?: any) {
+  const url = `${FLASK_API_BASE_URL}${endpoint}`;
   
+  const options: RequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // This ensures cookies are sent with the request
+  };
+  
+  if (data) {
+    options.body = JSON.stringify(data);
+  }
+  
+  const response = await fetch(url, options);
+  
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(errorText || `HTTP error! status: ${response.status}`);
+  }
+  
+  // Only try to parse JSON if the response has content
+  if (response.status !== 204) {
+    return response.json();
+  }
+  
+  return null;
+}
+
+// Main service object with methods for interacting with the quote system
+export const quoteIntegrationService = {
+  // Admin Portal Methods
   async getAdminQuotes(): Promise<QuoteData[]> {
-    const data = await this.fetchApi('/admin/quotes');
-    return data.quotes.map((quote: any) => new QuoteData(quote));
-  }
-
+    const data = await apiRequest('/integration/admin/quotes');
+    return data.quotes || [];
+  },
+  
   async getAdminQuote(quoteId: string): Promise<QuoteData> {
-    const data = await this.fetchApi(`/admin/quotes/${quoteId}`);
-    return new QuoteData(data.quote);
-  }
-
-  async assignQuote(quoteId: string, clinicId: string): Promise<any> {
-    return this.fetchApi(`/admin/quotes/${quoteId}/assign`, {
-      method: 'POST',
-      body: JSON.stringify({ clinic_id: clinicId }),
-    });
-  }
-
-  async unassignQuote(quoteId: string): Promise<any> {
-    return this.fetchApi(`/admin/quotes/${quoteId}/unassign`, {
-      method: 'POST',
-    });
-  }
-
-  // CLINIC PORTAL METHODS
+    const data = await apiRequest(`/integration/admin/quotes/${quoteId}`);
+    return data.quote;
+  },
   
+  async assignQuote(quoteId: string, clinicId: string): Promise<void> {
+    await apiRequest(`/integration/admin/quotes/${quoteId}/assign`, 'POST', { clinic_id: clinicId });
+  },
+  
+  async unassignQuote(quoteId: string): Promise<void> {
+    await apiRequest(`/integration/admin/quotes/${quoteId}/unassign`, 'POST');
+  },
+  
+  // Clinic Portal Methods
   async getClinicQuotes(clinicId: string): Promise<QuoteData[]> {
-    const data = await this.fetchApi(`/clinic/${clinicId}/quotes`);
-    return data.quotes.map((quote: any) => new QuoteData(quote));
-  }
-
+    const data = await apiRequest(`/integration/clinic/${clinicId}/quotes`);
+    return data.quotes || [];
+  },
+  
   async getClinicQuote(clinicId: string, quoteId: string): Promise<QuoteData> {
-    const data = await this.fetchApi(`/clinic/${clinicId}/quotes/${quoteId}`);
-    return new QuoteData(data.quote);
-  }
-
-  // PATIENT PORTAL METHODS
+    const data = await apiRequest(`/integration/clinic/${clinicId}/quotes/${quoteId}`);
+    return data.quote;
+  },
   
+  // Patient Portal Methods
   async getPatientQuotes(patientId: string): Promise<QuoteData[]> {
-    const data = await this.fetchApi(`/patient/${patientId}/quotes`);
-    return data.quotes.map((quote: any) => new QuoteData(quote));
-  }
-
-  async getPatientQuote(patientId: string, quoteId: string): Promise<QuoteData> {
-    const data = await this.fetchApi(`/patient/${patientId}/quotes/${quoteId}`);
-    return new QuoteData(data.quote);
-  }
-
-  // SHARED METHODS
+    const data = await apiRequest(`/integration/patient/${patientId}/quotes`);
+    return data.quotes || [];
+  },
   
-  async updateQuoteStatus(quoteId: string, status: string): Promise<any> {
-    return this.fetchApi(`/quotes/${quoteId}/status`, {
-      method: 'POST',
-      body: JSON.stringify({ status }),
-    });
-  }
-
-  async sendQuoteEmail(quoteId: string, email: string): Promise<any> {
-    return this.fetchApi(`/quotes/${quoteId}/send-email`, {
-      method: 'POST',
-      body: JSON.stringify({ email }),
-    });
-  }
-
-  async requestAppointment(quoteId: string): Promise<any> {
-    return this.fetchApi(`/quotes/${quoteId}/request-appointment`, {
-      method: 'POST',
-    });
-  }
-
+  async getPatientQuote(patientId: string, quoteId: string): Promise<QuoteData> {
+    const data = await apiRequest(`/integration/patient/${patientId}/quotes/${quoteId}`);
+    return data.quote;
+  },
+  
+  // Generic Quote Actions
+  async updateQuoteStatus(quoteId: string, status: string): Promise<void> {
+    await apiRequest(`/integration/quotes/${quoteId}/status`, 'PUT', { status });
+  },
+  
+  async sendQuoteEmail(quoteId: string, email: string): Promise<void> {
+    await apiRequest(`/integration/quotes/${quoteId}/email`, 'POST', { email });
+  },
+  
   async downloadQuotePdf(quoteId: string): Promise<Blob> {
-    const response = await this.fetchApi(`/quotes/${quoteId}/pdf`, {
+    const url = `${FLASK_API_BASE_URL}/integration/quotes/${quoteId}/pdf`;
+    const response = await fetch(url, {
       method: 'GET',
+      credentials: 'include',
     });
-    return await response.blob();
-  }
-
-  async updateTreatmentQuantity(quoteId: string, treatmentId: string, quantity: number): Promise<any> {
-    return this.fetchApi(`/quotes/${quoteId}/treatments/${treatmentId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ quantity }),
-    });
-  }
-
-  async removeTreatment(quoteId: string, treatmentId: string): Promise<any> {
-    return this.fetchApi(`/quotes/${quoteId}/treatments/${treatmentId}`, {
-      method: 'DELETE',
-    });
-  }
-}
-
-export const quoteIntegrationService = new QuoteIntegrationService();
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.blob();
+  },
+  
+  async requestAppointment(quoteId: string): Promise<void> {
+    await apiRequest(`/integration/quotes/${quoteId}/appointment`, 'POST');
+  },
+  
+  // Treatment Management
+  async updateTreatmentQuantity(quoteId: string, treatmentId: string, quantity: number): Promise<void> {
+    await apiRequest(`/integration/quotes/${quoteId}/treatments/${treatmentId}`, 'PUT', { quantity });
+  },
+  
+  async removeTreatment(quoteId: string, treatmentId: string): Promise<void> {
+    await apiRequest(`/integration/quotes/${quoteId}/treatments/${treatmentId}`, 'DELETE');
+  },
+  
+  // Promo Code Management
+  async applyPromoCode(quoteId: string, promoCode: string): Promise<QuoteData> {
+    const data = await apiRequest(`/integration/quotes/${quoteId}/promo-code`, 'POST', { promo_code: promoCode });
+    return data.quote;
+  },
+  
+  async removePromoCode(quoteId: string): Promise<QuoteData> {
+    const data = await apiRequest(`/integration/quotes/${quoteId}/promo-code`, 'DELETE');
+    return data.quote;
+  },
+};

@@ -1,85 +1,60 @@
-import React, { useState } from 'react';
-import { useParams, useLocation } from 'wouter';
-import { QuoteIntegrationWidget } from '@/components/quotes/QuoteIntegrationWidget';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React from 'react';
+import { PageHeader } from '@/components/page-header';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { QuoteIntegrationWidget } from '@/components/quotes/QuoteIntegrationWidget';
+import { FileText, RefreshCw } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function PatientQuotesPage() {
-  const [, navigate] = useLocation();
-  const { patientId = '123456' } = useParams(); // Fallback for demo purposes
-  
+  const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const patientId = user?.id?.toString();
+
   const handleQuoteAction = (action: string, quoteId: string) => {
-    // Handle custom actions here
-    toast({
-      title: 'Quote Action',
-      description: `Action ${action} requested for quote ${quoteId}`,
-    });
-    
-    // Handle navigation or other actions based on the action type
-    if (action === 'view-details') {
-      navigate(`/patient/${patientId}/quote/${quoteId}`);
+    if (action === 'view') {
+      setLocation(`/patient/quotes/${quoteId}`);
+    } else if (action === 'create') {
+      setLocation('/treatment-selector');
     }
   };
 
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-6">My Dental Quotes</h1>
-      
-      <QuoteIntegrationWidget
-        portalType="patient"
-        patientId={patientId}
-        onQuoteAction={handleQuoteAction}
+    <div className="container mx-auto py-6 px-4">
+      <PageHeader
+        title="My Quotes"
+        description="View and manage your dental treatment quotes"
+        actions={
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setLocation('/treatment-selector')}
+              className="flex items-center gap-2"
+            >
+              <FileText className="h-4 w-4" /> New Quote
+            </Button>
+          </div>
+        }
       />
-    </div>
-  );
-}
 
-// Detail page for a specific quote
-export function PatientQuoteDetailPage() {
-  const { patientId = '123456', quoteId } = useParams();
-  const [, navigate] = useLocation();
-  
-  const handleBackToList = () => {
-    navigate(`/patient/${patientId}/quotes`);
-  };
-  
-  const handleQuoteAction = (action: string, quoteId: string) => {
-    toast({
-      title: 'Quote Action',
-      description: `Action ${action} performed on quote ${quoteId}`,
-    });
-  };
-  
-  if (!quoteId) {
-    return (
-      <div className="container py-8">
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-center text-muted-foreground">Quote ID is required.</p>
-            <div className="flex justify-center mt-4">
-              <Button onClick={handleBackToList}>Back to Quotes</Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="mt-6">
+        {patientId ? (
+          <QuoteIntegrationWidget
+            portalType="patient"
+            patientId={patientId}
+            onQuoteAction={handleQuoteAction}
+          />
+        ) : (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Please log in to view your quotes</p>
+            <Button 
+              onClick={() => setLocation('/auth')} 
+              className="mt-4"
+            >
+              Login
+            </Button>
+          </div>
+        )}
       </div>
-    );
-  }
-  
-  return (
-    <div className="container py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Quote Details</h1>
-        <Button variant="outline" onClick={handleBackToList}>
-          Back to Quotes
-        </Button>
-      </div>
-      
-      <QuoteIntegrationWidget
-        portalType="patient"
-        patientId={patientId}
-        onQuoteAction={handleQuoteAction}
-      />
     </div>
   );
 }
