@@ -1,0 +1,1188 @@
+Python Flask Quote Builder Solution
+Here's a complete implementation using Flask:
+
+1. Setup the Project Structure
+First, let's set up the project structure:
+
+dental-quote-builder/
+├── app.py
+├── static/
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       └── main.js
+├── templates/
+│   ├── base.html
+│   └── quote_builder.html
+└── requirements.txt
+2. Create the Requirements File
+# requirements.txt
+Flask==2.0.1
+Flask-Session==0.4.0
+3. Create the Flask Application
+# app.py
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
+from flask_session import Session
+import json
+import os
+from datetime import datetime
+import uuid
+
+app = Flask(__name__)
+app.config["SECRET_KEY"] = "your-secret-key"  # Change this to a random string
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = False
+Session(app)
+
+# Sample treatment data
+TREATMENTS = [
+    {"id": 1, "name": "Teeth Whitening", "price": 250},
+    {"id": 2, "name": "Root Canal", "price": 800},
+    {"id": 3, "name": "Dental Crown", "price": 1200},
+    {"id": 4, "name": "Dental Implant", "price": 3000},
+    {"id": 5, "name": "Teeth Cleaning", "price": 120},
+    {"id": 6, "name": "Cavity Filling", "price": 150},
+    {"id": 7, "name": "Extraction", "price": 180},
+    {"id": 8, "name": "Dental Veneer", "price": 900}
+]
+
+# Valid promo codes
+PROMO_CODES = {
+    "SUMMER15": 15,
+    "DENTAL25": 25,
+    "TEST10": 10
+}
+
+def init_session():
+    """Initialize session data if it doesn't exist"""
+    if "quote_data" not in session:
+        session["quote_data"] = {
+            "treatments": [],
+            "promo_code": None,
+            "discount": 0,
+            "step": "treatments",
+            "patient_info": {
+                "name": "",
+                "email": "",
+                "phone": "",
+                "preferred_date": "",
+                "notes": ""
+            }
+        }
+        
+def calculate_totals():
+    """Calculate quote totals"""
+    init_session()
+    quote_data = session["quote_data"]
+    
+    subtotal = sum(treatment["price"] for treatment in quote_data["treatments"])
+    discount_amount = (subtotal * quote_data["discount"]) / 100
+    total = subtotal - discount_amount
+    
+    return {
+        "subtotal": subtotal,
+        "discount_amount": discount_amount,
+        "total": total
+    }
+
+@app.route("/")
+def index():
+    """Main page - redirect to quote builder"""
+    return redirect(url_for("quote_builder"))
+
+@app.route("/quote-builder")
+def quote_builder():
+    """Render the quote builder page"""
+    init_session()
+    return render_template("quote_builder.html", 
+                          treatments=TREATMENTS, 
+                          quote_data=session["quote_data"],
+                          totals=calculate_totals())
+
+@app.route("/api/treatments", methods=["GET"])
+def get_treatments():
+    """Get all available treatments"""
+    return jsonify(TREATMENTS)
+
+@app.route("/api/quote/treatments", methods=["GET"])
+def get_quote_treatments():
+    """Get treatments in the current quote"""
+    init_session()
+    return jsonify(session["quote_data"]["treatments"])
+
+@app.route("/api/quote/add-treatment", methods=["POST"])
+def add_treatment():
+    """Add a treatment to the quote"""
+    init_session()
+    
+    data = request.get_json()
+    treatment_id = data.get("treatment_id")
+    
+    # Find the treatment
+    treatment = next((t for t in TREATMENTS if t["id"] == treatment_id), None)
+    
+    if treatment:
+        # Create a copy with a unique instance ID (to allow duplicates)
+        treatment_copy = treatment.copy()
+        treatment_copy["instance_id"] = str(uuid.uuid4())
+        
+        # Add to session
+        session["quote_data"]["treatments"].append(treatment_copy)
+        session.modified = True
+        
+        return jsonify({
+            "success": True, 
+            "treatments": session["quote_data"]["treatments"],
+            "totals": calculate_totals()
+        })
+    
+    return jsonify({"success": False, "error": "Treatment not found"}), 404
+
+@app.route("/api/quote/remove-treatment", methods=["POST"])
+def remove_treatment():
+    """Remove a treatment from the quote"""
+    init_session()
+    
+    data = request.get_json()
+    instance_id = data.get("instance_id")
+    
+    # Filter out the treatment with the given instance_id
+    session["quote_data"]["treatments"] = [
+        t for t in session["quote_data"]["treatments"] 
+        if t.get("instance_id") != instance_id
+    ]
+    session.modified = True
+    
+    return jsonify({
+        "success": True, 
+        "treatments": session["quote_data"]["treatments"],
+        "totals": calculate_totals()
+    })
+
+@app.route("/api/quote/apply-promo", methods=["POST"])
+def apply_promo():
+    """Apply a promo code to the quote"""
+    init_session()
+    
+    data = request.get_json()
+    promo_code = data.get("promo_code", "").upper()
+    
+    if not promo_code:
+        return jsonify({"success": False, "error": "No promo code provided"}), 400
+    
+    # Check if promo code is valid
+    if promo_code in PROMO_CODES:
+        discount = PROMO_CODES[promo_code]
+        
+        # Apply to session
+        session["quote_data"]["promo_code"] = promo_code
+        session["quote_data"]["discount"] = discount
+        session.modified = True
+        
+        return jsonify({
+            "success": True,
+            "promo_code": promo_code,
+            "discount": discount,
+            "totals": calculate_totals()
+        })
+    
+    return jsonify({"success": False, "error": "Invalid promo code"}), 400
+
+@app.route("/api/quote/remove-promo", methods=["POST"])
+def remove_promo():
+    """Remove the applied promo code"""
+    init_session()
+    
+    session["quote_data"]["promo_code"] = None
+    session["quote_data"]["discount"] = 0
+    session.modified = True
+    
+    return jsonify({
+        "success": True,
+        "totals": calculate_totals()
+    })
+
+@app.route("/api/quote/set-step", methods=["POST"])
+def set_step():
+    """Set the current step in the quote flow"""
+    init_session()
+    
+    data = request.get_json()
+    step = data.get("step")
+    
+    if step in ["treatments", "promo", "patient-info", "review"]:
+        session["quote_data"]["step"] = step
+        session.modified = True
+        return jsonify({"success": True, "step": step})
+    
+    return jsonify({"success": False, "error": "Invalid step"}), 400
+
+@app.route("/api/quote/update-patient-info", methods=["POST"])
+def update_patient_info():
+    """Update patient information"""
+    init_session()
+    
+    data = request.get_json()
+    patient_info = data.get("patient_info", {})
+    
+    # Update only provided fields
+    for key, value in patient_info.items():
+        if key in session["quote_data"]["patient_info"]:
+            session["quote_data"]["patient_info"][key] = value
+    
+    session.modified = True
+    
+    return jsonify({
+        "success": True,
+        "patient_info": session["quote_data"]["patient_info"]
+    })
+
+@app.route("/api/quote/reset", methods=["POST"])
+def reset_quote():
+    """Reset the quote to empty state"""
+    if "quote_data" in session:
+        del session["quote_data"]
+    init_session()
+    
+    return jsonify({
+        "success": True,
+        "quote_data": session["quote_data"],
+        "totals": calculate_totals()
+    })
+
+@app.route("/api/quote/submit", methods=["POST"])
+def submit_quote():
+    """Submit the quote (would normally save to a database)"""
+    init_session()
+    
+    # Generate a quote ID
+    quote_id = f"Q-{datetime.now().strftime('%Y%m%d')}-{uuid.uuid4().hex[:6].upper()}"
+    
+    # In a real app, we would save to a database here
+    # For demo purposes, we'll just return success
+    
+    return jsonify({
+        "success": True,
+        "quote_id": quote_id,
+        "message": "Quote submitted successfully!"
+    })
+
+if __name__ == "__main__":
+    app.run(debug=True)
+4. Create the Base HTML Template
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Quote Builder</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dental Quote Builder</h1>
+        </header>
+        
+        <main>
+            {% block content %}{% endblock %}
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 MyDentalFly</p>
+        </footer>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+5. Create the Quote Builder Template
+<!-- templates/quote_builder.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="quote-builder">
+    <!-- Step Navigation -->
+    <div class="step-nav">
+        <button class="step-btn {% if quote_data.step == 'treatments' %}active{% endif %}" data-step="treatments">
+            Select Treatments
+        </button>
+        <button class="step-btn {% if quote_data.step == 'promo' %}active{% endif %}" data-step="promo">
+            Promo Code
+        </button>
+        <button class="step-btn {% if quote_data.step == 'patient-info' %}active{% endif %}" data-step="patient-info">
+            Patient Info
+        </button>
+        <button class="step-btn {% if quote_data.step == 'review' %}active{% endif %}" data-step="review">
+            Review
+        </button>
+    </div>
+
+    <!-- Debug Info -->
+    <div class="debug-panel">
+        <p>Debug: {{ quote_data.treatments|length }} treatments, step: {{ quote_data.step }}</p>
+        <p>Promo: {{ quote_data.promo_code or 'none' }} ({{ quote_data.discount }}%)</p>
+    </div>
+
+    <!-- Selected Treatments Summary (Always Visible) -->
+    <div class="selected-treatments-panel">
+        <h2>Your Selected Treatments</h2>
+        <div class="selected-treatments">
+            {% if quote_data.treatments %}
+                <ul class="treatment-list">
+                    {% for treatment in quote_data.treatments %}
+                    <li class="treatment-item">
+                        <span>{{ treatment.name }}</span>
+                        <div>
+                            <span>${{ "%.2f"|format(treatment.price) }}</span>
+                            <button class="remove-btn" data-instance-id="{{ treatment.instance_id }}">✕</button>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="totals">
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>${{ "%.2f"|format(totals.subtotal) }}</span>
+                    </div>
+                    {% if quote_data.discount > 0 %}
+                    <div class="total-row discount">
+                        <span>Discount ({{ quote_data.discount }}%):</span>
+                        <span>-${{ "%.2f"|format(totals.discount_amount) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="total-row grand-total">
+                        <span>Total:</span>
+                        <span>${{ "%.2f"|format(totals.total) }}</span>
+                    </div>
+                </div>
+            {% else %}
+                <p class="empty-message">No treatments selected yet</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Step Content -->
+    <div class="step-content">
+        <!-- Treatments Step -->
+        <div class="step-panel {% if quote_data.step != 'treatments' %}hidden{% endif %}" id="treatments-step">
+            <h2>Available Treatments</h2>
+            <div class="treatments-grid">
+                {% for treatment in treatments %}
+                <div class="treatment-card" data-id="{{ treatment.id }}">
+                    <h3>{{ treatment.name }}</h3>
+                    <p class="price">${{ "%.2f"|format(treatment.price) }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="step-actions">
+                {% if quote_data.treatments %}
+                <button class="btn next-btn" data-next-step="promo">Continue to Promo Code</button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Promo Step -->
+        <div class="step-panel {% if quote_data.step != 'promo' %}hidden{% endif %}" id="promo-step">
+            <h2>Promo Code</h2>
+            <div class="promo-section">
+                {% if quote_data.promo_code %}
+                <div class="applied-promo">
+                    <span>{{ quote_data.promo_code }} ({{ quote_data.discount }}% discount)</span>
+                    <button class="btn remove-promo-btn">Remove</button>
+                </div>
+                {% else %}
+                <div class="promo-input-group">
+                    <input type="text" id="promo-input" placeholder="Enter promo code">
+                    <button class="btn apply-promo-btn">Apply</button>
+                </div>
+                <div class="promo-message"></div>
+                {% endif %}
+            </div>
+            <div class="step-actions">
+                <button class="btn back-btn" data-back-step="treatments">Back</button>
+                <button class="btn next-btn" data-next-step="patient-info">Continue to Patient Info</button>
+            </div>
+        </div>
+
+        <!-- Patient Info Step -->
+        <div class="step-panel {% if quote_data.step != 'patient-info' %}hidden{% endif %}" id="patient-info-step">
+            <h2>Patient Information</h2>
+            <div class="patient-form">
+                <div class="form-group">
+                    <label for="patient-name">Name</label>
+                    <input type="text" id="patient-name" value="{{ quote_data.patient_info.name }}">
+                </div>
+                <div class="form-group">
+                    <label for="patient-email">Email</label>
+                    <input type="email" id="patient-email" value="{{ quote_data.patient_info.email }}">
+                </div>
+                <div class="form-group">
+                    <label for="patient-phone">Phone</label>
+                    <input type="tel" id="patient-phone" value="{{ quote_data.patient_info.phone }}">
+                </div>
+                <div class="form-group">
+                    <label for="preferred-date">Preferred Date</label>
+                    <input type="date" id="preferred-date" value="{{ quote_data.patient_info.preferred_date }}">
+                </div>
+                <div class="form-group">
+                    <label for="patient-notes">Notes</label>
+                    <textarea id="patient-notes">{{ quote_data.patient_info.notes }}</textarea>
+                </div>
+            </div>
+            <div class="step-actions">
+                <button class="btn back-btn" data-back-step="promo">Back</button>
+                <button class="btn next-btn" data-next-step="review">Review Quote</button>
+            </div>
+        </div>
+
+        <!-- Review Step -->
+        <div class="step-panel {% if quote_data.step != 'review' %}hidden{% endif %}" id="review-step">
+            <h2>Quote Review</h2>
+            <div class="review-summary">
+                <div class="review-section">
+                    <h3>Selected Treatments</h3>
+                    {% if quote_data.treatments %}
+                    <ul>
+                        {% for treatment in quote_data.treatments %}
+                        <li>{{ treatment.name }} - ${{ "%.2f"|format(treatment.price) }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No treatments selected</p>
+                    {% endif %}
+                </div>
+
+                {% if quote_data.promo_code %}
+                <div class="review-section">
+                    <h3>Applied Promo</h3>
+                    <p>{{ quote_data.promo_code }} ({{ quote_data.discount }}% discount)</p>
+                </div>
+                {% endif %}
+
+                <div class="review-section">
+                    <h3>Patient Information</h3>
+                    <p><strong>Name:</strong> {{ quote_data.patient_info.name or "Not provided" }}</p>
+                    <p><strong>Email:</strong> {{ quote_data.patient_info.email or "Not provided" }}</p>
+                    <p><strong>Phone:</strong> {{ quote_data.patient_info.phone or "Not provided" }}</p>
+                    <p><strong>Preferred Date:</strong> {{ quote_data.patient_info.preferred_date or "Not provided" }}</p>
+                    {% if quote_data.patient_info.notes %}
+                    <p><strong>Notes:</strong> {{ quote_data.patient_info.notes }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="review-section">
+                    <h3>Quote Summary</h3>
+                    <div class="total-row">
+                        <span>Subtotal:</span>
+                        <span>${{ "%.2f"|format(totals.subtotal) }}</span>
+                    </div>
+                    {% if quote_data.discount > 0 %}
+                    <div class="total-row discount">
+                        <span>Discount ({{ quote_data.discount }}%):</span>
+                        <span>-${{ "%.2f"|format(totals.discount_amount) }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="total-row grand-total">
+                        <span>Total:</span>
+                        <span>${{ "%.2f"|format(totals.total) }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="step-actions">
+                <button class="btn back-btn" data-back-step="patient-info">Back</button>
+                <button class="btn submit-btn">Submit Quote</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
+6. Create the CSS Styles
+/* static/css/style.css */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f4f7fa;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+h1 {
+    color: #2c3e50;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+    color: #2c3e50;
+}
+
+h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #34495e;
+}
+
+.quote-builder {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+/* Step Navigation */
+.step-nav {
+    display: flex;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.step-btn {
+    flex: 1;
+    padding: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: #7f8c8d;
+    position: relative;
+}
+
+.step-btn:hover {
+    background-color: #f9f9f9;
+}
+
+.step-btn.active {
+    color: #3498db;
+    font-weight: bold;
+}
+
+.step-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background-color: #3498db;
+}
+
+/* Debug Panel */
+.debug-panel {
+    background-color: #f8f9fa;
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* Selected Treatments Panel */
+.selected-treatments-panel {
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+}
+
+.treatment-list {
+    list-style: none;
+}
+
+.treatment-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.treatment-item:last-child {
+    border-bottom: none;
+}
+
+.remove-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.totals {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.total-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.discount {
+    color: #27ae60;
+}
+
+.grand-total {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 5px;
+}
+
+.empty-message {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+/* Step Content */
+.step-panel {
+    margin-bottom: 20px;
+}
+
+.step-panel.hidden {
+    display: none;
+}
+
+/* Treatment Selection */
+.treatments-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.treatment-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    padding: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.treatment-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.treatment-card h3 {
+    margin-bottom: 5px;
+}
+
+.price {
+    color: #2980b9;
+    font-weight: bold;
+}
+
+/* Promo Code Section */
+.promo-section {
+    margin-bottom: 20px;
+}
+
+.promo-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.promo-input-group input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.applied-promo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #e8f4fd;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.promo-message {
+    margin-top: 5px;
+    min-height: 20px;
+}
+
+.promo-message.error {
+    color: #e74c3c;
+}
+
+.promo-message.success {
+    color: #27ae60;
+}
+
+/* Patient Form */
+.patient-form {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.form-group textarea {
+    height: 100px;
+    resize: vertical;
+}
+
+/* Review Section */
+.review-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.review-section:last-child {
+    border-bottom: none;
+}
+
+.review-section ul {
+    list-style-position: inside;
+    margin-left: 10px;
+}
+
+/* Buttons */
+.step-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s;
+}
+
+.back-btn {
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.back-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.next-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.next-btn:hover {
+    background-color: #2980b9;
+}
+
+.apply-promo-btn {
+    background-color: #3498db;
+    color: white;
+}
+
+.apply-promo-btn:hover {
+    background-color: #2980b9;
+}
+
+.remove-promo-btn {
+    background-color: #f1f1f1;
+    color: #e74c3c;
+}
+
+.remove-promo-btn:hover {
+    background-color: #e0e0e0;
+}
+
+.submit-btn {
+    background-color: #27ae60;
+    color: white;
+}
+
+.submit-btn:hover {
+    background-color: #219653;
+}
+
+/* Footer */
+footer {
+    margin-top: 30px;
+    text-align: center;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+}
+7. Create the JavaScript
+// static/js/main.js
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const stepBtns = document.querySelectorAll('.step-btn');
+    const treatmentCards = document.querySelectorAll('.treatment-card');
+    const removeTreatmentBtns = document.querySelectorAll('.remove-btn[data-instance-id]');
+    const nextBtns = document.querySelectorAll('.next-btn');
+    const backBtns = document.querySelectorAll('.back-btn');
+    const applyPromoBtn = document.querySelector('.apply-promo-btn');
+    const removePromoBtn = document.querySelector('.remove-promo-btn');
+    const submitBtn = document.querySelector('.submit-btn');
+    const promoInput = document.getElementById('promo-input');
+    const promoMessage = document.querySelector('.promo-message');
+    
+    // Patient info fields
+    const patientName = document.getElementById('patient-name');
+    const patientEmail = document.getElementById('patient-email');
+    const patientPhone = document.getElementById('patient-phone');
+    const preferredDate = document.getElementById('preferred-date');
+    const patientNotes = document.getElementById('patient-notes');
+    
+    // Event handlers
+    
+    // Step navigation
+    stepBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const step = this.dataset.step;
+            setStep(step);
+        });
+    });
+    
+    // Add treatment
+    treatmentCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const treatmentId = parseInt(this.dataset.id);
+            addTreatment(treatmentId);
+        });
+    });
+    
+    // Remove treatment
+    removeTreatmentBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const instanceId = this.dataset.instanceId;
+            removeTreatment(instanceId);
+        });
+    });
+    
+    // Next step buttons
+    nextBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const nextStep = this.dataset.nextStep;
+            setStep(nextStep);
+        });
+    });
+    
+    // Back step buttons
+    backBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const backStep = this.dataset.backStep;
+            setStep(backStep);
+        });
+    });
+    
+    // Apply promo code
+    if (applyPromoBtn) {
+        applyPromoBtn.addEventListener('click', function() {
+            const code = promoInput.value.trim();
+            if (code) {
+                applyPromoCode(code);
+            } else {
+                showPromoMessage('Please enter a promo code', 'error');
+            }
+        });
+    }
+    
+    // Remove promo code
+    if (removePromoBtn) {
+        removePromoBtn.addEventListener('click', function() {
+            removePromoCode();
+        });
+    }
+    
+    // Patient info fields change
+    const patientInfoFields = [patientName, patientEmail, patientPhone, preferredDate, patientNotes];
+    patientInfoFields.forEach(field => {
+        if (field) {
+            field.addEventListener('blur', function() {
+                updatePatientInfo();
+            });
+        }
+    });
+    
+    // Submit quote
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function() {
+            submitQuote();
+        });
+    }
+    
+    // API functions
+    
+    // Set step
+    function setStep(step) {
+        fetch('/api/quote/set-step', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ step })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Hide all step panels
+                document.querySelectorAll('.step-panel').forEach(panel => {
+                    panel.classList.add('hidden');
+                });
+                
+                // Show the selected step panel
+                document.getElementById(`${step}-step`).classList.remove('hidden');
+                
+                // Update active step button
+                stepBtns.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.dataset.step === step) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error setting step:', error);
+        });
+    }
+    
+    // Add treatment
+    function addTreatment(treatmentId) {
+        fetch('/api/quote/add-treatment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ treatment_id: treatmentId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to reflect changes
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error adding treatment:', error);
+        });
+    }
+    
+    // Remove treatment
+    function removeTreatment(instanceId) {
+        fetch('/api/quote/remove-treatment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ instance_id: instanceId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to reflect changes
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error removing treatment:', error);
+        });
+    }
+    
+    // Apply promo code
+    function applyPromoCode(code) {
+        fetch('/api/quote/apply-promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ promo_code: code })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showPromoMessage(`Promo code ${data.promo_code} applied for ${data.discount}% discount!`, 'success');
+                // Reload after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showPromoMessage(data.error || 'Invalid promo code', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error applying promo code:', error);
+            showPromoMessage('Error applying promo code. Please try again.', 'error');
+        });
+    }
+    
+    // Remove promo code
+    function removePromoCode() {
+        fetch('/api/quote/remove-promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload the page to reflect changes
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error removing promo code:', error);
+        });
+    }
+    
+    // Update patient info
+    function updatePatientInfo() {
+        if (!patientName) return;
+        
+        const patientInfo = {
+            name: patientName.value,
+            email: patientEmail.value,
+            phone: patientPhone.value,
+            preferred_date: preferredDate.value,
+            notes: patientNotes.value
+        };
+        
+        fetch('/api/quote/update-patient-info', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ patient_info: patientInfo })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Patient info updated successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Error updating patient info:', error);
+        });
+    }
+    
+    // Submit quote
+    function submitQuote() {
+        fetch('/api/quote/submit', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`Quote submitted successfully! Your quote ID is: ${data.quote_id}`);
+                
+                // Reset quote and redirect to first step
+                fetch('/api/quote/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(() => {
+                    window.location.href = '/quote-builder';
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting quote:', error);
+            alert('Error submitting quote. Please try again.');
+        });
+    }
+    
+    // Helper functions
+    
+    function showPromoMessage(message, type) {
+        if (!promoMessage) return;
+        
+        promoMessage.textContent = message;
+        promoMessage.className = 'promo-message';
+        promoMessage.classList.add(type);
+    }
+});
+How to Deploy
+1. Local Development
+Create a new directory for your project
+Create all the files as shown above
+Install the dependencies:
+pip install -r requirements.txt
+Run the application:
+python app.py
+Open your browser and go to http://localhost:5000
+2. Deployment Options
+Option 1: Deploying to PythonAnywhere
+PythonAnywhere is a great option for hosting Python web applications:
+
+Sign up for a free account at PythonAnywhere
+Upload your files or clone from a Git repository
+Set up a new web app with Flask
+Configure your virtual environment and install dependencies
+Set the WSGI configuration file to point to your app
+Option 2: Deploying to Replit
+Replit is perfect for quick development and sharing:
+
+Create a new Python Repl
+Upload all the files
+Install the dependencies by adding them to the .replit file
+Run the application
+Replit will automatically give you a URL to access your app
+Option 3: Deploying to Heroku
+For a more scalable solution:
+
+Create a Procfile with:
+web: gunicorn app:app
+Add gunicorn to your requirements.txt
+Create a new Heroku app
+Deploy your code to Heroku
+Benefits of This Python Solution
+Server-side state management: All state is managed on the server, making it much more reliable
+No client-side state issues: Avoids React's state management problems
+Simple, clean architecture: Easier to maintain and debug
+No form submission issues: All forms are handled properly by Flask
+Session-based persistence: Data persists even if the user refreshes the page
+Robust error handling: Server-side validation and error handling
+Easy to extend: Add new features by extending the Flask routes
