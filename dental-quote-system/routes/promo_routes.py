@@ -1,135 +1,140 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, session
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
 from utils.session_manager import SessionManager
-import json
 
-promo_routes_bp = Blueprint('promo_routes', __name__)
+promo_routes = Blueprint('promo', __name__)
 
-@promo_routes_bp.route('/special-offers')
+@promo_routes.route('/special-offers')
 def special_offers():
     """Show all special offers"""
-    all_offers = PromoService.get_active_offers()
+    # Get active offers
+    offers = PromoService.get_active_offers()
     
-    # Group offers by category
-    categorized_offers = {}
-    for offer in all_offers:
-        if offer.get('promotion_level') not in categorized_offers:
-            categorized_offers[offer.get('promotion_level')] = []
-        
-        categorized_offers[offer.get('promotion_level')].append(offer)
-    
-    return render_template('promo/special_offers.html', 
-                         categorized_offers=categorized_offers)
+    return render_template('promo/special_offers.html', offers=offers)
 
-@promo_routes_bp.route('/special-offer/<offer_id>')
+@promo_routes.route('/special-offer/<offer_id>')
 def special_offer_detail(offer_id):
     """Show details for a specific offer"""
+    # Get offer details
     offer = PromoService.get_offer_by_id(offer_id)
     
     if not offer:
-        flash('Special offer not found.', 'error')
-        return redirect(url_for('promo_routes.special_offers'))
+        flash('Offer not found.', 'error')
+        return redirect(url_for('promo.special_offers'))
     
-    # Get related treatments
-    related_treatments = []
-    if offer.get('applicable_treatments'):
-        related_treatments = PromoService.get_treatments_for_offer(offer)
+    # Get applicable treatments for this offer
+    treatments = PromoService.get_treatments_for_offer(offer)
     
-    return render_template('promo/special_offer_detail.html',
-                           offer=offer,
-                           related_treatments=related_treatments)
+    return render_template('promo/offer_detail.html', 
+                           offer=offer, 
+                           treatments=treatments)
 
-@promo_routes_bp.route('/start-with-offer/<offer_id>')
+@promo_routes.route('/start-with-offer/<offer_id>')
 def start_with_offer(offer_id):
     """Start a quote with a special offer pre-applied"""
+    # Get offer details
     offer = PromoService.get_offer_by_id(offer_id)
     
     if not offer:
-        flash('Special offer not found.', 'error')
-        return redirect(url_for('promo_routes.special_offers'))
+        flash('Offer not found.', 'error')
+        return redirect(url_for('promo.special_offers'))
     
-    # Reset session for a new quote
+    # Reset session
     SessionManager.initialize_session(reset=True)
     
-    # Apply the promo code if the offer has one
-    if offer.get('promo_code'):
-        promo_code = offer.get('promo_code')
-        validation = PromoService.validate_promo_code(promo_code, [])
+    # Apply the offer's promo code
+    promo_code = offer.get('promo_code')
+    if promo_code:
+        # Get applicable treatments to check validation
+        applicable_treatments = offer.get('applicable_treatments', [])
         
-        if validation['valid']:
-            SessionManager.set_promo_code(promo_code, validation['details'])
+        # Validate the code
+        validation = PromoService.validate_promo_code(promo_code, applicable_treatments)
+        
+        if validation.get('valid'):
+            # Save promo code to session
+            SessionManager.set_promo_code(promo_code, validation.get('details'))
+            
+            # Set selected offer in session
+            SessionManager.set_selected_offer(offer_id)
+            
             flash(f'Special offer "{offer["title"]}" has been applied to your quote.', 'success')
         else:
-            flash(validation['message'], 'warning')
+            flash(validation.get('message', 'Failed to apply the offer.'), 'warning')
     
-    # Pre-select treatments if applicable
-    if offer.get('applicable_treatments'):
-        for treatment_id in offer.get('applicable_treatments'):
-            treatment = PromoService.get_treatment_by_id(treatment_id)
-            if treatment:
-                SessionManager.add_treatment(treatment)
+    # Add any preselected treatments if offer specifies
+    for treatment_id in offer.get('applicable_treatments', []):
+        treatment = PromoService.get_treatment_by_id(treatment_id)
+        if treatment:
+            SessionManager.add_treatment(treatment)
     
     # Redirect to quote builder
-    return redirect(url_for('page_routes.start_quote'))
+    return redirect(url_for('pages.quote_builder'))
 
-@promo_routes_bp.route('/apply-promo', methods=['POST'])
+@promo_routes.route('/apply-promo', methods=['POST'])
 def apply_promo():
     """Apply promo code to the current quote"""
-    promo_code = request.form.get('promo_code')
+    # Get promo code from form
+    promo_code = request.form.get('promo_code', '').strip()
     
     if not promo_code:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
-                'success': False,
-                'message': 'Please enter a valid promotional code.'
+                'success': False, 
+                'message': 'Please enter a promotional code.'
             })
-        
-        flash('Please enter a valid promotional code.', 'warning')
-        return redirect(url_for('page_routes.start_quote'))
+        else:
+            flash('Please enter a promotional code.', 'warning')
+            return redirect(url_for('pages.quote_builder'))
     
-    # Get selected treatments for validation
-    treatments = [t['id'] for t in SessionManager.get_selected_treatments()]
+    # Get treatment IDs for validation
+    selected_treatments = SessionManager.get_selected_treatments()
+    treatment_ids = [t.get('id') for t in selected_treatments]
     
-    # Validate the promo code
-    validation = PromoService.validate_promo_code(promo_code, treatments)
+    # Validate the code
+    validation = PromoService.validate_promo_code(promo_code, treatment_ids)
     
-    if validation['valid']:
+    if validation.get('valid'):
         # Save promo code to session
-        SessionManager.set_promo_code(promo_code, validation['details'])
+        SessionManager.set_promo_code(promo_code, validation.get('details'))
+        
+        # Get updated totals
         subtotal = SessionManager.get_subtotal()
-        discount_amount = SessionManager.get_discount_amount()
+        discount = SessionManager.get_discount_amount()
         total = SessionManager.get_total()
         
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': True,
                 'message': 'Promotional code applied successfully!',
+                'promo_details': validation.get('details'),
                 'subtotal': subtotal,
-                'discount_amount': discount_amount,
+                'discount': discount,
                 'total': total
             })
-        
-        flash('Promotional code applied successfully!', 'success')
+        else:
+            flash('Promotional code applied successfully!', 'success')
+            return redirect(url_for('pages.quote_builder'))
     else:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify({
                 'success': False,
-                'message': validation['message']
+                'message': validation.get('message', 'Invalid promotional code.')
             })
-        
-        flash(validation['message'], 'warning')
-    
-    return redirect(url_for('page_routes.start_quote'))
+        else:
+            flash(validation.get('message', 'Invalid promotional code.'), 'warning')
+            return redirect(url_for('pages.quote_builder'))
 
-@promo_routes_bp.route('/remove-promo', methods=['POST'])
+@promo_routes.route('/remove-promo', methods=['POST'])
 def remove_promo():
     """Remove applied promo code"""
     # Clear promo code from session
     SessionManager.clear_promo_code()
     
-    # Recalculate totals
+    # Get updated totals
     subtotal = SessionManager.get_subtotal()
-    discount_amount = SessionManager.get_discount_amount()
+    discount = SessionManager.get_discount_amount()
     total = SessionManager.get_total()
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -137,26 +142,32 @@ def remove_promo():
             'success': True,
             'message': 'Promotional code removed.',
             'subtotal': subtotal,
-            'discount_amount': discount_amount,
+            'discount': discount,
             'total': total
         })
-    
-    flash('Promotional code removed.', 'info')
-    return redirect(url_for('page_routes.start_quote'))
+    else:
+        flash('Promotional code has been removed.', 'info')
+        return redirect(url_for('pages.quote_builder'))
 
-@promo_routes_bp.route('/select-special-offer', methods=['POST'])
+@promo_routes.route('/select-special-offer', methods=['POST'])
 def select_special_offer():
     """AJAX endpoint to select a special offer"""
     offer_id = request.form.get('offer_id')
     
     if not offer_id:
-        return jsonify({'success': False, 'message': 'Invalid offer selection.'})
+        return jsonify({'success': False, 'message': 'No offer selected.'})
     
-    # Store selected offer in session
+    # Get offer details
+    offer = PromoService.get_offer_by_id(offer_id)
+    
+    if not offer:
+        return jsonify({'success': False, 'message': 'Offer not found.'})
+    
+    # Set selected offer in session
     SessionManager.set_selected_offer(offer_id)
     
-    # Return redirect URL
     return jsonify({
         'success': True,
-        'redirect': url_for('promo_routes.start_with_offer', offer_id=offer_id)
+        'message': f'Selected offer: {offer["title"]}',
+        'offer': offer
     })

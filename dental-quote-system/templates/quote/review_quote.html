@@ -1,253 +1,361 @@
 {% extends 'base.html' %}
 
-{% block title %}Review Your Quote | MyDentalFly{% endblock %}
-
-{% block extra_css %}
-<style>
-    .quote-card {
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-    .quote-header {
-        background-color: #f8f9fa;
-        border-bottom: 1px solid #e9ecef;
-    }
-    .treatment-item {
-        border-bottom: 1px solid #e9ecef;
-        padding: 1rem 0;
-    }
-    .treatment-item:last-child {
-        border-bottom: none;
-    }
-    .quote-footer {
-        background-color: #f8f9fa;
-        border-top: 1px solid #e9ecef;
-    }
-    .quote-ref {
-        font-family: monospace;
-        font-weight: bold;
-    }
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-        .print-only {
-            display: block !important;
-        }
-        body {
-            font-size: 12pt;
-        }
-        .container {
-            width: 100%;
-            max-width: 100%;
-        }
-        .quote-card {
-            box-shadow: none;
-            border: 1px solid #dee2e6;
-        }
-    }
-    .print-only {
-        display: none;
-    }
-</style>
-{% endblock %}
+{% block title %}Review Your Quote - Dental Quote System{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12">
-        <h1 class="mb-4 no-print">Review Your Dental Treatment Quote</h1>
-        <div class="progress mb-4 no-print">
-            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">Step 3 of 4</div>
+<div class="mb-4">
+    <h1 class="h2 mb-3">Review Your Quote</h1>
+    
+    <!-- Progress Steps -->
+    <div class="step-container mb-5">
+        <div class="step-line"></div>
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="step-item d-inline-block px-3">
+                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
+                        <i class="fas fa-check text-success"></i>
+                    </div>
+                    <p class="mb-0">1. Select Treatments</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-item d-inline-block px-3">
+                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
+                        <i class="fas fa-check text-success"></i>
+                    </div>
+                    <p class="mb-0">2. Your Information</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-item d-inline-block px-3">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <p class="mb-0 fw-bold">3. Review Quote</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="step-item d-inline-block px-3">
+                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <p class="mb-0">4. Confirmation</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">Your Selected Treatments</h3>
+                </div>
+                <div class="card-body">
+                    {% if selected_treatments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Treatment</th>
+                                        <th class="text-center">Quantity</th>
+                                        <th class="text-end">Unit Price</th>
+                                        <th class="text-end">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for treatment in selected_treatments %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ treatment.name }}</strong>
+                                                    {% if treatment.category %}
+                                                        <div class="small text-muted">{{ treatment.category }}</div>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                            <td class="text-center">{{ treatment.quantity }}</td>
+                                            <td class="text-end">${{ treatment.price }}</td>
+                                            <td class="text-end">${{ treatment.price * treatment.quantity }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                        <td class="text-end">${{ subtotal }}</td>
+                                    </tr>
+                                    {% if discount > 0 %}
+                                        <tr>
+                                            <td colspan="3" class="text-end text-success">
+                                                <strong>Discount 
+                                                    {% if promo_code %}
+                                                        ({{ promo_code }})
+                                                    {% endif %}:
+                                                </strong>
+                                            </td>
+                                            <td class="text-end text-success">-${{ discount }}</td>
+                                        </tr>
+                                    {% endif %}
+                                    <tr class="table-active">
+                                        <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                        <td class="text-end"><strong>${{ total }}</strong></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Your quote doesn't contain any treatments. Please <a href="{{ url_for('pages.quote_builder') }}">go back</a> and select treatments.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">Your Information</h3>
+                </div>
+                <div class="card-body">
+                    {% if patient_info %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Name:</strong></p>
+                                <p class="mb-3">{{ patient_info.first_name }} {{ patient_info.last_name }}</p>
+                                
+                                <p class="mb-1"><strong>Email:</strong></p>
+                                <p class="mb-3">{{ patient_info.email }}</p>
+                                
+                                <p class="mb-1"><strong>Phone:</strong></p>
+                                <p>{{ patient_info.phone }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p class="mb-1"><strong>Country:</strong></p>
+                                <p class="mb-3">{{ patient_info.country_name }}</p>
+                                
+                                <p class="mb-1"><strong>Preferred Date:</strong></p>
+                                <p class="mb-3">
+                                    {% if patient_info.preferred_date %}
+                                        {{ patient_info.preferred_date }}
+                                    {% else %}
+                                        Not specified
+                                    {% endif %}
+                                </p>
+                                
+                                <p class="mb-1"><strong>Additional Notes:</strong></p>
+                                <p>
+                                    {% if patient_info.notes %}
+                                        {{ patient_info.notes }}
+                                    {% else %}
+                                        None
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Your personal information is missing. Please <a href="{{ url_for('pages.patient_info') }}">go back</a> and provide your details.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">What Happens Next?</h3>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-paper-plane"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="h6 mb-1">Submit Your Quote</h4>
+                            <p class="mb-0">When you click "Submit Quote", we'll send you a confirmation email with your quote details.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-hospital"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="h6 mb-1">Clinic Review</h4>
+                            <p class="mb-0">Our partner clinics will review your treatment request and may contact you to discuss details.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex mb-3">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="h6 mb-1">Free Consultation</h4>
+                            <p class="mb-0">You'll receive a free consultation call to discuss your treatment options and answer any questions.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="h6 mb-1">Schedule Your Treatment</h4>
+                            <p class="mb-0">When you're ready, we'll help you schedule your treatment at your convenience.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="{{ url_for('pages.patient_info') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-1"></i> Back to Patient Information
+                </a>
+                {% if selected_treatments and patient_info %}
+                    <form method="POST" action="{{ url_for('pages.review_quote') }}">
+                        <button type="submit" class="btn btn-primary">
+                            Submit Quote <i class="fas fa-arrow-right ms-1"></i>
+                        </button>
+                    </form>
+                {% else %}
+                    <button type="button" class="btn btn-primary" disabled>
+                        Submit Quote <i class="fas fa-arrow-right ms-1"></i>
+                    </button>
+                {% endif %}
+            </div>
         </div>
         
-        <div class="print-only text-center mt-4 mb-4">
-            <h1>MyDentalFly Dental Treatment Quote</h1>
-            <p>Generated on {{ now.strftime('%B %d, %Y') }}</p>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-5">
-    <div class="col-md-12">
-        <div class="card quote-card">
-            <div class="card-header quote-header py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h2 class="h4 mb-0">Dental Treatment Quote</h2>
-                        <p class="mb-0 text-muted">Reference: <span class="quote-ref">{{ quote_ref }}</span></p>
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="h5 mb-0">Treatment Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Subtotal:</span>
+                            <span id="subtotal">${{ subtotal }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 {% if discount == 0 %}d-none{% endif %}" id="discount-row">
+                            <span>Discount:</span>
+                            <span id="discount">-${{ discount }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 fw-bold">
+                            <span>Total:</span>
+                            <span id="total">${{ total }}</span>
+                        </div>
                     </div>
-                    <div class="col-md-6 text-md-end">
-                        <p class="mb-0"><strong>Date:</strong> {{ now.strftime('%B %d, %Y') }}</p>
-                        <p class="mb-0"><strong>Valid Until:</strong> {{ expires.strftime('%B %d, %Y') }}</p>
+                    
+                    {% if promo_code %}
+                        <div class="alert alert-info mb-3">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-tag me-2"></i>
+                                <div>
+                                    <p class="mb-0"><strong>Promo: {{ promo_code }}</strong></p>
+                                    {% if promo_details %}
+                                        <p class="mb-0 small">{{ promo_details.description }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="alert alert-light border">
+                        <p class="mb-0 small"><i class="fas fa-info-circle me-1"></i> This is just a quote. No payment is required at this stage.</p>
                     </div>
                 </div>
             </div>
             
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <h3 class="h5">Patient Information</h3>
-                        <p class="mb-1"><strong>Name:</strong> {{ patient_info.name }}</p>
-                        <p class="mb-1"><strong>Email:</strong> {{ patient_info.email }}</p>
-                        <p class="mb-1"><strong>Phone:</strong> {{ patient_info.phone }}</p>
-                        {% if patient_info.notes %}
-                        <p class="mb-0"><strong>Notes:</strong> {{ patient_info.notes }}</p>
-                        {% endif %}
-                    </div>
-                    <div class="col-md-6">
-                        <h3 class="h5">Quote Details</h3>
-                        <p class="mb-1"><strong>Provider:</strong> MyDentalFly</p>
-                        <p class="mb-1"><strong>Location:</strong> Multiple partner clinics in Turkey</p>
-                        <p class="mb-1"><strong>Currency:</strong> USD (United States Dollar)</p>
-                        {% if promo_code %}
-                        <p class="mb-0"><strong>Promo Code:</strong> {{ promo_code }}</p>
-                        {% endif %}
-                    </div>
+            <div class="card mb-4">
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">Customer Testimonials</h3>
                 </div>
-                
-                <h3 class="h5 mb-3">Selected Treatments</h3>
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th scope="col">Treatment</th>
-                                <th scope="col">Description</th>
-                                <th scope="col" class="text-end">Price (USD)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for treatment in treatments %}
-                            <tr>
-                                <td>{{ treatment.name }}</td>
-                                <td>{{ treatment.description }}</td>
-                                <td class="text-end">${{ treatment.price }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                        <tfoot>
-                            <tr>
-                                <th colspan="2" class="text-end">Subtotal:</th>
-                                <td class="text-end">${{ subtotal }}</td>
-                            </tr>
-                            {% if discount > 0 %}
-                            <tr>
-                                <th colspan="2" class="text-end text-success">Discount:</th>
-                                <td class="text-end text-success">-${{ discount }}</td>
-                            </tr>
-                            {% endif %}
-                            <tr>
-                                <th colspan="2" class="text-end">Total:</th>
-                                <td class="text-end"><strong>${{ total }}</strong></td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-                
-                <div class="mt-4">
-                    <h3 class="h5 mb-3">What's Included</h3>
-                    <ul class="mb-0">
-                        <li>Pre-treatment consultation with an English-speaking specialist</li>
-                        <li>All necessary X-rays and diagnostics</li>
-                        <li>The treatments listed above performed by experienced professionals</li>
-                        <li>Post-treatment follow-up and care instructions</li>
-                        <li>1-year warranty on all treatments (terms apply)</li>
-                    </ul>
+                <div class="card-body">
+                    <div id="testimonialCarousel" class="carousel slide" data-bs-ride="carousel">
+                        <div class="carousel-inner">
+                            <div class="carousel-item active">
+                                <div class="text-center mb-3">
+                                    <div class="mb-2">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <p class="mb-2">"I saved over 70% on my dental implants compared to prices in the UK. The quality of care was excellent!"</p>
+                                    <p class="small text-muted mb-0">- Sarah J., London</p>
+                                </div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="text-center mb-3">
+                                    <div class="mb-2">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <p class="mb-2">"MyDentalFly made my dental tourism experience seamless. From airport pickup to treatment, everything was perfectly organized."</p>
+                                    <p class="small text-muted mb-0">- Michael T., Dublin</p>
+                                </div>
+                            </div>
+                            <div class="carousel-item">
+                                <div class="text-center mb-3">
+                                    <div class="mb-2">
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                        <i class="fas fa-star text-warning"></i>
+                                    </div>
+                                    <p class="mb-2">"The whole experience exceeded my expectations. World-class dental care at a fraction of the cost in the US."</p>
+                                    <p class="small text-muted mb-0">- Robert K., New York</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
             
-            <div class="card-footer quote-footer py-3">
-                <div class="row">
-                    <div class="col-md-7">
-                        <h3 class="h5 mb-2">Terms & Conditions</h3>
-                        <ul class="mb-0 small">
-                            <li>This quote is valid for 30 days from the date of issue.</li>
-                            <li>Prices are subject to change based on detailed examination findings.</li>
-                            <li>Additional treatments may be recommended based on in-person assessment.</li>
-                            <li>Payment terms: 30% deposit to secure appointment, balance due on treatment completion.</li>
-                            <li>Cancellation policy: Full refund with 7+ days notice, 50% refund with 3-6 days notice.</li>
-                        </ul>
+            <div class="card">
+                <div class="card-header bg-white">
+                    <h3 class="h5 mb-0">Need Help?</h3>
+                </div>
+                <div class="card-body">
+                    <p>If you have any questions about your quote or the booking process, our team is here to help:</p>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-phone-alt me-3 text-primary"></i>
+                        <div>
+                            <p class="mb-0"><strong>Phone Support</strong></p>
+                            <p class="mb-0 small">+44 20 7123 4567</p>
+                        </div>
                     </div>
-                    <div class="col-md-5">
-                        <h3 class="h5 mb-2">Next Steps</h3>
-                        <p class="mb-2 small">To proceed with your dental treatment plan:</p>
-                        <ol class="mb-0 small">
-                            <li>Save or print this quote for your records</li>
-                            <li>Our dental travel consultant will contact you within 24 hours</li>
-                            <li>Schedule your treatment dates and make travel arrangements</li>
-                            <li>Pay deposit to confirm your booking</li>
-                        </ol>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="fas fa-envelope me-3 text-primary"></i>
+                        <div>
+                            <p class="mb-0"><strong>Email Support</strong></p>
+                            <p class="mb-0 small">support@mydentalfly.com</p>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-comment-dots me-3 text-primary"></i>
+                        <div>
+                            <p class="mb-0"><strong>Live Chat</strong></p>
+                            <p class="mb-0 small">Available 24/7</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-5 no-print">
-    <div class="col-md-12">
-        <div class="d-flex justify-content-between">
-            <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left me-2"></i> Edit Patient Information
-            </a>
-            <div>
-                <button onclick="window.print()" class="btn btn-outline-primary me-2">
-                    <i class="fas fa-print me-2"></i> Print Quote
-                </button>
-                <a href="mailto:?subject=Your%20MyDentalFly%20Quote%20{{ quote_ref }}&body=Thank%20you%20for%20using%20MyDentalFly%20to%20get%20a%20quote%20for%20your%20dental%20treatment.%0A%0AYour%20quote%20reference%20is%3A%20{{ quote_ref }}%0A%0APlease%20visit%20https%3A%2F%2Fmydentalfly.com%2Fquote%2F{{ quote_ref }}%20to%20view%20your%20complete%20quote." class="btn btn-outline-primary me-2">
-                    <i class="fas fa-envelope me-2"></i> Email Quote
-                </a>
-                <a href="{{ url_for('page_routes.index') }}" class="btn btn-primary">
-                    Finish <i class="fas fa-check ms-2"></i>
-                </a>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-5 no-print">
-    <div class="col-md-12">
-        <div class="card bg-light">
-            <div class="card-body">
-                <h3 class="h5">Still Have Questions?</h3>
-                <p>Our dental travel consultants are here to help. Contact us with any questions or concerns about your quote or treatment plan.</p>
-                <div class="row">
-                    <div class="col-md-4">
-                        <p class="mb-1"><i class="fas fa-phone me-2"></i> +44 20 1234 5678</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-1"><i class="fas fa-envelope me-2"></i> info@mydentalfly.com</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p class="mb-1"><i class="fab fa-whatsapp me-2"></i> +90 555 123 4567</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row no-print">
-    <div class="col-md-12 text-center">
-        <h3 class="h5 mb-3">Why Choose MyDentalFly</h3>
-        <div class="row">
-            <div class="col-md-3">
-                <div class="mb-3"><i class="fas fa-user-md fa-2x text-primary"></i></div>
-                <h4 class="h6">Experienced Doctors</h4>
-                <p class="small">All our partner clinics employ experienced, English-speaking specialists.</p>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3"><i class="fas fa-certificate fa-2x text-primary"></i></div>
-                <h4 class="h6">Quality Guaranteed</h4>
-                <p class="small">ISO-certified clinics with the latest dental technology and materials.</p>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3"><i class="fas fa-headset fa-2x text-primary"></i></div>
-                <h4 class="h6">24/7 Support</h4>
-                <p class="small">Dedicated concierge service before, during, and after your treatment.</p>
-            </div>
-            <div class="col-md-3">
-                <div class="mb-3"><i class="fas fa-wallet fa-2x text-primary"></i></div>
-                <h4 class="h6">Transparent Pricing</h4>
-                <p class="small">No hidden fees, with savings of up to 70% compared to UK prices.</p>
             </div>
         </div>
     </div>
@@ -256,28 +364,12 @@
 
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add current date and expiration date for the quote
-    const now = new Date();
-    const expires = new Date(now);
-    expires.setDate(expires.getDate() + 30); // Quote valid for 30 days
-    
-    // Format dates for display
-    const formatDate = (date) => {
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return date.toLocaleDateString('en-US', options);
-    };
-    
-    // Replace template date placeholders with JavaScript
-    const datePlaceholders = document.querySelectorAll('[data-date="now"]');
-    datePlaceholders.forEach(el => {
-        el.textContent = formatDate(now);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize testimonial carousel
+        const testimonialCarousel = new bootstrap.Carousel(document.getElementById('testimonialCarousel'), {
+            interval: 5000,
+            touch: true
+        });
     });
-    
-    const expiryPlaceholders = document.querySelectorAll('[data-date="expires"]');
-    expiryPlaceholders.forEach(el => {
-        el.textContent = formatDate(expires);
-    });
-});
 </script>
 {% endblock %}

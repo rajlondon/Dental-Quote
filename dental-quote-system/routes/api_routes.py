@@ -1,144 +1,151 @@
-from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify
+from flask import Blueprint, request, jsonify
 from services.treatment_service import TreatmentService
 from utils.session_manager import SessionManager
 import json
 
-api_routes_bp = Blueprint('api_routes', __name__)
+api_routes = Blueprint('api', __name__)
 
-@api_routes_bp.route('/api/add-treatment', methods=['POST'])
-def add_treatment():
-    """Add a treatment to the current quote"""
-    data = request.get_json()
-    
-    if not data or 'treatment_id' not in data:
-        return jsonify({'success': False, 'message': 'Invalid request'})
-    
-    treatment_id = data['treatment_id']
-    treatment = TreatmentService.get_treatment(treatment_id)
-    
-    if not treatment:
-        return jsonify({'success': False, 'message': 'Treatment not found'})
-    
-    # Add treatment to session
-    SessionManager.add_treatment(treatment)
-    
-    # Get updated data
-    selected_treatments = SessionManager.get_selected_treatments()
-    subtotal = SessionManager.get_subtotal()
-    discount_amount = SessionManager.get_discount_amount()
-    total = SessionManager.get_total()
-    
-    return jsonify({
-        'success': True,
-        'treatments': selected_treatments,
-        'subtotal': subtotal,
-        'discount_amount': discount_amount,
-        'total': total
-    })
-
-@api_routes_bp.route('/api/remove-treatment', methods=['POST'])
-def remove_treatment():
-    """Remove a treatment from the current quote"""
-    data = request.get_json()
-    
-    if not data or 'treatment_id' not in data:
-        return jsonify({'success': False, 'message': 'Invalid request'})
-    
-    treatment_id = data['treatment_id']
-    
-    # Remove treatment from session
-    SessionManager.remove_treatment(treatment_id)
-    
-    # Get updated data
-    selected_treatments = SessionManager.get_selected_treatments()
-    subtotal = SessionManager.get_subtotal()
-    discount_amount = SessionManager.get_discount_amount()
-    total = SessionManager.get_total()
-    
-    return jsonify({
-        'success': True,
-        'treatments': selected_treatments,
-        'subtotal': subtotal,
-        'discount_amount': discount_amount,
-        'total': total
-    })
-
-@api_routes_bp.route('/api/update-quantity', methods=['POST'])
-def update_quantity():
-    """Update the quantity of a treatment in the current quote"""
-    data = request.get_json()
-    
-    if not data or 'treatment_id' not in data or 'quantity' not in data:
-        return jsonify({'success': False, 'message': 'Invalid request'})
-    
-    treatment_id = data['treatment_id']
-    quantity = int(data['quantity'])
-    
-    if quantity < 1:
-        quantity = 1
-    
-    # Update treatment quantity in session
-    SessionManager.update_treatment_quantity(treatment_id, quantity)
-    
-    # Get updated data
-    selected_treatments = SessionManager.get_selected_treatments()
-    subtotal = SessionManager.get_subtotal()
-    discount_amount = SessionManager.get_discount_amount()
-    total = SessionManager.get_total()
-    
-    return jsonify({
-        'success': True,
-        'treatments': selected_treatments,
-        'subtotal': subtotal,
-        'discount_amount': discount_amount,
-        'total': total
-    })
-
-@api_routes_bp.route('/api/get-treatment/<treatment_id>')
+@api_routes.route('/treatment/<treatment_id>', methods=['GET'])
 def get_treatment(treatment_id):
     """Get details for a specific treatment"""
+    # Get treatment details
     treatment = TreatmentService.get_treatment(treatment_id)
     
     if not treatment:
-        return jsonify({'success': False, 'message': 'Treatment not found'})
+        return jsonify({'error': 'Treatment not found'}), 404
     
-    return jsonify({
-        'success': True,
-        'treatment': treatment
-    })
+    return jsonify(treatment)
 
-@api_routes_bp.route('/api/get-quote-summary')
+@api_routes.route('/quote-summary', methods=['GET'])
 def get_quote_summary():
     """Get summary of the current quote"""
+    # Get current quote data
     selected_treatments = SessionManager.get_selected_treatments()
     promo_code = SessionManager.get_promo_code()
     promo_details = SessionManager.get_promo_details()
+    
+    # Calculate totals
     subtotal = SessionManager.get_subtotal()
-    discount_amount = SessionManager.get_discount_amount()
+    discount = SessionManager.get_discount_amount()
     total = SessionManager.get_total()
     
     return jsonify({
-        'success': True,
-        'treatments': selected_treatments,
+        'selected_treatments': selected_treatments,
+        'treatment_count': len(selected_treatments),
         'promo_code': promo_code,
         'promo_details': promo_details,
         'subtotal': subtotal,
-        'discount_amount': discount_amount,
+        'discount': discount,
         'total': total
     })
 
-@api_routes_bp.route('/api/generate-pdf', methods=['POST'])
+@api_routes.route('/add-treatment', methods=['POST'])
+def add_treatment():
+    """Add a treatment to the current quote"""
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
+    
+    if not treatment_id:
+        return jsonify({'error': 'No treatment ID provided'}), 400
+    
+    # Get treatment details
+    treatment = TreatmentService.get_treatment(treatment_id)
+    
+    if not treatment:
+        return jsonify({'error': 'Treatment not found'}), 404
+    
+    # Add to session
+    SessionManager.add_treatment(treatment)
+    
+    # Return updated quote summary
+    selected_treatments = SessionManager.get_selected_treatments()
+    subtotal = SessionManager.get_subtotal()
+    discount = SessionManager.get_discount_amount()
+    total = SessionManager.get_total()
+    
+    return jsonify({
+        'message': f'Added {treatment["name"]} to your quote',
+        'selected_treatments': selected_treatments,
+        'treatment_count': len(selected_treatments),
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total
+    })
+
+@api_routes.route('/remove-treatment', methods=['POST'])
+def remove_treatment():
+    """Remove a treatment from the current quote"""
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
+    
+    if not treatment_id:
+        return jsonify({'error': 'No treatment ID provided'}), 400
+    
+    # Remove from session
+    SessionManager.remove_treatment(treatment_id)
+    
+    # Return updated quote summary
+    selected_treatments = SessionManager.get_selected_treatments()
+    subtotal = SessionManager.get_subtotal()
+    discount = SessionManager.get_discount_amount()
+    total = SessionManager.get_total()
+    
+    return jsonify({
+        'message': 'Treatment removed from your quote',
+        'selected_treatments': selected_treatments,
+        'treatment_count': len(selected_treatments),
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total
+    })
+
+@api_routes.route('/update-quantity', methods=['POST'])
+def update_quantity():
+    """Update the quantity of a treatment in the current quote"""
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
+    quantity = data.get('quantity', 1)
+    
+    if not treatment_id:
+        return jsonify({'error': 'No treatment ID provided'}), 400
+    
+    # Ensure quantity is at least 1
+    quantity = max(1, int(quantity))
+    
+    # Get treatment details to include in response
+    treatment = TreatmentService.get_treatment(treatment_id)
+    
+    if not treatment:
+        return jsonify({'error': 'Treatment not found'}), 404
+    
+    # Update quantity in session
+    SessionManager.update_treatment_quantity(treatment_id, quantity)
+    
+    # Return updated quote summary
+    selected_treatments = SessionManager.get_selected_treatments()
+    subtotal = SessionManager.get_subtotal()
+    discount = SessionManager.get_discount_amount()
+    total = SessionManager.get_total()
+    
+    return jsonify({
+        'message': f'Updated quantity for {treatment["name"]}',
+        'selected_treatments': selected_treatments,
+        'treatment_count': len(selected_treatments),
+        'subtotal': subtotal,
+        'discount': discount,
+        'total': total
+    })
+
+@api_routes.route('/generate-pdf', methods=['POST'])
 def generate_pdf():
     """Generate PDF quote"""
-    quote_id = request.form.get('quote_id')
+    quote_id = request.json.get('quote_id')
     
     if not quote_id:
-        return jsonify({'success': False, 'message': 'Quote ID is required'})
+        return jsonify({'error': 'No quote ID provided'}), 400
     
+    # Generate PDF for the quote
     pdf_url = TreatmentService.generate_pdf_quote(quote_id)
-    
-    if not pdf_url:
-        return jsonify({'success': False, 'message': 'Failed to generate PDF'})
     
     return jsonify({
         'success': True,
