@@ -1,8 +1,7 @@
 /**
- * Utility functions for formatting values in the UI
+ * Utility functions for formatting and converting values
  */
 
-// Define currency types and interfaces
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'TRY';
 
 export interface CurrencyFormat {
@@ -13,65 +12,67 @@ export interface CurrencyFormat {
   precision: number;
 }
 
-// Currency formatting configurations
 export const CURRENCY_FORMATS: Record<CurrencyCode, CurrencyFormat> = {
   USD: {
     symbol: '$',
     position: 'before',
     separator: ',',
     decimal: '.',
-    precision: 2,
+    precision: 2
   },
   EUR: {
     symbol: '€',
     position: 'after',
     separator: '.',
     decimal: ',',
-    precision: 2,
+    precision: 2
   },
   GBP: {
     symbol: '£',
     position: 'before',
     separator: ',',
     decimal: '.',
-    precision: 2,
+    precision: 2
   },
   TRY: {
     symbol: '₺',
     position: 'after',
     separator: '.',
     decimal: ',',
-    precision: 2,
-  },
+    precision: 2
+  }
 };
 
-// Approximate exchange rates (as of May 2025)
+// Exchange rates from base currency (USD)
 export const USD_EXCHANGE_RATES: Record<CurrencyCode, number> = {
   USD: 1,
-  EUR: 0.91,
-  GBP: 0.78,
-  TRY: 31.45,
+  EUR: 0.92,
+  GBP: 0.79,
+  TRY: 31.85
 };
 
+// Exchange rates from EUR
 export const EUR_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 1.10,
+  USD: 1.09,
   EUR: 1,
-  GBP: 0.86,
-  TRY: 34.56,
+  GBP: 0.85,
+  TRY: 34.65
 };
 
+// Exchange rates from GBP
 export const GBP_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 1.28,
-  EUR: 1.16,
+  USD: 1.27,
+  EUR: 1.18,
   GBP: 1,
-  TRY: 40.32,
+  TRY: 40.48
 };
 
+// Exchange rates from TRY
 export const TRY_EXCHANGE_RATES: Record<CurrencyCode, number> = {
-  USD: 0.032,
+  USD: 0.031,
   EUR: 0.029,
   GBP: 0.025,
-  TRY: 1,
+  TRY: 1
 };
 
 /**
@@ -82,28 +83,20 @@ export const TRY_EXCHANGE_RATES: Record<CurrencyCode, number> = {
  * @returns Formatted price string
  */
 export function formatPrice(amount: number, currency: CurrencyCode = 'USD'): string {
-  if (amount === null || amount === undefined) {
-    return 'N/A';
-  }
-
+  // Get the currency format
   const format = CURRENCY_FORMATS[currency];
   
-  // Round to the specified precision
-  const roundedAmount = Math.round(amount * Math.pow(10, format.precision)) / Math.pow(10, format.precision);
+  // Format the number
+  const formattedNumber = amount.toFixed(format.precision)
+    .replace('.', format.decimal) // Replace decimal point
+    .replace(/\B(?=(\d{3})+(?!\d))/g, format.separator); // Add thousands separator
   
-  // Format the number with appropriate separators
-  let [integerPart, decimalPart] = roundedAmount.toFixed(format.precision).split('.');
-  
-  // Add thousand separators
-  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, format.separator);
-  
-  // Combine parts with appropriate decimal separator
-  const formattedNumber = decimalPart ? `${integerPart}${format.decimal}${decimalPart}` : integerPart;
-  
-  // Apply symbol in the correct position
-  return format.position === 'before' 
-    ? `${format.symbol}${formattedNumber}` 
-    : `${formattedNumber} ${format.symbol}`;
+  // Apply the currency symbol based on position
+  if (format.position === 'before') {
+    return `${format.symbol}${formattedNumber}`;
+  } else {
+    return `${formattedNumber} ${format.symbol}`;
+  }
 }
 
 /**
@@ -119,29 +112,35 @@ export function convertCurrency(
   fromCurrency: CurrencyCode = 'USD', 
   toCurrency: CurrencyCode = 'USD'
 ): number {
+  // If currencies are the same, no conversion needed
   if (fromCurrency === toCurrency) {
     return amount;
   }
   
-  let exchangeRate = 1;
-  
-  // Select the appropriate exchange rate table based on from currency
+  // Get the appropriate exchange rate matrix based on fromCurrency
+  let exchangeRates;
   switch (fromCurrency) {
     case 'USD':
-      exchangeRate = USD_EXCHANGE_RATES[toCurrency];
+      exchangeRates = USD_EXCHANGE_RATES;
       break;
     case 'EUR':
-      exchangeRate = EUR_EXCHANGE_RATES[toCurrency];
+      exchangeRates = EUR_EXCHANGE_RATES;
       break;
     case 'GBP':
-      exchangeRate = GBP_EXCHANGE_RATES[toCurrency];
+      exchangeRates = GBP_EXCHANGE_RATES;
       break;
     case 'TRY':
-      exchangeRate = TRY_EXCHANGE_RATES[toCurrency];
+      exchangeRates = TRY_EXCHANGE_RATES;
       break;
+    default:
+      exchangeRates = USD_EXCHANGE_RATES;
   }
   
-  return amount * exchangeRate;
+  // Convert to the target currency
+  const convertedAmount = amount * exchangeRates[toCurrency];
+  
+  // Round to 2 decimal places
+  return Math.round(convertedAmount * 100) / 100;
 }
 
 /**
@@ -152,14 +151,13 @@ export function convertCurrency(
  * @returns Formatted price string
  */
 export function formatPriceInCurrency(
-  amount: number,
+  amount: number, 
   displayCurrency: CurrencyCode = 'USD'
 ): string {
-  if (amount === null || amount === undefined) {
-    return 'N/A';
-  }
-  
+  // Convert from USD to the display currency
   const convertedAmount = convertCurrency(amount, 'USD', displayCurrency);
+  
+  // Format the converted amount
   return formatPrice(convertedAmount, displayCurrency);
 }
 
@@ -170,13 +168,9 @@ export function formatPriceInCurrency(
  * @returns Formatted percentage string
  */
 export function formatPercentage(value: number): string {
-  if (value === null || value === undefined) {
-    return 'N/A';
-  }
-  
-  // Multiply by 100 if the value is in decimal form (0.xx)
-  const displayValue = value <= 1 ? value * 100 : value;
-  return `${displayValue.toFixed(0)}%`;
+  // Check if value is already in percentage form (e.g., 15 vs 0.15)
+  const percentage = value > 1 ? value : value * 100;
+  return `${percentage.toFixed(0)}%`;
 }
 
 /**
@@ -187,27 +181,32 @@ export function formatPercentage(value: number): string {
  * @returns Formatted date string
  */
 export function formatDate(
-  date: Date | string | number,
+  date: Date | string,
   format: 'short' | 'medium' | 'long' = 'medium'
 ): string {
-  if (!date) {
-    return 'N/A';
+  // Convert string to Date if needed
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Define format options based on requested style
+  let options: Intl.DateTimeFormatOptions;
+  
+  switch (format) {
+    case 'short':
+      options = { month: 'numeric', day: 'numeric', year: '2-digit' };
+      break;
+    case 'medium':
+      options = { month: 'short', day: 'numeric', year: 'numeric' };
+      break;
+    case 'long':
+      options = { 
+        weekday: 'long',
+        month: 'long', 
+        day: 'numeric', 
+        year: 'numeric'
+      };
+      break;
   }
   
-  const dateObj = typeof date === 'string' || typeof date === 'number' 
-    ? new Date(date) 
-    : date;
-  
-  const options: Intl.DateTimeFormatOptions = { 
-    year: 'numeric', 
-    month: format === 'short' ? 'short' : 'long', 
-    day: 'numeric' 
-  };
-  
-  if (format === 'long') {
-    options.hour = '2-digit';
-    options.minute = '2-digit';
-  }
-  
+  // Return formatted date
   return new Intl.DateTimeFormat('en-US', options).format(dateObj);
 }
