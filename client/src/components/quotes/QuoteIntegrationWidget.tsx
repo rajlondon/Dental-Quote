@@ -1,398 +1,674 @@
-import React, { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Loader2, Tag, X } from 'lucide-react';
+import TreatmentList, { TreatmentLineItem } from './TreatmentList';
 import { useToast } from '@/hooks/use-toast';
-import { Treatment, TreatmentList } from './TreatmentList';
-import { useQuoteSystem, PortalType } from '@/hooks/use-quote-system';
-import { formatPrice } from '@/utils/format-utils';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { formatCurrency } from '@/utils/format-utils';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
 
-interface QuoteIntegrationWidgetProps {
-  initialTreatments?: Treatment[];
-  readOnly?: boolean;
-  selectedCurrency?: 'USD' | 'GBP' | 'EUR';
-  title?: string;
-  onQuoteCreated?: (quoteData: any) => void;
-  apiEndpoint?: string;
-  showPromoCodeInput?: boolean;
-  initialPromoCode?: string;
-  portalType?: PortalType;
+// Define API service types
+interface QuoteService {
+  initialize: () => Promise<void>;
+  addTreatment: (treatmentId: string, quantity: number) => Promise<void>;
+  removeTreatment: (treatmentId: string) => Promise<void>;
+  updateQuantity: (treatmentId: string, quantity: number) => Promise<void>;
+  applyPromoCode: (promoCode: string) => Promise<{ success: boolean; message?: string }>;
+  clearPromoCode: () => Promise<void>;
+  processOffer: (offerId: string) => Promise<void>;
+  submitPatientInfo: (patientInfo: PatientInfo) => Promise<void>;
+  saveQuote: () => Promise<{ quoteId: string }>;
+  getState: () => Promise<QuoteState>;
 }
 
+// Define patient info form schema
+const patientInfoSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().optional(),
+  country: z.string().min(1, 'Country is required'),
+  city: z.string().optional(),
+  preferredCurrency: z.string().optional(),
+  preferredTravelDate: z.string().optional(),
+  notes: z.string().optional()
+});
+
+// Define types
+type PatientInfo = z.infer<typeof patientInfoSchema>;
+
+interface QuoteState {
+  treatments: TreatmentLineItem[];
+  subtotal: number;
+  discountAmount: number;
+  total: number;
+  promoCode?: string;
+  discountType?: 'percentage' | 'fixed_amount';
+  discountValue?: number;
+  currency: string;
+  patientInfo?: PatientInfo;
+}
+
+interface QuoteIntegrationWidgetProps {
+  quoteService: QuoteService;
+  initialCurrency?: string;
+  initialTab?: string;
+  showPromoCodeSection?: boolean;
+  showPatientInfoSection?: boolean;
+  onQuoteSaved?: (quoteId: string) => void;
+  onTabChange?: (tabValue: string) => void;
+  className?: string;
+}
+
+/**
+ * A widget for integrating with the quote generation system
+ * This component handles the full quote flow from treatment selection to saving
+ */
 const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
-  initialTreatments,
-  readOnly = false,
-  selectedCurrency = 'USD',
-  title = 'Treatment Quote Builder',
-  onQuoteCreated,
-  apiEndpoint,
-  showPromoCodeInput = true,
-  initialPromoCode = '',
-  portalType = 'patient',
+  quoteService,
+  initialCurrency = 'USD',
+  initialTab = 'treatments',
+  showPromoCodeSection = true,
+  showPatientInfoSection = true,
+  onQuoteSaved,
+  onTabChange,
+  className = ''
 }) => {
-  // State for patient information
-  const [patientName, setPatientName] = useState('');
-  const [patientEmail, setPatientEmail] = useState('');
-  const [patientPhone, setPatientPhone] = useState('');
-  const [notes, setNotes] = useState('');
-  const [activeTab, setActiveTab] = useState('treatments');
-  const [savingQuote, setSavingQuote] = useState(false);
-  const [specialOfferLoading, setSpecialOfferLoading] = useState(false);
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState(initialTab);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [quoteState, setQuoteState] = useState<QuoteState>({
+    treatments: [],
+    subtotal: 0,
+    discountAmount: 0,
+    total: 0,
+    currency: initialCurrency
+  });
+  const [promoCode, setPromoCode] = useState('');
+  const [promoCodeError, setPromoCodeError] = useState('');
 
-  // Use our custom hook for quote system functionality
-  const quoteSystem = useQuoteSystem(portalType);
-  const {
-    treatments,
-    loading,
-    error,
-    subtotal,
-    discountAmount,
-    total,
-    promoCode,
-    appliedPromoCode,
-    discountType,
-    discountValue,
-    specialOffers,
-    updateTreatmentQuantity,
-    removeTreatment,
-    applyPromoCode,
-    clearPromoCode,
-    processSpecialOffer,
-    saveQuote,
-    setPromoCode,
-    changeCurrency,
-  } = quoteSystem;
-
-  // Handle applying a promo code
-  const handleApplyPromoCode = async () => {
-    if (!promoCode.trim()) {
-      toast({
-        title: 'Please enter a promo code',
-        description: 'Enter a valid promotional code to apply a discount.',
-        variant: 'destructive',
-      });
-      return;
+  // Patient info form
+  const patientInfoForm = useForm<PatientInfo>({
+    resolver: zodResolver(patientInfoSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      phone: '',
+      country: '',
+      city: '',
+      preferredCurrency: initialCurrency,
+      preferredTravelDate: '',
+      notes: ''
     }
+  });
 
-    await applyPromoCode(promoCode.trim());
-  };
-
-  // Handle removing a promo code
-  const handleClearPromoCode = async () => {
-    await clearPromoCode();
-  };
-
-  // Handle applying a special offer
-  const handleApplySpecialOffer = async (offerId: string) => {
-    setSpecialOfferLoading(true);
-    try {
-      await processSpecialOffer(offerId);
-      toast({
-        title: 'Special Offer Applied',
-        description: 'The special offer has been applied to your quote.',
-      });
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to apply special offer. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSpecialOfferLoading(false);
-    }
-  };
-
-  // Handle saving the quote
-  const handleSaveQuote = async () => {
-    if (!patientName.trim() || !patientEmail.trim()) {
-      toast({
-        title: 'Missing information',
-        description: 'Please provide your name and email to save the quote.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    setSavingQuote(true);
-    try {
-      const result = await saveQuote({
-        name: patientName,
-        email: patientEmail,
-        phone: patientPhone,
-        notes,
-      });
-
-      toast({
-        title: 'Quote Saved',
-        description: 'Your quote has been saved successfully!',
-      });
-
-      if (onQuoteCreated && result) {
-        onQuoteCreated(result);
-      }
-
-      // Clear form fields after successful save
-      setPatientName('');
-      setPatientEmail('');
-      setPatientPhone('');
-      setNotes('');
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save your quote. Please try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setSavingQuote(false);
-    }
-  };
-
-  // Handle currency change
-  const handleCurrencyChange = (value: string) => {
-    changeCurrency(value as 'USD' | 'GBP' | 'EUR');
-  };
-
-  // Set initial promo code if provided
+  // Initialize the quote on component mount
   useEffect(() => {
-    if (initialPromoCode && !appliedPromoCode) {
-      setPromoCode(initialPromoCode);
-      applyPromoCode(initialPromoCode);
-    }
-  }, [initialPromoCode, appliedPromoCode, setPromoCode, applyPromoCode]);
+    const initializeQuote = async () => {
+      setIsLoading(true);
+      try {
+        await quoteService.initialize();
+        await refreshQuoteState();
+      } catch (error) {
+        console.error('Error initializing quote:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to initialize quote. Please try again.',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // If there's an error, display it
-  if (error) {
+    initializeQuote();
+  }, [quoteService]);
+
+  // Auto-apply promo code from URL if present
+  useAutoApplyCode((code) => {
+    setPromoCode(code);
+    handleApplyPromoCode(code);
+  });
+
+  // Refresh quote state from the server
+  const refreshQuoteState = async () => {
+    try {
+      const state = await quoteService.getState();
+      setQuoteState(state);
+      
+      // Update promo code state if one is applied
+      if (state.promoCode) {
+        setPromoCode(state.promoCode);
+      }
+      
+      // Update patient info form if data is available
+      if (state.patientInfo) {
+        patientInfoForm.reset(state.patientInfo);
+      }
+      
+      return state;
+    } catch (error) {
+      console.error('Error refreshing quote state:', error);
+      return null;
+    }
+  };
+
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (onTabChange) {
+      onTabChange(value);
+    }
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = async (treatmentId: string, quantity: number) => {
+    setIsProcessing(true);
+    try {
+      await quoteService.updateQuantity(treatmentId, quantity);
+      await refreshQuoteState();
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update quantity. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle remove treatment
+  const handleRemoveTreatment = async (treatmentId: string) => {
+    setIsProcessing(true);
+    try {
+      await quoteService.removeTreatment(treatmentId);
+      await refreshQuoteState();
+      toast({
+        title: 'Treatment removed',
+        description: 'The treatment has been removed from your quote.',
+      });
+    } catch (error) {
+      console.error('Error removing treatment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove treatment. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle apply promo code
+  const handleApplyPromoCode = async (code: string) => {
+    if (!code.trim()) {
+      setPromoCodeError('Please enter a promo code');
+      return;
+    }
+
+    setIsProcessing(true);
+    setPromoCodeError('');
+    
+    try {
+      const result = await quoteService.applyPromoCode(code);
+      if (result.success) {
+        await refreshQuoteState();
+        toast({
+          title: 'Promo code applied',
+          description: 'Your promo code has been applied successfully.',
+        });
+      } else {
+        setPromoCodeError(result.message || 'Invalid promo code');
+        toast({
+          title: 'Invalid promo code',
+          description: result.message || 'The promo code you entered is invalid or has expired.',
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error);
+      setPromoCodeError('Failed to apply promo code. Please try again.');
+      toast({
+        title: 'Error',
+        description: 'Failed to apply promo code. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle clear promo code
+  const handleClearPromoCode = async () => {
+    setIsProcessing(true);
+    try {
+      await quoteService.clearPromoCode();
+      await refreshQuoteState();
+      setPromoCode('');
+      setPromoCodeError('');
+      toast({
+        title: 'Promo code removed',
+        description: 'Your promo code has been removed.',
+      });
+    } catch (error) {
+      console.error('Error clearing promo code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to clear promo code. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle patient info submission
+  const handlePatientInfoSubmit = async (data: PatientInfo) => {
+    setIsProcessing(true);
+    try {
+      await quoteService.submitPatientInfo(data);
+      await refreshQuoteState();
+      toast({
+        title: 'Patient information saved',
+        description: 'Your information has been saved successfully.',
+      });
+      
+      // Move to review tab
+      handleTabChange('review');
+    } catch (error) {
+      console.error('Error submitting patient info:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save patient information. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Handle save quote
+  const handleSaveQuote = async () => {
+    setIsProcessing(true);
+    try {
+      const { quoteId } = await quoteService.saveQuote();
+      await refreshQuoteState();
+      toast({
+        title: 'Quote saved',
+        description: 'Your quote has been saved successfully.',
+      });
+      
+      if (onQuoteSaved) {
+        onQuoteSaved(quoteId);
+      }
+    } catch (error) {
+      console.error('Error saving quote:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save quote. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Loading state
+  if (isLoading) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="flex items-center justify-center p-8">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2">Loading quote information...</span>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <div>
-              <CardTitle>{title}</CardTitle>
+    <div className={`quote-integration-widget space-y-4 ${className}`}>
+      <Tabs 
+        defaultValue={activeTab} 
+        value={activeTab} 
+        onValueChange={handleTabChange} 
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-3 mb-4">
+          <TabsTrigger value="treatments">Treatments</TabsTrigger>
+          {showPatientInfoSection && (
+            <TabsTrigger value="patient-info">Patient Info</TabsTrigger>
+          )}
+          <TabsTrigger value="review">Review & Save</TabsTrigger>
+        </TabsList>
+        
+        {/* Treatments Tab */}
+        <TabsContent value="treatments" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Selected Treatments</CardTitle>
               <CardDescription>
-                {readOnly
-                  ? 'View your treatment quote details'
-                  : 'Create and customize your dental treatment quote'}
+                View and manage your selected dental treatments
               </CardDescription>
-            </div>
-            <Select onValueChange={handleCurrencyChange} defaultValue={selectedCurrency}>
-              <SelectTrigger className="w-24">
-                <SelectValue placeholder="Currency" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="USD">USD</SelectItem>
-                <SelectItem value="GBP">GBP</SelectItem>
-                <SelectItem value="EUR">EUR</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex justify-center items-center py-10">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">Loading quote data...</span>
-            </div>
-          ) : (
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="treatments">Treatments</TabsTrigger>
-                <TabsTrigger value="specialOffers">Special Offers</TabsTrigger>
-                <TabsTrigger value="patientInfo" disabled={treatments.length === 0}>
-                  Patient Info
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="treatments" className="space-y-4">
-                {showPromoCodeInput && (
-                  <div className="flex space-x-2 mb-4">
-                    <div className="flex-1">
-                      <Label htmlFor="promoCode">Promo Code</Label>
-                      <Input
-                        id="promoCode"
-                        value={promoCode}
-                        onChange={(e) => setPromoCode(e.target.value)}
-                        placeholder="Enter promo code"
-                        className="w-full"
-                        disabled={!!appliedPromoCode || readOnly}
-                      />
-                    </div>
-                    {!appliedPromoCode ? (
+            </CardHeader>
+            <CardContent>
+              <TreatmentList
+                treatments={quoteState.treatments}
+                currency={quoteState.currency}
+                discountType={quoteState.discountType}
+                discountValue={quoteState.discountValue}
+                promoCode={quoteState.promoCode}
+                onQuantityChange={handleQuantityChange}
+                onRemoveTreatment={handleRemoveTreatment}
+              />
+            </CardContent>
+          </Card>
+          
+          {/* Promo Code Section */}
+          {showPromoCodeSection && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Promo Code</CardTitle>
+                <CardDescription>
+                  Enter a promo code to get a discount on your treatment
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex space-x-2 items-start">
+                  {quoteState.promoCode ? (
+                    <div className="bg-muted p-3 rounded-md flex items-center w-full">
+                      <Tag className="h-4 w-4 mr-2 text-primary" />
+                      <span className="text-sm font-medium">{quoteState.promoCode}</span>
+                      <span className="text-sm text-muted-foreground ml-2">
+                        {quoteState.discountType === 'percentage' 
+                          ? `(${quoteState.discountValue}% off)` 
+                          : `(${formatCurrency(quoteState.discountValue || 0, quoteState.currency)} off)`}
+                      </span>
+                      <div className="flex-1" />
                       <Button
-                        onClick={handleApplyPromoCode}
-                        className="mt-6"
-                        variant="outline"
-                        disabled={!promoCode.trim() || readOnly}
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={handleClearPromoCode}
+                        disabled={isProcessing}
                       >
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex-1">
+                        <Input
+                          value={promoCode}
+                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                          placeholder="Enter promo code"
+                          className="uppercase"
+                          aria-label="Promo code"
+                        />
+                        {promoCodeError && (
+                          <p className="text-xs text-destructive mt-1">{promoCodeError}</p>
+                        )}
+                      </div>
+                      <Button
+                        onClick={() => handleApplyPromoCode(promoCode)}
+                        disabled={isProcessing || !promoCode}
+                        className="shrink-0"
+                      >
+                        {isProcessing ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                         Apply
                       </Button>
-                    ) : (
-                      <Button
-                        onClick={handleClearPromoCode}
-                        className="mt-6"
-                        variant="outline"
-                        disabled={readOnly}
-                      >
-                        Remove
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Next Button */}
+          <div className="flex justify-end">
+            <Button
+              onClick={() => handleTabChange('patient-info')}
+              disabled={quoteState.treatments.length === 0}
+              size="lg"
+            >
+              Next: Patient Information
+            </Button>
+          </div>
+        </TabsContent>
+        
+        {/* Patient Info Tab */}
+        {showPatientInfoSection && (
+          <TabsContent value="patient-info" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Patient Information</CardTitle>
+                <CardDescription>
+                  Please provide your contact information for your quote
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...patientInfoForm}>
+                  <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="firstName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>First Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="John" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="lastName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Last Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Doe" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input placeholder="john.doe@example.com" type="email" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone (optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="+1 123 456 7890" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input placeholder="United States" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={patientInfoForm.control}
+                        name="city"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>City (optional)</FormLabel>
+                            <FormControl>
+                              <Input placeholder="New York" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="preferredTravelDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Preferred Travel Date (optional)</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormDescription>
+                            When would you like to travel for your treatment?
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={patientInfoForm.control}
+                      name="notes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Additional Notes (optional)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="Any special requirements or questions" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <div className="flex justify-end space-x-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => handleTabChange('treatments')}>
+                        Back
                       </Button>
+                      <Button type="submit" disabled={isProcessing}>
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Saving...
+                          </>
+                        ) : (
+                          'Next: Review'
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
+        
+        {/* Review Tab */}
+        <TabsContent value="review" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Summary</CardTitle>
+              <CardDescription>
+                Review your dental treatment quote before saving
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <TreatmentList
+                treatments={quoteState.treatments}
+                currency={quoteState.currency}
+                discountType={quoteState.discountType}
+                discountValue={quoteState.discountValue}
+                promoCode={quoteState.promoCode}
+                isReadOnly={true}
+              />
+              
+              {quoteState.patientInfo && (
+                <div className="mt-6 space-y-4">
+                  <h3 className="text-lg font-semibold">Patient Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Name</p>
+                      <p>
+                        {quoteState.patientInfo.firstName} {quoteState.patientInfo.lastName}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Email</p>
+                      <p>{quoteState.patientInfo.email}</p>
+                    </div>
+                    {quoteState.patientInfo.phone && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                        <p>{quoteState.patientInfo.phone}</p>
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">Location</p>
+                      <p>
+                        {quoteState.patientInfo.city && `${quoteState.patientInfo.city}, `}
+                        {quoteState.patientInfo.country}
+                      </p>
+                    </div>
+                    {quoteState.patientInfo.preferredTravelDate && (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Preferred Travel Date
+                        </p>
+                        <p>{quoteState.patientInfo.preferredTravelDate}</p>
+                      </div>
+                    )}
+                    {quoteState.patientInfo.notes && (
+                      <div className="col-span-2">
+                        <p className="text-sm font-medium text-muted-foreground">Notes</p>
+                        <p>{quoteState.patientInfo.notes}</p>
+                      </div>
                     )}
                   </div>
-                )}
-
-                <TreatmentList
-                  treatments={treatments}
-                  readOnly={readOnly}
-                  onQuantityChange={updateTreatmentQuantity}
-                  onRemoveTreatment={removeTreatment}
-                  selectedCurrency={selectedCurrency}
-                  showTotals={true}
-                  appliedPromoCode={appliedPromoCode}
-                  discountAmount={discountAmount}
-                  discountType={discountType || undefined}
-                  discountValue={discountValue || undefined}
-                />
-              </TabsContent>
-
-              <TabsContent value="specialOffers" className="space-y-4">
-                {specialOffers.length === 0 ? (
-                  <div className="text-center p-6 border rounded-lg border-dashed">
-                    <p className="text-muted-foreground">No special offers available at the moment</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {specialOffers.map((offer) => (
-                      <Card key={offer.id} className="overflow-hidden">
-                        {offer.bannerImage && (
-                          <div className="h-32 overflow-hidden">
-                            <img
-                              src={offer.bannerImage}
-                              alt={offer.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-lg">{offer.title}</CardTitle>
-                          <CardDescription>{offer.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="pb-2">
-                          <p className="text-sm font-medium text-primary">
-                            {offer.discountType === 'percentage'
-                              ? `${offer.discountValue}% discount`
-                              : `${formatPrice(offer.discountValue, selectedCurrency)} off`}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Promo code: {offer.promoCode}
-                          </p>
-                        </CardContent>
-                        <CardFooter>
-                          <Button
-                            onClick={() => handleApplySpecialOffer(offer.id)}
-                            disabled={readOnly || specialOfferLoading}
-                            className="w-full"
-                          >
-                            {specialOfferLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              'Apply Offer'
-                            )}
-                          </Button>
-                        </CardFooter>
-                      </Card>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="patientInfo" className="space-y-4">
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={patientName}
-                      onChange={(e) => setPatientName(e.target.value)}
-                      placeholder="Enter your full name"
-                      disabled={readOnly}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={patientEmail}
-                      onChange={(e) => setPatientEmail(e.target.value)}
-                      placeholder="Enter your email address"
-                      disabled={readOnly}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number (optional)</Label>
-                    <Input
-                      id="phone"
-                      value={patientPhone}
-                      onChange={(e) => setPatientPhone(e.target.value)}
-                      placeholder="Enter your phone number"
-                      disabled={readOnly}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="notes">Notes (optional)</Label>
-                    <textarea
-                      id="notes"
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      placeholder="Any additional information about your requirements"
-                      disabled={readOnly}
-                    />
-                  </div>
                 </div>
-
-                <div className="pt-4">
-                  <TreatmentList
-                    treatments={treatments}
-                    readOnly={true}
-                    selectedCurrency={selectedCurrency}
-                    showTotals={true}
-                    appliedPromoCode={appliedPromoCode}
-                    discountAmount={discountAmount}
-                    discountType={discountType || undefined}
-                    discountValue={discountValue || undefined}
-                  />
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          {activeTab === 'patientInfo' && !readOnly ? (
-            <div className="w-full">
-              <Button
-                onClick={handleSaveQuote}
-                disabled={savingQuote || !patientName || !patientEmail}
-                className="w-full"
+              )}
+            </CardContent>
+            <CardFooter className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleTabChange(showPatientInfoSection ? 'patient-info' : 'treatments')}
               >
-                {savingQuote ? (
+                Back
+              </Button>
+              <Button onClick={handleSaveQuote} disabled={isProcessing || quoteState.treatments.length === 0}>
+                {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
@@ -401,30 +677,10 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
                   'Save Quote'
                 )}
               </Button>
-            </div>
-          ) : (
-            <>
-              {activeTab !== 'treatments' && (
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveTab(activeTab === 'specialOffers' ? 'treatments' : 'specialOffers')}
-                >
-                  Back
-                </Button>
-              )}
-              {activeTab !== 'patientInfo' && treatments.length > 0 && !readOnly && (
-                <Button
-                  onClick={() =>
-                    setActiveTab(activeTab === 'treatments' ? 'specialOffers' : 'patientInfo')
-                  }
-                >
-                  Next
-                </Button>
-              )}
-            </>
-          )}
-        </CardFooter>
-      </Card>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
