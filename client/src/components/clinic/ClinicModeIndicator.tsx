@@ -1,6 +1,6 @@
 import React from 'react';
 import { useClinic } from '@/hooks/use-clinic';
-import { Bell, CheckCircle, Clinic } from 'lucide-react';
+import { CheckCircle, Building2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ClinicModeIndicatorProps {
@@ -20,7 +20,7 @@ export const ClinicModeIndicator: React.FC<ClinicModeIndicatorProps> = ({ clinic
   return (
     <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r">
       <div className="flex items-center">
-        <Clinic className="h-5 w-5 text-blue-500 mr-2" />
+        <Building2 className="h-5 w-5 text-blue-500 mr-2" />
         <div className="flex flex-col">
           <div className="flex items-center">
             <h3 className="text-blue-800 font-medium">

@@ -412,6 +412,9 @@ const QuoteBuilderPage: React.FC = () => {
   
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Display clinic mode indicator if accessed from clinic portal */}
+      {clinicPreference && <ClinicModeIndicator clinicId={clinicPreference} />}
+      
       <h1 className="text-3xl font-bold mb-8 text-center">Build Your Dental Treatment Quote</h1>
       
       {/* Progress indicator */}
