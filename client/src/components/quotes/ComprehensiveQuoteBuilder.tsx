@@ -1038,7 +1038,7 @@ export function ComprehensiveQuoteBuilder({
                       </div>
                     </div>
                     
-                    <div className="flex justify-end space-x-2 pt-4">
+                    <div className="flex justify-between space-x-2 pt-4">
                       <Button 
                         type="button" 
                         variant="outline"
@@ -1046,12 +1046,24 @@ export function ComprehensiveQuoteBuilder({
                       >
                         Clear Info
                       </Button>
-                      <Button
-                        type="button"
-                        onClick={() => setActiveTab('treatments')}
-                      >
-                        Back to Treatments
-                      </Button>
+
+                      <div className="space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setActiveTab('treatments')}
+                        >
+                          Back to Treatments
+                        </Button>
+                        
+                        <Button
+                          type="button"
+                          onClick={handleSubmitQuote}
+                          disabled={!patientInfo?.email || !patientInfo?.firstName || treatments.length === 0}
+                        >
+                          Review Quote
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
