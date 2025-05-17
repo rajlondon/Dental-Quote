@@ -1,124 +1,129 @@
 /**
- * Utility functions for formatting data in the application
+ * Format utilities for the dental quote application
  */
 
-/**
- * Format a date string or Date object to a localized string
- * @param dateInput Date string (ISO format) or Date object
- * @param format Format option: 'full', 'long', 'medium', 'short'
- * @returns Formatted date string
- */
-export function formatDate(
-  dateInput: string | Date,
-  format: 'full' | 'long' | 'medium' | 'short' = 'medium'
-): string {
-  if (!dateInput) return '';
-  
-  const date = typeof dateInput === 'string' ? new Date(dateInput) : dateInput;
-  
-  // Check if date is valid
-  if (isNaN(date.getTime())) return 'Invalid date';
-  
+// Format a date to localized string
+export const formatDate = (dateString: string, format: 'short' | 'long' = 'long'): string => {
   try {
-    return new Intl.DateTimeFormat('en-US', {
-      dateStyle: format,
-      timeStyle: format === 'short' || format === 'medium' ? 'short' : undefined
-    }).format(date);
-  } catch (e) {
-    // Fallback if Intl API fails
-    return date.toLocaleString();
+    const date = new Date(dateString);
+    
+    if (format === 'short') {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
+    }
+    
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return 'Invalid date';
   }
-}
+};
 
-/**
- * Format a number as currency
- * @param amount Amount to format
- * @param currency Currency code (default: 'USD')
- * @param decimals Number of decimal places (default: 2)
- * @returns Formatted currency string
- */
-export function formatCurrency(
+// Format currency
+export const formatCurrency = (
   amount: number,
   currency: string = 'USD',
-  decimals: number = 2
-): string {
-  if (amount === undefined || amount === null) return '';
-  
+  locale: string = 'en-US'
+): string => {
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale, {
       style: 'currency',
-      currency: currency,
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
+      currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
-  } catch (e) {
-    // Fallback if Intl API fails or currency is invalid
-    const symbol = currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
-    return `${symbol}${amount.toFixed(decimals)}`;
+  } catch (error) {
+    console.error('Currency formatting error:', error);
+    return `${currency} ${amount.toFixed(2)}`;
   }
-}
+};
 
-/**
- * Format a percentage value
- * @param value Value to format as percentage
- * @param decimals Number of decimal places
- * @returns Formatted percentage string
- */
-export function formatPercentage(value: number, decimals: number = 0): string {
-  if (value === undefined || value === null) return '';
-  
+// Format percentage
+export const formatPercentage = (
+  value: number,
+  locale: string = 'en-US',
+  minimumFractionDigits: number = 0,
+  maximumFractionDigits: number = 0
+): string => {
   try {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat(locale, {
       style: 'percent',
-      minimumFractionDigits: decimals,
-      maximumFractionDigits: decimals
+      minimumFractionDigits,
+      maximumFractionDigits,
     }).format(value / 100);
-  } catch (e) {
-    // Fallback if Intl API fails
-    return `${value.toFixed(decimals)}%`;
+  } catch (error) {
+    console.error('Percentage formatting error:', error);
+    return `${value}%`;
   }
-}
+};
 
-/**
- * Format a phone number for display
- * @param phoneNumber Phone number string
- * @returns Formatted phone number
- */
-export function formatPhoneNumber(phoneNumber: string): string {
-  if (!phoneNumber) return '';
-  
-  // Remove all non-numeric characters
+// Truncate text with ellipsis
+export const truncateText = (text: string, maxLength: number = 100): string => {
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength)}...`;
+};
+
+// Format phone number (US format)
+export const formatPhoneNumber = (phoneNumber: string): string => {
+  // Remove all non-digit characters
   const cleaned = phoneNumber.replace(/\D/g, '');
   
-  // Format for different countries
+  // Format: (XXX) XXX-XXXX
   if (cleaned.length === 10) {
-    // US format: (XXX) XXX-XXXX
     return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-  } else if (cleaned.length === 11 && cleaned.startsWith('1')) {
-    // US with country code: +1 (XXX) XXX-XXXX
-    return `+1 (${cleaned.slice(1, 4)}) ${cleaned.slice(4, 7)}-${cleaned.slice(7)}`;
-  } else if (cleaned.length > 8) {
-    // Generic international format with groups of 3-4 digits
-    const groups = [];
-    let remaining = cleaned;
-    
-    // Country code (1-4 digits)
-    if (remaining.length > 8) {
-      const countryCodeLength = Math.min(remaining.length - 8, 4);
-      groups.push(`+${remaining.slice(0, countryCodeLength)}`);
-      remaining = remaining.slice(countryCodeLength);
-    }
-    
-    // Rest of the digits in groups of 2-4
-    while (remaining.length > 0) {
-      const groupSize = remaining.length > 4 ? 3 : remaining.length;
-      groups.push(remaining.slice(0, groupSize));
-      remaining = remaining.slice(groupSize);
-    }
-    
-    return groups.join(' ');
   }
   
-  // If no specific format matches, return with spaces every 3 digits
-  return cleaned.replace(/(\d{3})(?=\d)/g, '$1 ').trim();
-}
+  // Format: XXX-XXX-XXXX if exactly 10 digits
+  // Otherwise return the original value
+  return phoneNumber;
+};
+
+// Calculate discount amount
+export const calculateDiscount = (
+  subtotal: number,
+  discountType: 'percentage' | 'fixed_amount',
+  discountValue: number
+): number => {
+  if (discountType === 'percentage') {
+    return (subtotal * discountValue) / 100;
+  }
+  return discountValue;
+};
+
+// Calculate total after discount
+export const calculateTotal = (
+  subtotal: number,
+  discountAmount: number
+): number => {
+  return Math.max(0, subtotal - discountAmount);
+};
+
+// Convert camelCase to Title Case with spaces
+export const camelCaseToTitleCase = (text: string): string => {
+  // Add space before capital letters and uppercase the first character
+  const result = text
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (str) => str.toUpperCase());
+  
+  return result;
+};
+
+// Slugify text for URLs
+export const slugify = (text: string): string => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-') // Replace spaces with -
+    .replace(/&/g, '-and-') // Replace & with 'and'
+    .replace(/[^\w\-]+/g, '') // Remove all non-word characters
+    .replace(/\-\-+/g, '-'); // Replace multiple - with single -
+};

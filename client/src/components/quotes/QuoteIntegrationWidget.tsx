@@ -1,436 +1,486 @@
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Loader2, Download, Send, Check, X } from 'lucide-react';
-import TreatmentList from './TreatmentList';
-import { useQuoteSystem, QuoteData } from '@/hooks/use-quote-system';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { formatDate } from '@/utils/format-utils';
+import TreatmentList, { Treatment } from './TreatmentList';
+import { useQuoteSystem } from '@/hooks/use-quote-system';
+import { Download, Check, FileDown, Info, Mail, Printer, RefreshCw } from 'lucide-react';
 
-export interface QuoteDetails {
-  id: string;
-  createdAt: string;
-  patientName: string;
-  patientEmail: string;
-  treatments: {
-    id: string;
-    name: string;
-    description?: string;
-    price: number;
-    quantity: number;
-    category?: string;
-  }[];
-  subtotal: number;
-  discount: number;
-  total: number;
-  promoCode?: string;
-  currency: string;
-  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'completed';
-}
+export type PortalType = 'patient' | 'clinic' | 'admin';
+export type ModeType = 'view' | 'edit' | 'create';
 
 interface QuoteIntegrationWidgetProps {
   quoteId?: string;
-  portalType: 'patient' | 'admin' | 'clinic';
-  onQuoteUpdated?: (quote: QuoteDetails) => void;
-  mode?: 'view' | 'edit';
+  portalType: PortalType;
+  mode?: ModeType;
+  initialSection?: string;
+  onSave?: (quoteData: any) => void;
+  onCancel?: () => void;
 }
 
 const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
   quoteId,
   portalType,
-  onQuoteUpdated,
-  mode = 'view'
+  mode = 'view',
+  initialSection = 'treatments',
+  onSave,
+  onCancel,
 }) => {
+  const [activeTab, setActiveTab] = useState(initialSection);
+  const [promoCode, setPromoCode] = useState('');
+  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
+  const [patientEmail, setPatientEmail] = useState('');
+  const [patientName, setPatientName] = useState('');
+  const [patientPhone, setPatientPhone] = useState('');
+  const [selectedCurrency, setSelectedCurrency] = useState<'USD' | 'GBP' | 'EUR'>('USD');
+  const { toast } = useToast();
+  
   const {
-    currentQuote,
+    quote,
     loading,
     error,
-    loadQuoteDetails,
-    applyPromoCode,
-    removePromoCode,
+    fetchQuote,
     updateTreatmentQuantity,
     removeTreatment,
+    applyPromoCode,
+    removePromoCode,
     downloadQuotePdf,
-    requestAppointment,
-    sendQuoteEmail
+    emailQuote,
+    printQuote
   } = useQuoteSystem(portalType);
-  
-  const [promoCode, setPromoCode] = useState<string>('');
-  const [applyingPromo, setApplyingPromo] = useState<boolean>(false);
-  const [removingPromo, setRemovingPromo] = useState<boolean>(false);
-  const [processingAction, setProcessingAction] = useState<boolean>(false);
-  const { toast } = useToast();
 
-  // Load quote details on component mount or quoteId change
+  // Fetch quote data on mount if quoteId is provided
   useEffect(() => {
     if (quoteId) {
-      loadQuoteDetails(quoteId).catch((err) => {
-        console.error('Error loading quote details:', err);
-      });
+      fetchQuote(quoteId);
     }
-  }, [quoteId, loadQuoteDetails]);
+  }, [quoteId, fetchQuote]);
 
-  // Handle applying promo code
+  // Handle promo code application
   const handleApplyPromoCode = async () => {
-    if (!promoCode || !currentQuote) return;
-    
-    setApplyingPromo(true);
-    try {
-      await applyPromoCode(currentQuote.id, promoCode);
-      setPromoCode('');
-      toast({
-        title: 'Promo Code Applied',
-        description: 'The promo code has been successfully applied to your quote.',
-        variant: 'success'
-      });
-      if (onQuoteUpdated && currentQuote) {
-        onQuoteUpdated(currentQuote);
-      }
-    } catch (err: any) {
+    if (!promoCode.trim()) {
       toast({
         title: 'Error',
-        description: err.message || 'Failed to apply promo code',
-        variant: 'destructive'
+        description: 'Please enter a promo code',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsApplyingPromo(true);
+    try {
+      await applyPromoCode(quoteId!, promoCode);
+      toast({
+        title: 'Success',
+        description: 'Promo code applied successfully',
+        variant: 'default',
+      });
+      setPromoCode(''); // Clear input after successful application
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error 
+          ? error.message 
+          : 'Failed to apply promo code',
+        variant: 'destructive',
       });
     } finally {
-      setApplyingPromo(false);
+      setIsApplyingPromo(false);
     }
   };
 
-  // Handle removing promo code
+  // Handle promo code removal
   const handleRemovePromoCode = async () => {
-    if (!currentQuote || !currentQuote.promoCode) return;
-    
-    setRemovingPromo(true);
     try {
-      await removePromoCode(currentQuote.id);
+      await removePromoCode(quoteId!);
       toast({
-        title: 'Promo Code Removed',
-        description: 'The promo code has been removed from your quote.',
-        variant: 'success'
+        title: 'Success',
+        description: 'Promo code removed successfully',
+        variant: 'default',
       });
-      if (onQuoteUpdated && currentQuote) {
-        onQuoteUpdated(currentQuote);
-      }
-    } catch (err: any) {
+    } catch (error) {
       toast({
         title: 'Error',
-        description: err.message || 'Failed to remove promo code',
-        variant: 'destructive'
-      });
-    } finally {
-      setRemovingPromo(false);
-    }
-  };
-
-  // Handle updating treatment quantity
-  const handleUpdateQuantity = async (treatmentId: string, quantity: number) => {
-    if (!currentQuote) return;
-    
-    try {
-      await updateTreatmentQuantity(currentQuote.id, treatmentId, quantity);
-      if (onQuoteUpdated && currentQuote) {
-        onQuoteUpdated(currentQuote);
-      }
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to update treatment quantity',
-        variant: 'destructive'
+        description: error instanceof Error 
+          ? error.message 
+          : 'Failed to remove promo code',
+        variant: 'destructive',
       });
     }
   };
 
-  // Handle removing a treatment
-  const handleRemoveTreatment = async (treatmentId: string) => {
-    if (!currentQuote) return;
-    
-    try {
-      await removeTreatment(currentQuote.id, treatmentId);
-      toast({
-        title: 'Treatment Removed',
-        description: 'The treatment has been removed from your quote.',
-        variant: 'success'
-      });
-      if (onQuoteUpdated && currentQuote) {
-        onQuoteUpdated(currentQuote);
-      }
-    } catch (err: any) {
-      toast({
-        title: 'Error',
-        description: err.message || 'Failed to remove treatment',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  // Handle downloading PDF
+  // Handle PDF download
   const handleDownloadPdf = async () => {
-    if (!currentQuote) return;
-    
-    setProcessingAction(true);
     try {
-      await downloadQuotePdf(currentQuote.id);
+      await downloadQuotePdf(quoteId!);
       toast({
-        title: 'PDF Downloaded',
-        description: 'The quote PDF has been downloaded successfully.',
-        variant: 'success'
+        title: 'Success',
+        description: 'Quote PDF downloaded successfully',
+        variant: 'default',
       });
-    } catch (err: any) {
+    } catch (error) {
       toast({
         title: 'Error',
-        description: err.message || 'Failed to download PDF',
-        variant: 'destructive'
+        description: error instanceof Error 
+          ? error.message 
+          : 'Failed to download PDF',
+        variant: 'destructive',
       });
-    } finally {
-      setProcessingAction(false);
     }
   };
 
-  // Handle requesting an appointment
-  const handleRequestAppointment = async () => {
-    if (!currentQuote) return;
-    
-    setProcessingAction(true);
-    try {
-      await requestAppointment(currentQuote.id);
-      toast({
-        title: 'Appointment Requested',
-        description: 'Your appointment request has been sent successfully.',
-        variant: 'success'
-      });
-    } catch (err: any) {
+  // Handle email quote
+  const handleEmailQuote = async () => {
+    if (!patientEmail) {
       toast({
         title: 'Error',
-        description: err.message || 'Failed to request appointment',
-        variant: 'destructive'
+        description: 'Please enter the patient email',
+        variant: 'destructive',
       });
-    } finally {
-      setProcessingAction(false);
+      return;
+    }
+
+    try {
+      await emailQuote(quoteId!, patientEmail);
+      toast({
+        title: 'Success',
+        description: 'Quote emailed successfully',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error instanceof Error 
+          ? error.message 
+          : 'Failed to email quote',
+        variant: 'destructive',
+      });
     }
   };
 
-  // Handle sending quote via email
-  const handleSendEmail = async () => {
-    if (!currentQuote) return;
-    
-    setProcessingAction(true);
+  // Handle print quote
+  const handlePrintQuote = async () => {
     try {
-      await sendQuoteEmail(currentQuote.id);
+      await printQuote(quoteId!);
       toast({
-        title: 'Email Sent',
-        description: 'The quote has been sent via email successfully.',
-        variant: 'success'
+        title: 'Success',
+        description: 'Quote sent to printer',
+        variant: 'default',
       });
-    } catch (err: any) {
+    } catch (error) {
       toast({
         title: 'Error',
-        description: err.message || 'Failed to send email',
-        variant: 'destructive'
+        description: error instanceof Error 
+          ? error.message 
+          : 'Failed to print quote',
+        variant: 'destructive',
       });
-    } finally {
-      setProcessingAction(false);
     }
   };
 
-  // Loading state
-  if (loading) {
+  // Show loading state
+  if (loading && !quote) {
     return (
-      <div className="flex justify-center my-12">
-        <div className="flex flex-col items-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="mt-4 text-muted-foreground">Loading quote details...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <Card className="text-center py-8">
+      <Card className="min-h-[300px] flex items-center justify-center">
         <CardContent>
-          <div className="flex flex-col items-center">
-            <X className="h-12 w-12 text-destructive mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Error Loading Quote</h3>
-            <p className="text-muted-foreground mb-4">{error}</p>
-            <Button onClick={() => quoteId && loadQuoteDetails(quoteId)}>
-              Try Again
-            </Button>
+          <div className="text-center">
+            <RefreshCw className="h-10 w-10 animate-spin text-primary mx-auto mb-4" />
+            <p className="text-muted-foreground">Loading quote data...</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // No quote or quote not found
-  if (!currentQuote) {
+  // Show error state
+  if (error && !quote) {
     return (
-      <Card className="text-center py-8">
-        <CardContent>
-          <div className="flex flex-col items-center">
-            <p className="text-muted-foreground">
-              {quoteId ? 'Quote not found' : 'No quote selected'}
-            </p>
+      <Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-red-500 mb-4">
+            <Info className="h-10 w-10 mx-auto mb-2" />
+            <p>{error}</p>
           </div>
+          <Button 
+            onClick={() => quoteId && fetchQuote(quoteId)} 
+            className="mx-auto block"
+          >
+            Try Again
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // If no quote data is available yet
+  if (!quote) {
+    return (
+      <Card>
+        <CardContent className="pt-6 text-center">
+          <p className="text-muted-foreground">No quote data available</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="w-full">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-start flex-wrap gap-3">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-xl mb-1">
-              Dental Treatment Quote #{currentQuote.id}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Created on {formatDate(currentQuote.createdAt)}
-            </p>
+            Dental Treatment Quote #{quote.id.substring(0, 8)}
           </div>
-          <div className="flex items-center gap-2">
-            <div className={`px-3 py-1 rounded-full text-sm font-medium
-              ${currentQuote.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                currentQuote.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                currentQuote.status === 'sent' ? 'bg-blue-100 text-blue-800' : 
-                currentQuote.status === 'completed' ? 'bg-purple-100 text-purple-800' : 
-                'bg-gray-100 text-gray-800'}`
-            }>
-              {currentQuote.status.charAt(0).toUpperCase() + currentQuote.status.slice(1)}
+          {portalType === 'patient' && (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
+                <Download className="h-4 w-4 mr-1" /> Download PDF
+              </Button>
+              <Button variant="outline" size="sm" onClick={handlePrintQuote}>
+                <Printer className="h-4 w-4 mr-1" /> Print
+              </Button>
             </div>
-          </div>
-        </div>
+          )}
+        </CardTitle>
       </CardHeader>
+
       <CardContent>
-        <div className="space-y-6">
-          {/* Patient Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-sm font-medium mb-2">Patient Information</h3>
-              <div className="space-y-1">
-                <p><span className="font-medium">Name:</span> {currentQuote.patientName}</p>
-                <p><span className="font-medium">Email:</span> {currentQuote.patientEmail}</p>
-              </div>
-            </div>
-            {currentQuote.clinicName && (
-              <div>
-                <h3 className="text-sm font-medium mb-2">Assigned Clinic</h3>
-                <p>{currentQuote.clinicName}</p>
-              </div>
-            )}
-          </div>
+        <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid grid-cols-3 mb-6">
+            <TabsTrigger value="treatments">Treatments</TabsTrigger>
+            <TabsTrigger value="promo">Promo Code</TabsTrigger>
+            <TabsTrigger value="details">Details</TabsTrigger>
+          </TabsList>
 
-          {/* Treatments */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Treatments</h3>
-            <TreatmentList 
-              treatments={currentQuote.treatments}
-              onUpdateQuantity={mode === 'edit' ? handleUpdateQuantity : undefined}
-              onRemoveTreatment={mode === 'edit' ? handleRemoveTreatment : undefined}
-              readOnly={mode !== 'edit'}
-              currency={currentQuote.currency}
-            />
-          </div>
+          {/* Treatments Tab */}
+          <TabsContent value="treatments">
+            <div className="space-y-4">
+              <TreatmentList
+                treatments={quote.treatments as Treatment[]}
+                readOnly={mode === 'view'}
+                onQuantityChange={updateTreatmentQuantity}
+                onRemoveTreatment={removeTreatment}
+                selectedCurrency={selectedCurrency}
+                showTotals={true}
+                appliedPromoCode={quote.promoCode}
+                discountAmount={quote.discountAmount || 0}
+                discountType={quote.discountType as 'percentage' | 'fixed_amount'}
+                discountValue={quote.discountValue || 0}
+              />
 
-          {/* Promo Code */}
-          <div>
-            <h3 className="text-sm font-medium mb-3">Promo Code</h3>
-            {currentQuote.promoCode ? (
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="font-medium">Applied Code:</span> {currentQuote.promoCode}
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {currentQuote.discount > 0 && (
-                      <>Savings: ${currentQuote.discount.toFixed(2)}</>
-                    )}
-                  </div>
-                </div>
-                {mode === 'edit' && (
+              <div className="flex justify-between mt-4">
+                <div className="flex gap-3">
                   <Button 
                     variant="outline" 
-                    onClick={handleRemovePromoCode}
-                    disabled={removingPromo}
+                    onClick={() => setActiveTab('promo')}
                   >
-                    {removingPromo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <X className="h-4 w-4 mr-2" />}
-                    Remove
+                    Next: Promo Code
                   </Button>
-                )}
-              </div>
-            ) : mode === 'edit' ? (
-              <div className="flex items-center gap-2">
-                <div className="flex-grow">
-                  <Input
-                    placeholder="Enter promo code"
-                    value={promoCode}
-                    onChange={(e) => setPromoCode(e.target.value)}
-                  />
                 </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Promo Code Tab */}
+          <TabsContent value="promo">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    {quote.promoCode ? (
+                      <div>
+                        <div className="flex items-center mb-4">
+                          <Check className="h-5 w-5 text-green-500 mr-2" />
+                          <span className="font-medium">
+                            Promo code <span className="text-primary font-bold">{quote.promoCode}</span> applied!
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          You're saving {quote.discountType === 'percentage'
+                            ? `${quote.discountValue}%`
+                            : `$${quote.discountAmount.toFixed(2)}`
+                          } on your dental treatment quote.
+                        </p>
+                        <Button 
+                          variant="outline" 
+                          onClick={handleRemovePromoCode}
+                          className="w-full"
+                        >
+                          Remove Promo Code
+                        </Button>
+                      </div>
+                    ) : (
+                      <div>
+                        <Label htmlFor="promoCode">Enter promo code</Label>
+                        <div className="flex gap-2 mt-1">
+                          <Input
+                            id="promoCode"
+                            placeholder="e.g. SUMMER15"
+                            value={promoCode}
+                            onChange={(e) => setPromoCode(e.target.value)}
+                          />
+                          <Button 
+                            onClick={handleApplyPromoCode}
+                            disabled={isApplyingPromo || !promoCode}
+                          >
+                            {isApplyingPromo ? (
+                              <>
+                                <RefreshCw className="h-4 w-4 mr-1 animate-spin" />
+                                Applying...
+                              </>
+                            ) : (
+                              'Apply'
+                            )}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Enter a valid promo code to get a discount on your dental treatment
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <TreatmentList
+                treatments={quote.treatments as Treatment[]}
+                readOnly={true}
+                selectedCurrency={selectedCurrency}
+                showTotals={true}
+                appliedPromoCode={quote.promoCode}
+                discountAmount={quote.discountAmount || 0}
+                discountType={quote.discountType as 'percentage' | 'fixed_amount'}
+                discountValue={quote.discountValue || 0}
+              />
+
+              <div className="flex justify-between mt-4">
                 <Button 
-                  onClick={handleApplyPromoCode} 
-                  disabled={!promoCode || applyingPromo}
+                  variant="outline" 
+                  onClick={() => setActiveTab('treatments')}
                 >
-                  {applyingPromo ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Check className="h-4 w-4 mr-2" />}
-                  Apply
+                  Back: Treatments
+                </Button>
+                <Button 
+                  onClick={() => setActiveTab('details')}
+                >
+                  Next: Details
                 </Button>
               </div>
-            ) : (
-              <p className="text-muted-foreground">No promo code applied</p>
-            )}
-          </div>
+            </div>
+          </TabsContent>
 
-          {/* Summary */}
-          <div className="border-t pt-4">
-            <div className="flex justify-between mb-2">
-              <span>Subtotal</span>
-              <span>${currentQuote.subtotal.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between mb-2">
-              <span>Discount</span>
-              <span>${currentQuote.discount.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-lg">
-              <span>Total</span>
-              <span>${currentQuote.total.toFixed(2)}</span>
-            </div>
-          </div>
+          {/* Details Tab */}
+          <TabsContent value="details">
+            <div className="space-y-6">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="patientName">Patient Name</Label>
+                      <Input
+                        id="patientName"
+                        placeholder="Full Name"
+                        value={patientName || quote.patientName || ''}
+                        onChange={(e) => setPatientName(e.target.value)}
+                        disabled={mode === 'view'}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="patientEmail">Patient Email</Label>
+                      <Input
+                        id="patientEmail"
+                        type="email"
+                        placeholder="email@example.com"
+                        value={patientEmail || quote.patientEmail || ''}
+                        onChange={(e) => setPatientEmail(e.target.value)}
+                        disabled={mode === 'view'}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="patientPhone">Patient Phone</Label>
+                      <Input
+                        id="patientPhone"
+                        placeholder="+1 (123) 456-7890"
+                        value={patientPhone || quote.patientPhone || ''}
+                        onChange={(e) => setPatientPhone(e.target.value)}
+                        disabled={mode === 'view'}
+                      />
+                    </div>
 
-          {/* Actions */}
-          <div className="flex flex-wrap gap-3 justify-end pt-4">
-            <Button
-              variant="outline"
-              onClick={handleDownloadPdf}
-              disabled={processingAction}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            
-            {portalType === 'patient' && (
-              <Button
-                onClick={handleRequestAppointment}
-                disabled={processingAction}
-                className="bg-primary hover:bg-primary/90"
-              >
-                Request Appointment
-              </Button>
-            )}
-            
-            {portalType === 'clinic' && (
-              <Button
-                onClick={handleSendEmail}
-                disabled={processingAction}
-                className="bg-primary hover:bg-primary/90"
-              >
-                <Send className="h-4 w-4 mr-2" />
-                Send to Patient
-              </Button>
-            )}
-          </div>
-        </div>
+                    {portalType === 'patient' && mode !== 'view' && (
+                      <div className="pt-2">
+                        <Button 
+                          onClick={handleEmailQuote}
+                          className="w-full"
+                          disabled={!patientEmail}
+                        >
+                          <Mail className="h-4 w-4 mr-2" />
+                          Email Quote to Me
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <TreatmentList
+                treatments={quote.treatments as Treatment[]}
+                readOnly={true}
+                selectedCurrency={selectedCurrency}
+                showTotals={true}
+                appliedPromoCode={quote.promoCode}
+                discountAmount={quote.discountAmount || 0}
+                discountType={quote.discountType as 'percentage' | 'fixed_amount'}
+                discountValue={quote.discountValue || 0}
+              />
+
+              <div className="flex justify-between mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab('promo')}
+                >
+                  Back: Promo Code
+                </Button>
+
+                {mode !== 'view' && (
+                  <div className="flex gap-2">
+                    {onCancel && (
+                      <Button 
+                        variant="outline" 
+                        onClick={onCancel}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                    {onSave && (
+                      <Button 
+                        onClick={() => {
+                          const updatedQuote = {
+                            ...quote,
+                            patientName,
+                            patientEmail,
+                            patientPhone,
+                          };
+                          onSave(updatedQuote);
+                        }}
+                      >
+                        Save Quote
+                      </Button>
+                    )}
+                    {!onSave && portalType === 'patient' && (
+                      <Button onClick={handleDownloadPdf}>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Download Quote
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
