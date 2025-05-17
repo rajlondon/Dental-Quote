@@ -1,267 +1,155 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Build Your Dental Treatment Quote{% endblock %}
+{% block title %}Build Your Dental Quote | MyDentalFly{% endblock %}
 
 {% block extra_css %}
 <style>
-    .treatment-selector {
-        border-radius: 0.5rem;
-        transition: all 0.2s ease;
+    .treatment-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
     }
-    .treatment-selector:hover {
+    
+    .treatment-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
-    .category-nav .nav-link {
-        color: #555;
-        border-radius: 0;
-        padding: 0.75rem 1rem;
-    }
-    .category-nav .nav-link.active {
-        background-color: var(--bs-primary);
-        color: white;
-    }
-    .treatment-item {
-        border-left: 4px solid transparent;
-        transition: all 0.2s ease;
-    }
-    .treatment-item:hover {
-        border-left-color: var(--bs-primary);
-        background-color: rgba(0,0,0,0.02);
-    }
-    .cart-item {
-        border-left: 4px solid var(--bs-primary);
+    
+    .selected-treatment {
+        border: 2px solid var(--bs-primary);
         background-color: rgba(var(--bs-primary-rgb), 0.05);
     }
+    
+    .category-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-right: 15px;
+    }
+    
+    .quote-summary {
+        position: sticky;
+        top: 20px;
+    }
+    
     .quantity-control {
         width: 120px;
     }
-    .summary-panel {
-        position: sticky;
-        top: 1rem;
+    
+    #promoCodeForm .input-group {
+        width: 100%;
     }
-    .step-container {
-        position: relative;
-    }
-    .step-line {
-        position: absolute;
-        top: 1.5rem;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background-color: #dee2e6;
-        z-index: 0;
-    }
-    .step-item {
-        position: relative;
-        z-index: 1;
-        background-color: white;
+    
+    @media (max-width: 767.98px) {
+        .quote-summary {
+            position: static;
+            margin-bottom: 30px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h1 class="h2 mb-3">Build Your Dental Treatment Quote</h1>
-    
-    <!-- Progress Steps -->
-    <div class="step-container mb-5">
-        <div class="step-line"></div>
-        <div class="row text-center">
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-clipboard-list"></i>
-                    </div>
-                    <p class="mb-0 fw-bold">1. Select Treatments</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <p class="mb-0">2. Your Information</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <p class="mb-0">3. Review Quote</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="step-item d-inline-block px-3">
-                    <div class="rounded-circle bg-light text-secondary d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 40px; height: 40px;">
-                        <i class="fas fa-file-invoice"></i>
-                    </div>
-                    <p class="mb-0">4. Confirmation</p>
-                </div>
-            </div>
+<div class="container py-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="fw-bold">Build Your Dental Quote</h1>
+            <p class="lead">Select treatments and customize your dental care package</p>
         </div>
     </div>
     
     <div class="row">
-        <div class="col-lg-8">
-            <div class="card mb-4">
+        <!-- Quote Summary (Mobile - Top) -->
+        <div class="col-12 d-block d-md-none mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Quote Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% include 'quote/partials/quote_summary.html' %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="col-md-8">
+            <!-- Treatment Categories Tabs -->
+            <div class="card shadow-sm mb-4">
                 <div class="card-header bg-white">
-                    <ul class="nav nav-tabs card-header-tabs category-nav" id="categoryTabs" role="tablist">
+                    <ul class="nav nav-tabs card-header-tabs" id="treatmentTabs" role="tablist">
                         {% for category_id, category_data in categorized_treatments.items() %}
-                            <li class="nav-item" role="presentation">
-                                <button class="nav-link {% if loop.first %}active{% endif %}" 
-                                        id="tab-{{ category_id }}" 
-                                        data-bs-toggle="tab" 
-                                        data-bs-target="#content-{{ category_id }}" 
-                                        type="button" 
-                                        role="tab" 
-                                        aria-controls="content-{{ category_id }}" 
-                                        aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
-                                    {% if category_data.category.icon %}
-                                        <i class="fas fa-{{ category_data.category.icon }} me-2"></i>
-                                    {% endif %}
-                                    {{ category_data.category.name }}
-                                </button>
-                            </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link {% if loop.first %}active{% endif %}" 
+                                    id="{{ category_id }}-tab" 
+                                    data-bs-toggle="tab" 
+                                    data-bs-target="#{{ category_id }}" 
+                                    type="button" 
+                                    role="tab" 
+                                    aria-controls="{{ category_id }}" 
+                                    aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
+                                <i class="fas fa-{{ category_data.category.icon }} me-2"></i>
+                                {{ category_data.category.name }}
+                            </button>
+                        </li>
                         {% endfor %}
                     </ul>
                 </div>
                 <div class="card-body">
-                    <div class="tab-content" id="categoryTabContent">
+                    <div class="tab-content" id="treatmentTabsContent">
                         {% for category_id, category_data in categorized_treatments.items() %}
-                            <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-                                 id="content-{{ category_id }}" 
-                                 role="tabpanel" 
-                                 aria-labelledby="tab-{{ category_id }}">
-                                
-                                <h3 class="h5 mb-3">{{ category_data.category.name }}</h3>
-                                <p>{{ category_data.category.description }}</p>
-                                
-                                <div class="treatments-list">
-                                    {% for treatment in category_data.treatments %}
-                                        <div class="treatment-item p-3 mb-3 border rounded" data-treatment-id="{{ treatment.id }}">
-                                            <div class="row align-items-center">
-                                                <div class="col-md-8">
-                                                    <h4 class="h6 mb-1">{{ treatment.name }}</h4>
-                                                    <p class="small text-muted mb-2">{{ treatment.description }}</p>
-                                                    <p class="mb-0"><strong>${{ treatment.price }}</strong></p>
-                                                </div>
-                                                <div class="col-md-4 text-end">
-                                                    <button class="btn btn-primary btn-add-treatment" 
-                                                            data-treatment-id="{{ treatment.id }}" 
-                                                            data-treatment-name="{{ treatment.name }}" 
-                                                            data-treatment-price="{{ treatment.price }}">
-                                                        <i class="fas fa-plus-circle me-1"></i> Add to Quote
+                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
+                             id="{{ category_id }}" 
+                             role="tabpanel" 
+                             aria-labelledby="{{ category_id }}-tab">
+                            <h4 class="mb-3">{{ category_data.category.name }}</h4>
+                            <p class="text-muted mb-4">{{ category_data.category.description }}</p>
+                            
+                            <div class="row g-3">
+                                {% for treatment in category_data.treatments %}
+                                <div class="col-lg-6">
+                                    <div class="card treatment-card h-100 {% if treatment.id in selected_treatments|map(attribute='id')|list %}selected-treatment{% endif %}" data-treatment-id="{{ treatment.id }}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ treatment.name }}</h5>
+                                            <p class="card-text">{{ treatment.description }}</p>
+                                            <div class="d-flex justify-content-between align-items-center mt-3">
+                                                <span class="fw-bold text-primary">${{ treatment.price }}</span>
+                                                <form action="{{ url_for('add_treatment') }}" method="post" class="add-treatment-form">
+                                                    <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-primary">
+                                                        {% if treatment.id in selected_treatments|map(attribute='id')|list %}
+                                                            Already in Quote
+                                                        {% else %}
+                                                            Add to Quote
+                                                        {% endif %}
                                                     </button>
-                                                </div>
+                                                </form>
                                             </div>
                                         </div>
-                                    {% endfor %}
+                                        <div class="card-footer bg-transparent">
+                                            <div class="small text-muted mb-1"><i class="far fa-clock me-1"></i> Duration: {{ treatment.duration_days }} day(s)</div>
+                                            <div class="small text-muted"><i class="far fa-calendar-alt me-1"></i> Recovery: {{ treatment.recovery_time }}</div>
+                                        </div>
+                                    </div>
                                 </div>
+                                {% endfor %}
                             </div>
+                        </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
         </div>
         
-        <div class="col-lg-4">
-            <div class="card summary-panel">
+        <!-- Quote Summary (Desktop - Sidebar) -->
+        <div class="col-md-4 d-none d-md-block">
+            <div class="quote-summary card shadow-sm">
                 <div class="card-header bg-primary text-white">
-                    <h3 class="h5 mb-0">Your Quote Summary</h3>
+                    <h5 class="mb-0">Your Quote Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div id="selected-treatments">
-                        {% if selected_treatments %}
-                            {% for treatment in selected_treatments %}
-                                <div class="cart-item p-3 mb-3 border rounded" data-treatment-id="{{ treatment.id }}">
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <h4 class="h6 mb-0">{{ treatment.name }}</h4>
-                                        <button class="btn btn-sm btn-outline-danger btn-remove-treatment" 
-                                                data-treatment-id="{{ treatment.id }}">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div class="input-group quantity-control">
-                                            <button class="btn btn-outline-secondary btn-decrease-quantity" 
-                                                    type="button" 
-                                                    data-treatment-id="{{ treatment.id }}">
-                                                <i class="fas fa-minus"></i>
-                                            </button>
-                                            <input type="number" 
-                                                   class="form-control text-center treatment-quantity" 
-                                                   value="{{ treatment.quantity }}" 
-                                                   min="1" 
-                                                   data-treatment-id="{{ treatment.id }}">
-                                            <button class="btn btn-outline-secondary btn-increase-quantity" 
-                                                    type="button" 
-                                                    data-treatment-id="{{ treatment.id }}">
-                                                <i class="fas fa-plus"></i>
-                                            </button>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="treatment-price">${{ treatment.price * treatment.quantity }}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            <div id="empty-cart" class="text-center py-4">
-                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-                                <p>Your quote is empty. Please select at least one treatment.</p>
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <hr>
-                    
-                    <!-- Promo Code Form -->
-                    <div class="mb-4">
-                        <div class="mb-3">
-                            <label for="promo_code" class="form-label">Promotional Code</label>
-                            <div class="input-group">
-                                <input type="text" 
-                                       class="form-control" 
-                                       id="promo_code" 
-                                       name="promo_code" 
-                                       placeholder="Enter promo code" 
-                                       value="{{ promo_code or '' }}">
-                                <button class="btn btn-outline-primary" type="button" id="btn-apply-promo">Apply</button>
-                            </div>
-                            {% if promo_code %}
-                                <div class="alert alert-success mt-2 py-2 d-flex justify-content-between align-items-center" id="promo-status">
-                                    <span>Code <strong>{{ promo_code }}</strong> applied!</span>
-                                    <button type="button" class="btn-close btn-sm" id="btn-remove-promo"></button>
-                                </div>
-                            {% else %}
-                                <div class="alert d-none mt-2 py-2" id="promo-status"></div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <!-- Pricing Summary -->
-                    <div class="pricing-summary">
-                        <div class="d-flex justify-content-between mb-2">
-                            <span>Subtotal:</span>
-                            <span id="subtotal">${{ subtotal }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2 {% if discount == 0 %}d-none{% endif %}" id="discount-row">
-                            <span>Discount:</span>
-                            <span id="discount">-${{ discount }}</span>
-                        </div>
-                        <div class="d-flex justify-content-between mb-2 fw-bold">
-                            <span>Total:</span>
-                            <span id="total">${{ total }}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-4 d-grid">
-                        <a href="{{ url_for('pages.patient_info') }}" class="btn btn-primary btn-lg {% if not selected_treatments %}disabled{% endif %}" id="btn-continue">
-                            Continue <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
+                    {% include 'quote/partials/quote_summary.html' %}
                 </div>
             </div>
         </div>
@@ -272,208 +160,223 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Add treatment to quote
-        document.querySelectorAll('.btn-add-treatment').forEach(function(button) {
-            button.addEventListener('click', function() {
-                const treatmentId = this.dataset.treatmentId;
+        // AJAX for adding treatments
+        document.querySelectorAll('.add-treatment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
                 
-                // Send AJAX request to add treatment
-                fetch('/api/add-treatment', {
+                const formData = new FormData(this);
+                const treatmentId = formData.get('treatment_id');
+                
+                fetch('{{ url_for("add_treatment") }}', {
                     method: 'POST',
+                    body: formData,
                     headers: {
-                        'Content-Type': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        treatment_id: treatmentId
-                    })
+                    }
                 })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.message) {
+                    if (data.success) {
+                        // Update the button text
+                        this.querySelector('button').textContent = 'Already in Quote';
+                        
+                        // Mark the card as selected
+                        document.querySelector(`.treatment-card[data-treatment-id="${treatmentId}"]`).classList.add('selected-treatment');
+                        
+                        // Update the quote summary
                         updateQuoteSummary(data);
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                });
             });
         });
         
-        // Remove treatment from quote
-        function setupRemoveButtons() {
-            document.querySelectorAll('.btn-remove-treatment').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    const treatmentId = this.dataset.treatmentId;
-                    
-                    // Send AJAX request to remove treatment
-                    fetch('/api/remove-treatment', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        body: JSON.stringify({
-                            treatment_id: treatmentId
-                        })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.message) {
-                            updateQuoteSummary(data);
-                        }
-                    })
-                    .catch(error => console.error('Error:', error));
-                });
-            });
-        }
-        
-        // Update quantity
-        function setupQuantityControls() {
-            // Increase quantity
-            document.querySelectorAll('.btn-increase-quantity').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    const treatmentId = this.dataset.treatmentId;
-                    const input = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-                    let quantity = parseInt(input.value) + 1;
-                    updateQuantity(treatmentId, quantity);
-                });
-            });
-            
-            // Decrease quantity
-            document.querySelectorAll('.btn-decrease-quantity').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    const treatmentId = this.dataset.treatmentId;
-                    const input = document.querySelector(`.treatment-quantity[data-treatment-id="${treatmentId}"]`);
-                    let quantity = parseInt(input.value) - 1;
-                    if (quantity < 1) quantity = 1;
-                    updateQuantity(treatmentId, quantity);
-                });
-            });
-            
-            // Manual input
-            document.querySelectorAll('.treatment-quantity').forEach(function(input) {
-                input.addEventListener('change', function() {
-                    const treatmentId = this.dataset.treatmentId;
-                    let quantity = parseInt(this.value);
-                    if (isNaN(quantity) || quantity < 1) quantity = 1;
-                    updateQuantity(treatmentId, quantity);
-                });
-            });
-        }
-        
-        function updateQuantity(treatmentId, quantity) {
-            // Send AJAX request to update quantity
-            fetch('/api/update-quantity', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    treatment_id: treatmentId,
-                    quantity: quantity
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message) {
-                    updateQuoteSummary(data);
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        }
-        
-        // Apply promo code
-        document.getElementById('btn-apply-promo').addEventListener('click', function() {
-            const promoCode = document.getElementById('promo_code').value.trim();
-            
-            if (!promoCode) {
-                showPromoStatus('Please enter a promotional code.', 'danger');
-                return;
-            }
-            
-            // Send AJAX request to apply promo code
-            fetch('/promo/apply-promo', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: `promo_code=${encodeURIComponent(promoCode)}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showPromoStatus(data.message, 'success');
-                    document.getElementById('subtotal').textContent = `$${data.subtotal}`;
-                    document.getElementById('discount').textContent = `-$${data.discount}`;
-                    document.getElementById('total').textContent = `$${data.total}`;
-                    
-                    if (data.discount > 0) {
-                        document.getElementById('discount-row').classList.remove('d-none');
-                    } else {
-                        document.getElementById('discount-row').classList.add('d-none');
-                    }
-                } else {
-                    showPromoStatus(data.message, 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showPromoStatus('An error occurred. Please try again.', 'danger');
-            });
-        });
-        
-        // Remove promo code
-        document.getElementById('btn-remove-promo')?.addEventListener('click', function() {
-            // Send AJAX request to remove promo code
-            fetch('/promo/remove-promo', {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('promo_code').value = '';
-                    showPromoStatus('', '');
-                    document.getElementById('subtotal').textContent = `$${data.subtotal}`;
-                    document.getElementById('discount').textContent = `-$${data.discount}`;
-                    document.getElementById('total').textContent = `$${data.total}`;
-                    
-                    if (data.discount > 0) {
-                        document.getElementById('discount-row').classList.remove('d-none');
-                    } else {
-                        document.getElementById('discount-row').classList.add('d-none');
-                    }
-                }
-            })
-            .catch(error => console.error('Error:', error));
-        });
-        
-        function showPromoStatus(message, type) {
-            const statusDiv = document.getElementById('promo-status');
-            if (!message) {
-                statusDiv.classList.add('d-none');
-                return;
-            }
-            
-            statusDiv.textContent = '';
-            statusDiv.classList.remove('d-none', 'alert-success', 'alert-danger');
-            
-            if (type) {
-                statusDiv.classList.add(`alert-${type}`);
+        // AJAX for removing treatments
+        document.querySelectorAll('.remove-treatment-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const treatmentId = this.getAttribute('data-treatment-id');
+                const formData = new FormData();
+                formData.append('treatment_id', treatmentId);
                 
-                if (type === 'success') {
-                    const messageSpan = document.createElement('span');
-                    messageSpan.innerHTML = `Code <strong>${document.getElementById('promo_code').value}</strong> applied!`;
+                fetch('{{ url_for("remove_treatment") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the item from the selected treatments list
+                        this.closest('.selected-treatment-item').remove();
+                        
+                        // Update the treatment card if visible
+                        const card = document.querySelector(`.treatment-card[data-treatment-id="${treatmentId}"]`);
+                        if (card) {
+                            card.classList.remove('selected-treatment');
+                            const button = card.querySelector('button');
+                            if (button) {
+                                button.textContent = 'Add to Quote';
+                            }
+                        }
+                        
+                        // Update the quote summary
+                        updateQuoteSummary(data);
+                    }
+                });
+            });
+        });
+        
+        // AJAX for updating quantities
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const treatmentId = this.getAttribute('data-treatment-id');
+                const quantity = this.value;
+                const formData = new FormData();
+                formData.append('treatment_id', treatmentId);
+                formData.append('quantity', quantity);
+                
+                fetch('{{ url_for("update_quantity") }}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the quote summary
+                        updateQuoteSummary(data);
+                    }
+                });
+            });
+        });
+        
+        // AJAX for applying promo code
+        document.getElementById('promoCodeForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch('{{ url_for("apply_promo_code") }}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const alertElement = document.getElementById('promoCodeAlert');
+                
+                if (data.success) {
+                    // Update the promo code section
+                    document.getElementById('promoCodeDisplay').textContent = data.promo_code;
+                    document.getElementById('promoCodeSection').classList.remove('d-none');
+                    document.getElementById('promoCodeForm').classList.add('d-none');
                     
-                    const closeButton = document.createElement('button');
-                    closeButton.className = 'btn-close btn-sm';
-                    closeButton.id = 'btn-remove-promo';
-                    closeButton.addEventListener('click', function() {
-                        fetch('/promo/remove-promo', {
+                    // Show success message
+                    alertElement.textContent = data.message;
+                    alertElement.className = 'alert alert-success';
+                    alertElement.classList.remove('d-none');
+                    
+                    // Update pricing
+                    document.getElementById('subtotalValue').textContent = `$${data.subtotal.toFixed(2)}`;
+                    document.getElementById('discountValue').textContent = `-$${data.discount.toFixed(2)}`;
+                    document.getElementById('totalValue').textContent = `$${data.total.toFixed(2)}`;
+                    
+                    // Show the discount row
+                    document.getElementById('discountRow').classList.remove('d-none');
+                } else {
+                    // Show error message
+                    alertElement.textContent = data.message;
+                    alertElement.className = 'alert alert-danger';
+                    alertElement.classList.remove('d-none');
+                }
+                
+                // Auto-hide the alert after 5 seconds
+                setTimeout(() => {
+                    alertElement.classList.add('d-none');
+                }, 5000);
+            });
+        });
+        
+        // AJAX for removing promo code
+        document.getElementById('removePromoBtn').addEventListener('click', function() {
+            fetch('{{ url_for("remove_promo_code") }}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Hide promo code section and show the form
+                    document.getElementById('promoCodeSection').classList.add('d-none');
+                    document.getElementById('promoCodeForm').classList.remove('d-none');
+                    
+                    // Update pricing
+                    document.getElementById('subtotalValue').textContent = `$${data.subtotal.toFixed(2)}`;
+                    document.getElementById('totalValue').textContent = `$${data.total.toFixed(2)}`;
+                    
+                    // Hide the discount row if no discount
+                    if (data.discount === 0) {
+                        document.getElementById('discountRow').classList.add('d-none');
+                    } else {
+                        document.getElementById('discountValue').textContent = `-$${data.discount.toFixed(2)}`;
+                    }
+                    
+                    // Clear the promo code input
+                    document.getElementById('promoCodeInput').value = '';
+                }
+            });
+        });
+        
+        // Function to update the quote summary
+        function updateQuoteSummary(data) {
+            const selectedTreatmentsList = document.getElementById('selectedTreatmentsList');
+            
+            // Clear the list
+            selectedTreatmentsList.innerHTML = '';
+            
+            // Add treatments to the list
+            if (data.selected_treatments && data.selected_treatments.length > 0) {
+                data.selected_treatments.forEach(treatment => {
+                    const item = document.createElement('div');
+                    item.className = 'selected-treatment-item d-flex justify-content-between align-items-center mb-3';
+                    item.innerHTML = `
+                        <div>
+                            <h6 class="mb-0">${treatment.name}</h6>
+                            <span class="text-muted small">$${treatment.price} each</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="input-group input-group-sm quantity-control me-2">
+                                <input type="number" class="form-control quantity-input" value="${treatment.quantity}" min="1" 
+                                       data-treatment-id="${treatment.id}">
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger remove-treatment-btn" 
+                                    data-treatment-id="${treatment.id}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    `;
+                    selectedTreatmentsList.appendChild(item);
+                    
+                    // Reattach event listeners
+                    const quantityInput = item.querySelector('.quantity-input');
+                    quantityInput.addEventListener('change', function() {
+                        const treatmentId = this.getAttribute('data-treatment-id');
+                        const quantity = this.value;
+                        const formData = new FormData();
+                        formData.append('treatment_id', treatmentId);
+                        formData.append('quantity', quantity);
+                        
+                        fetch('{{ url_for("update_quantity") }}', {
                             method: 'POST',
+                            body: formData,
                             headers: {
                                 'X-Requested-With': 'XMLHttpRequest'
                             }
@@ -481,115 +384,72 @@
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                document.getElementById('promo_code').value = '';
-                                showPromoStatus('', '');
-                                document.getElementById('subtotal').textContent = `$${data.subtotal}`;
-                                document.getElementById('discount').textContent = `-$${data.discount}`;
-                                document.getElementById('total').textContent = `$${data.total}`;
-                                
-                                if (data.discount > 0) {
-                                    document.getElementById('discount-row').classList.remove('d-none');
-                                } else {
-                                    document.getElementById('discount-row').classList.add('d-none');
-                                }
+                                updateQuoteSummary(data);
                             }
                         });
                     });
                     
-                    statusDiv.className = 'alert alert-success mt-2 py-2 d-flex justify-content-between align-items-center';
-                    statusDiv.appendChild(messageSpan);
-                    statusDiv.appendChild(closeButton);
-                } else {
-                    statusDiv.textContent = message;
-                }
-            }
-        }
-        
-        // Update the quote summary based on AJAX response
-        function updateQuoteSummary(data) {
-            const selectedTreatmentsDiv = document.getElementById('selected-treatments');
-            const emptyCartDiv = document.getElementById('empty-cart');
-            const continueButton = document.getElementById('btn-continue');
-            
-            // Clear existing treatments
-            selectedTreatmentsDiv.innerHTML = '';
-            
-            if (data.selected_treatments && data.selected_treatments.length > 0) {
-                // Add each treatment to the summary
-                data.selected_treatments.forEach(function(treatment) {
-                    const treatmentDiv = document.createElement('div');
-                    treatmentDiv.className = 'cart-item p-3 mb-3 border rounded';
-                    treatmentDiv.dataset.treatmentId = treatment.id;
-                    
-                    treatmentDiv.innerHTML = `
-                        <div class="d-flex justify-content-between mb-2">
-                            <h4 class="h6 mb-0">${treatment.name}</h4>
-                            <button class="btn btn-sm btn-outline-danger btn-remove-treatment" 
-                                    data-treatment-id="${treatment.id}">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div class="input-group quantity-control">
-                                <button class="btn btn-outline-secondary btn-decrease-quantity" 
-                                        type="button" 
-                                        data-treatment-id="${treatment.id}">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" 
-                                       class="form-control text-center treatment-quantity" 
-                                       value="${treatment.quantity}" 
-                                       min="1" 
-                                       data-treatment-id="${treatment.id}">
-                                <button class="btn btn-outline-secondary btn-increase-quantity" 
-                                        type="button" 
-                                        data-treatment-id="${treatment.id}">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <div class="text-end">
-                                <span class="treatment-price">$${treatment.price * treatment.quantity}</span>
-                            </div>
-                        </div>
-                    `;
-                    
-                    selectedTreatmentsDiv.appendChild(treatmentDiv);
+                    const removeBtn = item.querySelector('.remove-treatment-btn');
+                    removeBtn.addEventListener('click', function() {
+                        const treatmentId = this.getAttribute('data-treatment-id');
+                        const formData = new FormData();
+                        formData.append('treatment_id', treatmentId);
+                        
+                        fetch('{{ url_for("remove_treatment") }}', {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Remove the item from the selected treatments list
+                                this.closest('.selected-treatment-item').remove();
+                                
+                                // Update the treatment card if visible
+                                const card = document.querySelector(`.treatment-card[data-treatment-id="${treatmentId}"]`);
+                                if (card) {
+                                    card.classList.remove('selected-treatment');
+                                    const button = card.querySelector('button');
+                                    if (button) {
+                                        button.textContent = 'Add to Quote';
+                                    }
+                                }
+                                
+                                // Update the quote summary
+                                updateQuoteSummary(data);
+                            }
+                        });
+                    });
                 });
                 
-                // Remove empty cart message and enable continue button
-                if (emptyCartDiv) emptyCartDiv.remove();
-                continueButton.classList.remove('disabled');
+                // Show the no treatments message if list is empty
+                document.getElementById('noTreatmentsMessage').classList.add('d-none');
+                
+                // Enable the continue button
+                document.getElementById('continueBtn').disabled = false;
             } else {
-                // Show empty cart message and disable continue button
-                selectedTreatmentsDiv.innerHTML = `
-                    <div id="empty-cart" class="text-center py-4">
-                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
-                        <p>Your quote is empty. Please select at least one treatment.</p>
-                    </div>
-                `;
-                continueButton.classList.add('disabled');
+                // Show the no treatments message
+                document.getElementById('noTreatmentsMessage').classList.remove('d-none');
+                
+                // Disable the continue button
+                document.getElementById('continueBtn').disabled = true;
             }
             
-            // Update totals
-            document.getElementById('subtotal').textContent = `$${data.subtotal}`;
-            document.getElementById('discount').textContent = `-$${data.discount}`;
-            document.getElementById('total').textContent = `$${data.total}`;
+            // Update pricing
+            document.getElementById('subtotalValue').textContent = `$${data.subtotal.toFixed(2)}`;
+            document.getElementById('totalValue').textContent = `$${data.total.toFixed(2)}`;
             
-            // Toggle discount row visibility
+            // Update discount if applicable
             if (data.discount > 0) {
-                document.getElementById('discount-row').classList.remove('d-none');
+                document.getElementById('discountRow').classList.remove('d-none');
+                document.getElementById('discountValue').textContent = `-$${data.discount.toFixed(2)}`;
             } else {
-                document.getElementById('discount-row').classList.add('d-none');
+                document.getElementById('discountRow').classList.add('d-none');
             }
-            
-            // Re-attach event listeners to new elements
-            setupRemoveButtons();
-            setupQuantityControls();
         }
-        
-        // Initial setup of event listeners
-        setupRemoveButtons();
-        setupQuantityControls();
     });
 </script>
 {% endblock %}
