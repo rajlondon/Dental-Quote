@@ -390,110 +390,127 @@ document.addEventListener('DOMContentLoaded', function() {
     setupRemovePromoButtons();
     
     function removePromoCode() {
-        console.log("Removing promo code...");
+        console.log("Removing promo code completely...");
         
-        // Start with a clean UI state first - even before API call
+        // PHASE 1: Reset UI state immediately before server call
+        
+        // Reset promo display element
         const promoDisplayEl = document.querySelector('.promo-code-display');
         if (promoDisplayEl) {
             promoDisplayEl.textContent = '';
             promoDisplayEl.style.display = 'none';
         }
         
-        // Reset promo code input field right away
+        // Reset promo code input field, ensure it's clean and ready
         const promoCodeInput = document.getElementById('promo-code');
         if (promoCodeInput) {
             promoCodeInput.value = '';
             promoCodeInput.placeholder = 'Enter promo code';
-            // Make sure the input is fully available
             promoCodeInput.disabled = false;
             promoCodeInput.readOnly = false;
         }
         
-        // Hide all discount rows but don't remove them yet
+        // Clean up discount rows
         const discountRows = document.querySelectorAll('.total-row.discount');
         discountRows.forEach(row => {
-            row.style.display = 'none';
+            row.parentNode.removeChild(row); // Remove entirely instead of just hiding
         });
         
-        // Find and hide any promo display messages or applied banners
-        const promoAppliedMessage = document.querySelector('.promo-applied');
-        if (promoAppliedMessage) {
-            promoAppliedMessage.style.display = 'none';
+        // Reset any promo messages
+        const promoMessage = document.querySelector('.promo-message');
+        if (promoMessage) {
+            promoMessage.textContent = 'Removing promo code...';
+            promoMessage.className = 'promo-message';
         }
         
-        // Hide any applied promo sections
+        // Clear applied promo sections
         const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
         appliedPromoSections.forEach(section => {
+            section.innerHTML = ''; // Clear all content
             section.style.display = 'none';
-            // Also try to remove any child elements like buttons to prevent stale handlers
-            const removeButtons = section.querySelectorAll('.remove-promo-btn');
-            removeButtons.forEach(btn => btn.remove());
         });
-
-        // Now make the server call to ensure state is synchronized
+        
+        // Make sure promo form is ready for new code
+        const promoForm = document.querySelector('.promo-form');
+        if (promoForm) {
+            promoForm.reset(); // Reset the form if it's an actual form
+            promoForm.style.display = 'block';
+        }
+        
+        // Ensure promo code entry section is visible
+        const promoCodeSection = document.getElementById('promo-code-entry');
+        if (promoCodeSection) {
+            promoCodeSection.style.display = 'block';
+        }
+        
+        // Make apply button clickable
+        const applyBtn = document.querySelector('.apply-promo-btn');
+        if (applyBtn) {
+            applyBtn.disabled = false;
+        }
+        
+        // PHASE 2: Synchronize with server
         fetch('/api/quote/remove-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Cache-Control': 'no-cache',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
                 'Pragma': 'no-cache',
+                'Expires': '0'
             },
-            cache: 'no-store',  // Prevent caching
+            cache: 'no-store',
+            credentials: 'same-origin' // Include cookies
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Server response was not OK');
+            }
+            return response.json();
+        })
         .then(data => {
             if (data.success) {
-                console.log("Promo code removed successfully");
+                console.log("Promo code removed successfully from server");
                 
                 // Show success message
-                const messageEl = document.querySelector('.promo-message');
-                if (messageEl) {
-                    messageEl.textContent = 'Promo code removed successfully';
-                    messageEl.className = 'promo-message success-message';
+                if (promoMessage) {
+                    promoMessage.textContent = 'Promo code removed successfully';
+                    promoMessage.className = 'promo-message success-message';
                     
                     // Auto-hide message after 3 seconds
                     setTimeout(() => {
-                        messageEl.textContent = '';
-                        messageEl.className = 'promo-message';
+                        promoMessage.textContent = '';
+                        promoMessage.className = 'promo-message';
                     }, 3000);
                 }
-                
-                // Now we can fully remove discount rows
-                discountRows.forEach(row => {
-                    row.remove();
-                });
                 
                 // Update totals with zeroed discount
                 updateTotals(data.totals);
                 
-                // Reset the promo code form
-                // Enable the promo entry form again
-                const promoForm = document.querySelector('.promo-form');
-                if (promoForm) {
-                    promoForm.style.display = 'block';
-                }
-                
-                // Make sure all promo chips are visible
+                // Make sure all promo chips are visible and clickable
                 const promoChips = document.querySelectorAll('.promo-chip');
                 promoChips.forEach(chip => {
                     chip.style.display = 'inline-block';
+                    // Re-enable click events if they were disabled
+                    chip.style.pointerEvents = 'auto';
                 });
-
-                // No need for additional delays - the apply button should be ready immediately
-                const applyBtn = document.querySelector('.apply-promo-btn');
-                if (applyBtn) {
-                    applyBtn.disabled = false;
-                }
                 
-                // Force reload promo code section if needed
-                const promoCodeSection = document.getElementById('promo-code-entry');
-                if (promoCodeSection) {
-                    // Show the entry form
-                    promoCodeSection.style.display = 'block';
-                }
-                
-                // Make sure we properly setup all remove buttons again on any future application
-                setTimeout(setupRemovePromoButtons, 100);
+                // Force re-initialization of all components
+                setTimeout(() => {
+                    // Attach event listeners to newly visible promo chips
+                    promoChips.forEach(chip => {
+                        const newChip = chip.cloneNode(true);
+                        chip.parentNode.replaceChild(newChip, chip);
+                        newChip.addEventListener('click', () => {
+                            const promoText = newChip.textContent.split(' ')[0]; // Extract the code part
+                            if (promoCodeInput) {
+                                promoCodeInput.value = promoText;
+                            }
+                        });
+                    });
+                    
+                    // Set up any new remove buttons
+                    setupRemovePromoButtons();
+                }, 100);
             }
         })
         .catch(error => {
