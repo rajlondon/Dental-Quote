@@ -201,12 +201,13 @@ def validate_promo_code(promo_code, subtotal=0):
         return False, f"Promo code '{promo_code}' is invalid or expired"
     
     # Check if promotion is active
-    if not promotion.get('is_active', False):
+    is_active = promotion.get('is_active', False) if promotion else False
+    if not is_active:
         return False, f"Promo code '{promo_code}' has expired"
     
     # Check minimum order value
-    minimum_order = float(promotion.get('minimum_order', 0))
-    if minimum_order > 0 and subtotal < minimum_order:
+    minimum_order = float(promotion.get('minimum_order', 0)) if promotion else 0
+    if minimum_order > 0 and float(subtotal) < minimum_order:
         return False, f"This promo code requires a minimum order of ${minimum_order}"
     
     return True, "Promo code applied successfully"
@@ -227,14 +228,15 @@ def apply_promo_code(promo_code, subtotal=0):
     promo_details = get_promotion_by_code(promo_code)
     
     # Calculate the discount
-    discount_type = promo_details.get('discount_type', '')
-    discount_value = float(promo_details.get('discount_value', 0))
+    discount_type = promo_details.get('discount_type', '') if promo_details else ''
+    discount_value = float(promo_details.get('discount_value', 0)) if promo_details else 0
     
     discount_amount = 0
+    subtotal_float = float(subtotal)
     if discount_type == 'percentage':
-        discount_amount = subtotal * (discount_value / 100)
+        discount_amount = subtotal_float * (discount_value / 100)
     elif discount_type == 'fixed_amount':
-        discount_amount = min(discount_value, subtotal)  # Don't allow negative totals
+        discount_amount = min(discount_value, subtotal_float)  # Don't allow negative totals
     
     # Return success response
     return {

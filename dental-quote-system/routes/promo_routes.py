@@ -1,88 +1,110 @@
 """
 Promo Routes Module
-Handles promotional code routes for the dental quote system
+Handles promotional code application and validation
 """
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from utils.session_manager import get_quote_data, apply_promo_code, remove_promo_code
-from services.promo_service import verify_promo_code, get_offers
+from flask import Blueprint, request, redirect, url_for, flash, jsonify
+from utils.session_manager import set_promo_code, remove_promo_code, get_treatments, calculate_totals
+from services.promo_service import get_promotion_by_code, validate_promo_code, apply_promo_code
 
 # Create Blueprint
 promo_routes = Blueprint('promo_routes', __name__)
 
-# Special offers page route
-@promo_routes.route('/special-offers')
-def special_offers_page():
-    """Render the special offers page"""
-    offers = get_offers()
-    return render_template('promo/special_offers.html', offers=offers)
-
-# Apply promo code route
-@promo_routes.route('/apply-promo-code', methods=['POST'])
-def apply_promo_code_route():
+@promo_routes.route('/apply-promo', methods=['POST'])
+def apply_promo():
     """Apply a promo code to the quote"""
-    promo_code = request.form.get('promo_code')
+    promo_code = request.form.get('promo_code', '').strip().upper()
     
+    # Get selected treatments from session
+    treatments = get_treatments()
+    
+    # Calculate subtotal
+    subtotal = calculate_totals()['subtotal']
+    
+    # Handle AJAX requests
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+    
+    # If no promo code provided
     if not promo_code:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Promo code is required'})
-        flash('Promo code is required', 'error')
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'message': "Please enter a promo code"
+            })
+        flash("Please enter a promo code", "warning")
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Verify promo code
-    promo_details = verify_promo_code(promo_code)
+    # Apply the promo code
+    result = apply_promo_code(promo_code, subtotal)
     
-    if not promo_details:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Invalid promo code'})
-        flash('Invalid promo code', 'error')
-        return redirect(url_for('page_routes.quote_builder'))
+    if result['success']:
+        # Save to session
+        set_promo_code(promo_code, result['promo_details'])
+        
+        # Calculate updated totals
+        totals = calculate_totals()
+        
+        if is_ajax:
+            return jsonify({
+                'success': True,
+                'message': result['message'],
+                'promo_details': result['promo_details'],
+                'totals': totals
+            })
+        
+        flash(result['message'], "success")
+    else:
+        if is_ajax:
+            return jsonify({
+                'success': False,
+                'message': result['message']
+            })
+        
+        flash(result['message'], "danger")
     
-    # Apply promo code to quote
-    apply_promo_code(promo_code, promo_details)
-    
-    # Get updated quote data
-    quote_data = get_quote_data()
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True,
-            'treatments': quote_data['treatments'],
-            'subtotal': quote_data['subtotal'],
-            'discount': quote_data['discount'],
-            'total': quote_data['total'],
-            'promo_code': quote_data['promo_code'],
-            'promo_description': promo_details.get('description', '')
-        })
-    
-    flash(f'Promo code "{promo_code}" applied successfully', 'success')
     return redirect(url_for('page_routes.quote_builder'))
 
-# Remove promo code route
-@promo_routes.route('/remove-promo-code', methods=['POST'])
-def remove_promo_code_route():
-    """Remove the applied promo code from the quote"""
-    # Remove promo code from quote
-    success = remove_promo_code()
+@promo_routes.route('/remove-promo', methods=['POST'])
+def remove_promo():
+    """Remove a promo code from the quote"""
+    # Remove promo code from session
+    remove_promo_code()
     
-    if not success:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'No promo code applied'})
-        flash('No promo code applied', 'error')
-        return redirect(url_for('page_routes.quote_builder'))
+    # Calculate updated totals
+    totals = calculate_totals()
     
-    # Get updated quote data
-    quote_data = get_quote_data()
-    
+    # Handle AJAX requests
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
             'success': True,
-            'treatments': quote_data['treatments'],
-            'subtotal': quote_data['subtotal'],
-            'discount': quote_data['discount'],
-            'total': quote_data['total'],
-            'promo_code': None,
-            'promo_description': None
+            'message': "Promo code removed",
+            'totals': totals
         })
     
-    flash('Promo code removed', 'success')
+    flash("Promo code removed", "info")
     return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes.route('/validate-promo/<promo_code>', methods=['GET'])
+def validate_promo(promo_code):
+    """Validate a promo code via API"""
+    if not promo_code:
+        return jsonify({
+            'valid': False,
+            'message': "No promo code provided"
+        })
+    
+    # Calculate subtotal for validation
+    subtotal = calculate_totals()['subtotal']
+    
+    # Validate the promo code
+    is_valid, message = validate_promo_code(promo_code, subtotal)
+    
+    # Get promotion details if valid
+    promo_details = None
+    if is_valid:
+        promo_details = get_promotion_by_code(promo_code)
+    
+    return jsonify({
+        'valid': is_valid,
+        'message': message,
+        'promo_details': promo_details
+    })
