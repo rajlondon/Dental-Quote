@@ -250,27 +250,42 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function removePromoCode() {
+        // Start with a clean UI state first - even before API call
+        const promoDisplayEl = document.querySelector('.promo-code-display');
+        if (promoDisplayEl) {
+            promoDisplayEl.textContent = '';
+            promoDisplayEl.style.display = 'none';
+        }
+        
+        const removePromoBtn = document.querySelector('.remove-promo-btn');
+        if (removePromoBtn) {
+            removePromoBtn.style.display = 'none';
+        }
+
+        // Reset promo code input field right away
+        const promoCodeInput = document.getElementById('promo-code');
+        if (promoCodeInput) {
+            promoCodeInput.value = '';
+            promoCodeInput.placeholder = 'Enter promo code';
+        }
+        
+        // Find and remove discount row in totals if it exists
+        const discountRow = document.querySelector('.total-row.discount');
+        if (discountRow) {
+            discountRow.remove();
+        }
+
+        // Now make the server call to ensure state is synchronized
         fetch('/api/quote/remove-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
+            cache: 'no-store'  // Prevent caching
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update UI without page refresh
-                const promoDisplayEl = document.querySelector('.promo-code-display');
-                if (promoDisplayEl) {
-                    promoDisplayEl.textContent = '';
-                    promoDisplayEl.style.display = 'none';
-                }
-                
-                const removePromoBtn = document.querySelector('.remove-promo-btn');
-                if (removePromoBtn) {
-                    removePromoBtn.style.display = 'none';
-                }
-                
                 // Show success message
                 const messageEl = document.querySelector('.promo-message');
                 if (messageEl) {
@@ -284,21 +299,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 3000);
                 }
                 
-                // Reset promo code input
-                const promoCodeInput = document.getElementById('promo-code');
-                if (promoCodeInput) {
-                    promoCodeInput.value = '';
-                    promoCodeInput.placeholder = 'Enter promo code';
-                }
-                
-                // Find and remove discount row in totals if it exists
-                const discountRow = document.querySelector('.total-row.discount');
-                if (discountRow) {
-                    discountRow.remove();
-                }
-                
                 // Update totals with zeroed discount
                 updateTotals(data.totals);
+                
+                // Force a small delay before allowing new promo codes to be applied
+                setTimeout(() => {
+                    // Re-enable the apply button if it exists
+                    const applyBtn = document.querySelector('.apply-promo-btn');
+                    if (applyBtn && applyBtn.disabled) {
+                        applyBtn.disabled = false;
+                    }
+                }, 500);
             }
         })
         .catch(error => {
