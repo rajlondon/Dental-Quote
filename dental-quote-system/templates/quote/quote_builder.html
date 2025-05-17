@@ -1,151 +1,507 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quote Builder | MyDentalFly</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <div class="logo">
-                <h1>MyDentalFly</h1>
-                <p>Dental Quote System</p>
-            </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('page_routes.quote_builder') }}" class="active">Quote Builder</a></li>
-                    <li><a href="{{ url_for('promo_routes.special_offers_page') }}">Special Offers</a></li>
-                </ul>
-            </nav>
+{% extends 'base.html' %}
+
+{% block title %}Build Your Dental Quote | MyDentalFly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .treatment-card {
+        transition: all 0.3s ease;
+    }
+    .treatment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .selected-treatment {
+        border: 2px solid #0d6efd;
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    .quote-summary {
+        position: sticky;
+        top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">Build Your Dental Treatment Quote</h1>
+        <div class="progress mb-4">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: 25%;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100">Step 1 of 4</div>
         </div>
-    </header>
+    </div>
+</div>
 
-    <main>
-        <div class="container">
-            <div class="flash-container">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Select Your Treatments</h2>
             </div>
-
-            <h1 class="mb-4">Dental Treatment Quote Builder</h1>
-            
-            <div class="quote-builder-container">
-                <div class="treatments-section">
-                    <h2 class="mb-3">Available Treatments</h2>
-                    <p class="mb-3">Select treatments to include in your quote:</p>
-                    
-                    <div class="treatment-list">
-                        {% for treatment in available_treatments %}
-                            <div class="card treatment-card">
-                                <div class="card-body">
-                                    <div class="treatment-category">{{ treatment.category }}</div>
-                                    <h3 class="card-title">{{ treatment.name }}</h3>
-                                    <p class="card-text">{{ treatment.description }}</p>
-                                    <div class="treatment-price mb-2">${{ "%.2f"|format(treatment.price) }}</div>
-                                    <div class="treatment-actions">
-                                        <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST">
-                                            <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                            <button type="submit" class="btn btn-primary btn-sm">Add to Quote</button>
-                                        </form>
+            <div class="card-body">
+                <ul class="nav nav-tabs mb-4" id="treatmentTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all-treatments" type="button" role="tab">All Treatments</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="implants-tab" data-bs-toggle="tab" data-bs-target="#implant-treatments" type="button" role="tab">Implants</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="cosmetic-tab" data-bs-toggle="tab" data-bs-target="#cosmetic-treatments" type="button" role="tab">Cosmetic</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="restorative-tab" data-bs-toggle="tab" data-bs-target="#restorative-treatments" type="button" role="tab">Restorative</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="other-tab" data-bs-toggle="tab" data-bs-target="#other-treatments" type="button" role="tab">Other</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="treatmentTabContent">
+                    <div class="tab-pane fade show active" id="all-treatments" role="tabpanel">
+                        <div class="row">
+                            {% for treatment in available_treatments %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card treatment-card h-100 {% if treatment.id in [t.id for t in treatments] %}selected-treatment{% endif %}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text">{{ treatment.description }}</p>
+                                        <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                        
+                                        {% if treatment.id in [t.id for t in treatments] %}
+                                            <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                                            </form>
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    </div>
-                </div>
-                
-                <div class="quote-summary">
-                    <h2 class="summary-title">Your Quote</h2>
-                    
-                    {% if treatments %}
-                        <div class="summary-list">
-                            {% for treatment in treatments %}
-                                <div class="summary-item">
-                                    <div class="summary-item-name">{{ treatment.name }}</div>
-                                    <div class="summary-item-price">${{ "%.2f"|format(treatment.price) }}</div>
-                                    <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="d-inline">
-                                        <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                        <button type="submit" class="summary-item-remove" title="Remove">&times;</button>
-                                    </form>
-                                </div>
                             {% endfor %}
                         </div>
-                        
-                        <div class="summary-totals">
-                            <div class="summary-subtotal">
-                                <div>Subtotal</div>
-                                <div>${{ "%.2f"|format(subtotal) }}</div>
-                            </div>
-                            
-                            {% if promo_details %}
-                                <div class="summary-discount">
-                                    <div>Discount ({{ promo_details.description }})</div>
-                                    <div>-${{ "%.2f"|format(discount) }}</div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="implant-treatments" role="tabpanel">
+                        <div class="row">
+                            {% for treatment in available_treatments if treatment.category == 'Implants' %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card treatment-card h-100 {% if treatment.id in [t.id for t in treatments] %}selected-treatment{% endif %}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text">{{ treatment.description }}</p>
+                                        <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                        
+                                        {% if treatment.id in [t.id for t in treatments] %}
+                                            <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                            {% endif %}
-                            
-                            <div class="summary-total">
-                                <div>Total</div>
-                                <div>${{ "%.2f"|format(total) }}</div>
                             </div>
+                            {% endfor %}
                         </div>
-
-                        {% if promo_details %}
-                            <div class="applied-promo">
-                                <div class="applied-promo-info">
-                                    <div>Applied promo: <span class="applied-promo-code">{{ promo_code }}</span></div>
-                                    <div class="applied-promo-description">{{ promo_details.description }}</div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="cosmetic-treatments" role="tabpanel">
+                        <div class="row">
+                            {% for treatment in available_treatments if treatment.category == 'Cosmetic' %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card treatment-card h-100 {% if treatment.id in [t.id for t in treatments] %}selected-treatment{% endif %}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text">{{ treatment.description }}</p>
+                                        <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                        
+                                        {% if treatment.id in [t.id for t in treatments] %}
+                                            <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <form action="{{ url_for('promo_routes.remove_promo_code_route') }}" method="POST">
-                                    <button type="submit" class="applied-promo-remove" title="Remove promo code">&times;</button>
-                                </form>
                             </div>
-                        {% else %}
-                            <form class="promo-form" action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST">
-                                <h3 class="mb-2">Promotional Code</h3>
-                                <div class="input-group">
-                                    <input type="text" id="promo_code" name="promo_code" class="form-control" placeholder="Enter promo code">
-                                    <button type="submit" class="btn btn-primary">Apply</button>
-                                </div>
-                            </form>
-                        {% endif %}
-                        
-                        <div class="mt-4">
-                            <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary btn-block">Continue to Patient Info</a>
-                            <a href="{{ url_for('page_routes.reset_quote_route') }}" class="btn btn-outline-danger btn-block mt-2">Reset Quote</a>
+                            {% endfor %}
                         </div>
-                    {% else %}
-                        <p class="text-center mb-3">Your quote is empty. Select treatments from the left to build your quote.</p>
-                        
-                        <form class="promo-form" action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST">
-                            <h3 class="mb-2">Promotional Code</h3>
-                            <div class="input-group">
-                                <input type="text" id="promo_code" name="promo_code" class="form-control" placeholder="Enter promo code">
-                                <button type="submit" class="btn btn-primary">Apply</button>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="restorative-treatments" role="tabpanel">
+                        <div class="row">
+                            {% for treatment in available_treatments if treatment.category == 'Restorative' %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card treatment-card h-100 {% if treatment.id in [t.id for t in treatments] %}selected-treatment{% endif %}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text">{{ treatment.description }}</p>
+                                        <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                        
+                                        {% if treatment.id in [t.id for t in treatments] %}
+                                            <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                        </form>
-                    {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="tab-pane fade" id="other-treatments" role="tabpanel">
+                        <div class="row">
+                            {% for treatment in available_treatments if treatment.category not in ['Implants', 'Cosmetic', 'Restorative'] %}
+                            <div class="col-md-6 mb-4">
+                                <div class="card treatment-card h-100 {% if treatment.id in [t.id for t in treatments] %}selected-treatment{% endif %}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text">{{ treatment.description }}</p>
+                                        <p class="card-text"><strong>Price:</strong> ${{ treatment.price }}</p>
+                                        
+                                        {% if treatment.id in [t.id for t in treatments] %}
+                                            <form action="{{ url_for('page_routes.remove_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-danger">Remove</button>
+                                            </form>
+                                        {% else %}
+                                            <form action="{{ url_for('page_routes.add_treatment_route') }}" method="POST" class="treatment-form">
+                                                <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
+                                                <button type="submit" class="btn btn-outline-primary">Add to Quote</button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
-        </div>
-    </footer>
+    </div>
     
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+    <div class="col-md-4">
+        <div class="card quote-summary">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Your Quote Summary</h3>
+            </div>
+            <div class="card-body">
+                {% if treatments %}
+                    <h4 class="mb-3">Selected Treatments</h4>
+                    <ul class="list-group mb-4">
+                        {% for treatment in treatments %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ treatment.name }}
+                            <span class="badge bg-primary rounded-pill">${{ treatment.price }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    
+                    <div class="mb-4">
+                        <h4 class="mb-3">Promo Code</h4>
+                        {% if promo_code %}
+                            <div class="alert alert-success">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <p class="mb-0"><strong>{{ promo_code }}</strong> applied!</p>
+                                        {% if promo_details %}
+                                            <p class="mb-0 small">{{ promo_details.description }}</p>
+                                        {% endif %}
+                                    </div>
+                                    <form action="{{ url_for('promo_routes.remove_promo_code_route') }}" method="POST" id="remove-promo-form">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% else %}
+                            <form action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST" id="promo-form">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="promo_code" placeholder="Enter promo code">
+                                    <button class="btn btn-outline-primary" type="submit">Apply</button>
+                                </div>
+                            </form>
+                            <p class="text-muted small">Don't have a code? <a href="{{ url_for('promo_routes.special_offers_page') }}">Check our special offers</a></p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal:</span>
+                                <span>${{ subtotal }}</span>
+                            </div>
+                            {% if discount > 0 %}
+                            <div class="d-flex justify-content-between mb-2 text-success">
+                                <span>Discount:</span>
+                                <span>-${{ discount }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-between fw-bold">
+                                <span>Total:</span>
+                                <span>${{ total }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary">Continue to Patient Information</a>
+                        <a href="{{ url_for('page_routes.reset_quote_route') }}" class="btn btn-outline-secondary">Reset Quote</a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                        <p>Your quote is empty.</p>
+                        <p>Please select treatments from the list to build your quote.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle treatment forms with AJAX
+    const treatmentForms = document.querySelectorAll('.treatment-form');
+    treatmentForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            fetch(form.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the UI without a page reload
+                    updateQuoteSummary(data);
+                    updateTreatmentCards(data);
+                } else {
+                    // Show an error message
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Fallback to traditional form submission if AJAX fails
+                form.submit();
+            });
+        });
+    });
+    
+    // Handle promo code form with AJAX
+    const promoForm = document.getElementById('promo-form');
+    if (promoForm) {
+        promoForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(promoForm);
+            fetch(promoForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update the UI without a page reload
+                    updateQuoteSummary(data);
+                    
+                    // Replace promo form with success message
+                    const promoSection = document.querySelector('.mb-4:nth-of-type(2)');
+                    promoSection.innerHTML = `
+                        <h4 class="mb-3">Promo Code</h4>
+                        <div class="alert alert-success">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-0"><strong>${data.promo_code}</strong> applied!</p>
+                                    <p class="mb-0 small">${data.promo_description || ''}</p>
+                                </div>
+                                <form action="{{ url_for('promo_routes.remove_promo_code_route') }}" method="POST" id="remove-promo-form">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listener to the new remove promo form
+                    setupRemovePromoForm();
+                } else {
+                    // Show an error message
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Fallback to traditional form submission if AJAX fails
+                promoForm.submit();
+            });
+        });
+    }
+    
+    // Handle remove promo code form with AJAX
+    function setupRemovePromoForm() {
+        const removePromoForm = document.getElementById('remove-promo-form');
+        if (removePromoForm) {
+            removePromoForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                fetch(removePromoForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the UI without a page reload
+                        updateQuoteSummary(data);
+                        
+                        // Replace success message with promo form
+                        const promoSection = document.querySelector('.mb-4:nth-of-type(2)');
+                        promoSection.innerHTML = `
+                            <h4 class="mb-3">Promo Code</h4>
+                            <form action="{{ url_for('promo_routes.apply_promo_code_route') }}" method="POST" id="promo-form">
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" name="promo_code" placeholder="Enter promo code">
+                                    <button class="btn btn-outline-primary" type="submit">Apply</button>
+                                </div>
+                            </form>
+                            <p class="text-muted small">Don't have a code? <a href="{{ url_for('promo_routes.special_offers_page') }}">Check our special offers</a></p>
+                        `;
+                        
+                        // Re-add event listener to the new promo form
+                        const newPromoForm = document.getElementById('promo-form');
+                        if (newPromoForm) {
+                            newPromoForm.addEventListener('submit', promoForm.onsubmit);
+                        }
+                    } else {
+                        // Show an error message
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Fallback to traditional form submission if AJAX fails
+                    removePromoForm.submit();
+                });
+            });
+        }
+    }
+    
+    // Set up initial remove promo form
+    setupRemovePromoForm();
+    
+    // Function to update the quote summary with the new data
+    function updateQuoteSummary(data) {
+        const treatmentsList = document.querySelector('.list-group');
+        if (treatmentsList) {
+            treatmentsList.innerHTML = '';
+            
+            data.treatments.forEach(treatment => {
+                const li = document.createElement('li');
+                li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                li.innerHTML = `
+                    ${treatment.name}
+                    <span class="badge bg-primary rounded-pill">$${treatment.price}</span>
+                `;
+                treatmentsList.appendChild(li);
+            });
+            
+            // Update price summary
+            const priceRows = document.querySelectorAll('.card.bg-light .card-body > div');
+            
+            // Subtotal
+            priceRows[0].innerHTML = `
+                <span>Subtotal:</span>
+                <span>$${data.subtotal}</span>
+            `;
+            
+            // Discount (if applicable)
+            if (data.discount > 0) {
+                if (priceRows.length === 3) {
+                    priceRows[1].innerHTML = `
+                        <span>Discount:</span>
+                        <span>-$${data.discount}</span>
+                    `;
+                } else {
+                    const discountRow = document.createElement('div');
+                    discountRow.className = 'd-flex justify-content-between mb-2 text-success';
+                    discountRow.innerHTML = `
+                        <span>Discount:</span>
+                        <span>-$${data.discount}</span>
+                    `;
+                    priceRows[0].insertAdjacentElement('afterend', discountRow);
+                }
+            } else if (priceRows.length === 3) {
+                priceRows[1].remove();
+            }
+            
+            // Total
+            const totalRowIndex = data.discount > 0 ? 2 : 1;
+            priceRows[totalRowIndex].innerHTML = `
+                <span>Total:</span>
+                <span>$${data.total}</span>
+            `;
+        }
+    }
+    
+    // Function to update the treatment cards (add/remove buttons)
+    function updateTreatmentCards(data) {
+        const treatmentCards = document.querySelectorAll('.treatment-card');
+        const treatmentIds = data.treatments.map(t => t.id);
+        
+        treatmentCards.forEach(card => {
+            const treatmentId = card.querySelector('input[name="treatment_id"]').value;
+            const form = card.querySelector('form');
+            
+            if (treatmentIds.includes(treatmentId)) {
+                // Treatment is in the quote, show Remove button
+                card.classList.add('selected-treatment');
+                form.action = "{{ url_for('page_routes.remove_treatment_route') }}";
+                form.querySelector('button').className = 'btn btn-outline-danger';
+                form.querySelector('button').textContent = 'Remove';
+            } else {
+                // Treatment is not in the quote, show Add button
+                card.classList.remove('selected-treatment');
+                form.action = "{{ url_for('page_routes.add_treatment_route') }}";
+                form.querySelector('button').className = 'btn btn-outline-primary';
+                form.querySelector('button').textContent = 'Add to Quote';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

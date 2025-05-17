@@ -1,102 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MyDentalFly - Dental Quote System</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <div class="logo">
-                <h1>MyDentalFly</h1>
-                <p>Dental Quote System</p>
+{% extends 'base.html' %}
+
+{% block title %}MyDentalFly - Your Dental Travel Partner{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 text-center mb-5">
+        <h1 class="display-4">Get Your Personalized Dental Treatment Quote</h1>
+        <p class="lead">Compare high-quality dental treatments in Turkey with transparent pricing and exclusive offers</p>
+        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg mt-3">Build Your Quote Now</a>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-tooth fa-3x mb-3 text-primary"></i>
+                <h3>Top Quality Treatments</h3>
+                <p>Access world-class dental care at a fraction of European prices with ISO-certified clinics and English-speaking doctors.</p>
             </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="{{ url_for('page_routes.index') }}" class="active">Home</a></li>
-                    <li><a href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a></li>
-                    <li><a href="{{ url_for('promo_routes.special_offers_page') }}">Special Offers</a></li>
-                </ul>
-            </nav>
         </div>
-    </header>
-
-    <main>
-        <div class="container">
-            <div class="flash-container">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-money-bill-wave fa-3x mb-3 text-primary"></i>
+                <h3>Transparent Pricing</h3>
+                <p>Get clear, upfront pricing with no hidden fees. Save up to 70% compared to UK and EU dental costs.</p>
             </div>
-
-            <section class="hero mb-5">
-                <div class="text-center p-4 bg-white rounded shadow">
-                    <h1 class="mb-3">Welcome to MyDentalFly Dental Quote System</h1>
-                    <p class="mb-4">Build custom dental treatment quotes with our easy-to-use quote builder. Apply promotional codes for special discounts and get instant price estimates.</p>
-                    <div class="mt-4">
-                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">Start Building Your Quote</a>
-                        <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary btn-lg ml-3">View Special Offers</a>
-                    </div>
-                </div>
-            </section>
-
-            <section class="features mb-5">
-                <h2 class="text-center mb-4">Features</h2>
-                <div class="row">
-                    <div class="col">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Easy Quote Building</h3>
-                                <p class="card-text">Select from a variety of dental treatments to build your personalized quote in just a few clicks.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Special Offers</h3>
-                                <p class="card-text">Browse our special offers and apply promotional codes to save on your dental treatments.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="card">
-                            <div class="card-body">
-                                <h3 class="card-title">Instant Pricing</h3>
-                                <p class="card-text">Get instant price estimates and see how promotional discounts affect your total cost.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="cta mb-5">
-                <div class="text-center p-4 bg-white rounded shadow">
-                    <h2 class="mb-3">Ready to Get Started?</h2>
-                    <p class="mb-4">Build your custom dental treatment quote now or browse our special offers for extra savings.</p>
-                    <div class="mt-4">
-                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary">Build Your Quote</a>
-                        <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-secondary ml-3">View Special Offers</a>
-                    </div>
-                </div>
-            </section>
         </div>
-    </main>
-
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="fas fa-concierge-bell fa-3x mb-3 text-primary"></i>
+                <h3>Full Concierge Service</h3>
+                <p>Enjoy hassle-free booking with airport transfers, hotel arrangements, and 24/7 English support throughout your stay.</p>
+            </div>
         </div>
-    </footer>
-    
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-12 text-center">
+        <h2 class="mb-4">How It Works</h2>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px; height:80px">
+                    <h3 class="m-0">1</h3>
+                </div>
+                <h4>Choose Treatments</h4>
+                <p>Select the dental procedures you're interested in using our interactive treatment builder.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px; height:80px">
+                    <h3 class="m-0">2</h3>
+                </div>
+                <h4>Apply Special Offers</h4>
+                <p>Browse and apply exclusive deals and promotional discounts to save even more.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px; height:80px">
+                    <h3 class="m-0">3</h3>
+                </div>
+                <h4>Complete Your Details</h4>
+                <p>Provide your basic information so we can personalize your treatment experience.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto mb-3" style="width:80px; height:80px">
+                    <h3 class="m-0">4</h3>
+                </div>
+                <h4>Get Your Quote</h4>
+                <p>Receive your detailed treatment plan with accurate pricing and next steps.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 text-center mb-4">
+        <h2>Featured Special Offers</h2>
+        <p>Take advantage of these limited-time deals for additional savings on your dental treatment</p>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="{{ url_for('static', filename='images/offer-placeholder.jpg') }}" class="card-img-top" alt="Free Consultation Package">
+            <div class="card-body">
+                <h4 class="card-title">Free Consultation Package</h4>
+                <p class="card-text">Book a dental treatment and get free pre-consultation and aftercare support.</p>
+                <p class="text-muted">Use code: <strong>FREECONSULT</strong></p>
+                <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary">View Offer</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="{{ url_for('static', filename='images/offer-placeholder.jpg') }}" class="card-img-top" alt="Implant + Crown Bundle">
+            <div class="card-body">
+                <h4 class="card-title">Implant + Crown Bundle</h4>
+                <p class="card-text">Save 30% when combining dental implant with crown treatments.</p>
+                <p class="text-muted">Use code: <strong>IMPLANTCROWN30</strong></p>
+                <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary">View Offer</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <img src="{{ url_for('static', filename='images/offer-placeholder.jpg') }}" class="card-img-top" alt="Premium Hotel Deal">
+            <div class="card-body">
+                <h4 class="card-title">Premium Hotel Deal</h4>
+                <p class="card-text">Save up to 20% on premium hotels with your dental treatment booking.</p>
+                <p class="text-muted">Use code: <strong>LUXHOTEL20</strong></p>
+                <a href="{{ url_for('promo_routes.special_offers_page') }}" class="btn btn-outline-primary">View Offer</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 bg-light p-5 rounded">
+    <div class="col-md-12 text-center">
+        <h2 class="mb-4">Ready to Start Your Dental Journey?</h2>
+        <p class="lead mb-4">Get a personalized quote for your dental treatment in just a few clicks</p>
+        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">Create Your Quote Now</a>
+    </div>
+</div>
+{% endblock %}

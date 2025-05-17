@@ -1,249 +1,218 @@
 """
 Page Routes Module
-Handles main page navigation routes for the dental quote system
+Handles main page routes for the dental quote system
 """
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-import uuid
-import json
-from datetime import datetime
-
-# Import utilities
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, session
 from utils.session_manager import (
-    get_treatments, add_treatment, remove_treatment, 
-    get_patient_info, update_patient_info, reset_quote,
-    calculate_totals
+    get_quote_data, add_treatment, remove_treatment, 
+    update_patient_info, reset_quote
 )
+from services.treatment_service import get_available_treatments
+from services.promo_service import get_offers
 
-# Create blueprint
+# Create Blueprint
 page_routes = Blueprint('page_routes', __name__)
 
-# Mock data for treatments
-TREATMENTS = [
-    {
-        'id': 'dental-exam',
-        'name': 'Dental Examination',
-        'description': 'Comprehensive dental check-up including x-rays and consultation.',
-        'category': 'Diagnostic',
-        'price': 50.00
-    },
-    {
-        'id': 'teeth-cleaning',
-        'name': 'Professional Teeth Cleaning',
-        'description': 'Deep cleaning to remove plaque and tartar build-up.',
-        'category': 'Preventive',
-        'price': 80.00
-    },
-    {
-        'id': 'filling-simple',
-        'name': 'Simple Filling',
-        'description': 'Tooth-colored composite filling for small cavities.',
-        'category': 'Restorative',
-        'price': 120.00
-    },
-    {
-        'id': 'filling-complex',
-        'name': 'Complex Filling',
-        'description': 'Larger filling for extensive tooth decay.',
-        'category': 'Restorative',
-        'price': 180.00
-    },
-    {
-        'id': 'root-canal',
-        'name': 'Root Canal Treatment',
-        'description': 'Treatment for infected tooth pulp to save the natural tooth.',
-        'category': 'Endodontic',
-        'price': 500.00
-    },
-    {
-        'id': 'extraction-simple',
-        'name': 'Simple Tooth Extraction',
-        'description': 'Removal of visible teeth with local anesthesia.',
-        'category': 'Surgical',
-        'price': 150.00
-    },
-    {
-        'id': 'extraction-surgical',
-        'name': 'Surgical Tooth Extraction',
-        'description': 'Removal of impacted or broken teeth.',
-        'category': 'Surgical',
-        'price': 300.00
-    },
-    {
-        'id': 'crown-porcelain',
-        'name': 'Porcelain Crown',
-        'description': 'Custom-made cap to cover damaged tooth.',
-        'category': 'Prosthetic',
-        'price': 800.00
-    },
-    {
-        'id': 'veneer-porcelain',
-        'name': 'Porcelain Veneer',
-        'description': 'Thin layer of porcelain applied to front surface of tooth.',
-        'category': 'Cosmetic',
-        'price': 900.00
-    },
-    {
-        'id': 'teeth-whitening',
-        'name': 'Professional Teeth Whitening',
-        'description': 'In-office procedure to remove stains and discoloration.',
-        'category': 'Cosmetic',
-        'price': 350.00
-    },
-    {
-        'id': 'implant-single',
-        'name': 'Dental Implant',
-        'description': 'Titanium post surgically placed into jawbone to replace missing tooth.',
-        'category': 'Implant',
-        'price': 1500.00
-    },
-    {
-        'id': 'bridge-3unit',
-        'name': '3-Unit Dental Bridge',
-        'description': 'Fixed bridge to replace one or more missing teeth.',
-        'category': 'Prosthetic',
-        'price': 2000.00
-    }
-]
-
-# Home page route
+# Homepage route
 @page_routes.route('/')
 def index():
-    """Render home page."""
+    """Render the homepage"""
     return render_template('index.html')
 
 # Quote builder route
 @page_routes.route('/quote-builder')
 def quote_builder():
-    """Render quote builder page."""
-    # Get treatments from session
-    treatments = get_treatments()
+    """Render the quote builder page"""
+    # Get available treatments
+    available_treatments = get_available_treatments()
     
-    # Get promo code from query parameter
-    promo_code = request.args.get('promo')
-    
-    # Calculate totals
-    subtotal, discount, total = calculate_totals()
+    # Get current quote data
+    quote_data = get_quote_data()
     
     return render_template(
         'quote/quote_builder.html',
-        available_treatments=TREATMENTS,
-        treatments=treatments,
-        promo_code=session.get('promo_code'),
-        promo_details=session.get('promo_details'),
-        subtotal=subtotal,
-        discount=discount,
-        total=total
+        available_treatments=available_treatments,
+        treatments=quote_data['treatments'],
+        subtotal=quote_data['subtotal'],
+        discount=quote_data['discount'],
+        total=quote_data['total'],
+        promo_code=quote_data['promo_code'],
+        promo_details=quote_data['promo_details']
     )
 
 # Add treatment route
 @page_routes.route('/add-treatment', methods=['POST'])
 def add_treatment_route():
-    """Add treatment to quote."""
+    """Add a treatment to the quote"""
     treatment_id = request.form.get('treatment_id')
     
-    # Find treatment in available treatments
-    treatment = next((t for t in TREATMENTS if t['id'] == treatment_id), None)
+    if not treatment_id:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Treatment ID is required'})
+        flash('Treatment ID is required', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
     
-    if treatment:
-        add_treatment(treatment)
-        flash('Treatment added to quote.', 'success')
-    else:
-        flash('Treatment not found.', 'error')
+    # Get available treatments
+    available_treatments = get_available_treatments()
+    treatment = next((t for t in available_treatments if t['id'] == treatment_id), None)
     
+    if not treatment:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Treatment not found'})
+        flash('Treatment not found', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Add treatment to quote
+    success = add_treatment(treatment)
+    
+    if not success:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Treatment already in quote'})
+        flash('Treatment already in quote', 'warning')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Get updated quote data
+    quote_data = get_quote_data()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'treatments': quote_data['treatments'],
+            'subtotal': quote_data['subtotal'],
+            'discount': quote_data['discount'],
+            'total': quote_data['total'],
+            'promo_code': quote_data['promo_code'],
+            'promo_description': quote_data['promo_details']['description'] if quote_data['promo_details'] else None
+        })
+    
+    flash('Treatment added to quote', 'success')
     return redirect(url_for('page_routes.quote_builder'))
 
 # Remove treatment route
 @page_routes.route('/remove-treatment', methods=['POST'])
 def remove_treatment_route():
-    """Remove treatment from quote."""
+    """Remove a treatment from the quote"""
     treatment_id = request.form.get('treatment_id')
     
-    if remove_treatment(treatment_id):
-        flash('Treatment removed from quote.', 'success')
-    else:
-        flash('Treatment not found in quote.', 'error')
-    
-    return redirect(url_for('page_routes.quote_builder'))
-
-# Patient info route
-@page_routes.route('/patient-info', methods=['GET', 'POST'])
-def patient_info():
-    """Render and process patient info page."""
-    # Get treatments from session
-    treatments = get_treatments()
-    
-    # If there are no treatments, redirect to quote builder
-    if not treatments:
-        flash('Please select at least one treatment before proceeding.', 'warning')
+    if not treatment_id:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Treatment ID is required'})
+        flash('Treatment ID is required', 'error')
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Calculate totals
-    subtotal, discount, total = calculate_totals()
+    # Remove treatment from quote
+    success = remove_treatment(treatment_id)
+    
+    if not success:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Treatment not found in quote'})
+        flash('Treatment not found in quote', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Get updated quote data
+    quote_data = get_quote_data()
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({
+            'success': True,
+            'treatments': quote_data['treatments'],
+            'subtotal': quote_data['subtotal'],
+            'discount': quote_data['discount'],
+            'total': quote_data['total'],
+            'promo_code': quote_data['promo_code'],
+            'promo_description': quote_data['promo_details']['description'] if quote_data['promo_details'] else None
+        })
+    
+    flash('Treatment removed from quote', 'success')
+    return redirect(url_for('page_routes.quote_builder'))
+
+# Patient information route
+@page_routes.route('/patient-info', methods=['GET', 'POST'])
+def patient_info():
+    """Render and process the patient information page"""
+    quote_data = get_quote_data()
+    
+    # Check if there are treatments in the quote
+    if not quote_data['treatments']:
+        flash('Please add treatments to your quote first', 'warning')
+        return redirect(url_for('page_routes.quote_builder'))
     
     if request.method == 'POST':
-        # Update patient info in session
-        info = {
+        # Get patient info from form
+        patient_info = {
             'name': request.form.get('name', ''),
             'email': request.form.get('email', ''),
             'phone': request.form.get('phone', ''),
             'notes': request.form.get('notes', '')
         }
-        update_patient_info(info)
         
-        # Redirect to review page
+        # Validate required fields
+        if not all([patient_info['name'], patient_info['email'], patient_info['phone']]):
+            flash('Please fill in all required fields', 'error')
+            return render_template(
+                'quote/patient_info.html',
+                patient_info=patient_info,
+                treatments=quote_data['treatments'],
+                subtotal=quote_data['subtotal'],
+                discount=quote_data['discount'],
+                total=quote_data['total'],
+                promo_code=quote_data['promo_code'],
+                promo_details=quote_data['promo_details']
+            )
+        
+        # Update patient info in session
+        update_patient_info(patient_info)
+        
+        # Redirect to review quote page
         return redirect(url_for('page_routes.review_quote'))
     
-    # Get patient info from session
-    patient_info = get_patient_info()
-    
+    # GET request
     return render_template(
         'quote/patient_info.html',
-        patient_info=patient_info,
-        treatments=treatments,
-        promo_details=session.get('promo_details'),
-        subtotal=subtotal,
-        discount=discount,
-        total=total
+        patient_info=quote_data['patient_info'],
+        treatments=quote_data['treatments'],
+        subtotal=quote_data['subtotal'],
+        discount=quote_data['discount'],
+        total=quote_data['total'],
+        promo_code=quote_data['promo_code'],
+        promo_details=quote_data['promo_details']
     )
 
 # Review quote route
 @page_routes.route('/review-quote')
 def review_quote():
-    """Render review quote page."""
-    # Get treatments from session
-    treatments = get_treatments()
+    """Render the review quote page"""
+    quote_data = get_quote_data()
     
-    # If there are no treatments, redirect to quote builder
-    if not treatments:
-        flash('Please select at least one treatment before reviewing your quote.', 'warning')
+    # Check if there are treatments in the quote
+    if not quote_data['treatments']:
+        flash('Please add treatments to your quote first', 'warning')
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Get patient info from session
-    patient_info = get_patient_info()
-    
-    # If patient info is incomplete, redirect to patient info page
-    if not patient_info.get('name') or not patient_info.get('email') or not patient_info.get('phone'):
-        flash('Please complete your information before reviewing your quote.', 'warning')
+    # Check if patient info is filled
+    if not quote_data['patient_info'].get('name'):
+        flash('Please fill in your information first', 'warning')
         return redirect(url_for('page_routes.patient_info'))
     
-    # Calculate totals
-    subtotal, discount, total = calculate_totals()
+    # Generate a quote reference
+    quote_ref = quote_data['quote_id'][:8].upper()
     
     return render_template(
         'quote/review_quote.html',
-        treatments=treatments,
-        patient_info=patient_info,
-        promo_details=session.get('promo_details'),
-        quote_ref=session.get('quote_ref'),
-        subtotal=subtotal,
-        discount=discount,
-        total=total
+        quote_ref=quote_ref,
+        patient_info=quote_data['patient_info'],
+        treatments=quote_data['treatments'],
+        subtotal=quote_data['subtotal'],
+        discount=quote_data['discount'],
+        total=quote_data['total'],
+        promo_code=quote_data['promo_code'],
+        promo_details=quote_data['promo_details']
     )
 
 # Reset quote route
 @page_routes.route('/reset-quote')
 def reset_quote_route():
-    """Reset quote data and redirect to quote builder."""
+    """Reset the quote"""
     reset_quote()
-    flash('Quote has been reset.', 'success')
+    flash('Your quote has been reset', 'success')
     return redirect(url_for('page_routes.quote_builder'))
