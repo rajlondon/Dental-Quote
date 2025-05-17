@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update UI without page refresh
                 updatePromoCodeDisplay(promoCode, data.discount);
-                updateTotals(data.totals);
+                updateTotals(data.totals, promoCode); // Pass promoCode to updateTotals
                 
                 // Clear input field
                 if (promoInput) {
@@ -315,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function updateTotals(totals) {
+    function updateTotals(totals, promoCode) {
         if (!totals) return;
         
         // Update the totals in the selected treatments panel
@@ -332,11 +332,60 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Find the discount row
             const discountRow = document.querySelector('.total-row.discount');
-            if (discountRow) {
-                const discountValueEl = discountRow.querySelector('span:last-child');
-                if (discountValueEl) {
-                    discountValueEl.textContent = `-$${totals.discount_amount.toFixed(2)}`;
+            
+            // If we have a discount
+            if (totals.discount_amount > 0) {
+                // If promo code was provided or we can get it from the display
+                if (!promoCode) {
+                    // Try to get promo code from displayed message
+                    const promoDisplayEl = document.querySelector('.promo-code-display');
+                    if (promoDisplayEl && promoDisplayEl.textContent) {
+                        const match = promoDisplayEl.textContent.match(/Applied Promo: (\w+)/);
+                        if (match && match[1]) {
+                            promoCode = match[1];
+                        }
+                    }
                 }
+                
+                if (discountRow) {
+                    // Update existing discount row
+                    const discountLabelEl = discountRow.querySelector('span:first-child');
+                    const discountValueEl = discountRow.querySelector('span:last-child');
+                    
+                    if (discountLabelEl && promoCode) {
+                        discountLabelEl.textContent = `Discount - ${promoCode} (${totals.discount_percentage}%):`;
+                    }
+                    
+                    if (discountValueEl) {
+                        discountValueEl.textContent = `-$${totals.discount_amount.toFixed(2)}`;
+                    }
+                } else {
+                    // Create new discount row if it doesn't exist
+                    const newDiscountRow = document.createElement('div');
+                    newDiscountRow.className = 'total-row discount';
+                    
+                    const discountLabelEl = document.createElement('span');
+                    if (promoCode) {
+                        discountLabelEl.textContent = `Discount - ${promoCode} (${totals.discount_percentage}%):`;
+                    } else {
+                        discountLabelEl.textContent = `Discount (${totals.discount_percentage}%):`;
+                    }
+                    
+                    const discountValueEl = document.createElement('span');
+                    discountValueEl.textContent = `-$${totals.discount_amount.toFixed(2)}`;
+                    
+                    newDiscountRow.appendChild(discountLabelEl);
+                    newDiscountRow.appendChild(discountValueEl);
+                    
+                    // Insert before grand total
+                    const totalRow = document.querySelector('.total-row.grand-total');
+                    if (totalRow) {
+                        totalRow.parentNode.insertBefore(newDiscountRow, totalRow);
+                    }
+                }
+            } else if (discountRow) {
+                // Remove discount row if there's no discount
+                discountRow.remove();
             }
             
             // Find the total row
