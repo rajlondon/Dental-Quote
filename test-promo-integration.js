@@ -6,7 +6,11 @@
  * 2. That promo codes can be applied without page refreshes
  * 3. That the correct discounts are calculated
  */
-const axios = require('axios');
+import axios from 'axios';
+
+// Set the base URL for API requests
+const API_BASE_URL = 'http://localhost:3000'; // Adjust if your server is running on a different port
+axios.defaults.baseURL = API_BASE_URL;
 
 // Available promo codes for testing
 const PROMO_CODES = {
@@ -306,3 +310,11 @@ async function runTests() {
 runTests().catch(error => {
   log(`❌ Unexpected error during test execution: ${error.message}`, 'error');
 });
+
+// Export the functions for potential reuse
+export {
+  testPromoCodeApplication,
+  testSpecialOfferPromoCode,
+  testInvalidPromoCode,
+  runTests
+};
