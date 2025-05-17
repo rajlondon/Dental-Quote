@@ -33,7 +33,7 @@ export function Navbar() {
           <Button 
             size="sm" 
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 text-sm font-medium"
-            onClick={() => window.location.href = '/quote-builder'}
+            onClick={() => window.location.href = '/enhanced-quote'}
           >
             Get a Quote
           </Button>
@@ -94,7 +94,7 @@ export function Navbar() {
           <Button 
             size="sm" 
             className="bg-blue-600 hover:bg-blue-700 text-white rounded-md px-3 py-2 text-sm font-medium mr-2"
-            onClick={() => window.location.href = '/quote-builder'}
+            onClick={() => window.location.href = '/enhanced-quote'}
           >
             Get a Quote
           </Button>
