@@ -19,6 +19,7 @@ import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
 import { PageTransitionProvider, PageTransitionLoader } from "@/components/ui/page-transition-loader";
 import PromoDetector from "@/components/PromoDetector";
 import Home from "./pages/Home";
+import QuoteDemoPage from "@/pages/QuoteDemoPage";
 import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 import { SpecialOffersProvider } from "@/components/SpecialOffersProvider";

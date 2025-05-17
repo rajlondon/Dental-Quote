@@ -1,151 +1,169 @@
 /**
- * Format utilities for displaying currencies, percentages and other values
+ * Utility functions for formatting currency, dates, and other data consistently
+ * throughout the MyDentalFly application
  */
 
 /**
- * Formats a number as a currency price
- * @param amount - The price to format
- * @param currency - The currency code (USD, GBP, EUR)
- * @param locale - The locale to use for formatting
- * @returns Formatted price string
+ * Format a number as currency with proper currency symbol
+ * @param value The value to format as currency
+ * @param currencyCode The ISO currency code (USD, EUR, GBP)
+ * @param locale The locale to use for formatting (defaults to 'en-US')
+ * @returns Formatted currency string
  */
-export function formatPrice(
-  amount: number,
-  currency: 'USD' | 'GBP' | 'EUR' = 'USD',
+export const formatCurrency = (
+  value: number, 
+  currencyCode: string = 'USD',
   locale: string = 'en-US'
-): string {
-  return new Intl.NumberFormat(locale, {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
+): string => {
+  // Handle null or undefined values
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(value);
+  } catch (error) {
+    console.error(`Error formatting currency: ${error}`);
+    return `${currencyCode} ${value.toFixed(2)}`;
+  }
+};
 
 /**
- * Formats a discount type and value for display
- * @param type - The discount type ('percentage' or 'fixed_amount')
- * @param value - The discount value
- * @param currency - The currency code (for fixed amount discounts)
- * @returns Formatted discount string
+ * Format a percentage value
+ * @param value The percentage value to format (e.g., 25 for 25%)
+ * @returns Formatted percentage string (e.g., "25%")
  */
-export function formatDiscount(
-  type: 'percentage' | 'fixed_amount' | null | undefined,
-  value: number | null | undefined,
-  currency: 'USD' | 'GBP' | 'EUR' = 'USD'
-): string {
-  if (!type || value === null || value === undefined) {
+export const formatPercentage = (value: number): string => {
+  if (value === null || value === undefined) {
     return '';
   }
   
-  if (type === 'percentage') {
-    return `${value}%`;
-  } else {
-    return formatPrice(value, currency);
-  }
-}
+  return `${Math.round(value)}%`;
+};
 
 /**
- * Formats a date for display
- * @param date - The date to format
- * @param format - The format style ('short', 'medium', 'long')
- * @param locale - The locale to use for formatting
+ * Format a date string to a human-readable format
+ * @param dateString The date string to format
+ * @param format The format to use (short, medium, long, full)
  * @returns Formatted date string
  */
-export function formatDate(
-  date: Date | string,
-  format: 'short' | 'medium' | 'long' = 'medium',
+export const formatDate = (
+  dateString: string, 
+  format: 'short' | 'medium' | 'long' | 'full' = 'medium',
   locale: string = 'en-US'
-): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+): string => {
+  if (!dateString) return '';
   
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: format === 'short' ? 'numeric' : 'long',
-    day: 'numeric',
-  };
-  
-  if (format === 'long') {
-    options.hour = 'numeric';
-    options.minute = 'numeric';
+  try {
+    const date = new Date(dateString);
+    return new Intl.DateTimeFormat(locale, { dateStyle: format }).format(date);
+  } catch (error) {
+    console.error(`Error formatting date: ${error}`);
+    return dateString;
   }
-  
-  return new Intl.DateTimeFormat(locale, options).format(dateObj);
-}
+};
 
 /**
- * Shortens a long text string with ellipsis
- * @param text - The text to shorten
- * @param maxLength - The maximum length
- * @returns Shortened text with ellipsis if needed
+ * Convert currency amount from one currency to another
+ * @param amount The amount to convert
+ * @param fromCurrency The source currency code (USD, EUR, GBP)
+ * @param toCurrency The target currency code
+ * @returns Converted amount
  */
-export function shortenText(text: string, maxLength: number = 100): string {
+export const convertCurrency = (
+  amount: number, 
+  fromCurrency: string, 
+  toCurrency: string
+): number => {
+  if (amount === null || amount === undefined) {
+    return 0;
+  }
+  
+  // Fixed conversion rates (would be replaced with API call in production)
+  const rates = {
+    USD: 1,
+    EUR: 0.92,
+    GBP: 0.79
+  };
+  
+  // Return original amount if currency codes are the same
+  if (fromCurrency === toCurrency) {
+    return amount;
+  }
+  
+  // Convert to USD first if needed
+  const usdAmount = fromCurrency === 'USD' 
+    ? amount 
+    : amount / rates[fromCurrency];
+  
+  // Convert from USD to target currency
+  return toCurrency === 'USD' 
+    ? usdAmount 
+    : usdAmount * rates[toCurrency];
+};
+
+/**
+ * Calculate discount amount based on discount type and value
+ * @param subtotal The subtotal amount
+ * @param discountType The type of discount ('percentage' or 'fixed_amount')
+ * @param discountValue The discount value (percentage or fixed amount)
+ * @returns The calculated discount amount
+ */
+export const calculateDiscountAmount = (
+  subtotal: number, 
+  discountType: 'percentage' | 'fixed_amount', 
+  discountValue: number
+): number => {
+  if (subtotal <= 0 || discountValue <= 0) {
+    return 0;
+  }
+  
+  if (discountType === 'percentage') {
+    // Ensure percentage doesn't exceed 100%
+    const cappedPercentage = Math.min(discountValue, 100);
+    return (subtotal * cappedPercentage) / 100;
+  } else {
+    // For fixed amount, make sure discount doesn't exceed subtotal
+    return Math.min(discountValue, subtotal);
+  }
+};
+
+/**
+ * Format a quantity string with proper suffix
+ * @param quantity The quantity value
+ * @param singularSuffix The suffix for singular quantities (default: "item")
+ * @param pluralSuffix The suffix for plural quantities (default: "items")
+ * @returns Formatted quantity string
+ */
+export const formatQuantity = (
+  quantity: number, 
+  singularSuffix: string = 'item', 
+  pluralSuffix: string = 'items'
+): string => {
+  if (quantity === null || quantity === undefined) {
+    return '';
+  }
+  
+  return quantity === 1
+    ? `${quantity} ${singularSuffix}`
+    : `${quantity} ${pluralSuffix}`;
+};
+
+/**
+ * Truncate text with ellipsis if it exceeds specified length
+ * @param text The text to truncate
+ * @param maxLength The maximum length of the text
+ * @returns Truncated text with ellipsis if needed
+ */
+export const truncateText = (text: string, maxLength: number): string => {
   if (!text || text.length <= maxLength) {
     return text;
   }
   
   return text.substring(0, maxLength) + '...';
-}
-
-/**
- * Formats a phone number based on country code
- * @param phoneNumber - The phone number to format
- * @param countryCode - The country code
- * @returns Formatted phone number
- */
-export function formatPhoneNumber(phoneNumber: string, countryCode: string = 'US'): string {
-  if (!phoneNumber) {
-    return '';
-  }
-  
-  // Basic formatting for common country codes
-  const cleanedNumber = phoneNumber.replace(/\D/g, '');
-  
-  if (countryCode === 'US' || countryCode === 'CA') {
-    // Format: (XXX) XXX-XXXX
-    if (cleanedNumber.length === 10) {
-      return `(${cleanedNumber.substring(0, 3)}) ${cleanedNumber.substring(3, 6)}-${cleanedNumber.substring(6)}`;
-    }
-  } else if (countryCode === 'GB') {
-    // UK format
-    if (cleanedNumber.length === 11) {
-      return `${cleanedNumber.substring(0, 5)} ${cleanedNumber.substring(5, 8)} ${cleanedNumber.substring(8)}`;
-    }
-  }
-  
-  // Default: just return with country code prefix
-  return `+${countryCode} ${cleanedNumber}`;
-}
-
-/**
- * Calculates the discount amount based on a subtotal and discount type/value
- * @param subtotal - The subtotal amount
- * @param discountType - The discount type ('percentage' or 'fixed_amount')
- * @param discountValue - The discount value
- * @returns The calculated discount amount
- */
-export function calculateDiscountAmount(
-  subtotal: number,
-  discountType?: 'percentage' | 'fixed_amount' | null,
-  discountValue?: number | null
-): number {
-  if (!discountType || discountValue === null || discountValue === undefined) {
-    return 0;
-  }
-  
-  if (discountType === 'percentage') {
-    return (subtotal * discountValue) / 100;
-  } else {
-    return Math.min(discountValue, subtotal); // Don't exceed subtotal
-  }
-}
-
-/**
- * Calculate total price after discount
- * @param subtotal - The subtotal amount
- * @param discountAmount - The discount amount
- * @returns The total price after discount
- */
-export function calculateTotal(subtotal: number, discountAmount: number): number {
-  return Math.max(0, subtotal - discountAmount);
-}
+};
