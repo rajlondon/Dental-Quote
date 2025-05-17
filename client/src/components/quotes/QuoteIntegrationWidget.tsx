@@ -1,599 +1,467 @@
-import React, { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2, Download, FileText, Mail, Calendar, CheckCircle2, XCircle, AlertTriangle } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { TreatmentList } from './TreatmentList';
+import { formatCurrency } from '@/utils/format-utils';
+import TreatmentList, { Treatment } from './TreatmentList';
 import { useQuoteSystem } from '@/hooks/use-quote-system';
+import { CalendarIcon, CheckCircleIcon, DownloadIcon, MailIcon, SendIcon, XCircleIcon } from 'lucide-react';
 
-export type PortalType = 'admin' | 'clinic' | 'patient';
+export interface QuoteDetails {
+  id: string;
+  createdAt: string;
+  patientName: string;
+  patientEmail: string;
+  treatments: Treatment[];
+  subtotal: number;
+  discount: number;
+  total: number;
+  promoCode?: string;
+  currency: string;
+  status: 'draft' | 'sent' | 'accepted' | 'rejected' | 'completed';
+}
 
-export interface QuoteIntegrationWidgetProps {
-  portalType: PortalType;
+interface QuoteIntegrationWidgetProps {
   quoteId?: string;
-  onQuoteAction?: (action: string, quoteId: string) => void;
+  portalType: 'patient' | 'admin' | 'clinic';
+  onQuoteUpdated?: (quote: QuoteDetails) => void;
+  mode?: 'view' | 'edit';
 }
 
 export const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
-  portalType,
   quoteId,
-  onQuoteAction,
+  portalType,
+  onQuoteUpdated,
+  mode = 'view'
 }) => {
   const { toast } = useToast();
-  const quoteSystem = useQuoteSystem(portalType);
-  const [emailAddress, setEmailAddress] = useState('');
-  const [promoCode, setPromoCode] = useState('');
+  const { 
+    getQuote, 
+    updateQuote, 
+    applyPromoCode, 
+    removePromoCode, 
+    updateTreatmentQuantity,
+    removeTreatment,
+    downloadQuotePdf,
+    sendQuoteByEmail,
+    requestAppointment
+  } = useQuoteSystem(portalType);
 
-  // If we are viewing a specific quote, load its details
+  const [quote, setQuote] = useState<QuoteDetails | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [applyingPromo, setApplyingPromo] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const [pdfDownloading, setPdfDownloading] = useState(false);
+
+  // Fetch quote data on initial load
   useEffect(() => {
     if (quoteId) {
-      quoteSystem.loadQuoteDetails(quoteId);
-    } else {
-      quoteSystem.loadQuotes();
+      loadQuote();
     }
-  }, [quoteSystem, quoteId]);
+  }, [quoteId]);
 
-  // Function to format date
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  const loadQuote = async () => {
+    if (!quoteId) return;
 
-  // Function to get status badge variant
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>;
-      case 'confirmed':
-      case 'accepted':
-      case 'completed':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Accepted</Badge>;
-      case 'rejected':
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>;
-      case 'assigned':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">Assigned</Badge>;
-      case 'in_progress':
-        return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">In Progress</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="bg-indigo-50 text-indigo-700 border-indigo-200">Sent</Badge>;
-      case 'expired':
-        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">Expired</Badge>;
-      default:
-        return <Badge variant="outline">{status || 'Unknown'}</Badge>;
+    setLoading(true);
+    
+    try {
+      const data = await getQuote(quoteId);
+      setQuote(data);
+      if (onQuoteUpdated) {
+        onQuoteUpdated(data);
+      }
+    } catch (error) {
+      console.error('Error fetching quote:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load quote details',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle apply promo code
-  const handleApplyPromoCode = () => {
-    if (!quoteId || !promoCode.trim()) return;
-    
-    quoteSystem.applyPromoCode(quoteId, promoCode.trim())
-      .then(() => {
-        toast({
-          title: "Promo code applied",
-          description: `Promo code ${promoCode} has been applied to your quote.`,
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to apply promo code",
-          description: error.message || "Please try again with a valid promo code.",
-          variant: "destructive",
-        });
-      });
-  };
+  const handleApplyPromoCode = async () => {
+    if (!quoteId || !promoCodeInput.trim() || !quote) return;
 
-  // Handle remove promo code
-  const handleRemovePromoCode = () => {
-    if (!quoteId) return;
+    setApplyingPromo(true);
     
-    quoteSystem.removePromoCode(quoteId)
-      .then(() => {
-        setPromoCode('');
-        toast({
-          title: "Promo code removed",
-          description: "Promo code has been removed from your quote.",
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to remove promo code",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
+    try {
+      const updatedQuote = await applyPromoCode(quoteId, promoCodeInput);
+      setQuote(updatedQuote);
+      setPromoCodeInput('');
+      
+      toast({
+        title: 'Promo code applied',
+        description: `Discount applied to your quote: ${formatCurrency(updatedQuote.discount, updatedQuote.currency)}`,
+        variant: 'success',
       });
-  };
-
-  // Handle download PDF
-  const handleDownloadPdf = () => {
-    if (!quoteId) return;
-    
-    quoteSystem.downloadQuotePdf(quoteId)
-      .then(() => {
-        toast({
-          title: "PDF generated",
-          description: "Your quote PDF has been generated and downloaded.",
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to generate PDF",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
+      
+      if (onQuoteUpdated) {
+        onQuoteUpdated(updatedQuote);
+      }
+    } catch (error) {
+      console.error('Error applying promo code:', error);
+      toast({
+        title: 'Error',
+        description: 'Invalid promo code or cannot be applied to this quote',
+        variant: 'destructive',
       });
-  };
-
-  // Handle send email
-  const handleSendEmail = () => {
-    if (!quoteId || !emailAddress.trim()) return;
-    
-    quoteSystem.sendQuoteEmail(quoteId, emailAddress.trim())
-      .then(() => {
-        toast({
-          title: "Email sent",
-          description: `Quote has been sent to ${emailAddress}.`,
-          variant: "success",
-        });
-        setEmailAddress('');
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to send email",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
-      });
-  };
-
-  // Handle request appointment
-  const handleRequestAppointment = () => {
-    if (!quoteId) return;
-    
-    quoteSystem.requestAppointment(quoteId)
-      .then(() => {
-        toast({
-          title: "Appointment requested",
-          description: "Your appointment request has been sent to the clinic.",
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to request appointment",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
-      });
-  };
-
-  // Handle update treatment quantity
-  const handleUpdateQuantity = (treatmentId: string, quantity: number) => {
-    if (!quoteId) return;
-    
-    quoteSystem.updateTreatmentQuantity(quoteId, treatmentId, quantity)
-      .then(() => {
-        toast({
-          title: "Quantity updated",
-          description: "Treatment quantity has been updated.",
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to update quantity",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
-      });
-  };
-
-  // Handle remove treatment
-  const handleRemoveTreatment = (treatmentId: string) => {
-    if (!quoteId) return;
-    
-    quoteSystem.removeTreatment(quoteId, treatmentId)
-      .then(() => {
-        toast({
-          title: "Treatment removed",
-          description: "Treatment has been removed from your quote.",
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to remove treatment",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
-      });
-  };
-
-  // Handle status update
-  const handleUpdateStatus = (status: string) => {
-    if (!quoteId) return;
-    
-    quoteSystem.updateQuoteStatus(quoteId, status)
-      .then(() => {
-        toast({
-          title: "Status updated",
-          description: `Quote status has been updated to ${status}.`,
-          variant: "success",
-        });
-      })
-      .catch((error) => {
-        toast({
-          title: "Failed to update status",
-          description: error.message || "Please try again later.",
-          variant: "destructive",
-        });
-      });
-  };
-
-  // Single quote detail view
-  if (quoteId) {
-    if (quoteSystem.loading) {
-      return (
-        <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
+    } finally {
+      setApplyingPromo(false);
     }
+  };
 
-    if (quoteSystem.error) {
-      return (
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle className="text-destructive flex items-center">
-              <AlertTriangle className="mr-2 h-5 w-5" /> Error Loading Quote
-            </CardTitle>
-            <CardDescription>
-              There was a problem loading the quote details.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-destructive">{quoteSystem.error}</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => quoteSystem.loadQuoteDetails(quoteId)}>
-              Try Again
-            </Button>
-          </CardFooter>
-        </Card>
-      );
+  const handleRemovePromoCode = async () => {
+    if (!quoteId || !quote) return;
+    
+    try {
+      const updatedQuote = await removePromoCode(quoteId);
+      setQuote(updatedQuote);
+      
+      toast({
+        title: 'Promo code removed',
+        description: 'The promo code has been removed from your quote',
+        variant: 'success',
+      });
+      
+      if (onQuoteUpdated) {
+        onQuoteUpdated(updatedQuote);
+      }
+    } catch (error) {
+      console.error('Error removing promo code:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove promo code',
+        variant: 'destructive',
+      });
     }
+  };
 
-    if (!quoteSystem.currentQuote) {
-      return (
-        <Card className="w-full">
-          <CardHeader>
-            <CardTitle>Quote Not Found</CardTitle>
-            <CardDescription>
-              The requested quote could not be found.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>The quote may have been deleted or you don't have permission to view it.</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="outline" onClick={() => onQuoteAction && onQuoteAction('back', '')}>
-              Back to Quotes
-            </Button>
-          </CardFooter>
-        </Card>
-      );
+  const handleQuantityChange = async (treatmentId: string, newQuantity: number) => {
+    if (!quoteId || !quote) return;
+    
+    try {
+      const updatedQuote = await updateTreatmentQuantity(quoteId, treatmentId, newQuantity);
+      setQuote(updatedQuote);
+      
+      toast({
+        title: 'Quantity updated',
+        description: 'Treatment quantity has been updated',
+        variant: 'success',
+      });
+      
+      if (onQuoteUpdated) {
+        onQuoteUpdated(updatedQuote);
+      }
+    } catch (error) {
+      console.error('Error updating treatment quantity:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update treatment quantity',
+        variant: 'destructive',
+      });
     }
+  };
 
-    const { currentQuote } = quoteSystem;
-    const canEdit = 
-      portalType === 'admin' || 
-      (portalType === 'patient' && ['pending', 'in_progress'].includes(currentQuote.status || ''));
+  const handleRemoveTreatment = async (treatmentId: string) => {
+    if (!quoteId || !quote) return;
+    
+    try {
+      const updatedQuote = await removeTreatment(quoteId, treatmentId);
+      setQuote(updatedQuote);
+      
+      toast({
+        title: 'Treatment removed',
+        description: 'Treatment has been removed from your quote',
+        variant: 'success',
+      });
+      
+      if (onQuoteUpdated) {
+        onQuoteUpdated(updatedQuote);
+      }
+    } catch (error) {
+      console.error('Error removing treatment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to remove treatment',
+        variant: 'destructive',
+      });
+    }
+  };
 
-    return (
-      <div className="space-y-6">
-        <Card>
-          <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-            <div>
-              <CardTitle className="text-2xl flex items-center">
-                Quote #{currentQuote.id}
-                {getStatusBadge(currentQuote.status || 'pending')}
-              </CardTitle>
-              <CardDescription>
-                Created on {formatDate(currentQuote.created_at || '')}
-              </CardDescription>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="flex items-center gap-1" onClick={handleDownloadPdf}>
-                <Download className="h-4 w-4" /> PDF
-              </Button>
-              {portalType === 'patient' && currentQuote.status === 'pending' && (
-                <Button variant="default" className="flex items-center gap-1" onClick={handleRequestAppointment}>
-                  <Calendar className="h-4 w-4" /> Request Appointment
-                </Button>
-              )}
-              {portalType === 'clinic' && currentQuote.status === 'assigned' && (
-                <>
-                  <Button 
-                    variant="success" 
-                    className="flex items-center gap-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => handleUpdateStatus('accepted')}
-                  >
-                    <CheckCircle2 className="h-4 w-4" /> Accept
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    className="flex items-center gap-1"
-                    onClick={() => handleUpdateStatus('rejected')}
-                  >
-                    <XCircle className="h-4 w-4" /> Reject
-                  </Button>
-                </>
-              )}
-              {portalType === 'admin' && (
-                <Button 
-                  variant="outline" 
-                  onClick={() => onQuoteAction && onQuoteAction('assign', currentQuote.id || '')}
-                  disabled={!!currentQuote.clinic_id}
-                >
-                  Assign to Clinic
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Patient & Clinic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Patient Information</h3>
-                <div className="space-y-1">
-                  <p className="text-sm"><span className="font-medium">Name:</span> {currentQuote.patient_name || 'N/A'}</p>
-                  <p className="text-sm"><span className="font-medium">Email:</span> {currentQuote.patient_email || 'N/A'}</p>
-                  <p className="text-sm"><span className="font-medium">Phone:</span> {currentQuote.patient_phone || 'N/A'}</p>
-                </div>
-              </div>
-              {currentQuote.clinic_id && (
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Clinic Information</h3>
-                  <div className="space-y-1">
-                    <p className="text-sm"><span className="font-medium">Name:</span> {currentQuote.clinic_name || 'N/A'}</p>
-                    {/* Add more clinic details if available */}
-                  </div>
-                </div>
-              )}
-            </div>
+  const handleDownloadPdf = async () => {
+    if (!quoteId || !quote) return;
+    
+    setPdfDownloading(true);
+    
+    try {
+      await downloadQuotePdf(quoteId);
+      
+      toast({
+        title: 'PDF Downloaded',
+        description: 'Your quote PDF has been downloaded',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to download quote PDF',
+        variant: 'destructive',
+      });
+    } finally {
+      setPdfDownloading(false);
+    }
+  };
 
-            {/* Treatment List */}
-            <div>
-              <h3 className="text-lg font-semibold mb-3">Treatment Details</h3>
-              <TreatmentList 
-                treatments={currentQuote.treatments || []}
-                editable={canEdit}
-                onUpdateQuantity={canEdit ? handleUpdateQuantity : undefined}
-                onRemoveTreatment={canEdit ? handleRemoveTreatment : undefined}
-              />
-            </div>
+  const handleSendEmail = async () => {
+    if (!quoteId || !quote) return;
+    
+    setEmailSending(true);
+    
+    try {
+      await sendQuoteByEmail(quoteId);
+      
+      toast({
+        title: 'Email Sent',
+        description: `Quote has been sent to ${quote.patientEmail}`,
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send quote email',
+        variant: 'destructive',
+      });
+    } finally {
+      setEmailSending(false);
+    }
+  };
 
-            {/* Pricing Summary */}
-            <div className="bg-slate-50 p-4 rounded-md">
-              <h3 className="text-lg font-semibold mb-3">Pricing Summary</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>${(currentQuote.subtotal || 0).toFixed(2)}</span>
-                </div>
-                {currentQuote.discount_amount > 0 && (
-                  <div className="flex justify-between text-green-600">
-                    <span>Discount {currentQuote.discount_percent ? `(${currentQuote.discount_percent}%)` : ''}:</span>
-                    <span>-${(currentQuote.discount_amount || 0).toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-                  <span>Total:</span>
-                  <span>${(currentQuote.total || 0).toFixed(2)}</span>
-                </div>
-              </div>
-            </div>
+  const handleRequestAppointment = async () => {
+    if (!quoteId || !quote) return;
+    
+    try {
+      await requestAppointment(quoteId);
+      
+      toast({
+        title: 'Appointment Requested',
+        description: 'Your appointment request has been submitted',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error requesting appointment:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to request appointment',
+        variant: 'destructive',
+      });
+    }
+  };
 
-            {/* Promo Code Section */}
-            {canEdit && (
-              <div className="border p-4 rounded-md">
-                <h3 className="text-lg font-semibold mb-3">Promo Code</h3>
-                <div className="flex items-end gap-2">
-                  <div className="grid w-full max-w-sm items-center gap-1.5">
-                    <Label htmlFor="promo-code">Enter promo code</Label>
-                    <Input 
-                      id="promo-code" 
-                      placeholder="Enter promo code" 
-                      value={promoCode} 
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      disabled={!!currentQuote.promo_code}
-                    />
-                  </div>
-                  {currentQuote.promo_code ? (
-                    <Button variant="outline" className="mb-1.5" onClick={handleRemovePromoCode}>
-                      Remove
-                    </Button>
-                  ) : (
-                    <Button 
-                      className="mb-1.5" 
-                      onClick={handleApplyPromoCode}
-                      disabled={!promoCode.trim()}
-                    >
-                      Apply
-                    </Button>
-                  )}
-                </div>
-                {currentQuote.promo_code && (
-                  <p className="text-sm text-green-600 mt-2">
-                    Promo code <span className="font-semibold">{currentQuote.promo_code}</span> applied for {currentQuote.discount_percent}% discount.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Email Quote Section */}
-            <div className="border p-4 rounded-md">
-              <h3 className="text-lg font-semibold mb-3">Send Quote</h3>
-              <div className="flex items-end gap-2">
-                <div className="grid w-full max-w-sm items-center gap-1.5">
-                  <Label htmlFor="email">Email address</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    placeholder="Enter email address" 
-                    value={emailAddress} 
-                    onChange={(e) => setEmailAddress(e.target.value)}
-                  />
-                </div>
-                <Button 
-                  className="mb-1.5 flex items-center gap-1" 
-                  onClick={handleSendEmail}
-                  disabled={!emailAddress.trim()}
-                >
-                  <Mail className="h-4 w-4" /> Send
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Quotes list view
-  if (quoteSystem.loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  if (quoteSystem.error) {
+  if (loading) {
     return (
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-destructive flex items-center">
-            <AlertTriangle className="mr-2 h-5 w-5" /> Error Loading Quotes
-          </CardTitle>
-          <CardDescription>
-            There was a problem loading the quotes.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-destructive">{quoteSystem.error}</p>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center p-8">
+            <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            <p className="mt-4 text-muted-foreground">Loading quote details...</p>
+          </div>
         </CardContent>
-        <CardFooter>
-          <Button variant="outline" onClick={() => quoteSystem.loadQuotes()}>
-            Try Again
-          </Button>
-        </CardFooter>
       </Card>
     );
   }
 
-  if (!quoteSystem.quotes || quoteSystem.quotes.length === 0) {
+  if (!quote) {
     return (
       <Card className="w-full">
-        <CardHeader>
-          <CardTitle>No Quotes Found</CardTitle>
-          <CardDescription>
-            There are no quotes available at this time.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p>
-            {portalType === 'patient' && "You haven't created any quotes yet. Get started by creating a new quote."}
-            {portalType === 'clinic' && "No quotes have been assigned to your clinic yet."}
-            {portalType === 'admin' && "There are no quotes in the system yet."}
-          </p>
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center justify-center p-8">
+            <XCircleIcon className="h-12 w-12 text-destructive" />
+            <p className="mt-4 text-muted-foreground">Quote not found or not accessible</p>
+          </div>
         </CardContent>
-        <CardFooter>
-          {portalType === 'admin' && (
-            <Button onClick={() => onQuoteAction && onQuoteAction('create', '')}>
-              <FileText className="mr-2 h-4 w-4" /> Create New Quote
-            </Button>
-          )}
-          {portalType === 'patient' && (
-            <Button onClick={() => onQuoteAction && onQuoteAction('create', '')}>
-              <FileText className="mr-2 h-4 w-4" /> Create New Quote
-            </Button>
-          )}
-        </CardFooter>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="overflow-x-auto rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>Created</TableHead>
-              {portalType === 'admin' && <TableHead>Patient</TableHead>}
-              {(portalType === 'admin' || portalType === 'patient') && <TableHead>Clinic</TableHead>}
-              <TableHead>Treatments</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {quoteSystem.quotes.map(quote => (
-              <TableRow key={quote.id}>
-                <TableCell className="font-medium">{quote.id}</TableCell>
-                <TableCell>{formatDate(quote.created_at || '')}</TableCell>
-                {portalType === 'admin' && (
-                  <TableCell>{quote.patient_name || 'N/A'}</TableCell>
-                )}
-                {(portalType === 'admin' || portalType === 'patient') && (
-                  <TableCell>{quote.clinic_name || 'Not Assigned'}</TableCell>
-                )}
-                <TableCell>{quote.treatments?.length || 0} items</TableCell>
-                <TableCell>${(quote.total || 0).toFixed(2)}</TableCell>
-                <TableCell>{getStatusBadge(quote.status || 'pending')}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onQuoteAction && onQuoteAction('view', quote.id || '')}
-                    >
-                      View
-                    </Button>
-                    {portalType === 'admin' && !quote.clinic_id && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => onQuoteAction && onQuoteAction('assign', quote.id || '')}
-                      >
-                        Assign
-                      </Button>
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Dental Treatment Quote</CardTitle>
+            <CardDescription>Created on {new Date(quote.createdAt).toLocaleDateString()}</CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`px-3 py-1 text-xs font-medium rounded-full ${
+              quote.status === 'accepted' ? 'bg-green-100 text-green-800' :
+              quote.status === 'rejected' ? 'bg-red-100 text-red-800' :
+              quote.status === 'sent' ? 'bg-blue-100 text-blue-800' :
+              quote.status === 'completed' ? 'bg-purple-100 text-purple-800' :
+              'bg-gray-100 text-gray-800'
+            }`}>
+              {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="mb-6">
+          <div className="mb-4">
+            <Label className="text-sm text-muted-foreground">Patient Information</Label>
+            <div className="mt-1">
+              <p className="font-medium">{quote.patientName}</p>
+              <p className="text-sm text-muted-foreground">{quote.patientEmail}</p>
+            </div>
+          </div>
+          
+          <div className="mb-6">
+            <Label className="text-sm text-muted-foreground">Treatment List</Label>
+            <div className="mt-2">
+              <TreatmentList 
+                treatments={quote.treatments} 
+                currency={quote.currency} 
+                onQuantityChange={mode === 'edit' ? handleQuantityChange : undefined}
+                onRemoveTreatment={mode === 'edit' ? handleRemoveTreatment : undefined}
+                readOnly={mode !== 'edit'}
+                portalType={portalType}
+              />
+            </div>
+          </div>
+          
+          {mode === 'edit' && (
+            <div className="mb-6">
+              <Label htmlFor="promo-code">Promo Code</Label>
+              <div className="flex mt-1.5 gap-2">
+                <Input
+                  id="promo-code"
+                  placeholder="Enter promo code"
+                  value={promoCodeInput}
+                  onChange={(e) => setPromoCodeInput(e.target.value)}
+                  disabled={applyingPromo || !!quote.promoCode}
+                  className="w-full"
+                />
+                {quote.promoCode ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleRemovePromoCode}
+                    className="whitespace-nowrap"
+                  >
+                    <XCircleIcon className="mr-2 h-4 w-4" />
+                    Remove Code
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleApplyPromoCode}
+                    disabled={!promoCodeInput.trim() || applyingPromo}
+                    className="whitespace-nowrap"
+                  >
+                    {applyingPromo ? (
+                      <>
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2"></div>
+                        Applying...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircleIcon className="mr-2 h-4 w-4" />
+                        Apply Code
+                      </>
                     )}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+                  </Button>
+                )}
+              </div>
+              {quote.promoCode && (
+                <p className="mt-2 text-sm text-primary">Promo code <strong>{quote.promoCode}</strong> applied</p>
+              )}
+            </div>
+          )}
+          
+          <div className="rounded-md bg-muted p-4 space-y-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Subtotal</span>
+              <span>{formatCurrency(quote.subtotal, quote.currency)}</span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Discount</span>
+              <span className="text-primary">
+                {quote.discount > 0 
+                  ? `- ${formatCurrency(quote.discount, quote.currency)}`
+                  : formatCurrency(0, quote.currency)
+                }
+              </span>
+            </div>
+            
+            <Separator className="my-2" />
+            
+            <div className="flex justify-between font-medium">
+              <span>Total</span>
+              <span>{formatCurrency(quote.total, quote.currency)}</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+      
+      <CardFooter className="flex flex-wrap gap-2 justify-end">
+        {portalType === 'patient' && (
+          <Button
+            variant="outline"
+            onClick={handleRequestAppointment}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            Request Appointment
+          </Button>
+        )}
+        
+        <Button
+          variant="outline"
+          onClick={handleDownloadPdf}
+          disabled={pdfDownloading}
+        >
+          {pdfDownloading ? (
+            <>
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></div>
+              Downloading...
+            </>
+          ) : (
+            <>
+              <DownloadIcon className="mr-2 h-4 w-4" />
+              Download PDF
+            </>
+          )}
+        </Button>
+        
+        {(portalType === 'admin' || portalType === 'clinic') && (
+          <Button
+            onClick={handleSendEmail}
+            disabled={emailSending}
+          >
+            {emailSending ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent mr-2"></div>
+                Sending...
+              </>
+            ) : (
+              <>
+                <MailIcon className="mr-2 h-4 w-4" />
+                Send to Patient
+              </>
+            )}
+          </Button>
+        )}
+      </CardFooter>
+    </Card>
   );
 };
+
+export default QuoteIntegrationWidget;
