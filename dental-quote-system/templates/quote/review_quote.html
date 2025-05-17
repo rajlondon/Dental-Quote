@@ -5,24 +5,25 @@
 {% block content %}
 <div class="container py-5">
     <div class="row">
-        <div class="col-lg-8 mx-auto">
+        <!-- Review Quote Section -->
+        <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
                 <div class="card-body p-4">
                     <h2 class="card-title fw-bold mb-4">Review Your Quote</h2>
                     
                     <!-- Progress Indicator -->
                     <div class="progress mb-5" style="height: 8px;">
-                        <div class="progress-bar bg-primary" role="progressbar" style="width: 80%;" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar bg-primary" role="progressbar" style="width: 90%;" aria-valuenow="90" aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
                     <div class="d-flex justify-content-between text-center mb-5">
                         <div>
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 30px; height: 30px;">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 30px; height: 30px;">
                                 <i class="fas fa-check"></i>
                             </div>
                             <div class="small">Treatments</div>
                         </div>
                         <div>
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 30px; height: 30px;">
+                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center mx-auto mb-2" style="width: 30px; height: 30px;">
                                 <i class="fas fa-check"></i>
                             </div>
                             <div class="small">Patient Info</div>
@@ -41,237 +42,219 @@
                         </div>
                     </div>
                     
-                    <!-- Patient Information Section -->
                     <div class="mb-5">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">Patient Information</h5>
-                            <a href="{{ url_for('patient_info') }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-edit me-1"></i> Edit
-                            </a>
-                        </div>
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Full Name</p>
-                                        <p class="mb-0 fw-medium">{{ patient_info.first_name }} {{ patient_info.last_name }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Email Address</p>
-                                        <p class="mb-0 fw-medium">{{ patient_info.email }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Phone Number</p>
-                                        <p class="mb-0 fw-medium">{{ patient_info.phone }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Country of Residence</p>
-                                        <p class="mb-0 fw-medium">{{ patient_info.country }}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Travel Timeframe</p>
-                                        <p class="mb-0 fw-medium">
-                                            {% if patient_info.travel_month == 'ASAP' %}
-                                                As soon as possible
-                                            {% elif patient_info.travel_month == '1-month' %}
-                                                Within 1 month
-                                            {% elif patient_info.travel_month == '2-3-months' %}
-                                                2-3 months
-                                            {% elif patient_info.travel_month == '4-6-months' %}
-                                                4-6 months
-                                            {% elif patient_info.travel_month == '6-plus-months' %}
-                                                More than 6 months
-                                            {% elif patient_info.travel_month == 'not-sure' %}
-                                                Not sure yet
-                                            {% else %}
-                                                {{ patient_info.travel_month }}
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p class="mb-1 text-muted small">Travel Companions</p>
-                                        <p class="mb-0 fw-medium">
-                                            {% if patient_info.travel_companions == 'alone' %}
-                                                Traveling alone
-                                            {% elif patient_info.travel_companions == 'with-partner' %}
-                                                With partner/spouse
-                                            {% elif patient_info.travel_companions == 'with-family' %}
-                                                With family
-                                            {% elif patient_info.travel_companions == 'with-friends' %}
-                                                With friends
-                                            {% elif patient_info.travel_companions == 'not-decided' %}
-                                                Not decided yet
-                                            {% else %}
-                                                {{ patient_info.travel_companions }}
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    
-                                    {% if patient_info.medical_conditions %}
-                                        <div class="col-12">
-                                            <p class="mb-1 text-muted small">Medical Conditions</p>
-                                            <p class="mb-0 fw-medium">{{ patient_info.medical_conditions }}</p>
-                                        </div>
-                                    {% endif %}
-                                    
-                                    {% if patient_info.additional_notes %}
-                                        <div class="col-12">
-                                            <p class="mb-1 text-muted small">Additional Notes</p>
-                                            <p class="mb-0 fw-medium">{{ patient_info.additional_notes }}</p>
-                                        </div>
-                                    {% endif %}
-                                </div>
+                        <div class="alert alert-primary d-flex" role="alert">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-info-circle fa-lg"></i>
+                            </div>
+                            <div class="ms-3">
+                                <p class="mb-0">Please review your quote details below. If everything looks correct, click the "Confirm Quote" button to proceed.</p>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Treatment Details Section -->
-                    <div class="mb-5">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                            <h5 class="fw-bold mb-0">Selected Treatments</h5>
-                            <a href="{{ url_for('quote_builder') }}" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-edit me-1"></i> Edit
-                            </a>
+                    <!-- Quote ID & Date -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="bg-light rounded p-3">
+                                <div class="small text-muted">Quote Reference</div>
+                                <div class="fw-bold">{{ quote_id }}</div>
+                            </div>
                         </div>
-                        <div class="card">
+                        <div class="col-md-6">
+                            <div class="bg-light rounded p-3">
+                                <div class="small text-muted">Date</div>
+                                <div class="fw-bold">{{ now().strftime('%d %B, %Y') }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected Treatments -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">Selected Treatments</h5>
+                        </div>
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-hover mb-0">
+                                <table class="table mb-0">
                                     <thead class="table-light">
                                         <tr>
-                                            <th>Treatment</th>
-                                            <th class="text-center">Qty</th>
-                                            <th class="text-end">Price</th>
-                                            <th class="text-end">Total</th>
+                                            <th class="ps-4">Treatment</th>
+                                            <th class="text-center">Quantity</th>
+                                            <th class="text-center">Unit Price</th>
+                                            <th class="text-end pe-4">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {% for treatment in selected_treatments %}
-                                            <tr>
-                                                <td>
-                                                    <div class="fw-medium">{{ treatment.name }}</div>
-                                                    {% if treatment.description %}
-                                                        <small class="text-muted">{{ treatment.description }}</small>
-                                                    {% endif %}
-                                                </td>
-                                                <td class="text-center">{{ treatment.quantity }}</td>
-                                                <td class="text-end">€{{ "%.2f"|format(treatment.price) }}</td>
-                                                <td class="text-end">€{{ "%.2f"|format(treatment.price * treatment.quantity) }}</td>
-                                            </tr>
+                                        <tr>
+                                            <td class="ps-4">
+                                                <div class="fw-medium">{{ treatment.name }}</div>
+                                                <div class="small text-muted">{{ treatment.description | truncate(80) }}</div>
+                                            </td>
+                                            <td class="text-center align-middle">{{ treatment.quantity }}</td>
+                                            <td class="text-center align-middle">€{{ "%.2f"|format(treatment.price) }}</td>
+                                            <td class="text-end align-middle pe-4 fw-bold">€{{ "%.2f"|format(treatment.price * treatment.quantity) }}</td>
+                                        </tr>
                                         {% endfor %}
                                     </tbody>
-                                    <tfoot class="table-light">
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">Subtotal:</td>
-                                            <td class="text-end fw-bold">€{{ "%.2f"|format(subtotal) }}</td>
-                                        </tr>
-                                        {% if promo_code %}
-                                            <tr>
-                                                <td colspan="3" class="text-end">
-                                                    <div class="d-flex align-items-center justify-content-end">
-                                                        <span class="badge bg-primary me-2">{{ promo_code }}</span>
-                                                        <span>Discount ({{ promo_details.discount_value }}{% if promo_details.discount_type == 'percentage' %}%{% else %}€{% endif %}):</span>
-                                                    </div>
-                                                </td>
-                                                <td class="text-end text-danger">-€{{ "%.2f"|format(discount) }}</td>
-                                            </tr>
-                                        {% endif %}
-                                        <tr>
-                                            <td colspan="3" class="text-end fw-bold">Total:</td>
-                                            <td class="text-end fw-bold fs-5">€{{ "%.2f"|format(total) }}</td>
-                                        </tr>
-                                    </tfoot>
                                 </table>
                             </div>
                         </div>
-                    </div>
-                    
-                    <!-- Important Notes Section -->
-                    <div class="mb-5">
-                        <h5 class="fw-bold mb-3">Important Information</h5>
-                        <div class="bg-light p-3 rounded">
-                            <ul class="mb-0 ps-3">
-                                <li class="mb-2">This quote is valid for 30 days from today.</li>
-                                <li class="mb-2">A 20% deposit is required to secure your booking and appointment dates.</li>
-                                <li class="mb-2">The final treatment plan may be adjusted after in-person examination at the clinic.</li>
-                                <li class="mb-2">Travel and accommodation costs are not included in this quote.</li>
-                                <li>Additional fees may apply for supplementary treatments not included in this quote.</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <!-- Terms and Consent -->
-                    <form action="{{ url_for('confirm_quote') }}" method="POST">
-                        <div class="mb-4">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="terms_agreement" name="terms_agreement" required>
-                                <label class="form-check-label" for="terms_agreement">
-                                    I have read and agree to the <a href="#" target="_blank">Terms and Conditions</a> and <a href="#" target="_blank">Privacy Policy</a>.
-                                </label>
+                        <div class="card-footer bg-white">
+                            <div class="row">
+                                <div class="col-md-8 col-lg-9"></div>
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span class="text-muted">Subtotal:</span>
+                                        <span class="fw-medium">€{{ "%.2f"|format(subtotal) }}</span>
+                                    </div>
+                                    
+                                    {% if promo_code %}
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div>
+                                            <span class="text-muted">Discount:</span>
+                                            <span class="badge bg-primary ms-2">{{ promo_code }}</span>
+                                        </div>
+                                        <span class="fw-medium text-danger">-€{{ "%.2f"|format(discount) }}</span>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                        <span class="fw-bold">Total:</span>
+                                        <span class="fw-bold">€{{ "%.2f"|format(total) }}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        
-                        <div class="d-flex justify-content-between">
-                            <a href="{{ url_for('patient_info') }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-arrow-left me-2"></i> Back
-                            </a>
-                            <button type="submit" class="btn btn-primary">
-                                Confirm Quote <i class="fas fa-arrow-right ms-2"></i>
-                            </button>
+                    </div>
+                    
+                    <!-- Patient Information -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">Patient Information</h5>
                         </div>
-                    </form>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="small text-muted">Full Name</div>
+                                    <div class="fw-medium">{{ patient_info.first_name }} {{ patient_info.last_name }}</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="small text-muted">Email</div>
+                                    <div class="fw-medium">{{ patient_info.email }}</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="small text-muted">Phone</div>
+                                    <div class="fw-medium">{{ patient_info.phone }}</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <div class="small text-muted">Country</div>
+                                    <div class="fw-medium">{{ patient_info.country }}</div>
+                                </div>
+                                {% if patient_info.preferred_dates %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="small text-muted">Preferred Dates</div>
+                                    <div class="fw-medium">{{ patient_info.preferred_dates }}</div>
+                                </div>
+                                {% endif %}
+                                
+                                <div class="col-12 mb-3">
+                                    <div class="small text-muted">Travel Preferences</div>
+                                    <div class="fw-medium">
+                                        {% if patient_info.accommodation_needed %}
+                                        <span class="badge bg-primary me-2">Accommodation Needed</span>
+                                        {% endif %}
+                                        {% if patient_info.airport_transfer_needed %}
+                                        <span class="badge bg-primary">Airport Transfer Needed</span>
+                                        {% endif %}
+                                        {% if not patient_info.accommodation_needed and not patient_info.airport_transfer_needed %}
+                                        <span class="text-muted">None selected</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                {% if patient_info.additional_notes %}
+                                <div class="col-12">
+                                    <div class="small text-muted">Additional Notes</div>
+                                    <div class="fw-medium">{{ patient_info.additional_notes }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="card-title mb-0">Next Steps</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol class="mb-0">
+                                <li class="mb-2">After confirming your quote, you'll receive a copy via email.</li>
+                                <li class="mb-2">Our specialist will contact you within 24 hours to discuss your treatment options.</li>
+                                <li class="mb-2">We'll help arrange your travel and accommodation if needed.</li>
+                                <li>Once you're ready to proceed, a small deposit will secure your booking.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-5">
+                        <a href="{{ url_for('patient_info') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i> Back
+                        </a>
+                        <a href="{{ url_for('confirmation') }}" class="btn btn-primary">
+                            Confirm Quote <i class="fas fa-check ms-2"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quote Summary Section -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-top" style="top: 20px; z-index: 100;">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0">Your Quote Summary</h5>
+                </div>
+                <div class="card-body p-0">
+                    {% include 'quote/partials/quote_summary.html' %}
                 </div>
             </div>
             
-            <!-- Additional Services Section -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header bg-light py-3">
-                    <h5 class="card-title mb-0">Additional Services</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row g-4">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
-                                    <i class="fas fa-plane-departure"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1">Travel Assistance</h6>
-                                    <p class="mb-0 text-muted small">We can help arrange flights, airport transfers, and accommodation at preferential rates.</p>
-                                </div>
+            <div class="card mt-4 shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title fw-bold mb-3">Why Choose Us?</h5>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-star text-primary"></i>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
-                                    <i class="fas fa-language"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1">Translation Services</h6>
-                                    <p class="mb-0 text-muted small">Free interpreter services during your treatment and consultations.</p>
-                                </div>
+                        <div class="ms-3">
+                            <h6 class="fw-medium mb-1">Verified Clinics</h6>
+                            <p class="small text-muted mb-0">All clinics are thoroughly vetted and certified.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex mb-3">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-user-md text-primary"></i>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
-                                    <i class="fas fa-map-marked-alt"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1">City Tours</h6>
-                                    <p class="mb-0 text-muted small">Optional guided tours of Istanbul between your treatment appointments.</p>
-                                </div>
+                        <div class="ms-3">
+                            <h6 class="fw-medium mb-1">Expert Dentists</h6>
+                            <p class="small text-muted mb-0">Internationally trained specialists with years of experience.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="fas fa-thumbs-up text-primary"></i>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
-                                    <i class="fas fa-headset"></i>
-                                </div>
-                                <div>
-                                    <h6 class="fw-bold mb-1">Aftercare Support</h6>
-                                    <p class="mb-0 text-muted small">Ongoing support after you return home, including virtual follow-up consultations.</p>
-                                </div>
-                            </div>
+                        <div class="ms-3">
+                            <h6 class="fw-medium mb-1">Satisfaction Guarantee</h6>
+                            <p class="small text-muted mb-0">97% of our patients report complete satisfaction.</p>
                         </div>
                     </div>
                 </div>
@@ -279,4 +262,14 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_css %}
+.table th {
+    font-weight: 600;
+}
+.sticky-top {
+    position: -webkit-sticky;
+    position: sticky;
+}
 {% endblock %}

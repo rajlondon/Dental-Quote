@@ -1,549 +1,491 @@
 """
-Dental Quote System - MyDentalFly
-
-A Flask application for generating dental treatment quotes with
-support for promotional codes and special offers.
+Dental Quote System - Flask Application
+A web application for building dental treatment quotes
 """
-
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session
 import os
 import uuid
-import json
 from datetime import datetime
-from flask import (
-    Flask, 
-    render_template, 
-    request, 
-    redirect, 
-    url_for, 
-    session, 
-    jsonify, 
-    flash
-)
 
-from utils.session_manager import SessionManager
+# Import services and utilities
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
+from utils.session_manager import SessionManager
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'mydentalfly-quote-system-secret')
+app.secret_key = os.environ.get('SECRET_KEY', 'dental-quote-system-secret-key')
+
+# Set session lifetime
+app.config['PERMANENT_SESSION_LIFETIME'] = 60 * 60 * 24 * 7  # 7 days
 app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['PERMANENT_SESSION_LIFETIME'] = 3600 * 24 * 7  # 1 week
 
-# Initialize services
-treatment_service = TreatmentService()
-promo_service = PromoService()
+# Create directory for static images if it doesn't exist
+if not os.path.exists(os.path.join(app.static_folder, 'img', 'offers')):
+    os.makedirs(os.path.join(app.static_folder, 'img', 'offers'))
 
-# Helper function to initialize session data
-def initialize_session(reset=False):
-    """Initialize or reset the session data for the quote"""
-    if 'quote' not in session or reset:
-        session['quote'] = {
-            'selected_treatments': [],
-            'promo_code': None,
-            'promo_details': None,
-            'selected_offer': None,
-            'patient_info': None,
-            'quote_id': None
-        }
-        session.modified = True
-
-# Routes
+# Main routes
 @app.route('/')
 def index():
     """Homepage route"""
     # Get featured special offers
-    special_offers = promo_service.get_featured_offers()
-    # Get popular treatments
-    popular_treatments = treatment_service.get_popular_treatments()
+    special_offers = PromoService.get_special_offers()
+    featured_offers = [offer for offer in special_offers if offer.get('featured', False)]
     
-    return render_template('index.html', 
-                          special_offers=special_offers,
-                          popular_treatments=popular_treatments)
+    return render_template('index.html', featured_offers=featured_offers)
 
 @app.route('/quote-builder')
 def quote_builder():
-    """Quote builder starting page"""
-    # Initialize session data if not already done
-    initialize_session(reset=request.args.get('reset', False))
+    """Quote builder page"""
+    # Initialize or get session
+    SessionManager.initialize_session()
     
-    # Get all treatments grouped by category
-    categorized_treatments = treatment_service.get_treatments_by_category()
+    # Get all treatments organized by category
+    treatments = TreatmentService.get_all_treatments()
     
-    # Get session data for the view
-    selected_treatments = session['quote']['selected_treatments']
-    promo_code = session['quote']['promo_code']
-    promo_details = session['quote']['promo_details']
+    # Get currently selected treatments
+    selected_treatments = SessionManager.get_selected_treatments()
+    selected_treatment_ids = [t['id'] for t in selected_treatments]
     
-    # Calculate totals
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
+    # Calculate pricing
+    subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+    promo_code = SessionManager.get_promo_code()
+    promo_details = SessionManager.get_promo_details()
     
-    return render_template('quote/quote_builder.html',
-                          categorized_treatments=categorized_treatments,
-                          selected_treatments=selected_treatments,
-                          subtotal=subtotal,
-                          discount=discount,
-                          total=total,
-                          promo_code=promo_code,
-                          promo_details=promo_details,
-                          show_progress_bar=True,
-                          current_step=1)
-
-@app.route('/add-treatment', methods=['POST'])
-def add_treatment():
-    """Add a treatment to the quote"""
-    initialize_session()
-    
-    treatment_id = request.form.get('treatment_id')
-    if not treatment_id:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Treatment ID is required'})
-        flash('Treatment ID is required', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Get treatment details
-    treatment = treatment_service.get_treatment(treatment_id)
-    if not treatment:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Treatment not found'})
-        flash('Treatment not found', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Add to selected treatments or update quantity if already selected
-    selected_treatments = session['quote']['selected_treatments']
-    found = False
-    for t in selected_treatments:
-        if t['id'] == treatment_id:
-            t['quantity'] += 1
-            found = True
-            break
-            
-    if not found:
-        treatment['quantity'] = 1
-        selected_treatments.append(treatment)
-    
-    session.modified = True
-    
-    # Calculate totals
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    promo_details = session['quote']['promo_details']
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True, 
-            'message': 'Treatment added to quote',
-            'selected_treatments': selected_treatments,
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total
-        })
-    
-    flash('Treatment added to quote', 'success')
-    return redirect(url_for('quote_builder'))
-
-@app.route('/remove-treatment', methods=['POST'])
-def remove_treatment():
-    """Remove a treatment from the quote"""
-    initialize_session()
-    
-    treatment_id = request.form.get('treatment_id')
-    if not treatment_id:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Treatment ID is required'})
-        flash('Treatment ID is required', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Remove from selected treatments
-    selected_treatments = session['quote']['selected_treatments']
-    session['quote']['selected_treatments'] = [t for t in selected_treatments if t['id'] != treatment_id]
-    session.modified = True
-    
-    # Calculate totals
-    selected_treatments = session['quote']['selected_treatments']
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    promo_details = session['quote']['promo_details']
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True, 
-            'message': 'Treatment removed from quote',
-            'selected_treatments': selected_treatments,
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total
-        })
-    
-    flash('Treatment removed from quote', 'success')
-    return redirect(url_for('quote_builder'))
-
-@app.route('/update-quantity', methods=['POST'])
-def update_quantity():
-    """Update the quantity of a treatment in the quote"""
-    initialize_session()
-    
-    treatment_id = request.form.get('treatment_id')
-    quantity = request.form.get('quantity')
-    
-    if not treatment_id or not quantity:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Treatment ID and quantity are required'})
-        flash('Treatment ID and quantity are required', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    try:
-        quantity = int(quantity)
-        if quantity < 1:
-            raise ValueError("Quantity must be at least 1")
-    except ValueError:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Invalid quantity'})
-        flash('Invalid quantity', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Update quantity
-    selected_treatments = session['quote']['selected_treatments']
-    for t in selected_treatments:
-        if t['id'] == treatment_id:
-            t['quantity'] = quantity
-            break
-    
-    session.modified = True
-    
-    # Calculate totals
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    promo_details = session['quote']['promo_details']
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True, 
-            'message': 'Quantity updated',
-            'selected_treatments': selected_treatments,
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total
-        })
-    
-    flash('Quantity updated', 'success')
-    return redirect(url_for('quote_builder'))
-
-@app.route('/apply-promo-code', methods=['POST'])
-def apply_promo_code():
-    """Apply a promotional code to the quote"""
-    initialize_session()
-    
-    promo_code = request.form.get('promo_code')
-    if not promo_code:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'Promo code is required'})
-        flash('Promo code is required', 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Calculate current subtotal
-    selected_treatments = session['quote']['selected_treatments']
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    
-    # Validate promo code
-    result = promo_service.validate_promo_code(promo_code, subtotal)
-    if not result['valid']:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': result['message']})
-        flash(result['message'], 'error')
-        return redirect(url_for('quote_builder'))
-    
-    # Apply promo code
-    session['quote']['promo_code'] = promo_code
-    session['quote']['promo_details'] = result['details']
-    session.modified = True
-    
-    # Calculate totals with discount
-    discount = SessionManager.get_discount_amount(subtotal, result['details'])
-    total = SessionManager.get_total(subtotal, discount)
-    
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True, 
-            'message': 'Promo code applied successfully',
-            'promo_code': promo_code,
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total
-        })
-    
-    flash('Promo code applied successfully', 'success')
-    return redirect(url_for('quote_builder'))
-
-@app.route('/remove-promo-code', methods=['POST'])
-def remove_promo_code():
-    """Remove the promotional code from the quote"""
-    initialize_session()
-    
-    # Remove promo code
-    session['quote']['promo_code'] = None
-    session['quote']['promo_details'] = None
-    SessionManager.clear_promo_code(session)
-    
-    # Calculate totals without discount
-    selected_treatments = session['quote']['selected_treatments']
-    subtotal = SessionManager.get_subtotal(selected_treatments)
+    # Calculate discount if promo code is applied
     discount = 0
-    total = subtotal
+    if promo_code and promo_details:
+        discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
     
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return jsonify({
-            'success': True, 
-            'message': 'Promo code removed',
-            'subtotal': subtotal,
-            'discount': discount,
-            'total': total
-        })
+    # Calculate total
+    total = subtotal - discount
     
-    flash('Promo code removed', 'success')
-    return redirect(url_for('quote_builder'))
+    return render_template(
+        'quote/quote_builder.html', 
+        treatments=treatments,
+        selected_treatments=selected_treatments,
+        selected_treatment_ids=selected_treatment_ids,
+        subtotal=subtotal,
+        promo_code=promo_code,
+        discount=discount,
+        total=total
+    )
 
 @app.route('/patient-info', methods=['GET', 'POST'])
 def patient_info():
-    """Patient information page"""
-    initialize_session()
-    
-    # Ensure there are treatments selected
-    selected_treatments = session['quote']['selected_treatments']
+    """Patient information form"""
+    # Check if there are selected treatments
+    selected_treatments = SessionManager.get_selected_treatments()
     if not selected_treatments:
-        flash('Please select at least one treatment before proceeding', 'error')
         return redirect(url_for('quote_builder'))
     
-    # If form is submitted, save patient info
     if request.method == 'POST':
+        # Collect patient information
         patient_info = {
             'first_name': request.form.get('first_name'),
             'last_name': request.form.get('last_name'),
             'email': request.form.get('email'),
             'phone': request.form.get('phone'),
             'country': request.form.get('country'),
-            'preferred_month': request.form.get('preferred_month'),
-            'stay_duration': request.form.get('stay_duration'),
-            'accommodation_help': 'accommodation_help' in request.form,
-            'transport_help': 'transport_help' in request.form,
-            'translator_help': 'translator_help' in request.form,
-            'allergies': request.form.get('allergies'),
-            'medications': request.form.get('medications'),
-            'comments': request.form.get('comments'),
-            'receive_updates': 'receive_updates' in request.form,
-            'contact_consent': 'contact_consent' in request.form
+            'preferred_dates': request.form.get('preferred_dates'),
+            'accommodation_needed': 'accommodation_needed' in request.form,
+            'airport_transfer_needed': 'airport_transfer_needed' in request.form,
+            'additional_notes': request.form.get('additional_notes')
         }
         
-        session['quote']['patient_info'] = patient_info
-        session.modified = True
+        # Save patient information to session
+        SessionManager.set_patient_info(patient_info)
         
+        # Redirect to review page
         return redirect(url_for('review_quote'))
     
-    # Get countries for the dropdown
-    countries = treatment_service.get_countries()
+    # Get existing patient info if any
+    patient_info = SessionManager.get_patient_info() or {}
     
-    # Calculate totals
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    promo_details = session['quote']['promo_details']
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
+    # Calculate pricing
+    subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+    promo_code = SessionManager.get_promo_code()
+    promo_details = SessionManager.get_promo_details()
     
-    return render_template('quote/patient_info.html',
-                          selected_treatments=selected_treatments,
-                          subtotal=subtotal,
-                          discount=discount,
-                          total=total,
-                          promo_code=session['quote']['promo_code'],
-                          promo_details=promo_details,
-                          patient_info=session['quote']['patient_info'],
-                          countries=countries,
-                          show_progress_bar=True,
-                          current_step=2)
+    # Calculate discount if promo code is applied
+    discount = 0
+    if promo_code and promo_details:
+        discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+    
+    # Calculate total
+    total = subtotal - discount
+    
+    # List of countries for the dropdown
+    countries = [
+        'United Kingdom', 'Germany', 'France', 'Netherlands', 'Ireland', 
+        'Belgium', 'Sweden', 'Norway', 'Denmark', 'Finland', 
+        'Austria', 'Switzerland', 'Italy', 'Spain', 'Portugal',
+        'Other'
+    ]
+    
+    return render_template(
+        'quote/patient_info.html',
+        countries=countries,
+        patient_info=patient_info,
+        selected_treatments=selected_treatments,
+        subtotal=subtotal,
+        promo_code=promo_code,
+        discount=discount,
+        total=total
+    )
 
-@app.route('/review-quote', methods=['GET', 'POST'])
+@app.route('/review-quote')
 def review_quote():
     """Review quote page"""
-    initialize_session()
-    
-    # Ensure there are treatments selected and patient info
-    selected_treatments = session['quote']['selected_treatments']
-    patient_info = session['quote']['patient_info']
+    # Check if there are selected treatments and patient info
+    selected_treatments = SessionManager.get_selected_treatments()
+    patient_info = SessionManager.get_patient_info()
     
     if not selected_treatments:
-        flash('Please select at least one treatment before proceeding', 'error')
         return redirect(url_for('quote_builder'))
-        
+    
     if not patient_info:
-        flash('Please provide your information before proceeding', 'error')
         return redirect(url_for('patient_info'))
     
-    # Calculate totals
-    subtotal = SessionManager.get_subtotal(selected_treatments)
-    promo_details = session['quote']['promo_details']
-    discount = SessionManager.get_discount_amount(subtotal, promo_details)
-    total = SessionManager.get_total(subtotal, discount)
+    # Calculate pricing
+    subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+    promo_code = SessionManager.get_promo_code()
+    promo_details = SessionManager.get_promo_details()
     
-    return render_template('quote/review_quote.html',
-                          selected_treatments=selected_treatments,
-                          subtotal=subtotal,
-                          discount=discount,
-                          total=total,
-                          promo_code=session['quote']['promo_code'],
-                          promo_details=promo_details,
-                          patient_info=patient_info,
-                          show_progress_bar=True,
-                          current_step=3)
-
-@app.route('/confirm-quote', methods=['POST'])
-def confirm_quote():
-    """Confirm and submit the quote"""
-    initialize_session()
+    # Calculate discount if promo code is applied
+    discount = 0
+    if promo_code and promo_details:
+        discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
     
-    # Ensure user agreed to terms
-    if 'terms_agree' not in request.form:
-        flash('You must agree to the terms and conditions', 'error')
-        return redirect(url_for('review_quote'))
+    # Calculate total
+    total = subtotal - discount
     
-    # Save the quote to database
-    quote_data = {
-        'selected_treatments': session['quote']['selected_treatments'],
-        'promo_code': session['quote']['promo_code'],
-        'promo_details': session['quote']['promo_details'],
-        'patient_info': session['quote']['patient_info'],
-        'subtotal': SessionManager.get_subtotal(session['quote']['selected_treatments']),
-        'discount': SessionManager.get_discount_amount(
-            SessionManager.get_subtotal(session['quote']['selected_treatments']), 
-            session['quote']['promo_details']
-        ),
-        'total': SessionManager.get_total(
-            SessionManager.get_subtotal(session['quote']['selected_treatments']),
-            SessionManager.get_discount_amount(
-                SessionManager.get_subtotal(session['quote']['selected_treatments']), 
-                session['quote']['promo_details']
-            )
-        ),
-        'date_created': datetime.now().isoformat(),
-        'selected_offer': session['quote']['selected_offer']
-    }
+    # Generate a quote ID if not already present
+    quote_id = SessionManager.get_quote_id()
+    if not quote_id:
+        quote_id = f"MDF-{str(uuid.uuid4())[:8].upper()}"
+        SessionManager.set_quote_id(quote_id)
     
-    # Save to database and get quote ID
-    quote_id = treatment_service.save_quote(quote_data)
-    
-    # Update session with quote ID
-    SessionManager.set_quote_id(session, quote_id)
-    
-    # Redirect to confirmation page
-    return redirect(url_for('confirmation'))
+    return render_template(
+        'quote/review_quote.html',
+        quote_id=quote_id,
+        patient_info=patient_info,
+        selected_treatments=selected_treatments,
+        subtotal=subtotal,
+        promo_code=promo_code,
+        discount=discount,
+        total=total
+    )
 
 @app.route('/confirmation')
 def confirmation():
-    """Confirmation page after quote submission"""
-    initialize_session()
+    """Confirmation page after quote is submitted"""
+    # Check if there's a quote ID
+    quote_id = SessionManager.get_quote_id()
     
-    # Get quote from database using the ID
-    quote_id = session['quote']['quote_id']
     if not quote_id:
-        flash('Something went wrong. Please try again.', 'error')
-        return redirect(url_for('quote_builder'))
+        return redirect(url_for('index'))
     
-    quote = treatment_service.get_quote(quote_id)
-    if not quote:
-        flash('Quote not found. Please try again.', 'error')
-        return redirect(url_for('quote_builder'))
+    # Get data for display
+    selected_treatments = SessionManager.get_selected_treatments()
+    patient_info = SessionManager.get_patient_info()
     
-    # Generate reference number
-    quote_reference = f"MDF-{quote_id[:8].upper()}"
+    # Check required data
+    if not selected_treatments or not patient_info:
+        return redirect(url_for('index'))
     
-    return render_template('quote/confirmation.html',
-                          quote_reference=quote_reference,
-                          selected_treatments=quote['selected_treatments'],
-                          subtotal=quote['subtotal'],
-                          discount=quote['discount'],
-                          total=quote['total'],
-                          promo_code=quote['promo_code'],
-                          show_progress_bar=True,
-                          current_step=4)
+    # Calculate pricing
+    subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+    promo_code = SessionManager.get_promo_code()
+    promo_details = SessionManager.get_promo_details()
+    
+    # Calculate discount and savings percentage
+    discount = 0
+    savings_percent = 0
+    
+    if promo_code and promo_details:
+        discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+        if subtotal > 0:
+            savings_percent = round((discount / subtotal) * 100)
+    
+    # Calculate total
+    total = subtotal - discount
+    
+    # Clear session for new quote after displaying confirmation
+    # This ensures the confirmation can be viewed but then starts fresh
+    # SessionManager.initialize_session(reset=True)
+    
+    return render_template(
+        'quote/confirmation.html',
+        quote_id=quote_id,
+        patient_info=patient_info,
+        selected_treatments=selected_treatments,
+        subtotal=subtotal,
+        promo_code=promo_code,
+        promo_details=promo_details,
+        discount=discount,
+        savings_percent=savings_percent,
+        total=total
+    )
 
 @app.route('/special-offers')
 def special_offers():
     """Special offers page"""
-    # Get all active special offers
-    special_offers = promo_service.get_active_offers()
+    # Get all special offers
+    offers = PromoService.get_special_offers()
     
-    return render_template('quote/special_offers.html', 
-                          special_offers=special_offers)
+    return render_template('quote/special_offers.html', offers=offers)
 
-@app.route('/special-offer/<offer_id>')
-def special_offer_details(offer_id):
-    """Special offer details page"""
-    # Get offer details
-    offer = promo_service.get_offer_by_id(offer_id)
-    if not offer:
-        flash('Special offer not found', 'error')
+@app.route('/apply-offer/<offer_id>')
+def apply_offer(offer_id):
+    """Apply a special offer from the offers page"""
+    # Get all offers and find the selected one
+    offers = PromoService.get_special_offers()
+    selected_offer = None
+    
+    for offer in offers:
+        if offer['id'] == offer_id:
+            selected_offer = offer
+            break
+    
+    if not selected_offer:
         return redirect(url_for('special_offers'))
     
-    # Get treatments included in the offer
-    treatments = promo_service.get_treatments_for_offer(offer)
+    # Initialize session if needed
+    SessionManager.initialize_session()
     
-    return render_template('quote/special_offer_details.html',
-                          offer=offer,
-                          treatments=treatments)
+    # Get promo code from the offer
+    promo_code = selected_offer.get('promo_code')
+    
+    # Add any required treatments from the offer
+    # Example: Some offers may require specific treatments to be added
+    
+    # Redirect to quote builder with applied promo code
+    return redirect(url_for('quote_builder', promo_code=promo_code))
 
-@app.route('/apply-special-offer/<offer_id>')
-def apply_special_offer(offer_id):
-    """Apply a special offer to the quote"""
-    initialize_session(reset=True)
-    
-    # Get offer details
-    offer = promo_service.get_offer_by_id(offer_id)
-    if not offer:
-        flash('Special offer not found', 'error')
-        return redirect(url_for('special_offers'))
-    
-    # Set the selected offer in the session
-    SessionManager.set_selected_offer(session, offer)
-    
-    # Add treatments to the quote
-    if offer.get('applicable_treatments'):
-        for treatment_id in offer['applicable_treatments']:
-            treatment = promo_service.get_treatment_by_id(treatment_id)
-            if treatment:
-                treatment['quantity'] = 1
-                session['quote']['selected_treatments'].append(treatment)
-    
-    # Apply promo code if available
-    if offer.get('promo_code'):
-        # Calculate current subtotal
-        selected_treatments = session['quote']['selected_treatments']
-        subtotal = SessionManager.get_subtotal(selected_treatments)
+# API routes for AJAX interactions
+@app.route('/api/add-treatment', methods=['POST'])
+def api_add_treatment():
+    """API endpoint to add a treatment"""
+    try:
+        data = request.get_json()
+        treatment_id = data.get('treatment_id')
         
-        # Validate and apply promo code
-        result = promo_service.validate_promo_code(offer['promo_code'], subtotal)
-        if result['valid']:
-            session['quote']['promo_code'] = offer['promo_code']
-            session['quote']['promo_details'] = result['details']
+        # Get treatment details
+        treatment = TreatmentService.get_treatment_by_id(treatment_id)
+        if not treatment:
+            return jsonify({'success': False, 'message': 'Treatment not found'})
+        
+        # Add treatment to session
+        SessionManager.add_treatment(treatment)
+        
+        # Get updated data for response
+        selected_treatments = SessionManager.get_selected_treatments()
+        subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+        promo_code = SessionManager.get_promo_code()
+        promo_details = SessionManager.get_promo_details()
+        
+        discount = 0
+        if promo_code and promo_details:
+            discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+        
+        total = subtotal - discount
+        
+        return jsonify({
+            'success': True,
+            'selected_treatments': selected_treatments,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total
+        })
     
-    session.modified = True
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/remove-treatment', methods=['POST'])
+def api_remove_treatment():
+    """API endpoint to remove a treatment"""
+    try:
+        data = request.get_json()
+        treatment_id = data.get('treatment_id')
+        
+        # Remove treatment from session
+        SessionManager.remove_treatment(treatment_id)
+        
+        # Get updated data for response
+        selected_treatments = SessionManager.get_selected_treatments()
+        subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+        promo_code = SessionManager.get_promo_code()
+        promo_details = SessionManager.get_promo_details()
+        
+        discount = 0
+        if promo_code and promo_details:
+            discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+        
+        total = subtotal - discount
+        
+        return jsonify({
+            'success': True,
+            'selected_treatments': selected_treatments,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total
+        })
     
-    # Redirect to quote builder
-    flash(f"Special offer '{offer['title']}' applied", 'success')
-    return redirect(url_for('quote_builder'))
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/update-quantity', methods=['POST'])
+def api_update_quantity():
+    """API endpoint to update treatment quantity"""
+    try:
+        data = request.get_json()
+        treatment_id = data.get('treatment_id')
+        quantity = int(data.get('quantity', 1))
+        
+        # Validate quantity
+        if quantity <= 0:
+            return jsonify({'success': False, 'message': 'Quantity must be greater than zero'})
+        
+        # Update quantity in session
+        SessionManager.update_treatment_quantity(treatment_id, quantity)
+        
+        # Get updated data for response
+        selected_treatments = SessionManager.get_selected_treatments()
+        subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+        promo_code = SessionManager.get_promo_code()
+        promo_details = SessionManager.get_promo_details()
+        
+        discount = 0
+        if promo_code and promo_details:
+            discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+        
+        total = subtotal - discount
+        
+        return jsonify({
+            'success': True,
+            'selected_treatments': selected_treatments,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)})
+
+@app.route('/api/apply-promo-code', methods=['POST'])
+def api_apply_promo_code():
+    """API endpoint to apply a promo code"""
+    try:
+        data = request.get_json()
+        promo_code = data.get('promo_code', '').strip().upper()
+        
+        if not promo_code:
+            return jsonify({'success': False, 'message': 'Please enter a promo code'})
+        
+        # Get current selected treatments and subtotal
+        selected_treatments = SessionManager.get_selected_treatments()
+        subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+        
+        # Validate promo code
+        validation = PromoService.validate_promo_code(promo_code, selected_treatments, subtotal)
+        
+        if not validation['valid']:
+            return jsonify({'success': False, 'message': validation['message']})
+        
+        # Apply promo code if valid
+        promo_details = validation['promo_details']
+        SessionManager.set_promo_code(promo_code, promo_details)
+        
+        # Check if this promo code adds a special treatment
+        if promo_details.get('add_treatment'):
+            # Add the special treatment (e.g., free consultation)
+            special_treatment = promo_details['add_treatment']
+            # Check if it's already added to avoid duplicates
+            existing_ids = [t['id'] for t in selected_treatments]
+            if special_treatment['id'] not in existing_ids:
+                SessionManager.add_treatment(special_treatment)
+                selected_treatments = SessionManager.get_selected_treatments()
+        
+        # Calculate discount
+        discount = PromoService.calculate_discount(subtotal, promo_details, selected_treatments)
+        total = subtotal - discount
+        
+        return jsonify({
+            'success': True,
+            'message': validation['message'],
+            'promo_code': promo_code,
+            'discount': discount,
+            'total': total,
+            'selected_treatments': selected_treatments,
+            'subtotal': subtotal
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error applying promo code: {str(e)}'})
+
+@app.route('/api/remove-promo-code', methods=['POST'])
+def api_remove_promo_code():
+    """API endpoint to remove a promo code"""
+    try:
+        # Get current promo details
+        promo_code = SessionManager.get_promo_code()
+        promo_details = SessionManager.get_promo_details()
+        
+        # Check if a special treatment was added by this promo code
+        if promo_details and promo_details.get('add_treatment'):
+            special_treatment_id = promo_details['add_treatment']['id']
+            # Remove the special treatment
+            SessionManager.remove_treatment(special_treatment_id)
+        
+        # Remove promo code from session
+        SessionManager.remove_promo_code()
+        
+        # Recalculate pricing
+        selected_treatments = SessionManager.get_selected_treatments()
+        subtotal = TreatmentService.calculate_subtotal(selected_treatments)
+        
+        # No discount since promo code was removed
+        discount = 0
+        total = subtotal
+        
+        return jsonify({
+            'success': True,
+            'message': 'Promo code removed successfully',
+            'selected_treatments': selected_treatments,
+            'subtotal': subtotal,
+            'discount': discount,
+            'total': total
+        })
+    
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error removing promo code: {str(e)}'})
+
+# Static content routes
+@app.route('/about')
+def about():
+    """About page"""
+    return render_template('about.html')
+
+@app.route('/contact')
+def contact():
+    """Contact page"""
+    return render_template('contact.html')
+
+@app.route('/faq')
+def faq():
+    """FAQ page"""
+    return render_template('faq.html')
 
 # Error handlers
 @app.errorhandler(404)
 def page_not_found(e):
-    """Handle 404 errors"""
+    """404 Error handler"""
     return render_template('errors/404.html'), 404
 
 @app.errorhandler(500)
 def server_error(e):
-    """Handle 500 errors"""
+    """500 Error handler"""
     return render_template('errors/500.html'), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
