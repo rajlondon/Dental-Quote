@@ -1,169 +1,120 @@
 /**
- * Utility functions for formatting currency, dates, and other data consistently
- * throughout the MyDentalFly application
+ * Utility functions for formatting data in the UI
  */
 
 /**
- * Format a number as currency with proper currency symbol
- * @param value The value to format as currency
- * @param currencyCode The ISO currency code (USD, EUR, GBP)
- * @param locale The locale to use for formatting (defaults to 'en-US')
+ * Format a number as currency
+ * @param value - The value to format
+ * @param currency - The currency code (USD, EUR, GBP)
  * @returns Formatted currency string
  */
-export const formatCurrency = (
-  value: number, 
-  currencyCode: string = 'USD',
-  locale: string = 'en-US'
-): string => {
-  // Handle null or undefined values
-  if (value === null || value === undefined) {
-    return '';
-  }
+export function formatCurrency(value: number, currency = 'USD'): string {
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+  });
+  
+  return formatter.format(value);
+}
 
-  try {
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: currencyCode,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(value);
-  } catch (error) {
-    console.error(`Error formatting currency: ${error}`);
-    return `${currencyCode} ${value.toFixed(2)}`;
+/**
+ * Format a date to a friendly string
+ * @param date - The date to format
+ * @returns Formatted date string
+ */
+export function formatDate(date: Date | string): string {
+  if (typeof date === 'string') {
+    date = new Date(date);
   }
-};
+  
+  return new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  }).format(date);
+}
 
 /**
  * Format a percentage value
- * @param value The percentage value to format (e.g., 25 for 25%)
- * @returns Formatted percentage string (e.g., "25%")
+ * @param value - The value to format as percentage
+ * @param decimalPlaces - Number of decimal places
+ * @returns Formatted percentage string
  */
-export const formatPercentage = (value: number): string => {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  
-  return `${Math.round(value)}%`;
-};
+export function formatPercentage(value: number, decimalPlaces = 0): string {
+  return `${value.toFixed(decimalPlaces)}%`;
+}
 
 /**
- * Format a date string to a human-readable format
- * @param dateString The date string to format
- * @param format The format to use (short, medium, long, full)
- * @returns Formatted date string
+ * Convert a string to title case
+ * @param str - The string to convert
+ * @returns Title case string
  */
-export const formatDate = (
-  dateString: string, 
-  format: 'short' | 'medium' | 'long' | 'full' = 'medium',
-  locale: string = 'en-US'
-): string => {
-  if (!dateString) return '';
-  
-  try {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat(locale, { dateStyle: format }).format(date);
-  } catch (error) {
-    console.error(`Error formatting date: ${error}`);
-    return dateString;
-  }
-};
+export function toTitleCase(str: string): string {
+  return str.replace(
+    /\w\S*/g,
+    (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase()
+  );
+}
 
 /**
- * Convert currency amount from one currency to another
- * @param amount The amount to convert
- * @param fromCurrency The source currency code (USD, EUR, GBP)
- * @param toCurrency The target currency code
- * @returns Converted amount
+ * Format a dental procedure name
+ * @param name - The procedure name
+ * @returns Formatted procedure name
  */
-export const convertCurrency = (
-  amount: number, 
-  fromCurrency: string, 
-  toCurrency: string
-): number => {
-  if (amount === null || amount === undefined) {
-    return 0;
-  }
-  
-  // Fixed conversion rates (would be replaced with API call in production)
-  const rates = {
-    USD: 1,
-    EUR: 0.92,
-    GBP: 0.79
-  };
-  
-  // Return original amount if currency codes are the same
-  if (fromCurrency === toCurrency) {
-    return amount;
-  }
-  
-  // Convert to USD first if needed
-  const usdAmount = fromCurrency === 'USD' 
-    ? amount 
-    : amount / rates[fromCurrency];
-  
-  // Convert from USD to target currency
-  return toCurrency === 'USD' 
-    ? usdAmount 
-    : usdAmount * rates[toCurrency];
-};
+export function formatProcedureName(name: string): string {
+  // Custom formatting for dental procedure names
+  return toTitleCase(name)
+    .replace('Implant', 'Dental Implant')
+    .replace('Crown', 'Dental Crown')
+    .replace('Bridge', 'Dental Bridge')
+    .replace('Veneer', 'Porcelain Veneer');
+}
 
 /**
- * Calculate discount amount based on discount type and value
- * @param subtotal The subtotal amount
- * @param discountType The type of discount ('percentage' or 'fixed_amount')
- * @param discountValue The discount value (percentage or fixed amount)
- * @returns The calculated discount amount
+ * Calculate and format a discount amount
+ * @param price - The original price
+ * @param discountPercent - The discount percentage
+ * @param currency - The currency code
+ * @returns Formatted discount amount
  */
-export const calculateDiscountAmount = (
-  subtotal: number, 
-  discountType: 'percentage' | 'fixed_amount', 
-  discountValue: number
-): number => {
-  if (subtotal <= 0 || discountValue <= 0) {
-    return 0;
-  }
-  
-  if (discountType === 'percentage') {
-    // Ensure percentage doesn't exceed 100%
-    const cappedPercentage = Math.min(discountValue, 100);
-    return (subtotal * cappedPercentage) / 100;
-  } else {
-    // For fixed amount, make sure discount doesn't exceed subtotal
-    return Math.min(discountValue, subtotal);
-  }
-};
+export function formatDiscountAmount(
+  price: number, 
+  discountPercent: number, 
+  currency = 'USD'
+): string {
+  const discountAmount = price * (discountPercent / 100);
+  return formatCurrency(discountAmount, currency);
+}
 
 /**
- * Format a quantity string with proper suffix
- * @param quantity The quantity value
- * @param singularSuffix The suffix for singular quantities (default: "item")
- * @param pluralSuffix The suffix for plural quantities (default: "items")
- * @returns Formatted quantity string
+ * Format a phone number in international format
+ * @param phone - The phone number
+ * @param countryCode - The country code (default: +1 for US)
+ * @returns Formatted phone number
  */
-export const formatQuantity = (
-  quantity: number, 
-  singularSuffix: string = 'item', 
-  pluralSuffix: string = 'items'
-): string => {
-  if (quantity === null || quantity === undefined) {
-    return '';
+export function formatPhoneNumber(phone: string, countryCode = '+1'): string {
+  // Remove non-numeric characters
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Check if it already has a country code
+  if (cleaned.startsWith('1')) {
+    return `+${cleaned}`;
   }
   
-  return quantity === 1
-    ? `${quantity} ${singularSuffix}`
-    : `${quantity} ${pluralSuffix}`;
-};
+  return `${countryCode}${cleaned}`;
+}
 
 /**
- * Truncate text with ellipsis if it exceeds specified length
- * @param text The text to truncate
- * @param maxLength The maximum length of the text
- * @returns Truncated text with ellipsis if needed
+ * Format a file size in human-readable format
+ * @param bytes - The size in bytes
+ * @returns Formatted file size
  */
-export const truncateText = (text: string, maxLength: number): string => {
-  if (!text || text.length <= maxLength) {
-    return text;
-  }
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
   
-  return text.substring(0, maxLength) + '...';
-};
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
