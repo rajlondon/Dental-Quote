@@ -196,16 +196,22 @@ document.addEventListener('DOMContentLoaded', function() {
             applyButton.disabled = true;
         }
         
-        // First, hide any elements that might interfere
+        // First, clean up any previously applied promo elements
         const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
         appliedPromoSections.forEach(section => {
             section.style.display = 'none';
+            // Also remove any buttons to prevent stale event handlers
+            const removeButtons = section.querySelectorAll('.remove-promo-btn');
+            removeButtons.forEach(btn => btn.remove());
         });
         
+        // Add explicit cache-busting headers
         fetch('/api/quote/apply-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
             },
             body: JSON.stringify({ promo_code: promoCode }),
             cache: 'no-store', // Prevent caching
@@ -225,13 +231,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatePromoCodeDisplay(promoCode, data.discount);
                 updateTotals(data.totals, promoCode); 
                 
-                // Clear input field
+                // Store the current promo code for reference
                 if (promoInput) {
-                    promoInput.value = '';
+                    promoInput.value = promoCode;
+                    // But make it read-only to encourage using the remove button
+                    promoInput.readOnly = true;
                 }
                 
-                // Make sure "Remove" buttons work
-                setTimeout(setupRemovePromoButtons, 300);
+                // Make sure "Remove" buttons work - this is critical for the flow
+                setTimeout(setupRemovePromoButtons, 200);
             } else {
                 showPromoMessage(data.error || 'Failed to apply promo code', false);
                 
@@ -302,12 +310,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
                 appliedPromoSections.forEach(section => {
                     section.style.display = 'none';
+                    // Also remove any hidden content to ensure a clean DOM
+                    const removeButtons = section.querySelectorAll('.remove-promo-btn');
+                    removeButtons.forEach(btn => btn.remove());
                 });
                 
                 // Reset the promo input field
                 const promoCodeInput = document.getElementById('promo-code');
                 if (promoCodeInput) {
                     promoCodeInput.value = newPromoCode;
+                    // Make sure the input is editable and not disabled
+                    promoCodeInput.disabled = false;
+                    promoCodeInput.readOnly = false;
                 }
                 
                 // Make sure form is visible again for applying the new code
@@ -390,6 +404,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (promoCodeInput) {
             promoCodeInput.value = '';
             promoCodeInput.placeholder = 'Enter promo code';
+            // Make sure the input is fully available
+            promoCodeInput.disabled = false;
+            promoCodeInput.readOnly = false;
         }
         
         // Hide all discount rows but don't remove them yet
@@ -403,12 +420,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (promoAppliedMessage) {
             promoAppliedMessage.style.display = 'none';
         }
+        
+        // Hide any applied promo sections
+        const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
+        appliedPromoSections.forEach(section => {
+            section.style.display = 'none';
+            // Also try to remove any child elements like buttons to prevent stale handlers
+            const removeButtons = section.querySelectorAll('.remove-promo-btn');
+            removeButtons.forEach(btn => btn.remove());
+        });
 
         // Now make the server call to ensure state is synchronized
         fetch('/api/quote/remove-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache',
             },
             cache: 'no-store',  // Prevent caching
         })
@@ -460,20 +488,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Force reload promo code section if needed
                 const promoCodeSection = document.getElementById('promo-code-entry');
                 if (promoCodeSection) {
-                    // First hide any applied promo sections
-                    const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
-                    appliedPromoSections.forEach(section => {
-                        section.style.display = 'none';
-                    });
-                    
                     // Show the entry form
                     promoCodeSection.style.display = 'block';
                 }
+                
+                // Make sure we properly setup all remove buttons again on any future application
+                setTimeout(setupRemovePromoButtons, 100);
             }
         })
         .catch(error => {
             console.error('Error removing promo code:', error);
             showPromoMessage('Error removing promo code. Please try again.', false);
+            
+            // Show the promo form again even if there's an error
+            const promoCodeSection = document.getElementById('promo-code-entry');
+            if (promoCodeSection) {
+                promoCodeSection.style.display = 'block';
+            }
         });
     }
     
