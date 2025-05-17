@@ -2,216 +2,573 @@
 
 {% block title %}Build Your Dental Treatment Quote | MyDentalFly{% endblock %}
 
+{% block extra_css %}
+<style>
+    .treatment-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .treatment-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .category-nav .nav-link.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+    .quote-summary {
+        position: sticky;
+        top: 2rem;
+    }
+    .quantity-control {
+        max-width: 120px;
+    }
+    .promo-form {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
+    .treatment-image {
+        height: 180px;
+        object-fit: cover;
+    }
+    .empty-cart {
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container my-5">
-    <h1 class="mb-4">Build Your Dental Treatment Quote</h1>
-    
-    <!-- Step Indicator -->
-    <div class="step-indicator mb-5">
-        <div class="step active">
-            <div class="step-number">1</div>
-            <div class="step-title">Select Treatments</div>
-            <div class="step-line"></div>
-        </div>
-        <div class="step">
-            <div class="step-number">2</div>
-            <div class="step-title">Patient Info</div>
-            <div class="step-line"></div>
-        </div>
-        <div class="step">
-            <div class="step-number">3</div>
-            <div class="step-title">Review &amp; Submit</div>
-            <div class="step-line"></div>
-        </div>
-    </div>
-    
-    <!-- Notifications Area -->
-    <div id="notifications" class="mb-4"></div>
-    
+<div class="container py-5">
     <div class="row">
-        <!-- Treatments Selection -->
-        <div class="col-lg-8">
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="card-title mb-0">Available Treatments</h3>
+        <div class="col-12">
+            <h1 class="fw-bold mb-4">Build Your Dental Treatment Quote</h1>
+            
+            <!-- Progress Bar -->
+            <div class="progress mb-5" style="height: 10px;">
+                <div class="progress-bar" role="progressbar" style="width: 33%;" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            
+            <!-- Step Indicator -->
+            <div class="d-flex justify-content-between mb-5">
+                <div class="text-center">
+                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">1</div>
+                    <div><strong>Select Treatments</strong></div>
                 </div>
-                <div class="card-body">
-                    <p class="lead">Select the dental treatments you're interested in:</p>
-                    
-                    <ul class="nav nav-tabs" id="myTab" role="tablist">
-                        {% for category_id, category in categorized_treatments.items() %}
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link {% if loop.first %}active{% endif %}" 
-                                    id="tab-{{ category_id }}" 
-                                    data-bs-toggle="tab" 
-                                    data-bs-target="#{{ category_id }}" 
-                                    type="button" 
-                                    role="tab" 
-                                    aria-controls="{{ category_id }}" 
-                                    aria-selected="{% if loop.first %}true{% else %}false{% endif %}">
-                                {{ category.name }}
-                            </button>
-                        </li>
-                        {% endfor %}
-                    </ul>
-                    
-                    <div class="tab-content mt-3" id="myTabContent">
-                        {% for category_id, category in categorized_treatments.items() %}
-                        <div class="tab-pane fade {% if loop.first %}show active{% endif %}" 
-                             id="{{ category_id }}" 
-                             role="tabpanel" 
-                             aria-labelledby="tab-{{ category_id }}">
-                            
-                            <div class="row">
-                                {% for treatment in category.treatments %}
-                                <div class="col-md-6 mb-4">
-                                    <div class="card h-100">
-                                        <img src="{{ treatment.image }}" class="card-img-top" alt="{{ treatment.name }}" 
-                                             onerror="this.src='https://via.placeholder.com/400x200?text={{ treatment.name }}'">
-                                        <div class="card-body">
-                                            <h5 class="card-title">{{ treatment.name }}</h5>
-                                            <p class="card-text">{{ treatment.description }}</p>
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span class="price-tag">${{ treatment.price }}</span>
-                                                <form class="add-treatment-form">
-                                                    <input type="hidden" name="treatment_id" value="{{ treatment.id }}">
-                                                    <button type="submit" class="btn btn-primary">Add to Quote</button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endfor %}
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
+                <div class="text-center text-muted">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">2</div>
+                    <div>Patient Info</div>
+                </div>
+                <div class="text-center text-muted">
+                    <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mb-2" style="width: 40px; height: 40px;">3</div>
+                    <div>Review Quote</div>
                 </div>
             </div>
         </div>
-        
-        <!-- Quote Summary -->
-        <div class="col-lg-4">
-            <div class="quote-summary">
-                <h3 class="mb-3">Your Quote Summary</h3>
-                
-                <!-- Selected Treatments -->
-                <div class="mb-4">
-                    <h5>Selected Treatments</h5>
-                    <div id="selected-treatments">
-                        {% if selected_treatments %}
-                            {% for treatment in selected_treatments %}
-                            <div class="treatment-item">
-                                <button class="btn btn-sm btn-outline-danger remove-btn remove-treatment-btn" data-id="{{ treatment.id }}">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                <div class="row">
-                                    <div class="col-md-8">
-                                        <h5>{{ treatment.name }}</h5>
-                                        <p class="mb-2 text-muted">{{ treatment.description }}</p>
-                                        <div class="quantity-control">
-                                            <button type="button" class="decrease-btn">-</button>
-                                            <input type="number" class="quantity-input" value="{{ treatment.quantity or 1 }}" min="1" data-id="{{ treatment.id }}">
-                                            <button type="button" class="increase-btn">+</button>
+    </div>
+    
+    <div class="row">
+        <!-- Treatment Selection Section -->
+        <div class="col-lg-8">
+            <!-- Categories Nav -->
+            <ul class="nav nav-pills category-nav mb-4">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#all" data-bs-toggle="tab">All Treatments</a>
+                </li>
+                {% for category_id, category in categorized_treatments.items() %}
+                <li class="nav-item">
+                    <a class="nav-link" href="#{{ category_id }}" data-bs-toggle="tab">{{ category.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+            
+            <!-- Treatment Cards -->
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="all">
+                    <div class="row g-4">
+                        {% for category_id, category in categorized_treatments.items() %}
+                            {% for treatment in category.treatments %}
+                            <div class="col-md-6 col-xl-4">
+                                <div class="card h-100 border-0 shadow-sm treatment-card" id="treatment-{{ treatment.id }}">
+                                    <img src="{{ treatment.image|default(url_for('static', filename='images/treatment-placeholder.jpg')) }}" class="card-img-top treatment-image" alt="{{ treatment.name }}">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ treatment.name }}</h5>
+                                        <p class="card-text text-muted small">{{ treatment.description|truncate(80) }}</p>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="price-tag fw-bold">${{ treatment.price }}</span>
+                                            <button class="btn btn-sm btn-primary add-treatment-btn" 
+                                                    data-treatment-id="{{ treatment.id }}" 
+                                                    data-treatment-name="{{ treatment.name }}" 
+                                                    data-treatment-price="{{ treatment.price }}">
+                                                Add to Quote
+                                            </button>
                                         </div>
-                                    </div>
-                                    <div class="col-md-4 text-end">
-                                        <div class="price-tag mb-2">${{ treatment.price }}</div>
-                                        <div class="text-muted">Total: ${{ (treatment.price * (treatment.quantity or 1)) }}</div>
                                     </div>
                                 </div>
                             </div>
                             {% endfor %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                {% for category_id, category in categorized_treatments.items() %}
+                <div class="tab-pane fade" id="{{ category_id }}">
+                    <div class="row g-4">
+                        {% for treatment in category.treatments %}
+                        <div class="col-md-6 col-xl-4">
+                            <div class="card h-100 border-0 shadow-sm treatment-card" id="treatment-{{ treatment.id }}-{{ category_id }}">
+                                <img src="{{ treatment.image|default(url_for('static', filename='images/treatment-placeholder.jpg')) }}" class="card-img-top treatment-image" alt="{{ treatment.name }}">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ treatment.name }}</h5>
+                                    <p class="card-text text-muted small">{{ treatment.description|truncate(80) }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="price-tag fw-bold">${{ treatment.price }}</span>
+                                        <button class="btn btn-sm btn-primary add-treatment-btn" 
+                                                data-treatment-id="{{ treatment.id }}" 
+                                                data-treatment-name="{{ treatment.name }}" 
+                                                data-treatment-price="{{ treatment.price }}">
+                                            Add to Quote
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Quote Summary Section -->
+        <div class="col-lg-4 mt-5 mt-lg-0">
+            <div class="card border-0 shadow quote-summary">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Your Quote Summary</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Selected Treatments -->
+                    <div id="selected-treatments-container">
+                        {% if selected_treatments %}
+                            <h6 class="fw-bold mb-3">Selected Treatments</h6>
+                            <ul class="list-group mb-4" id="selected-treatments-list">
+                                {% for treatment in selected_treatments %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center" id="selected-{{ treatment.id }}">
+                                    <div>
+                                        <div>{{ treatment.name }}</div>
+                                        <div class="text-muted small">${{ treatment.price }} each</div>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <div class="input-group quantity-control me-2">
+                                            <button class="btn btn-outline-secondary decrease-quantity" data-treatment-id="{{ treatment.id }}">-</button>
+                                            <input type="text" class="form-control text-center treatment-quantity" value="{{ treatment.quantity|default(1) }}" readonly>
+                                            <button class="btn btn-outline-secondary increase-quantity" data-treatment-id="{{ treatment.id }}">+</button>
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-danger remove-treatment" data-treatment-id="{{ treatment.id }}">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </li>
+                                {% endfor %}
+                            </ul>
                         {% else %}
-                            <p class="text-muted">No treatments selected yet.</p>
+                            <div class="empty-cart mb-4">
+                                <div class="text-center">
+                                    <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                    <p>No treatments selected yet</p>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
-                </div>
-                
-                <!-- Promo Code -->
-                <div class="mb-4">
-                    <h5>Promo Code</h5>
                     
-                    {% if promo_code %}
-                    <div id="promoResult">
-                        <div class="applied-promo">
-                            <div><strong>Applied Code:</strong> {{ promo_code }}</div>
-                            <div><strong>Discount:</strong> 
-                                {% if promo_details.discount_type == 'percentage' %}
-                                    {{ promo_details.discount_value }}%
-                                {% else %}
-                                    ${{ promo_details.discount_value }}
-                                {% endif %}
+                    <!-- Promo Code Section -->
+                    <div class="promo-form mb-4">
+                        <h6 class="fw-bold mb-3">Promo Code</h6>
+                        {% if promo_code %}
+                            <div class="alert alert-success mb-3" id="promo-success">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ promo_code }}</strong> applied!
+                                        {% if promo_details %}
+                                            <div class="small">{{ promo_details.description }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger" id="remove-promo-btn">Remove</button>
+                                </div>
                             </div>
-                            <div>{{ promo_details.description }}</div>
-                            <button id="removePromoBtn" class="btn btn-sm btn-outline-danger mt-2">Remove</button>
-                        </div>
+                        {% else %}
+                            <div class="input-group mb-3">
+                                <input type="text" class="form-control" id="promo-code-input" placeholder="Enter code">
+                                <button class="btn btn-primary" type="button" id="apply-promo-btn">Apply</button>
+                            </div>
+                            <div class="alert alert-danger d-none" id="promo-error"></div>
+                        {% endif %}
                     </div>
-                    {% else %}
-                    <form id="promoCodeForm">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="promoCodeInput" name="promo_code" placeholder="Enter promo code">
-                            <button class="btn btn-primary" type="submit">Apply</button>
-                        </div>
-                    </form>
-                    <div id="promoResult" class="mt-2"></div>
-                    {% endif %}
-                </div>
-                
-                <!-- Totals -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Price Details</h5>
+                    
+                    <!-- Totals -->
+                    <div class="totals">
                         <div class="d-flex justify-content-between mb-2">
                             <span>Subtotal:</span>
-                            <span id="quote-subtotal">${{ quote_totals.subtotal }}</span>
+                            <span id="subtotal">${{ quote_totals.subtotal }}</span>
                         </div>
-                        <div class="d-flex justify-content-between mb-2">
+                        <div class="d-flex justify-content-between mb-2" id="discount-row" {% if not promo_code %}style="display: none;"{% endif %}>
                             <span>Discount:</span>
-                            <span id="quote-discount" class="discount-highlight">${{ quote_totals.discount }}</span>
+                            <span id="discount">-${{ quote_totals.discount_amount }}</span>
                         </div>
-                        <hr>
                         <div class="d-flex justify-content-between fw-bold">
                             <span>Total:</span>
-                            <span id="quote-total">${{ quote_totals.total }}</span>
+                            <span id="total">${{ quote_totals.total }}</span>
                         </div>
                     </div>
+                    
+                    <!-- Continue Button -->
+                    <div class="mt-4">
+                        <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-primary w-100 {% if not selected_treatments %}disabled{% endif %}" id="continue-btn">Continue to Patient Info</a>
+                    </div>
                 </div>
-                
-                <!-- Continue Button -->
-                <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-success w-100 {% if not selected_treatments %}disabled{% endif %}">
-                    Continue to Patient Information <i class="fas fa-arrow-right ms-2"></i>
-                </a>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
 <script>
-    // Check for promo code in URL and auto-apply it
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const promoCode = urlParams.get('promo');
-        
-        if (promoCode) {
-            const promoInput = document.getElementById('promoCodeInput');
-            const promoForm = document.getElementById('promoCodeForm');
+document.addEventListener('DOMContentLoaded', function() {
+    // Add Treatment
+    document.querySelectorAll('.add-treatment-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const treatmentId = this.dataset.treatmentId;
+            const treatmentName = this.dataset.treatmentName;
+            const treatmentPrice = this.dataset.treatmentPrice;
             
-            if (promoInput && promoForm) {
-                promoInput.value = promoCode;
-                
-                // Submit the form programmatically
-                setTimeout(() => {
-                    const event = new Event('submit', {
-                        'bubbles': true,
-                        'cancelable': true
-                    });
-                    promoForm.dispatchEvent(event);
-                }, 500);
-            }
+            // Send AJAX request to add treatment
+            fetch('/add-treatment-to-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `treatment_id=${treatmentId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateQuoteSummary(data);
+                    showAlert('success', `${treatmentName} added to your quote`);
+                } else {
+                    showAlert('danger', data.message || 'Failed to add treatment');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'An error occurred while adding the treatment');
+            });
+        });
+    });
+    
+    // Remove Treatment
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('remove-treatment') || event.target.closest('.remove-treatment')) {
+            const button = event.target.classList.contains('remove-treatment') ? 
+                  event.target : event.target.closest('.remove-treatment');
+            const treatmentId = button.dataset.treatmentId;
+            
+            // Send AJAX request to remove treatment
+            fetch('/remove-treatment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `treatment_id=${treatmentId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateQuoteSummary(data);
+                    showAlert('success', 'Treatment removed from your quote');
+                } else {
+                    showAlert('danger', data.message || 'Failed to remove treatment');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'An error occurred while removing the treatment');
+            });
         }
     });
+    
+    // Update Quantity
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('increase-quantity') || 
+            event.target.classList.contains('decrease-quantity')) {
+            
+            const treatmentId = event.target.dataset.treatmentId;
+            const isIncrease = event.target.classList.contains('increase-quantity');
+            const quantityInput = event.target.parentNode.querySelector('.treatment-quantity');
+            let currentQuantity = parseInt(quantityInput.value);
+            
+            // Calculate new quantity
+            let newQuantity = isIncrease ? currentQuantity + 1 : currentQuantity - 1;
+            
+            // Ensure quantity is at least 1
+            if (newQuantity < 1) {
+                newQuantity = 1;
+            }
+            
+            // Send AJAX request to update quantity
+            fetch('/update-quantity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: `treatment_id=${treatmentId}&quantity=${newQuantity}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateQuoteSummary(data);
+                } else {
+                    showAlert('danger', data.message || 'Failed to update quantity');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'An error occurred while updating quantity');
+            });
+        }
+    });
+    
+    // Apply Promo Code
+    document.getElementById('apply-promo-btn')?.addEventListener('click', function() {
+        const promoCode = document.getElementById('promo-code-input').value.trim();
+        if (!promoCode) {
+            showAlert('danger', 'Please enter a promo code');
+            return;
+        }
+        
+        // Send AJAX request to apply promo code
+        fetch('/apply-promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: `promo_code=${promoCode}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateQuoteSummary(data);
+                showAlert('success', 'Promo code applied successfully');
+            } else {
+                document.getElementById('promo-error').textContent = data.message || 'Invalid promo code';
+                document.getElementById('promo-error').classList.remove('d-none');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while applying the promo code');
+        });
+    });
+    
+    // Remove Promo Code
+    document.getElementById('remove-promo-btn')?.addEventListener('click', function() {
+        // Send AJAX request to remove promo code
+        fetch('/remove-promo', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: ``
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateQuoteSummary(data);
+                showAlert('success', 'Promo code removed');
+            } else {
+                showAlert('danger', data.message || 'Failed to remove promo code');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('danger', 'An error occurred while removing the promo code');
+        });
+    });
+    
+    // Function to update the quote summary with new data
+    function updateQuoteSummary(data) {
+        const treatmentsContainer = document.getElementById('selected-treatments-container');
+        const subtotalElement = document.getElementById('subtotal');
+        const discountElement = document.getElementById('discount');
+        const discountRow = document.getElementById('discount-row');
+        const totalElement = document.getElementById('total');
+        const continueBtn = document.getElementById('continue-btn');
+        
+        // Update treatments list
+        if (data.treatments.length === 0) {
+            treatmentsContainer.innerHTML = `
+                <div class="empty-cart mb-4">
+                    <div class="text-center">
+                        <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                        <p>No treatments selected yet</p>
+                    </div>
+                </div>
+            `;
+            continueBtn.classList.add('disabled');
+        } else {
+            let treatmentsHtml = `
+                <h6 class="fw-bold mb-3">Selected Treatments</h6>
+                <ul class="list-group mb-4" id="selected-treatments-list">
+            `;
+            
+            data.treatments.forEach(treatment => {
+                treatmentsHtml += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center" id="selected-${treatment.id}">
+                        <div>
+                            <div>${treatment.name}</div>
+                            <div class="text-muted small">$${treatment.price} each</div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="input-group quantity-control me-2">
+                                <button class="btn btn-outline-secondary decrease-quantity" data-treatment-id="${treatment.id}">-</button>
+                                <input type="text" class="form-control text-center treatment-quantity" value="${treatment.quantity || 1}" readonly>
+                                <button class="btn btn-outline-secondary increase-quantity" data-treatment-id="${treatment.id}">+</button>
+                            </div>
+                            <button class="btn btn-sm btn-outline-danger remove-treatment" data-treatment-id="${treatment.id}">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </li>
+                `;
+            });
+            
+            treatmentsHtml += `</ul>`;
+            treatmentsContainer.innerHTML = treatmentsHtml;
+            continueBtn.classList.remove('disabled');
+        }
+        
+        // Update promo code section
+        if (data.promo_code) {
+            const promoFormSection = document.querySelector('.promo-form');
+            promoFormSection.innerHTML = `
+                <h6 class="fw-bold mb-3">Promo Code</h6>
+                <div class="alert alert-success mb-3" id="promo-success">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${data.promo_code}</strong> applied!
+                            ${data.promo_details ? `<div class="small">${data.promo_details.description}</div>` : ''}
+                        </div>
+                        <button class="btn btn-sm btn-outline-danger" id="remove-promo-btn">Remove</button>
+                    </div>
+                </div>
+            `;
+            
+            // Re-attach event listener to the new button
+            document.getElementById('remove-promo-btn').addEventListener('click', function() {
+                fetch('/remove-promo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: ``
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateQuoteSummary(data);
+                        showAlert('success', 'Promo code removed');
+                    } else {
+                        showAlert('danger', data.message || 'Failed to remove promo code');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'An error occurred while removing the promo code');
+                });
+            });
+        } else {
+            const promoFormSection = document.querySelector('.promo-form');
+            promoFormSection.innerHTML = `
+                <h6 class="fw-bold mb-3">Promo Code</h6>
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" id="promo-code-input" placeholder="Enter code">
+                    <button class="btn btn-primary" type="button" id="apply-promo-btn">Apply</button>
+                </div>
+                <div class="alert alert-danger d-none" id="promo-error"></div>
+            `;
+            
+            // Re-attach event listener to the new button
+            document.getElementById('apply-promo-btn').addEventListener('click', function() {
+                const promoCode = document.getElementById('promo-code-input').value.trim();
+                if (!promoCode) {
+                    showAlert('danger', 'Please enter a promo code');
+                    return;
+                }
+                
+                fetch('/apply-promo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: `promo_code=${promoCode}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        updateQuoteSummary(data);
+                        showAlert('success', 'Promo code applied successfully');
+                    } else {
+                        document.getElementById('promo-error').textContent = data.message || 'Invalid promo code';
+                        document.getElementById('promo-error').classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showAlert('danger', 'An error occurred while applying the promo code');
+                });
+            });
+        }
+        
+        // Update totals
+        subtotalElement.textContent = `$${data.totals.subtotal}`;
+        if (data.totals.discount_amount > 0) {
+            discountElement.textContent = `-$${data.totals.discount_amount}`;
+            discountRow.style.display = 'flex';
+        } else {
+            discountRow.style.display = 'none';
+        }
+        totalElement.textContent = `$${data.totals.total}`;
+    }
+    
+    // Function to show alert messages
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        const container = document.querySelector('.container');
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto dismiss after 5 seconds
+        setTimeout(() => {
+            alertDiv.classList.remove('show');
+            setTimeout(() => alertDiv.remove(), 150);
+        }, 5000);
+    }
+});
 </script>
 {% endblock %}
