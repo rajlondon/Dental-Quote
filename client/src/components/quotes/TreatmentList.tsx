@@ -4,7 +4,7 @@
  * This component displays the list of treatments in a quote
  * and provides functionality for managing treatment quantities
  */
-import { useState } from 'react';
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -13,12 +13,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
+import { MinusCircle, PlusCircle, Trash2 } from "lucide-react";
 
-interface Treatment {
+export interface Treatment {
   id: string;
   name: string;
   quantity: number;
@@ -27,7 +24,7 @@ interface Treatment {
   clinic_ref_code?: string;
 }
 
-interface TreatmentListProps {
+export interface TreatmentListProps {
   treatments: Treatment[];
   editable?: boolean;
   onUpdateQuantity?: (treatmentId: string, quantity: number) => void;
@@ -42,119 +39,109 @@ export function TreatmentList({
   onRemoveTreatment,
   showClinicReferences = false,
 }: TreatmentListProps) {
-  const [quantities, setQuantities] = useState<Record<string, number>>(
-    treatments.reduce((acc, treatment) => {
-      acc[treatment.id] = treatment.quantity;
-      return acc;
-    }, {} as Record<string, number>)
-  );
+  if (!treatments || treatments.length === 0) {
+    return (
+      <div className="py-8 text-center">
+        <p className="text-muted-foreground">No treatments in this quote</p>
+      </div>
+    );
+  }
 
-  const handleQuantityChange = (treatmentId: string, value: string) => {
-    const quantity = parseInt(value, 10);
-    if (isNaN(quantity) || quantity < 1) return;
-
-    setQuantities((prev) => ({
-      ...prev,
-      [treatmentId]: quantity,
-    }));
-  };
-
-  const handleUpdateQuantity = (treatmentId: string) => {
-    if (onUpdateQuantity) {
-      onUpdateQuantity(treatmentId, quantities[treatmentId]);
-    }
-  };
-
-  // Calculate the total cost
-  const totalCost = treatments.reduce(
+  // Calculate totals
+  const subtotal = treatments.reduce(
     (sum, treatment) => sum + treatment.price * treatment.quantity,
     0
   );
 
   return (
-    <div className="w-full">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead className="w-[300px]">Treatment</TableHead>
-            {showClinicReferences && (
-              <TableHead>Clinic Reference</TableHead>
-            )}
-            <TableHead className="text-right">Unit Price</TableHead>
+            <TableHead className="text-right">Price</TableHead>
             <TableHead className="text-center">Quantity</TableHead>
             <TableHead className="text-right">Total</TableHead>
-            {editable && (
-              <TableHead className="text-right">Actions</TableHead>
-            )}
+            {showClinicReferences && <TableHead>Ref Code</TableHead>}
+            {editable && <TableHead></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
           {treatments.map((treatment) => (
             <TableRow key={treatment.id}>
               <TableCell className="font-medium">{treatment.name}</TableCell>
-              {showClinicReferences && (
-                <TableCell>{treatment.clinic_ref_code || 'N/A'}</TableCell>
-              )}
               <TableCell className="text-right">
-                {formatCurrency(treatment.price, treatment.currency)}
+                {treatment.currency} {treatment.price.toFixed(2)}
               </TableCell>
               <TableCell className="text-center">
                 {editable ? (
                   <div className="flex items-center justify-center gap-2">
-                    <Input
-                      type="number"
-                      value={quantities[treatment.id]}
-                      min={1}
-                      className="w-16 text-center"
-                      onChange={(e) =>
-                        handleQuantityChange(treatment.id, e.target.value)
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => 
+                        onUpdateQuantity?.(
+                          treatment.id,
+                          Math.max(1, treatment.quantity - 1)
+                        )
                       }
-                    />
-                    {quantities[treatment.id] !== treatment.quantity && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleUpdateQuantity(treatment.id)}
-                      >
-                        Update
-                      </Button>
-                    )}
+                      disabled={treatment.quantity <= 1}
+                    >
+                      <MinusCircle className="h-4 w-4" />
+                    </Button>
+                    <span>{treatment.quantity}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => 
+                        onUpdateQuantity?.(
+                          treatment.id,
+                          treatment.quantity + 1
+                        )
+                      }
+                    >
+                      <PlusCircle className="h-4 w-4" />
+                    </Button>
                   </div>
                 ) : (
                   treatment.quantity
                 )}
               </TableCell>
-              <TableCell className="text-right">
-                {formatCurrency(
-                  treatment.price * treatment.quantity,
-                  treatment.currency
-                )}
+              <TableCell className="text-right font-medium">
+                {treatment.currency}{" "}
+                {(treatment.price * treatment.quantity).toFixed(2)}
               </TableCell>
+              {showClinicReferences && (
+                <TableCell>
+                  {treatment.clinic_ref_code || "-"}
+                </TableCell>
+              )}
               {editable && (
-                <TableCell className="text-right">
+                <TableCell>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveTreatment && onRemoveTreatment(treatment.id)}
+                    size="icon"
+                    onClick={() => onRemoveTreatment?.(treatment.id)}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
                 </TableCell>
               )}
             </TableRow>
           ))}
-          <TableRow>
-            <TableCell colSpan={showClinicReferences ? 2 : 1} className="font-bold">
-              Total
-            </TableCell>
-            <TableCell colSpan={2}></TableCell>
-            <TableCell className="text-right font-bold">
-              {formatCurrency(totalCost, treatments[0]?.currency || 'USD')}
-            </TableCell>
-            {editable && <TableCell></TableCell>}
-          </TableRow>
         </TableBody>
       </Table>
+
+      <div className="mt-4 flex justify-end">
+        <div className="w-[200px]">
+          <div className="flex justify-between py-2">
+            <span>Subtotal:</span>
+            <span className="font-medium">
+              {treatments[0]?.currency || "$"} {subtotal.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

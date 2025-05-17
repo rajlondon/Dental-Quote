@@ -1,46 +1,40 @@
 /**
- * Hook for fetching clinic data
+ * Hook for accessing clinic data
+ * This hook provides access to the list of clinics and clinic details
  */
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 
 export interface Clinic {
-  id: number;
+  id: string;
   name: string;
-  location: string;
-  specialties?: string[];
-  rating?: number;
-  logo_url?: string;
+  logo?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
   website?: string;
-  contact_email?: string;
-  contact_phone?: string;
+  description?: string;
+  location?: string;
+  specialties?: string[];
 }
 
-/**
- * Hook to fetch a list of all available clinics
- */
-export function useClinicList() {
+export function useClinics() {
   return useQuery({
     queryKey: ['/api/clinics'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/clinics');
-      const data = await response.json();
-      return data as Clinic[];
+      return response.json() as Promise<Clinic[]>;
     }
   });
 }
 
-/**
- * Hook to fetch a specific clinic by ID
- */
-export function useClinicDetail(clinicId: string | number | null | undefined) {
+export function useClinicDetails(clinicId: string | undefined) {
   return useQuery({
     queryKey: [`/api/clinics/${clinicId}`],
     queryFn: async () => {
       if (!clinicId) return null;
       const response = await apiRequest('GET', `/api/clinics/${clinicId}`);
-      const data = await response.json();
-      return data as Clinic;
+      return response.json() as Promise<Clinic>;
     },
     enabled: !!clinicId
   });
