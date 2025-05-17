@@ -149,72 +149,89 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
     setIsValidatingPromo(true);
     
     try {
-      // For demonstration, using mock validation
-      const mockValidation = (code: string): PromoValidationResult => {
-        // Define valid promo codes for demo
-        const validCodes: Record<string, PromoValidationResult> = {
-          'SUMMER15': {
-            isValid: true,
-            code: 'SUMMER15',
-            message: 'Summer discount applied successfully!',
+      // First check if this is a package promo code
+      const packageData = await TreatmentPackageService.getPackageByPromoCode(codeToApply);
+      
+      if (packageData) {
+        // It's a package promo code
+        if (selectedTreatments.length > 0) {
+          // Ask if user wants to replace existing treatments
+          setPendingPackage(packageData);
+          setShowPackageDialog(true);
+          setIsValidatingPromo(false);
+          return;
+        } else {
+          // No existing treatments, apply package directly
+          applyTreatmentPackage(packageData);
+        }
+      } else {
+        // For standard promo codes, using mock validation
+        const mockValidation = (code: string): PromoValidationResult => {
+          // Define valid promo codes for demo
+          const validCodes: Record<string, PromoValidationResult> = {
+            'SUMMER15': {
+              isValid: true,
+              code: 'SUMMER15',
+              message: 'Summer discount applied successfully!',
+              discountType: 'percentage',
+              discountValue: 15
+            },
+            'DENTAL25': {
+              isValid: true,
+              code: 'DENTAL25',
+              message: 'Dental procedure discount applied!',
+              discountType: 'percentage',
+              discountValue: 25
+            },
+            'NEWPATIENT': {
+              isValid: true,
+              code: 'NEWPATIENT',
+              message: 'New patient discount applied!',
+              discountType: 'percentage',
+              discountValue: 20
+            },
+            'TEST10': {
+              isValid: true,
+              code: 'TEST10',
+              message: 'Test discount applied!',
+              discountType: 'percentage',
+              discountValue: 10
+            },
+            'FREECONSULT': {
+              isValid: true,
+              code: 'FREECONSULT',
+              message: 'Free consultation added to your treatment plan!',
+              discountType: 'fixed_amount',
+              discountValue: 0
+            }
+          };
+          
+          return validCodes[code.toUpperCase()] || {
+            isValid: false,
+            code: code,
+            message: 'Invalid promo code. Please try another.',
             discountType: 'percentage',
-            discountValue: 15
-          },
-          'DENTAL25': {
-            isValid: true,
-            code: 'DENTAL25',
-            message: 'Dental procedure discount applied!',
-            discountType: 'percentage',
-            discountValue: 25
-          },
-          'NEWPATIENT': {
-            isValid: true,
-            code: 'NEWPATIENT',
-            message: 'New patient discount applied!',
-            discountType: 'percentage',
-            discountValue: 20
-          },
-          'TEST10': {
-            isValid: true,
-            code: 'TEST10',
-            message: 'Test discount applied!',
-            discountType: 'percentage',
-            discountValue: 10
-          },
-          'FREECONSULT': {
-            isValid: true,
-            code: 'FREECONSULT',
-            message: 'Free consultation added to your treatment plan!',
-            discountType: 'fixed_amount',
             discountValue: 0
-          }
+          };
         };
         
-        return validCodes[code.toUpperCase()] || {
-          isValid: false,
-          code: code,
-          message: 'Invalid promo code. Please try another.',
-          discountType: 'percentage',
-          discountValue: 0
-        };
-      };
-      
-      const result = mockValidation(codeToApply);
-      setPromoValidationResult(result);
-      
-      if (result.isValid) {
-        setPromoCode(result.code);
-        toast({
-          title: 'Promo Code Applied',
-          description: result.message,
-          variant: 'success',
-        });
-      } else {
-        toast({
-          title: 'Invalid Promo Code',
-          description: result.message,
-          variant: 'destructive',
-        });
+        const result = mockValidation(codeToApply);
+        setPromoValidationResult(result);
+        
+        if (result.isValid) {
+          setPromoCode(result.code);
+          toast({
+            title: 'Promo Code Applied',
+            description: result.message,
+            variant: 'success',
+          });
+        } else {
+          toast({
+            title: 'Invalid Promo Code',
+            description: result.message,
+            variant: 'destructive',
+          });
+        }
       }
     } catch (error) {
       console.error('Error validating promo code:', error);
@@ -229,10 +246,45 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
     }
   };
   
+  // Function to apply a treatment package
+  const applyTreatmentPackage = (packageData: TreatmentPackage) => {
+    // Set the package treatments as selected treatments
+    const packageTreatments = packageData.treatments.map(treatment => ({
+      ...treatment,
+      price: treatment.price * (treatment.quantity || 1) // Adjust price for quantity
+    }));
+    
+    setSelectedTreatments(packageTreatments);
+    setCurrentPackage(packageData);
+    setAdditionalServices(packageData.additionalServices);
+    
+    // Set promo code and validation result
+    setPromoCode(packageData.promoCode);
+    setPromoValidationResult({
+      isValid: true,
+      code: packageData.promoCode,
+      message: `${packageData.name} package applied successfully!`,
+      discountType: 'percentage',
+      discountValue: packageData.discountPercentage,
+      isPackage: true,
+      packageId: packageData.id
+    });
+    
+    toast({
+      title: 'Package Applied',
+      description: `${packageData.name} has been applied to your quote.`,
+      variant: 'default',
+    });
+    
+    setIsValidatingPromo(false);
+  };
+  
   // Clear promo code
   const handleClearPromoCode = () => {
     setPromoCode(null);
     setPromoValidationResult(null);
+    setCurrentPackage(null);
+    setAdditionalServices([]);
     
     toast({
       title: 'Promo Code Removed',
