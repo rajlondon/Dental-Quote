@@ -1,86 +1,47 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Clinic } from "@/types/clinic";
-import { useToast } from "@/hooks/use-toast";
+/**
+ * Hook for fetching clinic data
+ */
+import { useQuery } from '@tanstack/react-query';
+import { apiRequest } from '@/lib/queryClient';
 
-export function useClinics() {
-  const { toast } = useToast();
+export interface Clinic {
+  id: number;
+  name: string;
+  location: string;
+  specialties?: string[];
+  rating?: number;
+  logo_url?: string;
+  website?: string;
+  contact_email?: string;
+  contact_phone?: string;
+}
 
-  // Query for all clinics (for admin portal)
-  const allClinicsQuery = useQuery<Clinic[]>({
-    queryKey: ["/api/clinics"],
+/**
+ * Hook to fetch a list of all available clinics
+ */
+export function useClinicList() {
+  return useQuery({
+    queryKey: ['/api/clinics'],
     queryFn: async () => {
-      const response = await apiRequest("GET", "/api/clinics");
+      const response = await apiRequest('GET', '/api/clinics');
       const data = await response.json();
-      return data.data;
-    },
-    enabled: true // Automatically enable so clinics are loaded
-  });
-
-  // Get a specific clinic by ID
-  const getClinicQuery = (id: number) => useQuery<Clinic>({
-    queryKey: ["/api/clinics", id],
-    queryFn: async () => {
-      const response = await apiRequest("GET", `/api/clinics/${id}`);
-      const data = await response.json();
-      return data.data;
-    },
-    enabled: !!id // Only fetch when ID is provided
-  });
-
-  // Update a clinic
-  const updateClinicMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number, data: Partial<Clinic> }) => {
-      const response = await apiRequest("PATCH", `/api/clinics/${id}`, data);
-      return response.json();
-    },
-    onSuccess: (data, variables) => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ["/api/clinics", variables.id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/clinics"] });
-      
-      toast({
-        title: "Clinic updated",
-        description: "The clinic has been updated successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error updating clinic",
-        description: error.message,
-        variant: "destructive",
-      });
+      return data as Clinic[];
     }
   });
+}
 
-  // Create a new clinic
-  const createClinicMutation = useMutation({
-    mutationFn: async (clinicData: Partial<Clinic>) => {
-      const response = await apiRequest("POST", "/api/clinics", clinicData);
-      return response.json();
+/**
+ * Hook to fetch a specific clinic by ID
+ */
+export function useClinicDetail(clinicId: string | number | null | undefined) {
+  return useQuery({
+    queryKey: [`/api/clinics/${clinicId}`],
+    queryFn: async () => {
+      if (!clinicId) return null;
+      const response = await apiRequest('GET', `/api/clinics/${clinicId}`);
+      const data = await response.json();
+      return data as Clinic;
     },
-    onSuccess: () => {
-      // Invalidate the clinics list query
-      queryClient.invalidateQueries({ queryKey: ["/api/clinics"] });
-      
-      toast({
-        title: "Clinic created",
-        description: "The clinic has been created successfully.",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error creating clinic",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
+    enabled: !!clinicId
   });
-
-  return {
-    allClinicsQuery,
-    getClinicQuery,
-    updateClinicMutation,
-    createClinicMutation
-  };
 }
