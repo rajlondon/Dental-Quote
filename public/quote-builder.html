@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Quote Builder</title>
+    <style>
+        /* Base Styles */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f8fa;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #1e88e5;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            color: #555;
+            margin-bottom: 20px;
+        }
+
+        .iframe-container {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .notes {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border-radius: 6px;
+        }
+
+        .notes h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .notes ul {
+            margin-left: 20px;
+        }
+
+        .notes li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Dental Quote Builder</h1>
+        <h2>Server-Side Solution with Flask</h2>
+        
+        <div class="iframe-container">
+            <iframe src="https://flask-dental-quote-builder.your-username.repl.co" title="Dental Quote Builder"></iframe>
+        </div>
+        
+        <div class="notes">
+            <h3>About This Solution</h3>
+            <p>This is a server-side implementation of the dental quote builder using Python Flask. Key advantages:</p>
+            <ul>
+                <li><strong>Server-side state management</strong> - All quote data is stored in a server-side session, preventing state loss between steps</li>
+                <li><strong>No form submission issues</strong> - Data is sent via AJAX calls without full page refreshes</li>
+                <li><strong>Step-by-step navigation</strong> - Clean interface that guides users through the quote process</li>
+                <li><strong>Promo code support</strong> - Try codes like SUMMER15, DENTAL25, NEWPATIENT, or TEST10</li>
+                <li><strong>Clean, modern design</strong> - Mobile-responsive layout with clear visual hierarchy</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
