@@ -503,11 +503,51 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
                     <p className={`text-sm ${promoValidationResult.isValid ? 'text-success-foreground' : 'text-destructive-foreground'}`}>
                       {promoValidationResult.message}
                     </p>
+                    
                     {promoValidationResult.isValid && promoValidationResult.discountType === 'percentage' && (
                       <p className="text-sm font-medium mt-1">
                         You save {promoValidationResult.discountValue}% 
                         ({formatPriceInCurrency(discount, currency)})
                       </p>
+                    )}
+                    
+                    {promoValidationResult.isValid && promoValidationResult.isPackage && currentPackage && (
+                      <div className="mt-3 pt-3 border-t border-border/30">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <Package className="h-4 w-4 text-primary" />
+                          <span className="font-medium text-sm">Treatment Package Applied</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{currentPackage.description}</p>
+                        
+                        <div className="mb-3">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Regular Price:</span>
+                            <span className="line-through text-muted-foreground">
+                              {formatPriceInCurrency(currentPackage.regularPrice, currency)}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span>Special Price:</span>
+                            <span className="font-semibold text-primary">
+                              {formatPriceInCurrency(currentPackage.discountedPrice, currency)}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {additionalServices.length > 0 && (
+                          <div className="mb-2">
+                            <p className="text-sm font-medium mb-1">Includes:</p>
+                            <ul className="grid grid-cols-1 gap-1">
+                              {additionalServices.filter(s => s.included).map((service, idx) => (
+                                <li key={idx} className="text-xs flex items-center gap-1">
+                                  <Check className="h-3 w-3 text-green-500" />
+                                  <span>{service.name}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
@@ -800,6 +840,99 @@ const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
           </button>
         )}
       </div>
+      
+      {/* Treatment Package Dialog */}
+      <Dialog open={showPackageDialog} onOpenChange={setShowPackageDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Apply Treatment Package
+            </DialogTitle>
+            <DialogDescription>
+              This promo code will apply a complete treatment package. This will replace your current treatment selection.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {pendingPackage && (
+            <div className="py-4">
+              <h3 className="font-semibold text-lg mb-2">{pendingPackage.name}</h3>
+              <p className="text-sm text-muted-foreground mb-4">{pendingPackage.description}</p>
+              
+              <Card className="mb-4">
+                <CardContent className="pt-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">Regular Price:</span>
+                    <span className="line-through text-muted-foreground">
+                      {formatPriceInCurrency(pendingPackage.regularPrice, pendingPackage.currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium">Package Price:</span>
+                    <span className="font-bold text-lg text-primary">
+                      {formatPriceInCurrency(pendingPackage.discountedPrice, pendingPackage.currency)}
+                    </span>
+                  </div>
+                  <div className="flex justify-end mt-1">
+                    <Badge variant="outline" className="bg-primary/10">
+                      Save {pendingPackage.discountPercentage}%
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <div className="space-y-2">
+                <h4 className="font-medium">Included Treatments:</h4>
+                <ul className="list-disc list-inside text-sm space-y-1.5">
+                  {pendingPackage.treatments.map(treatment => (
+                    <li key={treatment.id} className="flex justify-between">
+                      <span>{treatment.name} {treatment.quantity && treatment.quantity > 1 ? `(×${treatment.quantity})` : ''}</span>
+                      <span className="font-medium">{formatPriceInCurrency(treatment.price * (treatment.quantity || 1), pendingPackage.currency)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              {pendingPackage.additionalServices.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <h4 className="font-medium">Additional Services:</h4>
+                  <ul className="list-disc list-inside text-sm space-y-1.5">
+                    {pendingPackage.additionalServices.map((service, index) => (
+                      <li key={index} className="flex items-center">
+                        <span>{service.name}</span>
+                        {service.included ? (
+                          <Check className="text-green-500 h-4 w-4 ml-2" />
+                        ) : (
+                          <span className="text-muted-foreground ml-2">(Not included)</span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+          
+          <DialogFooter className="sm:justify-between">
+            <Button variant="outline" onClick={() => setShowPackageDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => {
+                if (pendingPackage) {
+                  applyTreatmentPackage(pendingPackage);
+                  setPendingPackage(null);
+                  setShowPackageDialog(false);
+                }
+              }} 
+              className="flex items-center gap-1"
+            >
+              <Check className="h-4 w-4" />
+              Apply Package
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
