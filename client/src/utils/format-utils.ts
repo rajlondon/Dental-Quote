@@ -4,6 +4,22 @@
 
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'TRY';
 
+/**
+ * Simple currency formatter (for compatibility with existing code)
+ * 
+ * @param amount - The amount to format
+ * @param currency - Optional currency code (defaults to USD)
+ * @returns Formatted currency string
+ */
+export function formatCurrency(amount: number, currency: string = 'USD'): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+}
+
 export interface CurrencyFormat {
   symbol: string;
   position: 'before' | 'after';
