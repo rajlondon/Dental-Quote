@@ -1,154 +1,283 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Review Quote | MyDentalFly</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <div class="logo">
-                <h1>MyDentalFly</h1>
-                <p>Dental Quote System</p>
-            </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a></li>
-                    <li><a href="{{ url_for('promo_routes.special_offers_page') }}">Special Offers</a></li>
-                </ul>
-            </nav>
+{% extends 'base.html' %}
+
+{% block title %}Review Your Quote | MyDentalFly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .quote-card {
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .quote-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #e9ecef;
+    }
+    .treatment-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 1rem 0;
+    }
+    .treatment-item:last-child {
+        border-bottom: none;
+    }
+    .quote-footer {
+        background-color: #f8f9fa;
+        border-top: 1px solid #e9ecef;
+    }
+    .quote-ref {
+        font-family: monospace;
+        font-weight: bold;
+    }
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        .print-only {
+            display: block !important;
+        }
+        body {
+            font-size: 12pt;
+        }
+        .container {
+            width: 100%;
+            max-width: 100%;
+        }
+        .quote-card {
+            box-shadow: none;
+            border: 1px solid #dee2e6;
+        }
+    }
+    .print-only {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4 no-print">Review Your Dental Treatment Quote</h1>
+        <div class="progress mb-4 no-print">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: 75%;" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100">Step 3 of 4</div>
         </div>
-    </header>
+        
+        <div class="print-only text-center mt-4 mb-4">
+            <h1>MyDentalFly Dental Treatment Quote</h1>
+            <p>Generated on {{ now.strftime('%B %d, %Y') }}</p>
+        </div>
+    </div>
+</div>
 
-    <main>
-        <div class="container">
-            <div class="flash-container">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-            </div>
-
-            <div class="quote-progress mb-4">
-                <div class="progress-step">1. Select Treatments</div>
-                <div class="progress-step">2. Patient Information</div>
-                <div class="progress-step active">3. Review Quote</div>
-            </div>
-
-            <div class="review-quote-container">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h1>Review Your Dental Quote</h1>
-                        <p>Quote Reference: {{ quote_ref }}</p>
+<div class="row mb-5">
+    <div class="col-md-12">
+        <div class="card quote-card">
+            <div class="card-header quote-header py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="h4 mb-0">Dental Treatment Quote</h2>
+                        <p class="mb-0 text-muted">Reference: <span class="quote-ref">{{ quote_ref }}</span></p>
                     </div>
-                    <div class="card-body">
-                        <div class="review-section">
-                            <h2 class="review-section-title">Patient Information</h2>
-                            <div class="review-patient">
-                                <div>
-                                    <p><span class="review-patient-label">Name:</span> {{ patient_info.name }}</p>
-                                    <p><span class="review-patient-label">Email:</span> {{ patient_info.email }}</p>
-                                </div>
-                                <div>
-                                    <p><span class="review-patient-label">Phone:</span> {{ patient_info.phone }}</p>
-                                    {% if patient_info.notes %}
-                                        <p><span class="review-patient-label">Notes:</span> {{ patient_info.notes }}</p>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="review-section">
-                            <h2 class="review-section-title">Selected Treatments</h2>
-                            <div class="review-treatments">
-                                <div class="summary-list">
-                                    {% for treatment in treatments %}
-                                        <div class="summary-item">
-                                            <div class="summary-item-name">{{ treatment.name }}</div>
-                                            <div class="summary-item-price">${{ "%.2f"|format(treatment.price) }}</div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="review-section">
-                            <h2 class="review-section-title">Pricing</h2>
-                            <div class="summary-totals">
-                                <div class="summary-subtotal">
-                                    <div>Subtotal</div>
-                                    <div>${{ "%.2f"|format(subtotal) }}</div>
-                                </div>
-                                
-                                {% if promo_details %}
-                                    <div class="summary-discount">
-                                        <div>Discount ({{ promo_details.description }})</div>
-                                        <div>-${{ "%.2f"|format(discount) }}</div>
-                                    </div>
-                                {% endif %}
-                                
-                                <div class="summary-total">
-                                    <div>Total</div>
-                                    <div>${{ "%.2f"|format(total) }}</div>
-                                </div>
-                            </div>
-                            
-                            {% if promo_details %}
-                                <div class="applied-promo mt-3">
-                                    <div class="applied-promo-info">
-                                        <div>Applied promo: <span class="applied-promo-code">{{ promo_code }}</span></div>
-                                        <div class="applied-promo-description">{{ promo_details.description }}</div>
-                                    </div>
-                                </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="mb-0"><strong>Date:</strong> {{ now.strftime('%B %d, %Y') }}</p>
+                        <p class="mb-0"><strong>Valid Until:</strong> {{ expires.strftime('%B %d, %Y') }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h3 class="h5">Patient Information</h3>
+                        <p class="mb-1"><strong>Name:</strong> {{ patient_info.name }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ patient_info.email }}</p>
+                        <p class="mb-1"><strong>Phone:</strong> {{ patient_info.phone }}</p>
+                        {% if patient_info.notes %}
+                        <p class="mb-0"><strong>Notes:</strong> {{ patient_info.notes }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h3 class="h5">Quote Details</h3>
+                        <p class="mb-1"><strong>Provider:</strong> MyDentalFly</p>
+                        <p class="mb-1"><strong>Location:</strong> Multiple partner clinics in Turkey</p>
+                        <p class="mb-1"><strong>Currency:</strong> USD (United States Dollar)</p>
+                        {% if promo_code %}
+                        <p class="mb-0"><strong>Promo Code:</strong> {{ promo_code }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <h3 class="h5 mb-3">Selected Treatments</h3>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">Treatment</th>
+                                <th scope="col">Description</th>
+                                <th scope="col" class="text-end">Price (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for treatment in treatments %}
+                            <tr>
+                                <td>{{ treatment.name }}</td>
+                                <td>{{ treatment.description }}</td>
+                                <td class="text-end">${{ treatment.price }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="2" class="text-end">Subtotal:</th>
+                                <td class="text-end">${{ subtotal }}</td>
+                            </tr>
+                            {% if discount > 0 %}
+                            <tr>
+                                <th colspan="2" class="text-end text-success">Discount:</th>
+                                <td class="text-end text-success">-${{ discount }}</td>
+                            </tr>
                             {% endif %}
-                        </div>
-
-                        <div class="review-actions">
-                            <div>
-                                <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-secondary">Back to Patient Info</a>
-                            </div>
-                            <div>
-                                <form action="{{ url_for('integration_routes.send_quote_email') }}" method="POST" class="d-inline">
-                                    <button type="submit" class="btn btn-primary">Email Quote</button>
-                                </form>
-                                <a href="{{ url_for('integration_routes.export_pdf') }}" class="btn btn-primary ml-2">Export as PDF</a>
-                                <a href="{{ url_for('page_routes.reset_quote_route') }}" class="btn btn-outline-primary ml-2">Start New Quote</a>
-                            </div>
-                        </div>
-                    </div>
+                            <tr>
+                                <th colspan="2" class="text-end">Total:</th>
+                                <td class="text-end"><strong>${{ total }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
                 </div>
-
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h2>Need Assistance?</h2>
-                    </div>
-                    <div class="card-body">
-                        <p>If you have any questions about your quote or would like to discuss your dental treatment options, please contact us:</p>
-                        <ul>
-                            <li>Email: info@mydentalfly.com</li>
-                            <li>Phone: +1-555-DENTAL (336825)</li>
+                
+                <div class="mt-4">
+                    <h3 class="h5 mb-3">What's Included</h3>
+                    <ul class="mb-0">
+                        <li>Pre-treatment consultation with an English-speaking specialist</li>
+                        <li>All necessary X-rays and diagnostics</li>
+                        <li>The treatments listed above performed by experienced professionals</li>
+                        <li>Post-treatment follow-up and care instructions</li>
+                        <li>1-year warranty on all treatments (terms apply)</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="card-footer quote-footer py-3">
+                <div class="row">
+                    <div class="col-md-7">
+                        <h3 class="h5 mb-2">Terms & Conditions</h3>
+                        <ul class="mb-0 small">
+                            <li>This quote is valid for 30 days from the date of issue.</li>
+                            <li>Prices are subject to change based on detailed examination findings.</li>
+                            <li>Additional treatments may be recommended based on in-person assessment.</li>
+                            <li>Payment terms: 30% deposit to secure appointment, balance due on treatment completion.</li>
+                            <li>Cancellation policy: Full refund with 7+ days notice, 50% refund with 3-6 days notice.</li>
                         </ul>
-                        <p>We're here to help you achieve the smile you deserve!</p>
+                    </div>
+                    <div class="col-md-5">
+                        <h3 class="h5 mb-2">Next Steps</h3>
+                        <p class="mb-2 small">To proceed with your dental treatment plan:</p>
+                        <ol class="mb-0 small">
+                            <li>Save or print this quote for your records</li>
+                            <li>Our dental travel consultant will contact you within 24 hours</li>
+                            <li>Schedule your treatment dates and make travel arrangements</li>
+                            <li>Pay deposit to confirm your booking</li>
+                        </ol>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
+</div>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
+<div class="row mb-5 no-print">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between">
+            <a href="{{ url_for('page_routes.patient_info') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i> Edit Patient Information
+            </a>
+            <div>
+                <button onclick="window.print()" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-print me-2"></i> Print Quote
+                </button>
+                <a href="mailto:?subject=Your%20MyDentalFly%20Quote%20{{ quote_ref }}&body=Thank%20you%20for%20using%20MyDentalFly%20to%20get%20a%20quote%20for%20your%20dental%20treatment.%0A%0AYour%20quote%20reference%20is%3A%20{{ quote_ref }}%0A%0APlease%20visit%20https%3A%2F%2Fmydentalfly.com%2Fquote%2F{{ quote_ref }}%20to%20view%20your%20complete%20quote." class="btn btn-outline-primary me-2">
+                    <i class="fas fa-envelope me-2"></i> Email Quote
+                </a>
+                <a href="{{ url_for('page_routes.index') }}" class="btn btn-primary">
+                    Finish <i class="fas fa-check ms-2"></i>
+                </a>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
+
+<div class="row mb-5 no-print">
+    <div class="col-md-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h3 class="h5">Still Have Questions?</h3>
+                <p>Our dental travel consultants are here to help. Contact us with any questions or concerns about your quote or treatment plan.</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <p class="mb-1"><i class="fas fa-phone me-2"></i> +44 20 1234 5678</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><i class="fas fa-envelope me-2"></i> info@mydentalfly.com</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p class="mb-1"><i class="fab fa-whatsapp me-2"></i> +90 555 123 4567</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row no-print">
+    <div class="col-md-12 text-center">
+        <h3 class="h5 mb-3">Why Choose MyDentalFly</h3>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3"><i class="fas fa-user-md fa-2x text-primary"></i></div>
+                <h4 class="h6">Experienced Doctors</h4>
+                <p class="small">All our partner clinics employ experienced, English-speaking specialists.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3"><i class="fas fa-certificate fa-2x text-primary"></i></div>
+                <h4 class="h6">Quality Guaranteed</h4>
+                <p class="small">ISO-certified clinics with the latest dental technology and materials.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3"><i class="fas fa-headset fa-2x text-primary"></i></div>
+                <h4 class="h6">24/7 Support</h4>
+                <p class="small">Dedicated concierge service before, during, and after your treatment.</p>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3"><i class="fas fa-wallet fa-2x text-primary"></i></div>
+                <h4 class="h6">Transparent Pricing</h4>
+                <p class="small">No hidden fees, with savings of up to 70% compared to UK prices.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add current date and expiration date for the quote
+    const now = new Date();
+    const expires = new Date(now);
+    expires.setDate(expires.getDate() + 30); // Quote valid for 30 days
     
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+    // Format dates for display
+    const formatDate = (date) => {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    };
+    
+    // Replace template date placeholders with JavaScript
+    const datePlaceholders = document.querySelectorAll('[data-date="now"]');
+    datePlaceholders.forEach(el => {
+        el.textContent = formatDate(now);
+    });
+    
+    const expiryPlaceholders = document.querySelectorAll('[data-date="expires"]');
+    expiryPlaceholders.forEach(el => {
+        el.textContent = formatDate(expires);
+    });
+});
+</script>
+{% endblock %}
