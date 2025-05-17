@@ -84,12 +84,14 @@
             <h2>Promo Code</h2>
             <div class="promo-section">
                 {% if quote_data.promo_code %}
-                <div class="applied-promo">
-                    <span>{{ quote_data.promo_code }} ({{ quote_data.discount }}% discount)</span>
-                    <button class="btn remove-promo-btn">Remove</button>
+                <div class="applied-promo-section">
+                    <div class="applied-promo">
+                        <span>{{ quote_data.promo_code }} ({{ quote_data.discount }}% discount)</span>
+                        <button class="btn remove-promo-btn" style="background-color: #dc3545; color: white; border: none; border-radius: 4px;">Remove</button>
+                    </div>
                 </div>
-                {% else %}
-                <div class="promo-form">
+                {% endif %}
+                <div id="promo-code-entry" class="promo-form" style="{% if quote_data.promo_code %}display:none;{% endif %}">
                     <div class="form-group">
                         <label for="promo-code">Enter Promo Code:</label>
                         <div class="promo-input-group">
@@ -108,7 +110,6 @@
                         </div>
                     </div>
                 </div>
-                {% endif %}
             </div>
             <div class="step-actions">
                 <button class="btn back-btn" data-prev-step="treatments">Back</button>
