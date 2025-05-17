@@ -7,10 +7,10 @@
  * 3. Verifying that the clinic ID is properly passed and displayed
  */
 
-const axios = require('axios');
-const { JSDOM } = require('jsdom');
-const fs = require('fs');
-const path = require('path');
+import axios from 'axios';
+import { JSDOM } from 'jsdom';
+import fs from 'fs';
+import path from 'path';
 
 // Configuration
 const BASE_URL = 'http://localhost:3000';
