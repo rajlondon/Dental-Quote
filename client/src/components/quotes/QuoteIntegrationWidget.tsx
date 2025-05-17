@@ -1,403 +1,731 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import TreatmentList, { Treatment } from './TreatmentList';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { formatCurrency, CurrencyCode } from '@/utils/format-utils';
-import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
+import TreatmentList from './TreatmentList';
+import { 
+  formatPrice, 
+  formatPriceInCurrency,
+  CurrencyCode
+} from '@/utils/format-utils';
 
-// Quote data interface
-interface QuoteData {
-  subtotal: number;
-  discount: number;
-  total: number;
-  promoCode?: string;
-  promoValid?: boolean;
-  promoMessage?: string;
-  currency: CurrencyCode;
-  treatments: Treatment[];
+interface Treatment {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  clinicId?: string;
+  clinicName?: string;
+  imageUrl?: string;
 }
 
-// Initial empty quote data
-const emptyQuoteData: QuoteData = {
-  subtotal: 0,
-  discount: 0,
-  total: 0,
-  currency: 'USD',
-  treatments: []
-};
+interface PromoValidationResult {
+  isValid: boolean;
+  code: string;
+  message: string;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+}
 
 interface QuoteIntegrationWidgetProps {
   initialTreatments?: Treatment[];
+  initialPromoCode?: string;
+  onQuoteSaved?: (quoteData: any) => void;
   currency?: CurrencyCode;
-  onUpdate?: (quoteData: QuoteData) => void;
-  readOnly?: boolean;
-  allowPromoCode?: boolean;
-  autoApplyPromo?: boolean;
+  portalType?: 'patient' | 'clinic' | 'admin';
+  mode?: 'create' | 'edit' | 'view';
 }
 
 const QuoteIntegrationWidget: React.FC<QuoteIntegrationWidgetProps> = ({
   initialTreatments = [],
+  initialPromoCode = '',
+  onQuoteSaved,
   currency = 'USD',
-  onUpdate,
-  readOnly = false,
-  allowPromoCode = true,
-  autoApplyPromo = true
+  portalType = 'patient',
+  mode = 'create'
 }) => {
-  // State for the quote data
-  const [quoteData, setQuoteData] = useState<QuoteData>({
-    ...emptyQuoteData,
-    currency,
-    treatments: initialTreatments
-  });
-  
-  // State for promo code input
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  
-  // State for loading indicators
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
-  
-  // Toast notifications
   const { toast } = useToast();
-  
-  // Auto-apply promo code from URL if enabled
-  const urlPromoCode = useAutoApplyCode(code => {
-    if (autoApplyPromo && code) {
-      setPromoCodeInput(code);
-      handleApplyPromoCode(code);
-    }
+  const [step, setStep] = useState<number>(1);
+  const [treatments, setTreatments] = useState<Treatment[]>([]);
+  const [selectedTreatments, setSelectedTreatments] = useState<Treatment[]>(initialTreatments);
+  const [loadingTreatments, setLoadingTreatments] = useState<boolean>(true);
+  const [promoCode, setPromoCode] = useState<string | null>(initialPromoCode || null);
+  const [promoInput, setPromoInput] = useState<string>('');
+  const [isValidatingPromo, setIsValidatingPromo] = useState<boolean>(false);
+  const [promoValidationResult, setPromoValidationResult] = useState<PromoValidationResult | null>(null);
+  const [patientInfo, setPatientInfo] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    notes: ''
   });
-
-  // Calculate subtotal from treatments
-  const calculateSubtotal = (treatments: Treatment[]): number => {
-    return treatments.reduce((sum, treatment) => {
-      const quantity = treatment.quantity || 1;
-      return sum + (treatment.price * quantity);
-    }, 0);
-  };
-
+  
+  // Fetch treatments from API
+  useEffect(() => {
+    const fetchTreatments = async () => {
+      try {
+        // For demonstration, using mock data
+        const mockTreatments: Treatment[] = [
+          {
+            id: '1',
+            name: 'Dental Implant',
+            description: 'Titanium post surgically placed into the jawbone',
+            price: 1200,
+            category: 'Implants'
+          },
+          {
+            id: '2',
+            name: 'Porcelain Crown',
+            description: 'Custom-made porcelain cap placed over a damaged tooth',
+            price: 800,
+            category: 'Crowns'
+          },
+          {
+            id: '3',
+            name: 'Root Canal',
+            description: 'Removal of infected pulp from inside the tooth',
+            price: 650,
+            category: 'Endodontics'
+          },
+          {
+            id: '4',
+            name: 'Teeth Whitening',
+            description: 'Professional whitening treatment for brighter smile',
+            price: 350,
+            category: 'Cosmetic'
+          },
+          {
+            id: '5',
+            name: 'Dental Veneers (per tooth)',
+            description: 'Thin shells custom-made to cover front surface of teeth',
+            price: 900,
+            category: 'Cosmetic'
+          }
+        ];
+        
+        setTreatments(mockTreatments);
+        setLoadingTreatments(false);
+      } catch (error) {
+        console.error('Error fetching treatments:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load treatments. Please try again.',
+          variant: 'destructive',
+        });
+        setLoadingTreatments(false);
+      }
+    };
+    
+    fetchTreatments();
+  }, [toast]);
+  
   // Apply promo code
-  const handleApplyPromoCode = async (code: string) => {
-    if (!code.trim()) {
+  const handleApplyPromoCode = async (code?: string) => {
+    const codeToApply = code || promoInput;
+    if (!codeToApply) return;
+    
+    setIsValidatingPromo(true);
+    
+    try {
+      // For demonstration, using mock validation
+      const mockValidation = (code: string): PromoValidationResult => {
+        // Define valid promo codes for demo
+        const validCodes: Record<string, PromoValidationResult> = {
+          'SUMMER15': {
+            isValid: true,
+            code: 'SUMMER15',
+            message: 'Summer discount applied successfully!',
+            discountType: 'percentage',
+            discountValue: 15
+          },
+          'DENTAL25': {
+            isValid: true,
+            code: 'DENTAL25',
+            message: 'Dental procedure discount applied!',
+            discountType: 'percentage',
+            discountValue: 25
+          },
+          'NEWPATIENT': {
+            isValid: true,
+            code: 'NEWPATIENT',
+            message: 'New patient discount applied!',
+            discountType: 'percentage',
+            discountValue: 20
+          },
+          'TEST10': {
+            isValid: true,
+            code: 'TEST10',
+            message: 'Test discount applied!',
+            discountType: 'percentage',
+            discountValue: 10
+          },
+          'FREECONSULT': {
+            isValid: true,
+            code: 'FREECONSULT',
+            message: 'Free consultation added to your treatment plan!',
+            discountType: 'fixed_amount',
+            discountValue: 0
+          }
+        };
+        
+        return validCodes[code.toUpperCase()] || {
+          isValid: false,
+          code: code,
+          message: 'Invalid promo code. Please try another.',
+          discountType: 'percentage',
+          discountValue: 0
+        };
+      };
+      
+      const result = mockValidation(codeToApply);
+      setPromoValidationResult(result);
+      
+      if (result.isValid) {
+        setPromoCode(result.code);
+        toast({
+          title: 'Promo Code Applied',
+          description: result.message,
+          variant: 'success',
+        });
+      } else {
+        toast({
+          title: 'Invalid Promo Code',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error validating promo code:', error);
       toast({
-        title: 'Validation Error',
-        description: 'Please enter a promo code',
-        variant: 'destructive'
+        title: 'Error',
+        description: 'Failed to validate promo code. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsValidatingPromo(false);
+      setPromoInput('');
+    }
+  };
+  
+  // Clear promo code
+  const handleClearPromoCode = () => {
+    setPromoCode(null);
+    setPromoValidationResult(null);
+    
+    toast({
+      title: 'Promo Code Removed',
+      description: 'Promo code has been removed from your quote.',
+    });
+  };
+  
+  // Handle adding a treatment
+  const handleAddTreatment = (treatment: Treatment) => {
+    setSelectedTreatments(prev => [...prev, treatment]);
+  };
+  
+  // Handle removing a treatment
+  const handleRemoveTreatment = (treatmentId: string) => {
+    setSelectedTreatments(prev => prev.filter(t => t.id !== treatmentId));
+  };
+  
+  // Calculate quote totals
+  const calculateTotals = () => {
+    const subtotal = selectedTreatments.reduce((sum, item) => sum + item.price, 0);
+    let discount = 0;
+    
+    if (promoValidationResult?.isValid) {
+      if (promoValidationResult.discountType === 'percentage') {
+        discount = subtotal * (promoValidationResult.discountValue / 100);
+      } else {
+        discount = promoValidationResult.discountValue;
+      }
+    }
+    
+    const total = subtotal - discount;
+    
+    return { subtotal, discount, total };
+  };
+  
+  // Handle patient info input
+  const handlePatientInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setPatientInfo(prev => ({ ...prev, [name]: value }));
+  };
+  
+  // Handle quote submission
+  const handleSubmitQuote = () => {
+    // Validate required fields
+    if (!patientInfo.name || !patientInfo.email || !patientInfo.phone) {
+      toast({
+        title: 'Missing Information',
+        description: 'Please fill out all required patient information fields.',
+        variant: 'destructive',
       });
       return;
     }
     
-    setIsApplyingPromo(true);
-    
-    try {
-      // Simulated API call to validate promo code
-      // In real implementation, this would be an API call
-      const response = await simulatePromoCodeValidation(code, calculateSubtotal(quoteData.treatments));
-      
-      if (response.valid) {
-        setQuoteData(prev => ({
-          ...prev,
-          promoCode: code,
-          promoValid: true,
-          promoMessage: response.message,
-          discount: response.discount,
-          total: prev.subtotal - response.discount
-        }));
-        
-        toast({
-          title: 'Promo Code Applied',
-          description: response.message || 'Your promo code has been applied successfully!'
-        });
-      } else {
-        setQuoteData(prev => ({
-          ...prev,
-          promoCode: code,
-          promoValid: false,
-          promoMessage: response.message,
-          discount: 0,
-          total: prev.subtotal
-        }));
-        
-        toast({
-          title: 'Invalid Promo Code',
-          description: response.message || 'This promo code is invalid or expired.',
-          variant: 'destructive'
-        });
-      }
-    } catch (error) {
-      console.error('Error applying promo code:', error);
-      toast({
-        title: 'Error',
-        description: 'There was an error applying your promo code. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsApplyingPromo(false);
-    }
-  };
-
-  // Remove a treatment from the list
-  const handleRemoveTreatment = (id: string) => {
-    if (readOnly) return;
-    
-    setQuoteData(prev => {
-      const updatedTreatments = prev.treatments.filter(t => t.id !== id);
-      const subtotal = calculateSubtotal(updatedTreatments);
-      
-      // If there was a promo code, recalculate with existing code
-      let discount = 0;
-      if (prev.promoValid && prev.promoCode) {
-        // This is simplified - in real implementation you might need to revalidate
-        // the promo code with the new subtotal
-        discount = calculatePromoDiscount(prev.promoCode, subtotal);
-      }
-      
-      return {
-        ...prev,
-        treatments: updatedTreatments,
-        subtotal,
-        discount,
-        total: subtotal - discount
-      };
-    });
-  };
-
-  // Update treatment quantity
-  const handleUpdateQuantity = (id: string, quantity: number) => {
-    if (readOnly) return;
-    
-    setQuoteData(prev => {
-      const updatedTreatments = prev.treatments.map(t => 
-        t.id === id ? { ...t, quantity: quantity } : t
-      );
-      
-      const subtotal = calculateSubtotal(updatedTreatments);
-      
-      // If there was a promo code, recalculate with existing code
-      let discount = 0;
-      if (prev.promoValid && prev.promoCode) {
-        discount = calculatePromoDiscount(prev.promoCode, subtotal);
-      }
-      
-      return {
-        ...prev,
-        treatments: updatedTreatments,
-        subtotal,
-        discount,
-        total: subtotal - discount
-      };
-    });
-  };
-
-  // Clear promo code
-  const handleClearPromoCode = () => {
-    setPromoCodeInput('');
-    setQuoteData(prev => ({
-      ...prev,
-      promoCode: undefined,
-      promoValid: false,
-      promoMessage: undefined,
-      discount: 0,
-      total: prev.subtotal
-    }));
-    
-    toast({
-      title: 'Promo Code Removed',
-      description: 'The promo code has been removed from your quote.'
-    });
-  };
-
-  // Simulate promo code validation (in real app, this would be an API call)
-  const simulatePromoCodeValidation = async (code: string, subtotal: number): Promise<{
-    valid: boolean;
-    discount: number;
-    message?: string;
-  }> => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock promo codes for testing
-    const promoCodes: Record<string, { 
-      discount: number, 
-      isPercentage: boolean, 
-      message: string 
-    }> = {
-      'SUMMER15': { discount: 15, isPercentage: true, message: '15% Summer discount applied!' },
-      'DENTAL25': { discount: 25, isPercentage: true, message: '25% Dental care discount applied!' },
-      'NEWPATIENT': { discount: 20, isPercentage: true, message: '20% New patient discount applied!' },
-      'TEST10': { discount: 10, isPercentage: true, message: '10% Test discount applied!' },
-      'FREECONSULT': { discount: 150, isPercentage: false, message: 'Free consultation (worth $150) applied!' },
-      'LUXHOTEL20': { discount: 20, isPercentage: true, message: '20% Luxury hotel package discount!' },
-      'IMPLANTCROWN30': { discount: 30, isPercentage: true, message: '30% off Implant + Crown package!' },
-      'FREEWHITE': { discount: 200, isPercentage: false, message: 'Free teeth whitening (worth $200) applied!' },
-      'LUXTRAVEL': { discount: 300, isPercentage: false, message: 'Luxury travel credit ($300) applied!' }
-    };
-    
-    const promoInfo = promoCodes[code.toUpperCase()];
-    
-    if (!promoInfo) {
-      return {
-        valid: false,
-        discount: 0,
-        message: 'Invalid promo code. Please check and try again.'
-      };
-    }
-    
-    // Calculate discount amount
-    const discountAmount = promoInfo.isPercentage 
-      ? (subtotal * promoInfo.discount / 100) 
-      : promoInfo.discount;
-    
-    return {
-      valid: true,
-      discount: discountAmount,
-      message: promoInfo.message
-    };
-  };
-
-  // Calculate promo discount based on code and subtotal
-  const calculatePromoDiscount = (code: string, subtotal: number): number => {
-    // This is simplified - in a real app, this might involve an API call
-    // or more complex business logic
-    const promoCodes: Record<string, { discount: number, isPercentage: boolean }> = {
-      'SUMMER15': { discount: 15, isPercentage: true },
-      'DENTAL25': { discount: 25, isPercentage: true },
-      'NEWPATIENT': { discount: 20, isPercentage: true },
-      'TEST10': { discount: 10, isPercentage: true },
-      'FREECONSULT': { discount: 150, isPercentage: false },
-      'LUXHOTEL20': { discount: 20, isPercentage: true },
-      'IMPLANTCROWN30': { discount: 30, isPercentage: true },
-      'FREEWHITE': { discount: 200, isPercentage: false },
-      'LUXTRAVEL': { discount: 300, isPercentage: false }
-    };
-    
-    const promoInfo = promoCodes[code.toUpperCase()];
-    
-    if (!promoInfo) return 0;
-    
-    return promoInfo.isPercentage 
-      ? (subtotal * promoInfo.discount / 100) 
-      : promoInfo.discount;
-  };
-
-  // Update subtotal and total when treatments change
-  useEffect(() => {
-    const subtotal = calculateSubtotal(quoteData.treatments);
-    let discount = quoteData.discount;
-    
-    // If there's a valid promo code, recalculate the discount
-    if (quoteData.promoValid && quoteData.promoCode) {
-      discount = calculatePromoDiscount(quoteData.promoCode, subtotal);
-    }
-    
-    setQuoteData(prev => ({
-      ...prev,
+    // Create quote data
+    const { subtotal, discount, total } = calculateTotals();
+    const quoteData = {
+      treatments: selectedTreatments,
+      patientInfo,
+      promoCode,
       subtotal,
       discount,
-      total: subtotal - discount
-    }));
+      total,
+      currency,
+      createdAt: new Date().toISOString()
+    };
     
-    // Call onUpdate callback if provided
-    if (onUpdate) {
-      onUpdate({
-        ...quoteData,
-        subtotal,
-        discount,
-        total: subtotal - discount
-      });
+    // Call the onQuoteSaved callback if provided
+    if (onQuoteSaved) {
+      onQuoteSaved(quoteData);
     }
-  }, [quoteData.treatments]);
-
-  return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle>Dental Treatment Quote</CardTitle>
-        <CardDescription>
-          Create and customize your dental treatment quote
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Treatment List */}
-        <TreatmentList
-          treatments={quoteData.treatments}
-          currency={quoteData.currency}
-          onRemove={handleRemoveTreatment}
-          onUpdateQuantity={handleUpdateQuantity}
-          readonly={readOnly}
-        />
-        
-        {/* Promo Code Section */}
-        {allowPromoCode && (
-          <div className="mt-6 p-4 border rounded-lg">
-            <h3 className="text-lg font-medium mb-2">Promotional Code</h3>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={promoCodeInput}
-                onChange={(e) => setPromoCodeInput(e.target.value)}
-                placeholder="Enter promo code"
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={readOnly || isApplyingPromo}
-              />
-              <button
-                onClick={() => handleApplyPromoCode(promoCodeInput)}
-                disabled={!promoCodeInput || readOnly || isApplyingPromo}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-md disabled:opacity-50"
-              >
-                {isApplyingPromo ? 'Applying...' : 'Apply'}
-              </button>
-              {quoteData.promoValid && (
-                <button
-                  onClick={handleClearPromoCode}
-                  disabled={readOnly || isApplyingPromo}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-4 py-2 rounded-md disabled:opacity-50"
-                >
-                  Clear
-                </button>
-              )}
+    
+    toast({
+      title: 'Quote Saved',
+      description: 'Your dental treatment quote has been saved successfully.',
+      variant: 'success',
+    });
+    
+    // Reset the form
+    setSelectedTreatments([]);
+    setPromoCode(null);
+    setPromoValidationResult(null);
+    setPatientInfo({
+      name: '',
+      email: '',
+      phone: '',
+      notes: ''
+    });
+    setStep(1);
+  };
+  
+  // Navigation between steps
+  const goToNextStep = () => {
+    if (step === 1 && selectedTreatments.length === 0) {
+      toast({
+        title: 'No Treatments Selected',
+        description: 'Please select at least one treatment to continue.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setStep(prev => prev + 1);
+  };
+  
+  const goToPreviousStep = () => {
+    setStep(prev => prev - 1);
+  };
+  
+  const { subtotal, discount, total } = calculateTotals();
+  
+  // Render the appropriate step
+  const renderStep = () => {
+    switch (step) {
+      case 1: // Select Treatments
+        return (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold">Select Dental Treatments</h2>
+              <p className="text-muted-foreground">
+                Choose the dental treatments you're interested in to get a personalized quote.
+              </p>
             </div>
             
-            {/* Promo message display */}
-            {quoteData.promoMessage && (
-              <div className={`mt-2 text-sm ${quoteData.promoValid ? 'text-green-600' : 'text-red-600'}`}>
-                {quoteData.promoMessage}
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold mb-3">Available Treatments</h3>
+                <TreatmentList
+                  treatments={treatments}
+                  onSelectTreatment={handleAddTreatment}
+                  selectedTreatments={selectedTreatments}
+                  loading={loadingTreatments}
+                  currency={currency}
+                />
               </div>
-            )}
-          </div>
-        )}
-        
-        {/* Quote Summary */}
-        <div className="mt-6 space-y-2">
-          <div className="flex justify-between">
-            <span>Subtotal:</span>
-            <span>{formatCurrency(quoteData.subtotal, quoteData.currency)}</span>
-          </div>
-          
-          {quoteData.discount > 0 && (
-            <div className="flex justify-between text-green-600">
-              <span>Discount:</span>
-              <span>-{formatCurrency(quoteData.discount, quoteData.currency)}</span>
+              
+              {selectedTreatments.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Selected Treatments</h3>
+                  <div className="border rounded-md p-4">
+                    <ul className="divide-y">
+                      {selectedTreatments.map(treatment => (
+                        <li key={treatment.id} className="py-3 flex justify-between">
+                          <div>
+                            <p className="font-medium">{treatment.name}</p>
+                            <p className="text-sm text-muted-foreground">{treatment.description}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">{formatPriceInCurrency(treatment.price, currency)}</p>
+                            <button 
+                              onClick={() => handleRemoveTreatment(treatment.id)}
+                              className="text-sm text-destructive hover:underline"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex justify-between">
+                        <span>Subtotal:</span>
+                        <span className="font-semibold">{formatPriceInCurrency(subtotal, currency)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
-          
-          <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
-            <span>Total:</span>
-            <span>{formatCurrency(quoteData.total, quoteData.currency)}</span>
           </div>
+        );
+        
+      case 2: // Apply Promo Code (Optional)
+        return (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold">Apply Promo Code</h2>
+              <p className="text-muted-foreground">
+                Have a promo code? Apply it to get a discount on your treatments.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="border rounded-md p-4">
+                <div className="flex gap-2 mb-4">
+                  <input 
+                    type="text" 
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value)}
+                    placeholder="Enter promo code"
+                    className="flex-1 border rounded-md px-3 py-2"
+                    disabled={!!promoCode || isValidatingPromo}
+                  />
+                  
+                  {promoCode ? (
+                    <button
+                      onClick={handleClearPromoCode}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 px-3 py-2 rounded-md"
+                      disabled={isValidatingPromo}
+                    >
+                      Clear
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => handleApplyPromoCode()}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 px-3 py-2 rounded-md"
+                      disabled={!promoInput || isValidatingPromo}
+                    >
+                      {isValidatingPromo ? 'Applying...' : 'Apply'}
+                    </button>
+                  )}
+                </div>
+                
+                {promoValidationResult && (
+                  <div className={`p-3 rounded-md ${promoValidationResult.isValid ? 'bg-success/20' : 'bg-destructive/20'}`}>
+                    <p className={`text-sm ${promoValidationResult.isValid ? 'text-success-foreground' : 'text-destructive-foreground'}`}>
+                      {promoValidationResult.message}
+                    </p>
+                    {promoValidationResult.isValid && promoValidationResult.discountType === 'percentage' && (
+                      <p className="text-sm font-medium mt-1">
+                        You save {promoValidationResult.discountValue}% 
+                        ({formatPriceInCurrency(discount, currency)})
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-3">Quote Summary</h3>
+                <ul className="divide-y">
+                  {selectedTreatments.map(treatment => (
+                    <li key={treatment.id} className="py-2 flex justify-between">
+                      <span>{treatment.name}</span>
+                      <span>{formatPriceInCurrency(treatment.price, currency)}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                <div className="mt-4 pt-4 border-t space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatPriceInCurrency(subtotal, currency)}</span>
+                  </div>
+                  
+                  {discount > 0 && (
+                    <div className="flex justify-between text-success">
+                      <span>Discount ({promoCode}):</span>
+                      <span>-{formatPriceInCurrency(discount, currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span>{formatPriceInCurrency(total, currency)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 3: // Patient Information
+        return (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold">Patient Information</h2>
+              <p className="text-muted-foreground">
+                Please provide your contact information to complete your quote.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="border rounded-md p-4">
+                <form className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="name">
+                      Full Name *
+                    </label>
+                    <input
+                      id="name"
+                      name="name"
+                      type="text"
+                      value={patientInfo.name}
+                      onChange={handlePatientInfoChange}
+                      required
+                      className="w-full border rounded-md px-3 py-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="email">
+                      Email Address *
+                    </label>
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={patientInfo.email}
+                      onChange={handlePatientInfoChange}
+                      required
+                      className="w-full border rounded-md px-3 py-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="phone">
+                      Phone Number *
+                    </label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={patientInfo.phone}
+                      onChange={handlePatientInfoChange}
+                      required
+                      className="w-full border rounded-md px-3 py-2"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1" htmlFor="notes">
+                      Additional Notes
+                    </label>
+                    <textarea
+                      id="notes"
+                      name="notes"
+                      value={patientInfo.notes}
+                      onChange={handlePatientInfoChange}
+                      className="w-full border rounded-md px-3 py-2 min-h-[100px]"
+                    />
+                  </div>
+                </form>
+              </div>
+              
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-3">Quote Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Treatments:</span>
+                    <span>{selectedTreatments.length} items</span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatPriceInCurrency(subtotal, currency)}</span>
+                  </div>
+                  
+                  {discount > 0 && (
+                    <div className="flex justify-between text-success">
+                      <span>Discount ({promoCode}):</span>
+                      <span>-{formatPriceInCurrency(discount, currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span>{formatPriceInCurrency(total, currency)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+        
+      case 4: // Review & Confirm
+        return (
+          <div className="space-y-6">
+            <div className="border-b pb-4">
+              <h2 className="text-2xl font-bold">Review & Confirm</h2>
+              <p className="text-muted-foreground">
+                Please review your quote details before confirming.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-3">Selected Treatments</h3>
+                <ul className="divide-y">
+                  {selectedTreatments.map(treatment => (
+                    <li key={treatment.id} className="py-2 flex justify-between">
+                      <div>
+                        <p className="font-medium">{treatment.name}</p>
+                        <p className="text-sm text-muted-foreground">{treatment.category}</p>
+                      </div>
+                      <span>{formatPriceInCurrency(treatment.price, currency)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-3">Patient Information</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Name</p>
+                    <p className="font-medium">{patientInfo.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-medium">{patientInfo.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Phone</p>
+                    <p className="font-medium">{patientInfo.phone}</p>
+                  </div>
+                  {patientInfo.notes && (
+                    <div className="col-span-2">
+                      <p className="text-sm text-muted-foreground">Notes</p>
+                      <p>{patientInfo.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="border rounded-md p-4">
+                <h3 className="text-lg font-semibold mb-3">Quote Summary</h3>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>{formatPriceInCurrency(subtotal, currency)}</span>
+                  </div>
+                  
+                  {discount > 0 && (
+                    <div className="flex justify-between text-success">
+                      <span>Discount ({promoCode}):</span>
+                      <span>-{formatPriceInCurrency(discount, currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between font-bold pt-2 border-t">
+                    <span>Total:</span>
+                    <span>{formatPriceInCurrency(total, currency)}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-muted/30 rounded-md p-4">
+                <p className="text-sm">
+                  By confirming this quote, you agree to our terms and conditions. This quote is valid for 30 days.
+                  A representative will contact you within 24 hours to discuss your treatment options and answer any questions.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+        
+      default:
+        return null;
+    }
+  };
+  
+  return (
+    <div className="bg-background rounded-lg border shadow-sm p-6 max-w-4xl mx-auto">
+      {/* Progress Steps */}
+      <div className="mb-8">
+        <div className="flex items-center justify-between">
+          {['Select Treatments', 'Promo Code', 'Patient Information', 'Confirm'].map((stepName, index) => (
+            <div 
+              key={index} 
+              className={`flex flex-col items-center ${index + 1 <= step ? 'text-primary' : 'text-muted-foreground'}`}
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${
+                index + 1 < step 
+                  ? 'bg-primary text-primary-foreground' 
+                  : index + 1 === step 
+                    ? 'border-2 border-primary text-primary' 
+                    : 'border-2 border-muted text-muted-foreground'
+              }`}>
+                {index + 1 < step ? '✓' : index + 1}
+              </div>
+              <span className={`text-xs sm:text-sm ${index + 1 === step ? 'font-medium' : ''}`}>{stepName}</span>
+            </div>
+          ))}
         </div>
-      </CardContent>
-      <CardFooter className="justify-between">
-        <div className="text-sm text-muted-foreground">
-          {quoteData.treatments.length === 0 ? (
-            'Add treatments to get a quote'
-          ) : (
-            `${quoteData.treatments.length} treatment${quoteData.treatments.length !== 1 ? 's' : ''} selected`
-          )}
+        <div className="relative mt-2">
+          <div className="absolute h-1 bg-muted inset-x-0 top-0"></div>
+          <div 
+            className="absolute h-1 bg-primary inset-y-0 left-0 transition-all duration-300"
+            style={{ width: `${((step - 1) / 3) * 100}%` }}
+          ></div>
         </div>
-        <div className="text-sm text-muted-foreground">
-          Prices shown in {quoteData.currency}
-        </div>
-      </CardFooter>
-    </Card>
+      </div>
+      
+      {/* Current Step Content */}
+      <div className="mb-8">
+        {renderStep()}
+      </div>
+      
+      {/* Navigation Buttons */}
+      <div className="flex justify-between">
+        <button
+          onClick={goToPreviousStep}
+          className="px-4 py-2 border rounded-md bg-background hover:bg-muted transition-colors"
+          disabled={step === 1}
+        >
+          Back
+        </button>
+        
+        {step < 4 ? (
+          <button
+            onClick={goToNextStep}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Continue
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmitQuote}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Confirm Quote
+          </button>
+        )}
+      </div>
+    </div>
   );
 };
 
