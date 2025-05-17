@@ -1,357 +1,426 @@
 """
-Promo Service for Dental Quote System
-Handles promo codes and special offers
+Promotion Service for Dental Quote System
+Manages promotional offers and discount codes
 """
+
 import json
 import os
-from pathlib import Path
+import uuid
 from datetime import datetime
 
 class PromoService:
     """
-    Service class for handling promotional codes and special offers
-    Provides methods to validate, apply, and manage promotions
+    Service for managing promotional offers and discount codes
     """
     
     def __init__(self):
-        """Initialize the promo service with sample data"""
-        self.data_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'promotions.json')
-        self.promotions = self._load_promotions()
+        """
+        Initialize the promotion service
+        
+        Loads promotion data from JSON file or creates sample data if not available
+        """
+        self.promotions = []
+        self.promo_codes = {}
+        
+        # Load promotions from data file if available
+        self._load_promotions()
+        
+        # If no promotions were loaded, create sample data
+        if not self.promotions:
+            self._create_sample_promotions()
     
     def _load_promotions(self):
-        """Load promotions from JSON file or use sample data if file doesn't exist"""
-        # Create data directory if it doesn't exist
-        Path(os.path.join(os.path.dirname(__file__), '..', 'data')).mkdir(parents=True, exist_ok=True)
-        
-        # Check if data file exists
-        if os.path.exists(self.data_file):
-            try:
-                with open(self.data_file, 'r') as f:
-                    return json.load(f)
-            except Exception as e:
-                print(f"Error loading promotions file: {e}")
-                return self._get_sample_promotions()
-        else:
-            # Create file with sample data
-            sample_data = self._get_sample_promotions()
-            self._save_promotions(sample_data)
-            return sample_data
-    
-    def _save_promotions(self, promotions):
-        """Save promotions to JSON file"""
+        """
+        Load promotions from JSON data file
+        """
         try:
-            with open(self.data_file, 'w') as f:
-                json.dump(promotions, f, indent=4)
-            return True
+            # Attempt to load from data file
+            data_file = os.path.join(os.path.dirname(__file__), '../data/promotions.json')
+            
+            if os.path.exists(data_file):
+                with open(data_file, 'r') as file:
+                    data = json.load(file)
+                    self.promotions = data.get('promotions', [])
+                    self.promo_codes = data.get('promo_codes', {})
+                
+                return True
         except Exception as e:
-            print(f"Error saving promotions: {e}")
-            return False
+            print(f"Error loading promotions: {e}")
+        
+        return False
     
-    def _get_sample_promotions(self):
-        """Get sample promotions data"""
-        return [
+    def _create_sample_promotions(self):
+        """
+        Create sample promotion data
+        """
+        # Create sample promotional offers
+        self.promotions = [
             {
-                "id": "summer15_promo",
-                "promo_code": "SUMMER15",
-                "title": "Summer Special Discount",
-                "description": "Get 15% off on all dental treatments this summer",
+                "id": "summer2025",
+                "title": "Summer 2025 Special",
+                "description": "Get 15% off all dental treatments this summer. Limited time offer!",
                 "discount_type": "percentage",
                 "discount_value": 15,
-                "start_date": "2025-05-01",
-                "end_date": "2025-08-31",
-                "is_active": True,
+                "applicable_treatments": [],  # Empty means applies to all treatments
                 "minimum_purchase": 0,
-                "applicable_treatments": [],  # Empty means all treatments
-                "terms_conditions": "Valid for all treatments. Cannot be combined with other offers.",
-                "banner_image": "images/summer-promo.jpg"
+                "start_date": "2025-06-01",
+                "end_date": "2025-08-31",
+                "promo_code": "SUMMER15",
+                "terms_conditions": "Cannot be combined with other offers. Valid for treatments booked by August 31, 2025.",
+                "banner_image": "images/promos/summer_special.jpg",
+                "is_active": True
             },
             {
-                "id": "dental25_promo",
-                "promo_code": "DENTAL25",
-                "title": "Premium Treatment Discount",
-                "description": "25% off on premium dental treatments",
-                "discount_type": "percentage",
-                "discount_value": 25,
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 1000,
-                "applicable_treatments": ["dental_implant_premium", "hollywood_smile", "full_mouth_reconstruction"],
-                "terms_conditions": "Valid for premium treatments only. Minimum purchase of $1000 required.",
-                "banner_image": "images/premium-promo.jpg"
-            },
-            {
-                "id": "newpatient_promo",
-                "promo_code": "NEWPATIENT",
-                "title": "New Patient Special",
-                "description": "Get 20% off on your first dental treatment as a new patient",
+                "id": "new_patient_2025",
+                "title": "New Patient Discount",
+                "description": "New patients receive 20% off their first dental treatment. Welcome to our clinic!",
                 "discount_type": "percentage",
                 "discount_value": 20,
+                "applicable_treatments": [],  # Empty means applies to all treatments
+                "minimum_purchase": 0,
                 "start_date": "2025-01-01",
                 "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 0,
-                "applicable_treatments": [],  # Empty means all treatments
-                "terms_conditions": "Valid for new patients only. One-time use per patient.",
-                "banner_image": "images/new-patient-promo.jpg"
+                "promo_code": "NEWPATIENT",
+                "terms_conditions": "Valid for first-time patients only. Cannot be combined with other offers.",
+                "banner_image": "images/promos/new_patient.jpg",
+                "is_active": True
             },
             {
-                "id": "test10_promo",
-                "promo_code": "TEST10",
+                "id": "implant_special",
+                "title": "Dental Implant + Crown Bundle",
+                "description": "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
+                "discount_type": "percentage",
+                "discount_value": 30,
+                "applicable_treatments": ["dental_implant_standard", "dental_crowns"],
+                "minimum_purchase": 0,
+                "start_date": "2025-01-01",
+                "end_date": "2025-12-31",
+                "promo_code": "IMPLANTCROWN30",
+                "terms_conditions": "Valid for single tooth implant and crown combinations only.",
+                "banner_image": "images/promos/implant_crown.jpg",
+                "is_active": True
+            },
+            {
+                "id": "hotel_deal",
+                "title": "Premium Hotel Deal",
+                "description": "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
+                "discount_type": "percentage",
+                "discount_value": 20,
+                "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
+                "minimum_purchase": 1000,
+                "start_date": "2025-01-01",
+                "end_date": "2025-12-31",
+                "promo_code": "LUXHOTEL20",
+                "terms_conditions": "Minimum treatment value of $1000 required. Subject to hotel availability.",
+                "banner_image": "images/promos/hotel_deal.jpg",
+                "is_active": True
+            },
+            {
+                "id": "free_consultation",
+                "title": "Free Consultation Package",
+                "description": "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
+                "discount_type": "fixed_amount",
+                "discount_value": 120,  # Value of the consultation
+                "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
+                "minimum_purchase": 0,
+                "start_date": "2025-01-01",
+                "end_date": "2025-12-31",
+                "promo_code": "FREECONSULT",
+                "terms_conditions": "Applicable for new patients only. One consultation per patient.",
+                "banner_image": "images/promos/free_consult.jpg",
+                "is_active": True
+            },
+            {
+                "id": "testing_discount",
                 "title": "Test Discount",
                 "description": "10% off for testing purposes",
                 "discount_type": "percentage",
                 "discount_value": 10,
+                "applicable_treatments": [],
+                "minimum_purchase": 0,
                 "start_date": "2025-01-01",
                 "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 0,
-                "applicable_treatments": [],  # Empty means all treatments
+                "promo_code": "TEST10",
                 "terms_conditions": "For testing purposes only.",
-                "banner_image": "images/test-promo.jpg"
-            },
-            {
-                "id": "freeconsult_promo",
-                "promo_code": "FREECONSULT",
-                "title": "Free Consultation Package",
-                "description": "Book a dental treatment and get free pre-consultation and aftercare support",
-                "discount_type": "fixed_amount",
-                "discount_value": 75,
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 500,
-                "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
-                "terms_conditions": "Applicable for new patients only. One consultation per patient.",
-                "banner_image": "images/free-consult-promo.jpg"
-            },
-            {
-                "id": "luxhotel20_promo",
-                "promo_code": "LUXHOTEL20",
-                "title": "Premium Hotel Deal",
-                "description": "Save up to 20% on premium hotels with your dental treatment booking",
-                "discount_type": "percentage",
-                "discount_value": 20,
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 1000,
-                "applicable_treatments": ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
-                "terms_conditions": "Minimum treatment value of $1000 required. Subject to hotel availability.",
-                "banner_image": "images/hotel-promo.jpg"
-            },
-            {
-                "id": "implantcrown30_promo",
-                "promo_code": "IMPLANTCROWN30",
-                "title": "Dental Implant + Crown Bundle",
-                "description": "Get a special bundle price when combining dental implant with a crown",
-                "discount_type": "percentage",
-                "discount_value": 30,
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 0,
-                "applicable_treatments": ["dental_implant_standard", "dental_crowns"],
-                "terms_conditions": "Valid for single tooth implant and crown combinations only.",
-                "banner_image": "images/implant-crown-promo.jpg"
-            },
-            {
-                "id": "freewhite_promo",
-                "promo_code": "FREEWHITE",
-                "title": "Free Teeth Whitening",
-                "description": "Receive a complimentary professional teeth whitening session with any veneer or crown treatment package",
-                "discount_type": "fixed_amount",
-                "discount_value": 150,
-                "start_date": "2025-01-01",
-                "end_date": "2025-12-31",
-                "is_active": True,
-                "minimum_purchase": 0,
-                "applicable_treatments": ["porcelain_veneers", "dental_crowns", "hollywood_smile"],
-                "terms_conditions": "Minimum of 4 veneers or crowns required. Not combinable with other offers.",
-                "banner_image": "images/whitening-promo.jpg"
+                "banner_image": "images/promos/test_discount.jpg",
+                "is_active": True
             }
         ]
+        
+        # Create promo code dictionary for easy lookup
+        for promo in self.promotions:
+            if promo.get('promo_code'):
+                self.promo_codes[promo.get('promo_code')] = promo
+        
+        # Save sample data to file
+        self._save_promotions()
+    
+    def _save_promotions(self):
+        """
+        Save promotions data to JSON file
+        """
+        try:
+            # Ensure data directory exists
+            data_dir = os.path.join(os.path.dirname(__file__), '../data')
+            os.makedirs(data_dir, exist_ok=True)
+            
+            # Save to data file
+            data_file = os.path.join(data_dir, 'promotions.json')
+            
+            with open(data_file, 'w') as file:
+                json.dump({
+                    'promotions': self.promotions,
+                    'promo_codes': self.promo_codes
+                }, file, indent=4)
+            
+            return True
+        except Exception as e:
+            print(f"Error saving promotions: {e}")
+        
+        return False
     
     def get_all_promotions(self):
-        """Get all promotions"""
+        """
+        Get all available promotions
+        
+        Returns:
+            list: List of all promotions
+        """
         return self.promotions
     
     def get_active_promotions(self):
-        """Get active promotions only"""
-        today = datetime.today().strftime('%Y-%m-%d')
+        """
+        Get all active promotions
+        
+        Returns:
+            list: List of active promotions
+        """
+        today = datetime.now().strftime('%Y-%m-%d')
+        
         return [
-            promo for promo in self.promotions
-            if promo['is_active'] 
-            and promo['start_date'] <= today 
-            and promo['end_date'] >= today
+            p for p in self.promotions
+            if p.get('is_active') and p.get('start_date') <= today and p.get('end_date') >= today
         ]
     
-    def get_promotion_by_id(self, promo_id):
-        """Get promotion by ID"""
-        for promo in self.promotions:
-            if promo['id'] == promo_id:
-                return promo
+    def get_promotion_by_id(self, promotion_id):
+        """
+        Get a promotion by its ID
+        
+        Args:
+            promotion_id (str): The ID of the promotion
+            
+        Returns:
+            dict: The promotion data or None if not found
+        """
+        for promotion in self.promotions:
+            if promotion.get('id') == promotion_id:
+                return promotion
+        
         return None
     
     def get_promotion_by_code(self, promo_code):
-        """Get promotion by promo code"""
-        if not promo_code:
-            return None
-            
-        # Normalize promo code (uppercase, no spaces)
-        promo_code = promo_code.strip().upper()
-        
-        for promo in self.promotions:
-            if promo['promo_code'].upper() == promo_code:
-                return promo
-        return None
-    
-    def validate_promo_code(self, promo_code, total_amount=0, treatments=None):
         """
-        Validate a promo code with optional amount and treatments
+        Get a promotion by its promo code
         
         Args:
-            promo_code (str): Promo code to validate
-            total_amount (float, optional): Total purchase amount
-            treatments (list, optional): List of treatment IDs
+            promo_code (str): The promotional code
             
         Returns:
-            dict: Validation result with 'valid' status and 'message'
+            dict: The promotion data or None if not found
         """
-        if not promo_code:
-            return {'valid': False, 'message': 'No promo code provided'}
-        
-        # Get promotion by code
-        promo = self.get_promotion_by_code(promo_code)
-        
-        # If no promotion found
-        if not promo:
-            return {'valid': False, 'message': 'Invalid promo code'}
-        
-        # Check if promotion is active
-        if not promo['is_active']:
-            return {'valid': False, 'message': 'This promotion is not active'}
-        
-        # Check date validity
-        today = datetime.today().strftime('%Y-%m-%d')
-        if today < promo['start_date'] or today > promo['end_date']:
-            return {'valid': False, 'message': 'This promotion has expired or not yet active'}
-        
-        # Check minimum purchase if applicable
-        if promo['minimum_purchase'] > 0 and total_amount < promo['minimum_purchase']:
-            return {
-                'valid': False, 
-                'message': f"Minimum purchase of ${promo['minimum_purchase']} required"
-            }
-        
-        # Check applicable treatments if specified
-        if promo['applicable_treatments'] and treatments:
-            # Check if any of the selected treatments are applicable
-            applicable_match = False
-            for treatment_id in treatments:
-                if treatment_id in promo['applicable_treatments']:
-                    applicable_match = True
-                    break
-            
-            if not applicable_match:
-                return {
-                    'valid': False, 
-                    'message': 'This promo code is not applicable to selected treatments'
-                }
-        
-        # All checks passed
-        return {'valid': True, 'message': 'Promo code applied successfully'}
+        return self.promo_codes.get(promo_code.upper())
     
-    def calculate_discount(self, promo_code, total_amount, treatments=None):
+    def is_valid_promo_code(self, promo_code):
         """
-        Calculate discount amount based on promo code
+        Check if a promo code is valid and active
         
         Args:
-            promo_code (str): Promo code to apply
-            total_amount (float): Total purchase amount
-            treatments (list, optional): List of treatment IDs
+            promo_code (str): The promotional code to check
             
         Returns:
-            dict: Discount calculation result
+            bool: True if the code is valid and active, False otherwise
         """
-        # Validate promo code first
-        validation = self.validate_promo_code(promo_code, total_amount, treatments)
-        if not validation['valid']:
+        if not promo_code:
+            return False
+        
+        promotion = self.get_promotion_by_code(promo_code.upper())
+        
+        if not promotion:
+            return False
+        
+        # Check if promotion is active and within date range
+        today = datetime.now().strftime('%Y-%m-%d')
+        return (
+            promotion.get('is_active', False) and
+            promotion.get('start_date', '') <= today and
+            promotion.get('end_date', '') >= today
+        )
+    
+    def apply_promo_code(self, promo_code, selected_treatments):
+        """
+        Apply a promo code to selected treatments
+        
+        Args:
+            promo_code (str): The promotional code to apply
+            selected_treatments (list): List of selected treatments
+            
+        Returns:
+            dict: Result containing success status, message, and discount details
+        """
+        if not promo_code:
             return {
                 'success': False,
-                'message': validation['message'],
-                'discount_amount': 0
+                'message': 'No promo code provided'
             }
         
-        # Get promotion details
-        promo = self.get_promotion_by_code(promo_code)
+        promotion = self.get_promotion_by_code(promo_code.upper())
         
-        # Calculate discount based on type
+        if not promotion:
+            return {
+                'success': False,
+                'message': 'Invalid promo code'
+            }
+        
+        # Check if promotion is active and within date range
+        today = datetime.now().strftime('%Y-%m-%d')
+        if not (
+            promotion.get('is_active', False) and
+            promotion.get('start_date', '') <= today and
+            promotion.get('end_date', '') >= today
+        ):
+            return {
+                'success': False,
+                'message': 'This promotion is no longer valid'
+            }
+        
+        # Calculate subtotal of selected treatments
+        subtotal = sum(
+            treatment.get('price', 0) * treatment.get('quantity', 1) 
+            for treatment in selected_treatments
+        )
+        
+        # Check minimum purchase requirement
+        minimum_purchase = promotion.get('minimum_purchase', 0)
+        if minimum_purchase > 0 and subtotal < minimum_purchase:
+            return {
+                'success': False,
+                'message': f'Minimum purchase of ${minimum_purchase} required for this promotion'
+            }
+        
+        # Check applicable treatments
+        applicable_treatments = promotion.get('applicable_treatments', [])
+        if applicable_treatments:
+            # Check if any selected treatment is applicable
+            has_applicable_treatments = any(
+                treatment.get('id') in applicable_treatments
+                for treatment in selected_treatments
+            )
+            
+            if not has_applicable_treatments:
+                # Get names of applicable treatments for error message
+                from services.treatment_service import TreatmentService
+                treatment_service = TreatmentService()
+                applicable_names = []
+                
+                for treatment_id in applicable_treatments:
+                    treatment = treatment_service.get_treatment_by_id(treatment_id)
+                    if treatment:
+                        applicable_names.append(treatment.get('name'))
+                
+                return {
+                    'success': False,
+                    'message': f'This promotion is only applicable to the following treatments: {", ".join(applicable_names)}'
+                }
+        
+        # Calculate discount
+        discount_type = promotion.get('discount_type')
+        discount_value = promotion.get('discount_value', 0)
         discount_amount = 0
-        if promo['discount_type'] == 'percentage':
-            discount_amount = total_amount * (promo['discount_value'] / 100)
-        elif promo['discount_type'] == 'fixed_amount':
-            discount_amount = min(promo['discount_value'], total_amount)
+        
+        if discount_type == 'percentage':
+            discount_amount = subtotal * (discount_value / 100)
+        elif discount_type == 'fixed_amount':
+            discount_amount = discount_value
+            # Ensure discount doesn't exceed subtotal
+            discount_amount = min(discount_amount, subtotal)
+        
+        # Calculate total after discount
+        total = subtotal - discount_amount
         
         return {
             'success': True,
-            'message': 'Discount applied successfully',
-            'discount_amount': round(discount_amount, 2),
-            'promo_details': promo
+            'message': 'Promotion applied successfully',
+            'promotion': promotion,
+            'subtotal': subtotal,
+            'discount_amount': discount_amount,
+            'total': total
         }
     
-    def add_promotion(self, promo_data):
-        """Add a new promotion"""
-        # Generate ID if not provided
-        if 'id' not in promo_data:
-            promo_data['id'] = f"{promo_data['promo_code'].lower()}_promo"
-        
-        # Add to promotions list
-        self.promotions.append(promo_data)
-        
-        # Save to file
-        self._save_promotions(self.promotions)
-        
-        return promo_data
-    
-    def update_promotion(self, promo_id, promo_data):
-        """Update an existing promotion"""
-        for i, promo in enumerate(self.promotions):
-            if promo['id'] == promo_id:
-                # Update promotion data
-                self.promotions[i] = {**promo, **promo_data}
-                
-                # Save to file
-                self._save_promotions(self.promotions)
-                
-                return self.promotions[i]
-        
-        return None  # Promotion not found
-    
-    def delete_promotion(self, promo_id):
-        """Delete a promotion"""
-        for i, promo in enumerate(self.promotions):
-            if promo['id'] == promo_id:
-                # Remove promotion
-                deleted_promo = self.promotions.pop(i)
-                
-                # Save to file
-                self._save_promotions(self.promotions)
-                
-                return deleted_promo
-        
-        return None  # Promotion not found
-    
     def get_featured_promotions(self, limit=3):
-        """Get featured promotions for homepage"""
-        active_promos = self.get_active_promotions()
+        """
+        Get featured promotions for display on homepage
+        
+        Args:
+            limit (int): Maximum number of promotions to return
+            
+        Returns:
+            list: List of featured promotions
+        """
+        active_promotions = self.get_active_promotions()
         
         # Sort by discount value (higher first)
-        sorted_promos = sorted(
-            active_promos, 
-            key=lambda p: p['discount_value'] * (100 if p['discount_type'] == 'fixed_amount' else 1),
+        sorted_promotions = sorted(
+            active_promotions, 
+            key=lambda p: p.get('discount_value', 0), 
             reverse=True
         )
         
-        # Return limited number of promotions
-        return sorted_promos[:limit]
+        return sorted_promotions[:limit]
+    
+    def get_eligible_promotions_for_treatments(self, selected_treatments):
+        """
+        Get promotions that are eligible for the selected treatments
+        
+        Args:
+            selected_treatments (list): List of selected treatments
+            
+        Returns:
+            list: List of eligible promotions
+        """
+        if not selected_treatments:
+            return []
+        
+        active_promotions = self.get_active_promotions()
+        eligible_promotions = []
+        
+        # Calculate subtotal
+        subtotal = sum(
+            treatment.get('price', 0) * treatment.get('quantity', 1) 
+            for treatment in selected_treatments
+        )
+        
+        # Get IDs of selected treatments
+        selected_treatment_ids = [t.get('id') for t in selected_treatments]
+        
+        for promotion in active_promotions:
+            # Check minimum purchase requirement
+            minimum_purchase = promotion.get('minimum_purchase', 0)
+            if minimum_purchase > 0 and subtotal < minimum_purchase:
+                continue
+            
+            # Check applicable treatments
+            applicable_treatments = promotion.get('applicable_treatments', [])
+            if applicable_treatments:
+                # Check if any selected treatment is applicable
+                has_applicable_treatments = any(
+                    treatment_id in applicable_treatments
+                    for treatment_id in selected_treatment_ids
+                )
+                
+                if not has_applicable_treatments:
+                    continue
+            
+            # Promotion is eligible
+            eligible_promotions.append(promotion)
+        
+        return eligible_promotions

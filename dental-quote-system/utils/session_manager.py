@@ -1,272 +1,289 @@
 """
 Session Manager for Dental Quote System
-Handles session management for quote data
+Handles session data storage and retrieval
 """
-from flask import session
 
-class SessionManager:
+from flask import session
+import uuid
+import json
+from datetime import datetime
+
+def get_session_data():
     """
-    Manages session data for the dental quote system.
-    Provides methods to store and retrieve user selected treatments,
-    promo codes, and other quote-related information.
+    Get the current session data
+    
+    Returns:
+        dict: The current session data
     """
+    if 'quote_data' not in session:
+        init_session_data()
     
-    def __init__(self):
-        """Initialize the session manager"""
-        self.session_key_treatments = 'selected_treatments'
-        self.session_key_promo = 'promo_code'
-        self.session_key_promo_details = 'promo_details'
-        self.session_key_patient_info = 'patient_info'
+    return session['quote_data']
+
+def set_session_data(data):
+    """
+    Update the session data
     
-    def initialize_session(self):
-        """Initialize session with empty data if not exists"""
-        if self.session_key_treatments not in session:
-            session[self.session_key_treatments] = []
-        
-        if self.session_key_promo not in session:
-            session[self.session_key_promo] = None
-            
-        if self.session_key_promo_details not in session:
-            session[self.session_key_promo_details] = None
-            
-        if self.session_key_patient_info not in session:
-            session[self.session_key_patient_info] = {}
-            
+    Args:
+        data (dict): The data to update in the session
+    """
+    if 'quote_data' not in session:
+        init_session_data()
+    
+    session['quote_data'].update(data)
+    session.modified = True
+
+def init_session_data():
+    """
+    Initialize session data with default values if not already present
+    """
+    if 'quote_data' not in session:
+        session['quote_data'] = {
+            'session_id': str(uuid.uuid4()),
+            'created_at': datetime.now().isoformat(),
+            'selected_treatments': [],
+            'promo_code': None,
+            'promo_details': None,
+            'special_offer_id': None,
+            'patient_info': {},
+            'quote_totals': {
+                'subtotal': 0,
+                'discount_amount': 0, 
+                'total': 0
+            }
+        }
         session.modified = True
+
+def add_treatment(treatment_data):
+    """
+    Add a treatment to the current quote
     
-    def add_treatment(self, treatment_data):
-        """
-        Add a treatment to the session
+    Args:
+        treatment_data (dict): The treatment data to add
         
-        Args:
-            treatment_data (dict): Treatment data with at least id, name, price
-            
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        # Convert to list if it's None
-        if session[self.session_key_treatments] is None:
-            session[self.session_key_treatments] = []
-        
-        # Check if treatment already exists
-        for treatment in session[self.session_key_treatments]:
-            if treatment['id'] == treatment_data['id']:
-                # Update quantity if it exists
-                if 'quantity' in treatment:
-                    treatment['quantity'] += 1
-                else:
-                    treatment['quantity'] = 2
-                session.modified = True
-                return True
-        
-        # Add new treatment with quantity 1
+    Returns:
+        dict: Updated session data including selected treatments and quote totals
+    """
+    session_data = get_session_data()
+    
+    # Check if treatment is already in the quote
+    treatment_id = treatment_data.get('id')
+    existing_treatment = next(
+        (t for t in session_data['selected_treatments'] if t.get('id') == treatment_id), 
+        None
+    )
+    
+    if existing_treatment:
+        # Update the quantity if the treatment already exists
+        existing_treatment['quantity'] = existing_treatment.get('quantity', 1) + 1
+    else:
+        # Add quantity field and add the treatment to the list
         treatment_data['quantity'] = 1
-        session[self.session_key_treatments].append(treatment_data)
-        session.modified = True
-        return True
+        session_data['selected_treatments'].append(treatment_data)
     
-    def remove_treatment(self, treatment_id):
-        """
-        Remove a treatment from the session
-        
-        Args:
-            treatment_id (str): ID of the treatment to remove
-            
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        # Filter out the treatment to remove
-        session[self.session_key_treatments] = [
-            t for t in session[self.session_key_treatments] 
-            if t['id'] != treatment_id
-        ]
-        
-        session.modified = True
-        return True
+    # Recalculate totals
+    update_quote_totals()
     
-    def update_treatment_quantity(self, treatment_id, quantity):
-        """
-        Update the quantity of a treatment
-        
-        Args:
-            treatment_id (str): ID of the treatment
-            quantity (int): New quantity
-            
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        # Find the treatment and update its quantity
-        for treatment in session[self.session_key_treatments]:
-            if treatment['id'] == treatment_id:
-                treatment['quantity'] = max(1, quantity)  # Ensure minimum quantity is 1
-                session.modified = True
-                return True
-                
-        return False  # Treatment not found
+    return {
+        'selected_treatments': session_data['selected_treatments'],
+        'totals': session_data['quote_totals']
+    }
+
+def remove_treatment(treatment_id):
+    """
+    Remove a treatment from the current quote
     
-    def apply_promo_code(self, promo_code, promo_details=None):
-        """
-        Apply a promo code to the session
+    Args:
+        treatment_id (str): The ID of the treatment to remove
         
-        Args:
-            promo_code (str): Promo code to apply
-            promo_details (dict, optional): Additional promo details
-            
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        session[self.session_key_promo] = promo_code
-        
-        if promo_details:
-            session[self.session_key_promo_details] = promo_details
-            
-        session.modified = True
-        return True
+    Returns:
+        dict: Updated session data including selected treatments and quote totals
+    """
+    session_data = get_session_data()
     
-    def remove_promo_code(self):
-        """
-        Remove the applied promo code
-        
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        session[self.session_key_promo] = None
-        session[self.session_key_promo_details] = None
-        
-        session.modified = True
-        return True
+    # Filter out the treatment with the specified ID
+    session_data['selected_treatments'] = [
+        t for t in session_data['selected_treatments'] if t.get('id') != treatment_id
+    ]
     
-    def save_patient_info(self, patient_data):
-        """
-        Save patient information
-        
-        Args:
-            patient_data (dict): Patient information
-            
-        Returns:
-            bool: Success status
-        """
-        self.initialize_session()
-        
-        session[self.session_key_patient_info] = patient_data
-        session.modified = True
-        return True
+    # Update session data
+    set_session_data(session_data)
     
-    def get_patient_info(self):
-        """
-        Get patient information
-        
-        Returns:
-            dict: Patient information
-        """
-        self.initialize_session()
-        return session.get(self.session_key_patient_info, {})
+    # Recalculate totals
+    update_quote_totals()
     
-    def get_selected_treatments(self):
-        """
-        Get selected treatments
-        
-        Returns:
-            list: List of selected treatments
-        """
-        self.initialize_session()
-        return session.get(self.session_key_treatments, [])
+    return {
+        'selected_treatments': session_data['selected_treatments'],
+        'totals': session_data['quote_totals']
+    }
+
+def update_treatment_quantity(treatment_id, quantity):
+    """
+    Update the quantity of a treatment in the current quote
     
-    def get_promo_code(self):
-        """
-        Get applied promo code
+    Args:
+        treatment_id (str): The ID of the treatment to update
+        quantity (int): The new quantity
         
-        Returns:
-            str: Applied promo code or None
-        """
-        self.initialize_session()
-        return session.get(self.session_key_promo)
+    Returns:
+        dict: Updated session data including selected treatments and quote totals
+    """
+    session_data = get_session_data()
     
-    def get_promo_details(self):
-        """
-        Get promo code details
-        
-        Returns:
-            dict: Promo details or None
-        """
-        self.initialize_session()
-        return session.get(self.session_key_promo_details)
+    # Find and update the treatment
+    for treatment in session_data['selected_treatments']:
+        if treatment.get('id') == treatment_id:
+            treatment['quantity'] = quantity
+            break
     
-    def calculate_totals(self):
-        """
-        Calculate quote totals
-        
-        Returns:
-            dict: Dictionary with subtotal, discount_amount, and total
-        """
-        self.initialize_session()
-        
-        # Calculate subtotal
-        subtotal = 0
-        for treatment in self.get_selected_treatments():
-            price = float(treatment.get('price', 0))
-            quantity = int(treatment.get('quantity', 1))
-            subtotal += price * quantity
-        
-        # Calculate discount
-        discount_amount = 0
-        promo_details = self.get_promo_details()
-        promo_code = self.get_promo_code()
-        
-        if promo_code and promo_details:
-            discount_type = promo_details.get('discount_type')
-            discount_value = float(promo_details.get('discount_value', 0))
-            
-            if discount_type == 'percentage':
-                discount_amount = subtotal * (discount_value / 100)
-            elif discount_type == 'fixed_amount':
-                discount_amount = min(discount_value, subtotal)  # Don't discount more than subtotal
-        
-        # Calculate total
-        total = max(0, subtotal - discount_amount)
-        
-        # Format to 2 decimal places
-        subtotal = round(subtotal, 2)
-        discount_amount = round(discount_amount, 2)
-        total = round(total, 2)
-        
-        return {
-            'subtotal': subtotal,
-            'discount_amount': discount_amount,
-            'total': total
-        }
+    # Update session data
+    set_session_data(session_data)
     
-    def get_quote_summary(self):
-        """
-        Get complete quote summary
-        
-        Returns:
-            dict: Complete quote data
-        """
-        return {
-            'treatments': self.get_selected_treatments(),
-            'promo_code': self.get_promo_code(),
-            'promo_details': self.get_promo_details(),
-            'patient_info': self.get_patient_info(),
-            'totals': self.calculate_totals()
-        }
+    # Recalculate totals
+    update_quote_totals()
     
-    def clear_session(self):
-        """
-        Clear all session data
+    return {
+        'selected_treatments': session_data['selected_treatments'],
+        'totals': session_data['quote_totals']
+    }
+
+def apply_promo_code(promo_code, promo_details):
+    """
+    Apply a promotional code to the current quote
+    
+    Args:
+        promo_code (str): The promotional code to apply
+        promo_details (dict): The details of the promotion
         
-        Returns:
-            bool: Success status
-        """
-        session.clear()
-        return True
+    Returns:
+        dict: Updated quote totals
+    """
+    session_data = get_session_data()
+    
+    # Store promo code and details
+    session_data['promo_code'] = promo_code
+    session_data['promo_details'] = promo_details
+    
+    # Update session data
+    set_session_data(session_data)
+    
+    # Recalculate totals
+    update_quote_totals()
+    
+    return session_data['quote_totals']
+
+def remove_promo_code():
+    """
+    Remove the promotional code from the current quote
+    
+    Returns:
+        dict: Updated quote totals
+    """
+    session_data = get_session_data()
+    
+    # Remove promo code and details
+    session_data['promo_code'] = None
+    session_data['promo_details'] = None
+    
+    # Update session data
+    set_session_data(session_data)
+    
+    # Recalculate totals
+    update_quote_totals()
+    
+    return session_data['quote_totals']
+
+def apply_special_offer(offer_id, offer_details):
+    """
+    Apply a special offer to the current quote
+    
+    Args:
+        offer_id (str): The ID of the offer to apply
+        offer_details (dict): The details of the offer
+        
+    Returns:
+        dict: Updated session data
+    """
+    session_data = get_session_data()
+    
+    # Store special offer ID and details
+    session_data['special_offer_id'] = offer_id
+    session_data['promo_code'] = offer_details.get('promo_code')
+    session_data['promo_details'] = offer_details
+    
+    # Update session data
+    set_session_data(session_data)
+    
+    # Recalculate totals
+    update_quote_totals()
+    
+    return session_data
+
+def save_patient_info(patient_data):
+    """
+    Save patient information to the current quote
+    
+    Args:
+        patient_data (dict): The patient information to save
+        
+    Returns:
+        dict: Updated session data
+    """
+    session_data = get_session_data()
+    
+    # Store patient information
+    session_data['patient_info'] = patient_data
+    
+    # Update session data
+    set_session_data(session_data)
+    
+    return session_data
+
+def update_quote_totals():
+    """
+    Recalculate the quote totals based on selected treatments and promotions
+    """
+    session_data = get_session_data()
+    
+    # Calculate subtotal
+    subtotal = sum(
+        treatment.get('price', 0) * treatment.get('quantity', 1) 
+        for treatment in session_data['selected_treatments']
+    )
+    
+    # Calculate discount amount based on promo code
+    discount_amount = 0
+    if session_data['promo_details']:
+        promo_details = session_data['promo_details']
+        
+        # Different calculation based on discount type
+        if promo_details.get('discount_type') == 'percentage':
+            discount_percentage = promo_details.get('discount_value', 0)
+            discount_amount = subtotal * (discount_percentage / 100)
+        elif promo_details.get('discount_type') == 'fixed_amount':
+            discount_amount = promo_details.get('discount_value', 0)
+            # Ensure discount doesn't exceed subtotal
+            discount_amount = min(discount_amount, subtotal)
+    
+    # Calculate total
+    total = subtotal - discount_amount
+    
+    # Update quote totals
+    session_data['quote_totals'] = {
+        'subtotal': subtotal,
+        'discount_amount': discount_amount,
+        'total': total
+    }
+    
+    # Update session data
+    set_session_data(session_data)
+
+def clear_session_data():
+    """
+    Clear all session data
+    """
+    if 'quote_data' in session:
+        del session['quote_data']
+    
+    # Re-initialize with default values
+    init_session_data()
