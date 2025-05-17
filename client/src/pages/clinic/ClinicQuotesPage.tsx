@@ -109,6 +109,14 @@ export default function ClinicQuotesPage() {
         actions={
           <div className="flex gap-2">
             <Button 
+              variant="default" 
+              className="flex items-center gap-2 bg-gradient-to-r from-blue-600 to-blue-700"
+              onClick={() => window.location.href = '/enhanced-quote?clinicId=' + clinicId}
+            >
+              <FileText className="h-4 w-4" /> 
+              Create New Quote
+            </Button>
+            <Button 
               variant="outline" 
               className="flex items-center gap-2"
               onClick={() => quoteSystem.clinicQuotesQuery.refetch()}
