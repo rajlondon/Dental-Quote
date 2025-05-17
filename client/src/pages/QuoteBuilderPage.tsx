@@ -177,21 +177,22 @@ const QuoteBuilderPage: React.FC = () => {
       setIsPromoValid(true);
       updateState({ promoCode: code });
       
-      // If valid, ask if they want to apply the corresponding package
+      // If valid, automatically apply the package since it's coming from a special offer
+      applyPackage(validPackage);
+      
       toast({
-        title: 'Valid promo code',
-        description: `This code is for the "${validPackage.name}" package. Would you like to apply it?`,
-        action: (
-          <Button size="sm" onClick={() => applyPackage(validPackage)}>
-            Apply Package
-          </Button>
-        ),
+        title: 'Special offer applied!',
+        description: `${validPackage.name} has been added to your quote.`,
       });
       return;
     }
     
-    // Mock validation for other codes
-    const validCodes = ['WELCOME10', 'DENTAL20', 'SMILE15'];
+    // Add the special offer codes we're using from SpecialOffersSection.tsx
+    const validCodes = [
+      'WELCOME10', 'DENTAL20', 'SMILE15', 
+      'IMPLANTCROWN30', 'LUXHOTEL20', 'LUXTRAVEL'
+    ];
+    
     const isValid = validCodes.includes(code);
     
     setIsPromoValid(isValid);
