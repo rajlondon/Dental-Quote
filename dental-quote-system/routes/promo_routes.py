@@ -1,156 +1,127 @@
 """
-Promo Code Routes for Dental Quote System
-Handles promo code application, validation, and removal
+Promo Routes for Dental Quote System
+Handles API endpoints for promo code operations
 """
 
-from flask import Blueprint, request, redirect, url_for, jsonify, flash, session
+from flask import Blueprint, request, jsonify, flash, redirect, url_for, render_template
 import logging
-from utils.session_manager import SessionManager
 from services.promo_service import PromoService
+from utils.session_manager import SessionManager
 
+# Configure logging
 logger = logging.getLogger(__name__)
 
 # Create blueprint
 promo_routes = Blueprint('promo_routes', __name__)
 
-@promo_routes.route('/apply-promo-code', methods=['POST'])
+@promo_routes.route('/api/apply-promo-code', methods=['POST'])
 def apply_promo_code():
-    """Apply a promo code and store in session"""
-    promo_code = request.form.get('promo_code', '').strip().upper()
+    """Apply a promo code to the current session"""
+    # Ensure session is initialized
+    SessionManager.initialize_session()
     
+    # Get promo code from request
+    promo_code = request.form.get('promo_code')
+    
+    # Check if promo code was provided
     if not promo_code:
-        flash("Please enter a promo code.", "error")
+        error_msg = 'No promo code provided'
+        
+        # Handle XHR requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': error_msg})
+        
+        # Handle regular form submission
+        flash(error_msg)
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Validate the promo code
-    is_valid, discount_percent, error_message = PromoService.validate_promo_code(promo_code)
+    # Validate promo code
+    promo_details = PromoService.validate_promo_code(promo_code)
     
-    if not is_valid:
-        flash(error_message, "error")
+    if not promo_details:
+        error_msg = 'Invalid promo code'
+        
+        # Handle XHR requests
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'error': error_msg})
+        
+        # Handle regular form submission
+        flash(error_msg)
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Store promo code details in session
-    promo_details = {
-        'promo_code': promo_code,
-        'discount_percent': discount_percent
-    }
+    # Store promo code in session
+    SessionManager.store_promo_code(promo_details['code'], promo_details['value'])
     
-    SessionManager.store_promo_details(promo_details)
-    
-    # Get special offer details if applicable
-    special_offer = PromoService.get_special_offer_details(promo_code)
-    
-    if special_offer:
-        flash(f"Applied: {special_offer.get('name')} - {special_offer.get('description')}", "success")
-    else:
-        flash(f"Promo code {promo_code} applied for {discount_percent}% discount!", "success")
-    
-    # Redirect back to quote builder
-    return redirect(url_for('page_routes.quote_builder'))
-
-@promo_routes.route('/remove-promo-code', methods=['POST'])
-def remove_promo_code():
-    """Remove a promo code from session"""
-    # Remove promo code details from session
-    SessionManager.remove_promo_details()
-    
-    flash("Promo code removed.", "info")
-    
-    # Redirect back to quote builder
-    return redirect(url_for('page_routes.quote_builder'))
-
-@promo_routes.route('/api/validate-promo', methods=['POST'])
-def validate_promo_api():
-    """API endpoint to validate a promo code and return discount info"""
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({
-                'success': False,
-                'error': 'No data provided'
-            }), 400
-        
-        promo_code = data.get('promo_code', '').strip().upper()
-        
-        if not promo_code:
-            return jsonify({
-                'success': False,
-                'error': 'No promo code provided'
-            }), 400
-        
-        # Validate the promo code
-        is_valid, discount_percent, error_message = PromoService.validate_promo_code(promo_code)
-        
-        if not is_valid:
-            return jsonify({
-                'success': False,
-                'error': error_message
-            }), 400
-        
-        # Get special offer details if applicable
-        special_offer = PromoService.get_special_offer_details(promo_code)
-        
-        # Return validation result
+    # Handle XHR requests
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
-            'success': True,
-            'data': {
-                'promo_code': promo_code,
-                'discount_percent': discount_percent,
-                'special_offer': special_offer
+            'success': True, 
+            'promo': {
+                'code': promo_details['code'],
+                'discount_type': promo_details['type'],
+                'discount_value': promo_details['value'],
+                'description': promo_details['description']
             }
         })
-    except Exception as e:
-        logger.exception("Error validating promo code via API")
+    
+    # Handle regular form submission
+    flash(f"Promo code '{promo_code}' applied successfully!")
+    return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes.route('/api/remove-promo-code', methods=['POST'])
+def remove_promo_code():
+    """Remove the applied promo code from the session"""
+    # Ensure session is initialized
+    SessionManager.initialize_session()
+    
+    # Remove promo code from session
+    SessionManager.remove_promo_code()
+    
+    # Handle XHR requests
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return jsonify({'success': True})
+    
+    # Handle regular form submission
+    flash("Promo code removed")
+    return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes.route('/api/validate-promo-code/<code>')
+def validate_promo_code(code):
+    """Validate a promo code without applying it"""
+    # Validate promo code
+    promo_details = PromoService.validate_promo_code(code)
+    
+    if not promo_details:
         return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
+            'valid': False,
+            'message': 'Invalid promo code'
+        })
+    
+    return jsonify({
+        'valid': True,
+        'code': promo_details['code'],
+        'discount_type': promo_details['type'],
+        'discount_value': promo_details['value'],
+        'description': promo_details['description']
+    })
+
+@promo_routes.route('/api/special-offers')
+def get_special_offers_api():
+    """API endpoint to get all special offers"""
+    offers = PromoService.get_special_offers()
+    return jsonify({
+        'success': True,
+        'offers': offers
+    })
 
 @promo_routes.route('/special-offers')
-def special_offers():
-    """Display page with all special offers"""
-    # For demonstration, we'll create some sample special offers
-    offers = [
-        {
-            'id': 'FREECONSULT',
-            'name': 'Free Consultation Package',
-            'description': 'Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.',
-            'discount_type': 'other',
-            'discount_value': 'Free consultation',
-            'applicable_treatments': ['Dental Implants', 'Porcelain Veneers', 'Full Mouth Reconstruction'],
-            'terms': 'Applicable for new patients only. One consultation per patient.',
-            'promo_code': 'FREECONSULT'
-        },
-        {
-            'id': 'LUXHOTEL20',
-            'name': 'Premium Hotel Deal',
-            'description': 'Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.',
-            'discount_type': 'percentage',
-            'discount_value': '20%',
-            'applicable_treatments': ['Dental Implants', 'Porcelain Veneers', 'Dental Crowns'],
-            'terms': 'Minimum treatment value of $1000 required. Subject to hotel availability.',
-            'promo_code': 'LUXHOTEL20'
-        },
-        {
-            'id': 'IMPLANTCROWN30',
-            'name': 'Implant + Crown Package',
-            'description': 'Get 30% off when you combine a dental implant with a crown restoration. Our most popular combination treatment.',
-            'discount_type': 'percentage',
-            'discount_value': '30%',
-            'applicable_treatments': ['Dental Implants', 'Dental Crowns'],
-            'terms': 'Must include at least one implant and one crown in the same treatment plan.',
-            'promo_code': 'IMPLANTCROWN30'
-        },
-        {
-            'id': 'FREEWHITE',
-            'name': 'Free Teeth Whitening',
-            'description': 'Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.',
-            'discount_type': 'other',
-            'discount_value': 'Free teeth whitening',
-            'applicable_treatments': ['Porcelain Veneers', 'Dental Crowns', 'Hollywood Smile'],
-            'terms': 'Minimum of 4 veneers or crowns required. Not combinable with other offers.',
-            'promo_code': 'FREEWHITE'
-        }
-    ]
+def special_offers_page():
+    """Page to display all special offers"""
+    # Ensure session is initialized
+    SessionManager.initialize_session()
     
+    # Get offers
+    offers = PromoService.get_special_offers()
+    
+    # Render special offers page
     return render_template('promo/special_offers.html', offers=offers)
