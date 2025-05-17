@@ -11,6 +11,7 @@ import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
 import { Treatment, TreatmentPackage, AdditionalService } from '@/types/treatment-types';
 import { CurrencyCode } from '@/types/general-types';
 import { ChevronRight, ChevronLeft, Package, Tag, Clipboard, User, Check, Send } from 'lucide-react';
+import ClinicModeIndicator from '@/components/clinic/ClinicModeIndicator';
 
 // Mock data for treatments - would be fetched from API in a real implementation
 const TREATMENTS: Treatment[] = [

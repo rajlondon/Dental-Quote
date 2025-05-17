@@ -7,8 +7,8 @@
  * 3. Promo codes can be applied through both clinic portal and URL parameters
  */
 
-const axios = require('axios');
-const { JSDOM } = require('jsdom');
+import axios from 'axios';
+import { JSDOM } from 'jsdom';
 
 // Configuration
 const API_BASE_URL = 'http://localhost:5000';
@@ -191,3 +191,6 @@ async function runTests() {
 runTests().catch(error => {
   logError('Unhandled error in test script', error);
 });
+
+// Export for module compatibility
+export { runTests };
