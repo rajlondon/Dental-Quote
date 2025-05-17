@@ -2,173 +2,87 @@
 Promo Routes Module
 Handles promotional code routes for the dental quote system
 """
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-import uuid
-import json
-from datetime import datetime
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from utils.session_manager import get_quote_data, apply_promo_code, remove_promo_code
+from services.promo_service import verify_promo_code, get_offers
 
-# Import utilities
-from utils.session_manager import apply_promo_code, remove_promo_code
-
-# Create blueprint
+# Create Blueprint
 promo_routes = Blueprint('promo_routes', __name__)
 
-# Valid promo codes with details
-PROMO_CODES = {
-    'SUMMER15': {
-        'code': 'SUMMER15',
-        'type': 'percentage',
-        'value': 15,
-        'description': 'Summer Special: 15% off all dental treatments'
-    },
-    'DENTAL25': {
-        'code': 'DENTAL25',
-        'type': 'percentage',
-        'value': 25,
-        'description': 'Dental Health Month: 25% off all treatments'
-    },
-    'NEWPATIENT': {
-        'code': 'NEWPATIENT',
-        'type': 'percentage',
-        'value': 20,
-        'description': 'New Patient Special: 20% off your first treatment'
-    },
-    'TEST10': {
-        'code': 'TEST10',
-        'type': 'percentage',
-        'value': 10,
-        'description': 'Test Discount: 10% off your total'
-    },
-    'FREECONSULT': {
-        'code': 'FREECONSULT',
-        'type': 'fixed',
-        'value': 50,
-        'description': 'Free Consultation (up to $50 value)'
-    },
-    'LUXHOTEL20': {
-        'code': 'LUXHOTEL20',
-        'type': 'percentage',
-        'value': 20,
-        'description': 'Premium Hotel Deal: 20% off select treatments'
-    },
-    'IMPLANTCROWN30': {
-        'code': 'IMPLANTCROWN30',
-        'type': 'percentage',
-        'value': 30,
-        'description': 'Implant + Crown Bundle: 30% off combined procedures'
-    },
-    'FREEWHITE': {
-        'code': 'FREEWHITE',
-        'type': 'fixed',
-        'value': 150,
-        'description': 'Free Teeth Whitening with Veneer or Crown Treatments'
-    }
-}
-
-# Mock data for special offers
-SPECIAL_OFFERS = [
-    {
-        'id': 'offer-1',
-        'title': 'Summer Smile Special',
-        'description': 'Get 15% off all dental treatments during our summer promotion.',
-        'clinic_name': 'DentGroup Istanbul',
-        'promo_code': 'SUMMER15',
-        'image': '/static/images/offer-placeholder.jpg',
-        'treatments': ['Dental Cleaning', 'Teeth Whitening', 'Dental Crowns'],
-        'valid_until': 'August 31, 2025'
-    },
-    {
-        'id': 'offer-2',
-        'title': 'New Patient Discount',
-        'description': 'First-time patients receive 20% off any treatment package.',
-        'clinic_name': 'Istanbul Dental Care',
-        'promo_code': 'NEWPATIENT',
-        'image': '/static/images/offer-placeholder.jpg',
-        'treatments': ['Dental Examination', 'X-Rays', 'Treatment Plan'],
-        'valid_until': 'December 31, 2025'
-    },
-    {
-        'id': 'offer-3',
-        'title': 'Implant + Crown Bundle',
-        'description': 'Save 30% when combining dental implant with crown treatment.',
-        'clinic_name': 'Maltepe Dental Clinic',
-        'promo_code': 'IMPLANTCROWN30',
-        'image': '/static/images/offer-placeholder.jpg',
-        'treatments': ['Dental Implant', 'Porcelain Crown', 'Abutment'],
-        'valid_until': 'July 31, 2025'
-    },
-    {
-        'id': 'offer-4',
-        'title': 'Free Consultation Package',
-        'description': 'Book any treatment and get a free consultation worth $50.',
-        'clinic_name': 'Dentakay Istanbul',
-        'promo_code': 'FREECONSULT',
-        'image': '/static/images/offer-placeholder.jpg',
-        'treatments': ['Dental Examination', 'X-Rays', 'Treatment Plan'],
-        'valid_until': 'October 15, 2025'
-    },
-    {
-        'id': 'offer-5',
-        'title': 'Premium Hotel Deal',
-        'description': 'Get 20% off select treatments and enjoy discounted stays at luxury hotels.',
-        'clinic_name': 'DentGroup Istanbul',
-        'promo_code': 'LUXHOTEL20',
-        'image': '/static/images/offer-placeholder.jpg',
-        'treatments': ['Dental Implants', 'Porcelain Veneers', 'Full Mouth Restoration'],
-        'valid_until': 'September 30, 2025'
-    }
-]
-
-# Special offers page
+# Special offers page route
 @promo_routes.route('/special-offers')
 def special_offers_page():
-    """Render special offers page."""
-    return render_template('promo/special_offers.html', offers=SPECIAL_OFFERS)
+    """Render the special offers page"""
+    offers = get_offers()
+    return render_template('promo/special_offers.html', offers=offers)
 
 # Apply promo code route
 @promo_routes.route('/apply-promo-code', methods=['POST'])
 def apply_promo_code_route():
-    """Apply promo code to quote."""
-    code = request.form.get('promo_code', '').strip().upper()
+    """Apply a promo code to the quote"""
+    promo_code = request.form.get('promo_code')
     
-    # Check if code exists
-    if code in PROMO_CODES:
-        # Apply promo code to session
-        apply_promo_code(code, PROMO_CODES[code])
-        flash(f'Promo code {code} applied successfully!', 'success')
-    else:
-        flash('Invalid promo code. Please try again.', 'error')
+    if not promo_code:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Promo code is required'})
+        flash('Promo code is required', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
     
-    # If this is an AJAX request, return JSON response
+    # Verify promo code
+    promo_details = verify_promo_code(promo_code)
+    
+    if not promo_details:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'Invalid promo code'})
+        flash('Invalid promo code', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Apply promo code to quote
+    apply_promo_code(promo_code, promo_details)
+    
+    # Get updated quote data
+    quote_data = get_quote_data()
+    
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        if code in PROMO_CODES:
-            return json.dumps({
-                'success': True,
-                'message': f'Promo code {code} applied successfully!',
-                'promo_details': PROMO_CODES[code]
-            })
-        else:
-            return json.dumps({
-                'success': False,
-                'message': 'Invalid promo code. Please try again.'
-            })
+        return jsonify({
+            'success': True,
+            'treatments': quote_data['treatments'],
+            'subtotal': quote_data['subtotal'],
+            'discount': quote_data['discount'],
+            'total': quote_data['total'],
+            'promo_code': quote_data['promo_code'],
+            'promo_description': promo_details.get('description', '')
+        })
     
-    # Otherwise redirect back to quote builder
+    flash(f'Promo code "{promo_code}" applied successfully', 'success')
     return redirect(url_for('page_routes.quote_builder'))
 
 # Remove promo code route
 @promo_routes.route('/remove-promo-code', methods=['POST'])
 def remove_promo_code_route():
-    """Remove promo code from quote."""
-    remove_promo_code()
-    flash('Promo code removed.', 'success')
+    """Remove the applied promo code from the quote"""
+    # Remove promo code from quote
+    success = remove_promo_code()
     
-    # If this is an AJAX request, return JSON response
+    if not success:
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': False, 'message': 'No promo code applied'})
+        flash('No promo code applied', 'error')
+        return redirect(url_for('page_routes.quote_builder'))
+    
+    # Get updated quote data
+    quote_data = get_quote_data()
+    
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return json.dumps({
+        return jsonify({
             'success': True,
-            'message': 'Promo code removed.'
+            'treatments': quote_data['treatments'],
+            'subtotal': quote_data['subtotal'],
+            'discount': quote_data['discount'],
+            'total': quote_data['total'],
+            'promo_code': None,
+            'promo_description': None
         })
     
-    # Otherwise redirect back to quote builder
+    flash('Promo code removed', 'success')
     return redirect(url_for('page_routes.quote_builder'))

@@ -1,171 +1,161 @@
 """
-Promo Service for Dental Quote System
-
-Handles validation and application of promo codes and special offers.
+Promo Service Module
+Handles promotional codes and special offers for the dental quote system
 """
+import datetime
 
-class PromoService:
-    """
-    Static class to handle promo code validation and special offer management.
-    """
-    
-    # Valid promo codes with their details
-    VALID_PROMO_CODES = {
-        'SUMMER15': {'code': 'SUMMER15', 'type': 'percentage', 'value': 15, 'description': 'Summer discount 15% off'},
-        'DENTAL25': {'code': 'DENTAL25', 'type': 'percentage', 'value': 25, 'description': 'Dental Special 25% off'},
-        'NEWPATIENT': {'code': 'NEWPATIENT', 'type': 'percentage', 'value': 20, 'description': 'New Patient 20% off'},
-        'TEST10': {'code': 'TEST10', 'type': 'percentage', 'value': 10, 'description': 'Test discount 10% off'},
-        'FREECONSULT': {'code': 'FREECONSULT', 'type': 'fixed', 'value': 0, 'description': 'Free dental consultation'},
-        'LUXHOTEL20': {'code': 'LUXHOTEL20', 'type': 'percentage', 'value': 20, 'description': 'Luxury Hotel Package 20% off'},
-        'IMPLANTCROWN30': {'code': 'IMPLANTCROWN30', 'type': 'percentage', 'value': 30, 'description': 'Implant + Crown Bundle 30% off'},
-        'FREEWHITE': {'code': 'FREEWHITE', 'type': 'product', 'value': 0, 'description': 'Free teeth whitening with any implant purchase'}
+# Predefined promo codes
+PROMO_CODES = {
+    'SUMMER15': {
+        'code': 'SUMMER15',
+        'description': 'Summer Discount 15%',
+        'discount_type': 'percentage',
+        'discount_value': 15,
+        'valid_until': datetime.date(2025, 9, 1)
+    },
+    'DENTAL25': {
+        'code': 'DENTAL25',
+        'description': 'Dental Care Discount 25%',
+        'discount_type': 'percentage',
+        'discount_value': 25,
+        'valid_until': datetime.date(2025, 12, 31)
+    },
+    'NEWPATIENT': {
+        'code': 'NEWPATIENT',
+        'description': 'New Patient Discount 20%',
+        'discount_type': 'percentage',
+        'discount_value': 20,
+        'valid_until': datetime.date(2025, 12, 31)
+    },
+    'TEST10': {
+        'code': 'TEST10',
+        'description': 'Test Discount 10%',
+        'discount_type': 'percentage',
+        'discount_value': 10,
+        'valid_until': datetime.date(2025, 12, 31)
+    },
+    'FREECONSULT': {
+        'code': 'FREECONSULT',
+        'description': 'Free Consultation Package',
+        'discount_type': 'fixed_amount',
+        'discount_value': 100,
+        'valid_until': datetime.date(2025, 8, 31)
+    },
+    'LUXHOTEL20': {
+        'code': 'LUXHOTEL20',
+        'description': 'Premium Hotel Deal 20%',
+        'discount_type': 'percentage',
+        'discount_value': 20,
+        'valid_until': datetime.date(2025, 8, 31)
+    },
+    'IMPLANTCROWN30': {
+        'code': 'IMPLANTCROWN30',
+        'description': 'Dental Implant + Crown Bundle 30%',
+        'discount_type': 'percentage',
+        'discount_value': 30,
+        'valid_until': datetime.date(2025, 7, 31)
+    },
+    'FREEWHITE': {
+        'code': 'FREEWHITE',
+        'description': 'Free Teeth Whitening',
+        'discount_type': 'fixed_amount',
+        'discount_value': 150,
+        'valid_until': datetime.date(2025, 8, 31)
+    },
+    'LUXTRAVEL': {
+        'code': 'LUXTRAVEL',
+        'description': 'Luxury Airport Transfer',
+        'discount_type': 'fixed_amount',
+        'discount_value': 80,
+        'valid_until': datetime.date(2025, 9, 30)
     }
+}
+
+# Special offers
+SPECIAL_OFFERS = [
+    {
+        'id': '1',
+        'title': 'Free Consultation Package',
+        'description': 'Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.',
+        'clinic_name': 'DentSpa Istanbul',
+        'treatments': ['Dental Implants', 'Veneers', 'Full Mouth Reconstruction'],
+        'promo_code': 'FREECONSULT',
+        'valid_until': 'August 31, 2025',
+        'image': '/static/images/offer-placeholder.jpg'
+    },
+    {
+        'id': '2',
+        'title': 'Premium Hotel Deal',
+        'description': 'Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.',
+        'clinic_name': 'Istanbul Dental Excellence',
+        'treatments': ['Dental Implants', 'Veneers', 'Crowns'],
+        'promo_code': 'LUXHOTEL20',
+        'valid_until': 'August 31, 2025',
+        'image': '/static/images/offer-placeholder.jpg'
+    },
+    {
+        'id': '3',
+        'title': 'Dental Implant + Crown Bundle',
+        'description': 'Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.',
+        'clinic_name': 'Maltepe Dental Clinic',
+        'treatments': ['Dental Implants', 'Crowns'],
+        'promo_code': 'IMPLANTCROWN30',
+        'valid_until': 'July 31, 2025',
+        'image': '/static/images/offer-placeholder.jpg'
+    },
+    {
+        'id': '4',
+        'title': 'Luxury Airport Transfer',
+        'description': 'Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.',
+        'clinic_name': 'Beyaz Ada Clinic',
+        'treatments': ['Full Mouth Reconstruction', 'Hollywood Smile', 'All-on-4 Implants'],
+        'promo_code': 'LUXTRAVEL',
+        'valid_until': 'September 30, 2025',
+        'image': '/static/images/offer-placeholder.jpg'
+    },
+    {
+        'id': '5',
+        'title': 'Free Teeth Whitening',
+        'description': 'Receive a complimentary professional teeth whitening session with any veneer or crown treatment package.',
+        'clinic_name': 'Istanbul Dental Smile',
+        'treatments': ['Veneers', 'Crowns', 'Hollywood Smile'],
+        'promo_code': 'FREEWHITE',
+        'valid_until': 'August 31, 2025',
+        'image': '/static/images/offer-placeholder.jpg'
+    }
+]
+
+def verify_promo_code(code):
+    """
+    Verify if a promo code is valid and return its details
     
-    # Special offers with details
-    SPECIAL_OFFERS = [
-        {
-            'id': 'free-consult',
-            'title': 'Free Consultation Package',
-            'description': 'Schedule a free dental consultation with one of our top specialists',
-            'clinic_name': 'DentGroup International',
-            'image': '/images/clinics/dentgroup.jpg',
-            'promo_code': 'FREECONSULT',
-            'valid_until': '2025-12-31',
-            'treatments': ['Dental Consultation']
-        },
-        {
-            'id': 'hotel-deal',
-            'title': 'Premium Hotel Deal',
-            'description': 'Get 20% off on all treatments plus 3 nights at a luxury hotel',
-            'clinic_name': 'Istanbul Dental Clinic',
-            'image': '/images/offers/premium-hotel-new.png',
-            'promo_code': 'LUXHOTEL20',
-            'valid_until': '2025-08-30',
-            'treatments': ['All Treatments']
-        },
-        {
-            'id': 'implant-crown',
-            'title': 'Dental Implant + Crown Bundle',
-            'description': 'Save 30% on our implant and crown package',
-            'clinic_name': 'Premium Dental Spa',
-            'image': '/images/treatments/illustrations/dental-implants1.png',
-            'promo_code': 'IMPLANTCROWN30',
-            'valid_until': '2025-09-15',
-            'treatments': ['Dental Implant', 'Dental Crown']
-        },
-        {
-            'id': 'airport-transfer',
-            'title': 'Luxury Airport Transfer',
-            'description': 'Book any treatment over $1000 and get free luxury airport transfers',
-            'clinic_name': 'VIP Dental Care',
-            'image': '/images/accommodations/premium-hotel.jpg',
-            'promo_code': 'TEST10',
-            'valid_until': '2025-10-31',
-            'treatments': ['Premium Treatments']
-        },
-        {
-            'id': 'free-whitening',
-            'title': 'Free Teeth Whitening',
-            'description': 'Get free teeth whitening with any dental implant treatment',
-            'clinic_name': 'Bright Smile Dental',
-            'image': '/images/treatments/illustrations/veneers-and-crowns.png',
-            'promo_code': 'FREEWHITE',
-            'valid_until': '2025-11-30',
-            'treatments': ['Teeth Whitening', 'Dental Implant']
-        }
-    ]
+    Args:
+        code (str): The promo code to verify
+        
+    Returns:
+        dict or None: The promo code details if valid, None otherwise
+    """
+    # Convert code to uppercase for case-insensitive comparison
+    code = code.upper()
     
-    @staticmethod
-    def validate_promo_code(code):
-        """
-        Validate a promo code
-        
-        Args:
-            code (str): The promo code to validate
-            
-        Returns:
-            dict: Promo details if valid, None if invalid
-        """
-        # Clean and normalize the code
-        if not code:
-            return None
-            
-        cleaned_code = code.strip().upper()
-        
-        # Check if code exists
-        if cleaned_code in PromoService.VALID_PROMO_CODES:
-            return PromoService.VALID_PROMO_CODES[cleaned_code]
-        
+    # Check if code exists
+    if code not in PROMO_CODES:
         return None
     
-    @staticmethod
-    def get_all_special_offers():
-        """
-        Get all available special offers
-        
-        Returns:
-            list: List of special offer details
-        """
-        return PromoService.SPECIAL_OFFERS
+    promo = PROMO_CODES[code]
     
-    @staticmethod
-    def get_special_offer_by_id(offer_id):
-        """
-        Get a special offer by ID
-        
-        Args:
-            offer_id (str): The ID of the special offer
-            
-        Returns:
-            dict: Special offer details if found, None if not found
-        """
-        for offer in PromoService.SPECIAL_OFFERS:
-            if offer['id'] == offer_id:
-                return offer
-        
+    # Check if code is still valid
+    today = datetime.date.today()
+    if today > promo['valid_until']:
         return None
     
-    @staticmethod
-    def get_special_offer_by_promo_code(promo_code):
-        """
-        Get a special offer by promo code
-        
-        Args:
-            promo_code (str): The promo code to look for
-            
-        Returns:
-            dict: Special offer details if found, None if not found
-        """
-        if not promo_code:
-            return None
-            
-        cleaned_code = promo_code.strip().upper()
-        
-        for offer in PromoService.SPECIAL_OFFERS:
-            if offer['promo_code'] == cleaned_code:
-                return offer
-        
-        return None
+    return promo
+
+def get_offers():
+    """
+    Get all special offers
     
-    @staticmethod
-    def calculate_discount(subtotal, promo_details):
-        """
-        Calculate discount amount based on promo details
-        
-        Args:
-            subtotal (float): The subtotal before discount
-            promo_details (dict): Promo code details
-            
-        Returns:
-            float: Discount amount
-        """
-        if not promo_details:
-            return 0
-        
-        if promo_details['type'] == 'percentage':
-            return (subtotal * promo_details['value']) / 100
-        elif promo_details['type'] == 'fixed':
-            return min(promo_details['value'], subtotal)
-        
-        # For 'product' type promos (like free whitening), no direct discount
-        return 0
+    Returns:
+        list: List of special offers
+    """
+    return SPECIAL_OFFERS

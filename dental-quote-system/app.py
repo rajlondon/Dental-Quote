@@ -1,54 +1,42 @@
 """
 Dental Quote System
-Main application module for the dental quote system
+Main application file
 """
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, session
+from flask_session import Session
 import os
-import secrets
-from datetime import timedelta
-
-# Import route blueprints
 from routes.page_routes import page_routes
 from routes.promo_routes import promo_routes
-from routes.integration_routes import integration_routes
-
-# Import utilities
 from utils.session_manager import initialize_session
+from datetime import timedelta
 
-# Create Flask application
+# Create Flask app
 app = Flask(__name__)
 
-# Configure application
-# Set secret key for session management
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
-
-# Set session configuration for persistence
+# Configure app
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dental-quote-system-secret-key')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=1)
+app.config['SESSION_FILE_DIR'] = os.path.join(os.getcwd(), 'flask_session')
+app.config['SESSION_FILE_THRESHOLD'] = 500  # Number of sessions stored before cleanup
+
+# Initialize session
+Session(app)
 
 # Register blueprints
 app.register_blueprint(page_routes)
 app.register_blueprint(promo_routes)
-app.register_blueprint(integration_routes)
 
-# Register error handlers
-@app.errorhandler(404)
-def not_found_error(error):
-    """Handle 404 Not Found errors."""
-    return render_template('errors/404.html'), 404
-
-@app.errorhandler(500)
-def internal_error(error):
-    """Handle 500 Internal Server errors."""
-    return render_template('errors/500.html'), 500
-
-# Request handling middleware
+# Register before_request handler
 @app.before_request
 def before_request():
-    """Initialize session before each request."""
+    """Initialize session before each request"""
     initialize_session()
 
-# Run the application
+# Create session directory if it doesn't exist
+os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+
 if __name__ == '__main__':
+    # Run the app in debug mode
     app.run(host='0.0.0.0', port=5005, debug=True)
