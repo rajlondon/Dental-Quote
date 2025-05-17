@@ -1,6 +1,5 @@
 import logging
-from flask import Blueprint, render_template, request, redirect, url_for, jsonify, abort, session, flash
-
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from utils.session_manager import SessionManager
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
@@ -15,16 +14,23 @@ promo_routes_bp = Blueprint('promo_routes', __name__)
 treatment_service = TreatmentService()
 promo_service = PromoService()
 
-# Route handlers
 @promo_routes_bp.route('/special-offers')
 def special_offers():
-    """Display a list of all active special offers."""
+    """
+    Render the special offers page
+    """
+    # Get all active special offers
     active_offers = promo_service.get_active_special_offers()
-    return render_template('promo/special_offers.html', offers=active_offers)
+    
+    return render_template('promo/special_offers.html',
+                          active_offers=active_offers)
 
 @promo_routes_bp.route('/special-offer/<offer_id>')
 def special_offer_detail(offer_id):
-    """Display details for a specific special offer."""
+    """
+    Render the detail page for a specific special offer
+    """
+    # Get the special offer by ID
     offer = promo_service.get_special_offer_by_id(offer_id)
     
     if not offer:
@@ -45,108 +51,96 @@ def special_offer_detail(offer_id):
 @promo_routes_bp.route('/start-with-offer/<offer_id>')
 def start_with_offer(offer_id):
     """
-    Start a new quote with a specific special offer.
-    This resets the session and adds the offer's treatments automatically.
+    Start a new quote with a specific special offer
     """
-    # Reset the session to start fresh
-    SessionManager.reset_session()
-    
-    # Set the special offer ID in the session
-    SessionManager.set_special_offer_id(offer_id)
-    
-    # Get the offer details
+    # Get the special offer by ID
     offer = promo_service.get_special_offer_by_id(offer_id)
     
     if not offer:
         flash('Special offer not found.', 'error')
         return redirect(url_for('promo_routes.special_offers'))
     
-    # Apply the promo code if there is one
+    # Reset the session to start fresh
+    SessionManager.reset_session()
+    
+    # Apply the promo code from the special offer
     if offer.get('promo_code'):
-        promo = promo_service.get_promo_code_by_code(offer['promo_code'])
-        if promo:
-            # Validate the promo code first - we'll skip subtotal check since it's a new quote
-            validation = promo_service.validate_promo_code(offer['promo_code'])
-            
-            if validation['valid']:
-                SessionManager.apply_promo_code(offer['promo_code'], 0)  # Start with 0 discount
+        SessionManager.set_promo_code(offer.get('promo_code'), offer)
     
     # Redirect to the quote builder
     return redirect(url_for('page_routes.quote_builder'))
 
 @promo_routes_bp.route('/apply-promo', methods=['POST'])
 def apply_promo():
-    """Apply a promo code to the current quote."""
-    # Initialize session if needed
-    SessionManager.initialize_session()
-    
-    # Get the promo code from the form
-    promo_code = request.form.get('promo_code', '').strip()
+    """
+    Apply a promotional code to the current quote
+    """
+    promo_code = request.form.get('promo_code')
     
     if not promo_code:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': 'No promo code provided.'})
-        flash('Please enter a promo code.', 'error')
-        return redirect(url_for('page_routes.quote_builder'))
+            return jsonify({'success': False, 'message': 'No promo code provided'})
+        else:
+            flash('No promo code provided.', 'warning')
+            return redirect(url_for('page_routes.quote_builder'))
     
-    # Get selected treatments
+    # Get quote data
+    quote_data = SessionManager.get_quote_data()
+    subtotal = quote_data.get('subtotal', 0)
+    
+    # Get selected treatments IDs
     selected_treatments = SessionManager.get_selected_treatments()
-    treatment_ids = [t['id'] for t in selected_treatments]
-    
-    # Calculate subtotal
-    totals = SessionManager.calculate_totals()
-    subtotal = totals['subtotal']
+    treatment_ids = [t.get('id') for t in selected_treatments]
     
     # Validate the promo code
-    validation = promo_service.validate_promo_code(promo_code, subtotal, treatment_ids)
+    validation_result = promo_service.validate_promo_code(promo_code, subtotal, treatment_ids)
     
-    if validation['valid']:
-        promo = validation['promo']
-        
-        # Calculate discount
-        discount_amount = promo_service.calculate_discount(promo, subtotal)
-        
-        # Apply the promo code to the session
-        SessionManager.apply_promo_code(promo_code, discount_amount)
-        
-        # Increment usage count for the promo code
-        promo_service.increment_usage_count(promo['id'])
-        
+    if not validation_result.get('valid'):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({
-                'success': True,
-                'message': 'Promo code applied successfully!',
-                'discount_amount': discount_amount,
-                'new_total': subtotal - discount_amount
-            })
-        
-        flash('Promo code applied successfully!', 'success')
-    else:
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return jsonify({'success': False, 'message': validation['message']})
-        
-        flash(validation['message'], 'error')
+            return jsonify({'success': False, 'message': validation_result.get('message')})
+        else:
+            flash(validation_result.get('message'), 'error')
+            return redirect(url_for('page_routes.quote_builder'))
     
-    return redirect(url_for('page_routes.quote_builder'))
-
-@promo_routes_bp.route('/remove-promo', methods=['POST'])
-def remove_promo():
-    """Remove the applied promo code from the current quote."""
-    # Initialize session if needed
-    SessionManager.initialize_session()
+    # Get promo details
+    promo_details = validation_result.get('promo_details')
     
-    # Remove the promo code from the session
-    SessionManager.remove_promo_code()
-    
-    # Recalculate totals
-    totals = SessionManager.calculate_totals()
+    # Apply the promo code to the session
+    SessionManager.set_promo_code(promo_code, promo_details)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({
-            'success': True,
-            'message': 'Promo code removed.',
-            'new_total': totals['total']
+            'success': True, 
+            'message': 'Promo code applied successfully',
+            'promo_code': promo_code,
+            'promo_details': promo_details,
+            'subtotal': quote_data.get('subtotal', 0),
+            'discount_amount': quote_data.get('discount_amount', 0),
+            'total': quote_data.get('total', 0)
         })
+    else:
+        flash('Promo code applied successfully.', 'success')
+        return redirect(url_for('page_routes.quote_builder'))
+
+@promo_routes_bp.route('/remove-promo', methods=['POST'])
+def remove_promo():
+    """
+    Remove a promotional code from the current quote
+    """
+    # Remove the promo code from the session
+    SessionManager.remove_promo_code()
     
-    flash('Promo code removed.', 'info')
-    return redirect(url_for('page_routes.quote_builder'))
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Get updated quote data
+        quote_data = SessionManager.get_quote_data()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Promo code removed successfully',
+            'subtotal': quote_data.get('subtotal', 0),
+            'discount_amount': quote_data.get('discount_amount', 0),
+            'total': quote_data.get('total', 0)
+        })
+    else:
+        flash('Promo code removed successfully.', 'success')
+        return redirect(url_for('page_routes.quote_builder'))

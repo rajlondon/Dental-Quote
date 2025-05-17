@@ -1,6 +1,8 @@
 import logging
 import json
 import os
+import uuid
+from datetime import datetime
 from typing import Dict, List, Any, Optional
 
 logger = logging.getLogger(__name__)
@@ -85,126 +87,175 @@ class TreatmentService:
         """
         Create sample treatment data
         """
+        now = datetime.utcnow().isoformat()
         return [
             {
                 "id": "dental_implant_standard",
                 "name": "Dental Implant (Standard)",
-                "description": "Titanium dental implant with abutment and crown",
-                "price": 850,
-                "duration_days": 5,
-                "recovery_time": "7-10 days",
+                "description": "Standard dental implant procedure including titanium implant and abutment.",
                 "category_id": "implants",
-                "image": "images/treatments/dental_implant.jpg"
+                "price": 750,
+                "currency": "USD",
+                "duration_minutes": 90,
+                "image_url": "/static/images/treatments/dental_implant_standard.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "dental_implant_premium",
                 "name": "Dental Implant (Premium)",
-                "description": "Premium dental implant with custom abutment and porcelain crown",
-                "price": 1200,
-                "duration_days": 5,
-                "recovery_time": "7-10 days",
+                "description": "Premium dental implant with higher grade materials and extended warranty.",
                 "category_id": "implants",
-                "image": "images/treatments/premium_implant.jpg"
+                "price": 950,
+                "currency": "USD",
+                "duration_minutes": 120,
+                "image_url": "/static/images/treatments/dental_implant_premium.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "all_on_4_implants",
                 "name": "All-on-4 Implants",
-                "description": "Full arch restoration with 4 dental implants",
-                "price": 5500,
-                "duration_days": 7,
-                "recovery_time": "10-14 days",
+                "description": "Four implants supporting a full arch of fixed teeth, ideal for complete tooth loss.",
                 "category_id": "implants",
-                "image": "images/treatments/all_on_4.jpg"
-            },
-            {
-                "id": "porcelain_veneers",
-                "name": "Porcelain Veneers",
-                "description": "Custom-made porcelain shells to cover the front of teeth",
-                "price": 350,
-                "duration_days": 5,
-                "recovery_time": "1-2 days",
-                "category_id": "cosmetic",
-                "image": "images/treatments/veneers.jpg"
-            },
-            {
-                "id": "teeth_whitening",
-                "name": "Professional Teeth Whitening",
-                "description": "In-office professional teeth whitening treatment",
-                "price": 250,
-                "duration_days": 1,
-                "recovery_time": "Same day",
-                "category_id": "cosmetic",
-                "image": "images/treatments/whitening.jpg"
-            },
-            {
-                "id": "hollywood_smile",
-                "name": "Hollywood Smile",
-                "description": "Complete smile makeover with veneers or crowns",
-                "price": 3200,
-                "duration_days": 7,
-                "recovery_time": "3-5 days",
-                "category_id": "cosmetic",
-                "image": "images/treatments/hollywood_smile.jpg"
+                "price": 7500,
+                "currency": "USD",
+                "duration_minutes": 240,
+                "image_url": "/static/images/treatments/all_on_4_implants.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "dental_crowns",
                 "name": "Dental Crown",
-                "description": "Porcelain or zirconia crown to restore damaged teeth",
-                "price": 300,
-                "duration_days": 3,
-                "recovery_time": "1-2 days",
+                "description": "Custom-made crown to restore a damaged or weakened tooth.",
                 "category_id": "restorative",
-                "image": "images/treatments/crown.jpg"
+                "price": 450,
+                "currency": "USD",
+                "duration_minutes": 60,
+                "image_url": "/static/images/treatments/dental_crown.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
+            },
+            {
+                "id": "porcelain_veneers",
+                "name": "Porcelain Veneers",
+                "description": "Custom-made thin shells designed to cover the front surface of teeth.",
+                "category_id": "cosmetic",
+                "price": 550,
+                "currency": "USD",
+                "duration_minutes": 90,
+                "image_url": "/static/images/treatments/porcelain_veneers.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
+            },
+            {
+                "id": "teeth_whitening",
+                "name": "Professional Teeth Whitening",
+                "description": "In-clinic teeth whitening treatment for a brighter smile.",
+                "category_id": "cosmetic",
+                "price": 250,
+                "currency": "USD",
+                "duration_minutes": 60,
+                "image_url": "/static/images/treatments/teeth_whitening.jpg",
+                "popular": True,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "root_canal",
                 "name": "Root Canal Treatment",
-                "description": "Endodontic treatment to remove infected pulp",
-                "price": 275,
-                "duration_days": 2,
-                "recovery_time": "1-2 days",
+                "description": "Procedure to treat infection at the center of a tooth.",
                 "category_id": "restorative",
-                "image": "images/treatments/root_canal.jpg"
+                "price": 600,
+                "currency": "USD",
+                "duration_minutes": 90,
+                "image_url": "/static/images/treatments/root_canal.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "dental_bridge",
                 "name": "Dental Bridge",
-                "description": "Fixed bridge to replace missing teeth",
-                "price": 750,
-                "duration_days": 5,
-                "recovery_time": "2-3 days",
+                "description": "Fixed replacement for missing teeth using adjacent teeth as anchors.",
                 "category_id": "restorative",
-                "image": "images/treatments/bridge.jpg"
+                "price": 850,
+                "currency": "USD",
+                "duration_minutes": 120,
+                "image_url": "/static/images/treatments/dental_bridge.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
+            },
+            {
+                "id": "hollywood_smile",
+                "name": "Hollywood Smile",
+                "description": "Complete smile makeover with veneers for a perfect, celebrity-like smile.",
+                "category_id": "cosmetic",
+                "price": 5000,
+                "currency": "USD",
+                "duration_minutes": 240,
+                "image_url": "/static/images/treatments/hollywood_smile.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "full_mouth_reconstruction",
                 "name": "Full Mouth Reconstruction",
-                "description": "Complete restoration of all teeth in both jaws",
-                "price": 8500,
-                "duration_days": 14,
-                "recovery_time": "2-3 weeks",
-                "category_id": "reconstructive",
-                "image": "images/treatments/full_mouth.jpg"
+                "description": "Comprehensive treatment to rebuild or restore all teeth in both jaws.",
+                "category_id": "restorative",
+                "price": 12000,
+                "currency": "USD",
+                "duration_minutes": 480,
+                "image_url": "/static/images/treatments/full_mouth_reconstruction.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
-                "id": "bone_graft",
-                "name": "Bone Graft",
-                "description": "Procedure to restore bone loss in the jaw",
-                "price": 450,
-                "duration_days": 1,
-                "recovery_time": "7-10 days",
-                "category_id": "reconstructive",
-                "image": "images/treatments/bone_graft.jpg"
+                "id": "dental_examination",
+                "name": "Comprehensive Dental Examination",
+                "description": "Complete dental checkup including X-rays and consultation.",
+                "category_id": "general",
+                "price": 80,
+                "currency": "USD",
+                "duration_minutes": 45,
+                "image_url": "/static/images/treatments/dental_examination.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
-                "id": "sinus_lift",
-                "name": "Sinus Lift",
-                "description": "Procedure to add bone to the upper jaw in the molar area",
-                "price": 950,
-                "duration_days": 1,
-                "recovery_time": "7-10 days",
-                "category_id": "reconstructive",
-                "image": "images/treatments/sinus_lift.jpg"
+                "id": "professional_cleaning",
+                "name": "Professional Dental Cleaning",
+                "description": "Deep cleaning procedure to remove plaque and tartar.",
+                "category_id": "general",
+                "price": 100,
+                "currency": "USD",
+                "duration_minutes": 60,
+                "image_url": "/static/images/treatments/professional_cleaning.jpg",
+                "popular": False,
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             }
         ]
     
@@ -212,30 +263,47 @@ class TreatmentService:
         """
         Create sample treatment categories
         """
+        now = datetime.utcnow().isoformat()
         return [
             {
                 "id": "implants",
                 "name": "Dental Implants",
-                "description": "Permanent tooth replacements that look and function like natural teeth",
-                "image": "images/categories/implants.jpg"
+                "description": "Long-lasting tooth replacement solutions anchored to the jawbone.",
+                "order": 1,
+                "icon": "tooth",
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "cosmetic",
                 "name": "Cosmetic Dentistry",
-                "description": "Treatments focused on improving the appearance of your smile",
-                "image": "images/categories/cosmetic.jpg"
+                "description": "Procedures designed to improve the appearance of your smile.",
+                "order": 2,
+                "icon": "smile",
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
                 "id": "restorative",
-                "name": "Restorative Dentistry",
-                "description": "Procedures to repair and restore damaged or missing teeth",
-                "image": "images/categories/restorative.jpg"
+                "name": "Restorative Treatments",
+                "description": "Procedures to restore damaged or missing teeth to full function.",
+                "order": 3,
+                "icon": "wrench",
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             },
             {
-                "id": "reconstructive",
-                "name": "Reconstructive Dentistry",
-                "description": "Advanced procedures to rebuild oral structure and function",
-                "image": "images/categories/reconstructive.jpg"
+                "id": "general",
+                "name": "General Dentistry",
+                "description": "Routine dental care to maintain oral health.",
+                "order": 4,
+                "icon": "check-circle",
+                "is_active": True,
+                "created_at": now,
+                "updated_at": now
             }
         ]
     
@@ -258,35 +326,24 @@ class TreatmentService:
         """
         Get all treatments in a specific category
         """
-        return [t for t in self.treatments if t.get('category_id') == category_id]
+        return [
+            t for t in self.treatments 
+            if t.get('category_id') == category_id and t.get('is_active', False)
+        ]
     
     def get_popular_treatments(self, limit: int = 6) -> List[Dict[str, Any]]:
         """
         Get popular treatments (for demonstration, returns a subset of treatments)
         In a real application, this would use analytics data to determine popularity
         """
-        popular_ids = [
-            "dental_implant_standard", 
-            "porcelain_veneers", 
-            "teeth_whitening", 
-            "hollywood_smile", 
-            "dental_crowns", 
-            "all_on_4_implants"
-        ]
-        
-        popular = []
-        for treatment_id in popular_ids:
-            treatment = self.get_treatment_by_id(treatment_id)
-            if treatment:
-                popular.append(treatment)
-        
+        popular = [t for t in self.treatments if t.get('popular', False) and t.get('is_active', False)]
         return popular[:limit]
     
     def get_all_categories(self) -> List[Dict[str, Any]]:
         """
         Get all treatment categories
         """
-        return self.categories
+        return sorted(self.categories, key=lambda c: c.get('order', 999))
     
     def get_category_by_id(self, category_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -304,19 +361,20 @@ class TreatmentService:
         """
         result = {}
         
-        for category in self.categories:
+        # Get active categories
+        active_categories = [c for c in self.categories if c.get('is_active', False)]
+        
+        # Sort categories by order
+        sorted_categories = sorted(active_categories, key=lambda c: c.get('order', 999))
+        
+        # For each category, get its treatments
+        for category in sorted_categories:
             category_id = category.get('id')
-            
-            # Get treatments for this category
-            category_treatments = self.get_treatments_by_category(category_id)
-            
-            # Create a new dict with category info and treatments
-            result[category_id] = {
-                "id": category_id,
-                "name": category.get('name'),
-                "description": category.get('description'),
-                "image": category.get('image'),
-                "treatments": category_treatments
-            }
+            if category_id:
+                treatments = self.get_treatments_by_category(category_id)
+                result[category_id] = {
+                    'category': category,
+                    'treatments': treatments
+                }
         
         return result

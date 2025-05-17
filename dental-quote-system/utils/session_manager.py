@@ -1,284 +1,274 @@
 import logging
+import uuid
 from typing import Dict, List, Any, Optional
 from flask import session
-import uuid
-from datetime import datetime
+from services.promo_service import PromoService
 
 logger = logging.getLogger(__name__)
 
 class SessionManager:
     """
-    Session Manager for handling quote data persistence
-    All methods are static as they operate on the Flask session object
+    Utility class for managing session data in the dental quote system
+    All methods are static to allow easy access from any part of the application
     """
-    
-    # Session keys
-    QUOTE_KEY = 'quote_data'
-    SELECTED_TREATMENTS_KEY = 'selected_treatments'
-    PATIENT_INFO_KEY = 'patient_info'
-    PROMO_CODE_KEY = 'promo_code'
-    PROMO_DETAILS_KEY = 'promo_details'
-    ORIGINAL_QUOTE_TOTAL_KEY = 'original_total'
     
     @staticmethod
     def initialize_session() -> None:
         """
-        Initialize the session with default values if they don't exist
+        Initialize session with default values if not already initialized
         """
-        if SessionManager.QUOTE_KEY not in session:
-            session[SessionManager.QUOTE_KEY] = {
-                'id': str(uuid.uuid4()),
-                'created_at': datetime.utcnow().isoformat(),
-                'updated_at': datetime.utcnow().isoformat(),
-                'subtotal': 0,
-                'discount_amount': 0,
-                'total': 0,
-                'currency': 'USD'
-            }
-        
-        if SessionManager.SELECTED_TREATMENTS_KEY not in session:
-            session[SessionManager.SELECTED_TREATMENTS_KEY] = []
-        
-        if SessionManager.PATIENT_INFO_KEY not in session:
-            session[SessionManager.PATIENT_INFO_KEY] = {}
-        
-        if SessionManager.PROMO_CODE_KEY not in session:
-            session[SessionManager.PROMO_CODE_KEY] = None
-        
-        if SessionManager.PROMO_DETAILS_KEY not in session:
-            session[SessionManager.PROMO_DETAILS_KEY] = None
-        
-        if SessionManager.ORIGINAL_QUOTE_TOTAL_KEY not in session:
-            session[SessionManager.ORIGINAL_QUOTE_TOTAL_KEY] = 0
+        if 'quote_initialized' not in session:
+            session['quote_id'] = str(uuid.uuid4())
+            session['selected_treatments'] = []
+            session['promo_code'] = None
+            session['promo_details'] = None
+            session['special_offer_id'] = None
+            session['patient_info'] = {}
+            session['subtotal'] = 0
+            session['discount_amount'] = 0
+            session['total'] = 0
+            session['quote_initialized'] = True
     
     @staticmethod
     def reset_session() -> None:
         """
-        Reset the session data
+        Reset the session to start a new quote
         """
-        if SessionManager.QUOTE_KEY in session:
-            del session[SessionManager.QUOTE_KEY]
-        
-        if SessionManager.SELECTED_TREATMENTS_KEY in session:
-            del session[SessionManager.SELECTED_TREATMENTS_KEY]
-        
-        if SessionManager.PATIENT_INFO_KEY in session:
-            del session[SessionManager.PATIENT_INFO_KEY]
-        
-        if SessionManager.PROMO_CODE_KEY in session:
-            del session[SessionManager.PROMO_CODE_KEY]
-        
-        if SessionManager.PROMO_DETAILS_KEY in session:
-            del session[SessionManager.PROMO_DETAILS_KEY]
-        
-        if SessionManager.ORIGINAL_QUOTE_TOTAL_KEY in session:
-            del session[SessionManager.ORIGINAL_QUOTE_TOTAL_KEY]
-        
-        SessionManager.initialize_session()
+        session['quote_id'] = str(uuid.uuid4())
+        session['selected_treatments'] = []
+        session['promo_code'] = None
+        session['promo_details'] = None
+        session['special_offer_id'] = None
+        session['patient_info'] = {}
+        session['subtotal'] = 0
+        session['discount_amount'] = 0
+        session['total'] = 0
+        session['quote_initialized'] = True
     
     @staticmethod
-    def get_quote_data() -> Dict[str, Any]:
+    def get_quote_id() -> str:
         """
-        Get the current quote data
-        """
-        SessionManager.initialize_session()
-        return session.get(SessionManager.QUOTE_KEY, {})
-    
-    @staticmethod
-    def update_quote_data(data: Dict[str, Any]) -> None:
-        """
-        Update the quote data
+        Get the current quote ID from session
         """
         SessionManager.initialize_session()
-        
-        # Update only the keys that are passed
-        current_data = session.get(SessionManager.QUOTE_KEY, {})
-        for key, value in data.items():
-            current_data[key] = value
-        
-        # Update the timestamp
-        current_data['updated_at'] = datetime.utcnow().isoformat()
-        
-        session[SessionManager.QUOTE_KEY] = current_data
+        return session.get('quote_id', '')
     
     @staticmethod
     def get_selected_treatments() -> List[Dict[str, Any]]:
         """
-        Get the list of selected treatments
+        Get the selected treatments from session
         """
         SessionManager.initialize_session()
-        return session.get(SessionManager.SELECTED_TREATMENTS_KEY, [])
+        return session.get('selected_treatments', [])
     
     @staticmethod
     def add_treatment(treatment: Dict[str, Any]) -> None:
         """
-        Add a treatment to the selected treatments list
-        If the treatment already exists, increment the quantity
+        Add a treatment to the session
+        If the treatment already exists, increment its quantity
         """
         SessionManager.initialize_session()
         
-        treatments = session.get(SessionManager.SELECTED_TREATMENTS_KEY, [])
+        # Get current treatments
+        selected_treatments = session.get('selected_treatments', [])
         
         # Check if the treatment already exists
-        existing_treatment = next((t for t in treatments if t.get('id') == treatment.get('id')), None)
+        existing_treatment = next((t for t in selected_treatments if t.get('id') == treatment.get('id')), None)
         
         if existing_treatment:
-            # Increment the quantity
+            # Increment quantity if already exists
             existing_treatment['quantity'] = existing_treatment.get('quantity', 1) + 1
         else:
-            # Add quantity to the treatment if not specified
-            if 'quantity' not in treatment:
-                treatment['quantity'] = 1
-            
-            # Add the treatment
-            treatments.append(treatment)
+            # Add treatment with quantity 1
+            treatment_with_quantity = treatment.copy()
+            treatment_with_quantity['quantity'] = 1
+            selected_treatments.append(treatment_with_quantity)
         
-        session[SessionManager.SELECTED_TREATMENTS_KEY] = treatments
+        # Update session
+        session['selected_treatments'] = selected_treatments
         
-        # Update the quote totals
-        SessionManager._recalculate_totals()
+        # Recalculate totals
+        SessionManager.calculate_totals()
     
     @staticmethod
     def remove_treatment(treatment_id: str) -> None:
         """
-        Remove a treatment from the selected treatments list
+        Remove a treatment from the session
         """
         SessionManager.initialize_session()
         
-        treatments = session.get(SessionManager.SELECTED_TREATMENTS_KEY, [])
+        # Get current treatments
+        selected_treatments = session.get('selected_treatments', [])
         
         # Remove the treatment
-        treatments = [t for t in treatments if t.get('id') != treatment_id]
+        session['selected_treatments'] = [t for t in selected_treatments if t.get('id') != treatment_id]
         
-        session[SessionManager.SELECTED_TREATMENTS_KEY] = treatments
-        
-        # Update the quote totals
-        SessionManager._recalculate_totals()
+        # Recalculate totals
+        SessionManager.calculate_totals()
     
     @staticmethod
     def update_treatment_quantity(treatment_id: str, quantity: int) -> None:
         """
-        Update the quantity of a selected treatment
+        Update the quantity of a treatment
+        If quantity is 0 or less, remove the treatment
         """
         SessionManager.initialize_session()
         
-        treatments = session.get(SessionManager.SELECTED_TREATMENTS_KEY, [])
+        if quantity <= 0:
+            SessionManager.remove_treatment(treatment_id)
+            return
         
-        # Find the treatment
-        treatment = next((t for t in treatments if t.get('id') == treatment_id), None)
+        # Get current treatments
+        selected_treatments = session.get('selected_treatments', [])
         
-        if treatment:
-            # Update the quantity
-            treatment['quantity'] = max(1, quantity)  # Ensure quantity is at least 1
+        # Update quantity
+        for treatment in selected_treatments:
+            if treatment.get('id') == treatment_id:
+                treatment['quantity'] = quantity
+                break
         
-        session[SessionManager.SELECTED_TREATMENTS_KEY] = treatments
+        # Update session
+        session['selected_treatments'] = selected_treatments
         
-        # Update the quote totals
-        SessionManager._recalculate_totals()
+        # Recalculate totals
+        SessionManager.calculate_totals()
     
     @staticmethod
-    def get_patient_info() -> Dict[str, Any]:
+    def calculate_totals() -> None:
         """
-        Get the patient information
+        Calculate subtotal, discount and total
         """
         SessionManager.initialize_session()
-        return session.get(SessionManager.PATIENT_INFO_KEY, {})
+        
+        # Get selected treatments
+        selected_treatments = session.get('selected_treatments', [])
+        
+        # Calculate subtotal
+        subtotal = sum(
+            t.get('price', 0) * t.get('quantity', 1) 
+            for t in selected_treatments
+        )
+        
+        # Store subtotal in session
+        session['subtotal'] = subtotal
+        
+        # Calculate discount if promo code is applied
+        discount_amount = 0
+        if session.get('promo_code') and session.get('promo_details'):
+            promo_details = session.get('promo_details', {})
+            
+            # Calculate discount based on discount type
+            if promo_details.get('discount_type') == 'percentage':
+                discount_amount = (subtotal * promo_details.get('discount_value', 0)) / 100
+            elif promo_details.get('discount_type') == 'fixed_amount':
+                discount_amount = promo_details.get('discount_value', 0)
+            
+            # Apply maximum discount limit if specified
+            if promo_details.get('max_discount_amount') and discount_amount > promo_details.get('max_discount_amount'):
+                discount_amount = promo_details.get('max_discount_amount')
+            
+            # Ensure discount doesn't exceed the subtotal
+            if discount_amount > subtotal:
+                discount_amount = subtotal
+        
+        # Store discount amount in session
+        session['discount_amount'] = discount_amount
+        
+        # Calculate total
+        total = subtotal - discount_amount
+        
+        # Store total in session
+        session['total'] = total
     
     @staticmethod
-    def update_patient_info(info: Dict[str, Any]) -> None:
+    def get_quote_data() -> Dict[str, Any]:
         """
-        Update the patient information
+        Get all quote data from session
         """
         SessionManager.initialize_session()
         
-        # Update only the keys that are passed
-        current_info = session.get(SessionManager.PATIENT_INFO_KEY, {})
-        for key, value in info.items():
-            current_info[key] = value
+        # Ensure totals are up to date
+        SessionManager.calculate_totals()
         
-        session[SessionManager.PATIENT_INFO_KEY] = current_info
+        return {
+            'id': session.get('quote_id', ''),
+            'subtotal': session.get('subtotal', 0),
+            'discount_amount': session.get('discount_amount', 0),
+            'total': session.get('total', 0),
+            'promo_code': session.get('promo_code'),
+            'special_offer_id': session.get('special_offer_id')
+        }
     
     @staticmethod
     def get_promo_code() -> Optional[str]:
         """
-        Get the current promo code
+        Get the applied promo code from session
         """
         SessionManager.initialize_session()
-        return session.get(SessionManager.PROMO_CODE_KEY)
+        return session.get('promo_code')
+    
+    @staticmethod
+    def get_promo_details() -> Optional[Dict[str, Any]]:
+        """
+        Get the details of the applied promo code from session
+        """
+        SessionManager.initialize_session()
+        return session.get('promo_details')
     
     @staticmethod
     def set_promo_code(code: str, details: Dict[str, Any]) -> None:
         """
-        Set the promo code and its details
+        Set promo code and its details in session
         """
         SessionManager.initialize_session()
         
-        # Store original total if not set
-        if not session.get(SessionManager.ORIGINAL_QUOTE_TOTAL_KEY):
-            session[SessionManager.ORIGINAL_QUOTE_TOTAL_KEY] = session.get(SessionManager.QUOTE_KEY, {}).get('total', 0)
+        session['promo_code'] = code
+        session['promo_details'] = details
         
-        session[SessionManager.PROMO_CODE_KEY] = code
-        session[SessionManager.PROMO_DETAILS_KEY] = details
-        
-        # Update the quote totals
-        SessionManager._recalculate_totals()
+        # Recalculate totals
+        SessionManager.calculate_totals()
     
     @staticmethod
     def remove_promo_code() -> None:
         """
-        Remove the promo code and its details
+        Remove promo code from session
         """
         SessionManager.initialize_session()
         
-        session[SessionManager.PROMO_CODE_KEY] = None
-        session[SessionManager.PROMO_DETAILS_KEY] = None
-        session[SessionManager.ORIGINAL_QUOTE_TOTAL_KEY] = 0
+        session['promo_code'] = None
+        session['promo_details'] = None
         
-        # Update the quote totals
-        SessionManager._recalculate_totals()
+        # Recalculate totals
+        SessionManager.calculate_totals()
     
     @staticmethod
-    def get_promo_details() -> Dict[str, Any]:
+    def set_special_offer_id(offer_id: str) -> None:
         """
-        Get the details of the applied promo code
+        Set the special offer ID in session
         """
         SessionManager.initialize_session()
-        return session.get(SessionManager.PROMO_DETAILS_KEY, {})
+        session['special_offer_id'] = offer_id
     
     @staticmethod
-    def _recalculate_totals() -> None:
+    def get_special_offer_id() -> Optional[str]:
         """
-        Recalculate the quote totals based on selected treatments and promo code
+        Get the special offer ID from session
         """
-        treatments = session.get(SessionManager.SELECTED_TREATMENTS_KEY, [])
-        
-        # Calculate subtotal
-        subtotal = sum(t.get('price', 0) * t.get('quantity', 1) for t in treatments)
-        
-        # Apply promo code if present
-        promo_code = session.get(SessionManager.PROMO_CODE_KEY)
-        promo_details = session.get(SessionManager.PROMO_DETAILS_KEY, {})
-        discount_amount = 0
-        
-        if promo_code and promo_details:
-            discount_type = promo_details.get('discount_type')
-            discount_value = promo_details.get('discount_value', 0)
-            
-            if discount_type == 'percentage':
-                discount_amount = (subtotal * discount_value) / 100
-            elif discount_type == 'fixed_amount':
-                discount_amount = min(discount_value, subtotal)  # Don't exceed subtotal
-        
-        # Calculate total
-        total = max(0, subtotal - discount_amount)
-        
-        # Update quote data
-        quote_data = session.get(SessionManager.QUOTE_KEY, {})
-        quote_data.update({
-            'subtotal': subtotal,
-            'discount_amount': discount_amount,
-            'total': total,
-            'updated_at': datetime.utcnow().isoformat()
-        })
-        
-        session[SessionManager.QUOTE_KEY] = quote_data
+        SessionManager.initialize_session()
+        return session.get('special_offer_id')
+    
+    @staticmethod
+    def get_patient_info() -> Dict[str, Any]:
+        """
+        Get patient information from session
+        """
+        SessionManager.initialize_session()
+        return session.get('patient_info', {})
+    
+    @staticmethod
+    def update_patient_info(patient_info: Dict[str, Any]) -> None:
+        """
+        Update patient information in session
+        """
+        SessionManager.initialize_session()
+        session['patient_info'] = patient_info
