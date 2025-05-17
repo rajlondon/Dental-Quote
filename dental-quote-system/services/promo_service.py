@@ -1,121 +1,160 @@
 """
 Promo Service for Dental Quote System
 
-This service handles promo code management including:
-- Validation of promo codes
-- Applying discounts based on promo codes
-- Managing special offers
+Handles validation and application of promo codes and special offers.
 """
 
 class PromoService:
     """
-    Service for promo code validation and management
-    
-    This class handles all promo code-related operations, ensuring
-    consistent behavior across all application areas.
+    Static class to handle promo code validation and special offer management.
     """
     
-    # Available promo codes with their discount values
-    PROMO_CODES = {
-        'SUMMER15': {'type': 'percentage', 'value': 15, 'description': 'Summer Special - 15% off all treatments'},
-        'DENTAL25': {'type': 'percentage', 'value': 25, 'description': 'Premium Discount - 25% off your quote'},
-        'NEWPATIENT': {'type': 'percentage', 'value': 20, 'description': 'New Patient Special - 20% off your first treatment'},
-        'TEST10': {'type': 'percentage', 'value': 10, 'description': 'Test Discount - 10% off all services'},
-        'FREECONSULT': {'type': 'fixed', 'value': 100, 'description': 'Free Consultation ($100 value)'},
-        'LUXHOTEL20': {'type': 'percentage', 'value': 20, 'description': 'Luxury Hotel Partner - 20% discount'},
-        'IMPLANTCROWN30': {'type': 'percentage', 'value': 30, 'description': 'Implant & Crown Package - 30% off'},
-        'FREEWHITE': {'type': 'fixed', 'value': 150, 'description': 'Free Whitening Treatment ($150 value)'}
+    # Valid promo codes with their details
+    VALID_PROMO_CODES = {
+        'SUMMER15': {'code': 'SUMMER15', 'type': 'percentage', 'value': 15, 'description': 'Summer discount 15% off'},
+        'DENTAL25': {'code': 'DENTAL25', 'type': 'percentage', 'value': 25, 'description': 'Dental Special 25% off'},
+        'NEWPATIENT': {'code': 'NEWPATIENT', 'type': 'percentage', 'value': 20, 'description': 'New Patient 20% off'},
+        'TEST10': {'code': 'TEST10', 'type': 'percentage', 'value': 10, 'description': 'Test discount 10% off'},
+        'FREECONSULT': {'code': 'FREECONSULT', 'type': 'fixed', 'value': 0, 'description': 'Free dental consultation'},
+        'LUXHOTEL20': {'code': 'LUXHOTEL20', 'type': 'percentage', 'value': 20, 'description': 'Luxury Hotel Package 20% off'},
+        'IMPLANTCROWN30': {'code': 'IMPLANTCROWN30', 'type': 'percentage', 'value': 30, 'description': 'Implant + Crown Bundle 30% off'},
+        'FREEWHITE': {'code': 'FREEWHITE', 'type': 'product', 'value': 0, 'description': 'Free teeth whitening with any implant purchase'}
     }
     
-    # Special offers data
+    # Special offers with details
     SPECIAL_OFFERS = [
         {
-            'id': 'offer1',
-            'name': 'Premium Dental Package',
-            'description': 'Get 25% off all premium dental services including implants, crowns, and veneers',
-            'promo_code': 'DENTAL25',
-            'image_url': '/static/images/premium-dental.jpg',
-            'discount_type': 'percentage',
-            'discount_value': 25,
-            'terms': 'Valid for all treatments. Cannot be combined with other offers. Expires December 31, 2025.'
-        },
-        {
-            'id': 'offer2',
-            'name': 'New Patient Welcome',
-            'description': 'New patients receive 20% off their first treatment plan',
-            'promo_code': 'NEWPATIENT',
-            'image_url': '/static/images/new-patient.jpg',
-            'discount_type': 'percentage',
-            'discount_value': 20,
-            'terms': 'Valid for new patients only. One-time use. Expires December 31, 2025.'
-        },
-        {
-            'id': 'offer3',
-            'name': 'Free Consultation',
-            'description': 'Book a free dental consultation (valued at $100)',
+            'id': 'free-consult',
+            'title': 'Free Consultation Package',
+            'description': 'Schedule a free dental consultation with one of our top specialists',
+            'clinic_name': 'DentGroup International',
+            'image': '/images/clinics/dentgroup.jpg',
             'promo_code': 'FREECONSULT',
-            'image_url': '/static/images/consultation.jpg',
-            'discount_type': 'fixed',
-            'discount_value': 100,
-            'terms': 'One consultation per patient. Booking required. Subject to availability.'
+            'valid_until': '2025-12-31',
+            'treatments': ['Dental Consultation']
         },
         {
-            'id': 'offer4',
-            'name': 'Summer Special',
-            'description': 'Enjoy 15% off all dental treatments this summer',
-            'promo_code': 'SUMMER15',
-            'image_url': '/static/images/summer-special.jpg',
-            'discount_type': 'percentage',
-            'discount_value': 15,
-            'terms': 'Valid for treatments booked before August 31, 2025. Cannot be combined with other offers.'
+            'id': 'hotel-deal',
+            'title': 'Premium Hotel Deal',
+            'description': 'Get 20% off on all treatments plus 3 nights at a luxury hotel',
+            'clinic_name': 'Istanbul Dental Clinic',
+            'image': '/images/offers/premium-hotel-new.png',
+            'promo_code': 'LUXHOTEL20',
+            'valid_until': '2025-08-30',
+            'treatments': ['All Treatments']
         },
         {
-            'id': 'offer5',
-            'name': 'Implant & Crown Package',
-            'description': 'Save 30% on implant and crown package treatments',
+            'id': 'implant-crown',
+            'title': 'Dental Implant + Crown Bundle',
+            'description': 'Save 30% on our implant and crown package',
+            'clinic_name': 'Premium Dental Spa',
+            'image': '/images/treatments/illustrations/dental-implants1.png',
             'promo_code': 'IMPLANTCROWN30',
-            'image_url': '/static/images/implant-crown.jpg',
-            'discount_type': 'percentage',
-            'discount_value': 30,
-            'terms': 'Valid for combined implant and crown treatments only. Limited time offer.'
+            'valid_until': '2025-09-15',
+            'treatments': ['Dental Implant', 'Dental Crown']
+        },
+        {
+            'id': 'airport-transfer',
+            'title': 'Luxury Airport Transfer',
+            'description': 'Book any treatment over $1000 and get free luxury airport transfers',
+            'clinic_name': 'VIP Dental Care',
+            'image': '/images/accommodations/premium-hotel.jpg',
+            'promo_code': 'TEST10',
+            'valid_until': '2025-10-31',
+            'treatments': ['Premium Treatments']
+        },
+        {
+            'id': 'free-whitening',
+            'title': 'Free Teeth Whitening',
+            'description': 'Get free teeth whitening with any dental implant treatment',
+            'clinic_name': 'Bright Smile Dental',
+            'image': '/images/treatments/illustrations/veneers-and-crowns.png',
+            'promo_code': 'FREEWHITE',
+            'valid_until': '2025-11-30',
+            'treatments': ['Teeth Whitening', 'Dental Implant']
         }
     ]
     
-    @classmethod
-    def validate_promo_code(cls, code):
+    @staticmethod
+    def validate_promo_code(code):
         """
         Validate a promo code
         
         Args:
-            code (str): Promo code to validate
+            code (str): The promo code to validate
             
         Returns:
-            dict|None: Promo details if valid, None if invalid
+            dict: Promo details if valid, None if invalid
         """
-        # Standardize the code format
-        formatted_code = code.strip().upper()
+        # Clean and normalize the code
+        if not code:
+            return None
+            
+        cleaned_code = code.strip().upper()
         
         # Check if code exists
-        if formatted_code in cls.PROMO_CODES:
-            promo_details = cls.PROMO_CODES[formatted_code]
-            
-            return {
-                'code': formatted_code,
-                'type': promo_details['type'],
-                'value': promo_details['value'],
-                'description': promo_details['description']
-            }
+        if cleaned_code in PromoService.VALID_PROMO_CODES:
+            return PromoService.VALID_PROMO_CODES[cleaned_code]
         
         return None
     
-    @classmethod
-    def calculate_discount(cls, promo_details, subtotal):
+    @staticmethod
+    def get_all_special_offers():
         """
-        Calculate discount based on promo details and subtotal
+        Get all available special offers
+        
+        Returns:
+            list: List of special offer details
+        """
+        return PromoService.SPECIAL_OFFERS
+    
+    @staticmethod
+    def get_special_offer_by_id(offer_id):
+        """
+        Get a special offer by ID
         
         Args:
+            offer_id (str): The ID of the special offer
+            
+        Returns:
+            dict: Special offer details if found, None if not found
+        """
+        for offer in PromoService.SPECIAL_OFFERS:
+            if offer['id'] == offer_id:
+                return offer
+        
+        return None
+    
+    @staticmethod
+    def get_special_offer_by_promo_code(promo_code):
+        """
+        Get a special offer by promo code
+        
+        Args:
+            promo_code (str): The promo code to look for
+            
+        Returns:
+            dict: Special offer details if found, None if not found
+        """
+        if not promo_code:
+            return None
+            
+        cleaned_code = promo_code.strip().upper()
+        
+        for offer in PromoService.SPECIAL_OFFERS:
+            if offer['promo_code'] == cleaned_code:
+                return offer
+        
+        return None
+    
+    @staticmethod
+    def calculate_discount(subtotal, promo_details):
+        """
+        Calculate discount amount based on promo details
+        
+        Args:
+            subtotal (float): The subtotal before discount
             promo_details (dict): Promo code details
-            subtotal (float): Order subtotal
             
         Returns:
             float: Discount amount
@@ -124,74 +163,9 @@ class PromoService:
             return 0
         
         if promo_details['type'] == 'percentage':
-            # Percentage discount
             return (subtotal * promo_details['value']) / 100
-        else:
-            # Fixed amount discount
+        elif promo_details['type'] == 'fixed':
             return min(promo_details['value'], subtotal)
-    
-    @classmethod
-    def get_all_special_offers(cls):
-        """
-        Get all available special offers
         
-        Returns:
-            list: List of special offers
-        """
-        return cls.SPECIAL_OFFERS
-    
-    @classmethod
-    def get_special_offer_by_id(cls, offer_id):
-        """
-        Get a special offer by ID
-        
-        Args:
-            offer_id (str): ID of the special offer
-            
-        Returns:
-            dict|None: Special offer details if found, None otherwise
-        """
-        for offer in cls.SPECIAL_OFFERS:
-            if offer['id'] == offer_id:
-                return offer
-        
-        return None
-    
-    @classmethod
-    def get_special_offer_by_promo_code(cls, promo_code):
-        """
-        Get a special offer by promo code
-        
-        Args:
-            promo_code (str): Promo code to search for
-            
-        Returns:
-            dict|None: Special offer details if found, None otherwise
-        """
-        formatted_code = promo_code.strip().upper()
-        
-        for offer in cls.SPECIAL_OFFERS:
-            if offer['promo_code'] == formatted_code:
-                return offer
-        
-        return None
-    
-    @classmethod
-    def get_special_offer_details(cls, offer_id=None, promo_code=None):
-        """
-        Get special offer details by either ID or promo code
-        
-        Args:
-            offer_id (str, optional): ID of the special offer
-            promo_code (str, optional): Promo code associated with the offer
-            
-        Returns:
-            dict|None: Special offer details if found, None otherwise
-        """
-        if offer_id:
-            return cls.get_special_offer_by_id(offer_id)
-        
-        if promo_code:
-            return cls.get_special_offer_by_promo_code(promo_code)
-        
-        return None
+        # For 'product' type promos (like free whitening), no direct discount
+        return 0
