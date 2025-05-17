@@ -3,170 +3,158 @@
 {% block title %}Special Offers - MyDentalFly{% endblock %}
 
 {% block content %}
-<!-- Special Offers Hero Section -->
-<section class="special-offers-hero py-5 bg-light">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-12 text-center">
-                <h1 class="display-5 fw-bold text-primary mb-3">Special Dental Treatment Offers</h1>
-                <p class="lead mb-4">Exclusive deals and promotions to help you save on your dental treatment</p>
-            </div>
-        </div>
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold">Special Dental Treatment Offers</h1>
+        <p class="lead">Take advantage of our limited-time special promotions and save on your dental treatment.</p>
     </div>
-</section>
 
-<!-- Offers List -->
-<section class="offers-list py-5">
-    <div class="container">
-        <div class="row g-4">
-            {% if offers %}
-                {% for offer in offers %}
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card h-100 border-0 shadow-sm offer-card">
-                            {% if offer.banner_image %}
-                                <img src="{{ url_for('static', filename=offer.banner_image) }}" class="card-img-top" alt="{{ offer.title }}">
-                            {% else %}
-                                <div class="card-img-top bg-light text-center py-5">
-                                    <i class="fas fa-percentage fa-4x text-primary"></i>
-                                </div>
-                            {% endif %}
-                            <div class="card-body">
-                                <h5 class="card-title">{{ offer.title }}</h5>
-                                <p class="card-text">{{ offer.description }}</p>
-                                
-                                {% if offer.discount_type == 'percentage' %}
-                                    <div class="discount-badge">{{ offer.discount_value }}% OFF</div>
-                                {% elif offer.discount_type == 'fixed_amount' %}
-                                    <div class="discount-badge">${{ offer.discount_value }} OFF</div>
-                                {% endif %}
-                                
-                                <div class="d-flex justify-content-between align-items-center mt-3">
-                                    <small class="text-muted">
-                                        Valid until: {{ offer.end_date }}
-                                    </small>
-                                    {% if offer.promo_code %}
-                                        <span class="badge bg-secondary">Code: {{ offer.promo_code }}</span>
+    <!-- Offers -->
+    <div class="row g-4">
+        {% if offers %}
+            {% for offer in offers %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 offer-card">
+                    <div class="offer-banner">SPECIAL OFFER</div>
+                    <div class="offer-discount">
+                        {% if offer.discount_type == 'percentage' %}
+                            {{ offer.discount_value }}% OFF
+                        {% else %}
+                            ${{ offer.discount_value }} OFF
+                        {% endif %}
+                    </div>
+                    <img src="{{ offer.banner_image }}" class="card-img-top" alt="{{ offer.title }}" onerror="this.src='https://via.placeholder.com/350x150?text=Special+Offer'">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ offer.title }}</h5>
+                        <p class="card-text">{{ offer.description }}</p>
+                        
+                        {% if offer.applicable_treatments %}
+                        <div class="mb-3">
+                            <p class="mb-1 fw-semibold">Applicable Treatments:</p>
+                            <ul class="list-unstyled small">
+                                {% for treatment_id in offer.applicable_treatments %}
+                                <li><i class="fas fa-check-circle text-success me-1"></i> 
+                                    {% if treatment_id == 'dental_implant_standard' %}
+                                        Standard Dental Implant
+                                    {% elif treatment_id == 'dental_implant_premium' %}
+                                        Premium Dental Implant
+                                    {% elif treatment_id == 'porcelain_veneers' %}
+                                        Porcelain Veneers
+                                    {% elif treatment_id == 'teeth_whitening' %}
+                                        Professional Teeth Whitening
+                                    {% elif treatment_id == 'dental_crowns' %}
+                                        Dental Crowns
+                                    {% elif treatment_id == 'root_canal' %}
+                                        Root Canal Treatment
+                                    {% elif treatment_id == 'dental_bridge' %}
+                                        Dental Bridge
+                                    {% elif treatment_id == 'hollywood_smile' %}
+                                        Hollywood Smile
+                                    {% elif treatment_id == 'all_on_4_implants' %}
+                                        All-on-4 Dental Implants
+                                    {% elif treatment_id == 'full_mouth_reconstruction' %}
+                                        Full Mouth Reconstruction
+                                    {% elif treatment_id == 'invisalign' %}
+                                        Invisalign Clear Aligners
+                                    {% elif treatment_id == 'metal_braces' %}
+                                        Traditional Metal Braces
+                                    {% else %}
+                                        {{ treatment_id }}
                                     {% endif %}
-                                </div>
-                                
-                                <hr>
-                                
-                                <h6 class="mb-2">Eligible Treatments:</h6>
-                                {% if offer.applicable_treatments %}
-                                    <ul class="small">
-                                        {% for treatment_id in offer.applicable_treatments %}
-                                            <li>{{ treatment_id|replace('_', ' ')|title }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% else %}
-                                    <p class="small">Applicable to all treatments</p>
-                                {% endif %}
-                                
-                                <div class="card-text small mt-3">
-                                    <strong>Terms & Conditions:</strong>
-                                    <p class="mb-0">{{ offer.terms_conditions }}</p>
-                                </div>
-                            </div>
-                            <div class="card-footer bg-white border-0">
-                                <a href="{{ url_for('promo_routes.special_offer_redirect', offer_id=offer.id) }}" class="btn btn-primary w-100">Get This Offer</a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if offer.promo_code %}
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">Promo Code</span>
+                                <input type="text" class="form-control text-center font-monospace" value="{{ offer.promo_code }}" readonly>
+                                <button class="btn btn-outline-secondary copy-code" type="button" data-code="{{ offer.promo_code }}">
+                                    <i class="fas fa-copy"></i>
+                                </button>
                             </div>
                         </div>
+                        {% endif %}
+                        
+                        <p class="small text-muted mb-3">
+                            <i class="fas fa-info-circle me-1"></i> {{ offer.terms_conditions }}
+                        </p>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('promo_routes.special_offer_redirect', offer_id=offer.id) }}" class="btn btn-primary">
+                                Get This Offer <i class="fas fa-arrow-right ms-1"></i>
+                            </a>
+                        </div>
                     </div>
-                {% endfor %}
-            {% else %}
-                <div class="col-12 text-center">
-                    <div class="no-offers p-5 bg-light rounded">
-                        <i class="fas fa-exclamation-circle fa-4x text-secondary mb-3"></i>
-                        <h3>No Special Offers Available</h3>
-                        <p>We don't have any active special offers at the moment. Please check back later for new promotions.</p>
-                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary mt-3">Build a Quote Anyway</a>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</section>
-
-<!-- Promo Code Section -->
-<section class="promo-code-section py-5 bg-light">
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-lg-8">
-                <div class="card border-0 shadow">
-                    <div class="card-body p-4">
-                        <h3 class="text-center mb-4">Have a Promo Code?</h3>
-                        <form id="promoCodeForm" class="d-flex">
-                            <input type="text" id="promoCode" class="form-control form-control-lg me-2" placeholder="Enter your promo code">
-                            <button type="submit" class="btn btn-primary btn-lg">Apply</button>
-                        </form>
-                        <div id="promoCodeMessage" class="mt-3 text-center"></div>
+                    <div class="card-footer bg-white">
+                        <small class="text-muted">
+                            <i class="fas fa-clock me-1"></i> Offer valid until {{ offer.end_date.split('T')[0] }}
+                        </small>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</section>
-
-<!-- Call to Action -->
-<section class="cta-section py-5 bg-primary text-white">
-    <div class="container">
-        <div class="row align-items-center">
-            <div class="col-lg-8 text-center text-lg-start">
-                <h2 class="fw-bold mb-3">Ready to Get Your Dental Quote?</h2>
-                <p class="lead mb-0">Start building your personalized dental treatment quote now.</p>
-            </div>
-            <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
-                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-light btn-lg">Build Your Quote</a>
+            {% endfor %}
+        {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="py-5">
+                <i class="fas fa-gift fa-4x text-muted mb-3"></i>
+                <h3>No Special Offers Available</h3>
+                <p class="text-muted mb-4">There are currently no special offers available. Please check back later!</p>
+                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary">View All Treatments</a>
             </div>
         </div>
+        {% endif %}
     </div>
-</section>
+    
+    <!-- Promo Code Section -->
+    <div class="row mt-5">
+        <div class="col-lg-8 mx-auto">
+            <div class="card bg-light border-0 p-4">
+                <div class="card-body text-center">
+                    <h3 class="mb-3">Have a Promo Code?</h3>
+                    <p class="mb-4">If you have a promotional code, you can apply it during the quotation process.</p>
+                    <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">
+                        Build Your Quote Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .discount-badge {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        background-color: #ff5722;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: bold;
-    }
-    
-    .offer-card {
-        position: relative;
-        transition: transform 0.3s ease;
-    }
-    
-    .offer-card:hover {
-        transform: translateY(-10px);
-    }
-    
-    .cta-section {
-        background: linear-gradient(90deg, #007bff, #0056b3);
-    }
-</style>
-{% endblock %}
-
-{% block extra_js %}
+{% block scripts %}
 <script>
-    $(document).ready(function() {
-        // Handle promo code form submission
-        $('#promoCodeForm').submit(function(e) {
-            e.preventDefault();
-            
-            var promoCode = $('#promoCode').val().trim();
-            
-            if (!promoCode) {
-                $('#promoCodeMessage').html('<div class="alert alert-warning">Please enter a promo code</div>');
-                return;
-            }
-            
-            // Redirect to quote builder with promo code
-            window.location.href = "{{ url_for('page_routes.quote_builder') }}?promo=" + promoCode;
+    // Copy promo code to clipboard
+    document.addEventListener('DOMContentLoaded', function() {
+        const copyButtons = document.querySelectorAll('.copy-code');
+        
+        copyButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const code = this.getAttribute('data-code');
+                navigator.clipboard.writeText(code)
+                    .then(() => {
+                        // Change button text temporarily
+                        const originalHTML = this.innerHTML;
+                        this.innerHTML = '<i class="fas fa-check"></i>';
+                        this.classList.add('btn-success');
+                        this.classList.remove('btn-outline-secondary');
+                        
+                        // Reset after 2 seconds
+                        setTimeout(() => {
+                            this.innerHTML = originalHTML;
+                            this.classList.remove('btn-success');
+                            this.classList.add('btn-outline-secondary');
+                        }, 2000);
+                    })
+                    .catch(err => {
+                        console.error('Error copying text: ', err);
+                    });
+            });
         });
     });
 </script>

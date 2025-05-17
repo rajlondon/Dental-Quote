@@ -3,191 +3,402 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}MyDentalFly - Dental Tourism Platform{% endblock %}</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}" type="image/x-icon">
+    <title>{% block title %}MyDentalFly - Dental Travel Quotes{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        :root {
+            --primary-color: #00a6c2;
+            --secondary-color: #0d6efd;
+            --accent-color: #ffc107;
+            --dark-color: #212529;
+            --light-color: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: #333;
+            background-color: #f9f9f9;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #008ca6;
+            border-color: #008ca6;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .badge-primary {
+            background-color: var(--primary-color);
+        }
+        
+        .text-primary {
+            color: var(--primary-color) !important;
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 40px 0;
+        }
+        
+        .footer a {
+            color: #ccc;
+            text-decoration: none;
+        }
+        
+        .footer a:hover {
+            color: white;
+        }
+        
+        /* Progress bar styles */
+        .quote-progress {
+            margin-bottom: 30px;
+        }
+        
+        .quote-progress .step {
+            position: relative;
+            text-align: center;
+        }
+        
+        .quote-progress .step-indicator {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ccc;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+        }
+        
+        .quote-progress .step.active .step-indicator {
+            background-color: var(--primary-color);
+        }
+        
+        .quote-progress .step.completed .step-indicator {
+            background-color: #28a745;
+        }
+        
+        .quote-progress .step-label {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .quote-progress .step.active .step-label {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+        
+        .quote-progress .step.completed .step-label {
+            color: #28a745;
+        }
+        
+        .quote-progress .progress-line {
+            height: 3px;
+            background-color: #ccc;
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            z-index: -1;
+        }
+        
+        .quote-progress .step:last-child .progress-line {
+            display: none;
+        }
+        
+        /* Flash messages */
+        .flash-message {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            animation: fadeIn 0.5s;
+        }
+        
+        .flash-message.success {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .flash-message.error {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .flash-message.warning {
+            background-color: #fff3cd;
+            border-color: #ffeeba;
+            color: #856404;
+        }
+        
+        .flash-message.info {
+            background-color: #d1ecf1;
+            border-color: #bee5eb;
+            color: #0c5460;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Special offer card styles */
+        .offer-card {
+            border: 2px solid var(--primary-color);
+            overflow: hidden;
+        }
+        
+        .offer-card .offer-banner {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 8px;
+            text-align: center;
+            font-weight: 600;
+        }
+        
+        .offer-card .offer-discount {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--accent-color);
+            color: var(--dark-color);
+            font-weight: 700;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transform: rotate(5deg);
+            z-index: 2;
+        }
+        
+        /* Treatment selector styles */
+        .treatment-item {
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .treatment-item:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .treatment-item.selected {
+            background-color: #e8f4f7;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        /* Price summary box */
+        .price-summary {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            position: sticky;
+            top: 20px;
+        }
+        
+        /* Loading spinner */
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s, opacity 0.3s;
+        }
+        
+        .spinner-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
     
-    <!-- Page-specific CSS -->
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Header/Navigation -->
-    <header class="header">
-        <nav class="navbar navbar-expand-lg bg-white shadow-sm py-3">
-            <div class="container">
-                <a class="navbar-brand" href="{{ url_for('page_routes.index') }}">
-                    <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="MyDentalFly Logo" height="40">
-                </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link {% if request.path == url_for('page_routes.index') %}active{% endif %}" href="{{ url_for('page_routes.index') }}">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'quote_builder' in request.path %}active{% endif %}" href="{{ url_for('page_routes.quote_builder') }}">Get a Quote</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link {% if 'special_offers' in request.path %}active{% endif %}" href="{{ url_for('promo_routes.special_offers') }}">Special Offers</a>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Treatments
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Dental Implants</a></li>
-                                <li><a class="dropdown-item" href="#">Veneers</a></li>
-                                <li><a class="dropdown-item" href="#">Crowns & Bridges</a></li>
-                                <li><a class="dropdown-item" href="#">Teeth Whitening</a></li>
-                                <li><a class="dropdown-item" href="#">All Treatments</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Destinations
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#">Istanbul</a></li>
-                                <li><a class="dropdown-item" href="#">Antalya</a></li>
-                                <li><a class="dropdown-item" href="#">Izmir</a></li>
-                                <li><a class="dropdown-item" href="#">All Destinations</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">About Us</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Contact</a>
-                        </li>
-                    </ul>
-                    <div class="d-flex">
-                        <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary">Get My Quote</a>
-                    </div>
-                </div>
-            </div>
-        </nav>
-    </header>
 
-    <!-- Main Content -->
-    <main>
-        <!-- Flash Messages -->
+    <!-- Header/Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('page_routes.index') }}">
+                <i class="fas fa-tooth me-2"></i>MyDentalFly
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('page_routes.index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('page_routes.quote_builder') }}">Get Quote</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('promo_routes.special_offers') }}">Special Offers</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="flash-messages container mt-3">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    {% endfor %}
-                </div>
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
             {% endif %}
         {% endwith %}
-        
-        <!-- Page Content -->
+    </div>
+    
+    <!-- Main Content -->
+    <main class="py-4">
         {% block content %}{% endblock %}
     </main>
-
+    
     <!-- Footer -->
-    <footer class="footer bg-dark text-white pt-5 pb-3">
+    <footer class="footer mt-5">
         <div class="container">
             <div class="row">
-                <div class="col-lg-4 mb-4 mb-lg-0">
-                    <img src="{{ url_for('static', filename='images/logo-white.svg') }}" alt="MyDentalFly Logo" height="40" class="mb-4">
-                    <p>Your trusted partner for dental tourism in Turkey. We connect you with top-rated dental clinics for high-quality treatment at affordable prices.</p>
-                    <div class="social-links mt-3">
-                        <a href="#" class="me-2 text-white"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="me-2 text-white"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="me-2 text-white"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="me-2 text-white"><i class="fab fa-linkedin-in"></i></a>
+                <div class="col-md-4 mb-4 mb-md-0">
+                    <h5><i class="fas fa-tooth me-2"></i>MyDentalFly</h5>
+                    <p class="mt-3">
+                        Your trusted platform for affordable dental treatment abroad. Get instant quotes, compare clinics, and book your dental journey with confidence.
+                    </p>
+                </div>
+                <div class="col-md-2 mb-4 mb-md-0">
+                    <h5>Quick Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
+                        <li><a href="{{ url_for('page_routes.quote_builder') }}">Get Quote</a></li>
+                        <li><a href="{{ url_for('promo_routes.special_offers') }}">Special Offers</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3 mb-4 mb-md-0">
+                    <h5>Popular Treatments</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="#">Dental Implants</a></li>
+                        <li><a href="#">Veneers</a></li>
+                        <li><a href="#">Crowns</a></li>
+                        <li><a href="#">Hollywood Smile</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Contact</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-envelope me-2"></i> info@mydentalfly.com</li>
+                        <li><i class="fas fa-phone me-2"></i> +44 (0)20 1234 5678</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> London, UK</li>
+                    </ul>
+                    <div class="mt-3">
+                        <a href="#" class="me-2"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-twitter"></i></a>
+                        <a href="#" class="me-2"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
                     </div>
                 </div>
-                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
-                    <h5 class="text-uppercase mb-4">Treatments</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Dental Implants</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Veneers</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Crowns & Bridges</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Teeth Whitening</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">All Treatments</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
-                    <h5 class="text-uppercase mb-4">Destinations</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Istanbul</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Antalya</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Izmir</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">All Destinations</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 col-6 mb-4 mb-md-0">
-                    <h5 class="text-uppercase mb-4">Company</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">About Us</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">How It Works</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Blog</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">FAQs</a></li>
-                        <li class="mb-2"><a href="#" class="text-white-50 text-decoration-none">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-12 mb-4 mb-md-0">
-                    <h5 class="text-uppercase mb-4">Contact</h5>
-                    <ul class="list-unstyled mb-0">
-                        <li class="mb-2 d-flex align-items-center">
-                            <i class="fas fa-map-marker-alt me-2"></i>
-                            <span class="text-white-50">Istanbul, Turkey</span>
-                        </li>
-                        <li class="mb-2 d-flex align-items-center">
-                            <i class="fas fa-phone me-2"></i>
-                            <a href="tel:+902123456789" class="text-white-50 text-decoration-none">+90 212 345 6789</a>
-                        </li>
-                        <li class="mb-2 d-flex align-items-center">
-                            <i class="fas fa-envelope me-2"></i>
-                            <a href="mailto:info@mydentalfly.com" class="text-white-50 text-decoration-none">info@mydentalfly.com</a>
-                        </li>
-                    </ul>
-                </div>
             </div>
-            <hr class="my-4 bg-secondary">
-            <div class="row align-items-center">
-                <div class="col-md-6 small text-white-50">
-                    &copy; {{ now().year }} MyDentalFly. All rights reserved.
+            <hr class="mt-4 mb-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 MyDentalFly. All rights reserved.</p>
                 </div>
-                <div class="col-md-6 text-md-end small">
-                    <a href="#" class="text-white-50 text-decoration-none me-3">Privacy Policy</a>
-                    <a href="#" class="text-white-50 text-decoration-none me-3">Terms of Service</a>
-                    <a href="#" class="text-white-50 text-decoration-none">Cookie Policy</a>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="me-3">Privacy Policy</a>
+                    <a href="#" class="me-3">Terms of Service</a>
+                    <a href="#">Cookies</a>
                 </div>
             </div>
         </div>
     </footer>
-
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- jQuery -->
+    <!-- Loading Spinner Overlay -->
+    <div class="spinner-overlay" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery (for AJAX requests) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
-    <!-- Custom JavaScript -->
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <!-- Common JavaScript -->
+    <script>
+        // Show/hide loading spinner
+        function showLoading() {
+            document.getElementById('loadingSpinner').classList.add('active');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loadingSpinner').classList.remove('active');
+        }
+        
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(function() {
+            const flashMessages = document.querySelectorAll('.flash-message');
+            flashMessages.forEach(function(message) {
+                message.style.opacity = '0';
+                message.style.transition = 'opacity 0.5s';
+                setTimeout(function() {
+                    message.style.display = 'none';
+                }, 500);
+            });
+        }, 5000);
+    </script>
     
-    <!-- Page-specific JavaScript -->
-    {% block extra_js %}{% endblock %}
+    {% block scripts %}{% endblock %}
+
 </body>
 </html>
