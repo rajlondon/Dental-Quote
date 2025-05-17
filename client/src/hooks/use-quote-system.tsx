@@ -1,292 +1,341 @@
 /**
- * Hook for accessing the quote management system
- * This hook provides a unified interface for all portals (admin, clinic, patient)
- * to interact with quotes
+ * Hook for accessing the quote system across all portals
+ * This hook provides unified access to quote data for the admin, clinic, and patient portals
  */
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { quoteIntegrationService, QuoteData } from '@/services/quote-integration-service';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { QuoteData, Treatment, quoteIntegrationService } from '@/services/quote-integration-service';
 import { useToast } from '@/hooks/use-toast';
 
-export function useQuoteSystem(
-  portalType: 'admin' | 'clinic' | 'patient',
-  userId?: string // clinicId or patientId depending on portalType
-) {
+// Admin Portal hooks
+export function useAdminQuotes() {
+  return useQuery({
+    queryKey: ['/api/admin/quotes'],
+    queryFn: async () => {
+      return await quoteIntegrationService.getAdminQuotes();
+    }
+  });
+}
+
+export function useAdminQuote(quoteId: string | undefined) {
+  return useQuery({
+    queryKey: ['/api/admin/quotes', quoteId],
+    queryFn: async () => {
+      if (!quoteId) return null;
+      return await quoteIntegrationService.getAdminQuote(quoteId);
+    },
+    enabled: !!quoteId
+  });
+}
+
+// Clinic Portal hooks
+export function useClinicQuotes(clinicId: string | undefined) {
+  return useQuery({
+    queryKey: ['/api/clinic/quotes', clinicId],
+    queryFn: async () => {
+      if (!clinicId) return [];
+      return await quoteIntegrationService.getClinicQuotes(clinicId);
+    },
+    enabled: !!clinicId
+  });
+}
+
+export function useClinicQuote(clinicId: string | undefined, quoteId: string | undefined) {
+  return useQuery({
+    queryKey: ['/api/clinic/quotes', clinicId, quoteId],
+    queryFn: async () => {
+      if (!clinicId || !quoteId) return null;
+      return await quoteIntegrationService.getClinicQuote(clinicId, quoteId);
+    },
+    enabled: !!clinicId && !!quoteId
+  });
+}
+
+// Patient Portal hooks
+export function usePatientQuotes(patientId: string | undefined) {
+  return useQuery({
+    queryKey: ['/api/patient/quotes', patientId],
+    queryFn: async () => {
+      if (!patientId) return [];
+      return await quoteIntegrationService.getPatientQuotes(patientId);
+    },
+    enabled: !!patientId
+  });
+}
+
+export function usePatientQuote(patientId: string | undefined, quoteId: string | undefined) {
+  return useQuery({
+    queryKey: ['/api/patient/quotes', patientId, quoteId],
+    queryFn: async () => {
+      if (!patientId || !quoteId) return null;
+      return await quoteIntegrationService.getPatientQuote(patientId, quoteId);
+    },
+    enabled: !!patientId && !!quoteId
+  });
+}
+
+// Shared hooks for all portals
+export function useUpdateQuoteStatus() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-
-  // Admin Portal Queries
-  const allQuotesQuery = useQuery({
-    queryKey: ['/api/integration/admin/quotes'],
-    queryFn: () => quoteIntegrationService.getAdminQuotes(),
-    enabled: portalType === 'admin',
-  });
-
-  // Clinic Portal Queries
-  const clinicQuotesQuery = useQuery({
-    queryKey: [`/api/integration/clinic/${userId}/quotes`],
-    queryFn: () => quoteIntegrationService.getClinicQuotes(userId!),
-    enabled: portalType === 'clinic' && !!userId,
-  });
-
-  // Patient Portal Queries
-  const patientQuotesQuery = useQuery({
-    queryKey: [`/api/integration/patient/${userId}/quotes`],
-    queryFn: () => quoteIntegrationService.getPatientQuotes(userId!),
-    enabled: portalType === 'patient' && !!userId,
-  });
-
-  // Selected Quote Query
-  const selectedQuoteQuery = useQuery({
-    queryKey: [
-      `/api/integration/${portalType}/${portalType === 'admin' ? '' : userId + '/'}quote/${selectedQuoteId}`,
-    ],
-    queryFn: async () => {
-      if (!selectedQuoteId) return null;
-      
-      if (portalType === 'admin') {
-        return quoteIntegrationService.getAdminQuote(selectedQuoteId);
-      } else if (portalType === 'clinic' && userId) {
-        return quoteIntegrationService.getClinicQuote(userId, selectedQuoteId);
-      } else if (portalType === 'patient' && userId) {
-        return quoteIntegrationService.getPatientQuote(userId, selectedQuoteId);
-      }
-      
-      return null;
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      status 
+    }: { 
+      quoteId: string; 
+      status: string;
+    }) => {
+      return await quoteIntegrationService.updateQuoteStatus(quoteId, status);
     },
-    enabled: !!selectedQuoteId,
-  });
-
-  // Mutations
-  const assignQuoteMutation = useMutation({
-    mutationFn: ({ quoteId, clinicId }: { quoteId: string; clinicId: string }) => 
-      quoteIntegrationService.assignQuote(quoteId, clinicId),
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/integration/admin/quotes'] });
-      if (selectedQuoteId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/integration/admin/quote/${selectedQuoteId}`] });
-      }
-      
-      toast({
-        title: 'Quote Assigned',
-        description: 'The quote has been successfully assigned to the clinic',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Assignment Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const unassignQuoteMutation = useMutation({
-    mutationFn: ({ quoteId }: { quoteId: string }) => 
-      quoteIntegrationService.unassignQuote(quoteId),
-    onSuccess: () => {
-      // Invalidate relevant queries
-      queryClient.invalidateQueries({ queryKey: ['/api/integration/admin/quotes'] });
-      if (selectedQuoteId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/integration/admin/quote/${selectedQuoteId}`] });
-      }
-      
-      toast({
-        title: 'Quote Unassigned',
-        description: 'The quote has been unassigned from the clinic',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Unassignment Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const updateStatusMutation = useMutation({
-    mutationFn: ({ quoteId, status }: { quoteId: string; status: string }) => 
-      quoteIntegrationService.updateQuoteStatus(quoteId, status),
-    onSuccess: () => {
-      // Invalidate relevant queries
-      if (portalType === 'admin') {
-        queryClient.invalidateQueries({ queryKey: ['/api/integration/admin/quotes'] });
-      } else if (portalType === 'clinic' && userId) {
-        queryClient.invalidateQueries({ queryKey: [`/api/integration/clinic/${userId}/quotes`] });
-      }
-      
-      if (selectedQuoteId) {
-        queryClient.invalidateQueries({ 
-          queryKey: [`/api/integration/${portalType}/${portalType === 'admin' ? '' : userId + '/'}quote/${selectedQuoteId}`] 
-        });
-      }
-      
-      toast({
-        title: 'Status Updated',
-        description: 'The quote status has been updated successfully',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Status Update Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const sendEmailMutation = useMutation({
-    mutationFn: ({ quoteId, email }: { quoteId: string; email: string }) => 
-      quoteIntegrationService.sendQuoteEmail(quoteId, email),
     onSuccess: () => {
       toast({
-        title: 'Email Sent',
-        description: 'The quote has been sent via email successfully',
+        title: "Success",
+        description: "Quote status updated successfully",
       });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Email Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const requestAppointmentMutation = useMutation({
-    mutationFn: ({ quoteId }: { quoteId: string }) => 
-      quoteIntegrationService.requestAppointment(quoteId),
-    onSuccess: () => {
-      toast({
-        title: 'Appointment Requested',
-        description: 'Your appointment request has been sent to the clinic',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Request Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const downloadPdfMutation = useMutation({
-    mutationFn: ({ quoteId }: { quoteId: string }) => 
-      quoteIntegrationService.downloadQuotePdf(quoteId),
-    onError: (error: Error) => {
-      toast({
-        title: 'Download Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const updateTreatmentQuantityMutation = useMutation({
-    mutationFn: ({ quoteId, treatmentId, quantity }: { quoteId: string; treatmentId: string; quantity: number }) => 
-      quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity),
-    onSuccess: () => {
-      if (selectedQuoteId) {
-        queryClient.invalidateQueries({ 
-          queryKey: [`/api/integration/${portalType}/${portalType === 'admin' ? '' : userId + '/'}quote/${selectedQuoteId}`] 
-        });
-      }
       
-      toast({
-        title: 'Treatment Updated',
-        description: 'The treatment quantity has been updated',
-      });
+      // Invalidate all quote queries to ensure fresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes'] });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Update Failed',
-        description: error.message,
-        variant: 'destructive',
+        title: "Error",
+        description: `Failed to update quote status: ${error.message}`,
+        variant: "destructive",
       });
-    },
-  });
-
-  const removeTreatmentMutation = useMutation({
-    mutationFn: ({ quoteId, treatmentId }: { quoteId: string; treatmentId: string }) => 
-      quoteIntegrationService.removeTreatment(quoteId, treatmentId),
-    onSuccess: () => {
-      if (selectedQuoteId) {
-        queryClient.invalidateQueries({ 
-          queryKey: [`/api/integration/${portalType}/${portalType === 'admin' ? '' : userId + '/'}quote/${selectedQuoteId}`] 
-        });
-      }
-      
-      toast({
-        title: 'Treatment Removed',
-        description: 'The treatment has been removed from the quote',
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: 'Removal Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Get the quotes based on portal type
-  const quotes = portalType === 'admin' 
-    ? allQuotesQuery.data 
-    : portalType === 'clinic' 
-      ? clinicQuotesQuery.data 
-      : patientQuotesQuery.data;
-
-  // Get the selected quote
-  const selectedQuote = selectedQuoteQuery.data;
-
-  // Loading/refetching states
-  const isLoading = portalType === 'admin' 
-    ? allQuotesQuery.isLoading 
-    : portalType === 'clinic' 
-      ? clinicQuotesQuery.isLoading 
-      : patientQuotesQuery.isLoading;
-
-  const isRefetching = portalType === 'admin' 
-    ? allQuotesQuery.isRefetching 
-    : portalType === 'clinic' 
-      ? clinicQuotesQuery.isRefetching 
-      : patientQuotesQuery.isRefetching;
-
-  // Refetch function
-  const refetchQuotes = () => {
-    if (portalType === 'admin') {
-      allQuotesQuery.refetch();
-    } else if (portalType === 'clinic') {
-      clinicQuotesQuery.refetch();
-    } else if (portalType === 'patient') {
-      patientQuotesQuery.refetch();
     }
-  };
+  });
+}
 
-  return {
-    selectedQuoteId,
-    setSelectedQuoteId,
-    allQuotesQuery,
-    clinicQuotesQuery,
-    patientQuotesQuery,
-    selectedQuoteQuery,
-    assignQuoteMutation,
-    unassignQuoteMutation,
-    updateStatusMutation, // This is used as "updateQuoteStatusMutation" in components
-    sendEmailMutation,
-    requestAppointmentMutation,
-    downloadPdfMutation,
-    updateTreatmentQuantityMutation,
-    removeTreatmentMutation,
-    quotes,
-    selectedQuote,
-    isLoading,
-    isRefetching,
-    refetchQuotes
-  };
+export function useAssignQuote() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      clinicId 
+    }: { 
+      quoteId: string; 
+      clinicId: string;
+    }) => {
+      return await quoteIntegrationService.assignQuote(quoteId, clinicId);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quote assigned to clinic successfully",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to assign quote: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useUnassignQuote() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId 
+    }: { 
+      quoteId: string; 
+    }) => {
+      return await quoteIntegrationService.unassignQuote(quoteId);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quote unassigned successfully",
+      });
+      
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to unassign quote: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useUpdateTreatmentQuantity() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      treatmentId, 
+      quantity 
+    }: { 
+      quoteId: string; 
+      treatmentId: string; 
+      quantity: number;
+    }) => {
+      return await quoteIntegrationService.updateTreatmentQuantity(quoteId, treatmentId, quantity);
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Success",
+        description: "Treatment quantity updated",
+      });
+      
+      // Invalidate specific quote
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes', variables.quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes', , variables.quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to update treatment: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useRemoveTreatment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      treatmentId 
+    }: { 
+      quoteId: string; 
+      treatmentId: string;
+    }) => {
+      return await quoteIntegrationService.removeTreatment(quoteId, treatmentId);
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Success",
+        description: "Treatment removed from quote",
+      });
+      
+      // Invalidate specific quote
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes', variables.quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes', , variables.quoteId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to remove treatment: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useSendQuoteEmail() {
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId, 
+      email 
+    }: { 
+      quoteId: string; 
+      email: string;
+    }) => {
+      return await quoteIntegrationService.sendQuoteEmail(quoteId, email);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Quote sent by email successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to send email: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useRequestAppointment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId 
+    }: { 
+      quoteId: string;
+    }) => {
+      return await quoteIntegrationService.requestAppointment(quoteId);
+    },
+    onSuccess: (_, variables) => {
+      toast({
+        title: "Success",
+        description: "Appointment request submitted successfully",
+      });
+      
+      // Invalidate all related quotes
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', , variables.quoteId] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to request appointment: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
+}
+
+export function useDownloadQuotePdf() {
+  const { toast } = useToast();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      quoteId 
+    }: { 
+      quoteId: string;
+    }) => {
+      return await quoteIntegrationService.downloadQuotePdf(quoteId);
+    },
+    onSuccess: (data, variables) => {
+      // Create a download link for the PDF
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quote-${variables.quoteId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      toast({
+        title: "Success",
+        description: "Quote PDF downloaded",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: `Failed to download PDF: ${error.message}`,
+        variant: "destructive",
+      });
+    }
+  });
 }

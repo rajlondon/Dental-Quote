@@ -1,675 +1,667 @@
 /**
- * Quote Integration Widget
+ * Quote Integration Widget Component
  * 
- * This component provides a unified interface for interacting with quotes
- * across all three portals (admin, clinic, patient).
+ * This component provides a unified interface for managing quotes across all portals
+ * (admin, clinic, and patient). It adapts its functionality based on the portal type.
  */
-import React, { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
-  Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter 
+  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle 
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { TreatmentList } from './TreatmentList';
 import { 
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow 
-} from '@/components/ui/table';
-import { 
-  Eye, ArrowRight, Download, Mail, Check, ArrowLeft, 
-  Calendar, Loader2, AlertTriangle, User, Building2, 
-  Activity, BadgePercent, RefreshCw
-} from 'lucide-react';
-import { useQuoteSystem } from '@/hooks/use-quote-system';
-import { QuoteData, Treatment } from '@/services/quote-integration-service';
+  useAdminQuotes, useAdminQuote, 
+  useClinicQuotes, useClinicQuote,
+  usePatientQuotes, usePatientQuote,
+  useUpdateQuoteStatus, useAssignQuote, useUnassignQuote,
+  useUpdateTreatmentQuantity, useRemoveTreatment,
+  useSendQuoteEmail, useRequestAppointment, useDownloadQuotePdf
+} from '@/hooks/use-quote-system';
+import { useClinics } from '@/hooks/use-clinics';
+import { Loader2, Download, Mail, Calendar, UserCheck } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from 'date-fns';
-import { formatCurrency } from '@/lib/utils';
+import { QuoteData } from '@/services/quote-integration-service';
 
-interface QuoteIntegrationWidgetProps {
-  portalType: 'admin' | 'clinic' | 'patient';
-  quoteId?: string;
-  userId?: string; // clinicId or patientId depending on portalType
-  onQuoteAction?: (action: string, quoteId: string) => void;
+// Portal type definitions
+export type PortalType = 'admin' | 'clinic' | 'patient';
+
+interface QuoteStatusBadgeProps {
+  status: string;
 }
 
-export function QuoteIntegrationWidget({ 
-  portalType, 
-  quoteId,
-  userId,
-  onQuoteAction 
-}: QuoteIntegrationWidgetProps) {
-  const quoteSystem = useQuoteSystem(portalType, userId);
-  const [activeTab, setActiveTab] = useState<string>('details');
-
-  useEffect(() => {
-    if (quoteId) {
-      quoteSystem.setSelectedQuoteId(quoteId);
-    }
-  }, [quoteId]);
-
-  // If it's a detailed view of a single quote
-  if (quoteId) {
-    const quote = quoteSystem.selectedQuote;
-    const isLoading = quoteSystem.selectedQuoteQuery.isLoading;
-
-    if (isLoading) {
-      return (
-        <Card className="w-full">
-          <CardContent className="flex justify-center items-center py-12">
-            <div className="flex flex-col items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">Loading quote information...</p>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (!quote) {
-      return (
-        <Card className="w-full">
-          <CardContent className="flex justify-center items-center py-12">
-            <div className="flex flex-col items-center">
-              <AlertTriangle className="h-8 w-8 text-warning mb-4" />
-              <p className="text-muted-foreground">Quote not found or no longer available.</p>
-              <Button 
-                variant="link" 
-                onClick={() => onQuoteAction?.('back', '')}
-                className="mt-4"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Quotes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    return (
-      <Card className="w-full">
-        <CardHeader className="flex flex-row items-start justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center">
-              Quote #{quote.id.toString().padStart(5, '0')}
-              <Badge className="ml-3" variant={getStatusVariant(quote.status)}>
-                {formatStatus(quote.status)}
-              </Badge>
-            </CardTitle>
-            <CardDescription>
-              Created on {format(new Date(quote.created_at), 'MMM d, yyyy')}
-            </CardDescription>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => onQuoteAction?.('back', '')}
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Quotes
-          </Button>
-        </CardHeader>
-        
-        <CardContent>
-          <Tabs defaultValue="details" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-4">
-              <TabsTrigger value="details">Details</TabsTrigger>
-              <TabsTrigger value="treatments">Treatments</TabsTrigger>
-              {portalType === 'admin' && (
-                <TabsTrigger value="assignment">Assignment</TabsTrigger>
-              )}
-              {portalType === 'clinic' && (
-                <TabsTrigger value="patient">Patient</TabsTrigger>
-              )}
-              {portalType === 'patient' && (
-                <TabsTrigger value="clinics">Clinics</TabsTrigger>
-              )}
-            </TabsList>
-            
-            <TabsContent value="details" className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Patient</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-1">
-                      <p className="font-medium">{quote.patient_name}</p>
-                      <p className="text-sm text-muted-foreground">{quote.patient_email}</p>
-                      {quote.patient_phone && (
-                        <p className="text-sm text-muted-foreground">{quote.patient_phone}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Amount</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-1">
-                      <p className="text-2xl font-bold">{formatCurrency(quote.total)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {quote.discount_amount > 0 ? (
-                          <>Subtotal: {formatCurrency(quote.subtotal)}</>
-                        ) : (
-                          'No discount applied'
-                        )}
-                      </p>
-                      {quote.discount_amount > 0 && (
-                        <p className="text-sm font-medium text-green-600">
-                          Discount: -{formatCurrency(quote.discount_amount)}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-                
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Status Info</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Status:</span>
-                        <Badge variant={getStatusVariant(quote.status)}>
-                          {formatStatus(quote.status)}
-                        </Badge>
-                      </div>
-                      
-                      <div className="flex justify-between">
-                        <span className="text-sm text-muted-foreground">Last Updated:</span>
-                        <span className="text-sm">
-                          {format(new Date(quote.updated_at), 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                      
-                      {quote.assigned_to && (
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Assigned To:</span>
-                          <span className="text-sm">{quote.assigned_to_name || 'Clinic #' + quote.assigned_to}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {quote.promo_code && (
-                <Alert>
-                  <BadgePercent className="h-4 w-4" />
-                  <AlertTitle>Promo Code Applied</AlertTitle>
-                  <AlertDescription>
-                    {quote.promo_code} - {quote.discount_amount > 0 
-                      ? `Saved ${formatCurrency(quote.discount_amount)}`
-                      : 'Promo code applied'}
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              {quote.notes && (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md">Additional Notes</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{quote.notes}</p>
-                  </CardContent>
-                </Card>
-              )}
-            </TabsContent>
-            
-            <TabsContent value="treatments">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Treatment List</CardTitle>
-                  <CardDescription>
-                    Treatments selected for this quote
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <TreatmentList 
-                    treatments={quote.treatments || []} 
-                    editable={false}
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-            
-            {portalType === 'admin' && (
-              <TabsContent value="assignment">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Clinic Assignment</CardTitle>
-                    <CardDescription>
-                      Manage which clinic is handling this quote
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {quote.assigned_to ? (
-                      <div className="space-y-4">
-                        <Alert>
-                          <Building2 className="h-4 w-4" />
-                          <AlertTitle>Currently Assigned</AlertTitle>
-                          <AlertDescription>
-                            This quote is assigned to {quote.assigned_to_name || 'Clinic #' + quote.assigned_to}
-                          </AlertDescription>
-                        </Alert>
-                        
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline"
-                            onClick={() => onQuoteAction?.('reassign', quote.id)}
-                          >
-                            Reassign to Different Clinic
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => quoteSystem.unassignQuoteMutation.mutate({ quoteId: quote.id })}
-                          >
-                            Unassign
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <Alert>
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertTitle>Not Assigned</AlertTitle>
-                          <AlertDescription>
-                            This quote has not been assigned to a clinic yet.
-                          </AlertDescription>
-                        </Alert>
-                        
-                        <Button onClick={() => onQuoteAction?.('assign', quote.id)}>
-                          Assign to Clinic
-                        </Button>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-            
-            {portalType === 'clinic' && (
-              <TabsContent value="patient">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Patient Information</CardTitle>
-                    <CardDescription>
-                      Contact details and additional information
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h3 className="font-medium mb-2">Contact Information</h3>
-                        <div className="space-y-2">
-                          <div className="flex items-start gap-2">
-                            <User className="h-4 w-4 mt-1 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium">{quote.patient_name}</p>
-                              <p className="text-sm text-muted-foreground">Name</p>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-2">
-                            <Mail className="h-4 w-4 mt-1 text-muted-foreground" />
-                            <div>
-                              <p className="font-medium">{quote.patient_email}</p>
-                              <p className="text-sm text-muted-foreground">Email</p>
-                            </div>
-                          </div>
-                          {quote.patient_phone && (
-                            <div className="flex items-start gap-2">
-                              <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{quote.patient_phone}</p>
-                                <p className="text-sm text-muted-foreground">Phone</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-medium mb-2">Additional Details</h3>
-                        <div className="space-y-2">
-                          {quote.preferred_dates && (
-                            <div className="flex items-start gap-2">
-                              <Calendar className="h-4 w-4 mt-1 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{quote.preferred_dates}</p>
-                                <p className="text-sm text-muted-foreground">Preferred Dates</p>
-                              </div>
-                            </div>
-                          )}
-                          
-                          {quote.preferred_contact_method && (
-                            <div className="flex items-start gap-2">
-                              <Activity className="h-4 w-4 mt-1 text-muted-foreground" />
-                              <div>
-                                <p className="font-medium">{quote.preferred_contact_method}</p>
-                                <p className="text-sm text-muted-foreground">Preferred Contact Method</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div>
-                      <h3 className="font-medium mb-2">Actions</h3>
-                      <div className="flex flex-wrap gap-2">
-                        <Button onClick={() => onQuoteAction?.('email', quote.id)}>
-                          <Mail className="h-4 w-4 mr-2" /> Email Quote
-                        </Button>
-                        
-                        <Button variant="outline" onClick={() => quoteSystem.downloadPdfMutation.mutate({ quoteId: quote.id })}>
-                          <Download className="h-4 w-4 mr-2" /> Download PDF
-                        </Button>
-                        
-                        {quote.status === 'pending' && (
-                          <Button 
-                            variant="outline"
-                            onClick={() => quoteSystem.updateStatusMutation.mutate({ 
-                              quoteId: quote.id, 
-                              status: 'in_progress' 
-                            })}
-                          >
-                            Start Processing
-                          </Button>
-                        )}
-                        
-                        {quote.status === 'in_progress' && (
-                          <Button 
-                            onClick={() => quoteSystem.updateStatusMutation.mutate({ 
-                              quoteId: quote.id, 
-                              status: 'completed' 
-                            })}
-                          >
-                            <Check className="h-4 w-4 mr-2" /> Mark as Completed
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-            
-            {portalType === 'patient' && (
-              <TabsContent value="clinics">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-lg">Assigned Clinic</CardTitle>
-                    <CardDescription>
-                      Information about the clinic handling your quote
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {quote.assigned_to ? (
-                      <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                          {quote.clinic_logo ? (
-                            <img 
-                              src={quote.clinic_logo} 
-                              alt={quote.assigned_to_name || 'Clinic logo'} 
-                              className="w-16 h-16 object-contain rounded-md"
-                            />
-                          ) : (
-                            <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center">
-                              <Building2 className="h-8 w-8 text-muted-foreground" />
-                            </div>
-                          )}
-                          
-                          <div>
-                            <h3 className="font-medium text-lg">
-                              {quote.assigned_to_name || 'Clinic #' + quote.assigned_to}
-                            </h3>
-                            {quote.clinic_location && (
-                              <p className="text-sm text-muted-foreground">{quote.clinic_location}</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        {quote.clinic_description && (
-                          <p className="text-sm">{quote.clinic_description}</p>
-                        )}
-                        
-                        <div className="flex flex-wrap gap-2 mt-4">
-                          {quote.clinic_website && (
-                            <Button variant="outline" asChild>
-                              <a href={quote.clinic_website} target="_blank" rel="noopener noreferrer">
-                                Visit Website
-                              </a>
-                            </Button>
-                          )}
-                          
-                          <Button onClick={() => quoteSystem.requestAppointmentMutation.mutate({ quoteId: quote.id })}>
-                            Request Appointment
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="text-center py-6">
-                        <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                        <h3 className="font-medium text-lg mb-1">Not Assigned Yet</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Your quote has not been assigned to a clinic yet. 
-                          Our team will review your request and match you with the right clinic soon.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            )}
-          </Tabs>
-        </CardContent>
-        
-        <CardFooter className="flex justify-between">
-          <div className="text-sm text-muted-foreground">
-            Quote ID: {quote.id}
-          </div>
-          <div className="space-x-2">
-            {portalType === 'admin' && (
-              <>
-                <Button 
-                  variant="outline" 
-                  onClick={() => quoteSystem.downloadPdfMutation.mutate({ quoteId: quote.id })}
-                >
-                  <Download className="mr-2 h-4 w-4" /> Download PDF
-                </Button>
-                {quote.status === 'pending' && (
-                  <Button 
-                    onClick={() => onQuoteAction?.('assign', quote.id)}
-                  >
-                    Assign to Clinic
-                  </Button>
-                )}
-              </>
-            )}
-            
-            {portalType === 'clinic' && (
-              <>
-                {quote.status === 'pending' && (
-                  <Button 
-                    onClick={() => quoteSystem.updateQuoteStatusMutation.mutate({ 
-                      quoteId: quote.id, 
-                      status: 'in_progress' 
-                    })}
-                  >
-                    Start Processing
-                  </Button>
-                )}
-              </>
-            )}
-            
-            {portalType === 'patient' && (
-              <Button 
-                variant="outline" 
-                onClick={() => quoteSystem.downloadPdfMutation.mutate({ quoteId: quote.id })}
-              >
-                <Download className="mr-2 h-4 w-4" /> Download PDF
-              </Button>
-            )}
-          </div>
-        </CardFooter>
-      </Card>
-    );
+function QuoteStatusBadge({ status }: QuoteStatusBadgeProps) {
+  let variant: 'default' | 'secondary' | 'destructive' | 'outline' = 'default';
+  
+  switch (status.toLowerCase()) {
+    case 'pending':
+      variant = 'outline';
+      break;
+    case 'confirmed':
+      variant = 'default';
+      break;
+    case 'completed':
+      variant = 'secondary';
+      break;
+    case 'cancelled':
+      variant = 'destructive';
+      break;
+    default:
+      variant = 'outline';
   }
+  
+  return <Badge variant={variant}>{status}</Badge>;
+}
 
-  // List view of all quotes
+interface QuoteListItemProps {
+  quote: QuoteData;
+  portalType: PortalType;
+  onSelect: (quoteId: string) => void;
+  isSelected: boolean;
+}
+
+function QuoteListItem({ quote, portalType, onSelect, isSelected }: QuoteListItemProps) {
+  const formattedDate = quote.created_at 
+    ? format(new Date(quote.created_at), 'MMM d, yyyy')
+    : 'Unknown date';
+  
+  const bgClass = isSelected ? 'bg-muted' : 'hover:bg-muted/50';
+  
   return (
-    <div className="space-y-4">
-      {quoteSystem.isLoading ? (
-        <Card className="w-full">
-          <CardContent className="flex justify-center items-center py-12">
-            <div className="flex flex-col items-center">
-              <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-              <p className="text-muted-foreground">Loading quotes...</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : quoteSystem.quotes.length === 0 ? (
-        <Card className="w-full">
-          <CardContent className="flex justify-center items-center py-12">
-            <div className="flex flex-col items-center text-center">
-              <AlertTriangle className="h-8 w-8 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-1">No Quotes Found</h3>
-              <p className="text-muted-foreground max-w-md mb-4">
-                {portalType === 'admin' 
-                  ? "There are no quotes in the system yet."
-                  : portalType === 'clinic'
-                    ? "No quotes have been assigned to your clinic yet."
-                    : "You haven't requested any quotes yet."}
-              </p>
-              {portalType === 'admin' && (
-                <Button onClick={() => onQuoteAction?.('create', '')}>
-                  Create New Quote
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Quote ID</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {quoteSystem.quotes.map((quote: QuoteData) => (
-                <TableRow key={quote.id}>
-                  <TableCell className="font-medium">
-                    #{quote.id.toString().padStart(5, '0')}
-                  </TableCell>
-                  <TableCell>{quote.patient_name}</TableCell>
-                  <TableCell>{format(new Date(quote.created_at), 'MMM d, yyyy')}</TableCell>
-                  <TableCell>{formatCurrency(quote.total)}</TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusVariant(quote.status)}>
-                      {formatStatus(quote.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onQuoteAction?.('view', quote.id)}
-                        title="View Quote"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      
-                      {portalType === 'admin' && quote.status === 'pending' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onQuoteAction?.('assign', quote.id)}
-                          title="Assign to Clinic"
-                        >
-                          <ArrowRight className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {portalType === 'clinic' && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onQuoteAction?.('email', quote.id)}
-                          title="Email Quote"
-                        >
-                          <Mail className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+    <div 
+      className={`p-4 cursor-pointer rounded-md mb-2 ${bgClass} transition-colors`}
+      onClick={() => onSelect(quote.id)}
+    >
+      <div className="flex justify-between items-start mb-1">
+        <div className="font-medium">
+          {quote.patient_name || 'No patient name'}
         </div>
-      )}
-      
-      <div className="flex justify-end">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => quoteSystem.refetchQuotes()}
-          className="flex items-center gap-2"
-        >
-          <RefreshCw className={`h-4 w-4 ${quoteSystem.isRefetching ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <QuoteStatusBadge status={quote.status} />
+      </div>
+      <div className="text-sm text-muted-foreground mb-1">
+        {formattedDate}
+      </div>
+      <div className="flex justify-between items-center">
+        <div className="text-sm">
+          {quote.treatments.length} treatments | 
+          {quote.currency} {quote.total.toFixed(2)}
+        </div>
+        {quote.clinic_name && portalType === 'admin' && (
+          <div className="text-xs text-muted-foreground">
+            {quote.clinic_name}
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-// Helper functions
-function getStatusVariant(status: string): 'default' | 'secondary' | 'outline' | 'success' | 'destructive' {
-  switch (status) {
-    case 'pending':
-      return 'secondary';
-    case 'assigned':
-    case 'in_progress':
-      return 'default';
-    case 'completed':
-    case 'accepted':
-      return 'success';
-    case 'rejected':
-    case 'cancelled':
-      return 'destructive';
-    default:
-      return 'outline';
+interface QuoteSystemContextProps {
+  portalType: PortalType;
+  clinicId?: string;
+  patientId?: string;
+}
+
+function useQuoteSystemContext({ portalType, clinicId, patientId }: QuoteSystemContextProps) {
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
+  
+  // Query hooks based on portal type
+  const adminQuotesQuery = useAdminQuotes();
+  const adminQuoteQuery = useAdminQuote(selectedQuoteId || undefined);
+  
+  const clinicQuotesQuery = useClinicQuotes(clinicId);
+  const clinicQuoteQuery = useClinicQuote(clinicId, selectedQuoteId || undefined);
+  
+  const patientQuotesQuery = usePatientQuotes(patientId);
+  const patientQuoteQuery = usePatientQuote(patientId, selectedQuoteId || undefined);
+  
+  // Mutation hooks
+  const updateStatusMutation = useUpdateQuoteStatus();
+  const assignQuoteMutation = useAssignQuote();
+  const unassignQuoteMutation = useUnassignQuote();
+  const updateTreatmentQuantityMutation = useUpdateTreatmentQuantity();
+  const removeTreatmentMutation = useRemoveTreatment();
+  const sendEmailMutation = useSendQuoteEmail();
+  const requestAppointmentMutation = useRequestAppointment();
+  const downloadPdfMutation = useDownloadQuotePdf();
+  
+  // Clinics data for assignment
+  const clinicsQuery = useClinics();
+  
+  // Helper for refetching quotes
+  const queryClient = useQueryClient();
+  const refetchQuotes = () => {
+    if (portalType === 'admin') {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/quotes'] });
+    } else if (portalType === 'clinic' && clinicId) {
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/quotes', clinicId] });
+    } else if (portalType === 'patient' && patientId) {
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/quotes', patientId] });
+    }
+  };
+  
+  // Determine which queries to use based on portal type
+  const allQuotesQuery = portalType === 'admin' 
+    ? adminQuotesQuery 
+    : portalType === 'clinic' 
+      ? clinicQuotesQuery 
+      : patientQuotesQuery;
+  
+  const selectedQuoteQuery = portalType === 'admin' 
+    ? adminQuoteQuery 
+    : portalType === 'clinic' 
+      ? clinicQuoteQuery 
+      : patientQuoteQuery;
+  
+  return {
+    selectedQuoteId,
+    setSelectedQuoteId,
+    allQuotesQuery,
+    selectedQuoteQuery,
+    updateStatusMutation,
+    assignQuoteMutation,
+    unassignQuoteMutation,
+    updateTreatmentQuantityMutation,
+    removeTreatmentMutation,
+    sendEmailMutation,
+    requestAppointmentMutation,
+    downloadPdfMutation,
+    clinicsQuery,
+    quotes: allQuotesQuery.data,
+    selectedQuote: selectedQuoteQuery.data,
+    isLoadingQuotes: allQuotesQuery.isLoading,
+    isLoadingSelectedQuote: selectedQuoteQuery.isLoading,
+    refetchQuotes
+  };
+}
+
+export interface QuoteIntegrationWidgetProps {
+  portalType: PortalType;
+  clinicId?: string;
+  patientId?: string;
+  viewOnly?: boolean;
+}
+
+export function QuoteIntegrationWidget({ 
+  portalType, 
+  clinicId, 
+  patientId,
+  viewOnly = false
+}: QuoteIntegrationWidgetProps) {
+  const quoteSystem = useQuoteSystemContext({ portalType, clinicId, patientId });
+  const [assignClinicId, setAssignClinicId] = useState<string>("");
+  const [statusValue, setStatusValue] = useState<string>("");
+  
+  const handleStatusChange = (quoteId: string, newStatus: string) => {
+    quoteSystem.updateStatusMutation.mutate({
+      quoteId,
+      status: newStatus
+    });
+  };
+  
+  const handleAssignClinic = (quoteId: string) => {
+    if (assignClinicId) {
+      quoteSystem.assignQuoteMutation.mutate({
+        quoteId,
+        clinicId: assignClinicId
+      });
+    }
+  };
+  
+  const handleUnassignClinic = (quoteId: string) => {
+    quoteSystem.unassignQuoteMutation.mutate({
+      quoteId
+    });
+  };
+  
+  const handleSendEmail = (quoteId: string, email: string) => {
+    quoteSystem.sendEmailMutation.mutate({
+      quoteId,
+      email
+    });
+  };
+  
+  const handleRequestAppointment = (quoteId: string) => {
+    quoteSystem.requestAppointmentMutation.mutate({
+      quoteId
+    });
+  };
+  
+  const handleDownloadPdf = (quoteId: string) => {
+    quoteSystem.downloadPdfMutation.mutate({
+      quoteId
+    });
+  };
+  
+  const handleUpdateTreatmentQuantity = (quoteId: string, treatmentId: string, quantity: number) => {
+    quoteSystem.updateTreatmentQuantityMutation.mutate({
+      quoteId,
+      treatmentId,
+      quantity
+    });
+  };
+  
+  const handleRemoveTreatment = (quoteId: string, treatmentId: string) => {
+    quoteSystem.removeTreatmentMutation.mutate({
+      quoteId,
+      treatmentId
+    });
+  };
+  
+  // Loading state
+  if (quoteSystem.isLoadingQuotes) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
-}
-
-function formatStatus(status: string): string {
-  // Convert statuses like in_progress to In Progress
-  const words = status.split('_');
-  return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-}
-
-function handleUpdateQuantity(treatmentId, quantity) {
-  // Implement updating treatment quantity
-  console.log('Update quantity:', treatmentId, quantity);
-}
-
-function handleRemoveTreatment(treatmentId) {
-  // Implement removing treatment
-  console.log('Remove treatment:', treatmentId);
+  
+  // No quotes state
+  if (!quoteSystem.quotes || quoteSystem.quotes.length === 0) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Quotes</CardTitle>
+          <CardDescription>
+            {portalType === 'admin' 
+              ? 'No quotes available in the system.' 
+              : portalType === 'clinic' 
+                ? 'No quotes assigned to this clinic.' 
+                : 'You have no quotes yet.'}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col items-center justify-center py-8">
+          <p className="text-muted-foreground text-center mb-4">
+            {portalType === 'admin' 
+              ? 'Patients need to submit quote requests through the quote builder.' 
+              : portalType === 'clinic' 
+                ? 'Admin needs to assign quotes to this clinic.' 
+                : 'Get started by creating a new quote.'}
+          </p>
+          {portalType === 'patient' && (
+            <Button variant="outline">Create New Quote</Button>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+  
+  return (
+    <div className="grid md:grid-cols-12 gap-4">
+      {/* Quote list sidebar */}
+      <div className="md:col-span-4 lg:col-span-3">
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle>My Quotes</CardTitle>
+            <CardDescription>
+              {portalType === 'admin' 
+                ? 'Manage all patient quotes' 
+                : portalType === 'clinic' 
+                  ? 'Quotes assigned to your clinic' 
+                  : 'Your treatment quotes'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="max-h-[500px] overflow-y-auto">
+            {quoteSystem.quotes.map((quote) => (
+              <QuoteListItem
+                key={quote.id}
+                quote={quote}
+                portalType={portalType}
+                onSelect={quoteSystem.setSelectedQuoteId}
+                isSelected={quote.id === quoteSystem.selectedQuoteId}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Quote details */}
+      <div className="md:col-span-8 lg:col-span-9">
+        {quoteSystem.selectedQuoteId ? (
+          <Card className="w-full">
+            {quoteSystem.isLoadingSelectedQuote ? (
+              <CardContent className="flex items-center justify-center min-h-[400px]">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </CardContent>
+            ) : !quoteSystem.selectedQuote ? (
+              <CardContent className="flex items-center justify-center min-h-[400px]">
+                <p className="text-muted-foreground">Quote not found</p>
+              </CardContent>
+            ) : (
+              <>
+                <CardHeader className="pb-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle>Quote #{quoteSystem.selectedQuote.id.substring(0, 8)}</CardTitle>
+                      <CardDescription>
+                        Created on {format(new Date(quoteSystem.selectedQuote.created_at), 'MMMM d, yyyy')}
+                      </CardDescription>
+                    </div>
+                    <QuoteStatusBadge status={quoteSystem.selectedQuote.status} />
+                  </div>
+                </CardHeader>
+                
+                <CardContent>
+                  <Tabs defaultValue="details">
+                    <TabsList className="mb-4">
+                      <TabsTrigger value="details">Details</TabsTrigger>
+                      <TabsTrigger value="treatments">Treatments</TabsTrigger>
+                      <TabsTrigger value="patient">Patient</TabsTrigger>
+                      {portalType === 'admin' && (
+                        <TabsTrigger value="assignment">Assignment</TabsTrigger>
+                      )}
+                    </TabsList>
+                    
+                    <TabsContent value="details">
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Status</h4>
+                            <div className="flex items-center">
+                              {viewOnly ? (
+                                <p>{quoteSystem.selectedQuote.status}</p>
+                              ) : (
+                                <Select 
+                                  value={statusValue || quoteSystem.selectedQuote.status} 
+                                  onValueChange={(value) => {
+                                    setStatusValue(value);
+                                    handleStatusChange(quoteSystem.selectedQuote.id, value);
+                                  }}
+                                >
+                                  <SelectTrigger className="w-full">
+                                    <SelectValue placeholder={quoteSystem.selectedQuote.status} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pending">Pending</SelectItem>
+                                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                                    <SelectItem value="completed">Completed</SelectItem>
+                                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Total</h4>
+                            <p className="text-lg font-semibold">
+                              {quoteSystem.selectedQuote.currency} {quoteSystem.selectedQuote.total.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Subtotal</h4>
+                          <p>{quoteSystem.selectedQuote.currency} {quoteSystem.selectedQuote.subtotal.toFixed(2)}</p>
+                        </div>
+                        
+                        {quoteSystem.selectedQuote.discount_amount > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Discount</h4>
+                            <p>- {quoteSystem.selectedQuote.currency} {quoteSystem.selectedQuote.discount_amount.toFixed(2)}</p>
+                            {quoteSystem.selectedQuote.promo_code && (
+                              <p className="text-xs text-muted-foreground">Promo code: {quoteSystem.selectedQuote.promo_code}</p>
+                            )}
+                          </div>
+                        )}
+                        
+                        {quoteSystem.selectedQuote.clinic_name && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Assigned Clinic</h4>
+                            <p>{quoteSystem.selectedQuote.clinic_name}</p>
+                          </div>
+                        )}
+                        
+                        {quoteSystem.selectedQuote.special_offer_name && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Special Offer</h4>
+                            <p>{quoteSystem.selectedQuote.special_offer_name}</p>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="treatments">
+                      <TreatmentList 
+                        treatments={quoteSystem.selectedQuote.treatments} 
+                        editable={!viewOnly && (portalType === 'admin' || portalType === 'clinic')}
+                        onUpdateQuantity={
+                          (treatmentId, quantity) => 
+                            handleUpdateTreatmentQuantity(quoteSystem.selectedQuote.id, treatmentId, quantity)
+                        }
+                        onRemoveTreatment={
+                          (treatmentId) => 
+                            handleRemoveTreatment(quoteSystem.selectedQuote.id, treatmentId)
+                        }
+                        showClinicReferences={portalType !== 'patient'}
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="patient">
+                      <div className="space-y-4">
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Name</h4>
+                          <p>{quoteSystem.selectedQuote.patient_name}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Email</h4>
+                          <p>{quoteSystem.selectedQuote.patient_email}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Phone</h4>
+                          <p>{quoteSystem.selectedQuote.patient_phone || 'Not provided'}</p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="text-sm font-medium mb-1">Country</h4>
+                          <p>{quoteSystem.selectedQuote.patient_country}</p>
+                        </div>
+                        
+                        {quoteSystem.selectedQuote.preferred_contact_method && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Preferred Contact Method</h4>
+                            <p>{quoteSystem.selectedQuote.preferred_contact_method}</p>
+                          </div>
+                        )}
+                        
+                        {quoteSystem.selectedQuote.preferred_dates && 
+                         quoteSystem.selectedQuote.preferred_dates.length > 0 && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Preferred Dates</h4>
+                            <ul className="list-disc pl-5">
+                              {quoteSystem.selectedQuote.preferred_dates.map((date, index) => (
+                                <li key={index}>{date}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {quoteSystem.selectedQuote.notes && (
+                          <div>
+                            <h4 className="text-sm font-medium mb-1">Notes</h4>
+                            <p>{quoteSystem.selectedQuote.notes}</p>
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                    
+                    {portalType === 'admin' && (
+                      <TabsContent value="assignment">
+                        <div className="space-y-4">
+                          {quoteSystem.selectedQuote.clinic_id ? (
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Currently Assigned To</h4>
+                              <div className="flex items-center justify-between">
+                                <p className="font-medium">{quoteSystem.selectedQuote.clinic_name}</p>
+                                
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="outline">Unassign</Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Unassign Quote</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to unassign this quote from {quoteSystem.selectedQuote.clinic_name}?
+                                        This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction 
+                                        onClick={() => handleUnassignClinic(quoteSystem.selectedQuote.id)}
+                                      >
+                                        Unassign
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </div>
+                          ) : (
+                            <div>
+                              <h4 className="text-sm font-medium mb-2">Assign to Clinic</h4>
+                              <div className="flex items-end gap-2">
+                                <div className="flex-1">
+                                  <Select value={assignClinicId} onValueChange={setAssignClinicId}>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select a clinic" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {quoteSystem.clinicsQuery.isLoading ? (
+                                        <div className="flex items-center justify-center p-2">
+                                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                                        </div>
+                                      ) : quoteSystem.clinicsQuery.data?.map(clinic => (
+                                        <SelectItem key={clinic.id} value={clinic.id}>
+                                          {clinic.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <Button 
+                                  disabled={!assignClinicId} 
+                                  onClick={() => handleAssignClinic(quoteSystem.selectedQuote.id)}
+                                >
+                                  Assign
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </TabsContent>
+                    )}
+                  </Tabs>
+                </CardContent>
+                
+                <CardFooter className="flex justify-between border-t pt-4">
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleDownloadPdf(quoteSystem.selectedQuote.id)}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <Mail className="h-4 w-4 mr-2" />
+                          Send via Email
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Send Quote</DialogTitle>
+                          <DialogDescription>
+                            Send the quote to the patient or another email address.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                          <Button 
+                            className="w-full"
+                            onClick={() => handleSendEmail(quoteSystem.selectedQuote.id, quoteSystem.selectedQuote.patient_email)}
+                          >
+                            Send to {quoteSystem.selectedQuote.patient_email}
+                          </Button>
+                        </div>
+                        <DialogFooter>
+                          <Button variant="outline" type="button">
+                            Close
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </div>
+                  
+                  {portalType === 'patient' && (
+                    <Button 
+                      onClick={() => handleRequestAppointment(quoteSystem.selectedQuote.id)}
+                      disabled={quoteSystem.selectedQuote.status !== 'confirmed'}
+                    >
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Request Appointment
+                    </Button>
+                  )}
+                  
+                  {portalType === 'clinic' && (
+                    <Button 
+                      onClick={() => handleStatusChange(quoteSystem.selectedQuote.id, 'confirmed')}
+                      disabled={quoteSystem.selectedQuote.status !== 'pending'}
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Confirm Quote
+                    </Button>
+                  )}
+                </CardFooter>
+              </>
+            )}
+          </Card>
+        ) : (
+          <Card className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
+            <h3 className="text-lg font-medium mb-2">Select a quote</h3>
+            <p className="text-muted-foreground">
+              Choose a quote from the list to view its details
+            </p>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
 }
