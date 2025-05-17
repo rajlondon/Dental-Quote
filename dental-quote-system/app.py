@@ -1,51 +1,51 @@
 """
-Dental Quote System Application
-Main application entry point
+MyDentalFly - Dental Quote System
+Main Flask Application
 """
-
-from flask import Flask, g, request, render_template
 import os
-import secrets
-
-# Import services
+from flask import Flask, render_template, session, request, flash
+from dotenv import load_dotenv
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
+from routes import page_routes, promo_routes, integration_routes
+import secrets
 
-# Import utilities
-from utils.session_manager import SessionManager
-
-# Import routes
-from routes.page_routes import page_routes
-from routes.promo_routes import promo_routes
-from routes.integration_routes import integration_routes
+# Load environment variables
+load_dotenv()
 
 def create_app():
     """Create and configure the Flask application"""
     app = Flask(__name__)
     
     # Configure app
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
     app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['SESSION_PERMANENT'] = False
+    app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
     
-    # Initialize services
+    # Create service instances
     treatment_service = TreatmentService()
     promo_service = PromoService()
     
-    # Initialize session manager with services
-    session_manager = SessionManager(promo_service=promo_service)
-    
-    # Store services in app config for access in routes
+    # Add services to app config for access in routes
     app.config['treatment_service'] = treatment_service
     app.config['promo_service'] = promo_service
-    app.config['session_manager'] = session_manager
+    
+    # Register error handlers
+    register_error_handlers(app)
+    
+    # Register context processors
+    register_context_processors(app)
     
     # Register blueprints
-    app.register_blueprint(page_routes)
-    app.register_blueprint(promo_routes)
-    app.register_blueprint(integration_routes, url_prefix='/api')
+    app.register_blueprint(page_routes.bp)
+    app.register_blueprint(promo_routes.bp)
+    app.register_blueprint(integration_routes.bp)
     
-    # Error handlers
+    return app
+
+def register_error_handlers(app):
+    """Register error handlers for the application"""
     @app.errorhandler(404)
     def page_not_found(e):
         return render_template('errors/404.html'), 404
@@ -53,29 +53,34 @@ def create_app():
     @app.errorhandler(500)
     def server_error(e):
         return render_template('errors/500.html'), 500
-    
-    # Auto-apply promo code from URL query parameter
-    @app.before_request
-    def check_promo_param():
-        # Only apply on GET requests with promo parameter
-        if request.method == 'GET' and request.args.get('promo'):
-            promo_code = request.args.get('promo')
-            
-            # Only apply if there's no existing promo and this is not an API route
-            if not session_manager.get_promo_code() and not request.path.startswith('/api'):
-                promo_result, error = session_manager.apply_promo_code(promo_code)
-                # Save the outcome for later (no need to flash immediately)
-                g.applied_promo = {
-                    'code': promo_code,
-                    'success': promo_result is not None,
-                    'error': error
-                }
-    
-    return app
 
-# Initialize app
-app = create_app()
+def register_context_processors(app):
+    """Register context processors for template rendering"""
+    @app.context_processor
+    def inject_services():
+        """Make services available to all templates"""
+        return {
+            'treatment_service': app.config['treatment_service'],
+            'promo_service': app.config['promo_service']
+        }
+    
+    @app.context_processor
+    def inject_quote_data():
+        """Make quote data available to all templates"""
+        from utils.session_manager import SessionManager
+        session_manager = SessionManager()
+        
+        selected_treatments = session_manager.get_selected_treatments()
+        totals = session_manager.calculate_totals()
+        
+        return {
+            'quote_item_count': len(selected_treatments),
+            'quote_total': totals['total'],
+            'quote_subtotal': totals['subtotal'],
+            'quote_discount': totals['discount_amount']
+        }
 
 if __name__ == '__main__':
-    # Run application on port 5000
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app = create_app()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)

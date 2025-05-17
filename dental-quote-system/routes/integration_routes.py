@@ -1,44 +1,131 @@
 """
 Integration Routes for Dental Quote System
-Handles API endpoints for integration with other systems
+Handles third-party service integrations like sending emails, generating PDFs, etc.
 """
+from flask import Blueprint, request, jsonify, current_app, render_template
+from utils.session_manager import SessionManager
+import os
+import json
+from datetime import datetime
 
-from flask import Blueprint, request, jsonify
+# Create a Blueprint
+bp = Blueprint('integration_routes', __name__)
 
-integration_routes = Blueprint('integration_routes', __name__)
+# Get session manager instance
+session_manager = SessionManager()
 
-@integration_routes.route('/get-quote-data', methods=['GET'])
-def get_quote_data():
-    """API endpoint to get current quote data"""
-    session_manager = request.app.config.get('session_manager')
+@bp.route('/api/send-quote-email', methods=['POST'])
+def send_quote_email():
+    """Send quote details via email"""
+    # This would typically use a service like SendGrid, Mailjet, etc.
+    # For this example, we'll just return success
     
-    # Get full quote data
-    quote_data = session_manager.get_full_quote()
+    # Get data from request
+    data = request.get_json()
+    email = data.get('email')
+    
+    if not email:
+        return jsonify({'success': False, 'message': 'Email is required'})
+    
+    # Get quote data
+    quote_data = session_manager.get_quote_summary()
+    
+    # For a real implementation, this is where we would send the email
+    # You would use a service like:
+    # - SendGrid (sendgrid.send_mail)
+    # - SMTP (smtplib)
+    # - AWS SES
     
     return jsonify({
         'success': True,
-        'data': quote_data
+        'message': f'Quote would be sent to {email} in production environment'
     })
 
-@integration_routes.route('/get-treatment-categories', methods=['GET'])
-def get_treatment_categories():
-    """API endpoint to get treatment categories"""
-    treatment_service = request.app.config.get('treatment_service')
+@bp.route('/api/generate-quote-pdf', methods=['POST'])
+def generate_quote_pdf():
+    """Generate PDF quote document"""
+    # This would typically use a library like weasyprint, xhtml2pdf, etc.
+    # For this example, we'll just return sample data
     
-    # Get categorized treatments
-    categories = treatment_service.get_categorized_treatments()
+    # Get quote data
+    quote_data = session_manager.get_quote_summary()
+    
+    # Generate a timestamp for the quote number
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    quote_number = f"QUOTE-{timestamp}"
+    
+    # For a real implementation, we would:
+    # 1. Render an HTML template with the quote data
+    # 2. Convert the HTML to PDF using a library
+    # 3. Save the PDF to the server
+    # 4. Return the URL to the PDF
     
     return jsonify({
         'success': True,
-        'data': categories
+        'message': 'PDF quote generated',
+        'quote_number': quote_number,
+        'pdf_url': f'/static/quotes/{quote_number}.pdf'
     })
 
-@integration_routes.route('/get-treatment-details/<treatment_id>', methods=['GET'])
-def get_treatment_details(treatment_id):
-    """API endpoint to get details of a specific treatment"""
-    treatment_service = request.app.config.get('treatment_service')
+@bp.route('/api/save-quote', methods=['POST'])
+def save_quote():
+    """Save quote data to backend system"""
+    # In a production environment, this would save to a database
+    # For this example, we'll save to a JSON file
     
-    # Get treatment details
+    # Get quote data
+    quote_data = session_manager.get_quote_summary()
+    
+    # Generate a timestamp for the quote ID
+    timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+    quote_id = f"Q{timestamp}"
+    
+    # Add quote ID and timestamp
+    quote_data['quote_id'] = quote_id
+    quote_data['created_at'] = datetime.now().isoformat()
+    
+    try:
+        # Create quotes directory if it doesn't exist
+        quotes_dir = os.path.join(os.path.dirname(__file__), '..', 'data', 'quotes')
+        os.makedirs(quotes_dir, exist_ok=True)
+        
+        # Save quote to JSON file
+        quote_file = os.path.join(quotes_dir, f"{quote_id}.json")
+        with open(quote_file, 'w') as f:
+            json.dump(quote_data, f, indent=4)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Quote saved successfully',
+            'quote_id': quote_id
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error saving quote: {str(e)}'
+        })
+
+@bp.route('/api/treatments', methods=['GET'])
+def get_treatments():
+    """Get all treatments as JSON"""
+    # Get treatment service from app context
+    treatment_service = current_app.config['treatment_service']
+    
+    # Get all treatments
+    treatments = treatment_service.get_all_treatments()
+    
+    return jsonify({
+        'success': True,
+        'treatments': treatments
+    })
+
+@bp.route('/api/treatment/<treatment_id>', methods=['GET'])
+def get_treatment(treatment_id):
+    """Get specific treatment as JSON"""
+    # Get treatment service from app context
+    treatment_service = current_app.config['treatment_service']
+    
+    # Get treatment by ID
     treatment = treatment_service.get_treatment_by_id(treatment_id)
     
     if not treatment:
@@ -49,75 +136,97 @@ def get_treatment_details(treatment_id):
     
     return jsonify({
         'success': True,
-        'data': treatment
+        'treatment': treatment
     })
 
-@integration_routes.route('/validate-promo', methods=['POST'])
-def validate_promo():
-    """API endpoint to validate a promo code"""
-    promo_service = request.app.config.get('promo_service')
-    session_manager = request.app.config.get('session_manager')
+@bp.route('/api/add-treatment', methods=['POST'])
+def add_treatment_to_quote():
+    """Add a treatment to the current quote"""
+    # Get treatment ID from request
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
     
-    # Get promo code from request
-    promo_code = request.json.get('promo_code')
-    if not promo_code:
-        return jsonify({
-            'success': False,
-            'message': 'Promo code is required'
-        }), 400
+    if not treatment_id:
+        return jsonify({'success': False, 'message': 'Treatment ID is required'})
     
-    # Validate promo code
-    promo_details = promo_service.validate_promo_code(promo_code)
-    if not promo_details:
-        return jsonify({
-            'success': False,
-            'message': 'Invalid promo code'
-        }), 400
+    # Get treatment service from app context
+    treatment_service = current_app.config['treatment_service']
     
-    # Check if treatments in quote are eligible for this promo
-    treatments = session_manager.get_selected_treatments()
-    if not promo_service.check_promo_eligibility(promo_details, treatments):
-        return jsonify({
-            'success': False,
-            'message': 'This promo code is not applicable to your selected treatments'
-        }), 400
+    # Get treatment by ID
+    treatment = treatment_service.get_treatment_by_id(treatment_id)
+    
+    if not treatment:
+        return jsonify({'success': False, 'message': 'Treatment not found'})
+    
+    # Add treatment to session
+    session_manager.add_treatment(treatment)
+    
+    # Get updated quote data
+    quote_totals = session_manager.calculate_totals()
+    selected_treatments = session_manager.get_selected_treatments()
     
     return jsonify({
         'success': True,
-        'data': promo_details
+        'message': f"Added {treatment['name']} to your quote",
+        'treatment': treatment,
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
     })
 
-@integration_routes.route('/save-quote', methods=['POST'])
-def save_quote():
-    """API endpoint to save quote to an external system"""
-    session_manager = request.app.config.get('session_manager')
+@bp.route('/api/remove-treatment', methods=['POST'])
+def remove_treatment_from_quote():
+    """Remove a treatment from the current quote"""
+    # Get treatment ID from request
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
     
-    # Get the full quote data
-    quote_data = session_manager.get_full_quote()
+    if not treatment_id:
+        return jsonify({'success': False, 'message': 'Treatment ID is required'})
     
-    # Check if patient info is provided
-    if not quote_data.get('patient_info'):
-        return jsonify({
-            'success': False,
-            'message': 'Patient information is required'
-        }), 400
+    # Remove treatment from session
+    session_manager.remove_treatment(treatment_id)
     
-    # Check if treatments are selected
-    if not quote_data.get('treatments'):
-        return jsonify({
-            'success': False,
-            'message': 'No treatments selected'
-        }), 400
-    
-    # Generate a quote ID (this would normally save to a database)
-    import os
-    quote_id = f"Q{os.urandom(4).hex().upper()}"
-    
-    # In a real implementation, this would save to a database
-    # db.save_quote(quote_data)
+    # Get updated quote data
+    quote_totals = session_manager.calculate_totals()
+    selected_treatments = session_manager.get_selected_treatments()
     
     return jsonify({
         'success': True,
-        'message': 'Quote saved successfully',
-        'quote_id': quote_id
+        'message': 'Treatment removed from your quote',
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
+    })
+
+@bp.route('/api/update-treatment-quantity', methods=['POST'])
+def update_treatment_quantity():
+    """Update the quantity of a treatment in the current quote"""
+    # Get data from request
+    data = request.get_json()
+    treatment_id = data.get('treatment_id')
+    quantity = data.get('quantity', 1)
+    
+    if not treatment_id:
+        return jsonify({'success': False, 'message': 'Treatment ID is required'})
+    
+    # Convert quantity to integer and ensure it's at least 1
+    try:
+        quantity = max(1, int(quantity))
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Quantity must be a number'})
+    
+    # Update treatment quantity in session
+    success = session_manager.update_treatment_quantity(treatment_id, quantity)
+    
+    if not success:
+        return jsonify({'success': False, 'message': 'Treatment not found in your quote'})
+    
+    # Get updated quote data
+    quote_totals = session_manager.calculate_totals()
+    selected_treatments = session_manager.get_selected_treatments()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Treatment quantity updated',
+        'selected_treatments': selected_treatments,
+        'totals': quote_totals
     })

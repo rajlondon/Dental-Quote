@@ -1,192 +1,144 @@
 """
 Page Routes for Dental Quote System
-Handles rendering of page templates
+Handles main page rendering
 """
+from flask import Blueprint, render_template, request, redirect, url_for, session, current_app, flash
+from utils.session_manager import SessionManager
 
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-import os
+# Create a Blueprint
+bp = Blueprint('page_routes', __name__)
 
-page_routes = Blueprint('page_routes', __name__)
+# Get session manager instance
+session_manager = SessionManager()
 
-@page_routes.route('/')
+@bp.route('/')
 def index():
-    """Homepage"""
-    # Get data from services
-    treatment_service = request.app.config.get('treatment_service')
-    promo_service = request.app.config.get('promo_service')
+    """Homepage route"""
+    # Get treatment and promo services from app context
+    treatment_service = current_app.config['treatment_service']
+    promo_service = current_app.config['promo_service']
     
-    # Get popular treatments and promotions for the homepage
-    popular_treatments = treatment_service.get_popular_treatments()
-    promotions = promo_service.get_featured_offers()
+    # Get featured promotions for homepage
+    featured_offers = promo_service.get_featured_promotions()
     
-    return render_template(
-        'index.html',
-        popular_treatments=popular_treatments,
-        promotions=promotions
-    )
+    return render_template('index.html', featured_offers=featured_offers)
 
-@page_routes.route('/quote-builder')
+@bp.route('/quote-builder')
 def quote_builder():
-    """Quote Builder Page - Step 1"""
-    # Get data from services
-    treatment_service = request.app.config.get('treatment_service')
-    session_manager = request.app.config.get('session_manager')
+    """Quote builder page route"""
+    # Get treatment and promo services from app context
+    treatment_service = current_app.config['treatment_service']
+    promo_service = current_app.config['promo_service']
     
-    # Get categorized treatments
-    categorized_treatments = treatment_service.get_categorized_treatments()
+    # Get all treatments categorized
+    categorized_treatments = treatment_service.get_all_categories()
     
     # Get session data
     selected_treatments = session_manager.get_selected_treatments()
-    quote_totals = session_manager.calculate_quote_totals()
     promo_code = session_manager.get_promo_code()
     promo_details = session_manager.get_promo_details()
+    quote_totals = session_manager.calculate_totals()
     
     return render_template(
         'quote/quote_builder.html',
         categorized_treatments=categorized_treatments,
         selected_treatments=selected_treatments,
-        quote_totals=quote_totals,
         promo_code=promo_code,
-        promo_details=promo_details
+        promo_details=promo_details,
+        quote_totals=quote_totals
     )
 
-@page_routes.route('/patient-info', methods=['GET', 'POST'])
+@bp.route('/patient-info', methods=['GET', 'POST'])
 def patient_info():
-    """Patient Information Form - Step 2"""
-    session_manager = request.app.config.get('session_manager')
-    
-    # Check if there are treatments in the quote
-    if not session_manager.get_selected_treatments():
-        flash('Please select at least one treatment before proceeding.', 'warning')
+    """Patient information page route"""
+    # Check if there are selected treatments
+    selected_treatments = session_manager.get_selected_treatments()
+    if not selected_treatments:
+        flash('Please select at least one treatment before proceeding', 'warning')
         return redirect(url_for('page_routes.quote_builder'))
     
     if request.method == 'POST':
         # Save patient info to session
         patient_data = {
-            'full_name': request.form.get('full_name', ''),
-            'email': request.form.get('email', ''),
-            'phone': request.form.get('phone', ''),
-            'country': request.form.get('country', ''),
-            'travel_date': request.form.get('travel_date', ''),
-            'additional_notes': request.form.get('additional_notes', '')
+            'first_name': request.form.get('first_name'),
+            'last_name': request.form.get('last_name'),
+            'email': request.form.get('email'),
+            'phone': request.form.get('phone'),
+            'country': request.form.get('country'),
+            'preferred_date': request.form.get('preferred_date'),
+            'notes': request.form.get('notes')
         }
         
         session_manager.save_patient_info(patient_data)
         
-        # Redirect to review page
-        return redirect(url_for('page_routes.review_quote'))
+        # Redirect to quote review page
+        return redirect(url_for('page_routes.quote_review'))
     
-    # Pre-fill form with any existing data
+    # GET request - show form
     patient_info = session_manager.get_patient_info()
-    
-    # Get quote data for summary
-    selected_treatments = session_manager.get_selected_treatments()
-    quote_totals = session_manager.calculate_quote_totals()
+    quote_totals = session_manager.calculate_totals()
     
     return render_template(
         'quote/patient_info.html',
         patient_info=patient_info,
-        selected_treatments=selected_treatments,
         quote_totals=quote_totals
     )
 
-@page_routes.route('/review-quote')
-def review_quote():
-    """Review Quote - Step 3"""
-    session_manager = request.app.config.get('session_manager')
+@bp.route('/quote-review')
+def quote_review():
+    """Quote review page route"""
+    # Check if there are selected treatments and patient info
+    selected_treatments = session_manager.get_selected_treatments()
+    patient_info = session_manager.get_patient_info()
     
-    # Check if there are treatments in the quote
-    if not session_manager.get_selected_treatments():
-        flash('Please select at least one treatment before proceeding.', 'warning')
+    if not selected_treatments:
+        flash('Please select at least one treatment before proceeding', 'warning')
         return redirect(url_for('page_routes.quote_builder'))
     
-    # Check if patient info is provided
-    if not session_manager.get_patient_info():
-        flash('Please provide your information before reviewing the quote.', 'warning')
+    if not patient_info or not patient_info.get('email'):
+        flash('Please provide your information before proceeding', 'warning')
         return redirect(url_for('page_routes.patient_info'))
     
-    # Get data for the review page
-    patient_info = session_manager.get_patient_info()
-    selected_treatments = session_manager.get_selected_treatments()
-    quote_totals = session_manager.calculate_quote_totals()
-    promo_code = session_manager.get_promo_code()
-    promo_details = session_manager.get_promo_details()
+    # Get quote data
+    quote_data = session_manager.get_quote_summary()
+    
+    # Get treatment service to fetch details
+    treatment_service = current_app.config['treatment_service']
     
     return render_template(
-        'quote/review_quote.html',
-        patient_info=patient_info,
-        selected_treatments=selected_treatments,
-        quote_totals=quote_totals,
-        promo_code=promo_code,
-        promo_details=promo_details
+        'quote/quote_review.html',
+        quote_data=quote_data,
+        treatment_service=treatment_service
     )
 
-@page_routes.route('/submit-quote', methods=['POST'])
-def submit_quote():
-    """Submit the quote for processing"""
-    session_manager = request.app.config.get('session_manager')
+@bp.route('/quote-confirmation')
+def quote_confirmation():
+    """Quote confirmation page after submission"""
+    # Get quote data
+    quote_data = session_manager.get_quote_summary()
     
-    # Get the complete quote
-    quote_data = session_manager.get_full_quote()
-    
-    # Generate a unique quote ID
-    # In production, this would save to a database
-    quote_id = f"Q{os.urandom(4).hex().upper()}"
-    session_manager.set_quote_id(quote_id)
-    
-    # Send confirmation email (mock)
-    # email_service.send_confirmation(patient_info['email'], quote_id)
-    
-    # Redirect to thank you page
-    return redirect(url_for('page_routes.thank_you'))
-
-@page_routes.route('/thank-you')
-def thank_you():
-    """Thank You Page after quote submission"""
-    session_manager = request.app.config.get('session_manager')
-    
-    # Get quote information for the page
-    quote_id = session_manager.get_quote_id()
-    patient_info = session_manager.get_patient_info()
-    
-    # Check if quote was submitted
-    if not quote_id:
-        return redirect(url_for('page_routes.index'))
+    # In a real application, we would save the quote to a database here
+    # and generate a quote number, but for this example we'll use a timestamp
+    import time
+    quote_number = f"Q{int(time.time())}"
     
     return render_template(
-        'quote/thank_you.html',
-        quote_id=quote_id,
-        patient_info=patient_info
+        'quote/quote_confirmation.html',
+        quote_data=quote_data,
+        quote_number=quote_number
     )
 
-@page_routes.route('/start-new-quote')
-def start_new_quote():
-    """Clear session and start a new quote"""
-    session_manager = request.app.config.get('session_manager')
-    session_manager.clear_quote()
-    
-    return redirect(url_for('page_routes.quote_builder'))
+@bp.route('/download-quote-pdf')
+def download_quote_pdf():
+    """Generate and download quote as PDF"""
+    # This route would generate a PDF using a library like xhtml2pdf or WeasyPrint
+    # For this example, we'll redirect to the confirmation page
+    flash('PDF generation would be implemented in a production system', 'info')
+    return redirect(url_for('page_routes.quote_confirmation'))
 
-@page_routes.route('/add-treatment-to-session', methods=['POST'])
-def add_treatment_to_session():
-    """Add a treatment to the session directly (non-AJAX)"""
-    treatment_service = request.app.config.get('treatment_service')
-    session_manager = request.app.config.get('session_manager')
-    
-    treatment_id = request.form.get('treatment_id')
-    if not treatment_id:
-        flash('Treatment ID is required', 'error')
-        return redirect(url_for('page_routes.quote_builder'))
-    
-    # Get treatment details
-    treatment = treatment_service.get_treatment_by_id(treatment_id)
-    if not treatment:
-        flash('Treatment not found', 'error')
-        return redirect(url_for('page_routes.quote_builder'))
-    
-    # Add to session
-    session_manager.add_treatment_to_quote(treatment)
-    flash(f'Added {treatment["name"]} to your quote', 'success')
-    
-    # Redirect back to the page
-    return redirect(url_for('page_routes.quote_builder'))
+@bp.route('/clear-session')
+def clear_session():
+    """Clear all session data and redirect to homepage"""
+    session_manager.clear_session()
+    flash('Your session has been cleared', 'info')
+    return redirect(url_for('page_routes.index'))
