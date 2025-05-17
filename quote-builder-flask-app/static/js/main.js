@@ -226,8 +226,39 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reload the page to show the updated UI without the promo code
-                window.location.href = '/quote-builder';
+                // Update UI without page refresh
+                const promoDisplayEl = document.querySelector('.promo-code-display');
+                if (promoDisplayEl) {
+                    promoDisplayEl.textContent = '';
+                    promoDisplayEl.style.display = 'none';
+                }
+                
+                const removePromoBtn = document.querySelector('.remove-promo-btn');
+                if (removePromoBtn) {
+                    removePromoBtn.style.display = 'none';
+                }
+                
+                // Show success message
+                const messageEl = document.querySelector('.promo-message');
+                if (messageEl) {
+                    messageEl.textContent = 'Promo code removed successfully';
+                    messageEl.className = 'promo-message success-message';
+                }
+                
+                // Enable promo code input and apply button
+                const promoCodeInput = document.getElementById('promo-code');
+                const applyPromoBtn = document.querySelector('.apply-promo-btn');
+                
+                if (promoCodeInput) {
+                    promoCodeInput.disabled = false;
+                }
+                
+                if (applyPromoBtn) {
+                    applyPromoBtn.disabled = false;
+                }
+                
+                // Update totals
+                updateTotals(data.totals);
             }
         })
         .catch(error => console.error('Error removing promo code:', error));
@@ -351,9 +382,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updatePromoCodeDisplay(promoCode, discount) {
-        // Reload the page to show the applied promo code
-        // This ensures the server-side template gets updated
-        window.location.href = '/quote-builder';
+        // Update UI without page refresh
+        const promoDisplayEl = document.querySelector('.promo-code-display');
+        if (promoDisplayEl) {
+            let discountText = '';
+            if (discount.type === 'percentage') {
+                discountText = `${discount.value}% off`;
+            } else if (discount.type === 'fixed_amount') {
+                discountText = `$${discount.value} off`;
+            }
+            
+            promoDisplayEl.textContent = `Applied Promo: ${promoCode} (${discountText})`;
+            promoDisplayEl.style.display = 'block';
+        }
+        
+        // Show remove button
+        const removePromoBtn = document.querySelector('.remove-promo-btn');
+        if (removePromoBtn) {
+            removePromoBtn.style.display = 'inline-block';
+        }
+        
+        // Disable promo code input and apply button
+        const promoCodeInput = document.getElementById('promo-code');
+        const applyPromoBtn = document.querySelector('.apply-promo-btn');
+        
+        if (promoCodeInput) {
+            promoCodeInput.disabled = true;
+        }
+        
+        if (applyPromoBtn) {
+            applyPromoBtn.disabled = true;
+        }
     }
     
     function showPromoMessage(message, isSuccess) {
