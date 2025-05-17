@@ -30,12 +30,12 @@ export interface TreatmentPackage {
   imageUrl?: string;
 }
 
-// Mock data for treatment packages linked to promo codes
-const treatmentPackages: TreatmentPackage[] = [
+// Mock treatment packages data for demonstration
+const mockPackages: TreatmentPackage[] = [
   {
     id: 'pkg-001',
-    name: 'Dental Implant Complete Package',
-    description: 'Full implant treatment including consultation, surgery, and crown',
+    name: 'Premium Implant Package',
+    description: 'Complete dental implant solution with 6 implants and crowns',
     promoCode: 'IMPLANTCROWN30',
     clinicId: 'clinic-001',
     treatments: [
@@ -45,7 +45,7 @@ const treatmentPackages: TreatmentPackage[] = [
         description: 'Titanium post surgically placed into the jawbone',
         price: 1200,
         category: 'Implants',
-        quantity: 1
+        quantity: 6
       },
       {
         id: '2',
@@ -53,40 +53,37 @@ const treatmentPackages: TreatmentPackage[] = [
         description: 'Custom-made porcelain cap placed over a damaged tooth',
         price: 800,
         category: 'Crowns',
-        quantity: 1
-      },
-      {
-        id: '4',
-        name: 'Dental X-Ray',
-        description: 'Comprehensive X-Ray imaging',
-        price: 150,
-        category: 'Diagnostics',
-        quantity: 1
+        quantity: 6
       }
     ],
     additionalServices: [
       {
-        name: 'Free Consultation',
-        description: 'Initial consultation with dental specialist',
+        name: 'CT Scan',
+        description: 'Detailed 3D imagery for precise implant planning',
+        included: true
+      },
+      {
+        name: 'Hotel Accommodation (3 nights)',
+        description: 'Stay at a luxury hotel during your treatment',
         included: true
       },
       {
         name: 'Airport Transfer',
-        description: 'Complimentary pickup from airport to hotel',
+        description: 'Pick-up and drop-off service to/from airport',
         included: true
       }
     ],
-    regularPrice: 2150,
-    discountedPrice: 1505,
+    regularPrice: 12000,
+    discountedPrice: 8400,
     discountPercentage: 30,
     currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?q=80&w=1470&auto=format&fit=crop'
+    imageUrl: 'https://example.com/implant-package.jpg'
   },
   {
     id: 'pkg-002',
-    name: 'Hollywood Smile Package',
-    description: 'Complete smile makeover with veneers and whitening',
-    promoCode: 'FREEWHITE',
+    name: 'Luxury Smile Makeover',
+    description: 'Complete smile transformation with veneers and whitening',
+    promoCode: 'LUXHOTEL20',
     clinicId: 'clinic-002',
     treatments: [
       {
@@ -95,12 +92,12 @@ const treatmentPackages: TreatmentPackage[] = [
         description: 'Thin shells custom-made to cover front surface of teeth',
         price: 900,
         category: 'Cosmetic',
-        quantity: 6
+        quantity: 8
       },
       {
-        id: '6',
-        name: 'Professional Teeth Whitening',
-        description: 'In-office teeth whitening procedure',
+        id: '4',
+        name: 'Teeth Whitening',
+        description: 'Professional whitening treatment for brighter smile',
         price: 350,
         category: 'Cosmetic',
         quantity: 1
@@ -108,26 +105,36 @@ const treatmentPackages: TreatmentPackage[] = [
     ],
     additionalServices: [
       {
-        name: 'Luxury Accommodation',
-        description: '3 nights stay at partner 5-star hotel',
+        name: 'Smile Design Consultation',
+        description: 'Personalized smile design with digital preview',
         included: true
       },
       {
-        name: 'Dental Care Kit',
-        description: 'Premium dental care kit for post-treatment maintenance',
+        name: 'Five-Star Hotel (5 nights)',
+        description: 'Stay at a luxury five-star hotel during your treatment',
         included: true
+      },
+      {
+        name: 'Private Transfer Service',
+        description: 'Luxury car transfer service to all appointments',
+        included: true
+      },
+      {
+        name: 'Tourist Attractions Tour',
+        description: 'Guided tour of city attractions on non-treatment days',
+        included: false
       }
     ],
-    regularPrice: 5750,
-    discountedPrice: 5400,
-    discountPercentage: 6.1,
+    regularPrice: 7550,
+    discountedPrice: 6040,
+    discountPercentage: 20,
     currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1581585504607-89fa2e7056da?q=80&w=1470&auto=format&fit=crop'
+    imageUrl: 'https://example.com/veneer-package.jpg'
   },
   {
     id: 'pkg-003',
-    name: 'All-on-4 Implants Premium Package',
-    description: 'Full arch restoration with just 4 implants and luxury accommodations',
+    name: 'Travel & Treatment Bundle',
+    description: 'Complete dental care with travel arrangements included',
     promoCode: 'LUXTRAVEL',
     clinicId: 'clinic-003',
     treatments: [
@@ -137,70 +144,7 @@ const treatmentPackages: TreatmentPackage[] = [
         description: 'Titanium post surgically placed into the jawbone',
         price: 1200,
         category: 'Implants',
-        quantity: 4
-      },
-      {
-        id: '7',
-        name: 'Full Arch Prosthesis',
-        description: 'Fixed full-arch prosthesis attached to implants',
-        price: 3500,
-        category: 'Prosthetics',
-        quantity: 1
-      },
-      {
-        id: '4',
-        name: 'Dental X-Ray',
-        description: 'Comprehensive X-Ray imaging',
-        price: 150,
-        category: 'Diagnostics',
-        quantity: 1
-      },
-      {
-        id: '8',
-        name: 'Dental CT Scan',
-        description: '3D imaging of teeth and jawbone',
-        price: 250,
-        category: 'Diagnostics',
-        quantity: 1
-      }
-    ],
-    additionalServices: [
-      {
-        name: 'Luxury Accommodation',
-        description: '7 nights stay at partner 5-star hotel',
-        included: true
-      },
-      {
-        name: 'VIP Transportation',
-        description: 'Private car service for all local transportation needs',
-        included: true
-      },
-      {
-        name: 'Guided City Tour',
-        description: 'Private guided tour of local attractions',
-        included: true
-      }
-    ],
-    regularPrice: 8700,
-    discountedPrice: 7830,
-    discountPercentage: 10,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1606811971618-4486d14f3f99?q=80&w=1470&auto=format&fit=crop'
-  },
-  {
-    id: 'pkg-004',
-    name: 'Hotel & Dental Package',
-    description: 'Dental treatment with luxury hotel stay included',
-    promoCode: 'LUXHOTEL20',
-    clinicId: 'clinic-002',
-    treatments: [
-      {
-        id: '3',
-        name: 'Root Canal',
-        description: 'Removal of infected pulp from inside the tooth',
-        price: 650,
-        category: 'Endodontics',
-        quantity: 1
+        quantity: 2
       },
       {
         id: '2',
@@ -208,102 +152,113 @@ const treatmentPackages: TreatmentPackage[] = [
         description: 'Custom-made porcelain cap placed over a damaged tooth',
         price: 800,
         category: 'Crowns',
+        quantity: 4
+      },
+      {
+        id: '3',
+        name: 'Root Canal',
+        description: 'Removal of infected pulp from inside the tooth',
+        price: 650,
+        category: 'Endodontics',
         quantity: 1
       }
     ],
     additionalServices: [
       {
-        name: 'Luxury Accommodation',
-        description: '5 nights stay at partner 5-star hotel',
+        name: 'Return Flight (Economy)',
+        description: 'Round-trip flights from your location',
+        included: true
+      },
+      {
+        name: 'Hotel Accommodation (7 nights)',
+        description: '4-star hotel accommodation during your treatment',
         included: true
       },
       {
         name: 'Airport Transfer',
-        description: 'Complimentary pickup from airport to hotel',
-        included: true
-      }
-    ],
-    regularPrice: 1450,
-    discountedPrice: 1160,
-    discountPercentage: 20,
-    currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1470&auto=format&fit=crop'
-  },
-  {
-    id: 'pkg-005',
-    name: 'Free Consultation Special',
-    description: 'Comprehensive dental consultation with no obligation',
-    promoCode: 'FREECONSULT',
-    treatments: [
-      {
-        id: '9',
-        name: 'Dental Consultation',
-        description: 'Comprehensive dental examination and treatment planning',
-        price: 100,
-        category: 'Consultations',
-        quantity: 1
-      }
-    ],
-    additionalServices: [
-      {
-        name: 'Digital X-Rays',
-        description: 'If needed for diagnosis',
+        description: 'Pick-up and drop-off service to/from airport',
         included: true
       },
       {
-        name: 'Treatment Plan',
-        description: 'Detailed treatment options and cost estimates',
+        name: 'City Excursions (2 days)',
+        description: 'Guided tours of local attractions',
         included: true
       }
     ],
-    regularPrice: 100,
-    discountedPrice: 0,
-    discountPercentage: 100,
+    regularPrice: 8200,
+    discountedPrice: 6560,
+    discountPercentage: 20,
     currency: 'USD',
-    imageUrl: 'https://images.unsplash.com/photo-1607613009820-a29f7bb81c04?q=80&w=1470&auto=format&fit=crop'
-  }
+    imageUrl: 'https://example.com/travel-package.jpg'
+  },
 ];
 
 /**
  * Service for handling treatment packages
  */
-export const TreatmentPackageService = {
+const TreatmentPackageService = {
   /**
    * Get all available treatment packages
    */
-  getAllPackages(): Promise<TreatmentPackage[]> {
-    return Promise.resolve(treatmentPackages);
+  async getAllPackages(): Promise<TreatmentPackage[]> {
+    // In a real application, this would be an API call
+    return new Promise((resolve) => {
+      // Simulate API delay
+      setTimeout(() => {
+        resolve(mockPackages);
+      }, 500);
+    });
   },
-  
+
   /**
    * Get a treatment package by its ID
    */
-  getPackageById(id: string): Promise<TreatmentPackage | null> {
-    const pkg = treatmentPackages.find(p => p.id === id);
-    return Promise.resolve(pkg || null);
+  async getPackageById(id: string): Promise<TreatmentPackage | null> {
+    // In a real application, this would be an API call
+    return new Promise((resolve) => {
+      // Simulate API delay
+      setTimeout(() => {
+        const pkg = mockPackages.find(p => p.id === id);
+        resolve(pkg || null);
+      }, 300);
+    });
   },
-  
+
   /**
    * Get a treatment package by promo code
    */
-  getPackageByPromoCode(code: string): Promise<TreatmentPackage | null> {
-    const pkg = treatmentPackages.find(p => p.promoCode.toUpperCase() === code.toUpperCase());
-    return Promise.resolve(pkg || null);
+  async getPackageByPromoCode(code: string): Promise<TreatmentPackage | null> {
+    // In a real application, this would be an API call
+    return new Promise((resolve) => {
+      // Simulate API delay
+      setTimeout(() => {
+        const pkg = mockPackages.find(p => p.promoCode.toUpperCase() === code.toUpperCase());
+        resolve(pkg || null);
+      }, 300);
+    });
   },
   
   /**
    * Get all available treatments from all packages
    */
-  getAllTreatments(): Promise<TreatmentItem[]> {
-    // Collect all treatments from all packages, removing duplicates
-    const allTreatments = treatmentPackages.flatMap(pkg => pkg.treatments);
-    
-    // Remove duplicates by ID
-    const uniqueTreatments = allTreatments.filter((treatment, index, self) => 
-      index === self.findIndex(t => t.id === treatment.id)
-    );
-    
-    return Promise.resolve(uniqueTreatments);
+  async getAllTreatments(): Promise<TreatmentItem[]> {
+    // In a real application, this would be an API call
+    return new Promise((resolve) => {
+      // Simulate API delay
+      setTimeout(() => {
+        const allTreatments: TreatmentItem[] = [];
+        
+        mockPackages.forEach(pkg => {
+          pkg.treatments.forEach(treatment => {
+            if (!allTreatments.some(t => t.id === treatment.id)) {
+              allTreatments.push(treatment);
+            }
+          });
+        });
+        
+        resolve(allTreatments);
+      }, 300);
+    });
   }
 };
 
