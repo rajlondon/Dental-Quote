@@ -1,877 +1,1037 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation } from 'wouter';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Package, Check, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import TreatmentPackageService, { TreatmentPackage, Treatment, AdditionalService } from '@/services/treatment-package-service';
 import { usePersistentQuote } from '@/hooks/use-persistent-quote';
-import { formatPriceInCurrency, CurrencyCode } from '@/utils/format-utils';
 import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
+import { Treatment, TreatmentPackage, AdditionalService } from '@/types/treatment-types';
+import { CurrencyCode } from '@/types/general-types';
+import { ChevronRight, ChevronLeft, Package, Tag, Clipboard, User, Check, Send } from 'lucide-react';
 
-// Simple mock treatments for demonstration purposes
-const mockTreatments: Treatment[] = [
+// Mock data for treatments - would be fetched from API in a real implementation
+const TREATMENTS: Treatment[] = [
+  { id: '1', name: 'Dental Implant', price: 500, description: 'Titanium dental implant only (excludes abutment and crown)' },
+  { id: '2', name: 'Implant Abutment', price: 150, description: 'Connector between implant and crown' },
+  { id: '3', name: 'Porcelain Crown', price: 200, description: 'Tooth-colored crown for front teeth' },
+  { id: '4', name: 'Zirconia Crown', price: 300, description: 'Premium metal-free crown with exceptional durability' },
+  { id: '5', name: 'Root Canal Treatment', price: 250, description: 'Complete endodontic therapy including filling' },
+  { id: '6', name: 'Professional Teeth Whitening', price: 200, description: 'In-office laser whitening procedure' },
+  { id: '7', name: 'Composite Filling', price: 80, description: 'Tooth-colored filling for cavities' },
+  { id: '8', name: 'Teeth Cleaning', price: 70, description: 'Professional scaling and polishing' },
+];
+
+// Mock data for treatment packages - would be fetched from API in a real implementation
+const PACKAGES: TreatmentPackage[] = [
   {
-    id: 'treat-001',
-    name: 'Dental Implant',
-    description: 'Titanium dental implant placement',
-    price: 850,
-    category: 'implants'
+    id: 'pkg1',
+    name: 'Premium Implant Package',
+    description: 'Complete dental implant treatment with premium materials',
+    price: 750,
+    originalPrice: 850,
+    items: [
+      { treatmentId: '1', quantity: 1 },
+      { treatmentId: '2', quantity: 1 },
+      { treatmentId: '4', quantity: 1 },
+    ],
+    promoCode: 'IMPLANTCROWN30'
   },
   {
-    id: 'treat-002',
-    name: 'Porcelain Crown',
-    description: 'Premium porcelain crown',
-    price: 450,
-    category: 'crowns'
+    id: 'pkg2',
+    name: 'Luxury Smile Makeover',
+    description: 'Complete smile transformation with zirconia crowns and hotel stay',
+    price: 2999,
+    originalPrice: 5999,
+    items: [
+      { treatmentId: '4', quantity: 8 },
+      { treatmentId: '6', quantity: 1 },
+      { treatmentId: '8', quantity: 1 },
+    ],
+    promoCode: 'LUXHOTEL20'
   },
   {
-    id: 'treat-003',
-    name: 'Root Canal Treatment',
-    description: 'Standard root canal treatment',
-    price: 350,
-    category: 'endodontics'
-  },
-  {
-    id: 'treat-004',
-    name: 'Professional Teeth Whitening',
-    description: 'In-office laser teeth whitening',
-    price: 400,
-    category: 'cosmetic'
-  },
-  {
-    id: 'treat-005',
-    name: 'Porcelain Veneer',
-    description: 'Premium porcelain veneer',
-    price: 550,
-    category: 'cosmetic'
+    id: 'pkg3',
+    name: 'Travel & Treatment Bundle',
+    description: 'All-inclusive package with flights, hotel, and dental treatment',
+    price: 1999,
+    originalPrice: 3499,
+    items: [
+      { treatmentId: '4', quantity: 4 },
+      { treatmentId: '6', quantity: 1 },
+      { treatmentId: '8', quantity: 1 },
+    ],
+    promoCode: 'LUXTRAVEL'
   }
 ];
+
+// Mock data for additional services
+const ADDITIONAL_SERVICES: AdditionalService[] = [
+  { id: 'as1', name: 'Airport Transfer', price: 50, description: 'Return airport pickup and drop-off' },
+  { id: 'as2', name: 'Hotel Booking (4-star)', price: 300, description: '3 nights accommodation' },
+  { id: 'as3', name: 'Hotel Booking (5-star)', price: 500, description: '3 nights accommodation' },
+  { id: 'as4', name: 'Translation Service', price: 100, description: 'Personal translator during treatment' },
+];
+
+const CURRENCY_EXCHANGE_RATES = {
+  USD: 1,
+  GBP: 0.78,
+  EUR: 0.91
+};
+
+// Format currency based on the selected currency
+const formatCurrency = (amount: number, currency: CurrencyCode): string => {
+  const value = amount * CURRENCY_EXCHANGE_RATES[currency];
+  
+  switch (currency) {
+    case 'USD':
+      return `$${value.toFixed(2)}`;
+    case 'GBP':
+      return `£${value.toFixed(2)}`;
+    case 'EUR':
+      return `€${value.toFixed(2)}`;
+    default:
+      return `$${value.toFixed(2)}`;
+  }
+};
+
+interface TreatmentItemProps {
+  treatment: Treatment;
+  onAdd: () => void;
+  currency: CurrencyCode;
+  quantity?: number;
+}
+
+const TreatmentItem: React.FC<TreatmentItemProps> = ({ treatment, onAdd, currency, quantity = 0 }) => (
+  <Card className="mb-4">
+    <CardHeader className="pb-2">
+      <CardTitle className="text-lg flex justify-between">
+        <span>{treatment.name}</span>
+        <span className="text-primary">{formatCurrency(treatment.price, currency)}</span>
+      </CardTitle>
+    </CardHeader>
+    <CardContent className="pb-2">
+      <p className="text-sm text-gray-600">{treatment.description}</p>
+    </CardContent>
+    <CardFooter className="flex justify-between items-center">
+      {quantity > 0 && (
+        <div className="text-sm text-gray-700 flex items-center">
+          <Check className="h-4 w-4 text-green-500 mr-1" /> 
+          {quantity > 1 ? `${quantity} × Added` : 'Added'}
+        </div>
+      )}
+      <Button variant={quantity > 0 ? "outline" : "default"} size="sm" onClick={onAdd}>
+        {quantity > 0 ? 'Add Another' : 'Add to Quote'}
+      </Button>
+    </CardFooter>
+  </Card>
+);
 
 const QuoteBuilderPage: React.FC = () => {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  
-  // Use the persistent state hook
-  const {
-    treatments: selectedTreatments,
-    promoCode,
-    currentPackage,
-    additionalServices,
-    patientInfo,
-    step,
+  const { 
+    treatments, 
+    updateState, 
+    promoCode, 
+    currentPackage, 
+    additionalServices, 
+    patientInfo, 
+    step, 
     currency,
-    updateState,
     resetState
   } = usePersistentQuote();
   
-  const [availableTreatments, setAvailableTreatments] = useState<Treatment[]>(mockTreatments);
-  const [isApplyingPromo, setIsApplyingPromo] = useState(false);
   const [promoInput, setPromoInput] = useState('');
-  const [subtotal, setSubtotal] = useState(0);
-  const [discount, setDiscount] = useState(0);
-  const [total, setTotal] = useState(0);
-  const [showReplaceConfirm, setShowReplaceConfirm] = useState(false);
-  const [pendingPackage, setPendingPackage] = useState<TreatmentPackage | null>(null);
+  const [isPromoValid, setIsPromoValid] = useState<boolean | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Handle auto-applying promo code from URL parameters
-  const handleApplyPromoCode = async (code: string) => {
-    if (!code) return;
+  // Auto-apply promo code from URL if present
+  useAutoApplyCode((code) => {
+    // Check if the code is valid against our mock packages
+    const validPackage = PACKAGES.find(pkg => pkg.promoCode === code);
     
-    try {
-      setIsApplyingPromo(true);
-      setPromoInput(code);
-      
-      // Check if promo code is for a package
-      const packageResult = await TreatmentPackageService.getPackageByPromoCode(code);
-      
-      if (packageResult) {
-        // If we have existing treatments and this is a package, confirm replacement
-        if (selectedTreatments.length > 0) {
-          setPendingPackage(packageResult);
-          setShowReplaceConfirm(true);
-          return; // Wait for user confirmation
-        } else {
-          // No existing treatments, apply package directly
-          applyPackage(packageResult);
-        }
-      } else {
-        // Regular discount promo code (we'll just fake it for now)
-        const discountPercent = 15; // Fake 15% discount
-        updateState({
-          promoCode: code
-        });
-        
-        toast({
-          title: 'Promo Code Applied',
-          description: `You've received a ${discountPercent}% discount!`,
-          variant: 'default',
-        });
-      }
-    } catch (error) {
-      console.error('Error applying promo code:', error);
+    if (validPackage) {
+      // If valid, apply the package and promo code
+      applyPackage(validPackage);
       toast({
-        title: 'Error',
-        description: 'Failed to apply promo code',
+        title: 'Special offer applied!',
+        description: `The ${validPackage.name} package has been added to your quote.`,
+        variant: 'default',
+      });
+    } else {
+      // If not a package, just set the promo code and validate
+      setPromoInput(code);
+      validatePromoCode(code);
+    }
+  });
+  
+  // Function to validate a promo code
+  const validatePromoCode = (code: string) => {
+    // Check if code exists in our mock packages
+    const validPackage = PACKAGES.find(pkg => pkg.promoCode === code);
+    
+    if (validPackage) {
+      setIsPromoValid(true);
+      updateState({ promoCode: code });
+      
+      // If valid, ask if they want to apply the corresponding package
+      toast({
+        title: 'Valid promo code',
+        description: `This code is for the "${validPackage.name}" package. Would you like to apply it?`,
+        action: (
+          <Button size="sm" onClick={() => applyPackage(validPackage)}>
+            Apply Package
+          </Button>
+        ),
+      });
+      return;
+    }
+    
+    // Mock validation for other codes
+    const validCodes = ['WELCOME10', 'DENTAL20', 'SMILE15'];
+    const isValid = validCodes.includes(code);
+    
+    setIsPromoValid(isValid);
+    if (isValid) {
+      updateState({ promoCode: code });
+      toast({
+        title: 'Promo code applied',
+        description: 'Your discount has been applied to the quote.',
+      });
+    } else {
+      toast({
+        title: 'Invalid promo code',
+        description: 'Please check the code and try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+  
+  // Function to apply a treatment package
+  const applyPackage = (pkg: TreatmentPackage) => {
+    // First, reset any existing treatments
+    updateState({ 
+      treatments: [],
+      promoCode: pkg.promoCode,
+      currentPackage: pkg
+    });
+    
+    // Then add all treatments from the package
+    const packageTreatments: Treatment[] = [];
+    
+    pkg.items.forEach(item => {
+      const treatment = TREATMENTS.find(t => t.id === item.treatmentId);
+      if (treatment) {
+        for (let i = 0; i < item.quantity; i++) {
+          packageTreatments.push({ ...treatment });
+        }
+      }
+    });
+    
+    updateState({ treatments: packageTreatments });
+    
+    // Advance to the patient info step
+    updateState({ step: 3 });
+  };
+  
+  // Function to add a treatment to the quote
+  const addTreatment = (treatment: Treatment) => {
+    updateState({ 
+      treatments: [...treatments, { ...treatment }],
+      // If we're adding treatments manually, clear any package
+      currentPackage: null
+    });
+    
+    toast({
+      title: 'Treatment added',
+      description: `${treatment.name} has been added to your quote.`,
+    });
+  };
+  
+  // Function to remove a treatment from the quote
+  const removeTreatment = (index: number) => {
+    const updatedTreatments = [...treatments];
+    updatedTreatments.splice(index, 1);
+    
+    updateState({ 
+      treatments: updatedTreatments,
+      // If we're modifying treatments manually, clear any package
+      currentPackage: null
+    });
+  };
+  
+  // Function to add an additional service
+  const toggleAdditionalService = (service: AdditionalService) => {
+    const isServiceAdded = additionalServices.some(s => s.id === service.id);
+    
+    if (isServiceAdded) {
+      // Remove service
+      updateState({
+        additionalServices: additionalServices.filter(s => s.id !== service.id)
+      });
+    } else {
+      // Add service
+      updateState({
+        additionalServices: [...additionalServices, service]
+      });
+    }
+  };
+  
+  // Function to change currency
+  const changeCurrency = (newCurrency: CurrencyCode) => {
+    updateState({ currency: newCurrency });
+  };
+  
+  // Calculate the total price of all treatments
+  const calculateTreatmentsTotal = (): number => {
+    return treatments.reduce((sum, item) => sum + item.price, 0);
+  };
+  
+  // Calculate the total price of all additional services
+  const calculateServicesTotal = (): number => {
+    return additionalServices.reduce((sum, item) => sum + item.price, 0);
+  };
+  
+  // Calculate any discounts based on promo code
+  const calculateDiscount = (): number => {
+    if (!promoCode) return 0;
+    
+    const treatmentsTotal = calculateTreatmentsTotal();
+    
+    // If it's a package promo code, calculate the package discount
+    if (currentPackage && currentPackage.promoCode === promoCode) {
+      const regularPrice = currentPackage.originalPrice;
+      const discountedPrice = currentPackage.price;
+      return regularPrice - discountedPrice;
+    }
+    
+    // Generic discount logic for other promo codes
+    if (promoCode === 'WELCOME10') return treatmentsTotal * 0.1;
+    if (promoCode === 'DENTAL20') return treatmentsTotal * 0.2;
+    if (promoCode === 'SMILE15') return treatmentsTotal * 0.15;
+    
+    return 0;
+  };
+  
+  // Calculate the grand total
+  const calculateTotal = (): number => {
+    return calculateTreatmentsTotal() + calculateServicesTotal() - calculateDiscount();
+  };
+  
+  // Handle form submission
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    // Validate required fields
+    if (!patientInfo.name || !patientInfo.email || !patientInfo.phone) {
+      toast({
+        title: 'Missing information',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
+    // Mock API submission
+    try {
+      // In a real app, you would send this data to your backend
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Success message
+      toast({
+        title: 'Quote submitted successfully!',
+        description: 'A confirmation has been sent to your email.',
+      });
+      
+      // Reset the form and navigate to confirmation page
+      resetState();
+      navigate('/quote-confirmation');
+    } catch (error) {
+      toast({
+        title: 'Error submitting quote',
+        description: 'Please try again later.',
         variant: 'destructive',
       });
     } finally {
-      setIsApplyingPromo(false);
+      setIsSubmitting(false);
     }
   };
   
-  useAutoApplyCode(handleApplyPromoCode);
-  
-  // Apply a package to the quote
-  const applyPackage = (pkg: TreatmentPackage) => {
-    // Extract treatments from package
-    const packageTreatments = TreatmentPackageService.getExpandedTreatments(pkg);
-    
-    // Update state with package info
-    updateState({
-      treatments: packageTreatments,
-      currentPackage: pkg,
-      additionalServices: pkg.additionalServices,
-      promoCode: pkg.promoCode
-    });
-    
-    setShowReplaceConfirm(false);
-    setPendingPackage(null);
-    
-    toast({
-      title: 'Package Applied',
-      description: `${pkg.name} has been added to your quote`,
-      variant: 'default',
-    });
-  };
-  
-  // Handle user confirming package replacement
-  const handleConfirmReplace = () => {
-    if (pendingPackage) {
-      applyPackage(pendingPackage);
-    }
-  };
-  
-  // Handle user declining package replacement
-  const handleDeclineReplace = () => {
-    setShowReplaceConfirm(false);
-    setPendingPackage(null);
-    setPromoInput('');
-  };
-  
-  // Add a treatment to the quote
-  const addTreatment = (treatment: Treatment) => {
-    // Clear any package that might have been applied
-    if (currentPackage) {
-      updateState({
-        currentPackage: null,
-        additionalServices: [],
-        promoCode: null
-      });
-    }
-    
-    updateState({
-      treatments: [...selectedTreatments, { ...treatment, quantity: 1 }]
-    });
-    
-    toast({
-      description: `${treatment.name} added to your quote`,
-    });
-  };
-  
-  // Remove a treatment from the quote
-  const removeTreatment = (index: number) => {
-    const newTreatments = [...selectedTreatments];
-    newTreatments.splice(index, 1);
-    
-    updateState({
-      treatments: newTreatments
-    });
-    
-    // If removing all treatments, also clear package info
-    if (newTreatments.length === 0) {
-      updateState({
-        currentPackage: null,
-        additionalServices: []
-      });
-    }
-  };
-  
-  // Update price calculations when selections change
-  useEffect(() => {
-    // Calculate subtotal
-    const calculatedSubtotal = selectedTreatments.reduce((sum, treatment) => 
-      sum + (treatment.price * (treatment.quantity || 1)), 0);
-    
-    // Add additional services that are included
-    const additionalServicesTotal = additionalServices
-      .filter(service => service.included)
-      .reduce((sum, service) => sum + service.price, 0);
-    
-    const newSubtotal = calculatedSubtotal + additionalServicesTotal;
-    setSubtotal(newSubtotal);
-    
-    // Calculate discount (if promo code applied)
-    let calculatedDiscount = 0;
-    
-    if (currentPackage) {
-      // If we have a package, use its discounted price
-      calculatedDiscount = newSubtotal - currentPackage.discountedPrice;
-    } else if (promoCode) {
-      // For regular promo codes, apply 15% discount (mock)
-      calculatedDiscount = newSubtotal * 0.15;
-    }
-    
-    setDiscount(calculatedDiscount);
-    setTotal(newSubtotal - calculatedDiscount);
-  }, [selectedTreatments, additionalServices, promoCode, currentPackage]);
-  
-  // Move to next step
-  const nextStep = () => {
-    // Simple validation for each step
-    if (step === 1 && selectedTreatments.length === 0) {
+  // Function to navigate between steps
+  const goToStep = (newStep: number) => {
+    // Validate current step before proceeding
+    if (step === 1 && treatments.length === 0) {
       toast({
         title: 'No treatments selected',
-        description: 'Please select at least one treatment to continue',
+        description: 'Please select at least one treatment.',
         variant: 'destructive',
       });
       return;
     }
     
-    if (step === 3 && (!patientInfo.name || !patientInfo.email)) {
-      toast({
-        title: 'Missing information',
-        description: 'Please provide your name and email to continue',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    updateState({ step: step + 1 });
+    updateState({ step: newStep });
   };
   
-  // Move to previous step
-  const prevStep = () => {
-    if (step > 1) {
-      updateState({ step: step - 1 });
-    }
-  };
+  // Calculate the counts of each treatment
+  const treatmentCounts: Record<string, number> = {};
+  treatments.forEach(treatment => {
+    treatmentCounts[treatment.id] = (treatmentCounts[treatment.id] || 0) + 1;
+  });
   
-  // Update patient info fields
-  const updatePatientInfo = (field: string, value: string) => {
-    updateState({
-      patientInfo: {
-        ...patientInfo,
-        [field]: value
+  // Group treatments by ID for display in summary
+  const groupedTreatments = treatments.reduce<Record<string, { treatment: Treatment, count: number }>>(
+    (acc, treatment) => {
+      if (!acc[treatment.id]) {
+        acc[treatment.id] = { treatment, count: 0 };
       }
-    });
-  };
+      acc[treatment.id].count++;
+      return acc;
+    }, 
+    {}
+  );
   
-  // Complete the quote process
-  const completeQuote = () => {
-    // In a real app, we would send the quote data to the backend
-    toast({
-      title: 'Quote Completed',
-      description: 'Your quote has been submitted successfully!',
-      variant: 'default',
-    });
-    
-    // Reset the state and go back to homepage
-    resetState();
-    navigate('/');
-  };
-  
-  // Change currency
-  const changeCurrency = (newCurrency: CurrencyCode) => {
-    updateState({ currency });
-  };
-
   return (
-    <div className="container py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">Build Your Dental Quote</h1>
-        <p className="text-muted-foreground">
-          Select treatments, apply special offers, and get your personalized quote
-        </p>
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-8 text-center">Build Your Dental Treatment Quote</h1>
       
-      {/* Progress steps */}
+      {/* Progress indicator */}
       <div className="mb-8">
-        <div className="flex justify-between">
-          {['Select Treatments', 'Apply Promotions', 'Your Information', 'Review Quote'].map((label, idx) => (
+        <div className="flex justify-between items-center">
+          {['Select Treatments', 'Review & Customize', 'Your Details', 'Confirm Quote'].map((label, index) => (
             <div 
-              key={idx} 
-              className={`flex-1 text-center py-2 ${step === idx + 1 ? 'border-b-2 border-primary font-medium text-primary' : 'border-b border-border text-muted-foreground'}`}
+              key={index} 
+              className={`flex-1 text-center ${index + 1 === step ? 'text-primary font-semibold' : 'text-gray-500'}`}
             >
-              <span className="hidden sm:inline">{label}</span>
-              <span className="inline sm:hidden">{idx + 1}</span>
+              <div 
+                className={`w-8 h-8 rounded-full mx-auto mb-2 flex items-center justify-center 
+                  ${index + 1 === step 
+                    ? 'bg-primary text-white' 
+                    : index + 1 < step 
+                      ? 'bg-primary/20 text-primary' 
+                      : 'bg-gray-200 text-gray-400'
+                  }`}
+              >
+                {index + 1 < step ? <Check className="h-4 w-4" /> : index + 1}
+              </div>
+              <span className="text-sm">{label}</span>
             </div>
           ))}
         </div>
+        <div className="relative h-2 bg-gray-200 rounded-full mt-4">
+          <div 
+            className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-300"
+            style={{ width: `${(step - 1) * 33.33}%` }}
+          ></div>
+        </div>
       </div>
       
-      {/* Package replacement confirmation dialog */}
-      {showReplaceConfirm && pendingPackage && (
-        <Alert className="mb-6">
-          <Package className="h-4 w-4" />
-          <AlertTitle>Replace your selections with a package?</AlertTitle>
-          <AlertDescription>
-            <p className="mb-2">
-              The promo code <span className="font-semibold">{pendingPackage.promoCode}</span> will 
-              apply the <span className="font-semibold">{pendingPackage.name}</span> package 
-              which includes {pendingPackage.treatments.reduce((sum, t) => sum + (t.quantity || 1), 0)} treatments.
-              This will replace your current selections.
-            </p>
-            <div className="flex gap-2 mt-4">
-              <Button size="sm" onClick={handleConfirmReplace}>
-                Apply Package <Check className="ml-2 h-4 w-4" />
-              </Button>
-              <Button size="sm" variant="outline" onClick={handleDeclineReplace}>
-                Keep My Selections
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
-      
-      {/* Step 1: Select Treatments */}
+      {/* Step 1: Treatment Selection */}
       {step === 1 && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Select Your Treatments</CardTitle>
-              <CardDescription>
-                Choose the dental treatments you're interested in
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Tabs defaultValue="all">
-                <TabsList>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                  <TabsTrigger value="implants">Implants</TabsTrigger>
-                  <TabsTrigger value="cosmetic">Cosmetic</TabsTrigger>
-                  <TabsTrigger value="crowns">Crowns</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="all" className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availableTreatments.map((treatment) => (
-                      <div key={treatment.id} className="flex justify-between border rounded-md p-4">
-                        <div>
-                          <h3 className="font-medium">{treatment.name}</h3>
-                          <p className="text-sm text-muted-foreground">{treatment.description}</p>
-                          <p className="text-sm font-semibold mt-1">{formatPriceInCurrency(treatment.price, currency)}</p>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          onClick={() => addTreatment(treatment)}
-                          className="self-center"
-                        >
-                          Add
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </TabsContent>
-                
-                <TabsContent value="implants" className="mt-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {availableTreatments
-                      .filter(treatment => treatment.category === 'implants')
-                      .map((treatment) => (
-                        <div key={treatment.id} className="flex justify-between border rounded-md p-4">
-                          <div>
-                            <h3 className="font-medium">{treatment.name}</h3>
-                            <p className="text-sm text-muted-foreground">{treatment.description}</p>
-                            <p className="text-sm font-semibold mt-1">{formatPriceInCurrency(treatment.price, currency)}</p>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => addTreatment(treatment)}
-                            className="self-center"
-                          >
-                            Add
-                          </Button>
-                        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Select Your Treatments</CardTitle>
+                <CardDescription>Choose dental treatments to include in your quote</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="treatments">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="treatments">Individual Treatments</TabsTrigger>
+                    <TabsTrigger value="packages">Treatment Packages</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="treatments">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {TREATMENTS.map(treatment => (
+                        <TreatmentItem 
+                          key={treatment.id} 
+                          treatment={treatment} 
+                          onAdd={() => addTreatment(treatment)}
+                          currency={currency}
+                          quantity={treatmentCounts[treatment.id] || 0}
+                        />
                       ))}
-                  </div>
-                </TabsContent>
-                
-                {/* Similar TabsContent for other categories */}
-              </Tabs>
-            </CardContent>
-          </Card>
-          
-          {/* Selected Treatments Summary */}
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Your Selected Treatments</CardTitle>
-              <CardDescription>
-                {selectedTreatments.length === 0 
-                  ? 'No treatments selected yet' 
-                  : `${selectedTreatments.length} treatment${selectedTreatments.length !== 1 ? 's' : ''} selected`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedTreatments.length === 0 ? (
-                <div className="text-center py-6 text-muted-foreground">
-                  <p>Please select some treatments to get started</p>
-                </div>
-              ) : (
-                <>
-                  {currentPackage && (
-                    <div className="mb-4 p-3 bg-primary/5 rounded-md border border-primary/20">
-                      <div className="flex items-center mb-2">
-                        <Package className="h-4 w-4 text-primary mr-2" />
-                        <span className="font-medium">{currentPackage.name}</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-2">{currentPackage.description}</p>
                     </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    {selectedTreatments.map((treatment, index) => (
-                      <div key={index} className="flex justify-between items-center border-b pb-2">
-                        <div>
-                          <span className="font-medium">{treatment.name}</span>
-                          {treatment.quantity && treatment.quantity > 1 && (
-                            <span className="text-sm ml-2 text-muted-foreground">x{treatment.quantity}</span>
-                          )}
-                          <p className="text-xs text-muted-foreground">{treatment.description}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span>{formatPriceInCurrency(treatment.price * (treatment.quantity || 1), currency)}</span>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeTreatment(index)} 
-                            className="h-8 w-8 p-0"
-                          >
-                            &times;
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {additionalServices.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="font-medium mb-2">Additional Services</h4>
-                      <div className="space-y-2">
-                        {additionalServices.filter(s => s.included).map((service, index) => (
-                          <div key={index} className="flex justify-between items-center border-b pb-2">
-                            <div>
-                              <span className="text-sm">{service.name}</span>
-                              <p className="text-xs text-muted-foreground">{service.description}</p>
+                  </TabsContent>
+                  <TabsContent value="packages">
+                    <div className="space-y-6">
+                      {PACKAGES.map(pkg => (
+                        <Card key={pkg.id} className="overflow-hidden">
+                          <CardHeader className="bg-primary/5 pb-2">
+                            <div className="flex justify-between items-start">
+                              <div>
+                                <CardTitle>{pkg.name}</CardTitle>
+                                <CardDescription className="mt-1">{pkg.description}</CardDescription>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-lg font-bold text-primary">
+                                  {formatCurrency(pkg.price, currency)}
+                                </div>
+                                <div className="text-sm text-gray-500 line-through">
+                                  {formatCurrency(pkg.originalPrice, currency)}
+                                </div>
+                              </div>
                             </div>
-                            <div>
-                              <span className="text-sm">{formatPriceInCurrency(service.price, currency)}</span>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <h4 className="text-sm font-medium mb-2 flex items-center">
+                              <Package className="h-4 w-4 mr-2" /> Package Includes:
+                            </h4>
+                            <ul className="space-y-2 mb-4">
+                              {pkg.items.map(item => {
+                                const treatment = TREATMENTS.find(t => t.id === item.treatmentId);
+                                return treatment ? (
+                                  <li key={item.treatmentId} className="text-sm flex justify-between">
+                                    <span>{treatment.name} {item.quantity > 1 ? `× ${item.quantity}` : ''}</span>
+                                    <span className="text-gray-500">
+                                      {formatCurrency(treatment.price * item.quantity, currency)}
+                                    </span>
+                                  </li>
+                                ) : null;
+                              })}
+                            </ul>
+                            <div className="text-sm flex items-center text-primary">
+                              <Tag className="h-4 w-4 mr-2" /> Promo code: <span className="font-mono ml-2">{pkg.promoCode}</span>
                             </div>
-                          </div>
+                          </CardContent>
+                          <CardFooter className="bg-gray-50">
+                            <Button 
+                              className="w-full" 
+                              onClick={() => applyPackage(pkg)}
+                              variant={currentPackage?.id === pkg.id ? "outline" : "default"}
+                            >
+                              {currentPackage?.id === pkg.id ? 'Package Applied' : 'Choose This Package'}
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Your Quote Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Selected Treatments</h3>
+                    {treatments.length === 0 ? (
+                      <p className="text-sm text-gray-500">No treatments selected yet</p>
+                    ) : (
+                      <ul className="divide-y">
+                        {Object.values(groupedTreatments).map(({ treatment, count }) => (
+                          <li key={treatment.id} className="py-2 flex justify-between text-sm">
+                            <span>{treatment.name} {count > 1 ? `× ${count}` : ''}</span>
+                            <span>{formatCurrency(treatment.price * count, currency)}</span>
+                          </li>
                         ))}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="mt-4 pt-4 border-t">
-                    <div className="flex justify-between mb-1">
-                      <span>Subtotal</span>
-                      <span>{formatPriceInCurrency(subtotal, currency)}</span>
-                    </div>
-                    
-                    {discount > 0 && (
-                      <div className="flex justify-between mb-1 text-green-600">
-                        <span>Discount</span>
-                        <span>-{formatPriceInCurrency(discount, currency)}</span>
-                      </div>
+                      </ul>
                     )}
-                    
-                    <div className="flex justify-between font-bold">
-                      <span>Total</span>
-                      <span>{formatPriceInCurrency(total, currency)}</span>
+                  </div>
+                  
+                  {/* Currency selector */}
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Currency</h3>
+                    <div className="flex space-x-2">
+                      {(['USD', 'GBP', 'EUR'] as CurrencyCode[]).map((curr) => (
+                        <Button 
+                          key={curr} 
+                          variant={currency === curr ? "default" : "outline"} 
+                          size="sm"
+                          onClick={() => changeCurrency(curr)}
+                        >
+                          {curr}
+                        </Button>
+                      ))}
                     </div>
                   </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-          
-          <div className="mt-6 flex justify-end">
-            <Button onClick={nextStep} disabled={selectedTreatments.length === 0}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+                  
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between font-medium">
+                      <span>Treatments Total</span>
+                      <span>{formatCurrency(calculateTreatmentsTotal(), currency)}</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="ghost" disabled>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button onClick={() => goToStep(2)} disabled={treatments.length === 0}>
+                  Next <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       )}
       
-      {/* Step 2: Apply Promotions */}
+      {/* Step 2: Review & Customize */}
       {step === 2 && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Apply Promotions</CardTitle>
-              <CardDescription>
-                Enter a promo code or select a special offer
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="border rounded-md p-4">
-                  <div className="flex gap-2 mb-4">
-                    <input 
-                      type="text" 
-                      value={promoInput}
-                      onChange={(e) => setPromoInput(e.target.value)}
-                      placeholder="Enter promo code"
-                      className="flex-1 border rounded-md px-3 py-2"
-                      disabled={!!promoCode || isApplyingPromo}
-                    />
-                    
-                    {promoCode ? (
-                      <Button
-                        onClick={() => updateState({ promoCode: null, currentPackage: null })}
-                        variant="destructive"
-                        disabled={isApplyingPromo}
-                      >
-                        Clear
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() => handleApplyPromoCode(promoInput)}
-                        disabled={!promoInput || isApplyingPromo}
-                      >
-                        {isApplyingPromo ? 'Applying...' : 'Apply'}
-                      </Button>
-                    )}
-                  </div>
-                  
-                  {promoCode && (
-                    <div className="p-3 rounded-md bg-green-50">
-                      <p className="text-sm text-green-800">
-                        Promo code {promoCode} applied successfully!
-                      </p>
-                      {discount > 0 && (
-                        <p className="text-sm font-medium mt-1 text-green-800">
-                          You save {formatPriceInCurrency(discount, currency)}
-                        </p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Review & Customize Your Quote</CardTitle>
+                <CardDescription>Adjust treatments and add optional services</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Tabs defaultValue="treatments">
+                  <TabsList className="mb-4">
+                    <TabsTrigger value="treatments">Selected Treatments</TabsTrigger>
+                    <TabsTrigger value="additional">Additional Services</TabsTrigger>
+                    <TabsTrigger value="promo">Promo Code</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="treatments">
+                    <div className="space-y-4">
+                      {treatments.length === 0 ? (
+                        <p className="text-gray-500">No treatments selected yet</p>
+                      ) : (
+                        treatments.map((treatment, index) => (
+                          <Card key={`${treatment.id}-${index}`}>
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between">
+                                <CardTitle className="text-base">{treatment.name}</CardTitle>
+                                <span className="font-medium text-primary">{formatCurrency(treatment.price, currency)}</span>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pb-2">
+                              <p className="text-sm text-gray-600">{treatment.description}</p>
+                            </CardContent>
+                            <CardFooter>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="text-red-500 hover:text-red-700"
+                                onClick={() => removeTreatment(index)}
+                              >
+                                Remove
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        ))
                       )}
-                      
-                      {currentPackage && (
-                        <div className="mt-3 pt-3 border-t border-green-200">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Package className="h-4 w-4 text-primary" />
-                            <span className="font-medium text-sm">Treatment Package Applied</span>
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">{currentPackage.description}</p>
-                          
-                          <div className="mb-3">
-                            <div className="flex justify-between text-sm mb-1">
-                              <span>Regular Price:</span>
-                              <span className="line-through text-muted-foreground">
-                                {formatPriceInCurrency(currentPackage.regularPrice, currency)}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span>Special Price:</span>
-                              <span className="font-semibold text-primary">
-                                {formatPriceInCurrency(currentPackage.discountedPrice, currency)}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {additionalServices.length > 0 && (
-                            <div className="mb-2">
-                              <p className="text-sm font-medium mb-1">Includes:</p>
-                              <ul className="grid grid-cols-1 gap-1">
-                                {additionalServices.filter(s => s.included).map((service, idx) => (
-                                  <li key={idx} className="text-xs flex items-center gap-1">
-                                    <Check className="h-3 w-3 text-green-500" />
-                                    <span>{service.name}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
+                      <Button onClick={() => goToStep(1)} variant="outline" className="w-full">
+                        Add More Treatments
+                      </Button>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="additional">
+                    <div className="space-y-4">
+                      {ADDITIONAL_SERVICES.map(service => {
+                        const isAdded = additionalServices.some(s => s.id === service.id);
+                        return (
+                          <Card key={service.id} className={isAdded ? 'border-primary' : ''}>
+                            <CardHeader className="pb-2">
+                              <div className="flex justify-between">
+                                <CardTitle className="text-base">{service.name}</CardTitle>
+                                <span className="font-medium text-primary">{formatCurrency(service.price, currency)}</span>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pb-2">
+                              <p className="text-sm text-gray-600">{service.description}</p>
+                            </CardContent>
+                            <CardFooter>
+                              <Button 
+                                variant={isAdded ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => toggleAdditionalService(service)}
+                              >
+                                {isAdded ? 'Remove' : 'Add to Quote'}
+                              </Button>
+                            </CardFooter>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="promo">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Apply Promo Code</CardTitle>
+                        <CardDescription>
+                          Enter a valid promo code to get a discount on your quote
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex space-x-2">
+                          <Input 
+                            placeholder="Enter promo code" 
+                            value={promoInput} 
+                            onChange={e => setPromoInput(e.target.value.toUpperCase())}
+                            className="font-mono"
+                          />
+                          <Button onClick={() => validatePromoCode(promoInput)}>Apply</Button>
                         </div>
-                      )}
+                        {isPromoValid === true && (
+                          <div className="mt-4 p-3 bg-green-50 text-green-800 rounded-md flex items-center">
+                            <Check className="h-5 w-5 mr-2" />
+                            <span>Promo code applied successfully!</span>
+                          </div>
+                        )}
+                        {isPromoValid === false && (
+                          <div className="mt-4 p-3 bg-red-50 text-red-800 rounded-md">
+                            Invalid promo code. Please try again.
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Quote Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Package info if applicable */}
+                  {currentPackage && (
+                    <div className="bg-primary/5 p-3 rounded-md">
+                      <h3 className="font-medium flex items-center text-primary">
+                        <Package className="h-4 w-4 mr-2" /> {currentPackage.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 mt-1">{currentPackage.description}</p>
                     </div>
                   )}
-                </div>
-                
-                <div className="border rounded-md p-4">
-                  <h3 className="text-lg font-semibold mb-3">Quote Summary</h3>
                   
-                  <div className="space-y-2 mb-4">
-                    {selectedTreatments.map((treatment, index) => (
-                      <div key={index} className="flex justify-between text-sm">
-                        <span>{treatment.name} {treatment.quantity && treatment.quantity > 1 && `(x${treatment.quantity})`}</span>
-                        <span>{formatPriceInCurrency(treatment.price * (treatment.quantity || 1), currency)}</span>
-                      </div>
-                    ))}
-                    
-                    {additionalServices.filter(s => s.included).map((service, index) => (
-                      <div key={index} className="flex justify-between text-sm">
-                        <span>{service.name}</span>
-                        <span>{formatPriceInCurrency(service.price, currency)}</span>
-                      </div>
-                    ))}
+                  {/* Treatments */}
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Selected Treatments</h3>
+                    {treatments.length === 0 ? (
+                      <p className="text-sm text-gray-500">No treatments selected yet</p>
+                    ) : (
+                      <ul className="divide-y">
+                        {Object.values(groupedTreatments).map(({ treatment, count }) => (
+                          <li key={treatment.id} className="py-2 flex justify-between text-sm">
+                            <span>{treatment.name} {count > 1 ? `× ${count}` : ''}</span>
+                            <span>{formatCurrency(treatment.price * count, currency)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                   
-                  <div className="pt-3 border-t">
-                    <div className="flex justify-between mb-1">
-                      <span>Subtotal</span>
-                      <span>{formatPriceInCurrency(subtotal, currency)}</span>
+                  {/* Additional Services */}
+                  {additionalServices.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Additional Services</h3>
+                      <ul className="divide-y">
+                        {additionalServices.map((service) => (
+                          <li key={service.id} className="py-2 flex justify-between text-sm">
+                            <span>{service.name}</span>
+                            <span>{formatCurrency(service.price, currency)}</span>
+                          </li>
+                        ))}
+                      </ul>
                     </div>
-                    
-                    {discount > 0 && (
-                      <div className="flex justify-between mb-1 text-green-600">
-                        <span>Discount</span>
-                        <span>-{formatPriceInCurrency(discount, currency)}</span>
+                  )}
+                  
+                  {/* Promo code */}
+                  {promoCode && (
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium flex items-center">
+                        <Tag className="h-4 w-4 mr-1" /> Promo Code: <span className="ml-1 font-mono">{promoCode}</span>
+                      </span>
+                      <span className="text-red-600">-{formatCurrency(calculateDiscount(), currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between font-medium">
+                      <span>Treatments Total</span>
+                      <span>{formatCurrency(calculateTreatmentsTotal(), currency)}</span>
+                    </div>
+                    {additionalServices.length > 0 && (
+                      <div className="flex justify-between font-medium mt-1">
+                        <span>Additional Services</span>
+                        <span>{formatCurrency(calculateServicesTotal(), currency)}</span>
                       </div>
                     )}
-                    
-                    <div className="flex justify-between font-bold">
+                    {promoCode && (
+                      <div className="flex justify-between font-medium mt-1 text-red-600">
+                        <span>Discount</span>
+                        <span>-{formatCurrency(calculateDiscount(), currency)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between font-bold mt-3 text-lg">
                       <span>Total</span>
-                      <span>{formatPriceInCurrency(total, currency)}</span>
+                      <span>{formatCurrency(calculateTotal(), currency)}</span>
                     </div>
                   </div>
                 </div>
-                
-                <div className="border rounded-md p-4">
-                  <h3 className="text-lg font-semibold mb-3">Currency Options</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(['USD', 'EUR', 'GBP', 'TRY'] as CurrencyCode[]).map((curr) => (
-                      <Button
-                        key={curr}
-                        variant={currency === curr ? 'default' : 'outline'}
-                        onClick={() => updateState({ currency: curr })}
-                      >
-                        {curr}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={prevStep}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-            <Button onClick={nextStep}>
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="ghost" onClick={() => goToStep(1)}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button onClick={() => goToStep(3)}>
+                  Next <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       )}
       
       {/* Step 3: Patient Information */}
       {step === 3 && (
-        <div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Information</CardTitle>
-              <CardDescription>
-                Please provide your details to complete the quote
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Name</label>
-                  <input 
-                    type="text" 
-                    className="w-full border rounded-md px-3 py-2"
-                    value={patientInfo.name}
-                    onChange={(e) => updatePatientInfo('name', e.target.value)}
-                    placeholder="Your full name"
-                  />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader>
+                <CardTitle>Your Contact Information</CardTitle>
+                <CardDescription>Enter your details to complete your quote request</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Full Name *</label>
+                      <Input 
+                        value={patientInfo.name} 
+                        onChange={e => updateState({ patientInfo: { ...patientInfo, name: e.target.value } })}
+                        placeholder="Enter your full name"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Email Address *</label>
+                      <Input 
+                        type="email"
+                        value={patientInfo.email} 
+                        onChange={e => updateState({ patientInfo: { ...patientInfo, email: e.target.value } })}
+                        placeholder="Enter your email address"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Phone Number *</label>
+                      <Input 
+                        value={patientInfo.phone} 
+                        onChange={e => updateState({ patientInfo: { ...patientInfo, phone: e.target.value } })}
+                        placeholder="Enter your phone number"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1 block">Additional Notes</label>
+                      <Textarea 
+                        value={patientInfo.notes} 
+                        onChange={e => updateState({ patientInfo: { ...patientInfo, notes: e.target.value } })}
+                        placeholder="Any specific questions or concerns? Let us know here."
+                        rows={4}
+                      />
+                    </div>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input 
-                    type="email" 
-                    className="w-full border rounded-md px-3 py-2"
-                    value={patientInfo.email}
-                    onChange={(e) => updatePatientInfo('email', e.target.value)}
-                    placeholder="Your email address"
-                  />
+              </CardContent>
+            </Card>
+          </div>
+          <div>
+            <Card className="sticky top-4">
+              <CardHeader>
+                <CardTitle>Quote Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {currentPackage && (
+                    <div className="bg-primary/5 p-3 rounded-md">
+                      <h3 className="font-medium flex items-center text-primary">
+                        <Package className="h-4 w-4 mr-2" /> {currentPackage.name}
+                      </h3>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Selected Treatments</h3>
+                    {treatments.length === 0 ? (
+                      <p className="text-sm text-gray-500">No treatments selected yet</p>
+                    ) : (
+                      <ul className="divide-y">
+                        {Object.values(groupedTreatments).map(({ treatment, count }) => (
+                          <li key={treatment.id} className="py-2 flex justify-between text-sm">
+                            <span>{treatment.name} {count > 1 ? `× ${count}` : ''}</span>
+                            <span>{formatCurrency(treatment.price * count, currency)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  
+                  {additionalServices.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-medium mb-2">Additional Services</h3>
+                      <ul className="divide-y">
+                        {additionalServices.map((service) => (
+                          <li key={service.id} className="py-2 flex justify-between text-sm">
+                            <span>{service.name}</span>
+                            <span>{formatCurrency(service.price, currency)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {promoCode && (
+                    <div className="flex justify-between text-sm">
+                      <span className="font-medium flex items-center">
+                        <Tag className="h-4 w-4 mr-1" /> Promo: <span className="ml-1 font-mono">{promoCode}</span>
+                      </span>
+                      <span className="text-red-600">-{formatCurrency(calculateDiscount(), currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span>{formatCurrency(calculateTotal(), currency)}</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Phone</label>
-                  <input 
-                    type="tel" 
-                    className="w-full border rounded-md px-3 py-2"
-                    value={patientInfo.phone}
-                    onChange={(e) => updatePatientInfo('phone', e.target.value)}
-                    placeholder="Your phone number"
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium mb-1">Additional Notes</label>
-                  <textarea 
-                    className="w-full border rounded-md px-3 py-2 min-h-[100px]"
-                    value={patientInfo.notes}
-                    onChange={(e) => updatePatientInfo('notes', e.target.value)}
-                    placeholder="Any specific concerns or questions"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={prevStep}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-            <Button 
-              onClick={nextStep} 
-              disabled={!patientInfo.name || !patientInfo.email}
-            >
-              Review Quote <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              </CardContent>
+              <CardFooter className="flex justify-between">
+                <Button variant="ghost" onClick={() => goToStep(2)}>
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+                <Button onClick={() => goToStep(4)}>
+                  Review Quote <ChevronRight className="ml-2 h-4 w-4" />
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       )}
       
-      {/* Step 4: Review Quote */}
+      {/* Step 4: Confirmation */}
       {step === 4 && (
-        <div>
+        <div className="max-w-3xl mx-auto">
           <Card>
-            <CardHeader>
-              <CardTitle>Review Your Quote</CardTitle>
-              <CardDescription>
-                Please review your dental quote before submitting
-              </CardDescription>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Review Your Quote</CardTitle>
+              <CardDescription>Please review all details before submitting</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Selected Treatments</h3>
-                  <div className="border rounded-md p-4">
-                    {currentPackage && (
-                      <div className="mb-3 p-3 bg-primary/5 rounded-md">
-                        <h4 className="font-medium flex items-center">
-                          <Package className="h-4 w-4 mr-2 text-primary" />
-                          {currentPackage.name}
-                        </h4>
-                        <p className="text-sm text-muted-foreground mt-1">{currentPackage.description}</p>
+                <div className="bg-primary/5 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center">
+                    <Clipboard className="h-5 w-5 mr-2 text-primary" /> Quote Summary
+                  </h3>
+                  
+                  {currentPackage && (
+                    <div className="mb-4">
+                      <div className="font-medium">Selected Package:</div>
+                      <div className="p-3 bg-white rounded shadow-sm mt-2">
+                        <div className="font-medium text-primary">{currentPackage.name}</div>
+                        <div className="text-sm text-gray-600">{currentPackage.description}</div>
                       </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      {selectedTreatments.map((treatment, index) => (
-                        <div key={index} className="flex justify-between">
-                          <div>
-                            <span>{treatment.name}</span>
-                            {treatment.quantity && treatment.quantity > 1 && (
-                              <span className="text-sm ml-2 text-muted-foreground">x{treatment.quantity}</span>
-                            )}
-                          </div>
-                          <span>{formatPriceInCurrency(treatment.price * (treatment.quantity || 1), currency)}</span>
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <div className="font-medium">Selected Treatments:</div>
+                    <div className="p-3 bg-white rounded shadow-sm mt-2">
+                      {Object.values(groupedTreatments).map(({ treatment, count }) => (
+                        <div key={treatment.id} className="flex justify-between py-2 border-b last:border-0">
+                          <span>{treatment.name} {count > 1 ? `× ${count}` : ''}</span>
+                          <span className="font-medium">{formatCurrency(treatment.price * count, currency)}</span>
                         </div>
                       ))}
                     </div>
-                    
-                    {additionalServices.length > 0 && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h4 className="font-medium mb-2">Additional Services</h4>
-                        <div className="space-y-2">
-                          {additionalServices.filter(s => s.included).map((service, index) => (
-                            <div key={index} className="flex justify-between">
-                              <span>{service.name}</span>
-                              <span>{formatPriceInCurrency(service.price, currency)}</span>
-                            </div>
-                          ))}
-                        </div>
+                  </div>
+                  
+                  {additionalServices.length > 0 && (
+                    <div className="mb-4">
+                      <div className="font-medium">Additional Services:</div>
+                      <div className="p-3 bg-white rounded shadow-sm mt-2">
+                        {additionalServices.map((service) => (
+                          <div key={service.id} className="flex justify-between py-2 border-b last:border-0">
+                            <span>{service.name}</span>
+                            <span className="font-medium">{formatCurrency(service.price, currency)}</span>
+                          </div>
+                        ))}
                       </div>
-                    )}
-                    
-                    {promoCode && (
-                      <div className="mt-4 pt-4 border-t">
-                        <div className="flex justify-between text-sm">
-                          <span className="font-medium">Promo Code</span>
-                          <span>{promoCode}</span>
-                        </div>
+                    </div>
+                  )}
+                  
+                  {promoCode && (
+                    <div className="mb-4">
+                      <div className="font-medium">Applied Promo Code:</div>
+                      <div className="p-3 bg-white rounded shadow-sm mt-2 flex justify-between">
+                        <span className="font-mono">{promoCode}</span>
+                        <span className="text-red-600 font-medium">-{formatCurrency(calculateDiscount(), currency)}</span>
                       </div>
-                    )}
-                    
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex justify-between mb-1">
-                        <span>Subtotal</span>
-                        <span>{formatPriceInCurrency(subtotal, currency)}</span>
-                      </div>
-                      
-                      {discount > 0 && (
-                        <div className="flex justify-between mb-1 text-green-600">
-                          <span>Discount</span>
-                          <span>-{formatPriceInCurrency(discount, currency)}</span>
-                        </div>
-                      )}
-                      
-                      <div className="flex justify-between font-bold">
-                        <span>Total</span>
-                        <span>{formatPriceInCurrency(total, currency)}</span>
-                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="p-3 bg-white rounded shadow-sm mt-4">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total Amount:</span>
+                      <span className="text-primary">{formatCurrency(calculateTotal(), currency)}</span>
                     </div>
                   </div>
                 </div>
                 
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Your Information</h3>
-                  <div className="border rounded-md p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <span className="block text-sm text-muted-foreground">Name</span>
-                        <span className="font-medium">{patientInfo.name}</span>
-                      </div>
-                      
-                      <div>
-                        <span className="block text-sm text-muted-foreground">Email</span>
-                        <span className="font-medium">{patientInfo.email}</span>
-                      </div>
-                      
-                      <div>
-                        <span className="block text-sm text-muted-foreground">Phone</span>
-                        <span className="font-medium">{patientInfo.phone || 'Not provided'}</span>
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h3 className="font-semibold text-lg mb-3 flex items-center">
+                    <User className="h-5 w-5 mr-2 text-primary" /> Your Information
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-sm text-gray-500">Full Name</span>
+                      <div className="font-medium">{patientInfo.name || '(Not provided)'}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Email Address</span>
+                      <div className="font-medium">{patientInfo.email || '(Not provided)'}</div>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-500">Phone Number</span>
+                      <div className="font-medium">{patientInfo.phone || '(Not provided)'}</div>
+                    </div>
+                  </div>
+                  
+                  {patientInfo.notes && (
+                    <div className="mt-4">
+                      <span className="text-sm text-gray-500">Additional Notes</span>
+                      <div className="p-3 bg-white rounded shadow-sm mt-1">
+                        {patientInfo.notes}
                       </div>
                     </div>
-                    
-                    {patientInfo.notes && (
-                      <div className="mt-4 pt-4 border-t">
-                        <span className="block text-sm text-muted-foreground">Additional Notes</span>
-                        <p>{patientInfo.notes}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-md">
-                  <h3 className="font-medium text-amber-800 mb-2">What happens next?</h3>
-                  <p className="text-sm text-amber-700">
-                    After submitting your quote, you'll receive a confirmation email with 
-                    details of your treatment plan. Our team will contact you within 24 hours 
-                    to discuss the next steps and answer any questions you may have.
-                  </p>
+                  )}
                 </div>
               </div>
             </CardContent>
+            <CardFooter className="flex flex-col sm:flex-row sm:justify-between gap-4">
+              <Button variant="outline" onClick={() => goToStep(3)} className="w-full sm:w-auto">
+                <ChevronLeft className="mr-2 h-4 w-4" /> Edit Details
+              </Button>
+              <Button 
+                onClick={handleSubmit} 
+                className="w-full sm:w-auto"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>Processing...</>
+                ) : (
+                  <>Submit Quote Request <Send className="ml-2 h-4 w-4" /></>
+                )}
+              </Button>
+            </CardFooter>
           </Card>
-          
-          <div className="mt-6 flex justify-between">
-            <Button variant="outline" onClick={prevStep}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-            <Button onClick={completeQuote}>
-              Submit Quote
-            </Button>
-          </div>
         </div>
       )}
     </div>
