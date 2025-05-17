@@ -1,88 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Special Offers | MyDentalFly</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-</head>
-<body>
-    <header class="site-header">
-        <div class="container">
-            <div class="logo">
-                <h1>MyDentalFly</h1>
-                <p>Dental Quote System</p>
-            </div>
-            <nav class="main-nav">
-                <ul>
-                    <li><a href="{{ url_for('page_routes.index') }}">Home</a></li>
-                    <li><a href="{{ url_for('page_routes.quote_builder') }}">Quote Builder</a></li>
-                    <li><a href="{{ url_for('promo_routes.special_offers_page') }}" class="active">Special Offers</a></li>
+{% extends 'base.html' %}
+
+{% block title %}Special Offers | MyDentalFly{% endblock %}
+
+{% block extra_css %}
+<style>
+    .offer-card {
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    .offer-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    .offer-card .card-img-top {
+        height: 200px;
+        object-fit: cover;
+    }
+    .promo-code {
+        font-family: monospace;
+        background-color: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px dashed #dee2e6;
+        font-weight: bold;
+    }
+    .valid-until {
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h1 class="mb-4">Special Offers & Promotions</h1>
+        <p class="lead">Take advantage of these exclusive offers to save on your dental treatment in Turkey</p>
+    </div>
+</div>
+
+<div class="row mb-5">
+    {% for offer in offers %}
+    <div class="col-md-4 mb-4">
+        <div class="card offer-card">
+            <img src="{{ offer.image }}" class="card-img-top" alt="{{ offer.title }}">
+            <div class="card-body">
+                <h3 class="card-title h4">{{ offer.title }}</h3>
+                <p class="card-text">{{ offer.description }}</p>
+                
+                <p class="mb-1"><strong>Clinic:</strong> {{ offer.clinic_name }}</p>
+                <p class="mb-1"><strong>Eligible Treatments:</strong></p>
+                <ul class="mb-3">
+                    {% for treatment in offer.treatments %}
+                    <li>{{ treatment }}</li>
+                    {% endfor %}
                 </ul>
-            </nav>
-        </div>
-    </header>
-
-    <main>
-        <div class="container">
-            <div class="flash-container">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        {% for category, message in messages %}
-                            <div class="flash-message {{ category }}">
-                                {{ message }}
-                            </div>
-                        {% endfor %}
-                    {% endif %}
-                {% endwith %}
-            </div>
-
-            <section class="special-offers-header mb-4">
-                <h1>Special Offers</h1>
-                <p>Take advantage of these special offers for your dental treatments. Click on an offer to apply the promo code to your quote.</p>
-            </section>
-
-            <section class="offers-container">
-                {% for offer in offers %}
-                    <div class="card offer-card">
-                        <img src="{{ offer.image }}" alt="{{ offer.title }}" class="card-img-top">
-                        <div class="card-body">
-                            <h2 class="card-title">{{ offer.title }}</h2>
-                            <p class="card-text">{{ offer.description }}</p>
-                            
-                            <p class="mb-2"><strong>Clinic:</strong> {{ offer.clinic_name }}</p>
-                            
-                            <h3 class="mb-1">Included Treatments:</h3>
-                            <ul class="offer-treatments">
-                                {% for treatment in offer.treatments %}
-                                    <li>{{ treatment }}</li>
-                                {% endfor %}
-                            </ul>
-                            
-                            <div class="mb-2">Promo Code: <span class="offer-code">{{ offer.promo_code }}</span></div>
-                            <div class="offer-valid">Valid until: {{ offer.valid_until }}</div>
-                        </div>
-                        <div class="card-footer">
-                            <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ offer.promo_code }}" class="btn btn-primary btn-block">Apply Offer</a>
-                        </div>
+                
+                <p class="mb-3 valid-until"><i class="far fa-calendar-alt me-1"></i> Valid until: {{ offer.valid_until }}</p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <p class="mb-0"><strong>Promo Code:</strong></p>
+                        <span class="promo-code">{{ offer.promo_code }}</span>
                     </div>
-                {% endfor %}
-            </section>
-            
-            <section class="cta mt-5 mb-5 text-center">
-                <h2 class="mb-3">Ready to Build Your Dental Quote?</h2>
-                <p class="mb-4">Start building your custom dental treatment quote and apply one of these special offers.</p>
-                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-primary btn-lg">Build Your Quote</a>
-            </section>
+                    <button class="btn btn-sm btn-outline-primary copy-code" data-code="{{ offer.promo_code }}">
+                        <i class="fas fa-copy me-1"></i> Copy
+                    </button>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('page_routes.quote_builder') }}?promo={{ offer.promo_code }}" class="btn btn-primary">
+                        Apply to Quote
+                    </a>
+                </div>
+            </div>
         </div>
-    </main>
+    </div>
+    {% endfor %}
+</div>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>&copy; 2025 MyDentalFly Dental Quote System. All rights reserved.</p>
+<div class="row mb-5">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="h5 mb-0">Have a Promo Code?</h3>
+            </div>
+            <div class="card-body">
+                <p>If you already have a promotional code, you can apply it directly to your quote during the quote building process.</p>
+                <a href="{{ url_for('page_routes.quote_builder') }}" class="btn btn-outline-primary">Build Your Quote</a>
+            </div>
         </div>
-    </footer>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h3 class="h5">Terms & Conditions</h3>
+                <ul class="mb-0">
+                    <li>Offers cannot be combined unless explicitly stated.</li>
+                    <li>Promotional codes must be applied at the time of quote generation.</li>
+                    <li>Offers are subject to availability and may be changed or withdrawn without notice.</li>
+                    <li>Some offers may have minimum treatment requirements or other restrictions.</li>
+                    <li>For full terms and conditions of each offer, please contact our customer service team.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle copy promo code buttons
+    const copyButtons = document.querySelectorAll('.copy-code');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const code = this.getAttribute('data-code');
+            navigator.clipboard.writeText(code).then(() => {
+                // Change button text temporarily
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+                this.classList.remove('btn-outline-primary');
+                this.classList.add('btn-success');
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    this.innerHTML = originalText;
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-outline-primary');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy promo code. Please try again or copy it manually.');
+            });
+        });
+    });
     
-    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-</body>
-</html>
+    // Handle URL parameters to auto-apply promo code
+    const urlParams = new URLSearchParams(window.location.search);
+    const autoApplyPromo = urlParams.get('apply');
+    
+    if (autoApplyPromo) {
+        const matchingButton = document.querySelector(`.copy-code[data-code="${autoApplyPromo}"]`);
+        if (matchingButton) {
+            // Highlight the matching offer card
+            const offerCard = matchingButton.closest('.offer-card');
+            offerCard.style.border = '2px solid #0d6efd';
+            offerCard.style.boxShadow = '0 0 15px rgba(13, 110, 253, 0.3)';
+            
+            // Scroll to the matching offer card
+            offerCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+});
+</script>
+{% endblock %}
