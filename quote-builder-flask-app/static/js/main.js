@@ -190,33 +190,65 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function applyPromoCode(promoCode) {
+        // Disable the apply button during processing
+        const applyButton = document.querySelector('.apply-promo-btn');
+        if (applyButton) {
+            applyButton.disabled = true;
+        }
+        
+        // First, hide any elements that might interfere
+        const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
+        appliedPromoSections.forEach(section => {
+            section.style.display = 'none';
+        });
+        
         fetch('/api/quote/apply-promo', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({ promo_code: promoCode }),
+            cache: 'no-store', // Prevent caching
         })
         .then(response => response.json())
         .then(data => {
             if (data.success) {
                 showPromoMessage(`Promo code ${promoCode} applied successfully!`, true);
                 
+                // Hide the promo form if successful
+                const promoForm = document.getElementById('promo-code-entry');
+                if (promoForm) {
+                    promoForm.style.display = 'none';
+                }
+                
                 // Update UI without page refresh
                 updatePromoCodeDisplay(promoCode, data.discount);
-                updateTotals(data.totals, promoCode); // Pass promoCode to updateTotals
+                updateTotals(data.totals, promoCode); 
                 
                 // Clear input field
                 if (promoInput) {
                     promoInput.value = '';
                 }
+                
+                // Make sure "Remove" buttons work
+                setTimeout(setupRemovePromoButtons, 300);
             } else {
                 showPromoMessage(data.error || 'Failed to apply promo code', false);
+                
+                // Re-enable the button if there was an error
+                if (applyButton) {
+                    applyButton.disabled = false;
+                }
             }
         })
         .catch(error => {
             console.error('Error applying promo code:', error);
             showPromoMessage('An error occurred. Please try again.', false);
+            
+            // Re-enable the button if there was an error
+            if (applyButton) {
+                applyButton.disabled = false;
+            }
         });
     }
     
@@ -289,6 +321,12 @@ document.addEventListener('DOMContentLoaded', function() {
         discountRows.forEach(row => {
             row.style.display = 'none';
         });
+        
+        // Find and hide any promo display messages or applied banners
+        const promoAppliedMessage = document.querySelector('.promo-applied');
+        if (promoAppliedMessage) {
+            promoAppliedMessage.style.display = 'none';
+        }
 
         // Now make the server call to ensure state is synchronized
         fetch('/api/quote/remove-promo', {
@@ -324,10 +362,36 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update totals with zeroed discount
                 updateTotals(data.totals);
                 
+                // Reset the promo code form
+                // Enable the promo entry form again
+                const promoForm = document.querySelector('.promo-form');
+                if (promoForm) {
+                    promoForm.style.display = 'block';
+                }
+                
+                // Make sure all promo chips are visible
+                const promoChips = document.querySelectorAll('.promo-chip');
+                promoChips.forEach(chip => {
+                    chip.style.display = 'inline-block';
+                });
+
                 // No need for additional delays - the apply button should be ready immediately
                 const applyBtn = document.querySelector('.apply-promo-btn');
                 if (applyBtn) {
                     applyBtn.disabled = false;
+                }
+                
+                // Force reload promo code section if needed
+                const promoCodeSection = document.getElementById('promo-code-entry');
+                if (promoCodeSection) {
+                    // First hide any applied promo sections
+                    const appliedPromoSections = document.querySelectorAll('.applied-promo-section');
+                    appliedPromoSections.forEach(section => {
+                        section.style.display = 'none';
+                    });
+                    
+                    // Show the entry form
+                    promoCodeSection.style.display = 'block';
                 }
             }
         })
