@@ -1,30 +1,21 @@
-/* 
- * Dental Quote System Styles
- * Main stylesheet for the dental quote system
- */
+/* General Styles */
+:root {
+    --primary-color: #0077cc;
+    --secondary-color: #14b8a6;
+    --success-color: #36b37e;
+    --danger-color: #ff5630;
+    --warning-color: #ffab00;
+    --info-color: #00b8d9;
+    --light-color: #f0f9ff;
+    --dark-color: #172b4d;
+    --body-bg: #f8fafc;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
 
-/* Reset and base styles */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
-
-:root {
-    --primary-color: #0d6efd;
-    --secondary-color: #6c757d;
-    --success-color: #198754;
-    --info-color: #0dcaf0;
-    --warning-color: #ffc107;
-    --danger-color: #dc3545;
-    --light-color: #f8f9fa;
-    --dark-color: #212529;
-    --white-color: #ffffff;
-    --black-color: #000000;
-    --border-color: #dee2e6;
-    --border-radius: 0.25rem;
-    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    --box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 body {
@@ -32,43 +23,24 @@ body {
     font-size: 16px;
     line-height: 1.6;
     color: var(--dark-color);
-    background-color: #f5f7fa;
+    background-color: var(--body-bg);
 }
 
-a {
-    color: var(--primary-color);
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
-}
-
-/* Layout */
 .container {
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
-    padding: 0 1rem;
+    padding: 0 15px;
 }
 
-.row {
-    display: flex;
-    flex-wrap: wrap;
-    margin: 0 -1rem;
-}
-
-.col {
-    flex: 1;
-    padding: 0 1rem;
-}
-
-/* Header and Navigation */
+/* Header Styles */
 .site-header {
-    background-color: var(--white-color);
-    box-shadow: var(--box-shadow);
-    padding: 1rem 0;
-    margin-bottom: 2rem;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    padding: 15px 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
 }
 
 .site-header .container {
@@ -77,22 +49,16 @@ a:hover {
     align-items: center;
 }
 
-.logo {
-    display: flex;
-    flex-direction: column;
-}
-
 .logo h1 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
     color: var(--primary-color);
+    font-size: 24px;
+    margin: 0;
 }
 
 .logo p {
-    font-size: 0.875rem;
-    margin: 0;
     color: var(--secondary-color);
+    font-size: 14px;
+    margin: 0;
 }
 
 .main-nav ul {
@@ -100,141 +66,160 @@ a:hover {
     list-style: none;
 }
 
-.main-nav li {
-    margin-left: 1.5rem;
+.main-nav ul li {
+    margin-left: 20px;
 }
 
-.main-nav a {
-    font-weight: 500;
-    color: var(--dark-color);
-    padding: 0.5rem 0;
-}
-
-.main-nav a:hover,
-.main-nav a.active {
-    color: var(--primary-color);
-    border-bottom: 2px solid var(--primary-color);
+.main-nav ul li a {
     text-decoration: none;
+    color: var(--dark-color);
+    padding: 5px 10px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
 }
 
-/* Main content area */
+.main-nav ul li a:hover {
+    background-color: var(--light-color);
+}
+
+.main-nav ul li a.active {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Main Content Styles */
 main {
-    min-height: calc(100vh - 200px);
-    padding: 1rem 0 3rem;
+    padding: 30px 0;
+    min-height: calc(100vh - 150px);
 }
 
-/* Footer */
-.site-footer {
-    background-color: var(--dark-color);
-    color: var(--light-color);
-    padding: 2rem 0;
-    margin-top: 2rem;
-    font-size: 0.875rem;
+h1, h2, h3, h4, h5, h6 {
+    margin-bottom: 15px;
+    font-weight: 600;
 }
 
-/* Flash messages */
-.flash-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    max-width: 300px;
+p {
+    margin-bottom: 15px;
 }
 
-.flash-message {
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    position: relative;
-    opacity: 1;
-    transition: opacity 0.3s ease-in-out;
+.mb-1 { margin-bottom: 5px; }
+.mb-2 { margin-bottom: 10px; }
+.mb-3 { margin-bottom: 15px; }
+.mb-4 { margin-bottom: 20px; }
+.mb-5 { margin-bottom: 30px; }
+
+.mt-1 { margin-top: 5px; }
+.mt-2 { margin-top: 10px; }
+.mt-3 { margin-top: 15px; }
+.mt-4 { margin-top: 20px; }
+.mt-5 { margin-top: 30px; }
+
+.ml-1 { margin-left: 5px; }
+.ml-2 { margin-left: 10px; }
+.ml-3 { margin-left: 15px; }
+
+.text-center { text-align: center; }
+.text-danger { color: var(--danger-color); }
+
+/* Cards, Forms, and Buttons */
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+    overflow: hidden;
 }
 
-.flash-message.success {
-    background-color: var(--success-color);
-    color: var(--white-color);
+.card-header {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #eaecef;
 }
 
-.flash-message.error {
-    background-color: var(--danger-color);
-    color: var(--white-color);
+.card-body {
+    padding: 20px;
 }
 
-.flash-message.warning {
-    background-color: var(--warning-color);
-    color: var(--dark-color);
+.card-footer {
+    padding: 15px 20px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #eaecef;
 }
 
-.flash-message.info {
-    background-color: var(--info-color);
-    color: var(--dark-color);
+.form-group {
+    margin-bottom: 20px;
 }
 
-.flash-message .close-btn {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    background: none;
-    border: none;
-    font-size: 1.25rem;
-    cursor: pointer;
-    color: inherit;
-    opacity: 0.7;
+.form-label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
 }
 
-.flash-message .close-btn:hover {
-    opacity: 1;
+.form-control {
+    width: 100%;
+    padding: 10px 15px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    transition: border-color 0.3s ease;
 }
 
-/* Buttons */
+.form-control:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.form-text {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
 .btn {
     display: inline-block;
     font-weight: 500;
+    color: #212529;
     text-align: center;
-    white-space: nowrap;
     vertical-align: middle;
     user-select: none;
+    background-color: transparent;
     border: 1px solid transparent;
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
+    padding: 10px 15px;
+    font-size: 16px;
     line-height: 1.5;
-    border-radius: var(--border-radius);
+    border-radius: 4px;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
     cursor: pointer;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.btn:hover {
     text-decoration: none;
 }
 
 .btn-primary {
-    color: var(--white-color);
+    color: #fff;
     background-color: var(--primary-color);
     border-color: var(--primary-color);
 }
 
 .btn-primary:hover {
-    background-color: #0b5ed7;
-    border-color: #0a58ca;
+    background-color: #0069d9;
+    border-color: #0062cc;
 }
 
 .btn-secondary {
-    color: var(--white-color);
-    background-color: var(--secondary-color);
-    border-color: var(--secondary-color);
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    border-color: #545b62;
 }
 
 .btn-danger {
-    color: var(--white-color);
+    color: #fff;
     background-color: var(--danger-color);
     border-color: var(--danger-color);
-}
-
-.btn-success {
-    color: var(--white-color);
-    background-color: var(--success-color);
-    border-color: var(--success-color);
 }
 
 .btn-outline-primary {
@@ -244,18 +229,19 @@ main {
 }
 
 .btn-outline-primary:hover {
-    color: var(--white-color);
+    color: #fff;
     background-color: var(--primary-color);
 }
 
-.btn-sm {
-    padding: 0.25rem 0.5rem;
-    font-size: 0.875rem;
+.btn-outline-danger {
+    color: var(--danger-color);
+    border-color: var(--danger-color);
+    background-color: transparent;
 }
 
-.btn-lg {
-    padding: 0.75rem 1.5rem;
-    font-size: 1.25rem;
+.btn-outline-danger:hover {
+    color: #fff;
+    background-color: var(--danger-color);
 }
 
 .btn-block {
@@ -263,98 +249,210 @@ main {
     width: 100%;
 }
 
-/* Cards */
-.card {
-    position: relative;
+.btn-lg {
+    padding: 12px 20px;
+    font-size: 18px;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-group .form-control {
+    flex: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Flash Messages */
+.flash-container {
+    margin-bottom: 20px;
+}
+
+.flash-message {
+    padding: 10px 15px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+}
+
+.flash-message.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.flash-message.danger, .flash-message.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.flash-message.warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
+.flash-message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
+/* Quote Builder Specific Styles */
+.quote-builder-container {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 30px;
+}
+
+.treatment-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.treatment-card {
+    height: 100%;
     display: flex;
     flex-direction: column;
-    min-width: 0;
-    word-wrap: break-word;
-    background-color: var(--white-color);
-    background-clip: border-box;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    margin-bottom: 1.5rem;
-    overflow: hidden;
 }
 
-.card-img-top {
-    width: 100%;
-    height: 200px;
-    object-fit: cover;
-}
-
-.card-header {
-    padding: 0.75rem 1.25rem;
-    margin-bottom: 0;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-bottom: 1px solid var(--border-color);
-}
-
-.card-body {
-    flex: 1 1 auto;
-    padding: 1.25rem;
-}
-
-.card-title {
-    margin-bottom: 0.75rem;
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-.card-text {
-    margin-bottom: 0.75rem;
-}
-
-.card-footer {
-    padding: 0.75rem 1.25rem;
-    background-color: rgba(0, 0, 0, 0.03);
-    border-top: 1px solid var(--border-color);
-}
-
-/* Forms */
-.form-group {
-    margin-bottom: 1rem;
-}
-
-.form-label {
-    display: inline-block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-}
-
-.form-control {
-    display: block;
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    font-size: 1rem;
-    line-height: 1.5;
-    color: var(--dark-color);
-    background-color: var(--white-color);
-    background-clip: padding-box;
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control:focus {
-    border-color: var(--primary-color);
-    outline: 0;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-.form-text {
-    margin-top: 0.25rem;
-    font-size: 0.875rem;
+.treatment-category {
+    font-size: 12px;
+    text-transform: uppercase;
     color: var(--secondary-color);
+    margin-bottom: 5px;
 }
 
-/* Special Offers */
+.treatment-price {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.treatment-actions {
+    margin-top: auto;
+}
+
+.quote-summary {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 20px;
+    position: sticky;
+    top: 100px;
+}
+
+.summary-title {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-list {
+    margin-bottom: 20px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.summary-item-name {
+    flex: 1;
+}
+
+.summary-item-price {
+    font-weight: 600;
+    margin: 0 10px;
+}
+
+.summary-item-remove {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.summary-totals {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.summary-subtotal, .summary-discount, .summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.summary-total {
+    font-weight: 700;
+    font-size: 18px;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.applied-promo {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.applied-promo-code {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.applied-promo-description {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 5px;
+}
+
+.applied-promo-remove {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.promo-form {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+/* Special Offers Specific Styles */
 .offers-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+    gap: 30px;
 }
 
 .offer-card {
@@ -363,424 +461,174 @@ main {
     flex-direction: column;
 }
 
-.offer-card .card-body {
-    flex: 1;
-}
-
-.offer-card .card-img-top {
-    height: 180px;
+.offer-card img {
+    width: 100%;
+    height: 200px;
     object-fit: cover;
 }
 
 .offer-treatments {
-    margin: 0.75rem 0;
-    padding-left: 1.25rem;
+    padding-left: 20px;
+    margin-bottom: 15px;
 }
 
 .offer-code {
-    font-weight: 700;
+    font-weight: 600;
+    background-color: #f8f9fa;
+    padding: 2px 5px;
+    border-radius: 3px;
     color: var(--primary-color);
-    background-color: rgba(13, 110, 253, 0.1);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--border-radius);
-    display: inline-block;
 }
 
 .offer-valid {
-    font-size: 0.875rem;
-    color: var(--secondary-color);
-    margin-top: 0.5rem;
+    font-size: 14px;
+    color: #6c757d;
 }
 
-/* Quote Builder */
-.quote-builder-container {
-    display: grid;
-    grid-template-columns: 1fr 350px;
-    gap: 2rem;
-}
-
-@media (max-width: 768px) {
-    .quote-builder-container {
-        grid-template-columns: 1fr;
-    }
-}
-
-.treatment-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1rem;
-}
-
-.treatment-card {
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.treatment-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.treatment-category {
-    font-size: 0.875rem;
-    color: var(--secondary-color);
-    margin-bottom: 0.25rem;
-}
-
-.treatment-price {
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.treatment-actions {
-    margin-top: 1rem;
-}
-
-/* Quote Summary */
-.quote-summary {
-    background-color: var(--white-color);
-    padding: 1.5rem;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    position: sticky;
-    top: 20px;
-}
-
-.summary-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.summary-list {
-    margin-bottom: 1rem;
-}
-
-.summary-item {
+/* Progress Steps */
+.quote-progress {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 30px;
+    position: relative;
 }
 
-.summary-item-name {
-    flex: 1;
+.quote-progress::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #e9ecef;
+    z-index: -1;
 }
 
-.summary-item-price {
+.progress-step {
+    background-color: white;
+    padding: 10px 15px;
+    border-radius: 30px;
     font-weight: 500;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    position: relative;
 }
 
-.summary-item-remove {
-    margin-left: 0.5rem;
-    color: var(--danger-color);
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-size: 1rem;
+.progress-step.active {
+    background-color: var(--primary-color);
+    color: white;
 }
 
-.summary-totals {
-    margin-top: 1rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.summary-subtotal,
-.summary-discount,
-.summary-total {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 0.5rem;
-}
-
-.summary-total {
-    font-weight: 700;
-    font-size: 1.125rem;
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border-color);
-}
-
-.promo-form {
-    margin: 1rem 0;
-}
-
-.promo-form .input-group {
-    display: flex;
-}
-
-.promo-form .form-control {
-    flex: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
-.promo-form .btn {
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-.applied-promo {
-    background-color: rgba(13, 110, 253, 0.1);
-    padding: 0.75rem;
-    border-radius: var(--border-radius);
-    margin: 1rem 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.applied-promo-info {
-    flex: 1;
-}
-
-.applied-promo-code {
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.applied-promo-remove {
-    background: none;
-    border: none;
-    color: var(--danger-color);
-    cursor: pointer;
-}
-
-/* Patient Info Form */
-.patient-info-form {
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-/* Review Quote */
+/* Review Quote Specific Styles */
 .review-quote-container {
     max-width: 800px;
     margin: 0 auto;
 }
 
 .review-section {
-    margin-bottom: 2rem;
+    margin-bottom: 30px;
 }
 
 .review-section-title {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.review-treatments {
-    margin-bottom: 1.5rem;
+    font-size: 20px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .review-patient {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.review-patient p {
-    margin-bottom: 0.5rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
 .review-patient-label {
-    font-weight: 500;
+    font-weight: 600;
+}
+
+.review-treatments {
+    margin-bottom: 20px;
 }
 
 .review-actions {
     display: flex;
-    gap: 1rem;
     justify-content: space-between;
-    margin-top: 2rem;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #eee;
 }
 
-/* Error pages */
-.error-container {
-    text-align: center;
-    padding: 3rem 1rem;
+/* Row/Column Layout */
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -15px;
 }
 
-.error-content {
-    max-width: 500px;
-    margin: 0 auto;
+.col {
+    flex: 1 0 0%;
+    padding: 0 15px;
 }
 
-.error-content h1 {
-    font-size: 5rem;
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-}
-
-.error-content h2 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-}
-
-.error-content p {
-    margin-bottom: 2rem;
-}
-
-/* Utilities */
-.text-center {
+/* Footer Styles */
+.site-footer {
+    background-color: white;
+    padding: 20px 0;
+    border-top: 1px solid #eee;
     text-align: center;
 }
 
-.text-right {
-    text-align: right;
-}
-
-.text-success {
-    color: var(--success-color);
-}
-
-.text-danger {
-    color: var(--danger-color);
-}
-
-.text-warning {
-    color: var(--warning-color);
-}
-
-.text-info {
-    color: var(--info-color);
-}
-
-.text-primary {
-    color: var(--primary-color);
-}
-
-.text-secondary {
-    color: var(--secondary-color);
-}
-
-.bg-light {
-    background-color: var(--light-color);
-}
-
-.bg-white {
-    background-color: var(--white-color);
-}
-
-.mb-1 {
-    margin-bottom: 0.25rem;
-}
-
-.mb-2 {
-    margin-bottom: 0.5rem;
-}
-
-.mb-3 {
-    margin-bottom: 1rem;
-}
-
-.mb-4 {
-    margin-bottom: 1.5rem;
-}
-
-.mb-5 {
-    margin-bottom: 3rem;
-}
-
-.mt-1 {
-    margin-top: 0.25rem;
-}
-
-.mt-2 {
-    margin-top: 0.5rem;
-}
-
-.mt-3 {
-    margin-top: 1rem;
-}
-
-.mt-4 {
-    margin-top: 1.5rem;
-}
-
-.mt-5 {
-    margin-top: 3rem;
-}
-
-.p-2 {
-    padding: 0.5rem;
-}
-
-.p-3 {
-    padding: 1rem;
-}
-
-.p-4 {
-    padding: 1.5rem;
-}
-
-.rounded {
-    border-radius: var(--border-radius);
-}
-
-.shadow {
-    box-shadow: var(--box-shadow);
-}
-
-/* Responsive */
+/* Responsive Adjustments */
 @media (max-width: 992px) {
-    .container {
-        max-width: 960px;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        max-width: 720px;
+    .quote-builder-container {
+        grid-template-columns: 1fr;
     }
     
-    .site-header .container {
-        flex-direction: column;
-    }
-    
-    .main-nav {
-        margin-top: 1rem;
-    }
-    
-    .main-nav ul {
-        justify-content: center;
-    }
-    
-    .main-nav li:first-child {
-        margin-left: 0;
+    .quote-summary {
+        position: static;
     }
     
     .review-patient {
         grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 576px) {
-    .container {
-        max-width: 100%;
-    }
-    
-    .row {
-        margin: 0;
-    }
-    
-    .col {
-        padding: 0;
-    }
-    
-    .btn-block-sm {
-        display: block;
-        width: 100%;
-        margin-bottom: 0.5rem;
+        gap: 10px;
     }
     
     .review-actions {
         flex-direction: column;
+        gap: 15px;
+    }
+    
+    .review-actions > div {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .site-header .container {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .main-nav ul {
+        margin-top: 15px;
+    }
+    
+    .main-nav ul li:first-child {
+        margin-left: 0;
+    }
+    
+    .row {
+        flex-direction: column;
+    }
+    
+    .col {
+        margin-bottom: 20px;
+    }
+    
+    .treatment-list {
+        grid-template-columns: 1fr;
+    }
+    
+    .offers-container {
+        grid-template-columns: 1fr;
     }
 }
