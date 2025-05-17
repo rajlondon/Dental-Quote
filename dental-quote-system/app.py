@@ -1,86 +1,86 @@
 """
 MyDentalFly - Dental Quote System
-Main Flask Application
+Main Application File
 """
+
 import os
-from flask import Flask, render_template, session, request, flash
+from datetime import datetime
+from flask import Flask, render_template, request, session, g
 from dotenv import load_dotenv
+
+# Import routes
+from routes.page_routes import page_routes
+from routes.promo_routes import promo_routes
+from routes.api_routes import api_routes
+from routes.integration_routes import integration_routes
+
+# Import services
 from services.treatment_service import TreatmentService
 from services.promo_service import PromoService
-from routes import page_routes, promo_routes, integration_routes
-import secrets
+
+# Import utilities
+from utils.session_manager import init_session_data, get_session_data
 
 # Load environment variables
 load_dotenv()
 
-def create_app():
-    """Create and configure the Flask application"""
-    app = Flask(__name__)
-    
-    # Configure app
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(16)
-    app.config['SESSION_TYPE'] = 'filesystem'
-    app.config['SESSION_PERMANENT'] = False
-    app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
-    
-    # Create service instances
-    treatment_service = TreatmentService()
-    promo_service = PromoService()
-    
-    # Add services to app config for access in routes
-    app.config['treatment_service'] = treatment_service
-    app.config['promo_service'] = promo_service
-    
-    # Register error handlers
-    register_error_handlers(app)
-    
-    # Register context processors
-    register_context_processors(app)
-    
-    # Register blueprints
-    app.register_blueprint(page_routes.bp)
-    app.register_blueprint(promo_routes.bp)
-    app.register_blueprint(integration_routes.bp)
-    
-    return app
+# Initialize Flask application
+app = Flask(__name__)
+app.secret_key = os.getenv('SECRET_KEY', 'my_secret_key_for_development')
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['PERMANENT_SESSION_LIFETIME'] = 86400  # 24 hours
 
-def register_error_handlers(app):
-    """Register error handlers for the application"""
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return render_template('errors/404.html'), 404
-    
-    @app.errorhandler(500)
-    def server_error(e):
-        return render_template('errors/500.html'), 500
+# Initialize services
+treatment_service = TreatmentService()
+promo_service = PromoService()
 
-def register_context_processors(app):
-    """Register context processors for template rendering"""
-    @app.context_processor
-    def inject_services():
-        """Make services available to all templates"""
-        return {
-            'treatment_service': app.config['treatment_service'],
-            'promo_service': app.config['promo_service']
-        }
+# Register blueprints
+app.register_blueprint(page_routes)
+app.register_blueprint(promo_routes)
+app.register_blueprint(api_routes)
+app.register_blueprint(integration_routes)
+
+# Application context
+@app.context_processor
+def inject_globals():
+    """
+    Inject global variables into all templates
+    """
+    # Get current session data
+    session_data = get_session_data()
     
-    @app.context_processor
-    def inject_quote_data():
-        """Make quote data available to all templates"""
-        from utils.session_manager import SessionManager
-        session_manager = SessionManager()
-        
-        selected_treatments = session_manager.get_selected_treatments()
-        totals = session_manager.calculate_totals()
-        
-        return {
-            'quote_item_count': len(selected_treatments),
-            'quote_total': totals['total'],
-            'quote_subtotal': totals['subtotal'],
-            'quote_discount': totals['discount_amount']
-        }
+    # Extract quote details
+    selected_treatments = session_data.get('selected_treatments', [])
+    promo_code = session_data.get('promo_code', None)
+    quote_totals = session_data.get('quote_totals', {
+        'subtotal': 0,
+        'discount_amount': 0,
+        'total': 0
+    })
+    
+    # Calculate quote item count
+    quote_item_count = sum(treatment.get('quantity', 1) for treatment in selected_treatments)
+    
+    return {
+        'now': datetime.now(),
+        'treatment_service': treatment_service,
+        'promo_service': promo_service,
+        'selected_treatments': selected_treatments,
+        'promo_code': promo_code,
+        'quote_totals': quote_totals,
+        'quote_item_count': quote_item_count,
+        'quote_total': quote_totals.get('total', 0)
+    }
+
+@app.before_request
+def before_request():
+    """
+    Initialize session data if needed before each request
+    """
+    init_session_data()
 
 if __name__ == '__main__':
-    app = create_app()
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Run the application
+    port = int(os.getenv('PORT', 5000))
+    debug = os.getenv('FLASK_ENV', 'development') == 'development'
+    app.run(host='0.0.0.0', port=port, debug=debug)
