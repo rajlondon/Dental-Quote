@@ -1,75 +1,85 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
-import { useQuotes } from "@/hooks/use-quotes";
-import QuoteListTable from "@/components/quotes/quote-list-table";
-import QuoteDetail from "@/components/quotes/quote-detail";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, Download, FileText } from "lucide-react";
+import { Loader2, Download, FileText, RefreshCw } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
+import { useQuoteSystem } from "@/hooks/use-quote-system";
+import { QuoteIntegrationWidget } from "@/components/quotes/QuoteIntegrationWidget";
+import { Dialog, DialogContent, DialogTitle, DialogHeader, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useClinicList } from "@/hooks/use-clinics";
 
 export default function AdminQuotesPage() {
   const [, setLocation] = useLocation();
   const params = useParams();
-  const quoteId = params?.id ? parseInt(params.id) : undefined;
+  const quoteId = params?.id;
   
-  const {
-    allQuotesQuery,
-    getQuoteQuery
-  } = useQuotes();
+  // Use the new quote system hook for the admin portal
+  const quoteSystem = useQuoteSystem('admin');
+  const clinicsQuery = useClinicList();
   
+  // Local state for dialogs
   const [activeTab, setActiveTab] = useState<"all" | "pending" | "assigned" | "in_progress" | "completed">("all");
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedClinicId, setSelectedClinicId] = useState<string>("");
 
   // Load quotes when component mounts
   useEffect(() => {
-    allQuotesQuery.refetch();
-  }, []);
+    if (quoteId) {
+      quoteSystem.setSelectedQuoteId(quoteId);
+    }
+  }, [quoteId]);
 
-  // Load specific quote if ID is provided
-  const quoteQuery = quoteId ? getQuoteQuery(quoteId) : null;
+  // Handle quote actions
+  const handleQuoteAction = (action: string, quoteId: string) => {
+    switch (action) {
+      case 'view':
+        setLocation(`/admin/quotes/${quoteId}`);
+        break;
+      case 'assign':
+        quoteSystem.setSelectedQuoteId(quoteId);
+        setAssignDialogOpen(true);
+        break;
+      case 'create':
+        setLocation('/admin/new-quote');
+        break;
+      default:
+        break;
+    }
+  };
 
-  // Handle loading states
-  if (quoteId && quoteQuery?.isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  // Handle error states
-  if (quoteId && quoteQuery?.error) {
-    return (
-      <div className="text-center py-12">
-        <p className="text-red-500 text-lg">Error loading quote: {quoteQuery?.error.message}</p>
-        <Button 
-          variant="outline" 
-          className="mt-4"
-          onClick={() => setLocation("/admin/quotes")}
-        >
-          Back to Quotes
-        </Button>
-      </div>
-    );
-  }
+  // Handle assigning quote to clinic
+  const handleAssignQuote = () => {
+    if (quoteSystem.selectedQuoteId && selectedClinicId) {
+      quoteSystem.assignQuoteMutation.mutate({
+        quoteId: quoteSystem.selectedQuoteId,
+        clinicId: selectedClinicId
+      }, {
+        onSuccess: () => {
+          setAssignDialogOpen(false);
+          setSelectedClinicId("");
+        }
+      });
+    }
+  };
 
   // If showing a specific quote
-  if (quoteId && quoteQuery?.data) {
+  if (quoteId) {
     return (
       <div className="container mx-auto py-6 px-4">
-        <QuoteDetail
-          quoteRequest={quoteQuery.data.quoteRequest}
-          versions={quoteQuery.data.versions}
+        <QuoteIntegrationWidget
           portalType="admin"
-          onBack={() => setLocation("/admin/quotes")}
+          quoteId={quoteId}
+          onQuoteAction={handleQuoteAction}
         />
       </div>
     );
   }
 
   // Filter quotes by status based on active tab
-  const filteredQuotes = allQuotesQuery.data?.filter(quote => {
+  const filteredQuotes = quoteSystem.quotes?.filter(quote => {
     if (activeTab === "pending") {
       return ["pending"].includes(quote.status);
     } else if (activeTab === "assigned") {
@@ -84,11 +94,11 @@ export default function AdminQuotesPage() {
 
   // Calculate statistics
   const stats = {
-    total: allQuotesQuery.data?.length || 0,
-    pending: allQuotesQuery.data?.filter(q => q.status === "pending").length || 0,
-    assigned: allQuotesQuery.data?.filter(q => q.status === "assigned").length || 0,
-    inProgress: allQuotesQuery.data?.filter(q => ["in_progress", "sent"].includes(q.status)).length || 0,
-    completed: allQuotesQuery.data?.filter(q => ["accepted", "completed"].includes(q.status)).length || 0
+    total: quoteSystem.quotes?.length || 0,
+    pending: quoteSystem.quotes?.filter(q => q.status === "pending").length || 0,
+    assigned: quoteSystem.quotes?.filter(q => q.status === "assigned").length || 0,
+    inProgress: quoteSystem.quotes?.filter(q => ["in_progress", "sent"].includes(q.status)).length || 0,
+    completed: quoteSystem.quotes?.filter(q => ["accepted", "completed"].includes(q.status)).length || 0
   };
 
   return (
@@ -103,6 +113,14 @@ export default function AdminQuotesPage() {
               className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4" /> Create New Quote
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={() => quoteSystem.allQuotesQuery.refetch()}
+            >
+              <RefreshCw className={`h-4 w-4 ${quoteSystem.allQuotesQuery.isRefetching ? 'animate-spin' : ''}`} /> 
+              Refresh
             </Button>
             <Button variant="outline" className="flex items-center gap-2">
               <Download className="h-4 w-4" /> Export Quotes
@@ -159,31 +177,65 @@ export default function AdminQuotesPage() {
         </TabsList>
 
         <TabsContent value={activeTab} className="mt-6">
-          {allQuotesQuery.isLoading ? (
-            <div className="flex justify-center my-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : (
-            <QuoteListTable
-              quotes={filteredQuotes}
-              portalType="admin"
-              isLoading={allQuotesQuery.isLoading}
-            />
-          )}
+          <QuoteIntegrationWidget
+            portalType="admin"
+            onQuoteAction={handleQuoteAction}
+          />
         </TabsContent>
       </Tabs>
 
-      {(!allQuotesQuery.data || allQuotesQuery.data.length === 0) && !allQuotesQuery.isLoading && (
-        <Card className="mt-8">
-          <CardContent className="flex flex-col items-center text-center p-12">
-            <FileText className="h-16 w-16 text-primary mb-4" />
-            <h3 className="text-xl font-semibold mb-2">No Quote Requests Yet</h3>
-            <p className="text-muted-foreground max-w-md mb-6">
-              There are no quote requests in the system yet. Quote requests will appear here when patients submit them through the platform.
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Assign Quote Dialog */}
+      <Dialog open={assignDialogOpen} onOpenChange={setAssignDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Quote to Clinic</DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <p className="text-sm text-muted-foreground mb-2">Select a clinic to assign this quote:</p>
+            
+            <Select value={selectedClinicId} onValueChange={setSelectedClinicId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a clinic" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {clinicsQuery.isLoading ? (
+                    <SelectItem value="loading" disabled>Loading clinics...</SelectItem>
+                  ) : clinicsQuery.data?.length ? (
+                    clinicsQuery.data.map(clinic => (
+                      <SelectItem key={clinic.id} value={clinic.id.toString()}>
+                        {clinic.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <SelectItem value="empty" disabled>No clinics available</SelectItem>
+                  )}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAssignDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleAssignQuote}
+              disabled={!selectedClinicId || quoteSystem.assignQuoteMutation.isPending}
+            >
+              {quoteSystem.assignQuoteMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Assigning...
+                </>
+              ) : (
+                'Assign Quote'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
