@@ -22,6 +22,7 @@ export default function EnhancedQuotePage() {
   const [currentStep, setCurrentStep] = useState<FlowStep>('quiz');
   const [isLoading, setIsLoading] = useState(false);
   const [promoCodeInput, setPromoCodeInput] = useState('');
+  const [promoCodeError, setPromoCodeError] = useState('');
   const [isSubmittingPromo, setIsSubmittingPromo] = useState(false);
   const [completedQuiz, setCompletedQuiz] = useState(false);
   
@@ -65,32 +66,28 @@ export default function EnhancedQuotePage() {
   const handlePromoCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!promoCodeInput.trim()) return;
+    // If no promo code is entered, just advance to the next section
+    if (!promoCodeInput.trim()) {
+      setCurrentStep('patient-info');
+      return;
+    }
     
     setIsSubmittingPromo(true);
     
-    // Simulate API call to validate promo code
-    setTimeout(() => {
-      const validPromoCodes = ["SUMMER15", "DENTAL25", "NEWPATIENT", "TEST10", "FREECONSULT", "LUXHOTEL20", "IMPLANTCROWN30", "FREEWHITE"];
+    // Validate promo code
+    const validPromoCodes = ["SUMMER15", "DENTAL25", "NEWPATIENT", "TEST10", "FREECONSULT", "LUXHOTEL20", "IMPLANTCROWN30", "FREEWHITE"];
       
-      if (validPromoCodes.includes(promoCodeInput.toUpperCase())) {
-        applyPromoCode(promoCodeInput.toUpperCase());
-        
-        toast({
-          title: "Promo Code Applied",
-          description: `Successfully applied promo code: ${promoCodeInput.toUpperCase()}`,
-        });
-      } else {
-        toast({
-          title: "Invalid Promo Code",
-          description: "The promo code you entered is invalid or expired.",
-          variant: "destructive",
-        });
-      }
-      
-      setIsSubmittingPromo(false);
-      setPromoCodeInput('');
-    }, 1000);
+    if (validPromoCodes.includes(promoCodeInput.toUpperCase())) {
+      // Apply the promo code
+      applyPromoCode(promoCodeInput.toUpperCase());
+      // Advance to the next section
+      setCurrentStep('patient-info');
+    } else {
+      // Show error directly in the form
+      setPromoCodeError("The promo code you entered is invalid or expired.");
+    }
+    
+    setIsSubmittingPromo(false);
   };
   
   // Handle patient info changes
@@ -240,23 +237,45 @@ export default function EnhancedQuotePage() {
                       Enter your promo code to get an instant discount on your treatments.
                     </p>
                     
-                    <form className="flex gap-2" onSubmit={handlePromoCodeSubmit}>
-                      <Input
-                        className="max-w-xs"
-                        placeholder="Enter promo code"
-                        value={promoCodeInput}
-                        onChange={(e) => setPromoCodeInput(e.target.value)}
-                      />
-                      <Button 
-                        type="submit"
-                        disabled={isSubmittingPromo || !promoCodeInput.trim()}
-                      >
-                        {isSubmittingPromo ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          'Apply'
-                        )}
-                      </Button>
+                    <form onSubmit={handlePromoCodeSubmit}>
+                      <div className="flex gap-2">
+                        <Input
+                          className="max-w-xs"
+                          placeholder="Enter promo code"
+                          value={promoCodeInput}
+                          onChange={(e) => {
+                            setPromoCodeInput(e.target.value);
+                            // Clear any previous error when user types
+                            if (promoCodeError) setPromoCodeError('');
+                          }}
+                        />
+                        <Button 
+                          type="submit"
+                          disabled={isSubmittingPromo}
+                        >
+                          {isSubmittingPromo ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            'Apply'
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {promoCodeError && (
+                        <div className="mt-2 text-sm text-red-600">
+                          {promoCodeError}
+                        </div>
+                      )}
+                      
+                      <div className="mt-4 flex justify-between">
+                        <Button 
+                          type="button"
+                          variant="outline"
+                          onClick={() => setCurrentStep('patient-info')}
+                        >
+                          Continue Without Promo
+                        </Button>
+                      </div>
                     </form>
                     
                     {promoCode && (
@@ -269,7 +288,10 @@ export default function EnhancedQuotePage() {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => clearPromoCode()}
+                            onClick={() => {
+                              clearPromoCode();
+                              setPromoCodeInput('');
+                            }}
                           >
                             Remove
                           </Button>
