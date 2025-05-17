@@ -3,32 +3,43 @@ Integration Routes Module
 Handles integration with external systems and API endpoints
 """
 from flask import Blueprint, request, jsonify
-from utils.session_manager import get_quote_data
-from datetime import datetime
+from utils.session_manager import export_session_data, get_treatments
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create Blueprint
 integration_routes = Blueprint('integration_routes', __name__)
 
-# API endpoint to get quote data as JSON
-@integration_routes.route('/api/quote-data', methods=['GET'])
-def get_quote_data_api():
-    """Return the current quote data as JSON"""
-    quote_data = get_quote_data()
-    
-    # Add additional metadata
-    quote_data['generated_at'] = datetime.now().isoformat()
-    quote_data['quote_ref'] = quote_data['quote_id'][:8].upper() if quote_data['quote_id'] else None
-    
-    return jsonify(quote_data)
+@integration_routes.route('/api/session-data', methods=['GET'])
+def get_session_data():
+    """API endpoint to get current session data"""
+    session_data = export_session_data()
+    return jsonify(session_data)
 
-# API endpoint for webhook integration
-@integration_routes.route('/api/webhook/quote-complete', methods=['POST'])
-def quote_webhook():
-    """Webhook to be called when a quote is completed"""
-    # Implement webhook logic here (e.g., send data to CRM, email system, etc.)
-    # This is a placeholder for future integration
+@integration_routes.route('/api/treatments', methods=['GET'])
+def get_treatment_data():
+    """API endpoint to get selected treatments"""
+    treatments = get_treatments()
+    return jsonify(treatments)
+
+@integration_routes.route('/api/export-quote', methods=['POST'])
+def export_quote():
+    """API endpoint to export quote data to external system"""
+    # Get session data
+    quote_data = export_session_data()
+    
+    # In a production environment, you would integrate with:
+    # 1. CRM system (e.g., Salesforce, HubSpot)
+    # 2. Email notification service
+    # 3. Patient management system
+    # 4. PDF generation service
+    
+    # For now, we'll just log and return the data
+    logger.info(f"Quote exported with ID: {quote_data.get('quote_id')}")
     
     return jsonify({
         'success': True,
-        'message': 'Quote webhook received'
+        'message': 'Quote exported successfully',
+        'quote_data': quote_data
     })

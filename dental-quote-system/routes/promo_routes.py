@@ -1,110 +1,120 @@
 """
 Promo Routes Module
-Handles promotional code application and validation
+Handles promotional code operations
 """
-from flask import Blueprint, request, redirect, url_for, flash, jsonify
-from utils.session_manager import set_promo_code, remove_promo_code, get_treatments, calculate_totals
-from services.promo_service import get_promotion_by_code, validate_promo_code, apply_promo_code
+from flask import Blueprint, request, jsonify, render_template
+from utils.session_manager import apply_promo_code, remove_promo_code, get_quote_totals
+from services.promo_service import get_active_promotions, get_promotion_by_code
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create Blueprint
 promo_routes = Blueprint('promo_routes', __name__)
 
 @promo_routes.route('/apply-promo', methods=['POST'])
 def apply_promo():
-    """Apply a promo code to the quote"""
-    promo_code = request.form.get('promo_code', '').strip().upper()
-    
-    # Get selected treatments from session
-    treatments = get_treatments()
-    
-    # Calculate subtotal
-    subtotal = calculate_totals()['subtotal']
-    
-    # Handle AJAX requests
+    """Apply a promo code to the current quote"""
+    # Check if the request is AJAX
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
-    # If no promo code provided
+    # Get the promo code from the form data
+    promo_code = request.form.get('promo_code', '').strip().upper()
+    
     if not promo_code:
         if is_ajax:
             return jsonify({
                 'success': False,
-                'message': "Please enter a promo code"
+                'message': 'Please enter a promo code'
             })
-        flash("Please enter a promo code", "warning")
-        return redirect(url_for('page_routes.quote_builder'))
+        return render_template('quote/quote_builder.html', error='Please enter a promo code')
     
-    # Apply the promo code
-    result = apply_promo_code(promo_code, subtotal)
+    # Try to apply the promo code
+    result = apply_promo_code(promo_code)
     
-    if result['success']:
-        # Save to session
-        set_promo_code(promo_code, result['promo_details'])
+    if len(result) == 3:  # Success case returns 3 values
+        success, message, promo_result = result
         
-        # Calculate updated totals
-        totals = calculate_totals()
+        # Calculate the updated totals
+        totals = get_quote_totals()
         
         if is_ajax:
             return jsonify({
                 'success': True,
-                'message': result['message'],
-                'promo_details': result['promo_details'],
+                'message': message,
+                'promo_details': promo_result.get('promo_details'),
+                'discount_amount': promo_result.get('discount_amount'),
                 'totals': totals
             })
-        
-        flash(result['message'], "success")
     else:
+        success, message = result
+        
         if is_ajax:
             return jsonify({
                 'success': False,
-                'message': result['message']
+                'message': message
             })
-        
-        flash(result['message'], "danger")
     
-    return redirect(url_for('page_routes.quote_builder'))
+    # For non-AJAX requests, redirect back to the quote builder page
+    return render_template('quote/quote_builder.html', 
+                          success_message=message if success else None, 
+                          error=message if not success else None)
 
 @promo_routes.route('/remove-promo', methods=['POST'])
 def remove_promo():
-    """Remove a promo code from the quote"""
-    # Remove promo code from session
-    remove_promo_code()
+    """Remove the applied promo code from the current quote"""
+    # Check if the request is AJAX
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
     
-    # Calculate updated totals
-    totals = calculate_totals()
+    # Try to remove the promo code
+    success, message = remove_promo_code()
     
-    # Handle AJAX requests
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+    # Calculate the updated totals
+    totals = get_quote_totals()
+    
+    if is_ajax:
         return jsonify({
-            'success': True,
-            'message': "Promo code removed",
+            'success': success,
+            'message': message,
             'totals': totals
         })
     
-    flash("Promo code removed", "info")
-    return redirect(url_for('page_routes.quote_builder'))
-
-@promo_routes.route('/validate-promo/<promo_code>', methods=['GET'])
-def validate_promo(promo_code):
-    """Validate a promo code via API"""
+    # For non-AJAX requests, redirect back to the quote builder page
+    return render_template('quote/quote_builder.html', 
+                          success_message=message if success else None, 
+                          error=message if not success else None)
+                          
+@promo_routes.route('/check-promo', methods=['GET'])
+def check_promo():
+    """Check if a promo code is valid without applying it"""
+    promo_code = request.args.get('code', '').strip().upper()
+    
     if not promo_code:
         return jsonify({
             'valid': False,
-            'message': "No promo code provided"
+            'message': 'No promo code provided'
         })
     
-    # Calculate subtotal for validation
-    subtotal = calculate_totals()['subtotal']
+    promotion = get_promotion_by_code(promo_code)
     
-    # Validate the promo code
-    is_valid, message = validate_promo_code(promo_code, subtotal)
-    
-    # Get promotion details if valid
-    promo_details = None
-    if is_valid:
-        promo_details = get_promotion_by_code(promo_code)
+    if promotion:
+        return jsonify({
+            'valid': True,
+            'message': 'Valid promo code',
+            'promo_details': promotion
+        })
+    else:
+        return jsonify({
+            'valid': False,
+            'message': f"Promo code '{promo_code}' is invalid or expired"
+        })
+
+@promo_routes.route('/active-promotions', methods=['GET'])
+def get_promotions():
+    """Get a list of all active promotions"""
+    promotions = get_active_promotions()
     
     return jsonify({
-        'valid': is_valid,
-        'message': message,
-        'promo_details': promo_details
+        'success': True,
+        'promotions': promotions
     })
