@@ -1,310 +1,344 @@
+"""
+Session Manager for Dental Quote System
+
+This module provides session management functionality for maintaining
+quote data throughout the user journey, from treatment selection to
+quote submission.
+"""
+
 from flask import session
-import json
-import uuid
 from datetime import datetime
+import uuid
+import json
+from typing import Dict, List, Any, Optional, Union
+
 
 class SessionManager:
     """
-    Utility class to manage session data for the quote builder
+    Session manager class to handle storing and retrieving quote data
+    in the user's session throughout the quote-building process.
     """
+
+    # Session keys
+    SESSION_KEY = 'dental_quote'
+    TREATMENTS_KEY = 'selected_treatments'
+    PROMO_CODE_KEY = 'promo_code'
+    PROMO_DETAILS_KEY = 'promo_details'
+    PATIENT_INFO_KEY = 'patient_info'
+    QUOTE_REFERENCE_KEY = 'quote_reference'
+    SUBTOTAL_KEY = 'subtotal'
+    DISCOUNT_KEY = 'discount'
+    TOTAL_KEY = 'total'
     
-    @staticmethod
-    def initialize_session(reset=False):
+    @classmethod
+    def initialize_session(cls, reset: bool = False) -> None:
         """
-        Initialize the session with default values if needed
+        Initialize or reset the quote session data
         
         Args:
-            reset (bool): If True, reset all session data to defaults
+            reset: If True, reset the session data even if it already exists
         """
-        if reset or 'quote_data' not in session:
-            session['quote_data'] = {
-                'selected_treatments': [],
-                'promo_code': None,
-                'promo_details': None,
-                'patient_info': None,
-                'quote_id': None,
-                'created_at': datetime.now().isoformat()
+        if cls.SESSION_KEY not in session or reset:
+            session[cls.SESSION_KEY] = {
+                cls.TREATMENTS_KEY: [],
+                cls.PROMO_CODE_KEY: None,
+                cls.PROMO_DETAILS_KEY: None,
+                cls.PATIENT_INFO_KEY: None,
+                cls.QUOTE_REFERENCE_KEY: None,
+                cls.SUBTOTAL_KEY: 0,
+                cls.DISCOUNT_KEY: 0,
+                cls.TOTAL_KEY: 0
             }
     
-    @staticmethod
-    def get_selected_treatments():
+    @classmethod
+    def get_quote_data(cls) -> Dict[str, Any]:
         """
-        Get the list of selected treatments
+        Get all quote data from the session
         
         Returns:
-            list: The selected treatments
+            Dictionary containing all quote data
         """
-        return session.get('quote_data', {}).get('selected_treatments', [])
+        cls.initialize_session()
+        return session[cls.SESSION_KEY]
     
-    @staticmethod
-    def add_treatment(treatment):
+    @classmethod
+    def get_selected_treatments(cls) -> List[Dict[str, Any]]:
         """
-        Add a treatment to the quote
+        Get selected treatments from the session
+        
+        Returns:
+            List of selected treatments with their details
+        """
+        return cls.get_quote_data().get(cls.TREATMENTS_KEY, [])
+    
+    @classmethod
+    def add_treatment(cls, treatment_data: Dict[str, Any]) -> None:
+        """
+        Add a treatment to the selected treatments list
         
         Args:
-            treatment (dict): The treatment to add
+            treatment_data: Dictionary containing treatment details
         """
-        if 'quote_data' not in session:
-            SessionManager.initialize_session()
+        treatments = cls.get_selected_treatments()
         
-        selected_treatments = SessionManager.get_selected_treatments()
-        
-        # Check if treatment is already in the list
+        # Check if treatment already exists in the list
         existing_treatment = next(
-            (t for t in selected_treatments if t['id'] == treatment['id']), 
+            (t for t in treatments if t['id'] == treatment_data['id']), 
             None
         )
         
         if existing_treatment:
-            # Increment quantity if already in the list
-            existing_treatment['quantity'] += 1
+            # Increment quantity if already in list
+            existing_treatment['quantity'] = existing_treatment.get('quantity', 1) + 1
         else:
             # Add new treatment with quantity 1
-            treatment_data = {
-                'id': treatment['id'],
-                'name': treatment['name'],
-                'description': treatment['description'],
-                'price': treatment['price'],
-                'category_id': treatment.get('category_id'),
-                'quantity': 1
-            }
-            selected_treatments.append(treatment_data)
+            treatment_data['quantity'] = 1
+            treatments.append(treatment_data)
         
-        session['quote_data']['selected_treatments'] = selected_treatments
+        # Update treatments in session
+        quote_data = cls.get_quote_data()
+        quote_data[cls.TREATMENTS_KEY] = treatments
+        session[cls.SESSION_KEY] = quote_data
         
-        # Recalculate totals
-        SessionManager._recalculate_totals()
+        # Recalculate pricing
+        cls.update_pricing()
     
-    @staticmethod
-    def remove_treatment(treatment_id):
+    @classmethod
+    def remove_treatment(cls, treatment_id: str) -> None:
         """
-        Remove a treatment from the quote
+        Remove a treatment from the selected treatments list
         
         Args:
-            treatment_id (str): The ID of the treatment to remove
+            treatment_id: ID of the treatment to remove
         """
-        if 'quote_data' not in session:
-            return
+        treatments = cls.get_selected_treatments()
+        updated_treatments = [t for t in treatments if t['id'] != treatment_id]
         
-        selected_treatments = SessionManager.get_selected_treatments()
+        # Update treatments in session
+        quote_data = cls.get_quote_data()
+        quote_data[cls.TREATMENTS_KEY] = updated_treatments
+        session[cls.SESSION_KEY] = quote_data
         
-        # Filter out the treatment to remove
-        updated_treatments = [t for t in selected_treatments if t['id'] != treatment_id]
-        
-        session['quote_data']['selected_treatments'] = updated_treatments
-        
-        # Recalculate totals
-        SessionManager._recalculate_totals()
+        # Recalculate pricing
+        cls.update_pricing()
     
-    @staticmethod
-    def update_treatment_quantity(treatment_id, quantity):
+    @classmethod
+    def update_treatment_quantity(cls, treatment_id: str, quantity: int) -> None:
         """
-        Update the quantity of a treatment
+        Update the quantity of a selected treatment
         
         Args:
-            treatment_id (str): The ID of the treatment to update
-            quantity (int): The new quantity
+            treatment_id: ID of the treatment to update
+            quantity: New quantity (must be at least 1)
         """
-        if 'quote_data' not in session:
-            return
-        
-        selected_treatments = SessionManager.get_selected_treatments()
-        
-        # Find the treatment
-        treatment = next(
-            (t for t in selected_treatments if t['id'] == treatment_id),
-            None
-        )
-        
-        if treatment:
-            # Update quantity
-            treatment['quantity'] = max(1, int(quantity))
+        if quantity < 1:
+            quantity = 1
             
-            # Update in session
-            session['quote_data']['selected_treatments'] = selected_treatments
-            
-            # Recalculate totals
-            SessionManager._recalculate_totals()
+        treatments = cls.get_selected_treatments()
+        
+        for treatment in treatments:
+            if treatment['id'] == treatment_id:
+                treatment['quantity'] = quantity
+                break
+        
+        # Update treatments in session
+        quote_data = cls.get_quote_data()
+        quote_data[cls.TREATMENTS_KEY] = treatments
+        session[cls.SESSION_KEY] = quote_data
+        
+        # Recalculate pricing
+        cls.update_pricing()
     
-    @staticmethod
-    def set_promo_code(code, details=None):
+    @classmethod
+    def set_promo_code(cls, promo_code: str, promo_details: Optional[Dict[str, Any]] = None) -> None:
         """
-        Set a promotional code and its details
+        Set the promotional code and its details
         
         Args:
-            code (str): The promotional code
-            details (dict, optional): Details about the promotion
+            promo_code: The promotional code string
+            promo_details: Optional dictionary with promo details (discount amount, type, etc.)
         """
-        if 'quote_data' not in session:
-            SessionManager.initialize_session()
+        quote_data = cls.get_quote_data()
+        quote_data[cls.PROMO_CODE_KEY] = promo_code
+        quote_data[cls.PROMO_DETAILS_KEY] = promo_details
+        session[cls.SESSION_KEY] = quote_data
         
-        session['quote_data']['promo_code'] = code
-        session['quote_data']['promo_details'] = details or {}
-        
-        # Recalculate totals with the new promo code
-        SessionManager._recalculate_totals()
+        # Recalculate pricing with new promo code
+        cls.update_pricing()
     
-    @staticmethod
-    def clear_promo_code():
-        """Clear the applied promotional code"""
-        if 'quote_data' not in session:
-            return
+    @classmethod
+    def remove_promo_code(cls) -> None:
+        """Remove the promotional code from the session"""
+        quote_data = cls.get_quote_data()
+        quote_data[cls.PROMO_CODE_KEY] = None
+        quote_data[cls.PROMO_DETAILS_KEY] = None
+        session[cls.SESSION_KEY] = quote_data
         
-        session['quote_data']['promo_code'] = None
-        session['quote_data']['promo_details'] = None
-        
-        # Recalculate totals without promo code
-        SessionManager._recalculate_totals()
+        # Recalculate pricing without promo code
+        cls.update_pricing()
     
-    @staticmethod
-    def get_promo_code():
+    @classmethod
+    def get_promo_code(cls) -> Optional[str]:
         """
-        Get the applied promotional code
+        Get the current promotional code
         
         Returns:
-            str: The promotional code or None
+            The promotional code or None if not set
         """
-        return session.get('quote_data', {}).get('promo_code')
+        return cls.get_quote_data().get(cls.PROMO_CODE_KEY)
     
-    @staticmethod
-    def get_promo_details():
+    @classmethod
+    def get_promo_details(cls) -> Optional[Dict[str, Any]]:
         """
-        Get details about the applied promotion
+        Get the promotional code details
         
         Returns:
-            dict: The promotion details or None
+            Dictionary with promo details or None if not set
         """
-        return session.get('quote_data', {}).get('promo_details')
+        return cls.get_quote_data().get(cls.PROMO_DETAILS_KEY)
     
-    @staticmethod
-    def set_patient_info(patient_data):
+    @classmethod
+    def set_patient_info(cls, patient_data: Dict[str, Any]) -> None:
         """
-        Set patient information
+        Set the patient information
         
         Args:
-            patient_data (dict): Patient information
+            patient_data: Dictionary containing patient details
         """
-        if 'quote_data' not in session:
-            SessionManager.initialize_session()
-        
-        session['quote_data']['patient_info'] = patient_data
+        quote_data = cls.get_quote_data()
+        quote_data[cls.PATIENT_INFO_KEY] = patient_data
+        session[cls.SESSION_KEY] = quote_data
     
-    @staticmethod
-    def get_patient_info():
+    @classmethod
+    def get_patient_info(cls) -> Optional[Dict[str, Any]]:
         """
         Get the patient information
         
         Returns:
-            dict: The patient information or None
+            Dictionary with patient details or None if not set
         """
-        return session.get('quote_data', {}).get('patient_info')
+        return cls.get_quote_data().get(cls.PATIENT_INFO_KEY)
     
-    @staticmethod
-    def set_quote_id(quote_id):
+    @classmethod
+    def generate_quote_reference(cls) -> str:
         """
-        Set the saved quote ID
-        
-        Args:
-            quote_id (str): The quote ID
-        """
-        if 'quote_data' not in session:
-            SessionManager.initialize_session()
-        
-        session['quote_data']['quote_id'] = quote_id
-    
-    @staticmethod
-    def get_quote_id():
-        """
-        Get the saved quote ID
+        Generate a unique quote reference number
         
         Returns:
-            str: The quote ID or None
+            A unique reference string
         """
-        return session.get('quote_data', {}).get('quote_id')
-    
-    @staticmethod
-    def set_selected_offer(offer_id):
-        """
-        Set the selected special offer
+        # Generate a unique reference in the format MDF-20250517-XXXX
+        date_str = datetime.now().strftime("%Y%m%d")
+        unique_id = str(uuid.uuid4())[:6].upper()
+        reference = f"MDF-{date_str}-{unique_id}"
         
-        Args:
-            offer_id (str): The offer ID
-        """
-        if 'quote_data' not in session:
-            SessionManager.initialize_session()
+        # Store the reference in the session
+        quote_data = cls.get_quote_data()
+        quote_data[cls.QUOTE_REFERENCE_KEY] = reference
+        session[cls.SESSION_KEY] = quote_data
         
-        session['quote_data']['selected_offer'] = offer_id
+        return reference
     
-    @staticmethod
-    def get_selected_offer():
+    @classmethod
+    def get_quote_reference(cls) -> Optional[str]:
         """
-        Get the selected special offer
+        Get the quote reference number
         
         Returns:
-            str: The offer ID or None
+            The quote reference string or None if not generated yet
         """
-        return session.get('quote_data', {}).get('selected_offer')
+        return cls.get_quote_data().get(cls.QUOTE_REFERENCE_KEY)
     
-    @staticmethod
-    def get_subtotal():
+    @classmethod
+    def update_pricing(cls) -> Dict[str, float]:
         """
-        Calculate the subtotal for all selected treatments
+        Calculate and update pricing information (subtotal, discount, total)
         
         Returns:
-            float: The subtotal
+            Dictionary with pricing information
         """
-        selected_treatments = SessionManager.get_selected_treatments()
+        # Get current quote data
+        quote_data = cls.get_quote_data()
+        treatments = quote_data.get(cls.TREATMENTS_KEY, [])
+        promo_details = quote_data.get(cls.PROMO_DETAILS_KEY)
         
-        if not selected_treatments:
-            return 0
+        # Calculate subtotal
+        subtotal = sum(
+            treatment.get('price', 0) * treatment.get('quantity', 1)
+            for treatment in treatments
+        )
         
-        return sum(t['price'] * t['quantity'] for t in selected_treatments)
+        # Calculate discount
+        discount = 0
+        if promo_details:
+            discount_type = promo_details.get('discount_type')
+            discount_value = promo_details.get('discount_value', 0)
+            applicable_treatments = promo_details.get('applicable_treatments', [])
+            
+            if discount_type == 'percentage':
+                if applicable_treatments:
+                    # Calculate subtotal for applicable treatments only
+                    applicable_subtotal = sum(
+                        treatment.get('price', 0) * treatment.get('quantity', 1)
+                        for treatment in treatments
+                        if treatment.get('id') in applicable_treatments
+                    )
+                    discount = applicable_subtotal * (discount_value / 100)
+                else:
+                    # Apply to all treatments
+                    discount = subtotal * (discount_value / 100)
+                    
+            elif discount_type == 'fixed_amount':
+                discount = min(discount_value, subtotal)  # Can't discount more than the subtotal
+        
+        # Calculate total
+        total = subtotal - discount
+        
+        # Update pricing in session
+        quote_data[cls.SUBTOTAL_KEY] = round(subtotal, 2)
+        quote_data[cls.DISCOUNT_KEY] = round(discount, 2)
+        quote_data[cls.TOTAL_KEY] = round(total, 2)
+        session[cls.SESSION_KEY] = quote_data
+        
+        return {
+            'subtotal': round(subtotal, 2),
+            'discount': round(discount, 2),
+            'total': round(total, 2)
+        }
     
-    @staticmethod
-    def get_discount_amount():
+    @classmethod
+    def get_pricing(cls) -> Dict[str, float]:
         """
-        Calculate the discount amount based on the applied promo code
+        Get current pricing information
         
         Returns:
-            float: The discount amount
+            Dictionary with subtotal, discount, and total
         """
-        promo_details = SessionManager.get_promo_details()
-        subtotal = SessionManager.get_subtotal()
-        
-        if not promo_details or subtotal == 0:
-            return 0
-        
-        discount_type = promo_details.get('discount_type')
-        discount_value = promo_details.get('discount_value', 0)
-        
-        if discount_type == 'percentage':
-            # Percentage discount
-            return (subtotal * discount_value / 100.0)
-        elif discount_type == 'fixed_amount':
-            # Fixed amount discount
-            return min(discount_value, subtotal)  # Don't discount more than the subtotal
-        
-        return 0
+        quote_data = cls.get_quote_data()
+        return {
+            'subtotal': quote_data.get(cls.SUBTOTAL_KEY, 0),
+            'discount': quote_data.get(cls.DISCOUNT_KEY, 0),
+            'total': quote_data.get(cls.TOTAL_KEY, 0)
+        }
     
-    @staticmethod
-    def get_total():
+    @classmethod
+    def get_complete_quote_data(cls) -> Dict[str, Any]:
         """
-        Calculate the total after discounts
+        Get complete quote data for submission or display
         
         Returns:
-            float: The total amount
+            Dictionary with all quote information
         """
-        subtotal = SessionManager.get_subtotal()
-        discount = SessionManager.get_discount_amount()
+        # Refresh pricing to ensure it's accurate
+        cls.update_pricing()
         
-        return subtotal - discount
-    
-    @staticmethod
-    def _recalculate_totals():
-        """
-        Internal method to recalculate totals
-        This is called automatically when treatments or promo codes change
-        """
-        # The totals are calculated on-demand, so no need to store them
-        # This method exists for future use if we need to cache calculated values
-        pass
+        # Return comprehensive quote data
+        return {
+            'treatments': cls.get_selected_treatments(),
+            'promo_code': cls.get_promo_code(),
+            'promo_details': cls.get_promo_details(),
+            'patient_info': cls.get_patient_info(),
+            'reference': cls.get_quote_reference() or cls.generate_quote_reference(),
+            'created_at': datetime.now().isoformat(),
+            **cls.get_pricing()
+        }
