@@ -1,0 +1,183 @@
+My Recommendation: Hybrid Approach
+Given what we've discussed, I recommend a hybrid approach that gives you the best of both worlds:
+
+Use Flask as the main application - This gives you the original website with all its features
+Embed the Python-based quote builder into this Flask application
+Create seamless navigation between the main site and the quote builder
+Implementation Plan
+Here's how we can implement this:
+
+1. Organize the Project Structure
+dental-system/
+├── app.py                  # Main Flask application
+├── config.py               # Configuration settings
+├── static/                 # Static assets
+│   ├── css/
+│   ├── js/
+│   └── images/
+├── templates/              # Main website templates
+│   ├── base.html           # Base template
+│   ├── index.html          # Homepage with special offers
+│   ├── search.html         # Search results
+│   └── ...
+├── quote_builder/          # Quote builder module
+│   ├── __init__.py
+│   ├── routes.py           # Quote builder routes
+│   ├── models.py           # Quote data models
+│   ├── services.py         # Business logic
+│   └── templates/          # Quote builder templates
+│       ├── quote_base.html
+│       ├── step1.html
+│       └── ...
+├── utils/                  # Shared utilities
+│   ├── __init__.py
+│   ├── session.py          # Enhanced session management
+│   └── ...
+└── requirements.txt        # Dependencies
+2. Set Up the Main Flask Application
+# app.py
+from flask import Flask, render_template, redirect, url_for
+from flask_session import Session
+import os
+from datetime import timedelta
+
+app = Flask(__name__)
+
+# Configure session
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key")
+app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_PERMANENT"] = True
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=24)
+app.config["SESSION_USE_SIGNER"] = True
+
+# Initialize session
+Session(app)
+
+# Import and register the quote builder blueprint
+from quote_builder.routes import quote_blueprint
+app.register_blueprint(quote_blueprint, url_prefix='/quote-builder')
+
+# Main website routes
+@app.route('/')
+def index():
+    # Example special offers data
+    special_offers = [
+        {"id": 1, "title": "Summer Special", "discount": "15% off", "image": "summer.jpg"},
+        {"id": 2, "title": "New Patient Offer", "discount": "Free Consultation", "image": "new_patient.jpg"},
+        {"id": 3, "title": "Family Package", "discount": "20% off for families", "image": "family.jpg"}
+    ]
+    
+    # Example statistics
+    stats = {
+        "quotes_generated": "17k+",
+        "patients_served": "5k+",
+        "dentists": "200+"
+    }
+    
+    return render_template('index.html', special_offers=special_offers, stats=stats)
+
+@app.route('/search')
+def search():
+    # Search functionality
+    query = request.args.get('query', '')
+    # Perform search...
+    return render_template('search.html', query=query, results=[])
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+3. Create the Quote Builder as a Flask Blueprint
+# quote_builder/routes.py
+from flask import Blueprint, render_template, request, jsonify, redirect, url_for, session
+from .services import QuoteService, PromoService
+from utils.session import SessionManager
+
+quote_blueprint = Blueprint('quote', __name__, template_folder='templates')
+
+@quote_blueprint.route('/')
+def index():
+    """Main quote builder page"""
+    # Initialize session if needed
+    SessionManager.init_quote_session()
+    
+    return render_template('quote_builder/index.html', 
+                           quote_data=SessionManager.get_quote_data(),
+                           step='treatments')
+
+@quote_blueprint.route('/step/<step_name>')
+def step(step_name):
+    """Handle different steps of the quote builder"""
+    # Initialize session if needed
+    SessionManager.init_quote_session()
+    
+    # Get current quote data
+    quote_data = SessionManager.get_quote_data()
+    
+    # Update current step
+    quote_data['step'] = step_name
+    SessionManager.save_quote_data(quote_data)
+    
+    return render_template(f'quote_builder/step_{step_name}.html', 
+                           quote_data=quote_data)
+
+# Additional routes for API endpoints...
+4. Create Navigation Between Main Site and Quote Builder
+<!-- templates/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dental Portal - {% block title %}Home{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            <div class="logo">
+                <a href="{{ url_for('index') }}">DentalFly</a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="{{ url_for('index') }}">Home</a></li>
+                <li><a href="{{ url_for('quote.index') }}">Quote Builder</a></li>
+                <li><a href="#">Services</a></li>
+                <li><a href="#">About Us</a></li>
+                <li><a href="#">Contact</a></li>
+            </ul>
+        </nav>
+        
+        {% block search_bar %}
+        <div class="search-container">
+            <form action="{{ url_for('search') }}" method="GET">
+                <input type="text" name="query" placeholder="Search treatments...">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+        {% endblock %}
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2025 DentalFly. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+Benefits of This Approach
+Unified Experience: Users can seamlessly navigate between the main website and the quote builder
+Consistent Design: Both parts of the application share the same look and feel
+Server-Side Stability: All state management happens on the server, avoiding the issues you faced with React
+Modularity: The quote builder is a separate module that can be maintained independently
+Simplified Development: Python is used throughout, making development more consistent
+Next Steps
+Start with the Flask application as your main entry point
+Integrate the quote builder as a Flask blueprint
+Ensure session management is consistent across both parts
+Style the quote builder to match the main website's design
+Add navigation elements to move between different sections
