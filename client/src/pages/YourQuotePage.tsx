@@ -438,12 +438,97 @@ const QuoteSummary: React.FC<{
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
   
+  // Promo code states
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [isValidPromo, setIsValidPromo] = useState(false);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoCodeLoading, setPromoCodeLoading] = useState(false);
+  
   // Extract user info from URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const userName = searchParams.get('name');
   const userEmail = searchParams.get('email');
   const userPhone = searchParams.get('phone');
   
+  // Handle promo code application
+  const handleApplyPromoCode = async (code: string) => {
+    if (!selectedClinic) {
+      toast({
+        title: "Error",
+        description: "Please select a clinic before applying a promo code",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setPromoCodeLoading(true);
+    
+    try {
+      // Call the API to validate the promo code
+      const response = await fetch('/api/promo-codes/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ code }),
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.valid) {
+        // Calculate the discount amount based on the original price
+        const originalPrice = selectedClinic.priceGBP;
+        let discountAmount = 0;
+        
+        if (data.discountType === 'percentage') {
+          discountAmount = Math.round((originalPrice * data.discountValue) / 100);
+        } else if (data.discountType === 'fixed_amount') {
+          discountAmount = Math.min(originalPrice, data.discountValue);
+        }
+        
+        setPromoCode(code);
+        setIsValidPromo(true);
+        setPromoDiscount(discountAmount);
+        
+        toast({
+          title: "Promo Code Applied",
+          description: `${data.message}. You saved £${discountAmount}.`,
+        });
+      } else {
+        setPromoCode(code);
+        setIsValidPromo(false);
+        setPromoDiscount(0);
+        
+        toast({
+          title: "Invalid Promo Code",
+          description: data.message || "This promo code is not valid.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error validating promo code:', error);
+      toast({
+        title: "Error",
+        description: "Failed to validate promo code. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPromoCodeLoading(false);
+    }
+  };
+  
+  // Handle removing promo code
+  const handleRemovePromoCode = () => {
+    setPromoCode(null);
+    setIsValidPromo(false);
+    setPromoDiscount(0);
+    
+    toast({
+      title: "Promo Code Removed",
+      description: "The promo code has been removed from your quote.",
+    });
+  };
+
   // Placeholder for download and email functions
   const handleDownloadQuote = () => {
     setIsDownloading(true);
@@ -471,9 +556,13 @@ const QuoteSummary: React.FC<{
     }, 1500);
   };
   
+  // Calculate final price with any promo code discount applied
+  const originalPrice = selectedClinic ? selectedClinic.priceGBP : 0;
+  const finalPrice = isValidPromo ? Math.max(0, originalPrice - promoDiscount) : originalPrice;
+  
   // Calculate UK price comparison (simplified for this example)
   const ukTreatmentPrice = selectedClinic ? selectedClinic.priceGBP * 2.5 : 0;
-  const savingsAmount = selectedClinic ? ukTreatmentPrice - selectedClinic.priceGBP : 0;
+  const savingsAmount = selectedClinic ? ukTreatmentPrice - finalPrice : 0;
   const savingsPercentage = selectedClinic ? Math.round((savingsAmount / ukTreatmentPrice) * 100) : 0;
   
   return (
