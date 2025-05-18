@@ -276,6 +276,37 @@ export function useFlaskIntegration(options: UseFlaskIntegrationOptions = {}) {
     };
   }, [autoSync, syncInterval, checkConnection, getQuoteState, syncWithFlask]);
 
+  // Function to get treatment packages - fallback to Express API if Flask doesn't have packages
+  const getPackages = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      // Try Flask first
+      try {
+        const response = await axios.get(`${FLASK_SERVICE_URL}/api/packages`);
+        if (response.data) {
+          return response.data;
+        }
+      } catch (flaskErr) {
+        console.log('Falling back to Express for packages');
+      }
+      
+      // Fallback to Express API
+      const response = await axios.get('/api/treatment-packages');
+      if (response.data) {
+        return response.data;
+      }
+      return [];
+    } catch (err) {
+      console.error('Error getting packages:', err);
+      if (handleErrors) {
+        setError(err instanceof Error ? err : new Error('Failed to get treatment packages'));
+      }
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  }, [handleErrors]);
+
   return {
     isConnected,
     isLoading,
@@ -289,6 +320,7 @@ export function useFlaskIntegration(options: UseFlaskIntegrationOptions = {}) {
     submitQuote,
     getTreatments,
     getSpecialOffers,
+    getPackages,
     clearError
   };
 }

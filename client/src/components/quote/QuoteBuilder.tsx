@@ -485,9 +485,47 @@ export function QuoteBuilder({
         </CardHeader>
         
         <CardContent>
+          {/* Package Preselection Handler - invisible component that handles package auto-selection */}
+          {selectedPackageId && (
+            <PackagePreselectionHandler 
+              packageId={selectedPackageId}
+              onTreatmentsSelected={(treatments) => {
+                setSelectedTreatments(treatments);
+                // Calculate new total
+                const newTotal = calculateTotal(treatments);
+                // Sync with Flask
+                syncWithFlask({
+                  treatments,
+                  total: newTotal,
+                  package_id: selectedPackageId
+                });
+              }}
+              onPackageLoaded={(packageData) => {
+                // Sync package data with Flask
+                syncWithFlask({
+                  package_id: packageData.id,
+                  package_name: packageData.title
+                });
+              }}
+            />
+          )}
+          
           {/* Dental Chart Step */}
           {currentStep === 'dental-chart' && (
             <div className="text-center py-6">
+              {selectedPackageId && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center">
+                    <Package className="h-5 w-5 text-blue-500 mr-2" />
+                    <span className="font-medium text-blue-700">
+                      Treatment Package Selected
+                    </span>
+                  </div>
+                  <p className="text-sm text-blue-600 mt-1">
+                    You've selected a package that includes specific treatments. Continue to review.
+                  </p>
+                </div>
+              )}
               <div className="mb-8 border border-gray-200 rounded-lg p-4">
                 <img 
                   src="/images/dental-chart.svg"
