@@ -3,51 +3,14 @@ import { Link } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import SpecialOffersSection from '@/components/home/SpecialOffersSection';
+import SearchBar from '@/components/home/SearchBar';
 import { ArrowRight, Star, HeartPulse, Globe } from 'lucide-react';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary/5 to-primary/10 py-16 md:py-24">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center gap-12">
-            <div className="md:w-1/2">
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight mb-4">
-                Find World-Class Dental Care at <span className="text-primary">Affordable Prices</span>
-              </h1>
-              <p className="text-lg text-gray-700 mb-8">
-                Compare prices and treatments from top-rated Turkish dental clinics.
-                Save up to 70% compared to UK and European prices.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button asChild size="lg" className="text-base">
-                  <Link href="/quote-flow">
-                    Get Your Free Quote <ArrowRight className="ml-2 h-5 w-5" />
-                  </Link>
-                </Button>
-                <Button asChild variant="outline" size="lg" className="text-base">
-                  <Link href="/how-it-works">
-                    How It Works
-                  </Link>
-                </Button>
-              </div>
-            </div>
-            <div className="md:w-1/2">
-              <div className="rounded-lg overflow-hidden shadow-2xl">
-                <img 
-                  src="/images/hero-image.jpg" 
-                  alt="Smiling patient at Turkish dental clinic" 
-                  className="w-full h-auto"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80";
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Search Bar Section */}
+      <SearchBar />
 
       {/* Why Choose Us Section */}
       <section className="py-16 bg-white">
