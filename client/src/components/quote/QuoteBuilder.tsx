@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import PackagePreselectionHandler from './PackagePreselectionHandler';
 
 interface QuoteBuilderProps {
   defaultStep?: string;
