@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useFlaskIntegration } from '@/hooks/use-flask-integration';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 interface EnhancedPackageHandlerProps {
   packageId: string | null;
@@ -116,8 +117,25 @@ export function EnhancedPackageHandler({
     loadPackageAndTreatments();
   }, [packageId, getPackages, getTreatments, syncWithFlask, onTreatmentsSelected, toast, hasProcessed]);
 
-  // This component doesn't render anything
-  return null;
+  // This component provides some visual feedback when a package is loaded
+  return hasProcessed ? (
+    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <span className="text-blue-500 mr-2">📦</span>
+          <span className="font-medium text-blue-700">
+            Package Applied
+          </span>
+        </div>
+        <Badge variant="outline" className="bg-blue-100">
+          Treatments Auto-Selected
+        </Badge>
+      </div>
+      <p className="text-sm text-blue-600 mt-1">
+        Your selected package includes specific treatments. Continue to review and modify if needed.
+      </p>
+    </div>
+  ) : null;
 }
 
 export default EnhancedPackageHandler;
