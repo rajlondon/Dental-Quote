@@ -45,9 +45,11 @@ export function useAutoApplyCode() {
       // Parse the URL search parameters
       const url = new URL(window.location.href);
       const params = new URLSearchParams(url.search);
-      const codeFromUrl = params.get('promo');
       
-      if (codeFromUrl) {
+      // Check both 'promo' and 'promoCode' parameters since we're using both in different places
+      const codeFromUrl = params.get('promoCode') || params.get('promo') || params.get('code');
+      
+      if (codeFromUrl && codeFromUrl !== promoCode) {
         setPromoCode(codeFromUrl);
         // Track that a promo code was found in URL
         trackEvent('promo_code_detected_in_url', 'promo', codeFromUrl);

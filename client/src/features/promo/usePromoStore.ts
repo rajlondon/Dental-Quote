@@ -70,9 +70,12 @@ export const usePromoStore = create<PromoState>()(
       },
       
       // Actions
-      setPromoSlug: (slug: string) => set({
-        activePromoSlug: slug
-      }),
+      setPromoSlug: (slug: string) => {
+        // Only update if the slug is different to prevent infinite update loops
+        if (get().activePromoSlug !== slug) {
+          set({ activePromoSlug: slug });
+        }
+      },
       
       setPromoData: (data: PromoData) => set({
         promoData: data
