@@ -102,7 +102,7 @@ const PatientQuoteDetail: React.FC = () => {
         <X className="h-4 w-4" />
         <AlertTitle>Error</AlertTitle>
         <AlertDescription>
-          {error || "Unable to load quote. Please try again later."}
+          {error instanceof Error ? error.message : error || "Unable to load quote. Please try again later."}
         </AlertDescription>
       </Alert>
     );

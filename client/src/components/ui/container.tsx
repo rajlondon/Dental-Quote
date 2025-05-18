@@ -5,9 +5,12 @@ interface ContainerProps {
   className?: string;
 }
 
+/**
+ * Responsive container component for consistent page layouts
+ */
 export const Container: React.FC<ContainerProps> = ({ 
   children, 
-  className = "" 
+  className = '' 
 }) => {
   return (
     <div className={`container mx-auto px-4 py-6 max-w-7xl ${className}`}>
