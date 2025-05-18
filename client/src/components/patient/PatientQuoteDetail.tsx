@@ -14,8 +14,13 @@ import CurrencyFormat from '@/components/ui/currency-format';
 
 // Using the shared CurrencyFormat component from @/components/ui/currency-format
 
-const PatientQuoteDetail: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
+interface PatientQuoteDetailProps {
+  id?: string;
+}
+
+const PatientQuoteDetail: React.FC<PatientQuoteDetailProps> = ({ id: propId }) => {
+  const params = useParams<{ id: string }>();
+  const id = propId || params.id;
   const { quote, loading, error, downloadPdf } = useQuoteDetails(id);
   const { toast } = useToast();
 
