@@ -2,65 +2,60 @@
  * Promo Code API Routes
  * Handles validation and application of promo codes
  */
-import express from 'express';
-import { validatePromoCode, calculateDiscount } from '../services/promo-code-service';
+import { Router, Request, Response } from 'express';
+import { validatePromoCode, calculateDiscount, applyDiscount, PromoCodeData } from '../services/promo-code-service';
 
-const router = express.Router();
+export const promoCodeRouter = Router();
 
 // Validate a promo code
-router.post('/validate', async (req, res) => {
+promoCodeRouter.post('/validate', async (req: Request, res: Response) => {
   try {
     const { code } = req.body;
     
-    if (!code) {
+    if (!code || typeof code !== 'string') {
       return res.status(400).json({
         success: false,
-        message: 'Promo code is required'
+        valid: false,
+        message: 'Invalid promo code format'
       });
     }
-    
+
     const promoData = await validatePromoCode(code);
     
-    return res.json({
-      success: promoData.valid,
+    return res.status(200).json({
+      success: true,
       ...promoData
     });
   } catch (error) {
     console.error('Error validating promo code:', error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while validating the promo code'
+      message: 'Server error validating promo code'
     });
   }
 });
 
-// Calculate discount for a given promo code and price
-router.post('/calculate-discount', async (req, res) => {
+// Calculate discount amount for a promo code and price
+promoCodeRouter.post('/calculate-discount', async (req: Request, res: Response) => {
   try {
-    const { code, originalPrice } = req.body;
+    const { code, price } = req.body;
     
-    if (!code) {
+    if (!code || typeof code !== 'string' || !price || isNaN(Number(price))) {
       return res.status(400).json({
         success: false,
-        message: 'Promo code is required'
+        message: 'Invalid request parameters'
       });
     }
-    
-    if (originalPrice === undefined || isNaN(originalPrice)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid original price is required'
-      });
-    }
-    
+
     const promoData = await validatePromoCode(code);
-    const discountAmount = calculateDiscount(promoData, originalPrice);
-    const finalPrice = Math.max(0, originalPrice - discountAmount);
+    const discountAmount = calculateDiscount(promoData, Number(price));
+    const finalPrice = applyDiscount(promoData, Number(price));
     
-    return res.json({
-      success: promoData.valid,
-      ...promoData,
-      originalPrice,
+    return res.status(200).json({
+      success: true,
+      valid: promoData.valid,
+      message: promoData.message,
+      originalPrice: Number(price),
       discountAmount,
       finalPrice
     });
@@ -68,9 +63,9 @@ router.post('/calculate-discount', async (req, res) => {
     console.error('Error calculating promo code discount:', error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while calculating the discount'
+      message: 'Server error calculating discount'
     });
   }
 });
 
-export default router;
+export default promoCodeRouter;
