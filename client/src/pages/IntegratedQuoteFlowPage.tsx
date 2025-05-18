@@ -21,10 +21,9 @@ const FLOW_STEPS = [
 
 const IntegratedQuoteFlowPage: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(0);
-  const [, navigate] = useNavigate();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { quote, updateQuote, clearQuote } = usePersistentQuote();
+  const { updateState, resetState } = usePersistentQuote();
   const { clinics } = useClinic();
   
   // Determine current step from URL
@@ -43,7 +42,7 @@ const IntegratedQuoteFlowPage: React.FC = () => {
   const navigateToStep = (stepIndex: number) => {
     if (stepIndex >= 0 && stepIndex < FLOW_STEPS.length) {
       const step = FLOW_STEPS[stepIndex];
-      navigate(`/quote-flow/${step.id}`);
+      setLocation(`/quote-flow/${step.id}`);
     }
   };
   
@@ -66,7 +65,7 @@ const IntegratedQuoteFlowPage: React.FC = () => {
   
   // Reset the quote flow
   const handleReset = () => {
-    clearQuote();
+    resetState();
     navigateToStep(0);
     toast({
       title: "Quote cleared",
@@ -86,7 +85,7 @@ const IntegratedQuoteFlowPage: React.FC = () => {
     
     // Redirect to patient portal (simulated)
     setTimeout(() => {
-      navigate("/patient-portal");
+      setLocation("/patient-portal");
     }, 1500);
   };
   
@@ -95,19 +94,19 @@ const IntegratedQuoteFlowPage: React.FC = () => {
     const step = FLOW_STEPS[currentStep];
     switch (step.id) {
       case 'quiz':
-        navigate("/dental-treatment-quiz");
+        setLocation("/dental-treatment-quiz");
         break;
       case 'dental-chart':
-        navigate("/dental-chart");
+        setLocation("/dental-chart");
         break;
       case 'treatments':
-        navigate("/quote-builder");
+        setLocation("/quote-builder");
         break;
       case 'patient-info':
-        navigate("/quote/patient-info");
+        setLocation("/quote/patient-info");
         break;
       case 'clinics':
-        navigate("/clinic-selection");
+        setLocation("/clinic-selection");
         break;
     }
   };
