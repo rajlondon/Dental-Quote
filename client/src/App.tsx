@@ -256,6 +256,7 @@ function Router() {
       <Route path="/resilient-websocket-test" component={ResilientWebSocketTest2} />
       <Route path="/resilient-websocket" component={ResilientWebSocketTest} />
       <Route path="/resilient-websocket-test3" component={ResilientWebSocketTest3} />
+      <Route path="/special-offer-test" component={SpecialOfferTestPage} />
       
       {/* Clinic-accessible test page - does not require being a patient */}
       <Route path="/clinic-quote-test" component={() => {
