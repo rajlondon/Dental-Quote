@@ -59,7 +59,7 @@ export function PackagePreselectionHandler({
         // Filter treatments that are included in the package
         const matchedTreatments = treatments.filter((treatment: any) => {
           const treatmentNameLower = treatment.name.toLowerCase().trim();
-          return packageIncludesLower.some(includeItem => 
+          return packageIncludesLower.some((includeItem: string) => 
             includeItem.includes(treatmentNameLower) || treatmentNameLower.includes(includeItem)
           );
         });
