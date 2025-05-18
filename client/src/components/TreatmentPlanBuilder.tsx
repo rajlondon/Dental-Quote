@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight, BadgePercent, Tag } from 'lucide-react';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -11,7 +11,6 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
 
 // Define TreatmentData structure
 export interface TreatmentItem {
@@ -26,21 +25,6 @@ export interface TreatmentItem {
   guarantee?: string;
   ukPriceGBP?: number;
   ukPriceUSD?: number;
-  basePriceUSD?: number; // Original base price in USD before discount
-  isPackage?: boolean;
-  isSpecialOffer?: boolean; // Flag to easily identify special offers
-  isLocked?: boolean; // Flag for locked items (packages, bonus items)
-  isBonus?: boolean; // Flag for bonus items (special offers)
-  packageId?: string;
-  // For discount display
-  basePriceGBP?: number; // Original base price before discount
-  hasDiscount?: boolean; // Flag for UI rendering
-  discountPercent?: number; // Calculated discount percentage
-  originalPrice?: number; // For display purposes
-  discountedPrice?: number; // For display purposes
-  // For promo token integration
-  promoToken?: string;
-  promoType?: 'special_offer' | 'package';
   specialOffer?: {
     id: string;
     title: string;
@@ -315,50 +299,23 @@ interface TreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
   hideHeader?: boolean; // Add option to hide the "Build Your Treatment Plan" header
-  treatmentCategoriesData?: TreatmentCategory[]; // Custom categories data for testing
 }
 
 const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({ 
   initialTreatments = [], 
   onTreatmentsChange,
-  hideHeader = false,
-  treatmentCategoriesData
+  hideHeader = false
 }) => {
-  // Use custom treatment categories if provided, otherwise use the default
-  const categories = treatmentCategoriesData || TREATMENT_CATEGORIES;
   const [treatments, setTreatments] = useState<TreatmentItem[]>(initialTreatments);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   
-  // Get the active special offer if there is one
-  const { 
-    specialOffer, 
-    hasActiveOffer, 
-    isSpecialOfferFlow,
-    applySpecialOfferToTreatments,
-    getDiscountedLines
-  } = useSpecialOfferTracking();
-  
-  // Calculate totals based on unit price (already discounted), not base price
+  // Calculate totals
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
   
-  // Process treatments with discount formatting for display
-  const processedTreatments = hasActiveOffer ? getDiscountedLines(treatments) : treatments;
-  
-  // Apply special offers to treatments whenever the treatment list or special offer changes
-  useEffect(() => {
-    if (hasActiveOffer && treatments.length > 0) {
-      // Apply special offer discounts to eligible treatments
-      const updatedTreatments = applySpecialOfferToTreatments(treatments);
-      if (JSON.stringify(updatedTreatments) !== JSON.stringify(treatments)) {
-        setTreatments(updatedTreatments);
-      }
-    }
-  }, [hasActiveOffer, specialOffer, treatments, applySpecialOfferToTreatments]);
-
   // Update parent component when treatments change
   useEffect(() => {
     if (onTreatmentsChange) {
@@ -367,7 +324,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   }, [treatments, onTreatmentsChange]);
   
   // Get available treatments for the selected category
-  const availableTreatments = categories.find(cat => cat.id === selectedCategory)?.treatments || [];
+  const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
   
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
@@ -425,86 +382,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   // Find treatment notes for display
   const getTreatmentNote = (categoryId: string, treatmentId: string) => {
-    const category = categories.find(cat => cat.id === categoryId);
+    const category = TREATMENT_CATEGORIES.find(cat => cat.id === categoryId);
     if (!category) return null;
     
     const treatment = category.treatments.find(t => t.id === treatmentId);
     return treatment?.notes;
-  };
-  
-  // Add a special offer treatment
-  const addSpecialOfferTreatment = (treatmentName: string, specialOffer: any) => {
-    // Find the base treatment in our categories
-    let baseTreatment: any = null;
-    let baseCategory: string = '';
-    
-    // Search through all categories to find the treatment
-    for (const category of categories) {
-      const found = category.treatments.find(t => 
-        t.name.toLowerCase().includes(treatmentName.toLowerCase()) ||
-        treatmentName.toLowerCase().includes(t.name.toLowerCase())
-      );
-      
-      if (found) {
-        baseTreatment = found;
-        baseCategory = category.id;
-        break;
-      }
-    }
-    
-    // If no matching treatment found, use a default
-    if (!baseTreatment) {
-      baseTreatment = {
-        id: 'special_offer_default',
-        name: treatmentName || 'Special Offer Treatment',
-        priceGBP: 1000,
-        priceUSD: 1280,
-        guarantee: '2-year',
-      };
-      baseCategory = 'other';
-    }
-    
-    // Calculate price with discount
-    let priceGBP = Math.round(baseTreatment.priceGBP * 0.35); // Standard Istanbul pricing
-    let priceUSD = Math.round(baseTreatment.priceUSD * 0.35);
-    
-    // Apply discount
-    if (specialOffer.discountType === 'percentage') {
-      const discountMultiplier = (100 - specialOffer.discountValue) / 100;
-      priceGBP = Math.round(priceGBP * discountMultiplier);
-      priceUSD = Math.round(priceUSD * discountMultiplier);
-    } else if (specialOffer.discountType === 'fixed_amount') {
-      priceGBP = Math.max(0, priceGBP - specialOffer.discountValue);
-      priceUSD = Math.max(0, priceUSD - Math.round(specialOffer.discountValue * 1.28)); // Convert to USD
-    }
-    
-    // Create treatment item
-    const newTreatment: TreatmentItem = {
-      id: `special_offer_${Date.now()}`,
-      category: baseCategory,
-      name: `${baseTreatment.name} (Special Offer)`,
-      quantity: 1,
-      priceGBP,
-      priceUSD,
-      subtotalGBP: priceGBP,
-      subtotalUSD: priceUSD,
-      guarantee: baseTreatment.guarantee,
-      ukPriceGBP: baseTreatment.priceGBP,
-      ukPriceUSD: baseTreatment.priceUSD,
-      isSpecialOffer: true,
-      specialOffer: {
-        id: specialOffer.id,
-        title: specialOffer.title,
-        discountType: specialOffer.discountType,
-        discountValue: specialOffer.discountValue,
-        clinicId: specialOffer.clinicId
-      }
-    };
-    
-    // Add to treatments list
-    setTreatments([...treatments, newTreatment]);
-    
-    return newTreatment;
   };
   
   // New direct add treatment without modal
@@ -524,33 +406,22 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     const istanbulPriceGBP = Math.round(treatment.priceGBP * 0.35);
     const istanbulPriceUSD = Math.round(treatment.priceUSD * 0.35);
     
-    // Create basic treatment object
-    const treatmentItem: TreatmentItem = {
+    // Add new treatment with Istanbul prices
+    const newTreatment: TreatmentItem = {
       id: `${treatment.id}_${Date.now()}`, // Unique ID
       category: categoryId,
       name: treatment.name,
       quantity: 1,
-      priceGBP: istanbulPriceGBP,
-      priceUSD: istanbulPriceUSD,
-      subtotalGBP: istanbulPriceGBP,
-      subtotalUSD: istanbulPriceUSD,
+      priceGBP: istanbulPriceGBP, // Use Istanbul price
+      priceUSD: istanbulPriceUSD, // Use Istanbul price
+      subtotalGBP: istanbulPriceGBP, // Use Istanbul price
+      subtotalUSD: istanbulPriceUSD, // Use Istanbul price
       guarantee: treatment.guarantee,
       ukPriceGBP: treatment.priceGBP, // Store original UK price for comparison
       ukPriceUSD: treatment.priceUSD,
     };
     
-    // Process special offers if available
-    if (hasActiveOffer && specialOffer) {
-      // Apply any special offers to the treatment
-      const treatedItems = applySpecialOfferToTreatments([treatmentItem]);
-      
-      // Add the (potentially modified) treatment to the list
-      setTreatments([...treatments, treatedItems[0]]);
-      return;
-    }
-    
-    // If no special offer, just add the treatment as is
-    setTreatments([...treatments, treatmentItem]);
+    setTreatments([...treatments, newTreatment]);
   };
   
   // Check if a treatment is already in the list
@@ -623,7 +494,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </TooltipProvider>
               </div>
               <div className="space-y-3">
-                {categories.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
+                {TREATMENT_CATEGORIES.find(cat => cat.id === 'implants')?.treatments.map((treatment) => (
                   <div key={treatment.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                     <div className="flex items-start gap-3">
                       <div className="pt-0.5">
@@ -1666,14 +1537,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {processedTreatments.map((treatment) => {
+              {treatments.map((treatment) => {
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
                 
                 return (
-                  <TableRow key={treatment.id} className={(treatment.isSpecialOffer || treatment.specialOffer) ? 'bg-primary/5 border-primary/20' : treatment.isPackage ? 'bg-blue-50 border-blue-200' : ''}>
+                  <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : ''}>
                     <TableCell>
                       <div>
-                        {(treatment.isSpecialOffer || treatment.specialOffer) && (
+                        {treatment.specialOffer && (
                           <div className="relative mb-2">
                             <Badge className="bg-primary/10 text-primary hover:bg-primary/15 flex items-center w-fit px-2 py-0.5 border border-primary/20">
                               <Sparkles className="h-3 w-3 mr-1" />
@@ -1685,15 +1556,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             </div>
                           </div>
                         )}
-                        {treatment.isPackage && (
-                          <div className="relative mb-2">
-                            <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 flex items-center w-fit px-2 py-0.5 border border-blue-200">
-                              <Check className="h-3 w-3 mr-1" />
-                              Treatment Package
-                            </Badge>
-                          </div>
-                        )}
-                        <span className={`font-medium ${(treatment.isSpecialOffer || treatment.specialOffer) ? 'text-primary' : treatment.isPackage ? 'text-blue-700' : ''}`}>
+                        <span className={`font-medium ${treatment.specialOffer ? 'text-primary' : ''}`}>
                           {treatment.name}
                         </span>
                         {treatment.specialOffer && (
@@ -1751,24 +1614,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div>
-                        {treatment.hasDiscount ? (
-                          <>
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="line-through text-sm text-gray-500">
-                                £{Math.round(treatment.originalPrice || 0)}
-                              </span>
-                              <span className="font-bold text-primary">£{treatment.priceGBP}</span>
-                            </div>
-                            <span className="block text-xs text-gray-500">
-                              ${treatment.priceUSD}
-                            </span>
-                            <div className="flex justify-end items-center mt-1">
-                              <Badge className="text-xs h-5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20">
-                                Save {treatment.discountPercent}%
-                              </Badge>
-                            </div>
-                          </>
-                        ) : treatment.specialOffer ? (
+                        {treatment.specialOffer ? (
                           <>
                             <div className="flex items-center justify-end gap-2">
                               <span className="line-through text-sm text-gray-500">
@@ -1784,18 +1630,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                                 {treatment.specialOffer.discountType === 'percentage' 
                                   ? `Save ${treatment.specialOffer.discountValue}%` 
                                   : `Save £${treatment.specialOffer.discountValue}`}
-                              </Badge>
-                            </div>
-                          </>
-                        ) : treatment.isSpecialOffer ? (
-                          <>
-                            <span className="font-bold text-primary">£{treatment.priceGBP}</span>
-                            <span className="block text-xs text-gray-500">
-                              ${treatment.priceUSD}
-                            </span>
-                            <div className="flex justify-end items-center mt-1">
-                              <Badge className="text-xs h-5 bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20">
-                                Special Offer
                               </Badge>
                             </div>
                           </>

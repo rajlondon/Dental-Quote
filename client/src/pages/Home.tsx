@@ -5,13 +5,12 @@ import HeroSimple from "@/components/HeroSimple";
 import Footer from "@/components/Footer";
 import SimpleBlogPage from "@/pages/SimpleBlogPage";
 import { Button } from "@/components/ui/button";
-import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin, FileText } from "lucide-react";
+import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import clinicsData from "@/data/clinics.json";
 import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
-import FixedHomePageOffers from "@/components/specialOffers/FixedHomePageOffers";
 
 // Clinic Card Component
 const ClinicCard = ({ 
@@ -114,17 +113,6 @@ const ClinicCard = ({
     }
   };
   
-  // Ensure we have a proper clinic ID for navigation
-  // This is critical for linking to the ClinicDetailPage
-  const clinicId = id || '';
-  
-  // Add detailed logging for debugging routing issues
-  console.log(`Clinic card for ${name} with ID: ${clinicId}`, {
-    clinicName: name,
-    clinicId: id,
-    link: `/clinic/${clinicId}`
-  });
-  
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>
       <div className="relative">
@@ -170,7 +158,7 @@ const ClinicCard = ({
         </div>
         
         <div className="grid grid-cols-2 gap-2">
-          <Link href={`/clinic/${clinicId}`} className="w-full">
+          <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`} className="w-full">
             <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
               View Clinic
             </Button>
@@ -306,35 +294,7 @@ const HomePage: React.FC = () => {
       <HeroSimple />
       
       {/* Premium Offers Carousel */}
-      {/* Temporarily commenting out the original component that has issues */}
-      {/* <EnhancedOffersCarousel className="px-4" /> */}
-      
-      {/* Using our fixed special offers component */}
-      <FixedHomePageOffers className="px-4" />
-      
-      {/* Demo System Alert - Added for quick access to the quote system demo */}
-      <div className="container mx-auto px-4 my-6">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow-sm p-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="text-xl font-bold text-blue-900 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
-                Quote System Demo Available
-              </h3>
-              <p className="text-blue-700 mt-1">
-                Try out our complete quote builder with special offers, treatment packages, and promo codes.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Link href="/quote-system-demo">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Launch Demo
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
+      <EnhancedOffersCarousel className="px-4" />
       
       {/* Popular Clinics Section */}
       <section className="py-16">
@@ -397,48 +357,10 @@ const HomePage: React.FC = () => {
               </div>
               <div className="p-4">
                 <Button asChild className="w-full bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium">
-                  <Link href="/quote">
+                  <Link href="/your-quote">
                     Build Custom Package
                   </Link>
                 </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Quote Builder CTA Section */}
-      <section className="py-16 bg-gradient-to-r from-blue-50 to-indigo-50">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">Plan Your Dental Treatment</h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Get an instant quote for your dental procedures with our easy-to-use quote builder.
-            </p>
-            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg">
-              <Link href="/quote">Build Your Quote</Link>
-            </Button>
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center mb-3">
-                  <Calculator className="h-5 w-5 text-primary mr-2" />
-                  <h3 className="font-semibold">Instant Pricing</h3>
-                </div>
-                <p className="text-sm text-gray-600">See transparent pricing for all dental treatments instantly.</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center mb-3">
-                  <Sparkles className="h-5 w-5 text-primary mr-2" />
-                  <h3 className="font-semibold">Special Offers</h3>
-                </div>
-                <p className="text-sm text-gray-600">Apply promo codes and access exclusive special offers.</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow-md">
-                <div className="flex items-center mb-3">
-                  <FileText className="h-5 w-5 text-primary mr-2" />
-                  <h3 className="font-semibold">Printable Quotes</h3>
-                </div>
-                <p className="text-sm text-gray-600">Generate professional treatment quotes you can save and share.</p>
               </div>
             </div>
           </div>

@@ -48,10 +48,6 @@ export function TreatmentPlanViewer({
   const [uploadInProgress, setUploadInProgress] = useState(false);
   const { toast } = useToast();
 
-  // IMPORTANT: Using '/api/treatment-module/' for consistent API path usage
-  // Update to use canonical API path format
-  const API_BASE_URL = "/api/v1";
-
   // Query to fetch the treatment plan
   const {
     data: treatmentPlan,
@@ -59,17 +55,13 @@ export function TreatmentPlanViewer({
     error: planError,
     refetch: refetchPlan
   } = useQuery({
-    queryKey: [`${API_BASE_URL}/treatment-plans`, treatmentPlanId],
+    queryKey: ['/api/treatment-plans', treatmentPlanId],
     queryFn: async () => {
-      console.log(`[API] GET ${API_BASE_URL}/treatment-plans/${treatmentPlanId}`);
-      const response = await apiRequest('GET', `${API_BASE_URL}/treatment-plans/${treatmentPlanId}`);
+      const response = await apiRequest('GET', `/api/treatment-plans/${treatmentPlanId}`);
       if (!response.ok) {
-        console.error(`[API] Failed to fetch treatment plan: Status ${response.status}`);
         throw new Error('Failed to fetch treatment plan');
       }
-      const data = await response.json();
-      console.log(`[API] Successfully fetched treatment plan data:`, data);
-      return data;
+      return response.json();
     },
     enabled: !!treatmentPlanId
   });

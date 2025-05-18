@@ -18,7 +18,6 @@
     "book_now": "Book Now",
     "account": "Account" 
   },
-  "quote.treatments.title": "Select Your Treatments",
   "language": {
     "changing": "Changing language...",
     "select": "Select language"
@@ -60,28 +59,5 @@
     "system": "System",
     "treatment": "Treatment",
     "offer": "Special Offer"
-  },
-  "clinic": {
-    "title": "Clinic Portal",
-    "back_to_site": "Back to Website",
-    "nav": {
-      "dashboard": "Dashboard",
-      "patients": "Patients",
-      "quotes": "Quotes",
-      "treatment_plans": "Treatment Plans",
-      "special_offers": "Special Offers",
-      "treatment_packages": "Treatment Packages",
-      "treatment_mapper": "Treatment Mapper",
-      "appointments": "Appointments",
-      "messages": "Messages",
-      "documents": "Documents",
-      "media": "Media Gallery",
-      "payments": "Payments", 
-      "reports": "Reports",
-      "analytics": "Analytics",
-      "settings": "Settings",
-      "testing": "Testing Mode",
-      "logout": "Log out"
-    }
   }
 }

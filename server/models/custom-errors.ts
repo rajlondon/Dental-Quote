@@ -4,56 +4,65 @@
 
 export class AppError extends Error {
   statusCode: number;
-  
-  constructor(message: string, statusCode: number) {
+  status: string;
+  isOperational: boolean;
+  details?: any;
+
+  constructor(message: string, statusCode: number, details?: any) {
     super(message);
     this.statusCode = statusCode;
-    this.name = this.constructor.name;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
+    this.isOperational = true;
+    this.details = details;
+    
     Error.captureStackTrace(this, this.constructor);
   }
 }
 
 export class BadRequestError extends AppError {
-  constructor(message: string = 'Bad Request') {
-    super(message, 400);
+  constructor(message: string = 'Bad request', details?: any) {
+    super(message, 400, details);
   }
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message: string = 'Unauthorized') {
-    super(message, 401);
+  constructor(message: string = 'Unauthorized', details?: any) {
+    super(message, 401, details);
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(message: string = 'Forbidden') {
-    super(message, 403);
+  constructor(message: string = 'Forbidden', details?: any) {
+    super(message, 403, details);
   }
 }
 
 export class NotFoundError extends AppError {
-  constructor(message: string = 'Resource not found') {
-    super(message, 404);
+  constructor(message: string = 'Resource not found', details?: any) {
+    super(message, 404, details);
   }
 }
 
 export class ConflictError extends AppError {
-  constructor(message: string = 'Conflict') {
-    super(message, 409);
+  constructor(message: string = 'Conflict with existing resource', details?: any) {
+    super(message, 409, details);
   }
 }
 
 export class ValidationError extends AppError {
-  errors: any[];
-  
-  constructor(message: string = 'Validation Error', errors: any[] = []) {
-    super(message, 422);
-    this.errors = errors;
+  constructor(message: string = 'Validation failed', details?: any) {
+    super(message, 422, details);
   }
 }
 
-export class InternalServerError extends AppError {
-  constructor(message: string = 'Internal Server Error') {
-    super(message, 500);
+export class ServerError extends AppError {
+  constructor(message: string = 'Internal server error', details?: any) {
+    super(message, 500, details);
+  }
+}
+
+export class ServiceUnavailableError extends AppError {
+  constructor(message: string = 'Service temporarily unavailable', details?: any) {
+    super(message, 503, details);
   }
 }

@@ -16,20 +16,22 @@ export function initPreventReloads() {
   // Only run in browser environment
   if (typeof window === 'undefined') return;
   
-  // Use a safer approach instead of directly overriding location.reload
-  // Create a function to intercept reload attempts using beforeunload
-  window.addEventListener('beforeunload', function(e) {
+  // Store original reload function
+  const originalReload = window.location.reload;
+  
+  // Override reload to check for clinic portal pages
+  window.location.reload = function customReload(...args) {
     const isClinicPortal = window.location.pathname.includes('clinic-portal') || 
                           window.location.pathname.includes('/clinic');
     
     if (isClinicPortal) {
       console.warn('BLOCKED: Automatic page reload prevented in clinic portal');
       console.trace('Reload stack trace');
-      e.preventDefault();
-      e.returnValue = '';
-      return '';
+      return false;
+    } else {
+      return originalReload.apply(this, args);
     }
-  });
+  };
   
   // Intercept history API in clinic portal
   const originalPushState = history.pushState;

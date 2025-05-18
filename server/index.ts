@@ -5,42 +5,6 @@ import path from "path";
 import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
-import { addCityColumns } from "./migrations/add-city-columns";
-import { runMigrations } from "./migrations/run-migrations";
-import { authDiagnosticsMiddleware } from "./middleware/auth-diagnostics";
-
-/**
- * Helper function to detect duplicate routes in Express app
- * This helps identify conflicting routes that may cause 404 errors
- */
-function checkRouteDuplicates(app: express.Application) {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
-  
-  if (!app._router || !app._router.stack) {
-    console.log('⚠️ No router stack found to check for duplicates');
-    return;
-  }
-  
-  app._router.stack
-    .filter((r: any) => r.route)
-    .forEach((r: any) => {
-      const path = r.route.path;
-      if (seen.has(path)) {
-        duplicates.add(path);
-      }
-      seen.add(path);
-    });
-  
-  if (duplicates.size > 0) {
-    console.error('⚠️ DUPLICATE ROUTES DETECTED:');
-    duplicates.forEach(path => {
-      console.error(`  - ${path}`);
-    });
-  } else {
-    console.log('✅ No duplicate routes detected');
-  }
-}
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -75,9 +39,6 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-// Add authentication diagnostics middleware to help trace session issues
-app.use(authDiagnosticsMiddleware);
-
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -109,29 +70,7 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Run database migrations before starting the server
-  try {
-    console.log('Running database migrations...');
-    
-    // Run legacy city columns migration
-    const migrationResult = await addCityColumns();
-    if (migrationResult.success) {
-      console.log('✅ City columns migration completed successfully');
-    } else {
-      console.error('❌ City columns migration failed:', migrationResult.message);
-    }
-    
-    // Run all SQL migrations using the new migration system
-    await runMigrations();
-    console.log('✅ SQL migrations completed successfully');
-  } catch (error) {
-    console.error('Error running database migrations:', error);
-  }
-
   const server = await registerRoutes(app);
-
-  // Check for duplicate routes to help diagnose 404 errors
-  checkRouteDuplicates(app);
 
   // Only apply our custom error handlers to API routes
   // This prevents interference with Vite's handling of frontend routes

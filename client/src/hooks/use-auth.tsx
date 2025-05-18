@@ -89,16 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<User | null, Error>({
-    queryKey: ["/auth/user"], // Updated to use consistent path without /api prefix
+    queryKey: ["/api/auth/user"],
     queryFn: async () => {
       // If we're in admin mode and already have cached data, return it directly to prevent loops
       if (window.location.pathname === '/admin-portal' && userDataRef.current) {
         console.log("Returning cached user data for admin portal to prevent refresh loops");
         return userDataRef.current;
       }
-      
-      // Fix for the duplicate API paths issue - ensure we're only calling /api/auth/user
-      // and not accidentally duplicating the /api prefix
 
       // Check sessionStorage cache
       const cachedUserData = sessionStorage.getItem('cached_user_data');
@@ -119,10 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch fresh data
       try {
         console.log("Fetching fresh user data");
-        // IMPORTANT: The api.get call automatically adds "/api" prefix (see client/src/lib/api.ts)
-        // So we must NOT include /api here to avoid making a call to /api/api/auth/user
-        console.log("Fetching user data with axios configured client");
-        const apiRes = await api.get("/auth/user");
+        const apiRes = await api.get("/api/auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache
@@ -156,10 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
-      // We've updated apiRequest to add the /api prefix if it's not already there
-      // So this should now be consistent across both axios and fetch clients
-      console.log("Executing login with enhanced apiRequest");
-      const res = await apiRequest("POST", "/auth/login", {
+      const res = await apiRequest("POST", "/api/auth/login", {
         email: credentials.email,
         password: credentials.password
       });
@@ -195,8 +186,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
-      // Update query cache with the new user data - use consistent path without /api prefix
-      queryClient.setQueryData(["/auth/user"], user);
+      // Update query cache with the new user data
+      queryClient.setQueryData(["/api/auth/user"], user);
       
       // Set session flag for WebSocket initialization
       sessionStorage.setItem('just_logged_in', 'true');
@@ -277,10 +268,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (userData: RegisterData) => {
-      // We've updated apiRequest to add the /api prefix if it's not already there
-      // So this should now be consistent across both axios and fetch clients
-      console.log("Executing registration with enhanced apiRequest");
-      const res = await apiRequest("POST", "/auth/register", userData);
+      const res = await apiRequest("POST", "/api/auth/register", userData);
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(errorData.message || "Registration failed");
@@ -289,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
-      queryClient.setQueryData(["/auth/user"], user);
+      queryClient.setQueryData(["/api/auth/user"], user);
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account",
@@ -307,42 +295,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      // We've updated apiRequest to add the /api prefix if it's not already there
-      // So this should now be consistent across both axios and fetch clients
-      console.log("Executing logout with enhanced apiRequest");
-      const res = await apiRequest("POST", "/auth/logout");
+      const res = await apiRequest("POST", "/api/auth/logout");
       if (!res.ok) {
         throw new Error("Logout failed");
       }
     },
     onSuccess: () => {
-      // Clear user data from query cache - use consistent path without /api prefix
-      queryClient.setQueryData(["/auth/user"], null);
+      // Clear user data from query cache
+      queryClient.setQueryData(["/api/auth/user"], null);
       
       // Clear all session-related caches for a clean logout
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
       sessionStorage.removeItem('clinic_portal_timestamp');
-      
-      // Clear all clinic-related flags
-      sessionStorage.removeItem('clinic_portal_access_successful');
-      sessionStorage.removeItem('is_clinic_staff');
-      sessionStorage.removeItem('disable_promo_redirect');
-      sessionStorage.removeItem('no_special_offer_redirect');
-      sessionStorage.removeItem('disable_quote_redirect');
-      sessionStorage.removeItem('clinic_session_active');
-      sessionStorage.removeItem('clinic_user_id');
-      sessionStorage.removeItem('clinic_id');
-      sessionStorage.removeItem('clinic_dashboard_requested');
-      sessionStorage.removeItem('clinic_login_in_progress');
-      
-      // Clear clinic cookies by setting them to expire immediately
-      document.cookie = "is_clinic_staff=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "is_clinic_login=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "no_promo_redirect=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "disable_quote_redirect=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "clinic_session_active=; path=/; max-age=0; SameSite=Lax";
-      document.cookie = "no_special_offer_redirect=; path=/; max-age=0; SameSite=Lax";
       
       console.log("Auth cache cleared during logout");
       

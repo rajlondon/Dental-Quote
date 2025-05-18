@@ -1,196 +1,37 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation } from "wouter";
+import { useParams } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { trendingPackages, type TrendingPackage, type Excursion } from "@/data/packages";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, Loader2, MapPin, Plane, Shield, Star, Users } from "lucide-react";
+import { Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, MapPin, Plane, Shield, Star, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePackages } from "@/hooks/use-packages";
-import { useToast } from "@/hooks/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useAuth } from "@/hooks/use-auth";
-
-// Helper function to format currency
-const formatCurrency = (amount: number, currency = 'GBP') => {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  }).format(amount);
-};
 
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
-  const { user } = useAuth();
-  const [location, setLocation] = useLocation();
-  const { toast } = useToast();
-  const [mockedPackageData, setMockedPackageData] = useState<TrendingPackage | null>(null);
-  const [isBooking, setIsBooking] = useState(false);
+  const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
   
-  // Convert URL-friendly ID to internal package ID
-  // For now, we map 'hollywood-smile-vacation' to our actual ID
-  const getInternalPackageId = (urlSlug: string) => {
-    const slugToIdMap: Record<string, string> = {
-      'hollywood-smile-vacation': 'e53cc92a-596d-4edc-a3f4-b1f31856415e',
-      // Add more mappings as needed
-    };
-    
-    return slugToIdMap[urlSlug] || urlSlug;
-  };
-  
-  // Use our packages hook for API data
-  const { getPackage, bookPackage } = usePackages();
-  const internalPackageId = getInternalPackageId(id || "");
-  console.log(`[DEBUG] URL slug: ${id}, mapped to internal ID: ${internalPackageId}`);
-  
-  const { 
-    data: actualPackageData, 
-    isLoading, 
-    error, 
-    refetch 
-  } = getPackage(internalPackageId);
-  
-  // Handle booking a package
-  const handleBookPackage = async () => {
-    try {
-      setIsBooking(true);
-  
-      // Check if user is logged in
-      if (user) {
-        // User is logged in, proceed with direct booking
-        if (user.role !== "patient") {
-          toast({
-            title: "Patient Account Required",
-            description: "Only patients can book treatment packages",
-            variant: "destructive"
-          });
-          return;
-        }
-        
-        // Call the API to book the package with the internal ID
-        const result = await bookPackage.mutateAsync(internalPackageId);
-        
-        // Redirect to patient portal with the newly booked treatment
-        if (result.success) {
-          setLocation("/patient/portal");
-        }
-      } else {
-        // If user is not logged in, save package details for later and redirect
-        // to the quote flow directly (similar to OfferCard and EnhancedOffersCarousel)
-        if (mockedPackageData && actualPackageData) {
-          // Prepare package data for session storage
-          const packageData = {
-            id: internalPackageId,
-            title: actualPackageData.name,
-            clinicId: actualPackageData.clinicId || "1",
-            basePrice: Number(actualPackageData.price) || 0,
-            currency: actualPackageData.currency || "USD"
-          };
-          
-          // Save to session storage for later retrieval
-          sessionStorage.setItem('pendingPackage', JSON.stringify(packageData));
-          sessionStorage.setItem('processingPackage', internalPackageId);
-          
-          toast({
-            title: "Package Selected",
-            description: `${actualPackageData.name} will be applied to your quote.`,
-            variant: "default",
-          });
-          
-          // Redirect directly to the quote flow without requiring login first
-          // Use the same format as PackageCard for consistency
-          window.location.href = `/quote?step=start&skipInfo=true&clinicId=${packageData.clinicId}&packageId=${internalPackageId}&source=package`;
-          return;
-        } else {
-          // Fallback to the old redirect method if package data is missing
-          toast({
-            title: "Package Selected",
-            description: "Proceeding to quote creation...",
-          });
-          
-          window.location.href = `/api/public/book-package/${id}`;
-          return;
-        }
-      }
-    } catch (error) {
-      console.error("Error booking package:", error);
-      toast({
-        title: "Booking Failed",
-        description: (error as Error)?.message || "Failed to book the package",
-        variant: "destructive"
-      });
-    } finally {
-      setIsBooking(false);
-    }
-  };
-  
-  // For now, we'll continue to use the mocked data for display formatting,
-  // but we fetch the real package data from API for booking
   useEffect(() => {
     // Debug info
     console.log("Package ID from params:", id);
+    console.log("Available packages:", trendingPackages.map(p => p.id));
     
-    // Find the package by ID from our mocked data for display
+    // Find the package by ID
     const pkg = trendingPackages.find(p => p.id === id);
+    console.log("Found package:", pkg);
     
     if (pkg) {
-      setMockedPackageData(pkg);
+      setPackageData(pkg);
       document.title = `${pkg.title} - MyDentalFly`;
     } else {
       document.title = "Package Not Found - MyDentalFly";
     }
-    
-    // Fetch the real data from API
-    refetch();
-  }, [id, refetch]);
+  }, [id]);
   
-  // Loading state
-  if (isLoading) {
-    return (
-      <>
-        <Navbar />
-        <div className="container mx-auto py-16 px-4">
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <h1 className="text-2xl font-bold mb-4">Loading Package...</h1>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-  
-  // Error state
-  if (error) {
-    return (
-      <>
-        <Navbar />
-        <div className="container mx-auto py-16 px-4">
-          <div className="text-center">
-            <Alert variant="destructive" className="mb-6 max-w-lg mx-auto">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                {(error as Error)?.message || "Failed to load package data. Please try again later."}
-              </AlertDescription>
-            </Alert>
-            <Button asChild>
-              <a href="/">Return to Homepage</a>
-            </Button>
-          </div>
-        </div>
-        <Footer />
-      </>
-    );
-  }
-  
-  // No package found
-  if (!mockedPackageData || !actualPackageData) {
+  if (!packageData) {
     return (
       <>
         <Navbar />
@@ -209,7 +50,7 @@ const PackageDetailPage = () => {
   }
   
   // Count complimentary excursions
-  const complimentaryExcursions = mockedPackageData.excursions.filter(exc => exc.included);
+  const complimentaryExcursions = packageData.excursions.filter(exc => exc.included);
   
   // Tier styles
   const tierStyles = {
@@ -229,28 +70,28 @@ const PackageDetailPage = () => {
           <ChevronRight className="h-4 w-4 mx-1" />
           <a href="/#packages" className="hover:text-primary">Packages</a>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <span className="text-gray-700">{mockedPackageData.title}</span>
+          <span className="text-gray-700">{packageData.title}</span>
         </div>
       
         {/* Package header section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <div className="mb-6 rounded-lg overflow-hidden h-[300px] shadow-md">
-              <img src={`/images/packages/${mockedPackageData.id}.png`} alt={mockedPackageData.title} className="w-full h-full object-cover" />
+              <img src={`/images/packages/${packageData.id}.png`} alt={packageData.title} className="w-full h-full object-cover" />
             </div>
             <div className="flex items-center gap-2 mb-3">
-              <Badge className={`${tierStyles[mockedPackageData.tier]} flex items-center gap-1`}>
+              <Badge className={`${tierStyles[packageData.tier]} flex items-center gap-1`}>
                 <Crown className="h-3 w-3" />
-                {mockedPackageData.tier.charAt(0).toUpperCase() + mockedPackageData.tier.slice(1)} Package
+                {packageData.tier.charAt(0).toUpperCase() + packageData.tier.slice(1)} Package
               </Badge>
               <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-                {mockedPackageData.duration}
+                {packageData.duration}
               </Badge>
             </div>
             
-            <h1 className="text-3xl font-bold mb-4">{mockedPackageData.title}</h1>
+            <h1 className="text-3xl font-bold mb-4">{packageData.title}</h1>
             
-            <p className="text-gray-700 mb-6">{mockedPackageData.description}</p>
+            <p className="text-gray-700 mb-6">{packageData.description}</p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <Card>
@@ -261,10 +102,10 @@ const PackageDetailPage = () => {
                   </h3>
                   
                   <div className="mb-2">
-                    <div className="font-medium">{mockedPackageData.clinic.name}</div>
+                    <div className="font-medium">{packageData.clinic.name}</div>
                     <div className="text-sm text-gray-600 flex items-center mt-1">
                       <MapPin className="h-4 w-4 mr-1 text-gray-500" />
-                      {mockedPackageData.clinic.location}
+                      {packageData.clinic.location}
                     </div>
                   </div>
                 </CardContent>
@@ -278,15 +119,15 @@ const PackageDetailPage = () => {
                   </h3>
                   
                   <div className="mb-2">
-                    <div className="font-medium">{mockedPackageData.hotel.name}</div>
+                    <div className="font-medium">{packageData.hotel.name}</div>
                     <div className="flex items-center mt-1">
                       <div className="flex mr-2">
-                        {[...Array(mockedPackageData.hotel.stars)].map((_, i) => (
+                        {[...Array(packageData.hotel.stars)].map((_, i) => (
                           <Star key={i} className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
                         ))}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {mockedPackageData.hotel.area}
+                        {packageData.hotel.area}
                       </div>
                     </div>
                   </div>
@@ -297,7 +138,7 @@ const PackageDetailPage = () => {
             <div className="mb-8">
               <h3 className="font-medium mb-3">Treatments Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {mockedPackageData.treatments.map((treatment, i) => (
+                {packageData.treatments.map((treatment, i) => (
                   <div key={i} className="flex items-start">
                     <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                     <span>{treatment.count}x {treatment.name}</span>
@@ -310,24 +151,24 @@ const PackageDetailPage = () => {
               <h3 className="font-medium mb-4">What's Included in Your Package</h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
                 <div className="flex flex-col items-center">
-                  <Hotel className={`h-6 w-6 ${mockedPackageData.includedServices.hotel ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.hotel ? 'text-gray-700' : 'text-gray-400'}`}>Hotel</span>
+                  <Hotel className={`h-6 w-6 ${packageData.includedServices.hotel ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${packageData.includedServices.hotel ? 'text-gray-700' : 'text-gray-400'}`}>Hotel</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Plane className={`h-6 w-6 ${mockedPackageData.includedServices.transfers ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.transfers ? 'text-gray-700' : 'text-gray-400'}`}>Transfers</span>
+                  <Plane className={`h-6 w-6 ${packageData.includedServices.transfers ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${packageData.includedServices.transfers ? 'text-gray-700' : 'text-gray-400'}`}>Transfers</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Shield className={`h-6 w-6 ${mockedPackageData.includedServices.consultation ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.consultation ? 'text-gray-700' : 'text-gray-400'}`}>Consultation</span>
+                  <Shield className={`h-6 w-6 ${packageData.includedServices.consultation ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${packageData.includedServices.consultation ? 'text-gray-700' : 'text-gray-400'}`}>Consultation</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <Landmark className={`h-6 w-6 ${mockedPackageData.includedServices.cityTour ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.cityTour ? 'text-gray-700' : 'text-gray-400'}`}>City Tour</span>
+                  <Landmark className={`h-6 w-6 ${packageData.includedServices.cityTour ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${packageData.includedServices.cityTour ? 'text-gray-700' : 'text-gray-400'}`}>City Tour</span>
                 </div>
                 <div className="flex flex-col items-center">
-                  <MapPin className={`h-6 w-6 ${mockedPackageData.includedServices.excursions ? 'text-green-600' : 'text-gray-300'}`} />
-                  <span className={`text-sm mt-1 ${mockedPackageData.includedServices.excursions ? 'text-gray-700' : 'text-gray-400'}`}>Excursions</span>
+                  <MapPin className={`h-6 w-6 ${packageData.includedServices.excursions ? 'text-green-600' : 'text-gray-300'}`} />
+                  <span className={`text-sm mt-1 ${packageData.includedServices.excursions ? 'text-gray-700' : 'text-gray-400'}`}>Excursions</span>
                 </div>
               </div>
             </div>
@@ -339,9 +180,9 @@ const PackageDetailPage = () => {
                 <div className="text-center mb-4">
                   <div className="text-sm text-gray-600 mb-1">Complete Package</div>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-primary">£{mockedPackageData.totalPrice}</span>
+                    <span className="text-3xl font-bold text-primary">£{packageData.totalPrice}</span>
                     <Badge className="bg-green-100 text-green-700 border-green-200">
-                      Save £{mockedPackageData.savings}
+                      Save £{packageData.savings}
                     </Badge>
                   </div>
                 </div>
@@ -375,31 +216,8 @@ const PackageDetailPage = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button 
-                    className="w-full" 
-                    onClick={handleBookPackage}
-                    disabled={isBooking || !actualPackageData}
-                  >
-                    {isBooking ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Booking...
-                      </>
-                    ) : (
-                      "Book This Package"
-                    )}
-                  </Button>
+                  <Button className="w-full">Book This Package</Button>
                   <Button variant="outline" className="w-full">Request More Information</Button>
-                  
-                  {/* Real package info from API */}
-                  {actualPackageData && (
-                    <div className="mt-3 p-3 border border-blue-100 bg-blue-50 rounded-md">
-                      <p className="text-xs text-blue-800 mb-1">API Package Information:</p>
-                      <p className="text-xs text-blue-600 font-medium">{actualPackageData.name}</p>
-                      <p className="text-xs text-blue-600">Price: {formatCurrency(Number(actualPackageData.price), actualPackageData.currency || 'GBP')}</p>
-                      <p className="text-xs text-blue-600">Clinic: {actualPackageData.clinic?.name}</p>
-                    </div>
-                  )}
                 </div>
               </CardContent>
             </Card>
@@ -416,7 +234,7 @@ const PackageDetailPage = () => {
           
           <TabsContent value="excursions" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {mockedPackageData.excursions.map((excursion) => (
+              {packageData.excursions.map((excursion) => (
                 <Card key={excursion.id} className={excursion.included ? 'border-green-200' : ''}>
                   <div className="relative h-48 bg-gray-100">
                     {excursion.included && (
@@ -457,7 +275,7 @@ const PackageDetailPage = () => {
                   <h4 className="font-medium text-lg">Arrival Day</h4>
                   <p className="text-gray-600 mt-2">
                     Arrive at Istanbul Airport where you'll be greeted by our representative. 
-                    You'll be transferred to {mockedPackageData.hotel.name} for check-in and rest.
+                    You'll be transferred to {packageData.hotel.name} for check-in and rest.
                   </p>
                 </div>
                 
@@ -467,7 +285,7 @@ const PackageDetailPage = () => {
                   </div>
                   <h4 className="font-medium text-lg">Initial Consultation</h4>
                   <p className="text-gray-600 mt-2">
-                    Visit {mockedPackageData.clinic.name} for your comprehensive dental assessment.
+                    Visit {packageData.clinic.name} for your comprehensive dental assessment.
                     The dentist will confirm your treatment plan and prepare for the procedures.
                   </p>
                 </div>
@@ -507,25 +325,25 @@ const PackageDetailPage = () => {
                       <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                       <span>All dental treatments listed</span>
                     </li>
-                    {mockedPackageData.includedServices.hotel && (
+                    {packageData.includedServices.hotel && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>{mockedPackageData.duration} accommodation at {mockedPackageData.hotel.name}</span>
+                        <span>{packageData.duration} accommodation at {packageData.hotel.name}</span>
                       </li>
                     )}
-                    {mockedPackageData.includedServices.transfers && (
+                    {packageData.includedServices.transfers && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Airport transfers and clinic transportation</span>
                       </li>
                     )}
-                    {mockedPackageData.includedServices.consultation && (
+                    {packageData.includedServices.consultation && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Initial consultation and follow-up appointments</span>
                       </li>
                     )}
-                    {mockedPackageData.includedServices.cityTour && (
+                    {packageData.includedServices.cityTour && (
                       <li className="flex items-start">
                         <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
                         <span>Guided city tour of Istanbul</span>

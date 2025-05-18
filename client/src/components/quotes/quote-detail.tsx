@@ -13,8 +13,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { getStatusBadgeColor, getStatusLabel } from "./quote-list-table";
-import { useNavigation } from "@/hooks/use-navigation";
-import { ROUTES } from "@/lib/routes";
 import { 
   ArrowLeft, 
   Clipboard, 
@@ -31,13 +29,10 @@ import {
 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import QuoteXrayFiles from "./quote-xray-files";
-import { PromoCodeBadge } from "@/components/promo/PromoCodeSummary";
-import { PromoCodeSummary } from "@/components/promo/PromoCodeSummary";
-import { DiscountType, PromoType } from "@shared/schema";
 
 type PortalType = "patient" | "clinic" | "admin";
 
-export interface ActionButton {
+interface ActionButton {
   label: string;
   variant: "default" | "destructive" | "outline" | "secondary" | "primary" | "accent" | "success" | "warning";
   onClick: () => void;
@@ -58,8 +53,6 @@ export default function QuoteDetail({
   onBack,
   actions = [],
 }: QuoteDetailProps) {
-  // Use our navigation system
-  const { navigateTo } = useNavigation();
   // Check if a custom action already exists for the same functionality
   const hasEquivalentCustomAction = () => {
     // If no actions provided, we definitely don't have an equivalent
@@ -122,23 +115,7 @@ export default function QuoteDetail({
       <div className="flex justify-between items-center">
         <Button
           variant="outline"
-          onClick={() => {
-            // Use our improved navigation approach
-            if (portalType === 'patient') {
-              // Set the session flag first, then navigate to patient portal
-              if (typeof window !== 'undefined') {
-                sessionStorage.setItem('patient_portal_section', 'quotes');
-                navigateTo(ROUTES.PATIENT_PORTAL);
-              }
-            } else if (portalType === 'admin') {
-              navigateTo(ROUTES.ADMIN_QUOTES);
-            } else if (portalType === 'clinic') {
-              navigateTo(ROUTES.CLINIC_QUOTES);
-            } else if (onBack) {
-              // Legacy fallback
-              onBack();
-            }
-          }}
+          onClick={onBack}
           className="flex items-center gap-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -217,13 +194,6 @@ export default function QuoteDetail({
                   <Badge variant={getStatusBadgeColor(quoteRequest.status)}>
                     {getStatusLabel(quoteRequest.status)}
                   </Badge>
-                  {quoteRequest.promoCode && quoteRequest.discountType && quoteRequest.discountValue && (
-                    <PromoCodeBadge 
-                      promoCode={quoteRequest.promoCode} 
-                      discountType={quoteRequest.discountType as DiscountType}
-                      discountValue={parseFloat(quoteRequest.discountValue.toString())}
-                    />
-                  )}
                 </CardTitle>
                 <CardDescription>
                   Created on {formatDate(quoteRequest.createdAt)}
@@ -257,54 +227,6 @@ export default function QuoteDetail({
                       </p>
                     )}
                   </div>
-                  
-                  {quoteRequest.promoCode && (
-                    <div className="bg-blue-50 p-4 rounded-md border border-blue-100 space-y-2">
-                      <h3 className="text-lg font-semibold flex items-center gap-2 text-blue-800">
-                        <Tag className="h-4 w-4" />
-                        Promotional Code
-                      </h3>
-                      
-                      {quoteRequest.promoName && (
-                        <p className="font-medium">{quoteRequest.promoName}</p>
-                      )}
-                      
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          {quoteRequest.promoCode}
-                        </Badge>
-                        
-                        {quoteRequest.discountType && quoteRequest.discountValue && (
-                          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-                            {quoteRequest.discountType === 'percentage' 
-                              ? `${quoteRequest.discountValue}% off` 
-                              : `${formatCurrency(parseFloat(quoteRequest.discountValue.toString()))} off`}
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      {quoteRequest.subtotal && quoteRequest.totalPrice && (portalType === 'admin' || portalType === 'clinic') && (
-                        <div className="text-sm mt-2 space-y-1">
-                          <div className="flex justify-between">
-                            <span className="text-gray-600">Subtotal:</span>
-                            <span className="font-medium">{formatCurrency(parseFloat(quoteRequest.subtotal.toString()))}</span>
-                          </div>
-                          {quoteRequest.totalAfterDiscount && (
-                            <>
-                              <div className="flex justify-between text-green-600">
-                                <span>Discount:</span>
-                                <span className="font-medium">-{formatCurrency(parseFloat(quoteRequest.subtotal.toString()) - parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
-                              </div>
-                              <div className="flex justify-between font-bold">
-                                <span>Total after discount:</span>
-                                <span>{formatCurrency(parseFloat(quoteRequest.totalAfterDiscount.toString()))}</span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
 
                   {quoteRequest.budget && (
                     <div>

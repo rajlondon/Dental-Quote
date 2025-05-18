@@ -1,4 +1,4 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { 
   SpecialOffer, 
@@ -6,12 +6,7 @@ import {
   specialOfferSchema, 
   createSpecialOfferSchema 
 } from '@shared/specialOffers';
-import { User, userSavedSpecialOffers } from '@shared/schema';
-import { isAuthenticated } from '../middleware/auth';
-import { db } from '../db';
-import { eq, and, desc } from 'drizzle-orm';
-import { AppError } from '../utils/app-error';
-import { catchAsync } from '../utils/catch-async';
+import { User } from '@shared/schema';
 
 const router = express.Router();
 
@@ -22,12 +17,12 @@ export const specialOffers = new Map<string, SpecialOffer[]>();
 const sampleOffers: SpecialOffer[] = [
   {
     id: "ac36590b-b0dc-434e-ba74-d42ab2485e81", // Use fixed ID for testing with refresh script
-    clinic_id: "1",  // Clinic 1 - DentGroup Istanbul
+    clinic_id: "1",  // Clinic 1
     title: "Free Consultation Package",
     description: "Book a dental treatment and get free pre-consultation and aftercare support with our experienced dental specialists.",
     discount_type: "percentage",
     discount_value: 100, // 100% off on consultation
-    applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "full_mouth_reconstruction"],
+    applicable_treatments: ["Dental Implants", "Veneers", "Full Mouth Reconstruction"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
     promo_code: "FREECONSULT",
@@ -40,19 +35,16 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString(),
-    // Added price data
-    treatment_price_gbp: 75,
-    treatment_price_usd: 95
+    admin_reviewed_at: new Date().toISOString()
   },
   {
     id: "134cdb0f-e783-47f5-a502-70e3960f7246", // Use fixed ID for testing with refresh script
-    clinic_id: "2", // Clinic 2 - Istanbul Dental Care
+    clinic_id: "2", // Clinic 2
     title: "Premium Hotel Deal",
     description: "Save up to 20% on premium hotels with your dental treatment booking. Enjoy luxury accommodations while you receive top-quality dental care.",
     discount_type: "percentage",
     discount_value: 20,
-    applicable_treatments: ["dental_implant_standard", "porcelain_veneers", "dental_crowns"],
+    applicable_treatments: ["All Treatments"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
     promo_code: "LUXHOTEL20",
@@ -65,19 +57,16 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString(),
-    // Added price data
-    treatment_price_gbp: 250,
-    treatment_price_usd: 325
+    admin_reviewed_at: new Date().toISOString()
   },
   {
     id: "3e6a315d-9d9f-4b56-97da-4b3d4b4b5367", // Use fixed ID for testing with refresh script
-    clinic_id: "3", // Clinic 3 - Maltepe Dental Clinic
+    clinic_id: "3", // Clinic 3
     title: "Dental Implant + Crown Bundle",
     description: "Get a special bundle price when combining dental implant with a crown. Save up to 30% compared to individual procedures.",
     discount_type: "percentage",
     discount_value: 30,
-    applicable_treatments: ["dental_implant_standard", "dental_crowns"],
+    applicable_treatments: ["Dental Implants", "Crowns"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(),
     promo_code: "IMPLANTCROWN30",
@@ -90,19 +79,16 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString(),
-    // Added price data
-    treatment_price_gbp: 1200,
-    treatment_price_usd: 1550
+    admin_reviewed_at: new Date().toISOString()
   },
   {
     id: "72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0", // Use fixed ID for testing with refresh script
-    clinic_id: "4", // Clinic 4 - Dentakay Istanbul
+    clinic_id: "4", // Clinic 4
     title: "Luxury Airport Transfer",
     description: "Complimentary luxury airport transfer with premium vehicles when you book any major dental treatment package.",
     discount_type: "fixed_amount",
     discount_value: 80,
-    applicable_treatments: ["full_mouth_reconstruction", "hollywood_smile", "all_on_4_implants"],
+    applicable_treatments: ["Full Mouth Reconstruction", "Hollywood Smile", "All-on-4 Implants"],
     start_date: new Date().toISOString(),
     end_date: new Date(new Date().setMonth(new Date().getMonth() + 4)).toISOString(),
     promo_code: "LUXTRAVEL",
@@ -115,10 +101,7 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString(),
-    // Added price data
-    treatment_price_gbp: 180,
-    treatment_price_usd: 230
+    admin_reviewed_at: new Date().toISOString()
   },
   {
     id: "a9f87e54-3c21-4f89-bc6d-1c2a1dfb76e9", // Use fixed ID for testing with refresh script
@@ -140,10 +123,7 @@ const sampleOffers: SpecialOffer[] = [
     homepage_display: false,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
-    admin_reviewed_at: new Date().toISOString(),
-    // Added price data
-    treatment_price_gbp: 150,
-    treatment_price_usd: 195
+    admin_reviewed_at: new Date().toISOString()
   }
 ];
 
@@ -1005,133 +985,5 @@ router.post('/refresh-images', async (req, res) => {
     refreshedOffers
   });
 });
-
-// User: Save a special offer to their account
-router.post('/api/special-offers/save-to-account', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  
-  // Extract offer details from request body
-  const { specialOfferId, clinicId, offerDetails } = req.body;
-  
-  if (!specialOfferId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Special offer ID is required'
-    });
-  }
-  
-  try {
-    // Insert into user_saved_special_offers table
-    const [savedOffer] = await db.insert(userSavedSpecialOffers).values({
-      userId,
-      specialOfferId,
-      clinicId,
-      offerDetails,
-      savedAt: new Date(),
-      viewed: false,
-      status: 'active',
-    }).returning();
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Special offer saved successfully',
-      data: savedOffer
-    });
-  } catch (error) {
-    console.error('Error saving special offer:', error);
-    throw new AppError(`Failed to save special offer: ${error.message}`, 500);
-  }
-}));
-
-// User: Get all saved special offers
-router.get('/api/special-offers/saved', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  
-  try {
-    // Query all saved offers for the user
-    const savedOffers = await db.select()
-      .from(userSavedSpecialOffers)
-      .where(eq(userSavedSpecialOffers.userId, userId))
-      .orderBy(desc(userSavedSpecialOffers.savedAt));
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Saved special offers retrieved successfully',
-      data: savedOffers
-    });
-  } catch (error) {
-    console.error('Error retrieving saved special offers:', error);
-    throw new AppError(`Failed to retrieve saved special offers: ${error.message}`, 500);
-  }
-}));
-
-// User: Update a saved special offer (mark as viewed, update status, etc.)
-router.patch('/api/special-offers/saved/:id', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const offerId = parseInt(req.params.id);
-  const updates = req.body;
-  
-  try {
-    // Update the saved offer
-    const [updatedOffer] = await db.update(userSavedSpecialOffers)
-      .set(updates)
-      .where(
-        and(
-          eq(userSavedSpecialOffers.id, offerId),
-          eq(userSavedSpecialOffers.userId, userId)
-        )
-      )
-      .returning();
-    
-    if (!updatedOffer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Saved offer not found'
-      });
-    }
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Saved offer updated successfully',
-      data: updatedOffer
-    });
-  } catch (error) {
-    console.error('Error updating saved special offer:', error);
-    throw new AppError(`Failed to update saved special offer: ${error.message}`, 500);
-  }
-}));
-
-// User: Delete a saved special offer
-router.delete('/api/special-offers/saved/:id', isAuthenticated, catchAsync(async (req: Request, res: Response) => {
-  const userId = req.user.id;
-  const offerId = parseInt(req.params.id);
-  
-  try {
-    // Delete the saved offer
-    const [deletedOffer] = await db.delete(userSavedSpecialOffers)
-      .where(
-        and(
-          eq(userSavedSpecialOffers.id, offerId),
-          eq(userSavedSpecialOffers.userId, userId)
-        )
-      )
-      .returning();
-    
-    if (!deletedOffer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Saved offer not found'
-      });
-    }
-    
-    return res.status(200).json({
-      success: true,
-      message: 'Saved offer deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting saved special offer:', error);
-    throw new AppError(`Failed to delete saved special offer: ${error.message}`, 500);
-  }
-}));
 
 export default router;

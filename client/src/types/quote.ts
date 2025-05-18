@@ -10,8 +10,7 @@ export type QuoteStatus =
   | "rejected" 
   | "completed" 
   | "cancelled"
-  | "expired"
-  | "draft";
+  | "expired";
 
 export interface CreateQuoteRequest {
   name: string;
@@ -56,29 +55,6 @@ export interface QuoteRequest {
   patientCountry?: string;
   patientCity?: string;
   patientLanguage?: string;
-  
-  // Bridge adapter properties
-  patientName?: string;
-  patientEmail?: string;
-  totalGBP?: number;
-  totalPrice?: number;
-  subtotal?: number;
-  totalAfterDiscount?: number;
-  treatments?: Array<{
-    name: string;
-    quantity: number;
-    price: number;
-    currency?: string;
-    isPackage?: boolean;
-    isSpecialOffer?: boolean;
-    packageId?: string;
-    specialOfferId?: string;
-  }>;
-  promoCode?: string;
-  promoName?: string;
-  discountType?: 'percentage' | 'fixed_amount';
-  discountValue?: number;
-  currency?: string;
   
   // Special offer information
   specialOffer?: {

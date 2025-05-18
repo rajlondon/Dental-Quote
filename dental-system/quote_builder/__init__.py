@@ -1,1 +1,0 @@
-# Quote Builder package initialization

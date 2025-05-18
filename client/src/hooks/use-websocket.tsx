@@ -41,7 +41,7 @@ export const useWebSocket = (): WebSocketHookResult => {
   const reconnectCountRef = useRef(0);
   const lastSuccessfulConnectionRef = useRef<number | null>(null);
   
-  // Function to initialize WebSocket connection with improved error handling
+  // Function to initialize WebSocket connection
   const initializeSocket = useCallback(() => {
     if (!user || !isComponentMounted.current) {
       // No WebSocket connection if not authenticated or if component is unmounting
@@ -50,37 +50,6 @@ export const useWebSocket = (): WebSocketHookResult => {
     }
     
     try {
-      // Check for global connection throttling
-      // If we had rapid connection failures, wait for a cooling-off period
-      const lastFailureTime = parseInt(sessionStorage.getItem('ws_last_failure_time') || '0', 10);
-      const currentTime = Date.now();
-      const timeSinceLastFailure = currentTime - lastFailureTime;
-      const consecutiveFailures = parseInt(sessionStorage.getItem('ws_consecutive_failures') || '0', 10);
-      
-      // If we've had multiple failures in rapid succession, implement an exponential backoff
-      if (consecutiveFailures > 2 && timeSinceLastFailure < 30000) {
-        // Exponential backoff based on failure count (max 30 seconds)
-        const backoffDelay = Math.min(1000 * Math.pow(1.5, consecutiveFailures), 30000);
-        const remainingCooldown = Math.max(0, backoffDelay - timeSinceLastFailure);
-        
-        if (remainingCooldown > 0) {
-          console.warn(`Connection throttling active. ${consecutiveFailures} consecutive failures, waiting ${remainingCooldown}ms before next attempt`);
-          
-          if (reconnectTimeoutRef.current) {
-            clearTimeout(reconnectTimeoutRef.current);
-          }
-          
-          reconnectTimeoutRef.current = setTimeout(() => {
-            if (isComponentMounted.current) {
-              console.log('Cooling-off period complete, attempting connection');
-              initializeSocket();
-            }
-          }, remainingCooldown);
-          
-          return;
-        }
-      }
-      
       // Clean up any existing connection first
       if (socketRef.current) {
         // Mark for manual close to prevent reconnect loop
@@ -99,7 +68,7 @@ export const useWebSocket = (): WebSocketHookResult => {
       // Create timestamp for this connection attempt
       const connectionAttemptTime = Date.now();
       
-      // Check individual connection rate limiting
+      // Check connection throttling
       if (lastSuccessfulConnectionRef.current) {
         const timeSinceLastConnection = connectionAttemptTime - lastSuccessfulConnectionRef.current;
         
@@ -168,9 +137,6 @@ export const useWebSocket = (): WebSocketHookResult => {
         
         console.log(`WebSocket connection ${thisConnectionId} established`);
         
-        // Reset the consecutive failures counter on successful connection
-        sessionStorage.setItem('ws_consecutive_failures', '0');
-        
         // Only update state if this is still the current socket
         if (isComponentMounted.current && 
             socketRef.current === socket && 
@@ -189,9 +155,6 @@ export const useWebSocket = (): WebSocketHookResult => {
               type: user.role
             }
           }));
-          
-          // Log connection success with readable timestamp for correlation with server logs
-          console.log(`WebSocket registered client ${user.id} (${user.role}) at ${new Date().toISOString()}`);
         }
       });
       
@@ -248,28 +211,7 @@ export const useWebSocket = (): WebSocketHookResult => {
           connectionTimeoutId = null;
         }
         
-        console.log(`WebSocket connection ${thisConnectionId} closed with code ${event.code}:`, event.reason || 'No reason provided');
-        
-        // Track consecutive failures for throttling
-        const isAbnormalClosure = (event.code !== 1000 && !event.wasClean);
-        if (isAbnormalClosure) {
-          // Track failure in session storage for global connection throttling
-          const currentTime = Date.now();
-          sessionStorage.setItem('ws_last_failure_time', currentTime.toString());
-          
-          const consecutiveFailures = parseInt(sessionStorage.getItem('ws_consecutive_failures') || '0', 10);
-          sessionStorage.setItem('ws_consecutive_failures', (consecutiveFailures + 1).toString());
-          
-          console.warn(`WebSocket failure #${consecutiveFailures + 1} at ${new Date(currentTime).toISOString()}`);
-        } else {
-          // Reset consecutive failures on clean closure
-          sessionStorage.setItem('ws_consecutive_failures', '0');
-        }
-        
-        // Log special case for abnormal closure
-        if (event.code === 1006) {
-          console.warn(`⚠️ WebSocket abnormal closure (1006) detected for connection ${thisConnectionId}. This typically indicates network issues or server restart.`);
-        }
+        console.log(`WebSocket connection ${thisConnectionId} closed:`, event.code, event.reason);
         
         // Only update state if this is still the current socket and component is mounted
         if (isComponentMounted.current && 
@@ -283,23 +225,11 @@ export const useWebSocket = (): WebSocketHookResult => {
           
           // Special check for clinic portal to prevent automatic reconnects
           const inClinicPortal = typeof window !== 'undefined' && 
-                                 (window.location.pathname.includes('clinic-portal') || 
-                                  window.location.pathname.includes('/clinic'));
+                                 (window.location.pathname === '/clinic-portal' || 
+                                  window.location.pathname === '/clinic');
           
-          // Determine if we should skip reconnection
-          // We skip if:
-          // 1. Manual close was requested (logout)
-          // 2. In clinic portal (to prevent refresh cycles)
-          // 3. Normal closure with code 1000 (intentional server or client disconnect)
-          // 4. Policy violation (1008) or authentication issues (4001-4003)
-          const skipReconnect = wasManualClose || 
-                               inClinicPortal || 
-                               event.code === 1000 || 
-                               event.code === 1008 || 
-                               (event.code >= 4001 && event.code <= 4003);
-          
-          if (skipReconnect) {
-            console.log(`WebSocket ${thisConnectionId} closed - skip reconnect - Manual: ${wasManualClose}, Clinic: ${inClinicPortal}, Code: ${event.code}`);
+          if (wasManualClose || inClinicPortal) {
+            console.log(`WebSocket ${thisConnectionId} closed - skip reconnect - Manual: ${wasManualClose}, Clinic: ${inClinicPortal}`);
             socketRef.current = null;
             
             if (reconnectTimeoutRef.current) {
@@ -309,54 +239,20 @@ export const useWebSocket = (): WebSocketHookResult => {
             return;
           }
           
-          // Only attempt to reconnect if we have a valid user and component is still mounted
-          if (user && isComponentMounted.current) {
-            // Determine reconnection priority based on close code
-            let isHighPriority = false;
-            
-            // High priority reconnection for specific close codes indicating temporary issues:
-            // - 1001: Going away (server restart)
-            // - 1006: Abnormal closure (network interruption)
-            // - 1012: Service restart
-            // - 1013: Try again later
-            if ([1001, 1006, 1012, 1013].includes(event.code)) {
-              isHighPriority = true;
-            }
-            
+          // Attempt to reconnect after delay (if user is still logged in and socket wasn't manually closed)
+          if (user && !event.wasClean && isComponentMounted.current) {
             // Increment reconnect count
             reconnectCountRef.current++;
             
             // Calculate backoff delay (gradually increasing with each attempt)
-            // For high priority issues, use shorter delays
-            const baseDelay = isHighPriority ? 1000 : 2000;
-            const maxReconnectAttempts = isHighPriority ? 10 : 5;
-            const reconnectDelay = Math.min(baseDelay + (reconnectCountRef.current * 1000), 15000);
+            const reconnectDelay = Math.min(2000 + (reconnectCountRef.current * 1000), 10000);
             
-            console.log(`Scheduling reconnect attempt #${reconnectCountRef.current} in ${reconnectDelay}ms (priority: ${isHighPriority ? 'high' : 'normal'})`);
+            console.log(`Scheduling reconnect attempt #${reconnectCountRef.current} in ${reconnectDelay}ms`);
             
-            // Clear any existing reconnect timeout
             if (reconnectTimeoutRef.current) {
               clearTimeout(reconnectTimeoutRef.current);
             }
             
-            // Stop trying after too many attempts
-            if (reconnectCountRef.current > maxReconnectAttempts) {
-              console.warn(`Giving up reconnection after ${maxReconnectAttempts} attempts`);
-              
-              // Notify user of persistent connection issues
-              if (isComponentMounted.current) {
-                toast({
-                  title: 'Connection Issue',
-                  description: 'Unable to maintain connection to the server. Please try refreshing the page.',
-                  variant: 'destructive'
-                });
-              }
-              
-              reconnectTimeoutRef.current = null;
-              return;
-            }
-            
-            // Set reconnect timeout
             reconnectTimeoutRef.current = setTimeout(() => {
               // Only reconnect if component is still mounted
               if (isComponentMounted.current) {
@@ -371,55 +267,16 @@ export const useWebSocket = (): WebSocketHookResult => {
       socket.addEventListener('error', (error) => {
         console.error(`WebSocket ${thisConnectionId} error:`, error);
         
-        // Track error in application monitoring
-        try {
-          // Add timestamp and user info for better debugging
-          const errorInfo = {
-            timestamp: new Date().toISOString(),
-            connectionId: thisConnectionId,
-            userId: user?.id,
-            userType: user?.role,
-            url: window.location.href,
-            readyState: socket.readyState,
-            errorType: (error as any)?.type || 'unknown'
-          };
+        // Only show toast if this is the current socket and component is mounted
+        if (isComponentMounted.current && 
+            socketRef.current === socket && 
+            (socketRef.current as any)._connectionId === thisConnectionId) {
           
-          console.error('WebSocket error details:', errorInfo);
-          
-          // Store the error timestamp in sessionStorage to avoid showing too many error messages
-          const lastErrorTime = parseInt(sessionStorage.getItem('ws_last_error_time') || '0', 10);
-          const currentTime = Date.now();
-          const showErrorMessage = (currentTime - lastErrorTime) > 10000; // Only show error message every 10 seconds
-          
-          // Only show toast if this is the current socket, component is mounted, and we haven't shown errors recently
-          if (isComponentMounted.current && 
-              socketRef.current === socket && 
-              (socketRef.current as any)._connectionId === thisConnectionId &&
-              showErrorMessage) {
-            
-            // Update the last error time
-            sessionStorage.setItem('ws_last_error_time', currentTime.toString());
-            
-            toast({
-              title: 'Connection Issue',
-              description: 'Experiencing network connectivity issues. Attempting to reconnect...',
-              variant: 'destructive',
-              duration: 5000
-            });
-            
-            // Force close and attempt to reconnect if socket is in a bad state after error
-            // This helps prevent sockets getting stuck in error states
-            if (socket.readyState !== WebSocket.CLOSED && socket.readyState !== WebSocket.CLOSING) {
-              try {
-                console.log(`Forcibly closing WebSocket after error, readyState: ${socket.readyState}`);
-                socket.close(3000, "Error recovery");
-              } catch (closeError) {
-                console.error('Error while trying to close socket after error:', closeError);
-              }
-            }
-          }
-        } catch (handlerError) {
-          console.error('Error in WebSocket error handler:', handlerError);
+          toast({
+            title: 'Connection Error',
+            description: 'Failed to connect to the server. Retrying...',
+            variant: 'destructive'
+          });
         }
       });
       

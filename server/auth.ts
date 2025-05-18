@@ -233,59 +233,16 @@ export async function setupAuth(app: Express) {
         
         console.error("Database error during session restore:", dbErr);
         
-        // On database error, create a better fallback user to maintain session continuity
-        console.log("Creating enhanced fallback user during database outage");
+        // On database error, create a fallback user to maintain session continuity
+        console.log("Creating minimal fallback user during database outage");
         
-        // Check if the ID is likely for a clinic user based on known patterns
-        // We can't access req here because we're in the Passport deserializeUser
-        
-        // Try to get stored clinic role and ID from any available sources
-        let reconstructedRole = "recovery_mode";
-        let reconstructedClinicId: number | undefined = undefined;
-        
-        // Attempt to determine if this is a clinic user based on known ID ranges or patterns
-        // In this case, we'll use the sessionStore directly to check for session data
-        try {
-          // Check if this is likely a clinic user based on stored flags or known patterns
-          // Check if the ID is likely a clinic ID based on patterns
-          let isLikelyClinicId = false;
-          
-          // Convert ID to string for safe handling regardless of type
-          const idStr = String(id);
-          
-          // Check numeric pattern (30-50 range)
-          const numId = parseInt(idStr, 10);
-          if (!isNaN(numId) && numId >= 30 && numId <= 50) {
-            isLikelyClinicId = true;
-          }
-          
-          // Check string pattern with clinic prefix
-          if (idStr.includes('clinic')) {
-            isLikelyClinicId = true;
-          }
-            
-          if (isLikelyClinicId) {
-            console.log(`User ID ${id} appears to be a clinic user ID based on known patterns`);
-            reconstructedRole = "clinic";
-            
-            // If we don't have a clinic ID but believe this is a clinic user, use ID as clinic ID
-            if (typeof id === 'number') {
-              reconstructedClinicId = id;
-            }
-          }
-        } catch (patternError) {
-          console.error("Error checking for clinic patterns:", patternError);
-        }
-        
-        // Create enhanced fallback user object with potential clinic data
+        // Create minimal user object for emergency fallback
         const fallbackUser = {
           id: id,
           email: "session-recovery@mydentalfly.local",
-          role: reconstructedRole,
-          clinicId: reconstructedClinicId
+          role: "recovery_mode"
         };
         
-        console.log(`Created fallback user with role: ${reconstructedRole}, clinicId: ${reconstructedClinicId || 'none'}`);
         done(null, fallbackUser);
       }
     } catch (err) {
@@ -296,172 +253,7 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Dedicated clinic login endpoint that performs server-side redirect
-  app.post("/api/auth/clinic-login", (req, res, next) => {
-    // Extract credentials and return URL from form submission
-    const { 
-      email, 
-      password, 
-      returnUrl, 
-      isClinicLogin, 
-      skipPromoRedirect,
-      no_special_offer_redirect,
-      disable_quote_redirect,
-      login_source,
-      timestamp
-    } = req.body;
-    
-    // Always force dashboard as the target, ignore any other returnUrl to ensure safety
-    const targetUrl = '/clinic-portal/dashboard';
-    
-    // Enhanced logging for clinic login diagnostics
-    console.log("CRITICAL: Clinic login request received:", {
-      email: email ? `${email.substring(0, 3)}...` : undefined,
-      hasPassword: !!password,
-      returnUrl,
-      targetUrl: targetUrl, // Log exactly where we plan to redirect
-      isClinicLogin,
-      skipPromoRedirect,
-      hasNoSpecialOfferRedirect: !!no_special_offer_redirect,
-      hasDisableQuoteRedirect: !!disable_quote_redirect,
-      loginSource: login_source || 'unknown',
-      hasTimestamp: !!timestamp
-    });
-    
-    // Check if already authenticated as clinic_staff with same email
-    if (req.isAuthenticated() && 
-        req.user.role === 'clinic_staff' && 
-        req.user.email === email) {
-      
-      console.log("Already authenticated as clinic staff with same email, redirecting to:", targetUrl);
-      
-      // Set additional redirect cookies to ensure the client-side gets the message
-      res.cookie('clinic_redirect_target', targetUrl, {
-        httpOnly: false,
-        maxAge: 60 * 1000, // 1 minute
-        path: '/'
-      });
-      
-      // Set the no_promo flag to ensure no promotional redirects occur
-      res.cookie('no_promo_redirect', 'true', {
-        httpOnly: false,
-        maxAge: 60 * 60 * 1000, // 1 hour
-        path: '/'
-      });
-      
-      // Force the client to go to the dashboard regardless of what might have been set elsewhere
-      return res.redirect('/clinic-portal/dashboard');
-    }
-    
-    // Authenticate the user
-    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) {
-        console.error("Clinic login error:", err);
-        return res.redirect('/clinic-login?error=server_error');
-      }
-      
-      if (!user) {
-        console.log("Clinic login failed: Invalid credentials");
-        return res.redirect('/clinic-login?error=invalid_credentials');
-      }
-      
-      // Verify this is a clinic staff account
-      if (user.role !== 'clinic_staff' && user.role !== 'admin') {
-        console.log("Clinic login failed: Not a clinic staff account");
-        return res.redirect('/clinic-login?error=access_denied');
-      }
-      
-      // Log the user in
-      req.login(user, (loginErr) => {
-        if (loginErr) {
-          console.error("Clinic login session error:", loginErr);
-          return res.redirect('/clinic-login?error=session_error');
-        }
-        
-        // Set multiple markers in the session for redundant protection
-        (req.session as any).isClinicStaff = true;
-        (req.session as any).clinicSessionActive = true;
-        (req.session as any).userRole = 'clinic_staff';
-        
-        // Always set these flags for clinic logins for maximum protection
-        (req.session as any).skipPromoRedirect = true;
-        (req.session as any).noSpecialOfferRedirect = true;
-        (req.session as any).disableQuoteRedirect = true;
-        
-        // Record login source for debugging
-        if (login_source) {
-          (req.session as any).loginSource = login_source;
-        }
-        
-        // Add timestamp for tracking
-        (req.session as any).clinicLoginTimestamp = Date.now();
-        
-        // Save the session explicitly before redirect to ensure cookie is set
-        req.session.save((saveErr) => {
-          if (saveErr) {
-            console.error("Error saving session before redirect:", saveErr);
-            return res.redirect('/clinic-login?error=session_save_error');
-          }
-          
-          // Enhanced redirect with debugging and reliability improvements
-          console.log(`✅ Clinic login successful, redirecting to ${targetUrl}`);
-          
-          // Set multiple cookies to help client-side detect this is a clinic session
-          // This provides redundancy for our detection mechanisms
-          res.cookie('is_clinic_staff', 'true', { 
-            httpOnly: false, // Allow JavaScript to read
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/' 
-          });
-          
-          // Add an additional cookie specifically for the post-login redirect
-          res.cookie('clinic_redirect_target', targetUrl, {
-            httpOnly: false, // Allow JavaScript to read
-            maxAge: 60 * 1000, // 1 minute - just enough for the redirect
-            path: '/'
-          });
-          
-          // Set the no_promo flag to prevent promotional redirects
-          res.cookie('no_promo_redirect', 'true', {
-            httpOnly: false,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'
-          });
-          
-          // Add a session marker cookie for clinic login
-          res.cookie('clinic_session_active', 'true', {
-            httpOnly: false,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'
-          });
-          
-          // Add a login timestamp cookie
-          res.cookie('clinic_login_timestamp', Date.now().toString(), {
-            httpOnly: false,
-            maxAge: 24 * 60 * 60 * 1000, // 24 hours
-            path: '/'
-          });
-          
-          // Force cache headers to prevent issues
-          res.setHeader('Cache-Control', 'no-store, must-revalidate');
-          res.setHeader('Pragma', 'no-cache');
-          res.setHeader('Expires', '0');
-          
-          // Ensure we're redirecting to the clinic portal regardless of what was requested
-          // This is a security measure to prevent redirection to potentially malicious URLs
-          const safeTargetUrl = targetUrl.startsWith('/clinic-portal') ? 
-            targetUrl : '/clinic-portal/dashboard';
-            
-          console.log(`Redirecting to safe target URL: ${safeTargetUrl} (original: ${targetUrl})`);
-          
-          // Send the redirect to the safe target URL
-          return res.redirect(safeTargetUrl);
-        });
-      });
-    })(req, res, next);
-  });
-  
-  // Standard login endpoint with enhanced email verification handling
+  // Login endpoint with enhanced email verification handling and clinic session optimization
   app.post("/api/auth/login", (req, res, next) => {
     // Special session optimization for clinic staff to prevent double login
     // Check if already authenticated as clinic_staff with same email
