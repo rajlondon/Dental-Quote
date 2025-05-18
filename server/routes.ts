@@ -48,6 +48,7 @@ import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
 import enhancedAuthRoutes from "./routes/auth-routes"; // Add enhanced auth routes
+import quoteDetailsRouter from "./routes/quote-details"; // Add quote details router with promo code support
 import promoCodesRoutes from "./routes/promo-codes";
 import quotesApiRoutes from "./routes/quotes";
 import openaiRoutes from "./routes/openai-routes";
