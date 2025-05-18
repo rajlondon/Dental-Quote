@@ -4,8 +4,8 @@
  * This script tests the communication between our Express server, Flask backend,
  * and React frontend to verify that the hybrid approach is working correctly.
  */
-const axios = require('axios');
-const chalk = require('chalk');
+import axios from 'axios';
+import chalk from 'chalk';
 
 // Utility functions for output formatting
 const log = {
@@ -17,7 +17,7 @@ const log = {
 };
 
 // Base URLs for different services
-const EXPRESS_URL = 'http://localhost:3000'; // Express server
+const EXPRESS_URL = 'http://localhost:5000'; // Express server (Replit uses port 5000)
 const FLASK_URL = 'http://localhost:8080';   // Flask server
 
 // Test functions
