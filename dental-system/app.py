@@ -24,12 +24,15 @@ app.register_blueprint(quote_blueprint, url_prefix='/quote-builder')
 def index():
     # Example special offers data
     special_offers = [
-        {"id": 1, "title": "Premium Implant Package", "discount": "50% off", "price": "€750", "oldPrice": "€1500", 
-         "image": "dental-implant.jpg", "promoCode": "IMPLANTCROWN30", "limited": True},
-        {"id": 2, "title": "Luxury Smile Makeover", "discount": "Save €3000", "price": "€2999", "oldPrice": "€5999", 
-         "image": "smile-makeover.jpg", "promoCode": "LUXHOTEL20", "limited": True},
-        {"id": 3, "title": "Travel & Treatment Bundle", "discount": "40% off", "price": "€1999", "oldPrice": "€3499", 
-         "image": "travel-bundle.jpg", "promoCode": "LUXTRAVEL", "limited": False}
+        {"id": 1, "title": "Premium Implant Package", "discount": "50% off", "price": 750, "old_price": 1500, 
+         "image_path": "images/dental-implant.jpg", "promo_code": "IMPLANTCROWN30", "limited": True, 
+         "description": "Get a premium dental implant with crown at half the normal price", "expiry_date": "June 30, 2025"},
+        {"id": 2, "title": "Luxury Smile Makeover", "discount": "Save €3000", "price": 2999, "old_price": 5999, 
+         "image_path": "images/smile-makeover.jpg", "promo_code": "LUXHOTEL20", "limited": True, 
+         "description": "Complete smile transformation with luxury hotel stay included", "expiry_date": "July 15, 2025"},
+        {"id": 3, "title": "Travel & Treatment Bundle", "discount": "40% off", "price": 1999, "old_price": 3499, 
+         "image_path": "images/travel-bundle.jpg", "promo_code": "LUXTRAVEL", "limited": False, 
+         "description": "All-inclusive package with flights, hotel and treatment", "expiry_date": "August 31, 2025"}
     ]
     
     # Example statistics
