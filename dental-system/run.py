@@ -34,12 +34,9 @@ app.config["SESSION_USE_SIGNER"] = True
 os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 Session(app)
 
-# Create static images directory if it doesn't exist
-os.makedirs(os.path.join(app.static_folder, 'images'), exist_ok=True)
-os.makedirs(os.path.join(app.static_folder, 'images/treatments'), exist_ok=True)
-os.makedirs(os.path.join(app.static_folder, 'images/offers'), exist_ok=True)
-os.makedirs(os.path.join(app.static_folder, 'images/testimonials'), exist_ok=True)
-os.makedirs(os.path.join(app.static_folder, 'css'), exist_ok=True)
+# Create static directories if they don't exist
+for folder in ['images', 'images/treatments', 'images/offers', 'images/testimonials', 'css']:
+    os.makedirs(os.path.join(app.static_folder, folder), exist_ok=True)
 
 # Session management class
 class SessionManager:
@@ -212,387 +209,146 @@ SPECIAL_OFFERS = [
         'expiry_date': '2025-08-15'
     }
 ]
-        session['quote_data'] = quote_data
-        
-    @staticmethod
-    def update_quote_step(step):
-        """Update the current step in the quote process"""
-        quote_data = SessionManager.get_quote_data()
-        quote_data['step'] = step
-        SessionManager.save_quote_data(quote_data)
-        
-    @staticmethod
-    def calculate_discount(promo_code, total):
-        """Calculate discount amount for a given promo code and total"""
-        if promo_code not in PROMO_CODES:
-            return 0
-            
-        promo_info = PROMO_CODES[promo_code]
-        discount_percent = promo_info.get('discount_percent', 0)
-        return (total * discount_percent) / 100
 
-# Mock data
-TREATMENTS = [
-    {"id": 1, "name": "Dental Implant", "price": 1200, "currency": "EUR", "description": "Titanium post surgically inserted into the jawbone"},
-    {"id": 2, "name": "Porcelain Crown", "price": 800, "currency": "EUR", "description": "Custom-made cap that covers a damaged tooth"},
-    {"id": 3, "name": "Root Canal", "price": 600, "currency": "EUR", "description": "Treatment for infected pulp of tooth"},
-    {"id": 4, "name": "Teeth Whitening", "price": 400, "currency": "EUR", "description": "Professional bleaching to remove stains"},
-    {"id": 5, "name": "Dental Veneers (per tooth)", "price": 700, "currency": "EUR", "description": "Custom shells to cover front of teeth"},
-    {"id": 6, "name": "Dental Cleaning", "price": 150, "currency": "EUR", "description": "Professional plaque and tartar removal"},
-]
-
-PROMO_CODES = {
-    "WELCOME10": {"discount_percent": 10, "description": "10% off your first treatment"},
-    "IMPLANTCROWN30": {"discount_percent": 30, "description": "30% off Implant + Crown package", "package_only": True},
-    "LUXHOTEL20": {"discount_percent": 20, "description": "20% off plus free hotel stay", "min_amount": 2000},
-    "LUXTRAVEL": {"discount_percent": 40, "description": "40% off with luxury travel arrangements", "min_amount": 1500}
-}
-
-# Special offers data - shared between Flask and React
-SPECIAL_OFFERS = [
-    {
-        "id": "ac36590b-b0dc-434e-ba74-d42ab2483f41",
-        "title": "Premium Implant Package",
-        "description": "Complete dental implant solution with premium materials",
-        "discount": "30% off",
-        "price": 1450,
-        "oldPrice": 2100,
-        "promoCode": "IMPLANTCROWN30",
-        "limited": True,
-        "clinicId": 1,
-        "treatmentIds": [1, 2],
-        "expiryDate": "2025-07-30",
-        "image": "dental-implant.jpg"
-    },
-    {
-        "id": "79a8f452-7398-4487-a5c9-35c4b998f2eb",
-        "title": "Luxury Smile Makeover",
-        "description": "Complete smile transformation with hotel accommodation included",
-        "discount": "Save €3000",
-        "price": 2999,
-        "oldPrice": 5999,
-        "promoCode": "LUXHOTEL20",
-        "limited": True,
-        "clinicId": 2,
-        "treatmentIds": [5, 4, 2],
-        "expiryDate": "2025-06-30",
-        "image": "smile-makeover.jpg"
-    },
-    {
-        "id": "5e68734d-6092-4822-a9ec-5099316c6d6f",
-        "title": "Travel & Treatment Bundle",
-        "description": "All-inclusive package with flights, luxury hotel, and premium treatments",
-        "discount": "40% off",
-        "price": 1999,
-        "oldPrice": 3499,
-        "promoCode": "LUXTRAVEL",
-        "limited": False,
-        "clinicId": 3,
-        "treatmentIds": [1, 2, 6],
-        "expiryDate": "2025-08-15",
-        "image": "travel-bundle.jpg"
-    }
-]
-
-# Main website routes
+# Flask routes for our hybrid application
 @app.route('/')
 def index():
-    # Example statistics
+    """Main homepage with special offers section"""
+    # Some basic stats to display on the homepage
     stats = {
-        "quotes_generated": "17k+",
-        "avg_clinic_rating": "4.5",
-        "max_savings": "70%",
-        "data_security": "Fully encrypted"
+        'patients_treated': '10,000+',
+        'clinics': '25+',
+        'savings': 'Up to 70%',
+        'satisfaction': '98%'
     }
-    
     return render_template('index.html', special_offers=SPECIAL_OFFERS, stats=stats)
 
 @app.route('/search')
 def search():
-    # Search functionality
-    location = request.args.get('location', '')
+    """Search results page"""
+    query = request.args.get('location', '')
     date = request.args.get('date', '')
-    # Perform search...
-    return render_template('search.html', location=location, date=date, results=[])
+    return render_template('search-results.html', query=query, date=date)
 
-# Quote Builder routes
-@app.route('/quote-builder/')
-def quote_index():
+@app.route('/quote-builder')
+@app.route('/quote-builder/<step_name>')
+def quote_builder(step_name='dental-chart'):
     """Main quote builder page"""
-    # Initialize session if needed
+    # Initialize the quote session
     SessionManager.init_quote_session()
-    
-    # Get current quote data
     quote_data = SessionManager.get_quote_data()
     
-    # Process any query parameters
-    promo_code = request.args.get('promo')
-    if promo_code and promo_code in PROMO_CODES:
-        # Auto-apply promo code from URL
-        discount_amount = SessionManager.calculate_discount(promo_code, quote_data.get('total', 0))
-        quote_data['promo_code'] = promo_code
-        quote_data['discount_amount'] = discount_amount
-        SessionManager.save_quote_data(quote_data)
+    # Get query parameters
+    promo_code = request.args.get('promo', quote_data.get('promo_code'))
+    offer_id = request.args.get('offer')
+    clinic_id = request.args.get('clinic', quote_data.get('clinic_id'))
     
-    # Check for clinic ID in URL
-    clinic_id = request.args.get('clinic_id')
+    # Update quote data with URL parameters
+    if promo_code:
+        quote_data['promo_code'] = promo_code
+    
     if clinic_id:
         quote_data['clinic_id'] = clinic_id
-        SessionManager.save_quote_data(quote_data)
         
-    # Check for treatments in URL (comma-separated list of IDs)
-    treatments_param = request.args.get('treatments')
-    if treatments_param:
-        try:
-            treatment_ids = [int(t) for t in treatments_param.split(',')]
-            treatments_to_add = [t for t in TREATMENTS if t['id'] in treatment_ids]
-            
-            # Add treatments to quote
-            if treatments_to_add:
-                quote_data['treatments'].extend(treatments_to_add)
-                quote_data['total'] = sum(t.get('price', 0) for t in quote_data['treatments'])
-                
-                # Recalculate discount if promo code is applied
-                if quote_data['promo_code']:
-                    quote_data['discount_amount'] = SessionManager.calculate_discount(
-                        quote_data['promo_code'], quote_data['total']
-                    )
-                    
-                SessionManager.save_quote_data(quote_data)
-        except ValueError:
-            # Ignore invalid treatment IDs
-            pass
+    if offer_id:
+        # Find the special offer by ID
+        offer = next((o for o in SPECIAL_OFFERS if o['id'] == offer_id), None)
+        if offer:
+            quote_data['special_offer'] = offer
+            if 'promo_code' in offer:
+                quote_data['promo_code'] = offer['promo_code']
     
-    return render_template('quote_builder/index.html', 
-                           quote_data=quote_data,
-                           treatments=TREATMENTS,
-                           step='treatments')
-
-@app.route('/quote-builder/step/<step_name>')
-def quote_step(step_name):
-    """Handle different steps of the quote builder"""
-    # Initialize session if needed
-    SessionManager.init_quote_session()
-    
-    # Get current quote data
-    quote_data = SessionManager.get_quote_data()
-    
-    # Update current step
-    quote_data['step'] = step_name
+    # Save updated quote data
     SessionManager.save_quote_data(quote_data)
+    SessionManager.update_quote_step(step_name)
     
-    # Prepare context based on step
-    context = {'quote_data': quote_data, 'treatments': TREATMENTS}
+    # Determine step number for progress indicator
+    step_order = ['dental-chart', 'treatments', 'promo-code', 'patient-info', 'review', 'confirmation']
+    step_num = step_order.index(step_name) + 1 if step_name in step_order else 1
     
-    return render_template(f'quote_builder/step_{step_name}.html', **context)
-
-# API endpoints for the quote builder UI
-@app.route('/quote-builder/api/add-treatment', methods=['POST'])
-def add_treatment():
-    """API endpoint to add a treatment to the quote"""
-    data = request.json
-    treatment_id = data.get('treatment_id')
+    # Setup step-specific data
+    context = {
+        'step': step_name,
+        'step_num': step_num,
+        'promo_code': quote_data.get('promo_code'),
+        'clinic_id': quote_data.get('clinic_id')
+    }
     
-    # Find the treatment in our list
-    treatment = next((t for t in TREATMENTS if t['id'] == treatment_id), None)
+    if step_name == 'treatments':
+        context['treatments'] = TREATMENTS
+        context['packages'] = PACKAGES
     
-    if not treatment:
-        return jsonify({'success': False, 'message': 'Treatment not found'}), 404
-    
-    # Add treatment to the quote
-    quote_data = SessionManager.get_quote_data()
-    quote_data['treatments'].append(treatment)
-    quote_data['total'] = sum(t.get('price', 0) for t in quote_data['treatments'])
-    
-    # Recalculate discount if promo code is applied
-    if quote_data['promo_code']:
-        quote_data['discount_amount'] = SessionManager.calculate_discount(
-            quote_data['promo_code'], quote_data['total']
-        )
+    elif step_name == 'promo-code':
+        # Get treatments from session
+        treatments = quote_data.get('treatments', [])
+        # Calculate the total price of selected treatments
+        total_price = sum(t.get('price', 0) for t in treatments)
         
-    SessionManager.save_quote_data(quote_data)
-    
-    return jsonify({
-        'success': True, 
-        'quote_data': quote_data
-    })
-
-@app.route('/quote-builder/api/remove-treatment', methods=['POST'])
-def remove_treatment():
-    """API endpoint to remove a treatment from the quote"""
-    data = request.json
-    treatment_id = data.get('treatment_id')
-    
-    # Remove treatment from the quote
-    quote_data = SessionManager.get_quote_data()
-    quote_data['treatments'] = [t for t in quote_data['treatments'] if t.get('id') != treatment_id]
-    quote_data['total'] = sum(t.get('price', 0) for t in quote_data['treatments'])
-    
-    # Recalculate discount if promo code is applied
-    if quote_data['promo_code']:
-        quote_data['discount_amount'] = SessionManager.calculate_discount(
-            quote_data['promo_code'], quote_data['total']
-        )
+        # Calculate discount if promo code is present
+        discount_amount = 0
+        if quote_data.get('promo_code'):
+            discount_amount = SessionManager.calculate_discount(
+                quote_data['promo_code'], total_price)
         
-    SessionManager.save_quote_data(quote_data)
+        context.update({
+            'quote_items': treatments,
+            'total_price': total_price - discount_amount,
+            'discount_amount': discount_amount,
+            'promo_code_status': 'valid' if discount_amount > 0 else None
+        })
     
-    return jsonify({
-        'success': True, 
-        'quote_data': quote_data
-    })
+    elif step_name == 'patient-info':
+        context['patient_info'] = quote_data.get('patient_info', {})
+    
+    elif step_name == 'review':
+        treatments = quote_data.get('treatments', [])
+        total_price = sum(t.get('price', 0) for t in treatments)
+        discount_amount = 0
+        
+        if quote_data.get('promo_code'):
+            discount_amount = SessionManager.calculate_discount(
+                quote_data['promo_code'], total_price)
+        
+        context.update({
+            'quote_items': treatments,
+            'total_price': total_price - discount_amount,
+            'discount_amount': discount_amount,
+            'patient_info': quote_data.get('patient_info', {})
+        })
+    
+    elif step_name == 'confirmation':
+        context['quote_reference'] = f"QT-{uuid.uuid4().hex[:8].upper()}"
+        context['patient_info'] = quote_data.get('patient_info', {})
+    
+    return render_template('quote-builder.html', **context)
 
-@app.route('/quote-builder/api/apply-promo-code', methods=['POST'])
-def apply_promo_code():
-    """API endpoint to apply a promo code to the quote"""
-    data = request.json
-    promo_code = data.get('promo_code')
-    
-    if not promo_code or promo_code not in PROMO_CODES:
-        return jsonify({
-            'success': False,
-            'message': 'Invalid promo code'
-        }), 400
-    
-    quote_data = SessionManager.get_quote_data()
-    total = quote_data.get('total', 0)
-    
-    # Apply promo code logic
-    promo_info = PROMO_CODES[promo_code]
-    
-    # Check minimum amount if required
-    if 'min_amount' in promo_info and total < promo_info['min_amount']:
-        return jsonify({
-            'success': False,
-            'message': f"Your total must be at least €{promo_info['min_amount']} to use this code"
-        }), 400
-    
-    # Calculate discount
-    discount_percent = promo_info.get('discount_percent', 0)
-    discount_amount = (total * discount_percent) / 100
-    
-    # Apply the discount
-    quote_data['promo_code'] = promo_code
-    quote_data['discount_amount'] = discount_amount
-    SessionManager.save_quote_data(quote_data)
-    
-    return jsonify({
-        'success': True,
-        'quote_data': quote_data,
-        'message': f"Applied: {promo_info.get('description')}"
-    })
-
-@app.route('/quote-builder/api/save-patient-info', methods=['POST'])
-def save_patient_info():
-    """API endpoint to save patient information"""
-    data = request.json
-    required_fields = ['name', 'email']
-    
-    # Validate required fields
-    for field in required_fields:
-        if not data.get(field):
-            return jsonify({
-                'success': False,
-                'message': f'Missing required field: {field}'
-            }), 400
-    
-    # Save patient info to the quote
-    quote_data = SessionManager.get_quote_data()
-    quote_data['patient_info'] = data
-    SessionManager.save_quote_data(quote_data)
-    
-    return jsonify({
-        'success': True,
-        'quote_data': quote_data
-    })
-
-@app.route('/quote-builder/api/submit-quote', methods=['POST'])
-def submit_quote():
-    """API endpoint to finalize and submit the quote"""
-    quote_data = SessionManager.get_quote_data()
-    
-    # Validate the quote has treatments and patient info
-    if not quote_data.get('treatments'):
-        return jsonify({
-            'success': False,
-            'message': 'No treatments selected'
-        }), 400
-    
-    if not quote_data.get('patient_info'):
-        return jsonify({
-            'success': False,
-            'message': 'Patient information missing'
-        }), 400
-    
-    # In a real app, this would save to a database and maybe send emails
-    # For now, just return success
-    
-    # Generate a quote ID (in real app, this would be from the database)
-    quote_data['status'] = 'submitted'
-    quote_data['submitted_at'] = datetime.now().isoformat()
-    
-    # Get a copy of the data before clearing
-    final_quote = quote_data.copy()
-    
-    # Clear the session
-    session.pop('quote_data', None)
-    
-    return jsonify({
-        'success': True,
-        'quote': final_quote,
-        'message': 'Quote submitted successfully!'
-    })
-
-# Integration API endpoints for React application
+# API endpoints for React integration
 @app.route('/api/quote-data-sync', methods=['POST'])
 def quote_data_sync():
     """API endpoint to synchronize quote data with React app"""
     try:
         data = request.json
-        quote_data = data.get('quote', {})
-        user_data = data.get('user', {})
-        timestamp = data.get('timestamp', datetime.now().isoformat())
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
         
-        # Log the synchronization request
-        print(f"Quote sync request received: user_id={user_data.get('id', 'anonymous')}, timestamp={timestamp}")
+        quote_data = SessionManager.get_quote_data()
+        # Update quote data from React
+        if 'quote' in data:
+            for key, value in data['quote'].items():
+                quote_data[key] = value
         
-        # Store the data in session
-        current_data = SessionManager.get_quote_data()
-        
-        # Merge data from React app with current session data
-        if 'treatments' in quote_data and quote_data['treatments']:
-            current_data['treatments'] = quote_data['treatments']
-            
-        if 'promoCode' in quote_data and quote_data['promoCode']:
-            current_data['promo_code'] = quote_data['promoCode']
-            
-        if 'clinicId' in quote_data and quote_data['clinicId']:
-            current_data['clinic_id'] = quote_data['clinicId']
-            
-        if 'patientInfo' in quote_data and quote_data['patientInfo']:
-            current_data['patient_info'] = quote_data['patientInfo']
-            
-        # Recalculate totals
-        current_data['total'] = sum(t.get('price', 0) for t in current_data['treatments'])
-        
-        # Recalculate discount if promo code is applied
-        if current_data['promo_code']:
-            current_data['discount_amount'] = SessionManager.calculate_discount(
-                current_data['promo_code'], current_data['total']
-            )
-            
-        # Save updated data
-        SessionManager.save_quote_data(current_data)
+        # Save the updated quote data
+        SessionManager.save_quote_data(quote_data)
         
         return jsonify({
             'success': True,
-            'quote_data': current_data,
-            'message': 'Quote data synchronized successfully'
+            'data': quote_data,
+            'message': 'Data synchronized successfully'
         })
     except Exception as e:
-        print(f"Error in quote data sync: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Error synchronizing quote data: {str(e)}'
+            'message': f'Error: {str(e)}'
         }), 500
 
 @app.route('/api/validate-promo', methods=['POST'])
@@ -601,63 +357,144 @@ def validate_promo():
     try:
         data = request.json
         promo_code = data.get('promoCode')
-        quote_total = data.get('quoteTotal', 0)
+        total = data.get('quoteTotal', 0)
         
-        # Validate the promo code
-        if not promo_code or promo_code not in PROMO_CODES:
+        if not promo_code:
             return jsonify({
                 'success': False,
-                'valid': False,
-                'message': 'Invalid promotional code'
+                'message': 'No promo code provided'
             }), 400
-            
-        promo_info = PROMO_CODES[promo_code]
         
-        # Check minimum amount if required
-        if 'min_amount' in promo_info and quote_total < promo_info['min_amount']:
-            return jsonify({
-                'success': False,
-                'valid': False,
-                'message': f"Your total must be at least €{promo_info['min_amount']} to use this code"
-            }), 400
-            
         # Calculate discount
-        discount_percent = promo_info.get('discount_percent', 0)
-        discount_amount = (quote_total * discount_percent) / 100
+        discount = SessionManager.calculate_discount(promo_code, total)
+        
+        if discount > 0:
+            # Save to session if valid
+            quote_data = SessionManager.get_quote_data()
+            quote_data['promo_code'] = promo_code
+            quote_data['discount_amount'] = discount
+            SessionManager.save_quote_data(quote_data)
+            
+            return jsonify({
+                'success': True,
+                'data': {
+                    'valid': True,
+                    'code': promo_code,
+                    'discount': discount,
+                    'discountedTotal': total - discount
+                },
+                'message': f'Promo code applied! You saved {discount}€'
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'data': {
+                    'valid': False,
+                    'code': promo_code
+                },
+                'message': 'Invalid promo code'
+            }), 400
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error: {str(e)}'
+        }), 500
+
+@app.route('/api/special-offers')
+def get_special_offers():
+    """API endpoint to get special offers for React app"""
+    return jsonify(SPECIAL_OFFERS)
+
+@app.route('/api/treatments')
+def get_treatments():
+    """API endpoint to get available treatments for React app"""
+    return jsonify(TREATMENTS)
+
+# Helper functions for bridging React and Flask
+@app.route('/api/bridge/state')
+def bridge_state():
+    """Get the current state for React app"""
+    quote_data = SessionManager.get_quote_data()
+    return jsonify({
+        'success': True,
+        'data': quote_data
+    })
+
+@app.route('/api/bridge/treatments')
+def bridge_treatments():
+    """Get available treatments for React app"""
+    return jsonify({
+        'success': True,
+        'data': {
+            'treatments': TREATMENTS,
+            'packages': PACKAGES
+        }
+    })
+
+# Save patient information
+@app.route('/api/save-patient-info', methods=['POST'])
+def save_patient_info():
+    """API endpoint to save patient information"""
+    try:
+        data = request.json
+        if not data:
+            return jsonify({'success': False, 'message': 'No data provided'}), 400
+        
+        # Get current quote data
+        quote_data = SessionManager.get_quote_data()
+        
+        # Update patient info
+        quote_data['patient_info'] = data
+        
+        # Save the updated quote data
+        SessionManager.save_quote_data(quote_data)
         
         return jsonify({
             'success': True,
-            'valid': True,
-            'promoCode': promo_code,
-            'discountPercent': discount_percent,
-            'discountAmount': discount_amount,
-            'description': promo_info.get('description', ''),
-            'message': f"Promo code '{promo_code}' applied successfully."
+            'message': 'Patient information saved successfully'
         })
     except Exception as e:
-        print(f"Error validating promo code: {str(e)}")
         return jsonify({
             'success': False,
-            'valid': False,
-            'message': f'Error validating promo code: {str(e)}'
+            'message': f'Error: {str(e)}'
         }), 500
 
-@app.route('/api/special-offers', methods=['GET'])
-def get_special_offers():
-    """API endpoint to get special offers for React app"""
+# Submit final quote
+@app.route('/api/submit-quote', methods=['POST'])
+def submit_quote():
+    """API endpoint to finalize and submit the quote"""
     try:
-        return jsonify(SPECIAL_OFFERS)
+        # Get current quote data
+        quote_data = SessionManager.get_quote_data()
+        
+        # Generate a reference number
+        reference = f"QT-{uuid.uuid4().hex[:8].upper()}"
+        quote_data['reference'] = reference
+        quote_data['status'] = 'submitted'
+        quote_data['submitted_at'] = datetime.now().isoformat()
+        
+        # Save the updated quote data
+        SessionManager.save_quote_data(quote_data)
+        
+        # In a real application, you might also:
+        # - Save the quote to a database
+        # - Send confirmation emails
+        # - Notify clinics, etc.
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'reference': reference,
+                'quote': quote_data
+            },
+            'message': 'Quote submitted successfully'
+        })
     except Exception as e:
-        print(f"Error fetching special offers: {str(e)}")
         return jsonify({
             'success': False,
-            'message': f'Error fetching special offers: {str(e)}'
+            'message': f'Error: {str(e)}'
         }), 500
 
+# Run the app
 if __name__ == '__main__':
-    # Create static directory for images if it doesn't exist
-    static_img_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'images')
-    os.makedirs(static_img_dir, exist_ok=True)
-    
-    # Run the Flask app
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8080)), debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8080)
