@@ -937,6 +937,9 @@ function Router() {
       {/* Simple Standalone Quote Builder (100% Self-Contained) */}
       <Route path="/simple-quote" component={React.lazy(() => import("@/pages/SimpleStandaloneQuote"))} />
       
+      {/* Package Test Page - Standalone package and treatment selection */}
+      <Route path="/package-test" component={React.lazy(() => import("@/pages/PackageTestPage"))} />
+      
       {/* Canonical route for patient quote details - redirect from /patient/quotes/:id */}
       <Route path="/portal/quotes/:id">
         {(params) => <PatientPortalPage initialSection="quotes" quoteId={params.id} />}
