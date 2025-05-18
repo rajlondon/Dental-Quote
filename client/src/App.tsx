@@ -16,6 +16,7 @@ import { initPreventReloads } from "@/utils/prevent-reloads";
 import SimpleClinicPage from "@/pages/SimpleClinicPage";
 import ClinicGuard from "@/components/ClinicGuard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
+import PromoTestPage from "@/pages/PromoTestPage";
 
 // Environment indicator component for production
 const EnvironmentBadge = () => {
@@ -148,6 +149,7 @@ function Router() {
       <Route path="/treatment-payment/:bookingId?">
         {(params) => <TreatmentPaymentPage />}
       </Route>
+      <Route path="/promo-test" component={PromoTestPage} />
       <Route path="/portal-testing">
         {() => <PortalTestingHub />}
       </Route>

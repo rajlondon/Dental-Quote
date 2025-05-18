@@ -50,6 +50,48 @@ export const treatmentPackages = [
     discountType: 'percentage',
     discountValue: 10,
     isActive: true
+  },
+  {
+    id: 'pkg_4',
+    title: 'Summer Dental Special',
+    description: 'Special summer package including teeth whitening and cleaning',
+    clinicId: 'maltepe-dental',
+    price: 1500,
+    currency: 'GBP',
+    treatments: ['teeth-whitening', 'cleaning'],
+    imageUrl: '/images/treatments/summer-special.jpg',
+    promoCode: 'SUMMER25',
+    discountType: 'percentage',
+    discountValue: 25,
+    isActive: true
+  },
+  {
+    id: 'pkg_5',
+    title: 'Family Dental Package',
+    description: 'Comprehensive dental care for the whole family with group discount',
+    clinicId: 'crown-dental',
+    price: 2500,
+    currency: 'GBP',
+    treatments: ['checkup', 'cleaning', 'whitening'],
+    imageUrl: '/images/treatments/family-package.jpg',
+    promoCode: 'FAMILY300',
+    discountType: 'fixed_amount',
+    discountValue: 300,
+    isActive: true
+  },
+  {
+    id: 'test_package',
+    title: 'Test Discount Package',
+    description: 'Special package for testing promo code functionality',
+    clinicId: 'maltepe-dental',
+    price: 1000,
+    currency: 'GBP',
+    treatments: ['test'],
+    imageUrl: '/images/treatments/test.jpg',
+    promoCode: 'TEST50',
+    discountType: 'percentage',
+    discountValue: 50,
+    isActive: true
   }
 ];
 
