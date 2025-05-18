@@ -1,32 +1,35 @@
 import React from 'react';
 import { useParams } from 'wouter';
 import PatientQuoteDetail from '@/components/patient/PatientQuoteDetail';
+import { PageHeader } from '@/components/ui/page-header';
+import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
-import { useLocation } from 'wouter';
+import { ArrowLeft } from 'lucide-react';
+import { Link } from 'wouter';
 
+/**
+ * Page component for displaying a single quote with detailed information
+ * Including promo code details and PDF download functionality
+ */
 const PatientQuoteDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const [_, navigate] = useLocation();
-
-  const handleBackToQuotes = () => {
-    navigate('/patient-portal/quotes');
-  };
-
   return (
-    <div className="container mx-auto py-6">
+    <Container>
       <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={handleBackToQuotes}
-          className="flex items-center"
-        >
-          <ChevronLeft className="h-4 w-4 mr-1" /> Back to My Quotes
-        </Button>
+        <Link href="/patient/quotes">
+          <Button variant="ghost" size="sm" className="mb-4">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Quotes
+          </Button>
+        </Link>
+        
+        <PageHeader 
+          title="Quote Details" 
+          description="View your treatment quote details including any applied promotions"
+        />
       </div>
       
-      {id && <PatientQuoteDetail />}
-    </div>
+      <PatientQuoteDetail />
+    </Container>
   );
 };
 

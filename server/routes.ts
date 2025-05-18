@@ -780,6 +780,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   console.log('[DEBUG] Mounting quotes-api-routes at /api/quotes-api');
   app.use('/api/quotes-api', quotesApiRoutes);
   
+  // Register enhanced quote details routes with promo code support
+  console.log('[DEBUG] Mounting enhanced quote details routes with promo code support');
+  app.use(quoteDetailsRouter);
+  
   // Mount the special offers and treatment packages API routes
   console.log('[DEBUG] Mounting quotes-special-offers-routes at /api/quotes-api');
   app.use('/api/quotes-api', quotesSpecialOffersRoutes);

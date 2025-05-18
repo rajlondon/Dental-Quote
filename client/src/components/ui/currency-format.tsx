@@ -1,9 +1,10 @@
 import React from 'react';
 
-interface CurrencyFormatProps {
+export interface CurrencyFormatProps {
   amount: number;
   currency?: string;
   locale?: string;
+  className?: string;
 }
 
 /**
@@ -13,7 +14,8 @@ interface CurrencyFormatProps {
 export const CurrencyFormat: React.FC<CurrencyFormatProps> = ({ 
   amount, 
   currency = 'USD',
-  locale = 'en-US'
+  locale = 'en-US',
+  className = ''
 }) => {
   const formatter = new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -22,7 +24,7 @@ export const CurrencyFormat: React.FC<CurrencyFormatProps> = ({
     maximumFractionDigits: 2,
   });
 
-  return <span>{formatter.format(amount)}</span>;
+  return <span className={className}>{formatter.format(amount)}</span>;
 };
 
 export default CurrencyFormat;
