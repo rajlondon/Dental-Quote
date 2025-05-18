@@ -450,6 +450,15 @@ const QuoteSummary: React.FC<{
   const userEmail = searchParams.get('email');
   const userPhone = searchParams.get('phone');
   
+  // Extract special offer info if any
+  const [specialOffer, setSpecialOffer] = useState<{
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    applicableTreatment: string;
+  } | null>(null);
+  
   // Handle promo code application
   const handleApplyPromoCode = async (code: string) => {
     if (!selectedClinic) {
@@ -602,6 +611,28 @@ const QuoteSummary: React.FC<{
                 <p className="text-sm text-muted-foreground mt-1">
                   This special offer includes a discount on {specialOffer.applicableTreatment}.
                   The discount has been applied to your quote.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* If promo code applied but not a special offer */}
+        {!specialOffer && isValidPromo && promoDiscount > 0 && (
+          <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-md relative overflow-hidden">
+            <div className="absolute -right-6 -top-6 w-24 h-24 bg-green-100/50 rounded-full flex items-center justify-center transform rotate-12">
+              <CheckCircle className="h-8 w-8 text-green-500" />
+            </div>
+            <div className="flex items-start">
+              <div className="flex-1 pr-16">
+                <div className="flex items-center">
+                  <h3 className="text-lg font-semibold text-green-700">Promo Code Applied</h3>
+                  <Badge variant="outline" className="bg-green-100 border-green-200 text-green-700 ml-2 px-2 py-0">
+                    £{promoDiscount} OFF
+                  </Badge>
+                </div>
+                <p className="text-sm text-green-600 mt-1">
+                  Your promo code "{promoCode}" has been successfully applied to your quote.
                 </p>
               </div>
             </div>
