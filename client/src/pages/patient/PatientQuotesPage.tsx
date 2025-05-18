@@ -302,6 +302,17 @@ const PatientQuotesPage: React.FC = () => {
                           {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
                         </span>
                       </div>
+                      {quote.promoCode && (
+                        <div className="flex justify-between items-center mt-2">
+                          <span className="text-muted-foreground">Promo:</span>
+                          <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center">
+                            {quote.promoCode}
+                            {quote.discountAmount > 0 && (
+                              <span className="ml-1">(-${quote.discountAmount.toFixed(2)})</span>
+                            )}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <Button 
                       variant="outline" 
