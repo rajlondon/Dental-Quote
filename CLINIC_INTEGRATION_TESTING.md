@@ -1,110 +1,89 @@
-# Testing the Clinic Portal Integration with Enhanced Quote Builder
+# Clinic Portal Integration Testing
 
-This document provides instructions for testing the integration between the clinic portal and the enhanced quote builder.
+This document provides instructions for testing the integration between the clinic portal and the enhanced quote builder system.
 
 ## Overview
 
-The enhanced quote builder can be accessed from different contexts:
-1. Directly from the homepage by patients
-2. From the clinic portal by clinic staff
-3. Via direct URL with query parameters
+The clinic integration allows clinic staff to create quotes for patients directly from the clinic portal. The quotes will be automatically associated with the clinic, and the clinic context will be maintained throughout the quote creation process.
 
-When accessed from the clinic portal, the quote builder should:
-- Display a clinic mode indicator
-- Pre-select the clinic in the workflow
-- Maintain clinic context throughout the quote creation process
-- Associate the created quote with the clinic
+## Testing Methods
 
-## Test Methods
+There are three ways to test the clinic portal integration:
 
-There are three ways to test this integration:
+### 1. Direct URL Testing
 
-### 1. Manual Testing via Browser
+You can test the integration by directly accessing the quote flow with a clinic ID parameter:
 
-#### Prerequisites
-- A valid clinic staff account
-- Access to the clinic portal
+```
+/quote-flow?clinic=40
+```
 
-#### Test Steps
-1. Log in to the clinic portal using clinic staff credentials
-2. Navigate to the "Quotes" section
-3. Click on "Create New Quote" button
-4. Verify that the quote builder opens with the clinic mode indicator visible
-5. Complete the quote creation process
-6. Verify that the quote appears in the clinic's quote list
+Replace `40` with any valid clinic ID in your system. This will simulate a quote being created from the clinic portal.
 
-### 2. Direct URL Testing
+### 2. Testing from Clinic Portal UI
 
-The quote builder can be directly accessed with clinic context via URL parameters.
-
-#### URL Parameters
-- `clinic`: The clinic ID to associate with the quote
-- `code`: (Optional) A promo code to apply automatically
-
-#### Test URLs
-- `/quote-builder?clinic=123` - Opens quote builder in clinic mode for clinic ID 123
-- `/quote-builder?clinic=123&code=WELCOME10` - Opens quote builder in clinic mode with a promo code
-
-#### Test Steps
-1. Access the URL directly in your browser
-2. Verify the clinic mode indicator appears
-3. Verify any promo code is automatically applied
-4. Complete the quote process
-5. Verify the association with the correct clinic
+1. Log in as a clinic staff member
+2. Navigate to the clinic dashboard
+3. Click on the "Create New Quote" button
+4. Verify that you are redirected to the quote builder with the clinic context preserved
 
 ### 3. Automated Testing
 
-We provide an automated test script that verifies the clinic portal integration.
+Run the automated test script to verify the integration:
 
-#### Running the Test Script
 ```bash
-node test-clinic-quote-builder-flow.js
+node test-clinic-integration.mjs
 ```
 
-The script performs the following checks:
-- Logs in as a clinic user
-- Verifies the clinic session is active
-- Accesses the quote builder through the clinic portal
-- Confirms the clinic mode indicator is present
-- Validates that the clinic ID is properly passed
+This script:
+1. Logs in as a clinic user
+2. Accesses the quote builder from the clinic portal
+3. Verifies that the clinic ID is properly passed
+4. Checks that the clinic mode indicator is displayed
 
-## Successful Integration Indicators
+## What to Look For
 
-A successful integration should show these indicators:
+When testing the integration, verify the following:
 
-1. **Visual Indicator**: The clinic mode banner appears at the top of the quote builder
-2. **Data Flow**: The clinic ID is properly passed through the workflow
-3. **State Persistence**: The clinic association is maintained even if the page is refreshed
-4. **Quote Attribution**: Completed quotes are properly attributed to the clinic
+1. **Clinic Mode Indicator**: When accessing the quote builder from the clinic portal, a blue "Clinic Mode" indicator should appear at the top of the page showing which clinic is creating the quote.
 
-## Common Issues and Troubleshooting
+2. **Clinic ID in URL**: The URL should contain the clinic ID parameter (`?clinic=XX`) when accessing from the clinic portal.
 
-### Session Expiration
-If the clinic session expires during testing, you may need to log in again to the clinic portal.
+3. **Clinic Preference in Quote**: The created quote should have the clinic preference set to the clinic ID.
 
-### Missing Clinic ID
-If the clinic mode indicator doesn't appear, check that:
-- You're properly logged in to the clinic portal
-- The clinic ID is correctly passed in the URL
-- The `clinicPreference` field is being properly stored in the persistent quote state
+4. **Navigation**: You should be able to navigate through the entire quote flow while maintaining the clinic context.
 
-### Browser Cache
-If you encounter unexpected behavior, try clearing your browser cache or using an incognito/private browsing window.
+5. **Final Destination**: After completing the quote, it should be saved to the patient portal and also be visible in the clinic's dashboard.
 
-## Integration Architecture
+## Troubleshooting
 
-The integration works through these key components:
+If the integration is not working as expected:
 
-1. **ClinicProvider**: Makes clinic data available throughout the application
-2. **useClinic Hook**: Provides access to clinic data and operations
-3. **usePersistentQuote Hook**: Stores the clinic preference in persistent state
-4. **ClinicModeIndicator**: Displays a visual indicator when in clinic mode
-5. **URL Parameter Handling**: Auto-applies clinic ID from URL parameters
+1. Check session storage for clinic ID:
+   - Open browser dev tools
+   - Go to Application > Storage > Session Storage
+   - Verify that `clinic_id` or `selected_clinic_id` is present
 
-## Reporting Issues
+2. Verify clinic detection:
+   - Open browser dev tools
+   - Check console for the message "Clinic ID detected in URL: XX"
 
-When reporting issues with the clinic integration, please include:
-- The exact steps to reproduce the issue
-- Your browser and version
-- Screenshots showing the problem
-- Any console errors visible in the browser developer tools
+3. Check for errors in the network requests:
+   - Look for any failed API requests in the Network tab
+   - Verify that the clinic ID is being included in relevant API calls
+
+## Main Integration Points
+
+The integration is built using these key components:
+
+1. `ClinicModeIndicator` - A component that displays when a quote is being created in clinic mode
+2. `useClinic` hook - Manages clinic data throughout the application
+3. `IntegratedQuoteFlowPage` - Connects all steps of the quote flow with clinic context awareness
+4. "Create New Quote" button on the clinic dashboard - Entry point for creating quotes from the clinic portal
+
+## Recent Updates
+
+- Added a "Create New Quote" button to the clinic dashboard
+- Enhanced the IntegratedQuoteFlowPage to detect and utilize clinic IDs
+- Created the ClinicModeIndicator component to show when in clinic mode
+- Implemented persistent clinic context throughout the quote flow
