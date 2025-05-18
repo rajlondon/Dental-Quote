@@ -1,50 +1,94 @@
-import React from 'react';
-
-/**
- * Simple test page to demonstrate how promo codes appear in quote displays
- */
-const QuoteDisplayTestPage: React.FC = () => {
+const QuoteDisplayTestPage = () => {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Quote Display with Promo Codes</h1>
-      <p className="text-gray-600 mb-8">This page demonstrates how promo codes and discounts appear in the quote display.</p>
+    <div style={{ 
+      maxWidth: '1200px', 
+      margin: '0 auto', 
+      padding: '2rem',
+      fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
+    }}>
+      <h1 style={{ fontSize: '1.875rem', fontWeight: 'bold', marginBottom: '1.5rem' }}>
+        Promo Code Display in Quotes - Design Demo
+      </h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Example 1: Quote with Promo Code */}
-        <div className="border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Quote with 10% Promo Code</h2>
+      <p style={{ color: '#4b5563', marginBottom: '2rem' }}>
+        A demonstration of how promo codes appear in the quote system.
+      </p>
+      
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: 'repeat(auto-fill, minmax(500px, 1fr))', 
+        gap: '2rem' 
+      }}>
+        {/* Example 1: Quote with WELCOME10 Promo */}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Quote with 10% Promo Code
+          </h2>
           
-          {/* Promo code display box */}
-          <div className="bg-green-50 border border-green-200 rounded-md p-4 flex items-start mb-6">
-            <div className="text-green-600 mr-3 flex-shrink-0 mt-0.5">🏷️</div>
+          {/* Promo code display */}
+          <div style={{ 
+            backgroundColor: '#f0fdf4', 
+            border: '1px solid #bbf7d0', 
+            borderRadius: '0.375rem', 
+            padding: '1rem', 
+            display: 'flex', 
+            alignItems: 'flex-start',
+            marginBottom: '1.5rem'
+          }}>
+            <span style={{ color: '#16a34a', marginRight: '0.75rem', fontSize: '1.25rem' }}>🏷️</span>
             <div>
-              <h3 className="font-medium text-green-800">Promo Code Applied: WELCOME10</h3>
-              <p className="text-green-700 text-sm mt-1">10% off your first dental treatment</p>
+              <h3 style={{ fontWeight: '500', color: '#166534' }}>
+                Promo Code Applied: WELCOME10
+              </h3>
+              <p style={{ color: '#15803d', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                10% off your first dental treatment
+              </p>
             </div>
           </div>
           
-          {/* Price summary */}
-          <div className="bg-gray-100 p-4 rounded-md mb-4">
-            <div className="flex justify-between mb-2">
+          {/* Price breakdown */}
+          <div style={{ 
+            backgroundColor: '#f3f4f6', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span>Subtotal:</span>
               <span>$4,000.00</span>
             </div>
-            <div className="flex justify-between mb-2 text-green-600">
-              <span className="flex items-center">
-                % Discount (WELCOME10):
-              </span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginBottom: '0.5rem',
+              color: '#16a34a'
+            }}>
+              <span>% Discount (WELCOME10):</span>
               <span>-$400.00</span>
             </div>
-            <div className="border-t border-gray-300 my-2"></div>
-            <div className="flex justify-between font-bold">
+            <div style={{ borderTop: '1px solid #d1d5db', margin: '0.5rem 0' }}></div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontWeight: 'bold' 
+            }}>
               <span>Total:</span>
-              <span className="text-lg">$3,600.00</span>
+              <span style={{ fontSize: '1.125rem' }}>$3,600.00</span>
             </div>
           </div>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-            <h3 className="font-semibold text-blue-800 mb-2">Treatments Included</h3>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
+          {/* Treatments */}
+          <div style={{ 
+            backgroundColor: '#eff6ff', 
+            border: '1px solid #bfdbfe', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <h3 style={{ fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
+              Treatments Included
+            </h3>
+            <ul style={{ paddingLeft: '1.5rem' }}>
               <li>Dental Implant - $1,200</li>
               <li>Porcelain Crown (x2) - $1,600</li>
               <li>X-Ray Full Mouth - $300</li>
@@ -53,69 +97,124 @@ const QuoteDisplayTestPage: React.FC = () => {
           </div>
         </div>
         
-        {/* Example 2: Quote with Package Discount */}
-        <div className="border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Quote with Package Promo</h2>
+        {/* Example 2: Package Promo */}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Quote with Package Promo
+          </h2>
           
-          {/* Promo code display box */}
-          <div className="bg-green-50 border border-green-200 rounded-md p-4 flex items-start mb-6">
-            <div className="text-green-600 mr-3 flex-shrink-0 mt-0.5">🏷️</div>
+          {/* Promo code display */}
+          <div style={{ 
+            backgroundColor: '#f0fdf4', 
+            border: '1px solid #bbf7d0', 
+            borderRadius: '0.375rem', 
+            padding: '1rem', 
+            display: 'flex', 
+            alignItems: 'flex-start',
+            marginBottom: '1.5rem'
+          }}>
+            <span style={{ color: '#16a34a', marginRight: '0.75rem', fontSize: '1.25rem' }}>🏷️</span>
             <div>
-              <h3 className="font-medium text-green-800">Promo Code Applied: IMPLANTCROWN30</h3>
-              <p className="text-green-700 text-sm mt-1">30% off on our premium implant and crown package</p>
+              <h3 style={{ fontWeight: '500', color: '#166534' }}>
+                Promo Code Applied: IMPLANTCROWN30
+              </h3>
+              <p style={{ color: '#15803d', fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                30% off on our premium implant and crown package
+              </p>
             </div>
           </div>
           
-          {/* Price summary */}
-          <div className="bg-gray-100 p-4 rounded-md mb-4">
-            <div className="flex justify-between mb-2">
+          {/* Price breakdown */}
+          <div style={{ 
+            backgroundColor: '#f3f4f6', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span>Subtotal:</span>
               <span>$6,000.00</span>
             </div>
-            <div className="flex justify-between mb-2 text-green-600">
-              <span className="flex items-center">
-                % Discount (IMPLANTCROWN30):
-              </span>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              marginBottom: '0.5rem',
+              color: '#16a34a'
+            }}>
+              <span>% Discount (IMPLANTCROWN30):</span>
               <span>-$1,800.00</span>
             </div>
-            <div className="border-t border-gray-300 my-2"></div>
-            <div className="flex justify-between font-bold">
+            <div style={{ borderTop: '1px solid #d1d5db', margin: '0.5rem 0' }}></div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontWeight: 'bold' 
+            }}>
               <span>Total:</span>
-              <span className="text-lg">$4,200.00</span>
+              <span style={{ fontSize: '1.125rem' }}>$4,200.00</span>
             </div>
           </div>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-            <h3 className="font-semibold text-blue-800 mb-2">Treatments Included</h3>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
+          {/* Treatments */}
+          <div style={{ 
+            backgroundColor: '#eff6ff', 
+            border: '1px solid #bfdbfe', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <h3 style={{ fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
+              Treatments Included
+            </h3>
+            <ul style={{ paddingLeft: '1.5rem' }}>
               <li>Premium Dental Implant (x2) - $3,000</li>
               <li>Ceramic Crown (x2) - $3,000</li>
             </ul>
           </div>
         </div>
         
-        {/* Example 3: Quote without Promo Code */}
-        <div className="border rounded-lg p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4">Quote without Promo Code</h2>
+        {/* Example 3: No Promo Code */}
+        <div style={{ border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Quote without Promo Code
+          </h2>
           
-          {/* No promo code display for this example */}
+          {/* No promo code display */}
           
-          {/* Price summary */}
-          <div className="bg-gray-100 p-4 rounded-md mb-4">
-            <div className="flex justify-between mb-2">
+          {/* Price breakdown */}
+          <div style={{ 
+            backgroundColor: '#f3f4f6', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <span>Subtotal:</span>
               <span>$5,000.00</span>
             </div>
-            <div className="border-t border-gray-300 my-2"></div>
-            <div className="flex justify-between font-bold">
+            <div style={{ borderTop: '1px solid #d1d5db', margin: '0.5rem 0' }}></div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              fontWeight: 'bold' 
+            }}>
               <span>Total:</span>
-              <span className="text-lg">$5,000.00</span>
+              <span style={{ fontSize: '1.125rem' }}>$5,000.00</span>
             </div>
           </div>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
-            <h3 className="font-semibold text-blue-800 mb-2">Treatments Included</h3>
-            <ul className="list-disc list-inside space-y-1 text-gray-700">
+          {/* Treatments */}
+          <div style={{ 
+            backgroundColor: '#eff6ff', 
+            border: '1px solid #bfdbfe', 
+            borderRadius: '0.375rem', 
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <h3 style={{ fontWeight: '600', color: '#1e40af', marginBottom: '0.5rem' }}>
+              Treatments Included
+            </h3>
+            <ul style={{ paddingLeft: '1.5rem' }}>
               <li>Full Mouth Veneers - $4,000</li>
               <li>Professional Whitening - $600</li>
               <li>Dental Consultation - $400</li>
@@ -124,30 +223,64 @@ const QuoteDisplayTestPage: React.FC = () => {
         </div>
         
         {/* Design Notes */}
-        <div className="border rounded-lg p-6 shadow-sm bg-gray-50">
-          <h2 className="text-xl font-bold mb-4">Design Elements</h2>
+        <div style={{ 
+          border: '1px solid #e5e7eb', 
+          borderRadius: '0.5rem', 
+          padding: '1.5rem', 
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+          backgroundColor: '#f9fafb'
+        }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold', marginBottom: '1rem' }}>
+            Design Elements
+          </h2>
           
-          <ul className="space-y-3">
-            <li className="flex items-start">
-              <div className="bg-green-50 border border-green-200 h-6 w-6 rounded mr-2 flex-shrink-0"></div>
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ 
+                width: '1.5rem', 
+                height: '1.5rem', 
+                backgroundColor: '#f0fdf4', 
+                border: '1px solid #bbf7d0',
+                borderRadius: '0.25rem',
+                marginRight: '0.5rem'
+              }}></div>
               <span>Green background for promo code highlight boxes</span>
             </li>
-            <li className="flex items-start">
-              <div className="text-green-600 mr-2">%</div>
+            <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ 
+                color: '#16a34a', 
+                marginRight: '0.5rem',
+                fontWeight: 'bold'
+              }}>%</div>
               <span>Green discount text with percentage symbol</span>
             </li>
-            <li className="flex items-start">
-              <div className="bg-blue-50 border border-blue-200 h-6 w-6 rounded mr-2 flex-shrink-0"></div>
+            <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ 
+                width: '1.5rem', 
+                height: '1.5rem', 
+                backgroundColor: '#eff6ff', 
+                border: '1px solid #bfdbfe',
+                borderRadius: '0.25rem',
+                marginRight: '0.5rem'
+              }}></div>
               <span>Blue treatment section for visual separation</span>
             </li>
-            <li className="flex items-start">
-              <div className="text-lg font-bold mr-2">$</div>
+            <li style={{ display: 'flex', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ 
+                fontSize: '1.125rem',
+                fontWeight: 'bold',
+                marginRight: '0.5rem'
+              }}>$</div>
               <span>Larger font size for final total amount</span>
             </li>
           </ul>
           
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
+          <div style={{ 
+            marginTop: '1.5rem', 
+            paddingTop: '1rem', 
+            borderTop: '1px solid #e5e7eb'
+          }}>
+            <p style={{ fontSize: '0.875rem', color: '#4b5563' }}>
               This simplified display shows how promo codes are highlighted in a green box at the top of the quote, 
               with discounts clearly shown in the pricing breakdown. The green color visually connects the promo code with 
               the discount amount.
