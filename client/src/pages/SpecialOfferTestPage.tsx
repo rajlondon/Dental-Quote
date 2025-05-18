@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import DirectPackageTest from '@/components/quote/DirectPackageTest';
 
 export default function SpecialOfferTestPage() {
   const { toast } = useToast();
@@ -92,7 +93,7 @@ export default function SpecialOfferTestPage() {
         ))}
       </div>
       
-      <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+      <div className="mt-8 mb-8 p-4 bg-gray-100 rounded-lg">
         <h2 className="font-semibold mb-2">Debug Information:</h2>
         <p className="text-sm text-gray-600">
           When you click a "Book This Offer" button, the system will:
@@ -100,9 +101,17 @@ export default function SpecialOfferTestPage() {
         <ol className="text-sm text-gray-600 list-decimal ml-5">
           <li>Redirect to the quote builder with packageId and promoCode in URL parameters</li>
           <li>The SpecialOfferHandler component will detect these parameters</li>
-          <li>The PackagePreselectionHandler will automatically select relevant treatments</li>
+          <li>The package treatments will be automatically selected</li>
           <li>The promo code will be applied automatically</li>
         </ol>
+      </div>
+      
+      <div className="mt-12 mb-8">
+        <h2 className="text-2xl font-bold mb-6 text-center">Direct Package Test</h2>
+        <p className="text-center text-gray-500 mb-6">
+          This is a simplified test to verify package selection works without any API integration
+        </p>
+        <DirectPackageTest />
       </div>
     </div>
   );
