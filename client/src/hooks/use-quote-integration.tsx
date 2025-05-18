@@ -124,12 +124,15 @@ export function useQuoteIntegration(options: QuoteIntegrationOptions = {}) {
     return (treatmentTotal + packageTotal + servicesTotal) - discountAmount;
   };
 
-  // Sync quote data with Flask backend
+  // Sync quote data with Flask backend through our bridge API
   const syncWithFlask = async () => {
     try {
       setIsSyncing(true);
       setError(null);
       
+      console.log('Syncing quote data with Flask bridge...');
+      
+      // Send data to our Express-Flask bridge
       const response = await axios.post('/api/quote-sync', {
         quoteId,
         treatments,
@@ -141,18 +144,30 @@ export function useQuoteIntegration(options: QuoteIntegrationOptions = {}) {
       });
       
       if (response.data.success) {
-        setQuoteData(response.data.quote);
-        setQuoteId(response.data.quote.id);
-        setLastSyncTime(new Date());
+        const quoteData = response.data.data?.quote_data;
         
-        // If promo code was applied on server, update local state
-        if (response.data.quote.promoCode && response.data.quote.promoCode !== promoCode) {
-          updateState({
-            promoCode: response.data.quote.promoCode
+        if (quoteData) {
+          // Map Flask data structure to our React structure
+          setQuoteData({
+            id: quoteData.id,
+            status: quoteData.status || 'draft',
+            totalAmount: quoteData.total || 0,
+            discount: quoteData.discount_amount || 0,
+            promoCode: quoteData.promo_code || null
           });
+          
+          setQuoteId(quoteData.id);
+          setLastSyncTime(new Date());
+          
+          // If promo code was applied on server, update local state
+          if (quoteData.promo_code && quoteData.promo_code !== promoCode) {
+            updateState({
+              promoCode: quoteData.promo_code
+            });
+          }
+          
+          console.log('Quote synced successfully with Flask backend');
         }
-        
-        console.log('Quote synced successfully with Flask backend');
       } else {
         setError(response.data.message || 'Failed to sync quote data');
       }
