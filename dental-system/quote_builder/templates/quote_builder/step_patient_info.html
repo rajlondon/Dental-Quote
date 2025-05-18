@@ -1,0 +1,76 @@
+<div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Your Details</h2>
+    
+    <form id="patient-info-form" onsubmit="savePatientInfo(event)" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name *</label>
+                <input type="text" id="name" name="name" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ quote_data.patient_info.name or '' }}">
+            </div>
+            
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                <input type="email" id="email" name="email" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ quote_data.patient_info.email or '' }}">
+            </div>
+            
+            <div>
+                <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ quote_data.patient_info.phone or '' }}">
+            </div>
+            
+            <div>
+                <label for="country" class="block text-sm font-medium text-gray-700 mb-1">Country of Residence *</label>
+                <select id="country" name="country" required class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="" disabled selected>Select your country</option>
+                    <option value="United Kingdom" {% if quote_data.patient_info.country == 'United Kingdom' %}selected{% endif %}>United Kingdom</option>
+                    <option value="United States" {% if quote_data.patient_info.country == 'United States' %}selected{% endif %}>United States</option>
+                    <option value="Canada" {% if quote_data.patient_info.country == 'Canada' %}selected{% endif %}>Canada</option>
+                    <option value="Australia" {% if quote_data.patient_info.country == 'Australia' %}selected{% endif %}>Australia</option>
+                    <option value="Germany" {% if quote_data.patient_info.country == 'Germany' %}selected{% endif %}>Germany</option>
+                    <option value="France" {% if quote_data.patient_info.country == 'France' %}selected{% endif %}>France</option>
+                    <option value="Spain" {% if quote_data.patient_info.country == 'Spain' %}selected{% endif %}>Spain</option>
+                    <option value="Italy" {% if quote_data.patient_info.country == 'Italy' %}selected{% endif %}>Italy</option>
+                    <option value="Netherlands" {% if quote_data.patient_info.country == 'Netherlands' %}selected{% endif %}>Netherlands</option>
+                    <option value="Other" {% if quote_data.patient_info.country == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+        </div>
+        
+        <div>
+            <label for="preferred_dates" class="block text-sm font-medium text-gray-700 mb-1">Preferred Travel Dates (optional)</label>
+            <input type="text" id="preferred_dates" name="preferred_dates" placeholder="e.g., June 2025 or flexible" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" value="{{ quote_data.patient_info.preferred_dates or '' }}">
+        </div>
+        
+        <div>
+            <label for="notes" class="block text-sm font-medium text-gray-700 mb-1">Additional Notes (optional)</label>
+            <textarea id="notes" name="notes" rows="3" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ quote_data.patient_info.notes or '' }}</textarea>
+        </div>
+        
+        <div class="bg-blue-50 p-4 rounded-md">
+            <div class="flex items-center">
+                <input type="checkbox" id="consent" name="consent" required class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                <label for="consent" class="ml-2 block text-sm text-gray-700">
+                    I consent to MyDentalFly collecting my information to provide me with dental treatment quotes and options. *
+                </label>
+            </div>
+        </div>
+        
+        <div class="bg-gray-50 p-4 rounded-md">
+            <h3 class="font-medium text-gray-900 mb-2">Your Privacy Matters</h3>
+            <p class="text-sm text-gray-500">
+                We take your privacy seriously. Your information will only be shared with the dental clinics you choose to connect with.
+                Read our <a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a> for more information.
+            </p>
+        </div>
+        
+        <div class="mt-8 flex justify-between">
+            <a href="{{ url_for('quote.step', step_name='promotions') }}" class="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors">
+                Back to Promotions
+            </a>
+            
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+                Continue to Review
+            </button>
+        </div>
+    </form>
+</div>
