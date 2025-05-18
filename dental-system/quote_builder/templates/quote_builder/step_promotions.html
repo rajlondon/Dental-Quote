@@ -1,0 +1,94 @@
+<div class="p-6">
+    <h2 class="text-2xl font-bold text-gray-900 mb-6">Apply Promotions</h2>
+    
+    <div class="mb-8">
+        {% if not quote_data.promo_code %}
+            <div class="bg-gray-50 p-6 rounded-lg">
+                <h3 class="text-lg font-medium text-gray-900 mb-2">Enter Promo Code</h3>
+                <p class="text-gray-500 mb-4">If you have a promo code, enter it below to receive your discount.</p>
+                
+                <div class="flex">
+                    <input type="text" id="promo-code" placeholder="Enter promo code" class="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 mr-0">
+                    <button onclick="applyPromoCode()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-r-md">
+                        Apply
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <div class="bg-green-50 p-6 rounded-lg border border-green-200">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-lg font-medium text-green-800">Promo Code Applied</h3>
+                        <div class="mt-2 text-green-700">
+                            <p>Code: <span class="font-bold">{{ quote_data.promo_code }}</span></p>
+                            <p class="mt-1">Discount: <span class="font-bold">€{{ quote_data.discount_amount }}</span></p>
+                            <p class="mt-1">New Total: <span class="font-bold">€{{ quote_data.total - quote_data.discount_amount }}</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Special Offers -->
+    <div class="mb-8">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Special Package Offers</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border rounded-lg overflow-hidden">
+                <div class="relative">
+                    <img src="{{ url_for('static', filename='images/dental-implant.jpg') }}" alt="Premium Implant Package" class="w-full h-40 object-cover">
+                    <div class="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 m-2 rounded-md font-medium">
+                        30% OFF
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="text-lg font-bold text-gray-900">Premium Implant Package</h4>
+                    <p class="text-gray-500 text-sm mt-1">Includes implant, abutment, and crown.</p>
+                    <div class="mt-2 flex items-center">
+                        <span class="text-lg font-bold text-blue-600">€1,450</span>
+                        <span class="ml-2 text-gray-500 line-through">€2,100</span>
+                    </div>
+                    <button onclick="window.location.href='{{ url_for('quote.index', promo='IMPLANTCROWN30') }}'" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">
+                        Apply Package
+                    </button>
+                </div>
+            </div>
+            
+            <div class="border rounded-lg overflow-hidden">
+                <div class="relative">
+                    <img src="{{ url_for('static', filename='images/smile-makeover.jpg') }}" alt="Luxury Smile Makeover" class="w-full h-40 object-cover">
+                    <div class="absolute top-0 right-0 bg-red-600 text-white px-3 py-1 m-2 rounded-md font-medium">
+                        Save €3000
+                    </div>
+                </div>
+                <div class="p-4">
+                    <h4 class="text-lg font-bold text-gray-900">Luxury Smile Makeover</h4>
+                    <p class="text-gray-500 text-sm mt-1">Full mouth restoration with premium accommodation.</p>
+                    <div class="mt-2 flex items-center">
+                        <span class="text-lg font-bold text-blue-600">€2,999</span>
+                        <span class="ml-2 text-gray-500 line-through">€5,999</span>
+                    </div>
+                    <button onclick="window.location.href='{{ url_for('quote.index', promo='LUXHOTEL20') }}'" class="mt-3 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md">
+                        Apply Package
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-8 flex justify-between">
+        <a href="{{ url_for('quote.index') }}" class="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors">
+            Back to Treatments
+        </a>
+        
+        <a href="{{ url_for('quote.step', step_name='patient_info') }}" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition-colors">
+            Continue to Your Details
+        </a>
+    </div>
+</div>
