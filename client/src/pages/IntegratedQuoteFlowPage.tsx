@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { ArrowRight, ArrowLeft, CheckCircle, Smile, Clipboard, User, Building2 } from 'lucide-react';
+import ClinicModeIndicator from '@/components/clinic/ClinicModeIndicator';
 
 // Define the steps in our integrated quote flow
 const FLOW_STEPS = [
@@ -25,6 +26,30 @@ const IntegratedQuoteFlowPage: React.FC = () => {
   const { toast } = useToast();
   const { updateState, resetState } = usePersistentQuote();
   const { clinics } = useClinic();
+  
+  // Check for clinic ID in URL parameters
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const clinicId = params.get('clinic');
+      
+      if (clinicId) {
+        console.log(`Clinic ID detected in URL: ${clinicId}`);
+        // Store the clinic ID in session storage for use throughout the quote flow
+        sessionStorage.setItem('selected_clinic_id', clinicId);
+        
+        // Update the quote state with the clinic preference
+        updateState({
+          clinicPreference: clinicId
+        });
+        
+        toast({
+          title: "Clinic detected",
+          description: `Creating quote for clinic ID: ${clinicId}`,
+        });
+      }
+    }
+  }, []);
   
   // Determine current step from URL
   useEffect(() => {
@@ -111,8 +136,34 @@ const IntegratedQuoteFlowPage: React.FC = () => {
     }
   };
   
+  // State for tracking if in clinic mode
+  const [isClinicMode, setIsClinicMode] = useState<boolean>(false);
+  const [clinicIdFromUrl, setClinicIdFromUrl] = useState<string | null>(null);
+  
+  // Check for clinic mode
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const clinicId = params.get('clinic');
+      
+      if (clinicId) {
+        setIsClinicMode(true);
+        setClinicIdFromUrl(clinicId);
+      } else {
+        // Check session storage as well
+        const storedClinicId = sessionStorage.getItem('selected_clinic_id') || 
+                              sessionStorage.getItem('clinic_id');
+        if (storedClinicId) {
+          setIsClinicMode(true);
+          setClinicIdFromUrl(storedClinicId);
+        }
+      }
+    }
+  }, []);
+
   return (
     <div className="container mx-auto px-4 py-8">
+      {isClinicMode && <ClinicModeIndicator clinicId={clinicIdFromUrl} />}
       <Card className="max-w-4xl mx-auto">
         <CardHeader className="pb-4">
           <CardTitle className="text-2xl font-bold">Build Your Dental Treatment Quote</CardTitle>

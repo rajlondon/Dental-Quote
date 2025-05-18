@@ -1,55 +1,66 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useClinic } from '@/hooks/use-clinic';
-import { CheckCircle, Building2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Shield, Building2, Info } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface ClinicModeIndicatorProps {
   clinicId?: string | null;
 }
 
-/**
- * Component to display when the quote builder is being used in clinic mode
- * Provides visual feedback and clinic context information
- */
-export const ClinicModeIndicator: React.FC<ClinicModeIndicatorProps> = ({ clinicId }) => {
-  const { selectedClinic, isLoadingClinic } = useClinic();
+export const ClinicModeIndicator: React.FC<ClinicModeIndicatorProps> = ({ clinicId: propClinicId }) => {
+  const { clinics } = useClinic();
+  const [clinicId, setClinicId] = useState<string | null>(propClinicId || null);
+  const [clinicName, setClinicName] = useState<string>('');
   
-  // Don't show anything if no clinic ID is provided
+  useEffect(() => {
+    // If clinicId was passed as a prop, use it
+    if (propClinicId) {
+      setClinicId(propClinicId);
+    } 
+    // Otherwise, check session storage and URL parameters
+    else if (typeof window !== 'undefined') {
+      // Check URL parameters first
+      const params = new URLSearchParams(window.location.search);
+      const urlClinicId = params.get('clinic');
+      
+      if (urlClinicId) {
+        setClinicId(urlClinicId);
+      } else {
+        // Fall back to session storage
+        const storedClinicId = sessionStorage.getItem('selected_clinic_id') || 
+                              sessionStorage.getItem('clinic_id');
+        if (storedClinicId) {
+          setClinicId(storedClinicId);
+        }
+      }
+    }
+  }, [propClinicId]);
+  
+  // Lookup clinic name if we have a clinic ID
+  useEffect(() => {
+    if (clinicId && clinics && clinics.length > 0) {
+      const clinic = clinics.find(c => c.id.toString() === clinicId);
+      if (clinic) {
+        setClinicName(clinic.name);
+      } else {
+        setClinicName(`Clinic #${clinicId}`);
+      }
+    }
+  }, [clinicId, clinics]);
+  
   if (!clinicId) return null;
   
   return (
-    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r">
-      <div className="flex items-center">
-        <Building2 className="h-5 w-5 text-blue-500 mr-2" />
-        <div className="flex flex-col">
-          <div className="flex items-center">
-            <h3 className="text-blue-800 font-medium">
-              Clinic Mode Active
-            </h3>
-            <Badge variant="outline" className="ml-2 bg-blue-100">
-              <CheckCircle className="h-3 w-3 mr-1" />
-              <span className="text-xs">Verified</span>
-            </Badge>
-          </div>
-          
-          {isLoadingClinic ? (
-            <p className="text-blue-600 text-sm mt-1">Loading clinic information...</p>
-          ) : selectedClinic ? (
-            <p className="text-blue-600 text-sm mt-1">
-              Creating quote for <strong>{selectedClinic.name}</strong>
-            </p>
-          ) : (
-            <p className="text-blue-600 text-sm mt-1">
-              Creating quote for clinic ID: <strong>{clinicId}</strong>
-            </p>
-          )}
-          
-          <p className="text-xs text-blue-500 mt-2">
-            Any quote created here will be associated with your clinic
-          </p>
-        </div>
-      </div>
-    </div>
+    <Alert className="border-blue-500 bg-blue-50 mb-4 clinic-mode-indicator">
+      <Shield className="h-4 w-4 text-blue-500" />
+      <AlertTitle className="flex items-center text-blue-700">
+        <Building2 className="h-4 w-4 mr-2" /> 
+        Clinic Mode
+      </AlertTitle>
+      <AlertDescription className="text-blue-600">
+        Creating quote on behalf of a patient for <strong>{clinicName}</strong>
+      </AlertDescription>
+    </Alert>
   );
 };
 
