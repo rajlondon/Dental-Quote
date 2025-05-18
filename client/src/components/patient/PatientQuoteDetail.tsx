@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams } from 'wouter';
-import axios from 'axios';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -8,88 +7,27 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { CurrencyFormat } from '@/components/ui/currency-format';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Clock, Download, Info, PiggyBank, CheckCircle2, X, ArrowUpDown } from 'lucide-react';
+import { useQuoteDetails } from '@/hooks/use-quote-details';
 
-// Types for the quote data
-interface QuoteDetail {
-  id: string;
-  status: 'draft' | 'submitted' | 'accepted' | 'completed';
-  createdAt: string;
-  patientName: string;
-  patientEmail: string;
-  patientPhone: string;
-  totalAmount: number;
-  discountAmount?: number;
-  promoCode?: string;
-  promoDescription?: string;
-  clinicId?: string;
-  clinicName?: string;
-  treatments: {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    description?: string;
-  }[];
-  packageDetails?: {
-    id: string;
-    name: string;
-    price: number;
-    description?: string;
-  };
-  additionalServices?: {
-    id: string;
-    name: string;
-    price: number;
-    description?: string;
-  }[];
-  notes?: string;
-}
+// Currency formatter component
+const CurrencyFormat: React.FC<{amount: number, currency?: string}> = ({ 
+  amount, 
+  currency = 'USD' 
+}) => {
+  const formatter = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  });
+  
+  return <span>{formatter.format(amount)}</span>;
+};
 
 const PatientQuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [quote, setQuote] = useState<QuoteDetail | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { quote, loading, error, downloadPdf } = useQuoteDetails(id);
   const { toast } = useToast();
-
-  useEffect(() => {
-    const fetchQuote = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await axios.get(`/api/patient/quotes/${id}`);
-        
-        if (response.data.success) {
-          setQuote(response.data.quote);
-        } else {
-          setError(response.data.message || 'Failed to load quote');
-          toast({
-            title: "Error",
-            description: response.data.message || 'Failed to load quote data',
-            variant: "destructive"
-          });
-        }
-      } catch (err) {
-        console.error('Error loading quote:', err);
-        setError('Failed to load quote');
-        toast({
-          title: "Error",
-          description: 'Failed to load quote from server',
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) {
-      fetchQuote();
-    }
-  }, [id, toast]);
 
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
@@ -128,10 +66,14 @@ const PatientQuoteDetail: React.FC = () => {
         description: "Please wait while we generate your quote PDF...",
       });
       
-      const response = await axios.get(`/api/quotes/${id}/pdf`, { responseType: 'blob' });
+      const blob = await downloadPdf();
+      
+      if (!blob) {
+        throw new Error('Failed to download PDF');
+      }
       
       // Create a URL for the blob
-      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', `quote-${id}.pdf`);
@@ -145,7 +87,6 @@ const PatientQuoteDetail: React.FC = () => {
       toast({
         title: "PDF Downloaded",
         description: "Your quote PDF has been downloaded successfully",
-        variant: "success"
       });
     } catch (err) {
       console.error('Error downloading PDF:', err);
