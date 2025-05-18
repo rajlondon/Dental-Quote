@@ -78,6 +78,21 @@ const ClinicDashboardSection = memo(() => {
   // Main render
   return (
     <div className="space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Clinic Dashboard</h2>
+        <Button 
+          className="bg-primary hover:bg-primary/90 text-white" 
+          onClick={() => {
+            // Get clinic ID from session storage
+            const clinicId = sessionStorage.getItem('clinic_id') || '0';
+            // Navigate to the integrated quote flow with clinic ID
+            window.location.href = `/quote-flow?clinic=${clinicId}`;
+          }}
+        >
+          Create New Quote
+        </Button>
+      </div>
+      
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <DashboardCard 
           title="Pending Appointments" 
