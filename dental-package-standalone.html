@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dental Package Demo</title>
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+  <div class="container mx-auto py-10 px-4">
+    <header class="mb-12 text-center">
+      <h1 class="text-4xl font-bold text-gray-900 mb-3">Dental Treatment Packages</h1>
+      <p class="text-lg text-gray-600">Select a package or customize your dental treatment plan</p>
+    </header>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+      <!-- Premium Implant Package -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="bg-gradient-to-r from-blue-600 to-blue-400 text-white p-6">
+          <h2 class="text-xl font-bold">Premium Implant Package</h2>
+          <p class="opacity-90">Get premium dental implants with 30% discount on crown work</p>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <p class="text-2xl font-bold">$1,200</p>
+            <p class="text-xs text-gray-500">Starting price</p>
+          </div>
+          
+          <div class="mb-4">
+            <p class="font-medium mb-2">Includes:</p>
+            <ul class="space-y-1">
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Dental Implant ($800)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Implant Crown ($700)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Panoramic X-Ray ($50)
+              </li>
+            </ul>
+          </div>
+          
+          <button onclick="applyPackage('pkg-001')" class="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded hover:bg-blue-700 transition-colors">
+            Apply Package
+          </button>
+        </div>
+      </div>
+
+      <!-- Luxury Smile Makeover -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="bg-gradient-to-r from-purple-600 to-purple-400 text-white p-6">
+          <h2 class="text-xl font-bold">Luxury Smile Makeover</h2>
+          <p class="opacity-90">20% off on full smile makeover treatments plus luxury hotel accommodation</p>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <p class="text-2xl font-bold">$2,500</p>
+            <p class="text-xs text-gray-500">Starting price</p>
+          </div>
+          
+          <div class="mb-4">
+            <p class="font-medium mb-2">Includes:</p>
+            <ul class="space-y-1">
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Dental Veneers (6 Units) ($2,400)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Teeth Whitening ($350)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Cosmetic Consultation ($100)
+              </li>
+            </ul>
+          </div>
+          
+          <button onclick="applyPackage('pkg-002')" class="w-full bg-purple-600 text-white font-medium py-2 px-4 rounded hover:bg-purple-700 transition-colors">
+            Apply Package
+          </button>
+        </div>
+      </div>
+
+      <!-- Travel & Treatment Bundle -->
+      <div class="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+        <div class="bg-gradient-to-r from-green-600 to-green-400 text-white p-6">
+          <h2 class="text-xl font-bold">Travel & Treatment Bundle</h2>
+          <p class="opacity-90">Comprehensive dental treatment with complimentary airport transfers</p>
+        </div>
+        <div class="p-6">
+          <div class="mb-4">
+            <p class="text-2xl font-bold">$1,800</p>
+            <p class="text-xs text-gray-500">Starting price</p>
+          </div>
+          
+          <div class="mb-4">
+            <p class="font-medium mb-2">Includes:</p>
+            <ul class="space-y-1">
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Full Mouth Restoration ($3,500)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Hotel Accommodation (5 Nights) ($750)
+              </li>
+              <li class="flex items-center text-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                </svg>
+                Airport Transfer ($100)
+              </li>
+            </ul>
+          </div>
+          
+          <button onclick="applyPackage('pkg-003')" class="w-full bg-green-600 text-white font-medium py-2 px-4 rounded hover:bg-green-700 transition-colors">
+            Apply Package
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Selected Treatments Section -->
+    <div id="selectedTreatments" class="bg-white rounded-lg shadow-md p-6 mb-8 hidden">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold">Selected Treatments</h2>
+        <span id="packageBadge" class="px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800">Package Applied</span>
+      </div>
+      
+      <div id="packageInfo" class="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg hidden">
+        <div class="flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5z" />
+            <path d="M11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+          </svg>
+          <span id="packageTitle" class="font-medium text-blue-700"></span>
+        </div>
+        <p id="packageDescription" class="text-sm text-blue-600 mt-1"></p>
+      </div>
+      
+      <div id="treatmentsList" class="mb-6"></div>
+      
+      <div class="bg-gray-50 p-4 rounded-lg border">
+        <div class="flex justify-between font-medium mb-2">
+          <span>Selected Treatments</span>
+          <span id="treatmentCount">0</span>
+        </div>
+        <div class="flex justify-between font-bold text-lg">
+          <span>Total Price</span>
+          <span id="totalPrice">$0</span>
+        </div>
+      </div>
+      
+      <div class="mt-6 flex gap-4">
+        <button id="generateQuoteBtn" class="flex-1 bg-blue-600 text-white font-medium py-2 px-4 rounded hover:bg-blue-700 transition-colors">
+          Generate Quote
+        </button>
+        <button id="resetSelectionBtn" class="flex-1 border border-gray-300 bg-white text-gray-700 font-medium py-2 px-4 rounded hover:bg-gray-50 transition-colors">
+          Reset Selection
+        </button>
+      </div>
+    </div>
+
+    <!-- Individual Treatments Selection -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-xl font-bold mb-4">Individual Treatments</h2>
+      <p class="text-gray-600 mb-6">Select individual treatments to customize your dental plan</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" id="allTreatments">
+        <!-- Treatments will be added here by JavaScript -->
+      </div>
+    </div>
+
+    <!-- Success Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 transition-transform duration-300 opacity-0">
+      Package applied successfully!
+    </div>
+  </div>
+
+  <script>
+    // Package data
+    const packages = {
+      'pkg-001': {
+        title: 'Premium Implant Package',
+        description: 'Get premium dental implants with 30% discount on crown work',
+        price: 1200,
+        promoCode: 'IMPLANTCROWN30',
+        treatments: [
+          { id: 'treatment-1', name: 'Dental Implant', price: 800 },
+          { id: 'treatment-2', name: 'Implant Crown', price: 700 },
+          { id: 'treatment-3', name: 'Panoramic X-Ray', price: 50 }
+        ]
+      },
+      'pkg-002': {
+        title: 'Luxury Smile Makeover',
+        description: '20% off on full smile makeover treatments plus luxury hotel accommodation',
+        price: 2500,
+        promoCode: 'LUXHOTEL20',
+        treatments: [
+          { id: 'treatment-4', name: 'Dental Veneers (6 Units)', price: 2400 },
+          { id: 'treatment-5', name: 'Teeth Whitening', price: 350 },
+          { id: 'treatment-6', name: 'Cosmetic Consultation', price: 100 }
+        ]
+      },
+      'pkg-003': {
+        title: 'Travel & Treatment Bundle',
+        description: 'Comprehensive dental treatment with complimentary airport transfers',
+        price: 1800,
+        promoCode: 'LUXTRAVEL',
+        treatments: [
+          { id: 'treatment-7', name: 'Full Mouth Restoration', price: 3500 },
+          { id: 'treatment-8', name: 'Hotel Accommodation (5 Nights)', price: 750 },
+          { id: 'treatment-9', name: 'Airport Transfer', price: 100 }
+        ]
+      }
+    };
+
+    // Define all available treatments
+    const allTreatments = [
+      { id: 'treatment-1', name: 'Dental Implant', price: 800 },
+      { id: 'treatment-2', name: 'Implant Crown', price: 700 },
+      { id: 'treatment-3', name: 'Panoramic X-Ray', price: 50 },
+      { id: 'treatment-4', name: 'Dental Veneers (Per Unit)', price: 400 },
+      { id: 'treatment-5', name: 'Teeth Whitening', price: 350 },
+      { id: 'treatment-6', name: 'Cosmetic Consultation', price: 100 },
+      { id: 'treatment-7', name: 'Full Mouth Restoration', price: 3500 },
+      { id: 'treatment-8', name: 'Hotel Accommodation (Per Night)', price: 150 },
+      { id: 'treatment-9', name: 'Airport Transfer', price: 100 },
+      { id: 'treatment-10', name: 'Root Canal Treatment', price: 500 },
+      { id: 'treatment-11', name: 'Dental Filling', price: 150 },
+      { id: 'treatment-12', name: 'Dental Crown', price: 600 }
+    ];
+
+    // Selected treatments
+    let selectedTreatments = [];
+    let selectedPackage = null;
+
+    // Initialize treatments display
+    function initTreatments() {
+      const treatmentsContainer = document.getElementById('allTreatments');
+      
+      allTreatments.forEach(treatment => {
+        const button = document.createElement('button');
+        button.className = 'flex justify-between items-center p-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors';
+        button.id = `btn-${treatment.id}`;
+        button.innerHTML = `
+          <span>${treatment.name}</span>
+          <span>$${treatment.price}</span>
+        `;
+        
+        button.addEventListener('click', () => toggleTreatment(treatment));
+        treatmentsContainer.appendChild(button);
+      });
+    }
+
+    // Toggle treatment selection
+    function toggleTreatment(treatment) {
+      const index = selectedTreatments.findIndex(t => t.id === treatment.id);
+      
+      if (index > -1) {
+        // Remove treatment
+        selectedTreatments.splice(index, 1);
+        document.getElementById(`btn-${treatment.id}`).classList.remove('bg-blue-600', 'text-white');
+        document.getElementById(`btn-${treatment.id}`).classList.add('border-gray-300');
+      } else {
+        // Add treatment
+        selectedTreatments.push(treatment);
+        document.getElementById(`btn-${treatment.id}`).classList.add('bg-blue-600', 'text-white');
+        document.getElementById(`btn-${treatment.id}`).classList.remove('border-gray-300');
+      }
+      
+      updateSelectedTreatments();
+    }
+
+    // Apply package
+    function applyPackage(packageId) {
+      document.getElementById('selectedTreatments').classList.remove('hidden');
+      document.getElementById('packageInfo').classList.remove('hidden');
+      
+      const pkg = packages[packageId];
+      selectedPackage = packageId;
+      selectedTreatments = [...pkg.treatments];
+      
+      // Update package info display
+      document.getElementById('packageTitle').textContent = pkg.title;
+      document.getElementById('packageDescription').textContent = `Package includes ${pkg.treatments.length} treatments with promo code ${pkg.promoCode}`;
+      
+      // Update treatment buttons
+      resetTreatmentButtons();
+      selectedTreatments.forEach(treatment => {
+        const button = document.getElementById(`btn-${treatment.id}`);
+        if (button) {
+          button.classList.add('bg-blue-600', 'text-white');
+          button.classList.remove('border-gray-300');
+        }
+      });
+      
+      updateSelectedTreatments();
+      showToast(`${pkg.title} applied successfully!`);
+      
+      // Scroll to selected treatments
+      document.getElementById('selectedTreatments').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Update selected treatments display
+    function updateSelectedTreatments() {
+      const treatmentsList = document.getElementById('treatmentsList');
+      const treatmentCount = document.getElementById('treatmentCount');
+      const totalPrice = document.getElementById('totalPrice');
+      
+      // Clear current list
+      treatmentsList.innerHTML = '';
+      
+      // Add treatments to list
+      if (selectedTreatments.length > 0) {
+        selectedTreatments.forEach(treatment => {
+          const item = document.createElement('div');
+          item.className = 'flex justify-between py-2 border-b';
+          item.innerHTML = `
+            <span>${treatment.name}</span>
+            <span>$${treatment.price}</span>
+          `;
+          treatmentsList.appendChild(item);
+        });
+        
+        // Update summary
+        treatmentCount.textContent = selectedTreatments.length;
+        
+        // Calculate total price
+        const total = selectedTreatments.reduce((sum, item) => sum + item.price, 0);
+        totalPrice.textContent = `$${total}`;
+        
+        // Show section
+        document.getElementById('selectedTreatments').classList.remove('hidden');
+      } else {
+        // Hide section if no treatments selected
+        document.getElementById('selectedTreatments').classList.add('hidden');
+      }
+    }
+
+    // Reset treatment buttons
+    function resetTreatmentButtons() {
+      allTreatments.forEach(treatment => {
+        const button = document.getElementById(`btn-${treatment.id}`);
+        if (button) {
+          button.classList.remove('bg-blue-600', 'text-white');
+          button.classList.add('border-gray-300');
+        }
+      });
+    }
+
+    // Reset selection
+    function resetSelection() {
+      selectedTreatments = [];
+      selectedPackage = null;
+      
+      document.getElementById('packageInfo').classList.add('hidden');
+      resetTreatmentButtons();
+      updateSelectedTreatments();
+      
+      showToast('Selection reset successfully!');
+    }
+
+    // Generate quote
+    function generateQuote() {
+      if (selectedTreatments.length === 0) {
+        showToast('Please select at least one treatment', 'red');
+        return;
+      }
+      
+      const total = selectedTreatments.reduce((sum, item) => sum + item.price, 0);
+      showToast(`Quote generated with ${selectedTreatments.length} treatments totaling $${total}`);
+      
+      // Here you would typically send data to server or redirect to quote page
+      console.log('Generating quote with treatments:', selectedTreatments);
+      console.log('Package applied:', selectedPackage);
+    }
+
+    // Show toast notification
+    function showToast(message, color = 'green') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      
+      // Set color
+      toast.className = toast.className.replace(/bg-\w+-500/g, `bg-${color}-500`);
+      
+      // Show toast
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      
+      // Hide after 3 seconds
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      initTreatments();
+      
+      // Add event listeners for buttons
+      document.getElementById('resetSelectionBtn').addEventListener('click', resetSelection);
+      document.getElementById('generateQuoteBtn').addEventListener('click', generateQuote);
+      
+      // Check URL parameters for package ID
+      const urlParams = new URLSearchParams(window.location.search);
+      const packageId = urlParams.get('packageId');
+      
+      if (packageId && packages[packageId]) {
+        applyPackage(packageId);
+      }
+    });
+  </script>
+</body>
+</html>
