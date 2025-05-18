@@ -20,6 +20,8 @@ interface QuoteData {
   discount_amount?: number;
   total?: number;
   clinic_id?: string | null;
+  package_id?: string | null;
+  package_name?: string | null;
   source?: string;
   status?: string;
   reference?: string;

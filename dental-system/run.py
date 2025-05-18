@@ -239,14 +239,34 @@ def quote_builder(step_name='dental-chart'):
     quote_data = SessionManager.get_quote_data()
     
     # Get query parameters
-    promo_code = request.args.get('promo', quote_data.get('promo_code'))
+    promo_code = request.args.get('promoCode') or request.args.get('promo') or request.args.get('code', quote_data.get('promo_code'))
+    package_id = request.args.get('packageId')
+    package_name = request.args.get('packageName')
+    start_quiz = request.args.get('startQuiz')
     offer_id = request.args.get('offer')
     clinic_id = request.args.get('clinic', quote_data.get('clinic_id'))
+    
+    # Redirect to dental quiz if requested
+    if start_quiz == 'true' and package_id:
+        # Store parameters in session for retrieval after quiz
+        session['pending_package_id'] = package_id
+        session['pending_package_name'] = package_name
+        session['pending_promo_code'] = promo_code
+        
+        # Redirect to dental quiz with return parameter
+        return redirect('/dental-quiz?returnToQuote=true')
     
     # Update quote data with URL parameters
     if promo_code:
         quote_data['promo_code'] = promo_code
+        app.logger.info(f"Applied promo code: {promo_code}")
     
+    if package_id:
+        quote_data['package_id'] = package_id
+        if package_name:
+            quote_data['package_name'] = package_name
+        app.logger.info(f"Applied package: {package_id} - {package_name}")
+        
     if clinic_id:
         quote_data['clinic_id'] = clinic_id
         
@@ -271,6 +291,9 @@ def quote_builder(step_name='dental-chart'):
         'step': step_name,
         'step_num': step_num,
         'promo_code': quote_data.get('promo_code'),
+        'package_id': quote_data.get('package_id', ''),
+        'package_name': quote_data.get('package_name', ''),
+        'start_quiz': 'false',  # Default to false since we're already in the quote builder
         'clinic_id': quote_data.get('clinic_id')
     }
     

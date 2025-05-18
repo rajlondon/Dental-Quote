@@ -51,7 +51,9 @@
             <div id="quote-builder-root" 
                  data-step="{{ step }}" 
                  data-clinic-id="{{ clinic_id or '' }}" 
-                 data-promo-code="{{ promo_code or '' }}">
+                 data-promo-code="{{ promo_code or '' }}"
+                 data-package-id="{{ package_id or '' }}"
+                 data-package-name="{{ package_name or '' }}">
                 <!-- React App will be mounted here -->
                 <div class="text-center py-12">
                     <div class="w-16 h-16 mx-auto mb-4 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -130,12 +132,16 @@
         const step = mountPoint.getAttribute('data-step');
         const clinicId = mountPoint.getAttribute('data-clinic-id');
         const promoCode = mountPoint.getAttribute('data-promo-code');
+        const packageId = mountPoint.getAttribute('data-package-id');
+        const packageName = mountPoint.getAttribute('data-package-name');
         
         // Inject initial data into window for React to access
         window.quoteBuilderConfig = {
             step: step,
             clinicId: clinicId || null,
             promoCode: promoCode || null,
+            packageId: packageId || null,
+            packageName: packageName || null,
             apiBaseUrl: '/api/flask',
             isEmbedded: true
         };
