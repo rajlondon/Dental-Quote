@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, CheckCircle2, AlertCircle, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import PackagePreselectionHandler from './PackagePreselectionHandler';
+import { EnhancedPackageHandler } from './EnhancedPackageHandler';
 
 interface QuoteBuilderProps {
   defaultStep?: string;
@@ -497,27 +497,14 @@ export function QuoteBuilder({
         </CardHeader>
         
         <CardContent>
-          {/* Package Preselection Handler - invisible component that handles package auto-selection */}
+          {/* Enhanced Package Handler - invisible component that handles package auto-selection */}
           {selectedPackageId && (
-            <PackagePreselectionHandler 
+            <EnhancedPackageHandler 
               packageId={selectedPackageId}
               onTreatmentsSelected={(treatments) => {
+                console.log("🦷 Treatments selected from package:", treatments.length);
                 setSelectedTreatments(treatments);
-                // Calculate new total
-                const newTotal = calculateTotal(treatments);
-                // Sync with Flask
-                syncWithFlask({
-                  treatments,
-                  total: newTotal,
-                  package_id: selectedPackageId
-                });
-              }}
-              onPackageLoaded={(packageData) => {
-                // Sync package data with Flask
-                syncWithFlask({
-                  package_id: packageData.id,
-                  package_name: packageData.title
-                });
+                calculateTotal(treatments);
               }}
             />
           )}
