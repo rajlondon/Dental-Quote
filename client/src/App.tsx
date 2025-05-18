@@ -918,6 +918,9 @@ function Router() {
       {/* Enhanced Quote Builder with Original Dental Quiz + Special Offers */}
       <Route path="/enhanced-quote" component={React.lazy(() => import("@/pages/EnhancedQuotePage"))} />
       
+      {/* Quote Display Test Page - Shows quote details with promo code information */}
+      <Route path="/quote-display-test" component={React.lazy(() => import("@/pages/QuoteDisplayTestPage"))} />
+      
       {/* Improved Quote Builder with Zustand Persistence */}
       <Route path="/improved-quote" component={React.lazy(() => import("@/pages/ImprovedQuotePage"))} />
       
