@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { usePersistentQuote } from '@/hooks/use-persistent-quote';
 import { useClinic } from '@/hooks/use-clinic';
+import { useQuoteIntegration } from '@/hooks/use-quote-integration';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -26,30 +27,17 @@ const IntegratedQuoteFlowPage: React.FC = () => {
   const { toast } = useToast();
   const { updateState, resetState } = usePersistentQuote();
   const { clinics } = useClinic();
-  
-  // Check for clinic ID in URL parameters
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const clinicId = params.get('clinic');
-      
-      if (clinicId) {
-        console.log(`Clinic ID detected in URL: ${clinicId}`);
-        // Store the clinic ID in session storage for use throughout the quote flow
-        sessionStorage.setItem('selected_clinic_id', clinicId);
-        
-        // Update the quote state with the clinic preference
-        updateState({
-          clinicPreference: clinicId
-        });
-        
-        toast({
-          title: "Clinic detected",
-          description: `Creating quote for clinic ID: ${clinicId}`,
-        });
-      }
-    }
-  }, []);
+  const { 
+    quoteData, 
+    quoteId, 
+    isSyncing, 
+    error, 
+    total,
+    hasClinic, 
+    hasPromo, 
+    saveQuote, 
+    submitQuote 
+  } = useQuoteIntegration();
   
   // Determine current step from URL
   useEffect(() => {
@@ -99,19 +87,48 @@ const IntegratedQuoteFlowPage: React.FC = () => {
   };
   
   // Finalize the quote and send to patient portal
-  const finalizeQuote = () => {
-    // In a real implementation, this would send data to the patient portal
-    // For now, we'll simulate this with a toast message
-    toast({
-      title: "Quote finalized",
-      description: "Your quote has been sent to the patient portal.",
-      variant: "success",
-    });
+  const finalizeQuote = async () => {
+    if (isSyncing) {
+      toast({
+        title: "Please wait",
+        description: "Your quote is still being processed.",
+      });
+      return;
+    }
     
-    // Redirect to patient portal (simulated)
-    setTimeout(() => {
-      setLocation("/patient-portal");
-    }, 1500);
+    // First, save the quote to get a quote ID
+    const savedQuoteId = await saveQuote();
+    
+    if (!savedQuoteId) {
+      toast({
+        title: "Error",
+        description: "Unable to save quote. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Then submit it to the patient portal
+    const submittedQuoteId = await submitQuote();
+    
+    if (submittedQuoteId) {
+      toast({
+        title: "Quote finalized",
+        description: "Your quote has been sent to the patient portal.",
+        variant: "success",
+      });
+      
+      // Redirect to patient portal with the quote ID
+      setTimeout(() => {
+        setLocation(`/patient-portal/quotes/${submittedQuoteId}`);
+      }, 1500);
+    } else {
+      toast({
+        title: "Error",
+        description: "Unable to submit quote. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   // Navigate to the appropriate component based on the current step
