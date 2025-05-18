@@ -9,12 +9,18 @@ import os
 from datetime import timedelta, datetime
 import json
 import uuid
+import random
 from flask_cors import CORS
 
-app = Flask(__name__)
+app = Flask(__name__, 
+            static_folder='static',
+            template_folder='templates')
 
 # Enable CORS for all routes to allow communication with the main React app
-CORS(app, supports_credentials=True)
+CORS(app, supports_credentials=True, resources={
+    r"/*": {"origins": "*"},
+    r"/api/*": {"origins": "*", "supports_credentials": True}
+})
 
 # Configure session
 app.config["SECRET_KEY"] = "dental-fly-secret-key"
@@ -27,6 +33,13 @@ app.config["SESSION_USE_SIGNER"] = True
 # Initialize session
 os.makedirs(app.config["SESSION_FILE_DIR"], exist_ok=True)
 Session(app)
+
+# Create static images directory if it doesn't exist
+os.makedirs(os.path.join(app.static_folder, 'images'), exist_ok=True)
+os.makedirs(os.path.join(app.static_folder, 'images/treatments'), exist_ok=True)
+os.makedirs(os.path.join(app.static_folder, 'images/offers'), exist_ok=True)
+os.makedirs(os.path.join(app.static_folder, 'images/testimonials'), exist_ok=True)
+os.makedirs(os.path.join(app.static_folder, 'css'), exist_ok=True)
 
 # Session management class
 class SessionManager:
@@ -58,6 +71,147 @@ class SessionManager:
     @staticmethod
     def save_quote_data(quote_data):
         """Save the quote data to session"""
+        session['quote_data'] = quote_data
+        
+    @staticmethod
+    def update_quote_step(step):
+        """Update the current step in the quote process"""
+        quote_data = SessionManager.get_quote_data()
+        quote_data['step'] = step
+        SessionManager.save_quote_data(quote_data)
+        
+    @staticmethod
+    def calculate_discount(promo_code, total):
+        """Calculate discount amount for a given promo code and total"""
+        # Simple promo code logic - could be replaced with database lookup
+        promo_codes = {
+            'WELCOME10': {'type': 'percentage', 'value': 10},
+            'SAVE50': {'type': 'fixed', 'value': 50},
+            'IMPLANTCROWN30': {'type': 'percentage', 'value': 30},
+            'LUXHOTEL20': {'type': 'percentage', 'value': 20},
+            'LUXTRAVEL': {'type': 'percentage', 'value': 40},
+        }
+        
+        if not promo_code or promo_code not in promo_codes:
+            return 0
+            
+        promo = promo_codes[promo_code]
+        if promo['type'] == 'percentage':
+            return round((promo['value'] / 100) * total, 2)
+        else:
+            return min(promo['value'], total)  # Don't discount more than the total
+
+# Sample data for demonstration
+TREATMENTS = [
+    {
+        'id': 1,
+        'name': 'Dental Implant',
+        'description': 'Complete implant including abutment and crown',
+        'price': 750,
+        'discount': None
+    },
+    {
+        'id': 2,
+        'name': 'Porcelain Crown',
+        'description': 'High-quality porcelain crown',
+        'price': 280,
+        'discount': None
+    },
+    {
+        'id': 3,
+        'name': 'Porcelain Veneer',
+        'description': 'Thin porcelain shell for front teeth',
+        'price': 320,
+        'discount': 10
+    },
+    {
+        'id': 4,
+        'name': 'Teeth Whitening',
+        'description': 'Professional in-office whitening',
+        'price': 180,
+        'discount': None
+    },
+    {
+        'id': 5,
+        'name': 'Root Canal Treatment',
+        'description': 'Complete root canal with filling',
+        'price': 290,
+        'discount': None
+    },
+    {
+        'id': 6,
+        'name': 'Dental Cleaning',
+        'description': 'Professional teeth cleaning and polishing',
+        'price': 85,
+        'discount': 15
+    }
+]
+
+PACKAGES = [
+    {
+        'id': 'pkg-001',
+        'name': 'Complete Implant Package',
+        'description': 'Implant, abutment, crown, and aftercare',
+        'price': 950,
+        'original_price': 1200,
+        'savings': '250€',
+        'badge': 'Most Popular'
+    },
+    {
+        'id': 'pkg-002',
+        'name': 'Hollywood Smile',
+        'description': '8 porcelain veneers for a perfect smile',
+        'price': 2400,
+        'original_price': 2880,
+        'savings': '480€',
+        'badge': 'Premium'
+    }
+]
+
+SPECIAL_OFFERS = [
+    {
+        'id': 'offer-001',
+        'title': 'Premium Implant Package',
+        'description': 'Complete dental implant solution with premium materials',
+        'image_path': 'images/offers/implant-package.jpg',
+        'discount': '30% off',
+        'price': 1450,
+        'old_price': 2100,
+        'promo_code': 'IMPLANTCROWN30',
+        'limited': True,
+        'clinicId': 1,
+        'treatmentIds': [1, 2], 
+        'expiry_date': '2025-07-30'
+    },
+    {
+        'id': 'offer-002',
+        'title': 'Luxury Smile Makeover',
+        'description': 'Complete smile transformation with hotel accommodation included',
+        'image_path': 'images/offers/smile-makeover.jpg',
+        'discount': 'Save €3000',
+        'price': 2999,
+        'old_price': 5999,
+        'promo_code': 'LUXHOTEL20',
+        'limited': True,
+        'clinicId': 2,
+        'treatmentIds': [5, 4, 2], 
+        'expiry_date': '2025-06-30'
+    },
+    {
+        'id': 'offer-003',
+        'title': 'Travel & Treatment Bundle',
+        'description': 'All-inclusive package with flights, luxury hotel, and premium treatments',
+        'image_path': 'images/offers/travel-bundle.jpg',
+        'discount': '40% off',
+        'price': 1999,
+        'old_price': 3499,
+        'promo_code': 'LUXTRAVEL',
+        'limited': False,
+        'clinicId': 3,
+        'treatmentIds': [1, 2, 6], 
+        'expiry_date': '2025-08-15'
+    }
+]
         session['quote_data'] = quote_data
         
     @staticmethod
