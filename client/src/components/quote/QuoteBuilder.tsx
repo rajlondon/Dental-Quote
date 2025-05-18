@@ -47,7 +47,10 @@ export function QuoteBuilder({
   const [patientInfo, setPatientInfo] = useState<any>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [quoteReference, setQuoteReference] = useState<string>('');
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
+  // Get package ID from URL parameters or props
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(
+    searchParams.get('packageId') || null
+  );
 
   // Initialize Flask integration
   const {
@@ -89,6 +92,13 @@ export function QuoteBuilder({
     if (urlPackageId) {
       setSelectedPackageId(urlPackageId);
       console.log(`📦 Detected package ID from URL: ${urlPackageId}`);
+      
+      // Synchronize with Flask backend
+      syncWithFlask({
+        package_id: urlPackageId,
+        package_name: urlPackageName || 'Treatment package'
+      });
+      
       toast({
         title: "Package Selected",
         description: `${urlPackageName || 'Treatment package'} will be applied to your quote.`,
