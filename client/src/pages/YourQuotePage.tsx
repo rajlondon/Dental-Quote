@@ -669,10 +669,34 @@ const QuoteSummary: React.FC<{
                   <TierBadge tier={selectedClinic.tier} />
                 </div>
                 <div className="ml-auto text-right">
-                  <p className="text-2xl font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
-                  <p className="text-sm text-gray-500">${selectedClinic.priceUSD}</p>
+                  {isValidPromo ? (
+                    <>
+                      <p className="text-2xl font-bold text-blue-600">
+                        £{finalPrice}
+                        <span className="text-sm line-through text-gray-500 ml-2">£{originalPrice}</span>
+                      </p>
+                      <p className="text-sm text-green-600">You saved £{promoDiscount}!</p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold text-blue-600">£{selectedClinic.priceGBP}</p>
+                      <p className="text-sm text-gray-500">${selectedClinic.priceUSD}</p>
+                    </>
+                  )}
                 </div>
               </div>
+            </div>
+            
+            {/* Promo Code Section */}
+            <div className="mb-6">
+              <PromoCodeInput
+                onApplyPromoCode={handleApplyPromoCode}
+                onRemovePromoCode={handleRemovePromoCode}
+                appliedCode={promoCode}
+                isValidCode={isValidPromo}
+                discountAmount={promoDiscount}
+                disabled={promoCodeLoading}
+              />
             </div>
             
             <div className="border rounded-md p-4 mb-6 bg-emerald-50">
