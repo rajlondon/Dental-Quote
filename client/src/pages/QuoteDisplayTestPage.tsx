@@ -8,12 +8,21 @@ import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, Tabl
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tag, Percent, Clock, CheckCircle2, ArrowUpDown, Download, Info } from 'lucide-react';
-import CurrencyFormat from '@/components/ui/currency-format';
+
+// Currency formatter helper function
+const formatCurrency = (amount: number, currency: string = 'USD', locale: string = 'en-US'): string => {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency',
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(amount);
+};
 
 /**
  * Sample quote data with different promo codes for demonstration
  */
-const SAMPLE_QUOTES = {
+const SAMPLE_QUOTES: Record<string, any> = {
   'quote-123': {
     id: 'quote-123',
     reference: 'Q-2025-05-001',
@@ -108,15 +117,19 @@ const SAMPLE_QUOTES = {
   }
 };
 
+interface QuoteDetailDisplayProps {
+  quote: any;
+}
+
 /**
  * Quote Detail Display Component
  */
-const QuoteDetailDisplay = ({ quote }) => {
+const QuoteDetailDisplay: React.FC<QuoteDetailDisplayProps> = ({ quote }) => {
   if (!quote) {
     return <div className="p-8 text-center text-muted-foreground">Please select a quote to display</div>;
   }
   
-  const getStatusBadgeColor = (status) => {
+  const getStatusBadgeColor = (status: string) => {
     switch (status.toLowerCase()) {
       case 'confirmed': return 'bg-green-100 text-green-800';
       case 'pending': return 'bg-yellow-100 text-yellow-800';
@@ -125,7 +138,7 @@ const QuoteDetailDisplay = ({ quote }) => {
     }
   };
   
-  const formatDate = (dateString) => {
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('en-US', { 
       year: 'numeric', 
@@ -182,15 +195,15 @@ const QuoteDetailDisplay = ({ quote }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {quote.treatments.map((treatment) => (
+            {quote.treatments.map((treatment: any) => (
               <TableRow key={treatment.id}>
                 <TableCell>{treatment.name}</TableCell>
                 <TableCell className="text-right">{treatment.quantity}</TableCell>
                 <TableCell className="text-right">
-                  <CurrencyFormat value={treatment.unitPrice} currency={quote.currency} />
+                  {formatCurrency(treatment.unitPrice, quote.currency)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <CurrencyFormat value={treatment.totalPrice} currency={quote.currency} />
+                  {formatCurrency(treatment.totalPrice, quote.currency)}
                 </TableCell>
               </TableRow>
             ))}
@@ -201,10 +214,7 @@ const QuoteDetailDisplay = ({ quote }) => {
       <div className="bg-muted p-4 rounded-md">
         <div className="flex justify-between mb-2">
           <span>Subtotal:</span>
-          <CurrencyFormat 
-            value={quote.totalAmount + quote.discountAmount} 
-            currency={quote.currency} 
-          />
+          <span>{formatCurrency(quote.totalAmount + quote.discountAmount, quote.currency)}</span>
         </div>
         
         {quote.discountAmount > 0 && (
@@ -213,7 +223,7 @@ const QuoteDetailDisplay = ({ quote }) => {
               <Percent className="h-4 w-4 mr-1" /> 
               Discount{quote.promoCode ? ` (${quote.promoCode})` : ''}:
             </span>
-            <span>-<CurrencyFormat value={quote.discountAmount} currency={quote.currency} /></span>
+            <span>-{formatCurrency(quote.discountAmount, quote.currency)}</span>
           </div>
         )}
         
@@ -221,11 +231,7 @@ const QuoteDetailDisplay = ({ quote }) => {
         
         <div className="flex justify-between font-bold">
           <span>Total:</span>
-          <CurrencyFormat 
-            value={quote.totalAmount} 
-            currency={quote.currency} 
-            className="text-lg" 
-          />
+          <span className="text-lg">{formatCurrency(quote.totalAmount, quote.currency)}</span>
         </div>
       </div>
       
@@ -258,8 +264,9 @@ const QuoteDetailDisplay = ({ quote }) => {
  * Test page to demonstrate the enhanced quote display with promo codes
  */
 const QuoteDisplayTestPage: React.FC = () => {
-  const [selectedQuoteId, setSelectedQuoteId] = useState('');
-  const [customQuoteId, setCustomQuoteId] = useState('');
+  // Set default quote to show on page load
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string>('quote-123');
+  const [customQuoteId, setCustomQuoteId] = useState<string>('');
   
   const handleViewQuote = () => {
     if (customQuoteId) {
@@ -267,7 +274,7 @@ const QuoteDisplayTestPage: React.FC = () => {
     }
   };
   
-  const getQuoteById = (id) => {
+  const getQuoteById = (id: string) => {
     return SAMPLE_QUOTES[id] || null;
   };
   
