@@ -4,8 +4,12 @@
  */
 import express from 'express';
 import testQuoteDataRoutes from './test-quote-data-routes';
+import flaskBridgeRoutes from './flask-bridge';
 
 const router = express.Router();
+
+// Mount Flask integration routes
+router.use(flaskBridgeRoutes);
 
 // Mount test routes for quote data
 router.use('/treatments', testQuoteDataRoutes);
