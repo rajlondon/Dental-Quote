@@ -8,21 +8,11 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Clock, Download, Info, PiggyBank, CheckCircle2, X, ArrowUpDown } from 'lucide-react';
+import { Clock, Download, Info, PiggyBank, CheckCircle2, X, ArrowUpDown, Tag, Percent } from 'lucide-react';
 import { useQuoteDetails } from '@/hooks/use-quote-details';
+import CurrencyFormat from '@/components/ui/currency-format';
 
-// Currency formatter component
-const CurrencyFormat: React.FC<{amount: number, currency?: string}> = ({ 
-  amount, 
-  currency = 'USD' 
-}) => {
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-  });
-  
-  return <span>{formatter.format(amount)}</span>;
-};
+// Using the shared CurrencyFormat component from @/components/ui/currency-format
 
 const PatientQuoteDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -176,23 +166,35 @@ const PatientQuoteDetail: React.FC = () => {
             {quote.promoCode && (
               <>
                 <Separator className="my-2" />
-                <div className="rounded-md bg-green-50 p-3 mt-2">
+                <div className="rounded-md bg-green-50 p-4 mt-2 border border-green-200">
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      <PiggyBank className="h-5 w-5 text-green-600" aria-hidden="true" />
+                      <Tag className="h-5 w-5 text-green-600" aria-hidden="true" />
                     </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-green-800">Promo Applied: {quote.promoCode}</h3>
-                      {quote.discountAmount && (
-                        <div className="mt-1 text-sm text-green-700">
-                          You saved <CurrencyFormat amount={quote.discountAmount} />
-                        </div>
-                      )}
+                    <div className="ml-3 flex-1">
+                      <div className="flex justify-between items-center">
+                        <h3 className="text-sm font-medium text-green-800">Promotion Code: <span className="font-bold">{quote.promoCode}</span></h3>
+                        <Badge variant="outline" className="bg-green-100 text-green-800 border-green-300">Applied</Badge>
+                      </div>
+                      
                       {quote.promoDescription && (
-                        <div className="mt-1 text-xs text-green-700">
+                        <div className="mt-1 text-sm text-green-700">
                           {quote.promoDescription}
                         </div>
                       )}
+                      
+                      {quote.discountAmount > 0 && (
+                        <div className="mt-2 flex items-center">
+                          <Percent className="h-4 w-4 text-green-600 mr-1" />
+                          <span className="text-sm font-medium text-green-800">
+                            Savings: <CurrencyFormat amount={quote.discountAmount} className="font-bold" />
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="mt-2 text-xs text-green-600">
+                        This promotion has been applied to your treatment quote.
+                      </div>
                     </div>
                   </div>
                 </div>
