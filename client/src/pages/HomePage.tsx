@@ -22,7 +22,7 @@ export default function HomePage() {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button asChild size="lg" className="text-base">
-                  <Link href="/quote-builder">
+                  <Link href="/quote-flow">
                     Get Your Free Quote <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
@@ -111,7 +111,7 @@ export default function HomePage() {
             Our team will help you find the best clinic for your needs.
           </p>
           <Button asChild size="lg" className="text-base">
-            <Link href="/quote-builder">
+            <Link href="/quote-flow">
               Start Your Free Quote <ArrowRight className="ml-2 h-5 w-5" />
             </Link>
           </Button>
