@@ -97,6 +97,7 @@ import TreatmentPaymentPage from "@/pages/TreatmentPaymentPage";
 import DentalChartPage from "@/pages/DentalChartPage";
 import PatientDentalChart from "@/pages/PatientDentalChart";
 import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
+import IntegratedQuoteFlowPage from "@/pages/IntegratedQuoteFlowPage";
 import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
@@ -145,6 +146,8 @@ function Router() {
       <Route path="/" component={HomePage} />
       <Route path="/home" component={HomePage} />
       <Route path="/quote-builder" component={QuoteBuilderPage} />
+      <Route path="/quote-flow" component={IntegratedQuoteFlowPage} />
+      <Route path="/quote-flow/:step" component={IntegratedQuoteFlowPage} />
       <Route path="/index">
         {() => <Redirect to="/" />}
       </Route>
