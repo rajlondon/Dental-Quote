@@ -40,6 +40,8 @@ import quoteRoutes from "./routes/quote-routes";
 import clinicMediaRoutes from "./routes/clinic-media-routes";
 import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
+import promoCodeRoutes from "./routes/promo-code-routes";
+import treatmentPackageRoutes from "./routes/treatment-package-routes";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
