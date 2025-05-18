@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import { useSpecialOfferTracking } from '@/hooks/use-special-offer-tracking';
-import { useAutoApplyCode } from '@/hooks/use-auto-apply-code';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
@@ -49,10 +46,7 @@ import {
   MessageCircle,
   CheckCircle,
   Pencil,
-  User,
-  Tag,
-  CalendarCheck,
-  X
+  User
 } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import StepByStepTreatmentBuilder from '@/components/StepByStepTreatmentBuilder';
@@ -182,49 +176,8 @@ const FAQSection: React.FC = () => {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  // QuoteFlow and SpecialOffer context
-  const { 
-    isSpecialOfferFlow, 
-    isPackageFlow, 
-    isPromoTokenFlow, 
-    promoType, 
-    quoteId 
-  } = useQuoteFlow();
-  const { 
-    specialOffer, 
-    hasActiveOffer,
-    applySpecialOfferToTreatments
-  } = useSpecialOfferTracking();
-  
-  // Automatically apply promo code from URL if present
-  const {
-    appliedPromo,
-    isLoading: isApplyingPromo,
-    error: promoError,
-    clearAppliedPromo
-  } = useAutoApplyCode(quoteId);
-  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  
-  // Show notification when promo code is applied or when there's an error
-  useEffect(() => {
-    if (appliedPromo) {
-      toast({
-        title: "Promo code applied",
-        description: `${appliedPromo.code.toUpperCase()} has been successfully applied to your quote.`,
-        variant: "default"
-      });
-    }
-    
-    if (promoError) {
-      toast({
-        title: "Promo code error",
-        description: promoError.message || "There was an error applying the promo code.",
-        variant: "destructive"
-      });
-    }
-  }, [appliedPromo, promoError, toast]);
   
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
@@ -379,46 +332,6 @@ const YourQuotePage: React.FC = () => {
       
       <main className="min-h-screen bg-gray-50 pt-24 pb-28">
         <div className="container mx-auto px-4">
-          
-          {/* Show promo code banner when a code is applied via URL */}
-          {appliedPromo && (
-            <div className="bg-green-50 border-green-200 border p-4 mb-6 rounded-md shadow-sm">
-              <div className="flex items-center">
-                <div className="flex-shrink-0 bg-green-100 p-2 rounded-full">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-green-800">
-                    Promo code applied: <span className="font-bold">{appliedPromo.code.toUpperCase()}</span>
-                  </h3>
-                  <div className="mt-1 text-sm text-green-700">
-                    <p>
-                      {appliedPromo.title || 'Discount'}: 
-                      <span className="font-medium ml-1">
-                        {appliedPromo.discount_type === 'PERCENT' 
-                          ? `${appliedPromo.discount_value}% off`
-                          : `€${appliedPromo.discount_value} off`
-                        }
-                      </span>
-                    </p>
-                    {appliedPromo.end_date && (
-                      <p className="text-xs text-green-600 mt-1">
-                        Expires: {new Date(appliedPromo.end_date).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button 
-                  onClick={clearAppliedPromo}
-                  className="ml-auto bg-green-100 text-green-600 hover:text-green-800 p-1.5 rounded-full hover:bg-green-200 transition-colors"
-                  aria-label="Remove promo code"
-                >
-                  <span className="sr-only">Remove promo code</span>
-                  <CheckCircle className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          )}
           {/* Back button */}
           <div className="mb-6">
             <Button
@@ -456,103 +369,13 @@ const YourQuotePage: React.FC = () => {
                   <div className="p-2 rounded-full bg-green-50">
                     <Sparkles className="h-6 w-6 text-green-500" />
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
-                      
-                      {/* Special offer badge */}
-                      {isSpecialOfferFlow && (
-                        <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md 
-                        flex items-center shadow-sm transform rotate-2 mr-2">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Special Offer Applied
-                        </div>
-                      )}
-                      
-                      {/* Package badge */}
-                      {isPackageFlow && (
-                        <div className="bg-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm transform rotate-2 mr-2">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Package Deal
-                        </div>
-                      )}
-                      
-                      {/* Promo token badge */}
-                      {isPromoTokenFlow && !isSpecialOfferFlow && !isPackageFlow && (
-                        <div className="bg-primary text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm transform rotate-2 mr-2">
-                          <Tag className="h-3 w-3 mr-1" />
-                          Promotional Offer
-                        </div>
-                      )}
-                    </div>
+                  <div>
+                    <CardTitle className="text-2xl">Cost Comparison Summary</CardTitle>
                     <CardDescription>See how much you could save compared to UK dental treatments</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                {/* Special offer alert - only shown when applicable */}
-                {isSpecialOfferFlow && specialOffer && (
-                  <div className="mb-6 bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 p-4 rounded-md shadow-sm">
-                    <div className="flex items-start">
-                      <div className="bg-white rounded-full p-1 border border-green-200 shadow-sm mr-3 mt-1">
-                        <Sparkles className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-semibold text-green-800 text-md">{specialOffer.title}</h3>
-                          {specialOffer.discountValue > 0 && (
-                            <div className="bg-green-600 text-white text-xs py-1 px-2 rounded-md font-medium">
-                              {specialOffer.discountType === 'percentage'
-                                ? `${specialOffer.discountValue}% OFF`
-                                : `£${specialOffer.discountValue} OFF`}
-                            </div>
-                          )}
-                        </div>
-                        <p className="text-green-700 text-sm mt-2 flex items-center">
-                          <Tag className="h-4 w-4 mr-1 text-green-600" />
-                          <span className="font-medium">
-                            {specialOffer.discountType === 'percentage'
-                              ? `Save ${specialOffer.discountValue}% off eligible treatments`
-                              : `Save £${specialOffer.discountValue} off eligible treatments`}
-                            {specialOffer.clinicId && ` at Clinic ${specialOffer.clinicId}`}
-                          </span>
-                        </p>
-                        <p className="text-green-700 text-xs mt-2 flex items-center">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          <span>Limited time offer - automatically applied to your quote</span>
-                        </p>
-                        {quoteId && (
-                          <p className="text-blue-600 text-xs mt-2 flex items-center">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            <span>Quote ID: {quoteId.substring(0, 8)}... is linked to this offer</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {/* Package alert - only shown when applicable */}
-                {isPackageFlow && (
-                  <div className="mb-6 bg-blue-50 border border-blue-100 p-4 rounded-md">
-                    <h3 className="font-semibold text-blue-800 mb-2">Your All-Inclusive Package Includes:</h3>
-                    <div className="space-y-2">
-                      <div className="flex items-center">
-                        <Hotel className="h-4 w-4 text-blue-600 mr-2" />
-                        <span className="text-blue-700 text-sm">Hotel accommodation</span>
-                      </div>
-                      <div className="flex items-center">
-                        <Car className="h-4 w-4 text-blue-600 mr-2" />
-                        <span className="text-blue-700 text-sm">Airport transfers</span>
-                      </div>
-                      <div className="flex items-center">
-                        <CalendarCheck className="h-4 w-4 text-blue-600 mr-2" />
-                        <span className="text-blue-700 text-sm">Free consultation</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Card className="bg-white border-gray-200">
                     <CardHeader className="pb-2">
@@ -566,48 +389,15 @@ const YourQuotePage: React.FC = () => {
                     </CardContent>
                   </Card>
                   
-                  <Card className={isSpecialOfferFlow 
-                    ? "bg-gradient-to-r from-green-50 to-blue-50 border-green-200 shadow-sm" 
-                    : "bg-green-50 border-green-100"}>
+                  <Card className="bg-green-50 border-green-100">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base font-medium text-green-700">
-                        {isSpecialOfferFlow 
-                          ? "Your Discounted Istanbul Price" 
-                          : "Estimated Istanbul Price"}
-                      </CardTitle>
+                      <CardTitle className="text-base font-medium text-green-700">Estimated Istanbul Price</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {isSpecialOfferFlow && specialOffer && specialOffer.discountValue > 0 ? (
-                        <>
-                          <div className="flex items-center space-x-2">
-                            {/* Calculate the original price before discount */}
-                            <p className="text-sm text-gray-500 line-through">
-                              {specialOffer.discountType === 'percentage' ? (
-                                `£${formatCurrency(Math.round(totalGBP * (1 + (specialOffer.discountValue / 100))))}`
-                              ) : (
-                                `£${formatCurrency(Math.round(totalGBP + specialOffer.discountValue))}`
-                              )}
-                            </p>
-                            <p className="text-2xl font-bold text-green-700">
-                              £{formatCurrency(Math.round(totalGBP))}
-                            </p>
-                          </div>
-                          <p className="text-sm text-green-600 mt-1 font-medium">
-                            {specialOffer.discountType === 'percentage' ? (
-                              `Save up to ${specialOffer.discountValue}% with this special offer`
-                            ) : (
-                              `Save up to £${specialOffer.discountValue} with this special offer`
-                            )}
-                          </p>
-                        </>
-                      ) : (
-                        <>
-                          <p className="text-2xl font-bold text-green-700">
-                            £{formatCurrency(Math.round(totalGBP))}
-                          </p>
-                          <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
-                        </>
-                      )}
+                      <p className="text-2xl font-bold text-green-700">
+                        £{formatCurrency(Math.round(totalGBP))}
+                      </p>
+                      <p className="text-sm text-green-600 mt-1 font-medium">Save up to 65% compared to UK</p>
                       <p className="text-xs text-green-600 mt-1">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </CardContent>
                   </Card>
@@ -789,48 +579,17 @@ const YourQuotePage: React.FC = () => {
                     <CardTitle className="flex items-center text-xl font-bold">
                       <Pencil className="mr-2 h-5 w-5 text-blue-500" />
                       Build Your Treatment Plan
-                      
-                      {/* Show badge when special offer is active */}
-                      {isSpecialOfferFlow && specialOffer && (
-                        <div className="ml-auto flex items-center">
-                          <div className="bg-gradient-to-r from-green-600 to-blue-600 text-white text-xs font-medium py-1 px-2 rounded-md flex items-center shadow-sm">
-                            <Sparkles className="h-3 w-3 mr-1" />
-                            {specialOffer.title}
-                          </div>
-                        </div>
-                      )}
                     </CardTitle>
                     <CardDescription>
                       Add all the treatments you're interested in to get a comprehensive quote
-                      {isSpecialOfferFlow && specialOffer && specialOffer.discountValue > 0 && (
-                        <span className="ml-2 text-green-600 font-medium">
-                          {specialOffer.discountType === 'percentage' 
-                            ? `(${specialOffer.discountValue}% discount applied)` 
-                            : `(£${specialOffer.discountValue} discount applied)`}
-                        </span>
-                      )}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <StepByStepTreatmentBuilder 
                       initialTreatments={treatmentItems}
-                      onTreatmentsChange={(treatments) => {
-                        // Apply any special offer discounts if applicable
-                        if (isSpecialOfferFlow && specialOffer && applySpecialOfferToTreatments) {
-                          const discountedTreatments = applySpecialOfferToTreatments(treatments);
-                          handleTreatmentPlanChange(discountedTreatments);
-                        } else {
-                          handleTreatmentPlanChange(treatments);
-                        }
-                      }}
+                      onTreatmentsChange={handleTreatmentPlanChange}
                       onComplete={(dentalChartData, treatments) => {
-                        // Apply any special offer discounts if applicable
-                        if (isSpecialOfferFlow && specialOffer && applySpecialOfferToTreatments) {
-                          const discountedTreatments = applySpecialOfferToTreatments(treatments);
-                          handleTreatmentPlanChange(discountedTreatments);
-                        } else {
-                          handleTreatmentPlanChange(treatments);
-                        }
+                        handleTreatmentPlanChange(treatments);
                         setCurrentStep('patient-info');
                         // Scroll to the patient info section
                         window.scrollTo({ top: 0, behavior: 'smooth' });

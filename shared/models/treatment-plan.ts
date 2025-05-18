@@ -1,178 +1,81 @@
 /**
- * Treatment Plan Model
- * 
- * This model defines the data structure for treatment plans,
- * which are a consolidated version of quotes, packages, and special offers
- * with additional metadata and planning information.
+ * Treatment Plan Data Models
+ * These are the models for treatment plans in the MyDentalFly platform
  */
 
 export interface TreatmentItem {
-  id: string;
+  id: number;
   name: string;
-  description?: string;
   price: number;
   quantity: number;
-  categoryId?: string;
-  categoryName?: string;
-  notes?: string;
-  customTreatment?: boolean;
-  
-  // Special offer related fields
-  isBonus?: boolean;           // Indicates if this is a bonus/free item tied to an offer
-  isRequired?: boolean;        // Indicates if this item is required for special offer validity
-  originalPrice?: number;      // Original price before discount (if this is a discounted item)
-  canEdit?: boolean;           // Whether quantities can be changed
-  canRemove?: boolean;         // Whether this treatment can be removed
-  
-  // Educational content
-  educationalContent?: {
-    description?: string;      // Detailed treatment description
-    ukComparisonPrice?: number; // Price comparison with UK
-    benefitsList?: string[];   // List of benefits
-    procedureSteps?: string[]; // Step-by-step procedure description
-    videoUrl?: string;         // URL to educational video
-    imageUrl?: string;         // URL to educational image/diagram
-    learnMoreUrl?: string;     // URL to a detailed educational page
-  };
+  description?: string;
+  clinicPrice?: number; // The price for the clinic (may be different from patient price)
 }
 
 export interface TreatmentPlan {
-  id: string;
-  patientId?: string | null;
-  clinicId?: string | null;
-  createdBy?: string | null;
-  title: string;
-  description?: string;
-  status: TreatmentPlanStatus;
+  id: number;
+  patientId: number;
+  patientName?: string; // Derived from patient relationship
+  clinicId?: number;
+  clinicName?: string; // Derived from clinic relationship
+  createdById?: number;
+  creatorName?: string; // Derived from createdBy relationship
+  status: string;  // draft, finalized, in_treatment, completed
+  portalStatus?: string; // active, in_progress, completed
+  treatmentDetails: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
+  notes?: string;
+  quoteRequestId?: number;
   createdAt: string;
   updatedAt: string;
-  dueDate?: string | null;
-  treatments: TreatmentItem[];
-  totalPrice: number;
-  discountPercentage?: number;
-  discountAmount?: number;
-  finalPrice: number;
-  paymentStatus: PaymentStatus;
-  attachments?: Attachment[];
-  sourceType: 'QUOTE' | 'PACKAGE' | 'SPECIAL_OFFER' | 'CUSTOM';
-  sourceId?: string | null;
-  
-  // Special offer related fields
-  offerId?: string;               // ID of the special offer if this plan was created from an offer
-  offerType?: string;             // Type of offer (SPECIAL_OFFER, TREATMENT_PACKAGE, BONUS)
-  offerTitle?: string;            // Title of the original offer
-  offerImageUrl?: string;         // Image URL of the original offer
-  offerValidUntil?: string;       // Expiration date of the offer
-  
-  metadata?: Record<string, any>;
-  clientNotes?: string;
-  clinicNotes?: string;
-  adminNotes?: string;
-  patientName?: string;           // Added for convenience in displays
-  clinicName?: string;            // Added for convenience in displays
 }
 
 export enum TreatmentPlanStatus {
-  DRAFT = 'DRAFT',
-  PROPOSED = 'PROPOSED',
-  ACCEPTED = 'ACCEPTED',
-  REJECTED = 'REJECTED',
-  IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED',
-  CANCELLED = 'CANCELLED'
+  DRAFT = "Draft",
+  SENT = "Sent",
+  ACCEPTED = "Accepted",
+  REJECTED = "Rejected",
+  IN_PROGRESS = "In Progress",
+  COMPLETED = "Completed",
+  CANCELLED = "Cancelled"
 }
 
 export enum PaymentStatus {
-  UNPAID = 'UNPAID',
-  PARTIAL = 'PARTIAL',
-  DEPOSIT_PAID = 'DEPOSIT_PAID',
-  PAID = 'PAID',
-  REFUNDED = 'REFUNDED'
+  PENDING = "Pending",
+  PARTIAL = "Partial",
+  PAID = "Paid",
+  REFUNDED = "Refunded"
 }
 
-export interface Attachment {
-  id: string;
-  filename: string;
-  fileType: string;
-  fileSize: number;
-  uploadedAt: string;
-  uploadedBy?: string;
-  url: string;
-  thumbnailUrl?: string;
-  metadata?: Record<string, any>;
+export interface CreateTreatmentPlanDto {
+  patientId: number;
+  clinicId?: number;
+  createdById?: number;
+  status?: string;
+  treatmentDetails: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency?: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
+  notes?: string;
+  quoteRequestId?: number;
+  portalStatus?: string;
 }
 
-export interface TreatmentPlanFilters {
-  patientId?: string;
-  clinicId?: string;
-  status?: TreatmentPlanStatus | TreatmentPlanStatus[];
-  dateFrom?: string;
-  dateTo?: string;
-  paymentStatus?: PaymentStatus | PaymentStatus[];
-  search?: string;
-  limit?: number;
-  offset?: number;
-}
-
-export interface PlanConversionOptions {
-  includeAttachments?: boolean;
-  preserveNotes?: boolean;
-  preserveMetadata?: boolean;
-  autoAssignClinic?: boolean;
-}
-
-export interface CreateTreatmentPlanRequest {
-  patientId?: string;
-  clinicId?: string;
-  title: string;
-  description?: string;
-  treatments: Omit<TreatmentItem, 'id'>[];
-  discountPercentage?: number;
-  sourceType?: 'QUOTE' | 'PACKAGE' | 'SPECIAL_OFFER' | 'CUSTOM';
-  sourceId?: string;
-  
-  // Special offer related fields
-  offerId?: string;
-  offerType?: string;
-  offerTitle?: string;
-  offerImageUrl?: string;
-  offerValidUntil?: string;
-  
-  clientNotes?: string;
-  clinicNotes?: string;
-  adminNotes?: string;
-  dueDate?: string;
-  patientName?: string;
-  clinicName?: string;
-}
-
-export interface UpdateTreatmentPlanRequest {
-  id: string;
-  title?: string;
-  description?: string;
-  status?: TreatmentPlanStatus;
-  treatments?: Partial<TreatmentItem>[];
-  discountPercentage?: number;
-  clientNotes?: string;
-  clinicNotes?: string;
-  adminNotes?: string;
-  dueDate?: string;
-}
-
-export interface TreatmentPlanResponse {
-  success: boolean;
-  message?: string;
-  data?: TreatmentPlan;
-}
-
-export interface TreatmentPlansListResponse {
-  success: boolean;
-  message?: string;
-  data?: {
-    plans: TreatmentPlan[];
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-  };
+export interface UpdateTreatmentPlanDto {
+  id?: number;
+  patientId?: number;
+  clinicId?: number;
+  status?: string;
+  treatmentDetails?: any; // JSON array of selected treatments
+  estimatedTotalCost?: string;
+  currency?: string;
+  includesHotel?: boolean;
+  hotelDetails?: any; // JSON object with hotel info
+  notes?: string;
+  quoteRequestId?: number;
+  portalStatus?: string;
 }

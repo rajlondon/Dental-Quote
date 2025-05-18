@@ -38,7 +38,6 @@ interface NotificationsContextType {
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
   deleteNotification: (id: string) => void;
-  generateTestNotifications: () => Promise<void>;
   createNotification: (notification: {
     title: string;
     message: string;
@@ -304,38 +303,6 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
     };
   };
 
-  // Mutation to generate test notifications
-  const generateTestNotificationsMutation = useMutation({
-    mutationFn: async () => {
-      const response = await apiRequest('POST', '/api/notifications/generate-test');
-      return response.json();
-    },
-    onSuccess: (data) => {
-      // Invalidate notifications query to refetch
-      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
-      
-      // Show success toast
-      toast({
-        title: 'Test Notifications Generated',
-        description: data.message || `Successfully generated ${data.count || 'several'} test notifications`,
-        variant: 'default'
-      });
-    },
-    onError: (error: any) => {
-      console.error('Failed to generate test notifications:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to generate test notifications',
-        variant: 'destructive'
-      });
-    }
-  });
-
-  // Wrapper function for the test notification mutation
-  const generateTestNotifications = async () => {
-    await generateTestNotificationsMutation.mutateAsync();
-  };
-
   return (
     <NotificationsContext.Provider value={{ 
       notifications, 
@@ -345,8 +312,7 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
       markAsRead, 
       markAllAsRead,
       deleteNotification,
-      createNotification,
-      generateTestNotifications
+      createNotification
     }}>
       {children}
     </NotificationsContext.Provider>

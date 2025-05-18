@@ -39,7 +39,6 @@ interface NotificationsPopoverProps {
   markAsRead?: (id: string) => void;
   markAllAsRead?: () => void;
   deleteNotification?: (id: string) => void;
-  generateTestNotifications?: () => Promise<void>;
   connected?: boolean;
   onRetryConnection?: () => void;
 }
@@ -50,7 +49,6 @@ export function NotificationsPopover({
   markAsRead = () => {}, 
   markAllAsRead = () => {},
   deleteNotification = () => {},
-  generateTestNotifications = async () => {},
   connected = true,
   onRetryConnection = () => {}
 }: NotificationsPopoverProps) {
@@ -182,12 +180,7 @@ export function NotificationsPopover({
           </div>
         )}
         <PopoverTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="relative"
-            data-notifications-trigger="true"
-          >
+          <Button variant="ghost" size="icon" className="relative">
             {connected ? (
               <Bell className="h-5 w-5" />
             ) : (
@@ -305,47 +298,26 @@ export function NotificationsPopover({
             )}
           </CardContent>
           <Separator />
-          <CardFooter className="p-3 flex-col gap-2">
-            <div className="flex justify-between w-full">
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs"
-                onClick={() => setIsOpen(false)}
-              >
-                {t('common.close', 'Close')}
-              </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-xs text-blue-600"
-                onClick={() => {
-                  setLocation('/patient-portal?section=messages');
-                  setIsOpen(false);
-                }}
-              >
-                {t('notifications.view_all', 'View all')}
-              </Button>
-            </div>
-            
-            {/* Test button for developers - hidden in production */}
-            {process.env.NODE_ENV !== 'production' && (
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="text-xs w-full text-green-600 hover:text-green-700 hover:bg-green-50"
-                onClick={async () => {
-                  try {
-                    await generateTestNotifications();
-                  } catch (error) {
-                    console.error('Error generating test notifications:', error);
-                  }
-                }}
-              >
-                <RefreshCw className="h-3 w-3 mr-1" />
-                Generate Test Notifications
-              </Button>
-            )}
+          <CardFooter className="p-3 flex justify-between">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs"
+              onClick={() => setIsOpen(false)}
+            >
+              {t('common.close', 'Close')}
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-xs text-blue-600"
+              onClick={() => {
+                setLocation('/patient-portal?section=messages');
+                setIsOpen(false);
+              }}
+            >
+              {t('notifications.view_all', 'View all')}
+            </Button>
           </CardFooter>
         </Card>
       </PopoverContent>

@@ -20,7 +20,6 @@ import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
 import { useTranslation } from "react-i18next";
 import { useLocation } from "wouter";
-import ActiveOfferBadge from '@/components/specialOffers/ActiveOfferBadge';
 
 // Defined specific dental treatment options
 const dentalTreatments = [
@@ -154,11 +153,8 @@ const QuoteForm: React.FC = () => {
               {t('form.description')}
             </p>
             
-            {/* Display active special offer banner using our new component */}
-            <ActiveOfferBadge showDetails={true} className="mb-6" />
-            
-            {/* Legacy special offer display - can be removed when ActiveOfferBadge is fully deployed */}
-            {hasActiveOffer && activeOfferData && !document.querySelector('[data-active-offer-badge]') && (
+            {/* Display active special offer banner if one exists */}
+            {hasActiveOffer && activeOfferData && (
               <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-24 h-24 -mr-8 -mt-8 bg-blue-500/10 rounded-full"></div>
                 <div className="absolute bottom-0 left-0 w-16 h-16 -ml-6 -mb-6 bg-blue-500/10 rounded-full"></div>

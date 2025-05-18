@@ -6,14 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { useTranslation } from 'react-i18next';
-
-// Add global window property for error toast tracking
-declare global {
-  interface Window {
-    __offerErrorToastShown?: boolean;
-    __directAdminNavigation?: boolean;
-  }
-}
 import { 
   AlertCircle, Check, Lock, Mail, Phone, User, ShieldCheck, Loader2
 } from 'lucide-react';
@@ -130,187 +122,13 @@ const PortalLoginPage: React.FC = () => {
     setupReloadTracker();
   }, []);
   
-  // Extract any query parameters from URL
-  const [searchParams, setSearchParams] = useState<URLSearchParams | null>(null);
-  
-  // Get and parse URL search params
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      setSearchParams(params);
-      
-      // Debug logging
-      if (params.has('booking')) {
-        console.log(`[DEBUG] Found booking param for package: ${params.get('booking')}`);
-      }
-    }
-  }, []);
-  
   // Check if user is already authenticated
   useEffect(() => {
-    // Don't redirect if not logged in
-    if (!user) return;
-    
-    console.log("User already authenticated in PortalLoginPage, checking for special offer data and booking param");
-    
-    // If the user is already logged in and has a pending offer, we should process it directly
-    // instead of clearing it to avoid losing the user selection
-    const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
-    const processingOffer = sessionStorage.getItem('processingSpecialOffer');
-    const activeOffer = sessionStorage.getItem('activeSpecialOffer');
-    
-    // If there's an active/pending offer, process it directly to a treatment plan
-    if (pendingOfferData || activeOffer) {
-      try {
-        console.log("User already logged in with pending offer, creating treatment plan directly");
-        
-        // Parse the offer data
-        const offerData = JSON.parse(pendingOfferData || activeOffer || '{}');
-        const offerId = offerData.id;
-        
-        if (offerId) {
-          // Check if user needs to go through the dental quiz first (new users)
-          const needsQuiz = !user.profileComplete;
-          
-          if (needsQuiz) {
-            // Store the pending offer for after quiz completion
-            localStorage.setItem('pendingOfferAfterQuiz', JSON.stringify({
-              offerId: offerId,
-              clinicId: offerData.clinicId,
-              offerTitle: offerData.title
-            }));
-            
-            toast({
-              title: "Let's Complete Your Dental Profile",
-              description: "Please answer a few questions about your dental needs first.",
-            });
-            
-            // Redirect to the quiz flow, but skip info page since we have basic info
-            setTimeout(() => {
-              window.location.href = '/quote?step=dental-quiz&skipInfo=true&clinicId=' + offerData.clinicId;
-            }, 100);
-            return;
-          }
-          
-          // If user has already completed profile, proceed with creating the treatment plan
-          // Try the proper endpoint first with fallback support
-          console.log(`Attempting to create treatment plan from offer ${offerId}`);
-          
-          // Use our reliable treatment plan API with proper error handling
-          console.log("Using /api/treatment-plans/from-offer endpoint with offer ID:", offerId);
-          
-          // Use the apiRequest helper for better error handling
-          apiRequest(
-            'POST', 
-            '/api/treatment-plans/from-offer',
-            {
-              offerId: offerId,
-              clinicId: offerData.clinicId || offerData.clinic_id,
-              notes: 'Created from special offer selection'
-            }
-          )
-          .then(response => {
-            if (!response.ok) {
-              throw new Error(`Failed to create treatment plan: ${response.status} ${response.statusText}`);
-            }
-            return response.json();
-          })
-          .then(data => {
-            console.log("Treatment plan created successfully:", data);
-            
-            // Invalidate treatment plans cache to ensure fresh data
-            queryClient.invalidateQueries({ queryKey: ['/api/treatment-plans'] });
-            
-            return { success: true, data };
-          })
-          .then(result => {
-            if (result.success && result.data) {
-              const data = result.data;
-              
-              if (data.treatmentPlanUrl) {
-                toast({
-                  title: "Special Offer Processed",
-                  description: `Treatment plan created from "${offerData.title}"`,
-                });
-                
-                // Clean up session storage
-                sessionStorage.removeItem('pendingSpecialOffer');
-                sessionStorage.removeItem('processingSpecialOffer');
-                sessionStorage.removeItem('activeSpecialOffer');
-                
-                // Redirect to the treatment plan
-                setTimeout(() => {
-                  window.location.href = data.treatmentPlanUrl;
-                }, 100);
-                return;
-              }
-            }
-          })
-          .catch(error => {
-            console.error("Error creating treatment plan from offer:", error);
-            
-            // Use a flag to prevent duplicate toasts
-            if (!window.__offerErrorToastShown) {
-              window.__offerErrorToastShown = true;
-              
-              toast({
-                title: "Error Processing Offer",
-                description: "There was a problem creating your treatment plan. Please try again.",
-                variant: "destructive"
-              });
-              
-              // Reset the flag after a delay
-              setTimeout(() => {
-                window.__offerErrorToastShown = false;
-              }, 5000);
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Error processing offer data:", error);
-      }
-    } else if (processingOffer) {
-      // If just processing, clean up to prevent loops
-      console.log("Found processingOffer only, clearing to prevent redirect loops");
-      sessionStorage.removeItem('processingSpecialOffer');
-    }
-    
-    // Check if we have a package booking redirect
-    if (searchParams && searchParams.has('booking') && user.role === 'patient') {
-      const packageId = searchParams.get('booking');
-      console.log(`[DEBUG] Redirecting to book package: ${packageId}`);
-      
-      // If user is a patient, redirect them to book the package through the API
-      if (user.emailVerified) {
-        toast({
-          title: "Ready to Book",
-          description: "You'll be redirected to complete your booking",
-        });
-        
-        // Create a form to submit a POST request to the booking endpoint
-        // This is necessary because we defined the booking endpoint as POST
-        toast({
-          title: "Redirecting",
-          description: "Processing your booking request..."
-        });
-        
-        // Create a hidden form for POST submission
-        // Note the correct API path is /api/treatment-module, not /api/treatment-plans
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = `/api/treatment-module/book-package/${packageId}`;
-        document.body.appendChild(form);
-        form.submit();
-        return;
-      }
-    }
-    
-    // Standard redirect based on user role if no special redirect is needed
-    if (user.role === 'admin') {
+    if (user && user.role === 'admin') {
       setLocation('/admin-portal');
-    } else if (user.role === 'clinic_staff') {
+    } else if (user && user.role === 'clinic_staff') {
       setLocation('/clinic-portal');
-    } else if (user.role === 'patient' && user.emailVerified) {
+    } else if (user && user.role === 'patient' && user.emailVerified) {
       setLocation('/client-portal');
     }
     
@@ -319,7 +137,7 @@ const PortalLoginPage: React.FC = () => {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
-  }, [user, searchParams]);
+  }, []);
   
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
@@ -542,28 +360,10 @@ const PortalLoginPage: React.FC = () => {
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
         
-        // Mark that we're in the middle of a clinic navigation to avoid race conditions
-        sessionStorage.setItem('clinic_navigation_in_progress', 'true');
-        
-        // Force direct navigation instead of using setLocation to prevent any potential issues
-        // with React Router hooks or state updates that might get interrupted
-        console.log("Using direct window location for clinic portal navigation");
-        
         // Add delay to ensure caches are written before redirect
         setTimeout(() => {
           console.log("Redirecting to clinic portal with pre-cached session");
-          try {
-            // Store indicator for ongoing navigation
-            sessionStorage.setItem('clinic_portal_redirect_timestamp', Date.now().toString());
-            
-            // Direct navigation to the unguarded clinic portal route instead
-            console.log('🔄 Redirecting to direct clinic portal access route');
-            window.location.href = '/clinic-direct';
-          } catch (navError) {
-            console.error("Error during clinic portal navigation:", navError);
-            // Fallback to react router
-            setLocation('/clinic-portal');
-          }
+          setLocation('/clinic-portal');
         }, 100);
       } else {
         // Default to patient portal for any other role
@@ -572,7 +372,7 @@ const PortalLoginPage: React.FC = () => {
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         
-        // Check if there's a pending special offer to process (MVP spec implementation)
+        // Check if there's a pending special offer to process
         console.log("Checking sessionStorage for pendingSpecialOffer");
         const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
         console.log("pendingSpecialOffer data:", pendingOfferData);
@@ -583,63 +383,55 @@ const PortalLoginPage: React.FC = () => {
             const offerData = JSON.parse(pendingOfferData);
             console.log("Successfully parsed pending special offer request:", offerData);
             
-            // Following MVP spec: Create a quote directly from the offer ID
-            const offerId = offerData.id;
-            const clinicId = offerData.clinicId || offerData.clinic_id || '';
+            // Format the offer data for consistency
+            const formattedOfferData = {
+              id: offerData.id,
+              title: offerData.title,
+              clinicId: offerData.clinicId || offerData.clinic_id || '',
+              discountValue: offerData.discountValue || offerData.discount_value || 0,
+              discountType: offerData.discountType || offerData.discount_type || 'percentage',
+              applicableTreatment: offerData.applicableTreatment || 
+                                   (offerData.applicable_treatments && offerData.applicable_treatments.length > 0 
+                                    ? offerData.applicable_treatments[0] 
+                                    : 'Dental Implants')
+            };
             
-            if (offerId) {
-              console.log(`Creating quote from offer ${offerId} for clinic ${clinicId}`);
-              toast({
-                title: "Processing Special Offer",
-                description: "Creating your quote with the selected offer...",
-              });
-              
-              // Call the API endpoint to start a quote from an offer
-              apiRequest('POST', `/api/offers/${offerId}/start`, { clinicId })
-                .then(response => {
-                  if (!response.ok) {
-                    throw new Error('Failed to create quote from offer');
-                  }
-                  return response.json();
-                })
-                .then(data => {
-                  console.log("Quote created successfully:", data);
-                  
-                  if (data.quoteId && data.quoteUrl) {
-                    toast({
-                      title: "Special Offer Applied",
-                      description: "Your quote has been created with the special offer discount.",
-                    });
-                    
-                    // Clear all special offer storage
-                    sessionStorage.removeItem('pendingSpecialOffer');
-                    sessionStorage.removeItem('processingSpecialOffer');
-                    sessionStorage.removeItem('activeSpecialOffer');
-                    
-                    // Redirect to the quote review page
-                    setTimeout(() => {
-                      window.location.href = data.quoteUrl;
-                    }, 100);
-                  } else {
-                    throw new Error('Invalid response from server');
-                  }
-                })
-                .catch(error => {
-                  console.error("Error creating quote from offer:", error);
-                  toast({
-                    title: "Error Processing Offer",
-                    description: "We couldn't process your special offer. You'll be redirected to your dashboard.",
-                    variant: "destructive",
-                  });
-                  
-                  // Redirect to patient portal on error
-                  setTimeout(() => {
-                    setLocation('/client-portal');
-                  }, 500);
-                });
-              
-              return; // Exit early as we're handling special redirect asynchronously
-            }
+            // Create URL parameters for quote page to ensure they're visible in the URL
+            const params = new URLSearchParams({
+              specialOffer: formattedOfferData.id,
+              offerTitle: formattedOfferData.title,
+              offerClinic: formattedOfferData.clinicId,
+              offerDiscount: formattedOfferData.discountValue.toString(),
+              offerDiscountType: formattedOfferData.discountType,
+              treatment: formattedOfferData.applicableTreatment
+            });
+            
+            console.log("Created URL parameters for special offer:", params.toString());
+            
+            // We won't remove pendingSpecialOffer until YourQuotePage confirms it has received it
+            // This provides a fallback in case of navigation issues
+            
+            // Store the formatted offer in activeSpecialOffer for use by the YourQuotePage
+            sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOfferData));
+            console.log("Saved activeSpecialOffer to sessionStorage:", formattedOfferData);
+            
+            // Notify user
+            toast({
+              title: "Special Offer Selected",
+              description: `${formattedOfferData.title} will be applied to your quote results.`,
+              variant: "default",
+            });
+            
+            // Redirect to the quote page with the URL parameters 
+            // This makes the special offer visible in the URL and provides additional resilience
+            setTimeout(() => {
+              console.log("Redirecting to quote page with special offer context");
+              const quoteUrl = `/your-quote?${params.toString()}`;
+              console.log("Redirect URL:", quoteUrl);
+              window.location.href = quoteUrl;
+            }, 100);
+            
+            return; // Exit early as we're handling special redirect
           } catch (error) {
             console.error("Error processing pending special offer:", error);
             console.error("Error details:", error instanceof Error ? error.message : String(error));
@@ -916,32 +708,6 @@ const PortalLoginPage: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Notice about dedicated clinic login page */}
-                  <div className="mb-4 p-3 bg-primary/5 rounded-md">
-                    <p className="text-sm font-medium mb-2">We've created a dedicated login page for clinic staff</p>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      For improved stability and better access to your dashboard, please use our new dedicated clinic portal.
-                    </p>
-                    <Button 
-                      onClick={() => setLocation('/clinic-login')} 
-                      className="w-full"
-                      variant="default"
-                    >
-                      Go to Clinic Login Portal
-                    </Button>
-                  </div>
-                  
-                  <div className="relative mb-4">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-background px-2 text-muted-foreground">
-                        Or continue here
-                      </span>
-                    </div>
-                  </div>
-                  
                   <Form {...loginForm}>
                     <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                       <FormField

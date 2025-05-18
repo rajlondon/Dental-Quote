@@ -1,348 +1,147 @@
-import React, { useState } from 'react';
-import { useLocation } from 'wouter';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  FilePlus, 
-  Loader2 
-} from 'lucide-react';
-import QuoteIntegrationWidget from '@/components/quotes/QuoteIntegrationWidget';
-import { useQuoteSystem } from '@/hooks/use-quote-system';
-import { formatDate } from '@/utils/format-utils';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from "react";
+import { useParams, useLocation } from "wouter";
+import { useQuotes } from "@/hooks/use-quotes";
+import QuoteListTable from "@/components/quotes/quote-list-table";
+import QuoteDetail from "@/components/quotes/quote-detail";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Plus, FileText } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
 
-const PatientQuotesPage: React.FC = () => {
-  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
-  const { quotes, loading, error, refetchQuotes } = useQuoteSystem('patient');
-  const [_, setLocation] = useLocation();
-  const { toast } = useToast();
+export default function PatientQuotesPage() {
+  const [, setLocation] = useLocation();
+  const params = useParams();
+  const quoteId = params?.id ? parseInt(params.id) : undefined;
+  
+  const {
+    userQuotesQuery,
+    getQuoteQuery
+  } = useQuotes();
+  
+  const [activeTab, setActiveTab] = useState<"all" | "pending" | "completed">("all");
 
-  const handleQuoteSelected = (quoteId: string) => {
-    setSelectedQuoteId(quoteId);
-  };
+  // Load quotes when component mounts
+  useEffect(() => {
+    userQuotesQuery.refetch();
+  }, []);
 
-  const handleBackToList = () => {
-    setSelectedQuoteId(null);
-  };
+  // Load specific quote if ID is provided
+  const quoteQuery = quoteId ? getQuoteQuery(quoteId) : null;
 
-  const handleCreateNewQuote = () => {
-    // In a real implementation, this would navigate to the quote builder
-    toast({
-      title: 'Create New Quote',
-      description: 'This would navigate to the quote builder in a real implementation.',
-      variant: 'default',
-    });
-  };
-
-  // Loading state
-  if (loading && quotes.length === 0) {
+  // Handle loading states
+  if (quoteId && quoteQuery?.isLoading) {
     return (
-      <div className="container mx-auto max-w-5xl py-8">
-        <div className="flex justify-center my-12">
-          <div className="flex flex-col items-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            <p className="mt-4 text-muted-foreground">Loading your quotes...</p>
-          </div>
-        </div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Error state
-  if (error && quotes.length === 0) {
+  // Handle error states
+  if (quoteId && quoteQuery?.error) {
     return (
-      <div className="container mx-auto max-w-5xl py-8">
-        <Card className="text-center py-8">
-          <CardContent>
-            <div className="flex flex-col items-center">
-              <p className="text-muted-foreground mb-4">{error}</p>
-              <Button onClick={() => refetchQuotes()}>
-                Try Again
+      <div className="text-center py-12">
+        <p className="text-red-500 text-lg">Error loading quote: {quoteQuery?.error.message}</p>
+        <Button 
+          variant="outline" 
+          className="mt-4"
+          onClick={() => setLocation("/patient/quotes")}
+        >
+          Back to Quotes
+        </Button>
+      </div>
+    );
+  }
+
+  // If showing a specific quote
+  if (quoteId && quoteQuery?.data) {
+    return (
+      <div className="container mx-auto py-6 px-4">
+        <QuoteDetail
+          quoteRequest={quoteQuery.data.quoteRequest}
+          versions={quoteQuery.data.versions}
+          portalType="patient"
+          onBack={() => setLocation("/patient/quotes")}
+        />
+      </div>
+    );
+  }
+
+  // Filter quotes by status based on active tab
+  const filteredQuotes = userQuotesQuery.data?.filter(quote => {
+    if (activeTab === "pending") {
+      return ["pending", "assigned", "in_progress", "sent"].includes(quote.status);
+    } else if (activeTab === "completed") {
+      return ["accepted", "rejected", "completed", "cancelled", "expired"].includes(quote.status);
+    }
+    return true;
+  }) || [];
+
+  return (
+    <div className="container mx-auto py-6 px-4">
+      <PageHeader
+        title="My Quotes"
+        description="View and manage your quote requests"
+        actions={
+          <Button asChild>
+            <a href="/quote-request" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" /> New Quote Request
+            </a>
+          </Button>
+        }
+      />
+
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "all" | "pending" | "completed")}
+        className="mt-6"
+      >
+        <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsTrigger value="all">All Quotes</TabsTrigger>
+          <TabsTrigger value="pending">Active</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value={activeTab} className="mt-6">
+          {userQuotesQuery.isLoading ? (
+            <div className="flex justify-center my-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <QuoteListTable
+              quotes={filteredQuotes}
+              portalType="patient"
+              isLoading={userQuotesQuery.isLoading}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
+
+      {(!userQuotesQuery.data || userQuotesQuery.data.length === 0) && !userQuotesQuery.isLoading && (
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Get Your Dental Treatment Quote</CardTitle>
+            <CardDescription>
+              Request a personalized quote from our partner clinics for your dental treatment
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center text-center space-y-4 py-6">
+            <FileText className="h-16 w-16 text-primary" />
+            <div className="max-w-md">
+              <h3 className="text-xl font-semibold mb-2">Start Your Dental Journey Today</h3>
+              <p className="text-muted-foreground mb-6">
+                Get detailed quotes from top dental clinics in Turkey. Compare prices, read reviews, and make informed decisions about your dental treatment.
+              </p>
+              <Button size="lg" asChild>
+                <a href="/quote-request" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" /> Request a Quote
+                </a>
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
-    );
-  }
-
-  // If a quote is selected, show the quote details
-  if (selectedQuoteId) {
-    return (
-      <div className="container mx-auto max-w-5xl py-8">
-        <div className="mb-4">
-          <Button 
-            variant="ghost" 
-            onClick={handleBackToList}
-            className="mb-4"
-          >
-            ← Back to My Quotes
-          </Button>
-        </div>
-        {/* Use our new enhanced quote detail component */}
-        <React.Suspense fallback={
-          <div className="flex justify-center my-12">
-            <div className="flex flex-col items-center">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="mt-4 text-muted-foreground">Loading quote details...</p>
-            </div>
-          </div>
-        }>
-          {/* Dynamic import of PatientQuoteDetail to prevent initial loading */}
-          {React.lazy(() => import('@/components/patient/PatientQuoteDetail'))({ id: selectedQuoteId })}
-        </React.Suspense>
-      </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto max-w-5xl py-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">My Dental Quotes</h1>
-          <p className="text-muted-foreground mt-1">
-            View and manage your dental treatment quotes
-          </p>
-        </div>
-        <Button onClick={handleCreateNewQuote}>
-          <FilePlus className="mr-2 h-4 w-4" /> Create New Quote
-        </Button>
-      </div>
-
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="active">Active Quotes</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="all">All Quotes</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="active">
-          {quotes.filter(q => q.status !== 'completed' && q.status !== 'rejected').length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {quotes
-                .filter(q => q.status !== 'completed' && q.status !== 'rejected')
-                .map(quote => (
-                  <Card key={quote.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleQuoteSelected(quote.id)}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Quote #{quote.id.substring(0, 8)}</CardTitle>
-                      <CardDescription className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" /> {formatDate(quote.createdAt, 'short')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Treatments:</span>
-                          <span className="font-medium">{quote.treatments.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total:</span>
-                          <span className="font-semibold">${quote.total.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium
-                            ${quote.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                              quote.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                              quote.status === 'sent' ? 'bg-blue-100 text-blue-800' : 
-                              'bg-gray-100 text-gray-800'}`
-                          }>
-                            {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
-                          </span>
-                        </div>
-                        {quote.promoCode && (
-                          <div className="flex justify-between items-center mt-2">
-                            <span className="text-muted-foreground">Promo:</span>
-                            <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center">
-                              {quote.promoCode}
-                              {quote.discountAmount > 0 && (
-                                <span className="ml-1">(-${quote.discountAmount.toFixed(2)})</span>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-4"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuoteSelected(quote.id);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          ) : (
-            <Card className="text-center py-8">
-              <CardContent>
-                <div className="flex flex-col items-center">
-                  <p className="text-muted-foreground mb-4">You don't have any active quotes</p>
-                  <Button onClick={handleCreateNewQuote}>Create Your First Quote</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="completed">
-          {quotes.filter(q => q.status === 'completed').length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {quotes
-                .filter(q => q.status === 'completed')
-                .map(quote => (
-                  <Card key={quote.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleQuoteSelected(quote.id)}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Quote #{quote.id.substring(0, 8)}</CardTitle>
-                      <CardDescription className="flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" /> {formatDate(quote.createdAt, 'short')}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Treatments:</span>
-                          <span className="font-medium">{quote.treatments.length}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Total:</span>
-                          <span className="font-semibold">${quote.total.toFixed(2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Status:</span>
-                          <span className="bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                            Completed
-                          </span>
-                        </div>
-                        {quote.promoCode && (
-                          <div className="flex justify-between items-center mt-2">
-                            <span className="text-muted-foreground">Promo:</span>
-                            <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center">
-                              {quote.promoCode}
-                              {quote.discountAmount > 0 && (
-                                <span className="ml-1">(-${quote.discountAmount.toFixed(2)})</span>
-                              )}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full mt-4"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleQuoteSelected(quote.id);
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-          ) : (
-            <Card className="text-center py-8">
-              <CardContent>
-                <div className="flex flex-col items-center">
-                  <p className="text-muted-foreground mb-4">You don't have any completed quotes</p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="all">
-          {quotes.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {quotes.map(quote => (
-                <Card key={quote.id} className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleQuoteSelected(quote.id)}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg">Quote #{quote.id.substring(0, 8)}</CardTitle>
-                    <CardDescription className="flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" /> {formatDate(quote.createdAt, 'short')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Treatments:</span>
-                        <span className="font-medium">{quote.treatments.length}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Total:</span>
-                        <span className="font-semibold">${quote.total.toFixed(2)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Status:</span>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium
-                          ${quote.status === 'accepted' ? 'bg-green-100 text-green-800' : 
-                            quote.status === 'rejected' ? 'bg-red-100 text-red-800' : 
-                            quote.status === 'sent' ? 'bg-blue-100 text-blue-800' : 
-                            quote.status === 'completed' ? 'bg-purple-100 text-purple-800' : 
-                            'bg-gray-100 text-gray-800'}`
-                        }>
-                          {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
-                        </span>
-                      </div>
-                      {quote.promoCode && (
-                        <div className="flex justify-between items-center mt-2">
-                          <span className="text-muted-foreground">Promo:</span>
-                          <span className="bg-green-100 text-green-800 px-2 py-0.5 rounded-full text-xs font-medium flex items-center">
-                            {quote.promoCode}
-                            {quote.discountAmount > 0 && (
-                              <span className="ml-1">(-${quote.discountAmount.toFixed(2)})</span>
-                            )}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      className="w-full mt-4"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleQuoteSelected(quote.id);
-                      }}
-                    >
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="text-center py-8">
-              <CardContent>
-                <div className="flex flex-col items-center">
-                  <p className="text-muted-foreground mb-4">You don't have any quotes</p>
-                  <Button onClick={handleCreateNewQuote}>Create Your First Quote</Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
-      </Tabs>
+      )}
     </div>
   );
-};
-
-export default PatientQuotesPage;
+}

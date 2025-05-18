@@ -203,10 +203,6 @@ export const TreatmentPlansSection = () => {
     }
   };
 
-  // IMPORTANT: Using '/api/treatment-module/' for consistent API path usage
-  // Update to use canonical API path format
-  const API_BASE_URL = "/api/v1";
-  
   // Handle send to patient
   const handleSendToPatient = async (plan: any) => {
     try {
@@ -216,8 +212,7 @@ export const TreatmentPlansSection = () => {
       });
       
       // Make API call to send the treatment plan to the patient
-      console.log(`[API] POST ${API_BASE_URL}/treatment-plans/${plan.id}/send`);
-      const response = await fetch(`${API_BASE_URL}/treatment-plans/${plan.id}/send`, {
+      const response = await fetch(`/api/treatment-plans/${plan.id}/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -225,7 +220,6 @@ export const TreatmentPlansSection = () => {
       });
       
       if (response.ok) {
-        console.log(`[API] Successfully sent treatment plan to patient`);
         // Update the plan status to "sent" in the local state
         if (plan.status === TreatmentPlanStatus.DRAFT) {
           await updateStatus(plan.id, TreatmentPlanStatus.SENT);
@@ -236,7 +230,6 @@ export const TreatmentPlansSection = () => {
           description: t("clinic.treatment_plans.send.success_description", "Treatment plan has been sent to {{name}}.", { name: plan.patientName }),
         });
       } else {
-        console.error(`[API] Failed to send treatment plan: Status ${response.status}`);
         const errorData = await response.json();
         throw new Error(errorData.message || "Failed to send treatment plan");
       }
@@ -253,8 +246,7 @@ export const TreatmentPlansSection = () => {
   // Helper function to update treatment plan status
   const updateStatus = async (id: number, status: TreatmentPlanStatus) => {
     try {
-      console.log(`[API] PATCH ${API_BASE_URL}/treatment-plans/${id} with status:`, status);
-      const response = await fetch(`${API_BASE_URL}/treatment-plans/${id}`, {
+      const response = await fetch(`/api/treatment-plans/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -263,11 +255,8 @@ export const TreatmentPlansSection = () => {
       });
       
       if (!response.ok) {
-        console.error(`[API] Failed to update treatment plan status: Status ${response.status}`);
         throw new Error("Failed to update status");
       }
-      
-      console.log(`[API] Successfully updated treatment plan status`);
       
       // Invalidate the query to refresh the data
       queryClient.invalidateQueries({ queryKey: ['/api/clinic/treatment-plans'] });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
@@ -7,8 +7,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { queryClient } from "@/lib/queryClient";
-import ClinicWebSocketProvider, { useClinicWebSocket, WebSocketMessage } from "@/components/ClinicWebSocketProvider";
-import ClinicTestPageLink from "@/components/ClinicTestPageLink";
 import {
   Select,
   SelectContent,
@@ -20,7 +18,7 @@ import {
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
   Menu, LogOut, ChevronRight, Grid3X3, TestTube,
-  Clock, TrendingUp, CalendarDays, Tag, Image, Package
+  Clock, TrendingUp, CalendarDays, Tag, Image
 } from 'lucide-react';
 import { 
   Card, 
@@ -49,104 +47,21 @@ import ClinicSettingsSection from '@/components/clinic/ClinicSettingsSection';
 import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
-import { TreatmentPackageManager } from '@/components/clinic/TreatmentPackageManager';
 import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
-import PackageQuoteManager from '@/components/clinic/PackageQuoteManager';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
   initialSection?: string;
 }
 
-// Function to extract a cookie by name
-const getCookie = (name: string): string | null => {
-  if (typeof document === 'undefined') return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
-};
-
 const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({ 
   disableAutoRefresh = true,
   initialSection = 'dashboard'
 }) => {
-  // Defensive initialization for initialSection
-  const safeInitialSection = initialSection || 'dashboard';
   const { t, i18n } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  
-  // Function to check for login redirect conditions
-  const getRedirectSafeSection = (): string => {
-    // Check various sources to determine if we're coming from a login
-    const hasLoginFlag = typeof window !== 'undefined' && 
-      sessionStorage.getItem('clinic_login_in_progress') === 'true';
-    const hasDashboardRequest = typeof window !== 'undefined' && 
-      sessionStorage.getItem('clinic_dashboard_requested') === 'true';
-    const hasRedirectCookie = getCookie('clinic_redirect_target') !== null;
-    
-    if (hasLoginFlag || hasDashboardRequest || hasRedirectCookie) {
-      console.log('✅ ClinicPortalPage detected login redirect indicators - forcing dashboard view');
-      
-      // Clear login flags while maintaining no_promo_redirect
-      if (typeof window !== 'undefined') {
-        sessionStorage.removeItem('clinic_login_in_progress');
-        sessionStorage.removeItem('clinic_dashboard_requested');
-        sessionStorage.setItem('clinic_dashboard_accessed', Date.now().toString());
-        
-        // Set strong cookies to maintain clinic session
-        document.cookie = "clinic_session_active=true; path=/; max-age=86400; SameSite=Lax";
-        document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
-        document.cookie = "no_promo_redirect=true; path=/; max-age=86400; SameSite=Lax";
-      }
-      
-      return 'dashboard';
-    }
-    
-    return initialSection;
-  };
-  
-  // Parse the URL for potential section parameter
-  const getInitialSectionFromUrl = () => {
-    try {
-      // First check if we have a valid initialSection prop
-      if (safeInitialSection && safeInitialSection !== 'dashboard') {
-        console.log(`Using initialSection prop: ${safeInitialSection}`);
-        return safeInitialSection;
-      }
-      
-      // Then check if we're on a path like /clinic-portal/dashboard
-      const pathname = window.location.pathname;
-      const parts = pathname.split('/');
-      
-      // If format is /clinic-portal/{section}
-      if (parts.length >= 3 && parts[1] === 'clinic-portal' && parts[2]) {
-        console.log(`Found section in URL path: ${parts[2]}`);
-        return parts[2];
-      }
-      
-      // Otherwise check for query param
-      const params = new URLSearchParams(window.location.search);
-      const sectionParam = params.get('section');
-      if (sectionParam) {
-        console.log(`Found section in query parameter: ${sectionParam}`);
-        return sectionParam;
-      }
-      
-      // Fall back to the redirect-safe method
-      return getRedirectSafeSection();
-    } catch (error) {
-      console.error("Error parsing section from URL:", error);
-      return getRedirectSafeSection();
-    }
-  };
-  
-  // Use the section from URL or the redirect-safe section with extra safety checks
-  const [activeSection, setActiveSection] = useState<string>(() => {
-    const section = getInitialSectionFromUrl();
-    return section || 'dashboard'; // Ensure we always have a valid section
-  });
+  const [activeSection, setActiveSection] = useState<string>(initialSection);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
   
@@ -242,90 +157,16 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   // Flag to track component mount status
   const isMounted = React.useRef(true);
   
-  // New effect to handle clinic login redirection protection
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      console.log("✅ ClinicPortalPage initialized - setting up redirection protection");
-      
-      // Clear any promotion or treatment quote flags to prevent conflicts
-      sessionStorage.removeItem('promo_redirect_pending');
-      sessionStorage.removeItem('special_offer_redirect_target');
-      sessionStorage.removeItem('selected_treatments');
-      sessionStorage.removeItem('quote_flow_state');
-      sessionStorage.removeItem('treatment_selection_active');
-      
-      // Set clinic portal specific flags
-      sessionStorage.setItem('clinic_portal_access_successful', 'true');
-      sessionStorage.setItem('clinic_dashboard_accessed', Date.now().toString());
-      sessionStorage.setItem('disable_promo_redirect', 'true');
-      
-      // Set cookies to maintain clinic session across page refreshes
-      document.cookie = "is_clinic_staff=true; path=/; max-age=86400; SameSite=Lax";
-      document.cookie = "clinic_session_active=true; path=/; max-age=3600; SameSite=Lax";
-      document.cookie = "no_promo_redirect=true; path=/; max-age=3600; SameSite=Lax";
-      
-      // Remove any lingering clinic redirect flags
-      sessionStorage.removeItem('clinic_login_in_progress');
-    }
-  }, []);
-  
-  // Helper function to initialize clinic sessions consistently
-  const initializeClinicSession = (userId: number) => {
-    console.log(`🔧 Initializing clinic session for user ${userId}`);
-    
-    // Store clinic user data securely in session storage for recovery purposes
-    sessionStorage.setItem('clinic_user_id', userId.toString());
-    sessionStorage.setItem('clinic_session_timestamp', Date.now().toString());
-    sessionStorage.setItem('clinic_session_initialized', 'true');
-    
-    // Specific flag for direct access route
-    if (window.location.pathname === '/clinic-direct') {
-      sessionStorage.setItem('clinic_direct_session', 'true');
-      console.log('Setting up direct clinic access session');
-      
-      // This flag is checked by our API middleware to allow access
-      // even in scenarios where the full auth context isn't available
-      sessionStorage.setItem('clinic_api_access_token', `clinic-${userId}-${Date.now()}`);
-    }
-    
-    // Set shared state flags
-    (window as any).__clinicPortalMounted = true;
-    (window as any).__clinicSessionActive = true;
-    
-    return true;
-  };
-  
-  // Enhanced initialization with direct access support
+  // SIMPLIFIED: Just a simple effect for initialization - no complicated checks
   useEffect(() => {
     // Skip if no user
     if (!user) {
-      // Special handling for direct access mode
-      if (window.location.pathname === '/clinic-direct') {
-        console.log('Attempting to initialize clinic session from direct access route');
-        
-        // Check if we have cached user data in session storage
-        const cachedUserData = sessionStorage.getItem('clinic_user_data');
-        if (cachedUserData) {
-          try {
-            const parsedUser = JSON.parse(cachedUserData);
-            if (parsedUser && parsedUser.id) {
-              console.log('Using cached user data for direct clinic access:', parsedUser.id);
-              initializeClinicSession(parsedUser.id);
-            }
-          } catch (e) {
-            console.error('Failed to parse cached user data:', e);
-          }
-        }
-      }
       return;
     }
     
     console.log("ClinicPortalPage: Initializing for clinic staff user:", user.id);
     
-    // Initialize the clinic session
-    initializeClinicSession(user.id);
-    
-    // Mark initialization complete
+    // Simple straightforward initialization
     initialLoadComplete.current = true;
     
     // Cleanup function for component unmount
@@ -335,116 +176,47 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       
       // This prevents issues with WebSocket connection management
       setTimeout(() => {
-        if (window.location.pathname !== '/clinic-portal' && 
-            window.location.pathname !== '/clinic-direct') {
+        if (window.location.pathname !== '/clinic-portal') {
           console.log("Clearing clinic portal mounted flag after navigation");
           (window as any).__clinicPortalMounted = false;
-          (window as any).__clinicSessionActive = false;
         }
       }, 1000);
     };
   }, [user]);
   
-  // Import and use the WebSocket hook for real-time updates
-  // Check if user is authenticated
-  if (!user) {
-    // Redirect to login page if not authenticated
-    React.useEffect(() => {
-      console.log("No authenticated user found in ClinicPortalPage, redirecting to login");
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access the clinic portal.",
-        variant: "destructive"
-      });
-      
-      // Short delay to allow toast to show before redirect
-      setTimeout(() => {
-        setLocation('/clinic-login');
-      }, 1500);
-    }, []);
-    
-    // Show loading indicator while redirecting
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-        <h2 className="text-2xl font-bold mb-2">Authentication Required</h2>
-        <p className="text-muted-foreground">Redirecting to login page...</p>
-      </div>
-    );
-  }
-  
-  // Only use WebSocket if user is authenticated
-  const { isConnected, sendMessage } = useClinicWebSocket();
-  
-  // Set up event listeners for WebSocket events
-  useEffect(() => {
-    if (isConnected) {
-      console.log('WebSocket connected for clinic portal');
-      // Store connection status in session for recovery purposes
-      sessionStorage.setItem('clinic_websocket_connected', 'true');
-    } else {
-      console.log('WebSocket disconnected for clinic portal');
-      // Store disconnection in session
-      sessionStorage.setItem('clinic_websocket_connected', 'false');
-    }
-  }, [isConnected]);
-  
-  // Handle WebSocket messages
-  const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
-    console.log('WebSocket message received in clinic portal:', message);
-    // Handle specific message types
-    if (message.type === 'notification') {
-      // Handle notification updates
-      toast({
-        title: message.payload?.title || 'New Notification',
-        description: message.payload?.message || 'You have a new notification',
-      });
-    }
-  }, [toast]);
-  
-  // Set up effect to listen for WebSocket messages
-  useEffect(() => {
-    // Custom event listener for WebSocket messages
-    const handleWebSocketEvent = (event: CustomEvent) => {
-      if (event.detail) {
-        handleWebSocketMessage(event.detail);
-      }
-    };
-    
-    // Add event listener
-    document.addEventListener('websocket-message', handleWebSocketEvent as EventListener);
-    
-    // Cleanup
-    return () => {
-      document.removeEventListener('websocket-message', handleWebSocketEvent as EventListener);
-    };
-  }, [handleWebSocketMessage]);
-
-  // Component unmount cleanup effect with enhanced WebSocket handling
+  // Component unmount cleanup effect with advanced WebSocket handling
   useEffect(() => {
     // Set a flag on mount to track this instance
     const instanceId = `clinic-portal-instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     (window as any).__lastClinicPortalInstance = instanceId;
     
-    // Set up additional recovery options
-    sessionStorage.setItem('clinic_portal_instance_id', instanceId);
-    sessionStorage.setItem('clinic_portal_active', 'true');
-    
     return () => {
-      console.log("ClinicPortalPage unmounting, performing cleanup");
-      
-      // Only perform full cleanup if this is the most recent instance
-      // This prevents older unmounted instances from clearing newer ones
-      if ((window as any).__lastClinicPortalInstance === instanceId) {
-        // Clear any stored session data
-        sessionStorage.removeItem('clinic_portal_active');
-        sessionStorage.setItem('clinic_portal_unmounted', 'true');
-        console.log(`Cleanup complete for clinic portal`);
-      } else {
-        console.log("Skipping full cleanup - newer instance exists");
+      // Prevent WebSocket connection errors on unmount
+      if (isMounted.current) {
+        console.log("ClinicPortalPage unmounting, performing cleanup");
+        
+        // Only perform full cleanup if this is the most recent instance
+        // This prevents older unmounted instances from clearing newer ones
+        if ((window as any).__lastClinicPortalInstance === instanceId) {
+          // Clear any stored session data
+          sessionStorage.removeItem('clinic_portal_active');
+          
+          // Disconnect WebSocket safely if this component is responsible for it
+          if (user) {
+            // Manually trigger WebSocket cleanup via custom event
+            // This event is caught by the useWebSocket hook
+            const cleanupEvent = new CustomEvent('websocket-component-cleanup', {
+              detail: { userId: user.id, componentId: instanceId }
+            });
+            document.dispatchEvent(cleanupEvent);
+            console.log(`Triggered WebSocket cleanup for user ${user.id}`);
+          }
+        } else {
+          console.log("Skipping full cleanup - newer instance exists");
+        }
       }
     };
-  }, []);
+  }, [user]);
   
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
@@ -498,23 +270,23 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       
       // Step 5: Provide feedback to the user after successful logout
       toast({
-        title: 'Successfully logged out',
-        description: 'You have been logged out of your account.',
+        title: t('portal.logout_success', 'Successfully logged out'),
+        description: t('portal.logout_message', 'You have been logged out of your account.'),
       });
       
       // Step 6: Redirect to login page
       console.log("Logout sequence complete, redirecting to login page");
-      window.location.href = '/portal-login';
+      setLocation('/portal-login');
       
     } catch (err) {
       console.error("Logout handler error:", err);
       toast({
-        title: 'Logged out',
-        description: 'Logout completed with some errors, but you have been signed out.',
+        title: t('portal.logout_success', 'Logged out'),
+        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
       });
       
       // Fallback: redirect even if something fails
-      window.location.href = '/portal-login';
+      setLocation('/portal-login');
     }
   };
 
@@ -525,8 +297,6 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     { id: 'quotes', label: t("clinic.nav.quotes", "Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
     { id: 'special_offers', label: t("clinic.nav.special_offers", "Special Offers"), icon: <Tag className="h-5 w-5" /> },
-    { id: 'treatment_packages', label: t("clinic.nav.treatment_packages", "Treatment Packages"), icon: <Package className="h-5 w-5" /> },
-    { id: 'package_quotes', label: t("clinic.nav.package_quotes", "Package Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatment_mapper', label: t("clinic.nav.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
@@ -708,15 +478,6 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         return <ClinicTreatmentPlansSection />;
       case 'special_offers':
         return <SpecialOffersManager />;
-      case 'treatment_packages':
-        return <TreatmentPackageManager />;
-      case 'package_quotes':
-        return user && user.clinicId ? <PackageQuoteManager clinicId={user.clinicId} /> : (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-            <h3 className="text-lg font-medium text-yellow-800">Clinic ID Required</h3>
-            <p className="mt-2 text-yellow-600">Please ensure your account is associated with a clinic.</p>
-          </div>
-        );
       case 'treatment_mapper':
         return <ClinicTreatmentMapperPage />;
       case 'appointments':
@@ -905,8 +666,6 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           aria-hidden="true"
         />
       )}
-      {/* Add Test Page Link for clinic staff */}
-      <ClinicTestPageLink />
     </div>
   );
 };
