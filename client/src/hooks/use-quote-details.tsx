@@ -1,112 +1,98 @@
-import { useState, useEffect } from 'react';
-import { QuoteIntegrationService } from '@/services/quote-integration-service';
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 
-export interface QuoteDetail {
+interface Treatment {
   id: string;
-  status: 'draft' | 'submitted' | 'accepted' | 'completed';
+  name: string;
+  price: number;
+  quantity: number;
+  description?: string;
+}
+
+interface PackageDetails {
+  id: string;
+  name: string;
+  price: number;
+  description?: string;
+}
+
+interface QuoteDetails {
+  id: string;
+  status: string;
   createdAt: string;
   patientName: string;
   patientEmail: string;
   patientPhone: string;
+  clinicId: string;
+  clinicName: string;
   totalAmount: number;
-  discountAmount?: number;
+  discountAmount: number;
   promoCode?: string;
   promoDescription?: string;
-  clinicId?: string;
-  clinicName?: string;
-  treatments: {
-    id: string;
-    name: string;
-    price: number;
-    quantity: number;
-    description?: string;
-  }[];
-  packageDetails?: {
-    id: string;
-    name: string;
-    price: number;
-    description?: string;
-  };
-  additionalServices?: {
-    id: string;
-    name: string;
-    price: number;
-    description?: string;
-  }[];
+  treatments: Treatment[];
+  packageDetails?: PackageDetails;
+  additionalServices?: any[];
   notes?: string;
 }
 
-export function useQuoteDetails(quoteId: string | undefined) {
-  const [quote, setQuote] = useState<QuoteDetail | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchQuoteDetails = async () => {
-      if (!quoteId) {
-        setLoading(false);
-        return;
-      }
-
+/**
+ * Custom hook for fetching quote details with promo code information
+ */
+export function useQuoteDetails(quoteId: string) {
+  const { data, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['/api/patient/quotes', quoteId],
+    queryFn: async () => {
       try {
-        setLoading(true);
-        setError(null);
+        const response = await axios.get(`/api/patient/quotes/${quoteId}`);
         
-        const response = await QuoteIntegrationService.getQuoteById(quoteId);
-        
-        if (response.success) {
-          setQuote(response.quote);
+        if (response.data.success) {
+          return response.data.quote as QuoteDetails;
         } else {
-          setError(response.message || 'Failed to load quote details');
+          throw new Error(response.data.message || 'Failed to fetch quote details');
         }
       } catch (err) {
-        console.error('Error loading quote details:', err);
-        setError('Failed to load quote details');
-      } finally {
-        setLoading(false);
+        console.error('Error fetching quote details:', err);
+        // If the enhanced endpoint fails, try the standard endpoint
+        try {
+          const response = await axios.get(`/api/quotes/${quoteId}`);
+          
+          // Convert standard quote format to our enhanced format
+          const standardQuote = response.data.quote || response.data;
+          return {
+            ...standardQuote,
+            discountAmount: standardQuote.discountAmount || 0,
+            promoCode: standardQuote.promoCode || null
+          } as QuoteDetails;
+        } catch (fallbackErr) {
+          console.error('Fallback fetch also failed:', fallbackErr);
+          throw fallbackErr;
+        }
       }
-    };
+    },
+    enabled: !!quoteId
+  });
 
-    fetchQuoteDetails();
-  }, [quoteId]);
-
-  const refreshQuote = async () => {
-    if (!quoteId) return;
-    
-    setLoading(true);
+  /**
+   * Helper function to download the quote as PDF
+   */
+  const downloadPdf = async (): Promise<Blob | null> => {
     try {
-      const response = await QuoteIntegrationService.getQuoteById(quoteId);
+      const response = await axios.get(`/api/quotes/${quoteId}/pdf`, {
+        responseType: 'blob'
+      });
       
-      if (response.success) {
-        setQuote(response.quote);
-      } else {
-        setError(response.message || 'Failed to refresh quote details');
-      }
+      return new Blob([response.data], { type: 'application/pdf' });
     } catch (err) {
-      console.error('Error refreshing quote details:', err);
-      setError('Failed to refresh quote details');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const downloadPdf = async () => {
-    if (!quoteId) return null;
-    
-    try {
-      return await QuoteIntegrationService.downloadQuotePdf(quoteId);
-    } catch (err) {
-      console.error('Error downloading quote PDF:', err);
-      setError('Failed to download quote PDF');
+      console.error('Error downloading PDF:', err);
       return null;
     }
   };
 
   return {
-    quote,
-    loading,
-    error,
-    refreshQuote,
+    quote: data,
+    loading: isLoading,
+    error: isError ? error : null,
+    refetch,
     downloadPdf
   };
 }
