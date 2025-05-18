@@ -46,6 +46,7 @@ export function QuoteBuilder({
   const [patientInfo, setPatientInfo] = useState<any>({});
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [quoteReference, setQuoteReference] = useState<string>('');
+  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
 
   // Initialize Flask integration
   const {
@@ -69,12 +70,54 @@ export function QuoteBuilder({
 
   // Handle URL parameters on mount
   useEffect(() => {
-    const urlPromoCode = searchParams.get('promo') || promoCode;
-    const urlClinicId = searchParams.get('clinic') || clinicId;
+    const urlPromoCode = searchParams.get('promoCode') || searchParams.get('promo') || searchParams.get('code') || promoCode;
+    const urlClinicId = searchParams.get('clinicId') || searchParams.get('clinic') || clinicId;
+    const urlPackageId = searchParams.get('packageId');
+    const urlPackageName = searchParams.get('packageName');
     const urlOfferId = searchParams.get('offer');
 
     if (urlPromoCode) {
       setActivePromoCode(urlPromoCode);
+      console.log(`📣 Applying promo code from URL: ${urlPromoCode}`);
+      toast({
+        title: "Promo Code Applied",
+        description: `Promotion "${urlPromoCode}" automatically applied!`,
+      });
+    }
+    
+    if (urlPackageId) {
+      setSelectedPackageId(urlPackageId);
+      console.log(`📦 Detected package ID from URL: ${urlPackageId}`);
+      toast({
+        title: "Package Selected",
+        description: `${urlPackageName || 'Treatment package'} will be applied to your quote.`,
+      });
+    }
+
+    // Check for values from session storage (coming back from dental quiz)
+    const pendingPackageId = sessionStorage.getItem('pendingPackageId');
+    const pendingPackageName = sessionStorage.getItem('pendingPackageName');
+    const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+    
+    if (pendingPackageId && !urlPackageId) {
+      setSelectedPackageId(pendingPackageId);
+      console.log(`📦 Applying pending package from session: ${pendingPackageId}`);
+      toast({
+        title: "Package Retrieved",
+        description: `${pendingPackageName || 'Treatment package'} has been applied from your selection.`,
+      });
+      sessionStorage.removeItem('pendingPackageId');
+      sessionStorage.removeItem('pendingPackageName');
+    }
+    
+    if (pendingPromoCode && !urlPromoCode) {
+      setActivePromoCode(pendingPromoCode);
+      console.log(`🏷️ Applying pending promo code from session: ${pendingPromoCode}`);
+      toast({
+        title: "Promo Code Retrieved",
+        description: `Promotion "${pendingPromoCode}" has been applied.`,
+      });
+      sessionStorage.removeItem('pendingPromoCode');
     }
 
     // Sync with Flask and pass URL parameters
@@ -96,6 +139,10 @@ export function QuoteBuilder({
           
           if (initialState.promo_code) {
             setActivePromoCode(initialState.promo_code);
+          }
+          
+          if (initialState.package_id) {
+            setSelectedPackageId(initialState.package_id);
           }
           
           if (initialState.discount_amount) {
