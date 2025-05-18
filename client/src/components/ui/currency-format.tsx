@@ -6,16 +6,23 @@ interface CurrencyFormatProps {
   locale?: string;
 }
 
-export const CurrencyFormat: React.FC<CurrencyFormatProps> = ({
-  amount,
+/**
+ * Component to format currency values consistently across the application
+ * Supports USD, EUR, GBP and other currency codes
+ */
+export const CurrencyFormat: React.FC<CurrencyFormatProps> = ({ 
+  amount, 
   currency = 'USD',
   locale = 'en-US'
 }) => {
-  const formattedAmount = new Intl.NumberFormat(locale, {
+  const formatter = new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency,
-    minimumFractionDigits: 2
-  }).format(amount);
+    currency: currency,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-  return <span>{formattedAmount}</span>;
+  return <span>{formatter.format(amount)}</span>;
 };
+
+export default CurrencyFormat;
