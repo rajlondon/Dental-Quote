@@ -76,7 +76,7 @@ const PatientQuoteDetail: React.FC = () => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `quote-${id}.pdf`);
+      link.setAttribute('download', `dental-quote-${id}.pdf`);
       document.body.appendChild(link);
       link.click();
       
