@@ -122,6 +122,7 @@ import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
 import ContactWidget from "@/components/ContactWidget";
 import PatientTreatmentPlanPage from "@/pages/patient/PatientTreatmentPlanPage";
 import PatientQuotesPage from "@/pages/patient/PatientQuotesPage";
+import PatientQuoteDetailPage from "@/pages/PatientQuoteDetailPage";
 import ClinicTreatmentPlanPage from "@/pages/clinic/ClinicTreatmentPlanPage";
 import AdminTreatmentPlansPage from "@/pages/admin/AdminTreatmentPlansPage";
 import AdminQuotesPage from "@/pages/admin/AdminQuotesPage";
@@ -967,12 +968,17 @@ function Router() {
         }}
       </Route>
       
-      {/* Patient Quote Detail Page */}
+      {/* Patient Quote Detail Page - Enhanced with promo code display */}
       <Route path="/patient/quotes/:id">
         {(params) => {
-          // Import our enhanced PatientQuoteDetailPage that uses the QuoteIntegrationWidget
+          // Import our enhanced PatientQuoteDetailPage that properly displays promo codes
           return (
-            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">Loading quote details...</div>}>
+            <Suspense fallback={<div className="flex justify-center items-center min-h-[50vh]">
+              <div className="flex flex-col items-center">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
+                <p className="mt-4 text-muted-foreground">Loading quote details...</p>
+              </div>
+            </div>}>
               <PatientQuoteDetailPage />
             </Suspense>
           );

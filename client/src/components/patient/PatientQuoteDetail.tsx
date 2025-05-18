@@ -1,748 +1,388 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
-// No longer using UUID format conversion
-import { formatDate } from '@/lib/date-utils';
-import { formatDiscount, formatCurrency } from '@/lib/format';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigation } from '@/hooks/use-navigation';
-import { useQuoteFlow } from '@/contexts/QuoteFlowContext';
-import TreatmentLinePrice from '@/components/specialOffers/TreatmentLinePrice';
-import { PromoCodeSummary, PromoCodeBadge } from '@/components/promo/PromoCodeSummary';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'wouter';
+import axios from 'axios';
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, ArrowLeft, FileText, Download, Wallet, MessageCircle, CalendarCheck, CheckCircle, ShieldX, AlertTriangle, Edit, Gift, Tag, Percent } from 'lucide-react';
-import { PromoType, DiscountType } from '@shared/schema';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
+import { CurrencyFormat } from '@/components/ui/currency-format';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Clock, Download, Info, PiggyBank, CheckCircle2, X, ArrowUpDown } from 'lucide-react';
 
-// Define the treatment type
-type QuoteTreatment = {
-  name: string;
-  quantity?: number;
-  price?: number;
-  basePriceGBP?: number; // Original price before discount
-  unitPriceGBP?: number; // Discounted price
-  isPackage?: boolean;
-  isSpecialOffer?: boolean; // Flag to easily identify special offers
-  isLocked?: boolean; // Flag to indicate if the treatment is locked (part of a package)
-  packageId?: string;
-  specialOffer?: {
-    id: string;
-    title: string;
-    discountType: 'percentage' | 'fixed_amount';
-    discountValue: number;
-    clinicId: string;
-  };
-};
-
-// Quote shape for type safety
-interface Quote {
-  id: string | number;
-  status?: string;
-  title?: string;
-  createdAt?: string;
+// Types for the quote data
+interface QuoteDetail {
+  id: string;
+  status: 'draft' | 'submitted' | 'accepted' | 'completed';
+  createdAt: string;
+  patientName: string;
+  patientEmail: string;
+  patientPhone: string;
+  totalAmount: number;
+  discountAmount?: number;
+  promoCode?: string;
+  promoDescription?: string;
+  clinicId?: string;
   clinicName?: string;
-  clinicAddress?: string;
-  clinicContact?: string;
-  treatments?: QuoteTreatment[];
-  totalPrice?: number;
-  subtotal?: number;  // Original price before applying discount
+  treatments: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    description?: string;
+  }[];
+  packageDetails?: {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+  };
+  additionalServices?: {
+    id: string;
+    name: string;
+    price: number;
+    description?: string;
+  }[];
   notes?: string;
-  canEdit?: boolean;
-  promoCode?: string;  // Promo code applied to the quote
-  promoName?: string;  // Name of the promotion
-  discountType?: string; // Type of discount (percentage or fixed_amount)
-  discountValue?: number; // Value of the discount
-  discountAmount?: number; // Calculated discount amount
 }
 
-interface PatientQuoteDetailProps {
-  quoteId: string | number;
-  onBack: () => void;
-}
-
-/**
- * Component to display the details of a specific quote within the patient portal
- * This component allows viewing quote details without navigating away from the patient portal
- */
-const PatientQuoteDetail = ({ quoteId, onBack }: PatientQuoteDetailProps) => {
-  const { t } = useTranslation();
+const PatientQuoteDetail: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const [quote, setQuote] = useState<QuoteDetail | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const { navigateToRoute } = useNavigation();
-  const { source, promoType, offerId, packageId, clinicId } = useQuoteFlow();
 
-  // Format the quote ID as needed
-  const formattedQuoteId = typeof quoteId === 'string' ? quoteId : quoteId.toString();
-  
-  // Determine if this quote is from a special flow
-  const isPromotionalQuote = source === 'special_offer' || source === 'package' || source === 'promo_token';
-  
-  // Fetch the quote details
-  const { 
-    data: quoteData, 
-    isLoading, 
-    error 
-  } = useQuery({
-    queryKey: ['/api/quotes/details', formattedQuoteId],
-    queryFn: async () => {
-      console.log(`[DEBUG] Fetching quote details for ID: ${formattedQuoteId}`);
+  useEffect(() => {
+    const fetchQuote = async () => {
       try {
-        const response = await apiRequest('GET', `/api/quotes/${formattedQuoteId}`);
-        const data = await response.json();
+        setLoading(true);
+        setError(null);
         
-        if (!data.success) {
-          console.error('[ERROR] Quote details API returned unsuccessful response:', data);
-          throw new Error(data.message || 'Failed to fetch quote details');
+        const response = await axios.get(`/api/patient/quotes/${id}`);
+        
+        if (response.data.success) {
+          setQuote(response.data.quote);
+        } else {
+          setError(response.data.message || 'Failed to load quote');
+          toast({
+            title: "Error",
+            description: response.data.message || 'Failed to load quote data',
+            variant: "destructive"
+          });
         }
-        
-        console.log('[DEBUG] Successfully loaded quote details:', data.data);
-        return data.data || null;
-      } catch (error) {
-        console.error('[ERROR] Failed to fetch quote details:', error);
-        throw error;
+      } catch (err) {
+        console.error('Error loading quote:', err);
+        setError('Failed to load quote');
+        toast({
+          title: "Error",
+          description: 'Failed to load quote from server',
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
       }
-    },
-    staleTime: 60000 // 1 minute
-  });
-  
-  // Extract the specific quote details from the nested response
-  const quote = React.useMemo<Quote | null>(() => {
-    if (!quoteData) return null;
-    
-    // Log the raw API response to understand the structure
-    console.log('[DEBUG] Raw quote API response data:', JSON.stringify(quoteData, null, 2));
-    
-    // Extract quote from the nested structure based on the API response format
-    const quoteRequest = quoteData.quoteRequest || {};
-    console.log('[DEBUG] Extracted quoteRequest:', JSON.stringify(quoteRequest, null, 2));
-    
-    const quoteVersions = quoteData.versions || [];
-    console.log('[DEBUG] Extracted quoteVersions:', JSON.stringify(quoteVersions, null, 2));
-    
-    // Get the latest version if it exists, otherwise use the quote request
-    const latestVersion = quoteVersions.length > 0 
-      ? quoteVersions[quoteVersions.length - 1] 
-      : null;
-    
-    // Check if the quote has associated pricing data
-    console.log('[DEBUG] Quote pricing info:', {
-      hasEstimatedPrice: !!quoteRequest.estimatedPrice,
-      estimatedPrice: quoteRequest.estimatedPrice,
-      hasQuoteData: !!quoteRequest.quoteData,
-      quoteDataType: quoteRequest.quoteData ? typeof quoteRequest.quoteData : 'N/A',
-      parsedQuoteData: quoteRequest.quoteData ? 
-        (typeof quoteRequest.quoteData === 'string' ? 
-          JSON.parse(quoteRequest.quoteData) : quoteRequest.quoteData) : null
-    });
-    
-    // Get proper treatments and pricing from the version if available
-    let treatments = [];
-    let totalPrice = 0;
-    
-    // Try to extract treatment data from various fields
-    const parsedQuoteData = quoteRequest.quoteData && typeof quoteRequest.quoteData === 'string' ?
-      JSON.parse(quoteRequest.quoteData) : quoteRequest.quoteData;
-    
-    if (latestVersion && latestVersion.treatments) {
-      // Use treatments from the latest version
-      console.log('[DEBUG] Using treatments from latestVersion:', latestVersion.treatments);
-      treatments = latestVersion.treatments.map((t: any) => ({
-        name: t.name || 'Treatment',
-        quantity: t.quantity || 1,
-        price: t.price || 0,
-        basePriceGBP: t.basePriceGBP || t.price || 0,
-        unitPriceGBP: t.unitPriceGBP || t.price || 0,
-        isPackage: t.isPackage || false,
-        isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
-        isLocked: t.isLocked || false,
-        packageId: t.packageId || undefined,
-        specialOffer: t.specialOffer || undefined
-      }));
-      
-      // Calculate the total price
-      totalPrice = treatments.reduce((sum: number, t: any) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
-    } else if (parsedQuoteData && parsedQuoteData.treatments) {
-      // If we have parsed quote data with treatments, use that
-      console.log('[DEBUG] Using treatments from parsedQuoteData:', parsedQuoteData.treatments);
-      treatments = parsedQuoteData.treatments.map((t: any) => ({
-        name: t.name || 'Treatment',
-        quantity: t.quantity || 1,
-        price: t.price || 0,
-        basePriceGBP: t.basePriceGBP || t.price || 0,
-        unitPriceGBP: t.unitPriceGBP || t.price || 0,
-        isPackage: t.isPackage || false,
-        isSpecialOffer: !!t.specialOffer, // Set flag based on specialOffer existence
-        isLocked: t.isLocked || false,
-        packageId: t.packageId || undefined,
-        specialOffer: t.specialOffer || undefined
-      }));
-      
-      // Calculate the total price 
-      totalPrice = treatments.reduce((sum: number, t: any) => sum + ((t.price || 0) * (t.quantity || 1)), 0);
-    } else {
-      // Use a default treatment based on the request
-      console.log('[DEBUG] Using default treatment based on quoteRequest');
-      treatments = [
-        {
-          name: quoteRequest.specificTreatment || quoteRequest.treatment || 'Dental Treatment',
-          quantity: 1,
-          price: quoteRequest.estimatedPrice || 1500, // Default price if none available
-          basePriceGBP: quoteRequest.basePriceGBP || quoteRequest.estimatedPrice || 1500,
-          unitPriceGBP: quoteRequest.unitPriceGBP || quoteRequest.estimatedPrice || 1500,
-          isPackage: quoteRequest.isPackage || false,
-          isSpecialOffer: !!quoteRequest.specialOffer, // Set flag based on specialOffer existence
-          isLocked: quoteRequest.isLocked || false,
-          packageId: quoteRequest.packageId || undefined,
-          specialOffer: quoteRequest.specialOffer || undefined
-        }
-      ];
-      totalPrice = quoteRequest.estimatedPrice || 1500; // Default price if none available
-    }
-    
-    // Enhanced status determination logic
-    let status = quoteRequest.status || 'draft';
-    let canEdit = false;
-    
-    if (['draft', 'pending', 'new', 'active'].includes(status)) {
-      // These statuses are considered editable
-      canEdit = true;
-    }
-    
-    // Construct a structured quote object with all necessary fields
-    const result = {
-      id: quoteRequest.id,
-      status: status,
-      title: quoteRequest.treatment,
-      createdAt: quoteRequest.createdAt,
-      clinicName: quoteRequest.clinicName || 'Istanbul Dental Smile',
-      clinicAddress: quoteRequest.clinicAddress || 'Istanbul, Turkey',
-      clinicContact: quoteRequest.clinicPhone || '+90 123 456 7890',
-      totalPrice: totalPrice,
-      subtotal: quoteRequest.subtotal || totalPrice, // Original price before discount
-      notes: quoteRequest.notes,
-      treatments: treatments,
-      canEdit: canEdit,
-      // Promo code information
-      promoCode: quoteRequest.promoCode || null,
-      promoName: quoteRequest.promoName || null,
-      discountType: quoteRequest.discountType || null,
-      discountValue: quoteRequest.discountValue || null,
-      discountAmount: quoteRequest.discountAmount || null
     };
-    
-    console.log('[DEBUG] Final structured quote object:', result);
-    return result;
-  }, [quoteData]);
 
-  // Get status badge color and text for a status
-  const getStatusBadge = (status: string | undefined) => {
-    // Handle undefined or empty status
-    if (!status) {
-      return { color: 'bg-gray-400', text: 'Unknown' };
+    if (id) {
+      fetchQuote();
     }
-    
+  }, [id, toast]);
+
+  const getStatusBadgeColor = (status: string) => {
     switch (status) {
-      case 'sent':
-        return { color: 'bg-blue-500', text: 'Sent' };
-      case 'in_progress':
-        return { color: 'bg-yellow-500', text: 'In Progress' };
+      case 'draft':
+        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
+      case 'submitted':
+        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
       case 'accepted':
-        return { color: 'bg-green-500', text: 'Accepted' };
-      case 'rejected':
-        return { color: 'bg-red-500', text: 'Rejected' };
+        return 'bg-green-100 text-green-800 hover:bg-green-200';
       case 'completed':
-        return { color: 'bg-green-700', text: 'Completed' };
-      case 'cancelled':
-        return { color: 'bg-gray-500', text: 'Cancelled' };
-      case 'expired':
-        return { color: 'bg-gray-700', text: 'Expired' };
+        return 'bg-purple-100 text-purple-800 hover:bg-purple-200';
       default:
-        return { color: 'bg-gray-400', text: status.charAt(0).toUpperCase() + status.slice(1) };
+        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
     }
   };
 
-  // Get the status icon for a quote based on its status
-  const getStatusIcon = (status: string | undefined) => {
-    // Handle undefined or empty status
-    if (!status) {
-      return <FileText className="h-5 w-5 text-gray-500" />;
-    }
-    
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'sent':
-        return <Loader2 className="h-5 w-5 text-blue-500" />;
-      case 'in_progress':
-        return <Loader2 className="h-5 w-5 text-yellow-500 animate-spin" />;
+      case 'draft':
+        return <Clock className="h-4 w-4 mr-1" />;
+      case 'submitted':
+        return <ArrowUpDown className="h-4 w-4 mr-1" />;
       case 'accepted':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
-      case 'rejected':
-        return <ShieldX className="h-5 w-5 text-red-500" />;
-      case 'expired':
-        return <AlertTriangle className="h-5 w-5 text-gray-700" />;
+        return <CheckCircle2 className="h-4 w-4 mr-1" />;
+      case 'completed':
+        return <CheckCircle2 className="h-4 w-4 mr-1" />;
       default:
-        return <FileText className="h-5 w-5 text-gray-500" />;
+        return <Info className="h-4 w-4 mr-1" />;
     }
   };
 
-  // Handle payment for a quote
-  const handlePayment = () => {
-    // Navigate to payment page
-    toast({
-      title: "Payment feature coming soon",
-      description: "The payment feature is currently under development."
-    });
+  const handleDownloadPdf = async () => {
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your quote PDF...",
+      });
+      
+      const response = await axios.get(`/api/quotes/${id}/pdf`, { responseType: 'blob' });
+      
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `quote-${id}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: "PDF Downloaded",
+        description: "Your quote PDF has been downloaded successfully",
+        variant: "success"
+      });
+    } catch (err) {
+      console.error('Error downloading PDF:', err);
+      toast({
+        title: "Error",
+        description: "Failed to download quote PDF",
+        variant: "destructive"
+      });
+    }
   };
 
-  // Handle making appointment for the quote
-  const handleMakeAppointment = () => {
-    // Navigate to appointments page
-    toast({
-      title: "Appointment booking coming soon",
-      description: "The appointment booking feature is currently under development."
-    });
-  };
-
-  // Handle accepting the quote
-  const handleAcceptQuote = () => {
-    // Accept the quote API call
-    toast({
-      title: "Quote accepted",
-      description: "Thank you for accepting the quote. A representative will contact you soon.",
-      variant: "default"
-    });
-  };
-
-  // Handle rejecting the quote
-  const handleRejectQuote = () => {
-    // Reject the quote API call
-    toast({
-      title: "Quote rejected",
-      description: "The quote has been rejected. Please provide feedback to help us improve."
-    });
-  };
-
-  // Handle downloading the quote as PDF
-  const handleDownload = () => {
-    // Download the quote as PDF
-    toast({
-      title: "Download started",
-      description: "Your quote PDF is being generated and will download shortly."
-    });
-  };
-  
-  // Handle editing the quote
-  const handleEdit = () => {
-    if (!quote?.id) return;
-    
-    // Use the navigateTo method for client-side navigation
-    const editPath = `/patient/quotes/${quote.id}/edit`;
-    navigateToRoute(editPath);
-    
-    // Show success toast
-    toast({
-      title: "Edit Quote",
-      description: "You can now edit your quote details."
-    });
-  };
-
-  // Show loading state
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12">
-        <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-4" />
-        <p className="text-gray-500">{t('quotes.loading_details', 'Loading quote details...')}</p>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading"/>
       </div>
     );
   }
 
-  // Show error state
   if (error || !quote) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <AlertTriangle className="h-10 w-10 text-red-500 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-red-700 mb-2">
-          {t('quotes.error_details_title', 'Error Loading Quote Details')}
-        </h3>
-        <p className="text-red-600 mb-4">
-          {t('quotes.error_details_description', 'There was a problem loading the quote details. Please try again later.')}
-        </p>
-        <div className="flex justify-center space-x-4">
-          <Button onClick={onBack} variant="outline" className="flex items-center">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('common.back', 'Back')}
-          </Button>
-          <Button onClick={() => window.location.reload()}>
-            {t('common.retry', 'Retry')}
-          </Button>
-        </div>
-      </div>
+      <Alert variant="destructive" className="max-w-3xl mx-auto my-8">
+        <X className="h-4 w-4" />
+        <AlertTitle>Error</AlertTitle>
+        <AlertDescription>
+          {error || "Unable to load quote. Please try again later."}
+        </AlertDescription>
+      </Alert>
     );
   }
 
-  // Get the status display
-  const status = getStatusBadge(quote.status);
-  const StatusIcon = () => getStatusIcon(quote.status);
-
   return (
-    <div className="space-y-6">
-      {/* Promotional banner for quotes from special sources */}
-      {isPromotionalQuote && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center">
-            <Gift className="h-5 w-5 text-blue-600 mr-3" />
-            <div>
-              <h3 className="font-semibold text-blue-800">
-                {source === 'special_offer' && 'Special Offer Applied'}
-                {source === 'package' && 'Package Deal Applied'}
-                {source === 'promo_token' && 'Promotional Quote'}
-              </h3>
-              <p className="text-sm text-blue-700">
-                {source === 'special_offer' && 'This quote includes special offer pricing and benefits.'}
-                {source === 'package' && 'This quote includes package deal pricing and benefits.'}
-                {source === 'promo_token' && promoType === 'special_offer' && 'This quote includes special offer pricing and benefits.'}
-                {source === 'promo_token' && promoType === 'package' && 'This quote includes package deal pricing and benefits.'}
-                {source === 'promo_token' && !promoType && 'This quote includes promotional pricing and benefits.'}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* Back button and title */}
-      <div className="flex items-center justify-between">
-        <Button 
-          variant="ghost" 
-          onClick={onBack}
-          className="flex items-center text-gray-600 hover:text-gray-900 px-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          {t('common.back_to_quotes', 'Back to Quotes')}
-        </Button>
-        <Badge className={status.color}>
-          {status.text}
-        </Badge>
-      </div>
-
-      {/* Quote header */}
-      <div>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold">
-            {quote.title || (quote.id ? `Quote #${quote.id.toString().slice(0, 8)}` : 'Quote Details')}
-          </h1>
-          
-          {/* Promo code badge */}
-          {quote.promoCode && (
-            <Badge variant="outline" className="flex items-center gap-2 bg-blue-50 text-blue-700 border-blue-200">
-              {quote.discountType === 'percentage' ? <Percent className="h-3 w-3" /> : <Tag className="h-3 w-3" />}
-              <span className="font-medium">
-                {quote.promoCode}: {formatDiscount(quote.discountType || 'fixed_amount', quote.discountValue || 0)} off
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col lg:flex-row justify-between items-start gap-6 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center">
+            Quote #{quote.id} 
+            <Badge className={`ml-3 ${getStatusBadgeColor(quote.status)}`}>
+              <span className="flex items-center">
+                {getStatusIcon(quote.status)}
+                {quote.status.charAt(0).toUpperCase() + quote.status.slice(1)}
               </span>
             </Badge>
+          </h1>
+          <p className="text-muted-foreground">Created: {new Date(quote.createdAt).toLocaleDateString()}</p>
+        </div>
+        <Button onClick={handleDownloadPdf} className="flex items-center">
+          <Download className="mr-2 h-4 w-4" /> Download PDF
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Patient Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="font-medium">{quote.patientName}</p>
+            <p>{quote.patientEmail}</p>
+            <p>{quote.patientPhone}</p>
+          </CardContent>
+        </Card>
+        
+        {quote.clinicId && (
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg">Clinic</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="font-medium">{quote.clinicName || `Clinic #${quote.clinicId}`}</p>
+            </CardContent>
+          </Card>
+        )}
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Quote Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex justify-between items-center">
+              <p>Total Amount:</p>
+              <p className="font-bold text-lg">
+                <CurrencyFormat amount={quote.totalAmount} />
+              </p>
+            </div>
+            
+            {quote.promoCode && (
+              <>
+                <Separator className="my-2" />
+                <div className="rounded-md bg-green-50 p-3 mt-2">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <PiggyBank className="h-5 w-5 text-green-600" aria-hidden="true" />
+                    </div>
+                    <div className="ml-3">
+                      <h3 className="text-sm font-medium text-green-800">Promo Applied: {quote.promoCode}</h3>
+                      {quote.discountAmount && (
+                        <div className="mt-1 text-sm text-green-700">
+                          You saved <CurrencyFormat amount={quote.discountAmount} />
+                        </div>
+                      )}
+                      {quote.promoDescription && (
+                        <div className="mt-1 text-xs text-green-700">
+                          {quote.promoDescription}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <Tabs defaultValue="treatments" className="max-w-4xl mx-auto">
+        <TabsList className="mb-4">
+          <TabsTrigger value="treatments">Treatments</TabsTrigger>
+          {quote.packageDetails && <TabsTrigger value="package">Package</TabsTrigger>}
+          {quote.additionalServices && quote.additionalServices.length > 0 && (
+            <TabsTrigger value="services">Additional Services</TabsTrigger>
           )}
-        </div>
-        <div className="flex items-center mt-2 text-gray-600">
-          <StatusIcon />
-          <span className="ml-2">{status.text}</span>
-          <span className="mx-2">•</span>
-          <span>{formatDate(quote.createdAt) || 'N/A'}</span>
-        </div>
-      </div>
-
-      {/* Clinic information */}
-      <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-        <h2 className="font-semibold mb-2">{t('quotes.clinic_information', 'Clinic Information')}</h2>
-        <p className="text-lg font-medium">{quote.clinicName || 'Multiple Clinics'}</p>
-        {quote.clinicAddress && (
-          <p className="text-gray-600">{quote.clinicAddress}</p>
+          {quote.notes && <TabsTrigger value="notes">Notes</TabsTrigger>}
+        </TabsList>
+        
+        <TabsContent value="treatments">
+          <Card>
+            <CardHeader>
+              <CardTitle>Selected Treatments</CardTitle>
+              <CardDescription>Dental treatments included in this quote</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Treatment</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead className="text-right">Price</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {quote.treatments.map((treatment) => (
+                    <TableRow key={treatment.id}>
+                      <TableCell>
+                        <div className="font-medium">{treatment.name}</div>
+                        {treatment.description && (
+                          <div className="text-sm text-muted-foreground">{treatment.description}</div>
+                        )}
+                      </TableCell>
+                      <TableCell>{treatment.quantity}</TableCell>
+                      <TableCell className="text-right">
+                        <CurrencyFormat amount={treatment.price} />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        {quote.packageDetails && (
+          <TabsContent value="package">
+            <Card>
+              <CardHeader>
+                <CardTitle>Treatment Package</CardTitle>
+                <CardDescription>Package details included in this quote</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 border rounded-lg">
+                  <h3 className="text-lg font-semibold">{quote.packageDetails.name}</h3>
+                  {quote.packageDetails.description && (
+                    <p className="mt-2 text-muted-foreground">{quote.packageDetails.description}</p>
+                  )}
+                  <div className="mt-4 text-right">
+                    <span className="font-bold">
+                      <CurrencyFormat amount={quote.packageDetails.price} />
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         )}
-        {quote.clinicContact && (
-          <p className="text-gray-600">{quote.clinicContact}</p>
+        
+        {quote.additionalServices && quote.additionalServices.length > 0 && (
+          <TabsContent value="services">
+            <Card>
+              <CardHeader>
+                <CardTitle>Additional Services</CardTitle>
+                <CardDescription>Extra services included in this quote</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Service</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {quote.additionalServices.map((service) => (
+                      <TableRow key={service.id}>
+                        <TableCell>
+                          <div className="font-medium">{service.name}</div>
+                          {service.description && (
+                            <div className="text-sm text-muted-foreground">{service.description}</div>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <CurrencyFormat amount={service.price} />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
         )}
-      </div>
-
-      {/* Treatments list */}
-      <div>
-        <h2 className="font-semibold mb-4">{t('quotes.treatments', 'Treatments')}</h2>
-        <div className="border rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('quotes.treatment_name', 'Treatment')}
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('quotes.quantity', 'Quantity')}
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('quotes.price', 'Price')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {/* Regular treatments section */}
-              {quote.treatments && quote.treatments.map((treatment: QuoteTreatment, index: number) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div className="flex items-center gap-2">
-                      <span>{treatment.name}</span>
-                      {treatment.isPackage && (
-                        <Badge className="bg-purple-100 text-purple-800 border-purple-200 hover:bg-purple-200">
-                          Package
-                        </Badge>
-                      )}
-                      {(treatment.isSpecialOffer || treatment.specialOffer) && (
-                        <Badge className="bg-blue-100 text-blue-800 border-blue-200 hover:bg-blue-200 flex items-center">
-                          <Gift className="h-3 w-3 mr-1" />
-                          {treatment.specialOffer?.title || "Special Offer"}
-                          {treatment.specialOffer?.discountType === 'percentage' && treatment.specialOffer.discountValue > 0 && 
-                            ` (${treatment.specialOffer.discountValue}% off)`}
-                          {treatment.specialOffer?.discountType === 'fixed_amount' && treatment.specialOffer.discountValue > 0 && 
-                            ` (£${treatment.specialOffer.discountValue} off)`}
-                          {treatment.specialOffer?.clinicId && 
-                            <span className="ml-1 text-xs bg-gray-100 text-gray-600 rounded px-1">
-                              CL{treatment.specialOffer.clinicId}
-                            </span>}
-                        </Badge>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {treatment.quantity || 1}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                    {/* Use the TreatmentLinePrice component to handle all price display cases */}
-                    <TreatmentLinePrice 
-                      price={treatment.price}
-                      basePriceGBP={treatment.basePriceGBP}
-                      unitPriceGBP={treatment.unitPriceGBP}
-                      isSpecialOffer={treatment.isSpecialOffer}
-                      hasSpecialOffer={!!treatment.specialOffer}
-                      specialOfferText={treatment.specialOffer?.title 
-                        ? `${treatment.specialOffer.title} Applied` 
-                        : isPromotionalQuote 
-                          ? 'Promotional Price'
-                          : 'Special Offer Applied'
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-
-              {/* Special Offers Section - Always displayed as separate row */}
-              {quote.treatments && quote.treatments.some(t => t.specialOffer || t.isSpecialOffer) && (
-                <>
-                  {/* Separator row */}
-                  <tr className="bg-gray-100">
-                    <td colSpan={3} className="px-6 py-2 text-xs font-semibold text-gray-500 uppercase">
-                      Special Offers Applied
-                    </td>
-                  </tr>
-                  
-                  {/* Special offer items */}
-                  {quote.treatments
-                    .filter(t => t.specialOffer || t.isSpecialOffer)
-                    .map((treatment, index) => {
-                      const specialOfferTitle = treatment.specialOffer?.title || "Special Offer";
-                      const discountType = treatment.specialOffer?.discountType || 'percentage';
-                      const discountValue = treatment.specialOffer?.discountValue || 0;
-                      const clinicCode = treatment.specialOffer?.clinicId ? `CL${treatment.specialOffer.clinicId}` : '';
-                      
-                      return (
-                        <tr key={`offer-${index}`} className="bg-green-50 border-t border-b border-green-100">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">
-                            <div className="flex items-center gap-2">
-                              <Gift className="h-4 w-4 text-green-600" />
-                              <span>{specialOfferTitle}</span>
-                              {clinicCode && (
-                                <span className="text-xs text-gray-500">
-                                  Code: {clinicCode}
-                                </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700">
-                            1
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-green-700 font-medium">
-                            {discountValue > 0 ? (
-                              discountType === 'percentage' ? 
-                                `${discountValue}% off` : 
-                                `£${discountValue} off`
-                            ) : (
-                              'Special Price'
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  }
-                </>
-              )}
-
-              {/* Promotional token section if present */}
-              {isPromotionalQuote && !quote.treatments?.some(t => t.specialOffer) && (
-                <tr className="bg-blue-50 border-t border-b border-blue-100">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-800">
-                    <div className="flex items-center gap-2">
-                      <Gift className="h-4 w-4 text-blue-600" />
-                      <span>Promotional Price</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-700">
-                    1
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-700 font-medium">
-                    Special Price
-                  </td>
-                </tr>
-              )}
-            </tbody>
-            <tfoot className="bg-gray-50">
-              {/* Show discount information if promo code was applied */}
-              {quote.promoCode && (
-                <>
-                  <tr>
-                    <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
-                      {t('quotes.subtotal', 'Subtotal')}:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">
-                      {formatCurrency(quote.subtotal || 0)}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td colSpan={2} className="px-6 py-4 text-sm font-medium text-blue-600 text-right">
-                      {t('quotes.discount', 'Discount')} 
-                      {quote.promoName && <span> ({quote.promoName})</span>}:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 text-right">
-                      {quote.discountAmount ? (
-                        `- ${formatCurrency(quote.discountAmount)}`
-                      ) : (
-                        `- ${formatDiscount(quote.discountType || 'fixed_amount', quote.discountValue || 0)}`
-                      )}
-                    </td>
-                  </tr>
-                </>
-              )}
-              <tr>
-                <td colSpan={2} className="px-6 py-4 text-sm font-medium text-gray-900 text-right">
-                  {t('quotes.total', 'Total')}:
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                  {formatCurrency(quote.totalPrice || 0)}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-
-      {/* Detailed promo code information if available */}
-      {quote.promoCode && (
-        <div className="mb-6">
-          <h2 className="font-semibold mb-3 text-blue-800">{t('quotes.promo_code', 'Promotional Discount')}</h2>
-          <PromoCodeSummary
-            promoCode={quote.promoCode}
-            promoName={quote.promoName || 'Special Discount'}
-            discountType={quote.discountType === 'percentage' ? DiscountType.PERCENT : DiscountType.FIXED}
-            discountValue={quote.discountValue || 0}
-            promoType={PromoType.OFFER}
-            subtotal={quote.subtotal}
-            discountAmount={quote.discountAmount}
-            totalAfterDiscount={quote.totalPrice}
-            showFullDetails={true}
-            className="max-w-md"
-          />
-        </div>
-      )}
-
-      {/* Notes */}
-      {quote.notes && (
-        <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-          <h2 className="font-semibold mb-2 text-blue-800">{t('quotes.notes', 'Notes')}</h2>
-          <p className="text-blue-700 whitespace-pre-line">{quote.notes}</p>
-        </div>
-      )}
-
-      {/* Action buttons */}
-      <Separator />
-      <div className="flex flex-wrap gap-3 justify-end">
-        {/* Show different actions based on quote status */}
-        {quote.status === 'sent' && (
-          <>
-            <Button 
-              variant="outline" 
-              className="flex items-center text-green-600 hover:bg-green-50 border-green-200"
-              onClick={handleAcceptQuote}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {t('quotes.accept', 'Accept Quote')}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center text-red-600 hover:bg-red-50 border-red-200"
-              onClick={handleRejectQuote}
-            >
-              <ShieldX className="h-4 w-4 mr-2" />
-              {t('quotes.reject', 'Reject Quote')}
-            </Button>
-          </>
+        
+        {quote.notes && (
+          <TabsContent value="notes">
+            <Card>
+              <CardHeader>
+                <CardTitle>Notes</CardTitle>
+                <CardDescription>Additional information about this quote</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 border rounded-lg whitespace-pre-wrap">
+                  {quote.notes}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         )}
-
-        {quote.status && ['accepted', 'completed'].includes(quote.status) && (
-          <>
-            <Button 
-              variant="outline" 
-              className="flex items-center text-purple-600 hover:bg-purple-50 border-purple-200"
-              onClick={handleMakeAppointment}
-            >
-              <CalendarCheck className="h-4 w-4 mr-2" />
-              {t('quotes.book_appointment', 'Book Appointment')}
-            </Button>
-            <Button 
-              variant="outline" 
-              className="flex items-center text-indigo-600 hover:bg-indigo-50 border-indigo-200"
-              onClick={handlePayment}
-            >
-              <Wallet className="h-4 w-4 mr-2" />
-              {t('quotes.make_payment', 'Make Payment')}
-            </Button>
-          </>
-        )}
-
-        {/* Edit button - only available for editable quotes */}
-        {quote.canEdit && (
-          <Button 
-            variant="outline" 
-            className="flex items-center text-amber-600 hover:bg-amber-50 border-amber-200"
-            onClick={handleEdit}
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            {t('quotes.edit', 'Edit Quote')}
-          </Button>
-        )}
-
-        {/* Message button - available for all quotes */}
-        <Button 
-          variant="outline" 
-          className="flex items-center text-blue-600 hover:bg-blue-50 border-blue-200"
-          onClick={() => navigateToRoute('PATIENT_MESSAGES')}
-        >
-          <MessageCircle className="h-4 w-4 mr-2" />
-          {t('quotes.contact', 'Contact Clinic')}
-        </Button>
-
-        {/* Download button - available for all quotes */}
-        <Button 
-          variant="outline" 
-          className="flex items-center text-gray-600 hover:bg-gray-50"
-          onClick={handleDownload}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {t('quotes.download', 'Download Quote')}
-        </Button>
-      </div>
+      </Tabs>
     </div>
   );
 };
