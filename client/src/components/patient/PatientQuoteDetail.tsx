@@ -187,7 +187,7 @@ const PatientQuoteDetail: React.FC = () => {
                         <div className="mt-2 flex items-center">
                           <Percent className="h-4 w-4 text-green-600 mr-1" />
                           <span className="text-sm font-medium text-green-800">
-                            Savings: <CurrencyFormat amount={quote.discountAmount} className="font-bold" />
+                            Savings: <span className="font-bold"><CurrencyFormat amount={quote.discountAmount} /></span>
                           </span>
                         </div>
                       )}
