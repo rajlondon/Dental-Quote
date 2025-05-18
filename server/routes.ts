@@ -280,6 +280,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register trending packages routes with commission-based promotion system
   app.use(trendingPackagesRoutes);
   
+  // Register treatment package routes
+  app.use('/api/treatment-packages', treatmentPackageRoutes);
+  
+  // Register promo code routes for special offers and treatment packages
+  app.use('/api/promo-codes', promoCodeRoutes);
+  
   // Register clinic media routes for before/after images and videos
   app.use('/api/clinic-media', clinicMediaRoutes);
   
