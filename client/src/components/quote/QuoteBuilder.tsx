@@ -96,7 +96,9 @@ export function QuoteBuilder({
       // Synchronize with Flask backend
       syncWithFlask({
         package_id: urlPackageId,
-        package_name: urlPackageName || 'Treatment package'
+        package_name: urlPackageName || 'Treatment package',
+        treatments: [], // Will be populated by PackagePreselectionHandler
+        apply_package: true // Signal to apply package immediately
       });
       
       toast({

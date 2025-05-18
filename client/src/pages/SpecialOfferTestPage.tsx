@@ -1,141 +1,108 @@
-import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { TreatmentItem } from '@/services/specialOfferService';
-import SpecialOfferPanel from '@/components/specialOffers/SpecialOfferPanel';
-import { useToast } from "@/hooks/use-toast";
-
-// Mock treatment data for testing
-const mockTreatments: TreatmentItem[] = [
-  { id: '1', name: 'Dental Implant', category: 'Implants', quantity: 1, priceGBP: 450 },
-  { id: '2', name: 'Porcelain Crown', category: 'Crowns', quantity: 1, priceGBP: 180 },
-  { id: '3', name: 'Teeth Whitening', category: 'Cosmetic', quantity: 1, priceGBP: 120 }
-];
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export default function SpecialOfferTestPage() {
-  const [clinicId, setClinicId] = useState<number>(1); // Default to clinic ID 1
-  const [treatments, setTreatments] = useState<TreatmentItem[]>(mockTreatments);
-  const [discountedTreatments, setDiscountedTreatments] = useState<TreatmentItem[] | null>(null);
-  const [totalSavings, setTotalSavings] = useState<number>(0);
   const { toast } = useToast();
 
-  // Calculate totals
-  const calculateTotal = (items: TreatmentItem[]) => {
-    return items.reduce((sum, item) => sum + item.priceGBP, 0);
-  };
+  const specialOffers = [
+    {
+      id: 'offer-001',
+      title: 'Premium Implant Package',
+      packageId: 'pkg-001',
+      promoCode: 'IMPLANTCROWN30',
+      description: 'Get premium dental implants with 30% discount on crown work',
+      price: 1200
+    },
+    {
+      id: 'offer-002',
+      title: 'Luxury Smile Makeover',
+      packageId: 'pkg-002',
+      promoCode: 'LUXHOTEL20',
+      description: '20% off on full smile makeover treatments plus luxury hotel accommodation',
+      price: 2500
+    },
+    {
+      id: 'offer-003',
+      title: 'Travel & Treatment Bundle',
+      packageId: 'pkg-003',
+      promoCode: 'LUXTRAVEL',
+      description: 'Comprehensive dental treatment with complimentary airport transfers',
+      price: 1800
+    }
+  ];
 
-  const originalTotal = calculateTotal(treatments);
-  const discountedTotal = discountedTreatments ? calculateTotal(discountedTreatments) : originalTotal;
-
-  // Handle applying an offer
-  const handleApplyOffer = (updatedTreatments: TreatmentItem[], savings: number) => {
-    setDiscountedTreatments(updatedTreatments);
-    setTotalSavings(savings);
-    
+  const handleBookOffer = (offer: any) => {
     toast({
-      title: "Special Offer Applied",
-      description: `You've saved £${savings.toFixed(2)}!`,
+      title: "Offer Selected",
+      description: `You've selected the ${offer.title} package. Redirecting to quote builder...`,
     });
-  };
-
-  // Reset discounts
-  const handleResetOffer = () => {
-    setDiscountedTreatments(null);
-    setTotalSavings(0);
     
-    toast({
-      title: "Offer Reset",
-      description: "Special offer has been removed",
-    });
+    // Simulate delay before redirect
+    setTimeout(() => {
+      // Build the URL with parameters
+      const url = `/quote-builder?packageId=${offer.packageId}&promoCode=${offer.promoCode}&packageName=${encodeURIComponent(offer.title)}`;
+      window.location.href = url;
+    }, 1500);
   };
 
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6">Special Offers Test Page</h1>
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-8 text-center">Special Offers Test Page</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Test Configuration</CardTitle>
-            <CardDescription>Adjust settings to test special offers functionality</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="clinicId">Clinic ID</Label>
-                <Input 
-                  id="clinicId" 
-                  type="number" 
-                  value={clinicId}
-                  onChange={(e) => setClinicId(parseInt(e.target.value))}
-                  min={1}
-                />
+      <p className="text-center text-gray-500 mb-8">
+        This page tests the special offer to quote builder flow.
+        Click on any "Book This Offer" button to simulate the user flow.
+      </p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {specialOffers.map((offer) => (
+          <Card key={offer.id} className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-blue-600 to-blue-400 text-white">
+              <CardTitle>{offer.title}</CardTitle>
+              <CardDescription className="text-white/90">{offer.description}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <div className="mb-4">
+                <p className="text-2xl font-bold">${offer.price}</p>
+                <p className="text-xs text-gray-500">Starting price</p>
               </div>
               
-              <div>
-                <Label>Current Treatments</Label>
-                <div className="border rounded-md p-4 mt-2 space-y-2">
-                  {treatments.map((treatment, index) => (
-                    <div key={index} className="flex justify-between items-center">
-                      <span>
-                        {treatment.name} 
-                        {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
-                      </span>
-                      <span>£{treatment.priceGBP.toFixed(2)}</span>
-                    </div>
-                  ))}
-                  <div className="border-t pt-2 mt-2 font-bold flex justify-between">
-                    <span>Total:</span>
-                    <span>£{originalTotal.toFixed(2)}</span>
-                  </div>
+              <div className="mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-green-500">✓</span> Includes treatment package
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-green-500">✓</span> Automatic promo code: {offer.promoCode}
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-green-500">✓</span> Seamless booking experience
                 </div>
               </div>
               
-              {discountedTreatments && (
-                <div>
-                  <Label>Discounted Treatments</Label>
-                  <div className="border rounded-md p-4 mt-2 space-y-2 bg-green-50">
-                    {discountedTreatments.map((treatment, index) => (
-                      <div key={index} className="flex justify-between items-center">
-                        <span>
-                          {treatment.name} 
-                          {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
-                        </span>
-                        <span>£{treatment.priceGBP.toFixed(2)}</span>
-                      </div>
-                    ))}
-                    <div className="border-t pt-2 mt-2 font-bold flex justify-between">
-                      <span>Total:</span>
-                      <span>£{discountedTotal.toFixed(2)}</span>
-                    </div>
-                    <div className="text-green-600 font-bold flex justify-between">
-                      <span>You Save:</span>
-                      <span>£{totalSavings.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {discountedTreatments && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  onClick={handleResetOffer}
-                >
-                  Reset Offer
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-        
-        <SpecialOfferPanel 
-          clinicId={clinicId}
-          treatments={treatments}
-          onApplyOffer={handleApplyOffer}
-        />
+              <Button 
+                className="w-full" 
+                onClick={() => handleBookOffer(offer)}
+              >
+                Book This Offer
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      
+      <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+        <h2 className="font-semibold mb-2">Debug Information:</h2>
+        <p className="text-sm text-gray-600">
+          When you click a "Book This Offer" button, the system will:
+        </p>
+        <ol className="text-sm text-gray-600 list-decimal ml-5">
+          <li>Redirect to the quote builder with packageId and promoCode in URL parameters</li>
+          <li>The SpecialOfferHandler component will detect these parameters</li>
+          <li>The PackagePreselectionHandler will automatically select relevant treatments</li>
+          <li>The promo code will be applied automatically</li>
+        </ol>
       </div>
     </div>
   );
