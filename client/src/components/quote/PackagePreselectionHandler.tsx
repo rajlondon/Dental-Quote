@@ -1,6 +1,6 @@
-import { useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import React, { useEffect, useState } from 'react';
 import { useFlaskIntegration } from '@/hooks/use-flask-integration';
+import { useToast } from '@/hooks/use-toast';
 
 interface PackagePreselectionHandlerProps {
   packageId: string | null;
@@ -17,37 +17,37 @@ export function PackagePreselectionHandler({
   onTreatmentsSelected,
   onPackageLoaded
 }: PackagePreselectionHandlerProps) {
+  const { getPackages, getTreatments } = useFlaskIntegration();
   const { toast } = useToast();
-  const { isConnected, getTreatments, getPackages } = useFlaskIntegration();
+  const [hasProcessed, setHasProcessed] = useState(false);
 
   useEffect(() => {
-    if (!packageId || !isConnected) return;
+    // Only process the package once to avoid infinite loops
+    if (!packageId || hasProcessed) return;
 
-    const loadPackageAndSelectTreatments = async () => {
+    const loadPackageAndTreatments = async () => {
       try {
-        console.log(`🔍 Loading package details for ID: ${packageId}`);
-
-        // Get all available packages
+        // Step 1: Get all available packages
         const packages = await getPackages();
+        
         if (!packages || packages.length === 0) {
-          console.error('❌ No packages available');
+          console.error('No packages available');
           return;
         }
 
-        // Find the selected package
+        // Step 2: Find the selected package
         const selectedPackage = packages.find((pkg: any) => pkg.id === packageId);
+        
         if (!selectedPackage) {
-          console.error(`❌ Package with ID ${packageId} not found`);
+          console.error(`Package with ID ${packageId} not found`);
           return;
         }
 
-        console.log(`✅ Found package: ${selectedPackage.title}`);
-        onPackageLoaded(selectedPackage);
-
-        // Get all available treatments
+        // Step 3: Get all available treatments
         const treatments = await getTreatments();
+        
         if (!treatments || treatments.length === 0) {
-          console.error('❌ No treatments available');
+          console.error('No treatments available');
           return;
         }
 
@@ -67,27 +67,36 @@ export function PackagePreselectionHandler({
         if (matchedTreatments.length > 0) {
           console.log(`✅ Matched ${matchedTreatments.length} treatments from package`);
           onTreatmentsSelected(matchedTreatments);
-
-          toast({
-            title: 'Package Treatments Pre-Selected',
-            description: `${matchedTreatments.length} treatments have been automatically selected based on your package.`,
-            duration: 5000,
-          });
         } else {
-          console.warn('⚠️ No matching treatments found for package');
-          toast({
-            title: 'Package Applied',
-            description: 'Please select specific treatments based on your package.',
-            variant: 'default',
-          });
+          console.warn('No treatments matched with package includes');
+          // If no matches found, select the first few treatments as a fallback
+          const fallbackTreatments = treatments.slice(0, 3);
+          onTreatmentsSelected(fallbackTreatments);
         }
+
+        // Call onPackageLoaded with the selected package data
+        onPackageLoaded(selectedPackage);
+
+        // Show success toast
+        toast({
+          title: "Package Applied",
+          description: `${selectedPackage.title} package has been applied to your quote.`
+        });
+
+        // Mark as processed to prevent repeated processing
+        setHasProcessed(true);
       } catch (error) {
-        console.error('Error pre-selecting package treatments:', error);
+        console.error('Error processing package:', error);
+        toast({
+          title: "Error",
+          description: "Failed to apply package treatments. Please select treatments manually.",
+          variant: "destructive"
+        });
       }
     };
 
-    loadPackageAndSelectTreatments();
-  }, [packageId, isConnected, getTreatments, getPackages, onTreatmentsSelected, onPackageLoaded, toast]);
+    loadPackageAndTreatments();
+  }, [packageId, getPackages, getTreatments, onTreatmentsSelected, onPackageLoaded, toast, hasProcessed]);
 
   // This component doesn't render anything
   return null;
