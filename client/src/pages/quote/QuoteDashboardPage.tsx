@@ -123,7 +123,7 @@ export default function QuoteDashboardPage() {
             />
             
             {/* Special offers section */}
-            {specialOffers.length > 0 && !offerId && currentStep !== 'confirmation' && (
+            {specialOffers.length > 0 && !offerId && step !== 'confirmation' && (
               <div className="mt-8">
                 <h2 className="text-2xl font-bold text-gray-900 mb-4">Special Offers</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -218,7 +218,4 @@ export default function QuoteDashboardPage() {
   );
 }
 
-function currentStep() {
-  const [searchParams] = useSearchParams();
-  return searchParams.get('step') || 'dental-chart';
-}
+// Removed unused function

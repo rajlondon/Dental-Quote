@@ -248,7 +248,7 @@ export function useFlaskIntegration(options: UseFlaskIntegrationOptions = {}) {
 
   // Setup auto-sync if enabled
   useEffect(() => {
-    let syncInterval: NodeJS.Timeout;
+    let interval: NodeJS.Timeout;
     
     const setupSync = async () => {
       // Check connection first
@@ -259,7 +259,7 @@ export function useFlaskIntegration(options: UseFlaskIntegrationOptions = {}) {
         await getQuoteState();
         
         // Setup interval for auto-sync
-        syncInterval = setInterval(async () => {
+        interval = setInterval(async () => {
           await syncWithFlask();
         }, syncInterval);
       }
@@ -268,8 +268,8 @@ export function useFlaskIntegration(options: UseFlaskIntegrationOptions = {}) {
     setupSync();
     
     return () => {
-      if (syncInterval) {
-        clearInterval(syncInterval);
+      if (interval) {
+        clearInterval(interval);
       }
     };
   }, [autoSync, syncInterval, checkConnection, getQuoteState, syncWithFlask]);
