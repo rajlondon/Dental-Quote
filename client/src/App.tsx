@@ -19,6 +19,7 @@ import { ErrorBoundary, NavigationErrorBoundary } from "@/components/error-bound
 import { NavigationProvider, useNavigation } from "@/hooks/use-navigation";
 import { PageTransitionProvider, PageTransitionLoader } from "@/components/ui/page-transition-loader";
 import PromoDetector from "@/components/PromoDetector";
+import { SpecialOfferHandler } from "@/components/quote/SpecialOfferHandler";
 import Home from "./pages/Home";
 import HomePage from "./pages/HomePage";
 import QuoteBuilderPage from "./pages/QuoteBuilderPage";
@@ -140,8 +141,10 @@ function Router() {
   
   return (
     <>
-      {/* Add PromoDetector to handle URL parameters */}
+      {/* Add PromoDetector and SpecialOfferHandler to handle URL parameters */}
       <PromoDetector />
+      {/* Handle special offers and package selections */}
+      <SpecialOfferHandler />
       <Switch>
         {/* Public Routes */}
       <Route path="/" component={HomePage} />

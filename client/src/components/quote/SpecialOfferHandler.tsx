@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useNavigate, useLocation } from 'wouter';
+import { useLocation } from 'wouter';
 
 /**
  * Component to handle special offers from URL parameters
@@ -8,7 +8,6 @@ import { useNavigate, useLocation } from 'wouter';
  */
 export function SpecialOfferHandler() {
   const { toast } = useToast();
-  const [, navigate] = useNavigate();
   const [location] = useLocation();
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export function SpecialOfferHandler() {
             });
             
             // Redirect to quote builder with package and promo information
-            navigate(`/quote-builder?packageId=${offer.packageId}&packageName=${encodeURIComponent(offer.title)}${offer.promoCode ? `&promoCode=${offer.promoCode}` : ''}`);
+            window.location.href = `/quote-builder?packageId=${offer.packageId}&packageName=${encodeURIComponent(offer.title)}${offer.promoCode ? `&promoCode=${offer.promoCode}` : ''}`;
           } else {
             // Handle invalid offer ID
             toast({
@@ -58,9 +57,9 @@ export function SpecialOfferHandler() {
     // If we already have a packageId in the URL but aren't on the quote builder page
     else if (packageId && !location.includes('/quote-builder')) {
       const redirectUrl = `/quote-builder?packageId=${packageId}${promoCode ? `&promoCode=${promoCode}` : ''}`;
-      navigate(redirectUrl);
+      window.location.href = redirectUrl;
     }
-  }, [location, navigate, toast]);
+  }, [location, toast]);
 
   // This component doesn't render anything
   return null;
