@@ -5,6 +5,8 @@
  * including treatment management, promo code application, and quote totals.
  */
 
+import axios from 'axios';
+
 // API endpoint for the quote integration
 const QUOTE_API_BASE_URL = '/api/quote';
 
@@ -158,6 +160,53 @@ export const QuoteIntegrationService = {
     } catch (error) {
       console.error('Error resetting quote:', error);
       throw new Error('Failed to reset quote');
+    }
+  },
+  
+  /**
+   * Get quote details by ID - including promo code info
+   */
+  async getQuoteById(quoteId: string): Promise<any> {
+    try {
+      const response = await axios.get(`/api/patient/quotes/${quoteId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching quote details:', error);
+      throw new Error('Failed to fetch quote details');
+    }
+  },
+  
+  /**
+   * Get all quotes for the current user
+   */
+  async getQuotes(portalType: 'patient' | 'clinic' | 'admin' = 'patient'): Promise<any> {
+    try {
+      const endpoint = portalType === 'patient' 
+        ? '/api/patient/quotes' 
+        : portalType === 'clinic' 
+          ? '/api/clinic/quotes' 
+          : '/api/admin/quotes';
+      
+      const response = await axios.get(endpoint);
+      return response.data;
+    } catch (error) {
+      console.error(`Error fetching ${portalType} quotes:`, error);
+      throw new Error(`Failed to fetch ${portalType} quotes`);
+    }
+  },
+  
+  /**
+   * Download quote PDF
+   */
+  async downloadQuotePdf(quoteId: string): Promise<Blob> {
+    try {
+      const response = await axios.get(`/api/quotes/${quoteId}/pdf`, { 
+        responseType: 'blob' 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error downloading quote PDF:', error);
+      throw new Error('Failed to download quote PDF');
     }
   }
 };
