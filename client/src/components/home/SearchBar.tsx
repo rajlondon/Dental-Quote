@@ -19,11 +19,11 @@ const SearchBar: React.FC = () => {
     
     // Build query params
     const params = new URLSearchParams();
-    if (location) params.append('location', location);
+    if (locationValue) params.append('location', locationValue);
     if (date) params.append('date', format(date, 'yyyy-MM-dd'));
     
     // Navigate to quote flow with parameters
-    setLocation_(`/quote-flow?${params.toString()}`);
+    navigate(`/quote-flow?${params.toString()}`);
   };
 
   return (
