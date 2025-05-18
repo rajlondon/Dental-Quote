@@ -38,10 +38,14 @@ interface QuoteDetails {
 /**
  * Custom hook for fetching quote details with promo code information
  */
-export function useQuoteDetails(quoteId: string) {
+export function useQuoteDetails(quoteId?: string) {
   const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ['/api/patient/quotes', quoteId],
     queryFn: async () => {
+      if (!quoteId) {
+        throw new Error('No quote ID provided');
+      }
+      
       try {
         const response = await axios.get(`/api/patient/quotes/${quoteId}`);
         
@@ -76,6 +80,11 @@ export function useQuoteDetails(quoteId: string) {
    * Helper function to download the quote as PDF
    */
   const downloadPdf = async (): Promise<Blob | null> => {
+    if (!quoteId) {
+      console.error('Cannot download PDF: No quote ID provided');
+      return null;
+    }
+    
     try {
       const response = await axios.get(`/api/quotes/${quoteId}/pdf`, {
         responseType: 'blob'
