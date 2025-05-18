@@ -1,148 +1,154 @@
 /**
- * Main API Router
- * This router consolidates all API endpoints
+ * API Routes for MyDentalFly
  */
-import express from 'express';
-import testQuoteDataRoutes from './test-quote-data-routes';
-import flaskBridgeRoutes from './flask-bridge';
-import axios from 'axios';
+import { Express, Request, Response } from 'express';
 
-const router = express.Router();
-
-// Configure Flask service URL
-const FLASK_SERVICE_URL = process.env.FLASK_SERVICE_URL || 'http://localhost:8080';
-
-// Mount Flask integration routes
-router.use(flaskBridgeRoutes);
-
-// Direct quote sync endpoint
-router.post('/quote-sync', async (req, res) => {
-  try {
-    console.log('[API Router] Quote sync request received, forwarding to Flask');
-    const quoteData = req.body;
-    
-    // Forward to Flask
-    const response = await axios.post(`${FLASK_SERVICE_URL}/api/quote-data-sync`, {
-      quote: quoteData,
-      user: req.session?.user || { id: 'anonymous' },
-      timestamp: new Date().toISOString()
-    });
-    
-    console.log('[API Router] Received response from Flask');
-    return res.json({
-      success: true,
-      data: response.data,
-      message: 'Successfully synchronized with Flask service'
-    });
-  } catch (error) {
-    console.error('[API Router] Error syncing with Flask:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to synchronize with Flask service',
-      error: error.message
-    });
+// Sample treatment packages data
+const treatmentPackages = [
+  {
+    id: "pkg-001",
+    title: "Dental Implant Package",
+    description: "Complete dental implant procedure including consultation, surgery, and crown",
+    image: "/images/packages/implant-package.jpg",
+    price: 850,
+    originalPrice: 1200,
+    currency: "EUR",
+    discount: "29%",
+    clinicId: 1,
+    treatments: [
+      { id: 1, name: "Dental Implant", price: 750 },
+      { id: 2, name: "Crown", price: 450 }
+    ]
+  },
+  {
+    id: "pkg-002",
+    title: "Smile Makeover Package",
+    description: "Complete smile transformation with veneers and teeth whitening",
+    image: "/images/packages/smile-makeover.jpg",
+    price: 1200,
+    originalPrice: 1800,
+    currency: "EUR",
+    discount: "33%",
+    clinicId: 2,
+    treatments: [
+      { id: 3, name: "Porcelain Veneers (6 units)", price: 1200 },
+      { id: 4, name: "Teeth Whitening", price: 600 }
+    ]
+  },
+  {
+    id: "pkg-003",
+    title: "All-on-4 Dental Implants",
+    description: "Full arch restoration with just 4 implants",
+    image: "/images/packages/all-on-4.jpg",
+    price: 3500,
+    originalPrice: 5000,
+    currency: "EUR",
+    discount: "30%",
+    clinicId: 3,
+    treatments: [
+      { id: 5, name: "All-on-4 Implants", price: 3500 }
+    ]
   }
-});
+];
 
-// Special promo code validation endpoint
-router.post('/validate-promo', async (req, res) => {
-  try {
-    console.log('[API Router] Validating promo code');
-    const { promoCode, quoteTotal, treatments } = req.body;
+export function registerApiRoutes(app: Express) {
+  // Get treatment packages
+  app.get('/api/treatment-packages', (req: Request, res: Response) => {
+    console.log('Serving treatment packages from direct handler');
+    res.json(treatmentPackages);
+  });
+  
+  // Get treatment package by ID
+  app.get('/api/treatment-packages/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+    const treatmentPackage = treatmentPackages.find(p => p.id === id);
     
-    // Forward to Flask
-    const response = await axios.post(`${FLASK_SERVICE_URL}/api/validate-promo`, {
-      promoCode,
-      quoteTotal,
-      treatments
-    });
+    if (!treatmentPackage) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Treatment package not found' 
+      });
+    }
     
-    return res.json({
-      success: true,
-      data: response.data
-    });
-  } catch (error) {
-    console.error('[API Router] Error validating promo code:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to validate promo code',
-      error: error.message
-    });
-  }
-});
-
-// Get special offers from Flask
-router.get('/special-offers', async (req, res) => {
-  try {
-    console.log('[API Router] Getting special offers from Flask');
+    res.json(treatmentPackage);
+  });
+  
+  // Apply promo code to treatment package
+  app.post('/api/apply-promo', (req: Request, res: Response) => {
+    const { promoCode, packageId } = req.body;
     
-    // Get offers from Flask
-    const response = await axios.get(`${FLASK_SERVICE_URL}/api/special-offers`);
+    // Simple promo code logic - could be replaced with database lookup
+    const validPromoCodes = {
+      'WELCOME10': { type: 'percentage', value: 10 },
+      'SAVE50': { type: 'fixed', value: 50 },
+      'IMPLANTCROWN30': { type: 'percentage', value: 30 },
+      'LUXHOTEL20': { type: 'percentage', value: 20 },
+      'LUXTRAVEL': { type: 'percentage', value: 40 }
+    };
     
-    return res.json(response.data);
-  } catch (error) {
-    console.error('[API Router] Error getting special offers:', error);
+    if (!promoCode) {
+      return res.status(400).json({
+        success: false,
+        message: 'No promo code provided'
+      });
+    }
     
-    // Fallback to local test data if Flask is unavailable
-    return res.json([
-      {
-        id: "ac36590b-b0dc-434e-ba74-d42ab2483f41",
-        title: "Premium Implant Package",
-        description: "Complete dental implant solution with premium materials",
-        imageUrl: "/assets/special-offers/implant-package.jpg",
-        discount: "30% off",
-        price: 1450,
-        oldPrice: 2100,
-        promoCode: "IMPLANTCROWN30",
-        limited: true,
-        clinicId: 1,
-        treatmentIds: [1, 2],
-        expiryDate: "2025-07-30"
-      },
-      {
-        id: "79a8f452-7398-4487-a5c9-35c4b998f2eb",
-        title: "Luxury Smile Makeover",
-        description: "Complete smile transformation with hotel accommodation included",
-        imageUrl: "/assets/special-offers/smile-makeover.jpg",
-        discount: "Save €3000",
-        price: 2999,
-        oldPrice: 5999,
-        promoCode: "LUXHOTEL20",
-        limited: true,
-        clinicId: 2,
-        treatmentIds: [5, 4, 2], 
-        expiryDate: "2025-06-30"
-      },
-      {
-        id: "5e68734d-6092-4822-a9ec-5099316c6d6f",
-        title: "Travel & Treatment Bundle",
-        description: "All-inclusive package with flights, luxury hotel, and premium treatments",
-        imageUrl: "/assets/special-offers/travel-bundle.jpg",
-        discount: "40% off",
-        price: 1999,
-        oldPrice: 3499,
-        promoCode: "LUXTRAVEL",
-        limited: false,
-        clinicId: 3,
-        treatmentIds: [1, 2, 6], 
-        expiryDate: "2025-08-15"
+    if (!validPromoCodes[promoCode]) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid promo code'
+      });
+    }
+    
+    // Find the package if packageId is provided
+    let targetPackage = null;
+    if (packageId) {
+      targetPackage = treatmentPackages.find(p => p.id === packageId);
+      
+      if (!targetPackage) {
+        return res.status(404).json({
+          success: false,
+          message: 'Treatment package not found'
+        });
       }
-    ]);
-  }
-});
-
-// Mount test routes for quote data
-router.use('/treatments', testQuoteDataRoutes);
-router.use('/treatment-packages', testQuoteDataRoutes);
-router.use('/addons', testQuoteDataRoutes);
-router.use('/promo', testQuoteDataRoutes);
-router.use('/test-promo-applied', testQuoteDataRoutes);
-
-// Special route to get test promo codes 
-// This avoids conflict with the /api/promo-codes route that's already defined
-router.use('/test-promo-codes', testQuoteDataRoutes);
-
-// Dedicated route for test packages
-router.use('/test-packages', testQuoteDataRoutes);
-
-export default router;
+    }
+    
+    const promo = validPromoCodes[promoCode];
+    let discount = 0;
+    
+    if (targetPackage) {
+      // Calculate discount for specific package
+      if (promo.type === 'percentage') {
+        discount = (promo.value / 100) * targetPackage.price;
+      } else {
+        discount = Math.min(promo.value, targetPackage.price);
+      }
+      
+      const discountedPrice = targetPackage.price - discount;
+      
+      res.json({
+        success: true,
+        data: {
+          originalPrice: targetPackage.price,
+          discountedPrice,
+          discount,
+          discountType: promo.type,
+          discountValue: promo.value,
+          promoCode,
+          message: `Promo code ${promoCode} applied! You saved ${discount}€`
+        }
+      });
+    } else {
+      // Just return promo code info if no package specified
+      res.json({
+        success: true,
+        data: {
+          promoCode,
+          discountType: promo.type,
+          discountValue: promo.value,
+          message: `Valid promo code: ${promoCode}`
+        }
+      });
+    }
+  });
+}
