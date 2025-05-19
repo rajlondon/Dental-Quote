@@ -7,7 +7,53 @@ import { promoCodeService } from '../services/promo-code-service';
 
 export const promoCodeRouter = Router();
 
-// Validate a promo code
+// Validate a promo code with GET endpoint
+promoCodeRouter.get('/validate/:code', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.params;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({
+        success: false,
+        valid: false,
+        message: 'Invalid promo code format'
+      });
+    }
+
+    const validationResult = await promoCodeService.validateCode(code);
+    
+    // If this is a package code, include package data
+    let packageData = null;
+    if (validationResult.valid && validationResult.type === 'package') {
+      const packagePromo = await promoCodeService.getPackagePromoCode(code);
+      if (packagePromo && packagePromo.packageData) {
+        packageData = packagePromo.packageData;
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      valid: validationResult.valid,
+      code: validationResult.code,
+      type: validationResult.type || 'discount',
+      isPackage: validationResult.type === 'package',
+      discountType: validationResult.discountType,
+      discountValue: validationResult.discountValue,
+      packageData,
+      message: validationResult.valid 
+        ? `Successfully validated promo code: ${validationResult.code}` 
+        : validationResult.error
+    });
+  } catch (error) {
+    console.error('Error validating promo code:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error validating promo code'
+    });
+  }
+});
+
+// Validate a promo code with POST
 promoCodeRouter.post('/validate', async (req: Request, res: Response) => {
   try {
     const { code } = req.body;
