@@ -42,6 +42,7 @@ import openaiRoutes from "./routes/openai-routes";
 import imageCacheRoutes from "./routes/image-cache-routes";
 import promoCodeRoutes from "./routes/promo-code-routes";
 import treatmentPackageRoutes from "./routes/treatment-package-routes";
+import clinicRoutes from "./routes/clinic-routes";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -285,6 +286,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register promo code routes for special offers and treatment packages
   app.use('/api/promo-codes', promoCodeRoutes);
+
+  // Register clinic routes for package results page
+  app.use('/api/clinics', clinicRoutes);
   
   // Register clinic media routes for before/after images and videos
   app.use('/api/clinic-media', clinicMediaRoutes);
