@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { QuoteProvider } from '../contexts/QuoteContext';
+import React, { useState, useEffect } from 'react';
+import { QuoteProvider, useQuote } from '../contexts/QuoteContext';
 import { QuoteSummary } from '../components/QuoteSummary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -111,9 +111,7 @@ export default function PromoTestPage() {
         
         <div>
           <QuoteProvider>
-            <div className="promo-test-quotesummary-wrapper">
-              <PromoCodeTester treatments={selectedTreatmentObjects} />
-            </div>
+            <PromoCodeTester treatments={selectedTreatmentObjects} />
           </QuoteProvider>
         </div>
       </div>
@@ -122,35 +120,30 @@ export default function PromoTestPage() {
 }
 
 // Helper component to connect test page with QuoteContext
-function PromoCodeTester({ treatments }) {
-  const { addTreatment, removeTreatment } = React.useContext(
-    React.createContext(null)
-  );
+function PromoCodeTester({ treatments }: { treatments: Array<{ id: string; name: string; price: number }> }) {
+  const quoteContext = useQuote();
   
   // Add selected treatments to the quote context
-  React.useEffect(() => {
-    // This is a hacky way to access the actual context functions
-    // In a real application, you'd use a more structured approach
-    const contextElement = document.querySelector('.promo-test-quotesummary-wrapper');
-    if (contextElement) {
-      const quoteContext = React.createContext(null);
-      const { addTreatment, removeTreatment } = React.useContext(quoteContext);
+  useEffect(() => {
+    // Safely access the context methods
+    if (quoteContext) {
+      const { addTreatment, removeTreatment, treatments: contextTreatments } = quoteContext;
       
-      if (addTreatment && removeTreatment) {
-        // Clear existing treatments
-        const existingTreatments = document.querySelectorAll('[data-treatment-id]');
-        existingTreatments.forEach(treatment => {
-          const id = treatment.getAttribute('data-treatment-id');
-          if (id) removeTreatment(id);
-        });
-        
-        // Add new treatments
-        treatments.forEach(treatment => {
-          addTreatment(treatment);
+      // First remove all existing treatments
+      if (contextTreatments && contextTreatments.length > 0) {
+        [...contextTreatments].forEach(treatment => {
+          if (treatment && treatment.id) {
+            removeTreatment(treatment.id);
+          }
         });
       }
+      
+      // Then add the new selected treatments
+      treatments.forEach(treatment => {
+        addTreatment(treatment);
+      });
     }
-  }, [treatments]);
+  }, [treatments, quoteContext]);
   
   return <QuoteSummary />;
 }

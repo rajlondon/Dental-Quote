@@ -8,15 +8,16 @@ import { CheckCircle, XCircle } from 'lucide-react';
 export function PromoCodeInput() {
   const [inputCode, setInputCode] = useState('');
   const [error, setError] = useState('');
-  const { 
-    promoCode, 
-    applyPromoCode, 
-    clearPromoCode, 
-    isApplyingPromo,
-    discountAmount 
-  } = useQuote();
+  const quoteContext = useQuote();
   
-  const handleSubmit = async (e) => {
+  // Extract values from context
+  const promoCode = quoteContext?.promoCode || null;
+  const discountAmount = quoteContext?.discountAmount || 0;
+  const isApplyingPromo = quoteContext?.isApplyingPromo || false;
+  const applyPromoCode = quoteContext?.applyPromoCode;
+  const clearPromoCode = quoteContext?.clearPromoCode;
+  
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!inputCode.trim()) {
@@ -24,11 +25,13 @@ export function PromoCodeInput() {
       return;
     }
     
-    try {
-      setError('');
-      await applyPromoCode(inputCode.trim());
-    } catch (err) {
-      setError(err.message || 'Failed to apply promo code');
+    if (applyPromoCode) {
+      try {
+        setError('');
+        applyPromoCode(inputCode.trim());
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Failed to apply promo code');
+      }
     }
   };
   
@@ -52,7 +55,7 @@ export function PromoCodeInput() {
           <Button 
             variant="outline" 
             size="sm" 
-            onClick={clearPromoCode}
+            onClick={() => clearPromoCode && clearPromoCode()}
             className="ml-4"
           >
             Remove
@@ -68,7 +71,7 @@ export function PromoCodeInput() {
         <Input
           type="text"
           value={inputCode}
-          onChange={(e) => setInputCode(e.target.value)}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputCode(e.target.value)}
           placeholder="Enter promo code"
           className="flex-1"
           disabled={isApplyingPromo}
