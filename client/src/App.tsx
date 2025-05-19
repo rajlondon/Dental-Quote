@@ -88,6 +88,7 @@ import VerificationSentPage from "@/pages/VerificationSentPage";
 import EmailVerifiedPage from "@/pages/EmailVerifiedPage";
 import VerificationFailedPage from "@/pages/VerificationFailedPage";
 import PackageDetailPage from "@/pages/PackageDetailPage";
+import PackageResultsPage from "@/pages/PackageResultsPage";
 import BookingsPage from "@/pages/bookings-page";
 import BookingDetailPage from "@/pages/booking-detail-page";
 import CreateBookingPage from "@/pages/create-booking-page";
@@ -130,6 +131,7 @@ function Router() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
+      <Route path="/results" component={PackageResultsPage} />
       <Route path="/quote">
         {() => <Redirect to="/your-quote" />}
       </Route>

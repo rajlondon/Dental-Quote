@@ -338,14 +338,14 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       
-      // Redirect to booking page with quote information
+      // Redirect to results page with clinic information
       if (state.isPackage) {
-        // For packages, redirect to booking page with package information
-        window.location.href = `/booking?package=${encodeURIComponent(state.packageName || '')}` + 
+        // For packages, redirect to results page with the specific clinic
+        window.location.href = `/results?package=${encodeURIComponent(state.packageName || '')}` + 
                                `&promo=${encodeURIComponent(state.promoCode || '')}` + 
                                `&total=${state.total}` +
                                `&clinicId=${state.clinicId || ''}`;
-        return { success: true, message: "Redirecting to booking page" };
+        return { success: true, message: "Redirecting to clinic results page" };
       } else {
         // For regular quotes, submit to quotes API
         const quoteData = {
