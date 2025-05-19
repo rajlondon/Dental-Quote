@@ -732,8 +732,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       
                       <div className="flex items-center">
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                        <span className="ml-1 text-sm font-medium">{clinic.ratings.overall}</span>
-                        <span className="ml-1 text-xs text-gray-500">({clinic.ratings.reviews})</span>
+                        <span className="ml-1 text-sm font-medium">{clinic.ratings ? clinic.ratings.overall : 'N/A'}</span>
+                        <span className="ml-1 text-xs text-gray-500">({clinic.ratings ? clinic.ratings.reviews : '0'})</span>
                       </div>
                     </div>
                     
