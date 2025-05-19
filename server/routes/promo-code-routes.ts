@@ -31,6 +31,16 @@ promoCodeRouter.get('/validate/:code', async (req: Request, res: Response) => {
       }
     }
     
+    // Calculate a sample discount amount for display purposes
+    let sampleDiscountAmount = null;
+    if (validationResult.valid && validationResult.discountType && validationResult.discountValue) {
+      if (validationResult.discountType === 'percentage') {
+        sampleDiscountAmount = `${validationResult.discountValue}%`;
+      } else if (validationResult.discountType === 'fixed_amount') {
+        sampleDiscountAmount = `£${validationResult.discountValue}`;
+      }
+    }
+    
     return res.status(200).json({
       success: true,
       valid: validationResult.valid,
@@ -39,10 +49,12 @@ promoCodeRouter.get('/validate/:code', async (req: Request, res: Response) => {
       isPackage: validationResult.type === 'package',
       discountType: validationResult.discountType,
       discountValue: validationResult.discountValue,
+      sampleDiscountAmount,
       packageData,
       message: validationResult.valid 
         ? `Successfully validated promo code: ${validationResult.code}` 
-        : validationResult.error
+        : validationResult.error,
+      clinicId: validationResult.clinicId
     });
   } catch (error) {
     console.error('Error validating promo code:', error);
