@@ -78,13 +78,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 }) => {
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
+  const [selectedTab, setSelectedTab] = useState<string>('default');
+  const [selectedView, setSelectedView] = useState<'list' | 'grid'>('list');
   const { toast } = useToast();
   
   // New function to handle direct PDF download
   const downloadPdf = (clinicId: string) => {
     try {
       // Get the clinic data
-      const clinic = clinicsData.find(c => c.id === clinicId);
+      const clinic = allClinicsData.find((c: any) => c.id === clinicId);
       if (!clinic) return;
       
       const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
@@ -176,6 +178,42 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   
   // Get promo code clinic ID from session storage if available
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+  const [filteredClinics, setFilteredClinics] = useState<any[]>([]);
+  const [ukTotalPrice, setUkTotalPrice] = useState<number>(0);
+  
+  useEffect(() => {
+    // Calculate value for UK for comparison (MOCK DATA)
+    const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
+    setUkTotalPrice(ukTotal);
+    
+    // Filter clinics if there's a promo code with a specific clinic ID
+    if (promoCodeClinicId) {
+      const filtered = allClinicsData.filter(clinic => clinic.id === promoCodeClinicId);
+      setFilteredClinics(filtered.length > 0 ? filtered : allClinicsData);
+      
+      // If we have exactly one clinic, automatically select the tab
+      if (filtered.length === 1) {
+        setSelectedTab(filtered[0].id);
+      }
+    } else {
+      setFilteredClinics(allClinicsData);
+    }
+    
+    // Clear promo code session storage after navigation away
+    return () => {
+      const hasVisited = sessionStorage.getItem('visitedMatchedClinics');
+      if (hasVisited) {
+        // Clear the promo code data to prevent it from persisting indefinitely
+        sessionStorage.removeItem('pendingPromoCode');
+        sessionStorage.removeItem('pendingPackageData');
+        sessionStorage.removeItem('pendingPromoCodeClinicId');
+        sessionStorage.removeItem('visitedMatchedClinics');
+      } else {
+        // Mark that we've visited this page
+        sessionStorage.setItem('visitedMatchedClinics', 'true');
+      }
+    };
+  }, [totalGBP, promoCodeClinicId]);
   
   // Define the clinics data
   const allClinicsData = [
