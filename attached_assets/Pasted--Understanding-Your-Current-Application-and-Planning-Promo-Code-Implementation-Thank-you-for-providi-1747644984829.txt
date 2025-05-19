@@ -1,0 +1,654 @@
+
+Understanding Your Current Application and Planning Promo Code Implementation
+Thank you for providing such detailed information about your application. I now have a much clearer picture of your system architecture and the challenges you've been facing with promo code implementation.
+
+Current State Analysis
+Based on your description, you have a well-structured application with:
+
+Modern tech stack: React/TypeScript frontend with Express.js backend
+Solid data management: PostgreSQL with Drizzle ORM
+Working quote flow: From initial form to booking and payment
+Recently implemented promo code functionality: But with integration challenges
+The issues you've experienced seem to center around state management inconsistencies and synchronization problems between the frontend and backend when applying promo codes.
+
+Identifying the Core Problem
+From your description, the main issues appear to be:
+
+State synchronization: Promo codes aren't properly persisting throughout the quote flow
+UI update inconsistencies: The interface doesn't reliably reflect discount changes
+Treatment selection state loss: Applied promo codes cause treatment selections to reset
+These issues suggest problems with how state is being managed and updated when promo codes are applied.
+
+Recommended Approach
+Instead of rebuilding components or creating parallel systems, I recommend a focused approach that addresses the specific synchronization issues:
+
+1. Isolate the Quote Builder State Management
+
+Copy
+// client/src/contexts/QuoteContext.tsx
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from 'react-query';
+import { api } from '../lib/api';
+
+// Define action types for state changes
+const ACTIONS = {
+  SET_TREATMENTS: 'set_treatments',
+  ADD_TREATMENT: 'add_treatment',
+  REMOVE_TREATMENT: 'remove_treatment',
+  SET_PROMO_CODE: 'set_promo_code',
+  CLEAR_PROMO_CODE: 'clear_promo_code',
+  UPDATE_TOTALS: 'update_totals',
+  RESET: 'reset'
+};
+
+// Initial state
+const initialState = {
+  treatments: [],
+  promoCode: null,
+  discountAmount: 0,
+  subtotal: 0,
+  total: 0,
+  loading: false,
+  error: null
+};
+
+// Reducer to handle all state changes
+function quoteReducer(state, action) {
+  switch (action.type) {
+    case ACTIONS.SET_TREATMENTS:
+      return {
+        ...state,
+        treatments: action.payload
+      };
+    case ACTIONS.ADD_TREATMENT:
+      return {
+        ...state,
+        treatments: [...state.treatments, action.payload]
+      };
+    case ACTIONS.REMOVE_TREATMENT:
+      return {
+        ...state,
+        treatments: state.treatments.filter(t => t.id !== action.payload)
+      };
+    case ACTIONS.SET_PROMO_CODE:
+      return {
+        ...state,
+        promoCode: action.payload.code,
+        discountAmount: action.payload.discountAmount,
+        loading: false
+      };
+    case ACTIONS.CLEAR_PROMO_CODE:
+      return {
+        ...state,
+        promoCode: null,
+        discountAmount: 0,
+        loading: false
+      };
+    case ACTIONS.UPDATE_TOTALS:
+      return {
+        ...state,
+        subtotal: action.payload.subtotal,
+        total: action.payload.total,
+        loading: false
+      };
+    case ACTIONS.RESET:
+      return initialState;
+    default:
+      return state;
+  }
+}
+
+// Create the context
+const QuoteContext = createContext(null);
+
+// Provider component
+export function QuoteProvider({ children }) {
+  const [state, dispatch] = useReducer(quoteReducer, initialState);
+  const queryClient = useQueryClient();
+  
+  // Calculate totals whenever treatments or discount changes
+  useEffect(() => {
+    const subtotal = state.treatments.reduce((sum, t) => sum + t.price, 0);
+    const total = Math.max(0, subtotal - state.discountAmount);
+    
+    dispatch({
+      type: ACTIONS.UPDATE_TOTALS,
+      payload: { subtotal, total }
+    });
+  }, [state.treatments, state.discountAmount]);
+  
+  // Apply promo code mutation
+  const applyPromoMutation = useMutation(
+    async (code) => {
+      // Set loading state
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      // Get current treatments to send to API
+      const treatmentIds = state.treatments.map(t => t.id);
+      
+      // Call API to validate and calculate discount
+      const response = await api.post('/api/promo-codes/apply', {
+        code,
+        treatmentIds
+      });
+      
+      return response.data;
+    },
+    {
+      onSuccess: (data) => {
+        // Update state with validated promo code
+        dispatch({
+          type: ACTIONS.SET_PROMO_CODE,
+          payload: {
+            code: data.code,
+            discountAmount: data.discountAmount
+          }
+        });
+        
+        // Invalidate quotes cache to ensure fresh data
+        queryClient.invalidateQueries('quote');
+      },
+      onError: (error) => {
+        console.error('Promo code application failed:', error);
+        dispatch({ type: ACTIONS.CLEAR_PROMO_CODE });
+      }
+    }
+  );
+  
+  // Clear promo code
+  const clearPromoCode = () => {
+    dispatch({ type: ACTIONS.CLEAR_PROMO_CODE });
+  };
+  
+  // Add treatment with validation
+  const addTreatment = (treatment) => {
+    if (!state.treatments.some(t => t.id === treatment.id)) {
+      dispatch({ type: ACTIONS.ADD_TREATMENT, payload: treatment });
+    }
+  };
+  
+  // Remove treatment
+  const removeTreatment = (treatmentId) => {
+    dispatch({ type: ACTIONS.REMOVE_TREATMENT, payload: treatmentId });
+  };
+  
+  // Save quote to server
+  const saveQuote = async () => {
+    try {
+      const quoteData = {
+        treatments: state.treatments.map(t => t.id),
+        promoCode: state.promoCode,
+        subtotal: state.subtotal,
+        discount: state.discountAmount,
+        total: state.total
+      };
+      
+      const response = await api.post('/api/quotes', quoteData);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to save quote:', error);
+      throw error;
+    }
+  };
+  
+  return (
+    <QuoteContext.Provider
+      value={{
+        ...state,
+        addTreatment,
+        removeTreatment,
+        applyPromoCode: (code) => applyPromoMutation.mutate(code),
+        clearPromoCode,
+        saveQuote,
+        isApplyingPromo: applyPromoMutation.isLoading
+      }}
+    >
+      {children}
+    </QuoteContext.Provider>
+  );
+}
+
+// Custom hook for using the quote context
+export function useQuote() {
+  const context = useContext(QuoteContext);
+  if (!context) {
+    throw new Error('useQuote must be used within a QuoteProvider');
+  }
+  return context;
+}
+2. Create a Focused Promo Code Component
+
+Copy
+// client/src/components/PromoCodeInput.tsx
+import React, { useState } from 'react';
+import { useQuote } from '../contexts/QuoteContext';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Alert, AlertDescription } from './ui/alert';
+import { CheckCircle, XCircle } from 'lucide-react';
+
+export function PromoCodeInput() {
+  const [inputCode, setInputCode] = useState('');
+  const [error, setError] = useState('');
+  const { 
+    promoCode, 
+    applyPromoCode, 
+    clearPromoCode, 
+    isApplyingPromo,
+    discountAmount 
+  } = useQuote();
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!inputCode.trim()) {
+      setError('Please enter a promo code');
+      return;
+    }
+    
+    try {
+      setError('');
+      await applyPromoCode(inputCode.trim());
+    } catch (err) {
+      setError(err.message || 'Failed to apply promo code');
+    }
+  };
+  
+  // If promo code is already applied, show active state
+  if (promoCode) {
+    return (
+      <div className="rounded-md bg-green-50 p-4 mb-4 border border-green-200">
+        <div className="flex items-center">
+          <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-green-800">
+              Promo code <span className="font-bold">{promoCode}</span> applied!
+            </p>
+            <p className="text-sm text-green-700 mt-1">
+              You saved {new Intl.NumberFormat('en-GB', { 
+                style: 'currency', 
+                currency: 'GBP' 
+              }).format(discountAmount)}
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={clearPromoCode}
+            className="ml-4"
+          >
+            Remove
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-4">
+      <form onSubmit={handleSubmit} className="flex space-x-2">
+        <Input
+          type="text"
+          value={inputCode}
+          onChange={(e) => setInputCode(e.target.value)}
+          placeholder="Enter promo code"
+          className="flex-1"
+          disabled={isApplyingPromo}
+        />
+        <Button 
+          type="submit" 
+          disabled={isApplyingPromo || !inputCode.trim()}
+          className="whitespace-nowrap"
+        >
+          {isApplyingPromo ? 'Applying...' : 'Apply Code'}
+        </Button>
+      </form>
+      
+      {error && (
+        <Alert variant="destructive">
+          <XCircle className="h-4 w-4 mr-2" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+    </div>
+  );
+}
+3. Update the Quote Summary Component
+
+Copy
+// client/src/components/QuoteSummary.tsx
+import React from 'react';
+import { useQuote } from '../contexts/QuoteContext';
+import { PromoCodeInput } from './PromoCodeInput';
+import { Button } from './ui/button';
+import { formatCurrency } from '../utils/format';
+
+export function QuoteSummary() {
+  const { 
+    treatments, 
+    subtotal, 
+    total, 
+    discountAmount, 
+    promoCode,
+    saveQuote 
+  } = useQuote();
+  
+  return (
+    <div className="rounded-lg border bg-card p-6 shadow-sm">
+      <h3 className="text-lg font-semibold mb-4">Quote Summary</h3>
+      
+      {/* Treatment list */}
+      <div className="space-y-2 mb-6">
+        {treatments.length === 0 ? (
+          <p className="text-muted-foreground">No treatments selected</p>
+        ) : (
+          treatments.map((treatment) => (
+            <div key={treatment.id} className="flex justify-between">
+              <span>{treatment.name}</span>
+              <span className="font-medium">{formatCurrency(treatment.price)}</span>
+            </div>
+          ))
+        )}
+      </div>
+      
+      {/* Subtotal */}
+      <div className="flex justify-between py-2 border-t">
+        <span>Subtotal</span>
+        <span className="font-medium">{formatCurrency(subtotal)}</span>
+      </div>
+      
+      {/* Discount (if applied) */}
+      {discountAmount > 0 && (
+        <div className="flex justify-between py-2 text-green-600">
+          <span>Discount {promoCode && `(${promoCode})`}</span>
+          <span className="font-medium">-{formatCurrency(discountAmount)}</span>
+        </div>
+      )}
+      
+      {/* Total */}
+      <div className="flex justify-between py-2 border-t border-b mb-6">
+        <span className="font-semibold">Total</span>
+        <span className="font-bold text-lg">
+          {formatCurrency(total)}
+        </span>
+      </div>
+      
+      {/* Promo code input */}
+      <div className="mb-6">
+        <h4 className="text-sm font-medium mb-2">Promo Code</h4>
+        <PromoCodeInput />
+      </div>
+      
+      {/* Action buttons */}
+      <div className="flex flex-col space-y-2">
+        <Button 
+          onClick={saveQuote}
+          disabled={treatments.length === 0}
+        >
+          Continue to Booking
+        </Button>
+        <Button variant="outline">Save Quote for Later</Button>
+      </div>
+    </div>
+  );
+}
+4. Server-Side Promo Code Handler
+
+Copy
+// server/routes/promo-code-routes.ts
+import express from 'express';
+import { promoCodeService } from '../services/promo-code-service';
+
+const router = express.Router();
+
+// Validate promo code
+router.post('/validate', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid promo code format' });
+    }
+    
+    const validationResult = await promoCodeService.validateCode(code);
+    
+    if (validationResult.valid) {
+      return res.json({
+        valid: true,
+        code: validationResult.code,
+        discountType: validationResult.discountType,
+        discountValue: validationResult.discountValue
+      });
+    } else {
+      return res.status(400).json({
+        valid: false,
+        error: validationResult.error
+      });
+    }
+  } catch (error) {
+    console.error('Promo code validation error:', error);
+    return res.status(500).json({ error: 'Failed to validate promo code' });
+  }
+});
+
+// Apply promo code and calculate discount
+router.post('/apply', async (req, res) => {
+  try {
+    const { code, treatmentIds } = req.body;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid promo code format' });
+    }
+    
+    if (!Array.isArray(treatmentIds)) {
+      return res.status(400).json({ error: 'Treatment IDs must be an array' });
+    }
+    
+    // First validate the code
+    const validationResult = await promoCodeService.validateCode(code);
+    
+    if (!validationResult.valid) {
+      return res.status(400).json({
+        valid: false,
+        error: validationResult.error
+      });
+    }
+    
+    // Then calculate the discount
+    const calculationResult = await promoCodeService.calculateDiscount({
+      code: validationResult.code,
+      discountType: validationResult.discountType,
+      discountValue: validationResult.discountValue,
+      treatmentIds
+    });
+    
+    // Return the discount information
+    return res.json({
+      code: validationResult.code,
+      discountType: validationResult.discountType,
+      discountValue: validationResult.discountValue,
+      discountAmount: calculationResult.discountAmount,
+      originalTotal: calculationResult.originalTotal,
+      newTotal: calculationResult.newTotal
+    });
+  } catch (error) {
+    console.error('Promo code application error:', error);
+    return res.status(500).json({ error: 'Failed to apply promo code' });
+  }
+});
+
+export const promoCodeRoutes = router;
+5. Promo Code Service Implementation
+
+Copy
+// server/services/promo-code-service.ts
+import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import { promoCodes } from '../db/schema';
+import { treatmentService } from './treatment-service';
+
+export const promoCodeService = {
+  // Validate a promo code
+  async validateCode(code: string) {
+    // Normalize code to uppercase for case-insensitive comparison
+    const normalizedCode = code.toUpperCase();
+    
+    try {
+      // Find the promo code in the database
+      const promoCode = await db.query.promoCodes.findFirst({
+        where: eq(promoCodes.code, normalizedCode)
+      });
+      
+      // If code doesn't exist
+      if (!promoCode) {
+        return {
+          valid: false,
+          error: 'Invalid promo code'
+        };
+      }
+      
+      // Check if code is active
+      if (!promoCode.isActive) {
+        return {
+          valid: false,
+          error: 'This promo code is no longer active'
+        };
+      }
+      
+      // Check if code has expired
+      if (promoCode.expiresAt && new Date(promoCode.expiresAt) < new Date()) {
+        return {
+          valid: false,
+          error: 'This promo code has expired'
+        };
+      }
+      
+      // Check if code has reached maximum uses
+      if (promoCode.maxUses && promoCode.currentUses >= promoCode.maxUses) {
+        return {
+          valid: false,
+          error: 'This promo code has reached its maximum number of uses'
+        };
+      }
+      
+      // Code is valid
+      return {
+        valid: true,
+        code: promoCode.code,
+        discountType: promoCode.discountType,
+        discountValue: promoCode.discountValue
+      };
+    } catch (error) {
+      console.error('Error validating promo code:', error);
+      return {
+        valid: false,
+        error: 'An error occurred while validating the promo code'
+      };
+    }
+  },
+  
+  // Calculate discount for a valid promo code
+  async calculateDiscount({ code, discountType, discountValue, treatmentIds }) {
+    try {
+      // Get treatment details to calculate original total
+      const treatments = await treatmentService.getTreatmentsByIds(treatmentIds);
+      
+      // Calculate original total
+      const originalTotal = treatments.reduce((sum, t) => sum + t.price, 0);
+      
+      // Calculate discount amount based on discount type
+      let discountAmount = 0;
+      
+      if (discountType === 'percentage') {
+        // For percentage discount, calculate percentage of original total
+        discountAmount = (originalTotal * (discountValue / 100));
+      } else if (discountType === 'fixed_amount') {
+        // For fixed amount, use the discount value directly
+        discountAmount = discountValue;
+      }
+      
+      // Ensure discount doesn't exceed original total
+      discountAmount = Math.min(discountAmount, originalTotal);
+      
+      // Calculate new total after discount
+      const newTotal = originalTotal - discountAmount;
+      
+      return {
+        discountAmount,
+        originalTotal,
+        newTotal
+      };
+    } catch (error) {
+      console.error('Error calculating discount:', error);
+      throw new Error('Failed to calculate discount');
+    }
+  },
+  
+  // Increment usage count for a promo code
+  async incrementUsage(code: string) {
+    try {
+      const normalizedCode = code.toUpperCase();
+      
+      await db.update(promoCodes)
+        .set({ 
+          currentUses: db.raw('current_uses + 1')
+        })
+        .where(eq(promoCodes.code, normalizedCode));
+      
+      return true;
+    } catch (error) {
+      console.error('Error incrementing promo code usage:', error);
+      return false;
+    }
+  }
+};
+Implementation Strategy
+I recommend this phased approach to implement the promo code functionality:
+
+Phase 1: Isolated Testing Environment
+Create a new route
+
+Copy
+/quote-test
+that doesn't replace your existing quote flow
+Implement the
+
+Copy
+QuoteContext
+provider in this isolated environment
+Add the
+
+Copy
+PromoCodeInput
+and
+
+Copy
+QuoteSummary
+components
+Test promo code application thoroughly in this isolated environment
+Phase 2: Server-Side Implementation
+Create the promo code database table
+Implement the server-side validation and calculation endpoints
+Test these endpoints independently using Postman or a similar tool
+Phase 3: Integration
+Once the isolated test is working reliably, integrate the components into your main quote flow
+Add the
+
+Copy
+QuoteProvider
+to wrap your existing quote flow components
+Replace the current price summary component with the new
+
+Copy
+QuoteSummary
+component
+Phase 4: Rollout
+Add a feature flag to easily toggle between old and new implementations
+Implement monitoring to track any issues
+Gradually roll out to all users
+Key Benefits of This Approach
+Isolated Development: Test in a separate route before integrating
+Single Source of Truth: All quote state in one context provider
+Clean Separation: Promo code UI separate from calculation logic
+Robust Error Handling: Clear feedback for users
+Minimal Changes: Focused changes to specific components
