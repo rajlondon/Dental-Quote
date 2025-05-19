@@ -1039,7 +1039,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <div className="mt-4 pt-4 border-t">
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Total Reviews</span>
-                              <span className="font-medium">{clinic.ratings.reviews}</span>
+                              <span className="font-medium">{clinic.ratings && clinic.ratings.reviews ? clinic.ratings.reviews : '0'}</span>
                             </div>
                           </div>
                         </div>
