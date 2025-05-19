@@ -520,6 +520,21 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
   ];
+  
+  // Filter clinics based on the promo code clinic ID if one exists
+  useEffect(() => {
+    // If a promo code has a specific clinic ID, only show that clinic
+    if (promoCodeClinicId) {
+      const filtered = allClinicsDataList.filter(clinic => clinic.id === promoCodeClinicId);
+      if (filtered.length > 0) {
+        setFilteredClinics(filtered);
+      } else {
+        setFilteredClinics(allClinicsDataList);
+      }
+    } else {
+      setFilteredClinics(allClinicsDataList);
+    }
+  }, [promoCodeClinicId]);
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
