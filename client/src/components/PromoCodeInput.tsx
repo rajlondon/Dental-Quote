@@ -50,7 +50,14 @@ export function PromoCodeInput() {
   if (!quoteContextAvailable) {
     return (
       <div className="space-y-4">
-        <div className="flex space-x-2">
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          if (inputCode.trim()) {
+            setError('Please continue to the quote page to use promo codes');
+          } else {
+            setError('Please enter a promo code');
+          }
+        }} className="flex space-x-2">
           <Input
             type="text"
             value={inputCode}
@@ -58,12 +65,23 @@ export function PromoCodeInput() {
             placeholder="Enter promo or package code"
             className="flex-1"
           />
-          <Button className="whitespace-nowrap">
+          <Button 
+            type="submit"
+            className="whitespace-nowrap"
+          >
             Apply Code
           </Button>
-        </div>
+        </form>
+        
+        {error && (
+          <Alert variant="destructive">
+            <XCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        
         <div className="text-xs text-gray-500">
-          <p>Log in to use promo codes</p>
+          <p>Continue to the quote page to apply promo codes</p>
         </div>
       </div>
     );
