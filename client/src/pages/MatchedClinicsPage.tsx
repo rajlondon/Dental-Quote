@@ -519,7 +519,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   ];
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
-    const clinic = filteredClinics.find((c: any) => c.id === clinicId);
+    // Get the price factor from the filtered clinics, with a fallback to default
+    const clinic = filteredClinics && filteredClinics.length > 0 
+      ? filteredClinics.find((c: any) => c.id === clinicId) 
+      : null;
     const priceFactor = clinic?.priceFactor || 0.35; // Default to 35% if clinic not found
     
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
