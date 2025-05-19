@@ -76,7 +76,12 @@ export function PromoCodeInput() {
             if (response.data.valid) {
               // Use the sampleDiscountAmount from the response if available
               if (response.data.sampleDiscountAmount) {
-                setSuccess(`Promo code "${inputCode}" is valid! You'll save ${response.data.sampleDiscountAmount} off`);
+                // For percentage discounts, show a concrete example amount
+                if (response.data.discountType === 'percentage') {
+                  setSuccess(`Promo code "${inputCode}" is valid! You'll save ${response.data.sampleDiscountAmount} with this code`);
+                } else {
+                  setSuccess(`Promo code "${inputCode}" is valid! You'll save ${response.data.sampleDiscountAmount} with this code`);
+                }
               } else if (response.data.discountValue !== undefined) {
                 const discountMsg = response.data.discountType === 'percentage'
                   ? `${response.data.discountValue}% off`

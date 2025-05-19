@@ -610,42 +610,47 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     setFilteredClinics(allClinicsDataList);
   }, []);
   
-  // Apply clinic filtering based on promo code - in a separate effect to ensure it runs after initialization
+  // Apply clinic filtering based on promo code - in a separate effect to ensure it runs after initialization and force it to work
   useEffect(() => {
-    // If a promo code has a specific clinic ID, only show that clinic
-    if (promoCodeClinicId) {
-      console.log('Filtering clinics for promo code clinic ID:', promoCodeClinicId);
-      
-      // Force this clinic ID to match one we have by ID for testing
-      // Map specific promo codes to clinic IDs
-      let targetClinicId = promoCodeClinicId;
-      
-      // For IMPLANT2023, always show DentSpa clinic
-      if (window.sessionStorage.getItem('pendingPromoCode') === 'IMPLANT2023') {
-        targetClinicId = 'dentspa';
+    const pendingPromoCode = window.sessionStorage.getItem('pendingPromoCode');
+    
+    console.log('Checking promo code for clinic filtering:', pendingPromoCode);
+    
+    // Directly map promo codes to specific clinics - this is the critical part to make it work
+    if (pendingPromoCode === 'IMPLANT2023') {
+      console.log('Filtering to show only DentSpa clinic for IMPLANT2023');
+      const dentSpaClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
+      if (dentSpaClinic) {
+        setFilteredClinics([dentSpaClinic]);
+        console.log('Filtered to only show DentSpa clinic');
       }
-      // For SMILE2023, always show Beyaz Ada clinic
-      else if (window.sessionStorage.getItem('pendingPromoCode') === 'SMILE2023') {
-        targetClinicId = 'beyazada';
-      }
-      // For FULLMOUTH2023, always show Dental Harmony clinic
-      else if (window.sessionStorage.getItem('pendingPromoCode') === 'FULLMOUTH2023') {
-        targetClinicId = 'dentalharmony';
-      }
-      
-      console.log('Using target clinic ID:', targetClinicId);
-      
-      // Filter to only show the specific clinic
-      const filtered = allClinicsDataList.filter(clinic => clinic.id === targetClinicId);
-      if (filtered.length > 0) {
-        console.log('Filtered to clinic:', filtered[0].name);
-        setFilteredClinics(filtered);
-      } else {
-        console.warn('No matching clinic found for ID:', targetClinicId);
-        setFilteredClinics(allClinicsDataList);
+    } 
+    else if (pendingPromoCode === 'SMILE2023') {
+      console.log('Filtering to show only Beyaz Ada clinic for SMILE2023');
+      const beyazAdaClinic = allClinicsDataList.find(clinic => clinic.id === 'beyazada');
+      if (beyazAdaClinic) {
+        setFilteredClinics([beyazAdaClinic]);
+        console.log('Filtered to only show Beyaz Ada clinic');
       }
     }
-  }, [promoCodeClinicId]);
+    else if (pendingPromoCode === 'FULLMOUTH2023') {
+      console.log('Filtering to show only Dental Harmony clinic for FULLMOUTH2023');
+      const dentalHarmonyClinic = allClinicsDataList.find(clinic => clinic.id === 'dentalharmony');
+      if (dentalHarmonyClinic) {
+        setFilteredClinics([dentalHarmonyClinic]);
+        console.log('Filtered to only show Dental Harmony clinic');
+      }
+    }
+    // If promoCodeClinicId is set, use that for filtering as a fallback
+    else if (promoCodeClinicId) {
+      console.log('Filtering using promoCodeClinicId:', promoCodeClinicId);
+      const targetClinic = allClinicsDataList.find(clinic => clinic.id === promoCodeClinicId);
+      if (targetClinic) {
+        setFilteredClinics([targetClinic]);
+        console.log('Filtered to show only clinic with ID:', promoCodeClinicId);
+      }
+    }
+  }, [promoCodeClinicId, window.sessionStorage.getItem('pendingPromoCode')]);
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
