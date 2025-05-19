@@ -284,29 +284,14 @@ const PortalLoginPage: React.FC = () => {
   const isSubmitting = React.useRef(false);
 
   const onLoginSubmit = async (values: z.infer<typeof loginSchema>) => {
-    // Prevent simultaneous logins
-    if (isSubmitting.current) {
-      console.log("Login already in progress, ignoring duplicate submission");
-      return;
-    }
+    // Simple approach - reset isSubmitting for testing
+    isSubmitting.current = false;
+    loginInProgress.current = false;
     
-    // Set flag to indicate form submission in progress
-    isSubmitting.current = true;
-    
-    // Visual feedback
-    setIsLoading(true);
-    // Prevent duplicate submissions
-    if (loginInProgress.current) {
-      console.log("Login already in progress, ignoring duplicate submission");
-      return;
-    }
-    
-    // Set loading state for button
+    // Set loading state for visual feedback
     setIsLoading(true);
     
     try {
-      // Set flag to prevent duplicate submissions
-      loginInProgress.current = true;
       console.log("Login attempt with:", values);
       
       // Store login intent in session storage before login
