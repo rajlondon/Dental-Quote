@@ -163,7 +163,7 @@ interface QuoteContextType {
 }
 
 // Create the context
-const QuoteContext = createContext<QuoteContextType | null>(null);
+export const QuoteContext = createContext<QuoteContextType | null>(null);
 
 // Provider component
 export function QuoteProvider({ children }: { children: React.ReactNode }) {

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useQuote } from '../contexts/QuoteContext';
+import React, { useState, useContext } from 'react';
+import { useQuote, QuoteContext } from '../contexts/QuoteContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -8,7 +8,12 @@ import { CheckCircle, XCircle, Package } from 'lucide-react';
 export function PromoCodeInput() {
   const [inputCode, setInputCode] = useState('');
   const [error, setError] = useState('');
-  const quoteContext = useQuote();
+  
+  // Check if QuoteContext is available before using useQuote
+  const quoteContextAvailable = useContext(QuoteContext) !== null;
+  
+  // Only use useQuote if context is available, otherwise use default values
+  const quoteContext = quoteContextAvailable ? useQuote() : null;
   
   // Extract values from context
   const promoCode = quoteContext?.promoCode || null;
@@ -27,7 +32,8 @@ export function PromoCodeInput() {
       return;
     }
     
-    if (applyPromoCode) {
+    // Check if context and applyPromoCode are available
+    if (quoteContextAvailable && applyPromoCode) {
       try {
         setError('');
         applyPromoCode(inputCode.trim());
@@ -35,8 +41,33 @@ export function PromoCodeInput() {
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : 'Failed to apply promo code');
       }
+    } else {
+      setError('Cannot apply promo code at this time');
     }
   };
+  
+  // If context is not available, show simplified input
+  if (!quoteContextAvailable) {
+    return (
+      <div className="space-y-4">
+        <div className="flex space-x-2">
+          <Input
+            type="text"
+            value={inputCode}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputCode(e.target.value)}
+            placeholder="Enter promo or package code"
+            className="flex-1"
+          />
+          <Button className="whitespace-nowrap">
+            Apply Code
+          </Button>
+        </div>
+        <div className="text-xs text-gray-500">
+          <p>Log in to use promo codes</p>
+        </div>
+      </div>
+    );
+  }
   
   // If promo code is already applied, show active state
   if (promoCode) {
