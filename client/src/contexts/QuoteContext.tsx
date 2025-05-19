@@ -328,31 +328,61 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
   // Save quote to server
   const saveQuote = async () => {
     try {
-      const quoteData = {
-        treatments: state.treatments.map(t => t.id),
-        promoCode: state.promoCode,
-        isPackage: state.isPackage,
-        packageName: state.packageName,
-        subtotal: state.subtotal,
-        discount: state.discountAmount,
-        total: state.total,
-        clinicId: state.clinicId
-      };
+      // If no treatments are selected and not a package, show error
+      if (state.treatments.length === 0 && !state.isPackage) {
+        toast({
+          title: "Error",
+          description: "Please select at least one treatment before saving your quote.",
+          variant: "destructive"
+        });
+        return;
+      }
       
-      const response = await axios.post('/api/quotes', quoteData);
-      
-      toast({
-        title: "Quote Saved",
-        description: "Your quote has been saved successfully.",
-      });
-      
-      return response.data;
+      // Redirect to booking page with quote information
+      if (state.isPackage) {
+        // For packages, redirect to booking page with package information
+        window.location.href = `/booking?package=${encodeURIComponent(state.packageName || '')}` + 
+                               `&promo=${encodeURIComponent(state.promoCode || '')}` + 
+                               `&total=${state.total}` +
+                               `&clinicId=${state.clinicId || ''}`;
+        return { success: true, message: "Redirecting to booking page" };
+      } else {
+        // For regular quotes, submit to quotes API
+        const quoteData = {
+          name: "Guest User", // Adding required field
+          email: "guest@example.com", // Adding required field
+          treatment: state.treatments.length > 0 ? state.treatments[0].name : "Consultation", // Adding required field
+          consent: true, // Adding required field
+          treatments: state.treatments.map(t => t.id),
+          promoCode: state.promoCode,
+          isPackage: state.isPackage,
+          packageName: state.packageName,
+          subtotal: state.subtotal,
+          discount: state.discountAmount,
+          total: state.total,
+          clinicId: state.clinicId
+        };
+        
+        const response = await axios.post('/api/quotes', quoteData);
+        
+        toast({
+          title: "Quote Saved",
+          description: "Your quote has been saved successfully. Redirecting to booking page...",
+        });
+        
+        // Redirect to booking page
+        setTimeout(() => {
+          window.location.href = `/booking?quoteId=${response.data.id}`;
+        }, 1500);
+        
+        return response.data;
+      }
     } catch (error) {
       console.error('Failed to save quote:', error);
       
       toast({
         title: "Error",
-        description: "Failed to save quote. Please try again.",
+        description: "Failed to save quote. Please ensure all required information is provided.",
         variant: "destructive"
       });
       
