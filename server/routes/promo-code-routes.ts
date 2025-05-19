@@ -130,7 +130,9 @@ promoCodeRouter.post('/apply-package', async (req: Request, res: Response) => {
       originalPrice: packagePromo.packageData.originalPrice,
       packagePrice: packagePromo.packageData.packagePrice,
       clinicId: packagePromo.clinicId,
-      savings: packagePromo.packageData.originalPrice - packagePromo.packageData.packagePrice
+      savings: packagePromo.packageData.originalPrice - packagePromo.packageData.packagePrice,
+      attractions: packagePromo.packageData.attractions || [],
+      additionalServices: packagePromo.packageData.additionalServices || []
     });
   } catch (error) {
     console.error('Error applying package promo code:', error);

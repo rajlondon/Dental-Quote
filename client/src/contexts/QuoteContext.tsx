@@ -24,6 +24,14 @@ const ACTIONS = {
   RESET: 'reset'
 };
 
+// Define attraction interface
+interface TouristAttraction {
+  name: string;
+  description: string;
+  value: number;
+  included: boolean;
+}
+
 // Define state interface
 interface QuoteState {
   treatments: Treatment[];
@@ -37,6 +45,8 @@ interface QuoteState {
   packageName: string | null;
   packageDescription: string | null;
   clinicId: string | null;
+  attractions: TouristAttraction[];
+  additionalServices: string[];
 }
 
 // Initial state
@@ -51,7 +61,9 @@ const initialState: QuoteState = {
   isPackage: false,
   packageName: null,
   packageDescription: null,
-  clinicId: null
+  clinicId: null,
+  attractions: [],
+  additionalServices: []
 };
 
 // Reducer to handle all state changes
@@ -91,6 +103,8 @@ function quoteReducer(state: QuoteState, action: any): QuoteState {
         discountAmount: action.payload.savings,
         total: action.payload.packagePrice,
         clinicId: action.payload.clinicId,
+        attractions: action.payload.attractions || [],
+        additionalServices: action.payload.additionalServices || [],
         loading: false
       };
     case ACTIONS.CLEAR_PROMO_CODE:
@@ -102,7 +116,9 @@ function quoteReducer(state: QuoteState, action: any): QuoteState {
         isPackage: false,
         packageName: null,
         packageDescription: null,
-        clinicId: null
+        clinicId: null,
+        attractions: [],
+        additionalServices: []
       };
     case ACTIONS.UPDATE_TOTALS:
       return {
@@ -137,6 +153,8 @@ interface QuoteContextType {
   packageName: string | null;
   packageDescription: string | null;
   clinicId: string | null;
+  attractions: TouristAttraction[];
+  additionalServices: string[];
   addTreatment: (treatment: Treatment) => void;
   removeTreatment: (treatmentId: string) => void;
   applyPromoCode: (code: string) => void;
@@ -251,7 +269,9 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
           originalPrice: data.originalPrice,
           packagePrice: data.packagePrice,
           savings: data.savings,
-          clinicId: data.clinicId
+          clinicId: data.clinicId,
+          attractions: data.attractions || [],
+          additionalServices: data.additionalServices || []
         }
       });
       
