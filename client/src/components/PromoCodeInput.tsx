@@ -120,10 +120,10 @@ export function PromoCodeInput() {
         )}
         
         {success && (
-          <Alert variant="success" className="bg-green-50 border-green-200 text-green-800">
-            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-            <AlertDescription>{success}</AlertDescription>
-          </Alert>
+          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md flex items-start">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
+            <div>{success}</div>
+          </div>
         )}
         
         {packageInfo && (
