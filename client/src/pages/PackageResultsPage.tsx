@@ -258,7 +258,108 @@ export default function PackageResultsPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Itemized Treatment Breakdown */}
+                <div className="mt-8 border rounded-lg overflow-hidden">
+                  <div className="bg-primary/5 p-4 border-b">
+                    <h4 className="font-semibold">Itemized Package Breakdown</h4>
+                  </div>
+                  <div className="p-4">
+                    <table className="w-full">
+                      <thead className="border-b">
+                        <tr>
+                          <th className="text-left py-2">Treatment</th>
+                          <th className="text-center py-2">Quantity</th>
+                          <th className="text-right py-2">Price Per Unit</th>
+                          <th className="text-right py-2">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {clinic.package_treatments && clinic.package_treatments.length > 0 ? (
+                          clinic.package_treatments.map((treatment, index) => (
+                            <tr key={index} className="hover:bg-muted/50">
+                              <td className="py-3">{treatment.name}</td>
+                              <td className="text-center py-3">{treatment.quantity || 1}</td>
+                              <td className="text-right py-3">£{treatment.price}</td>
+                              <td className="text-right py-3">£{(treatment.price * (treatment.quantity || 1)).toLocaleString()}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={4} className="py-4 text-center text-muted-foreground">
+                              No treatment details available
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                      <tfoot className="border-t">
+                        <tr className="bg-muted/20">
+                          <td colSpan={3} className="py-3 font-medium">Original Price:</td>
+                          <td className="text-right py-3 font-medium">£{params.get('originalPrice') || (total * 1.2).toFixed(0)}</td>
+                        </tr>
+                        <tr className="bg-green-50">
+                          <td colSpan={3} className="py-3 font-semibold text-green-700">Package Price with Promo: {promoCode}</td>
+                          <td className="text-right py-3 font-semibold text-green-700">£{total.toLocaleString()}</td>
+                        </tr>
+                        <tr className="bg-green-100">
+                          <td colSpan={3} className="py-3 font-semibold text-green-800">You Save:</td>
+                          <td className="text-right py-3 font-semibold text-green-800">
+                            £{((params.get('originalPrice') ? parseInt(params.get('originalPrice')!) : (total * 1.2)) - total).toLocaleString()}
+                            {' '}
+                            ({Math.round(((params.get('originalPrice') ? parseInt(params.get('originalPrice')!) : (total * 1.2)) - total) / 
+                              (params.get('originalPrice') ? parseInt(params.get('originalPrice')!) : (total * 1.2)) * 100)}%)
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
               </div>
+              
+              {/* Tourist Attractions Section */}
+              {params.get('attractions') && (
+                <div className="mb-8 border rounded-lg overflow-hidden">
+                  <div className="bg-blue-50 p-4 border-b">
+                    <h4 className="font-semibold text-blue-800">Included Tourist Attractions</h4>
+                    <p className="text-sm text-blue-600 mt-1">Experience the best of Istanbul while recovering</p>
+                  </div>
+                  <div className="p-4 grid gap-4 md:grid-cols-2">
+                    {JSON.parse(decodeURIComponent(params.get('attractions') || '[]')).map((attraction, index) => (
+                      <div key={index} className="border rounded-md p-4 bg-blue-50/30">
+                        <h5 className="font-medium">{attraction.name}</h5>
+                        <p className="text-sm text-muted-foreground mt-1">{attraction.description}</p>
+                        <div className="flex justify-between items-center mt-2">
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800">
+                            Value: £{attraction.value}
+                          </Badge>
+                          {attraction.included && (
+                            <Badge className="bg-green-100 text-green-800">
+                              Included
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Additional Services Section */}
+              {params.get('additionalServices') && (
+                <div className="mb-8 border rounded-lg overflow-hidden">
+                  <div className="bg-purple-50 p-4 border-b">
+                    <h4 className="font-semibold text-purple-800">Additional Services Included</h4>
+                  </div>
+                  <div className="p-4 grid gap-2">
+                    {JSON.parse(decodeURIComponent(params.get('additionalServices') || '[]')).map((service, index) => (
+                      <div key={index} className="flex items-center">
+                        <Check className="h-5 w-5 text-purple-500 mr-2 shrink-0" />
+                        <span>{service}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               <div className="mb-6">
                 <h3 className="font-medium mb-4">Clinic Features</h3>
