@@ -913,7 +913,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               </div>
               
               {/* Detailed Info Tabs */}
-              {clinic.ratings && clinic.doctors && (
+              {(
                 <div className="p-6">
                   <Tabs defaultValue="ratings">
                     <TabsList className="mb-4 flex flex-wrap">
