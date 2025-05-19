@@ -51,6 +51,7 @@ export function PromoCodeInput() {
   const [success, setSuccess] = useState<string | null>(null);
   const [packageInfo, setPackageInfo] = useState<any>(null);
   const [isValidating, setIsValidating] = useState(false);
+  const [validationData, setValidationData] = useState<any>(null);
   
   // If context is not available, show enhanced standalone input
   if (!quoteContextAvailable) {
@@ -74,6 +75,7 @@ export function PromoCodeInput() {
             
             if (response.data.valid) {
               setSuccess(`Promo code "${inputCode}" is valid!`);
+              setValidationData(response.data);
               
               // If it's a package, show package info
               if (response.data.isPackage && response.data.packageData) {
@@ -147,7 +149,16 @@ export function PromoCodeInput() {
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md flex items-start">
             <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-            <div>{success}</div>
+            <div>
+              {success}
+              {validationData?.discountValue && (
+                <div className="mt-1 text-sm font-medium">
+                  You save: {validationData.discountType === 'percentage' 
+                    ? `${validationData.discountValue}% off your total` 
+                    : `£${validationData.discountValue}`}
+                </div>
+              )}
+            </div>
           </div>
         )}
         
@@ -164,8 +175,9 @@ export function PromoCodeInput() {
                 <p className="text-xs font-medium text-blue-800">Included treatments:</p>
                 <ul className="mt-1 text-xs text-blue-700 list-disc pl-5">
                   {packageInfo.treatments.map((treatment: any, i: number) => (
-                    <li key={i}>{treatment.name} {treatment.quantity > 1 ? `(x${treatment.quantity})` : ''}</li>
+                    <li key={i}>{treatment.quantity} x {treatment.name}</li>
                   ))}
+                  <li className="font-medium text-blue-800 mt-1">Free excursion on a cruise in Istanbul</li>
                   
                   {packageInfo.savings && (
                     <div className="mt-2 text-green-700 text-xs font-medium">
