@@ -5,12 +5,21 @@ export interface PackageTreatment {
   quantity: number;
 }
 
+export interface TouristAttraction {
+  name: string;
+  description: string;
+  value: number;
+  included: boolean;
+}
+
 export interface PackageData {
   name: string;
   description: string;
   treatments: PackageTreatment[];
   originalPrice: number;
   packagePrice: number;
+  attractions?: TouristAttraction[];
+  additionalServices?: string[];
 }
 
 export interface PromoCode {
