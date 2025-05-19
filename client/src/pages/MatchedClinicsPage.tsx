@@ -186,6 +186,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
     
+    // Check if this is a promo code with a specific clinic ID
+    console.log('Promo code clinic ID:', promoCodeClinicId);
+    
     // Define the clinics data first
     const allClinicsDataList = [
       {
