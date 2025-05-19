@@ -1022,16 +1022,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <Star 
                                       key={i} 
                                       className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.location) 
+                                        clinic.ratings && i < Math.floor(clinic.ratings.location || 0) 
                                           ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.location 
+                                          : clinic.ratings && i < (clinic.ratings.location || 0)
                                             ? 'text-yellow-500 fill-yellow-500 opacity-50' 
                                             : 'text-gray-300'
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.location}</span>
+                                <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.location : 'N/A'}</span>
                               </div>
                             </div>
                           </div>
