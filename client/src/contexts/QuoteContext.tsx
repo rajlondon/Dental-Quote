@@ -114,12 +114,16 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
   
   // Apply promo code mutation
   const applyPromoMutation = useMutation({
-    mutationFn: async (code) => {
+    mutationFn: async (code: string) => {
       // Set loading state
       dispatch({ type: ACTIONS.SET_LOADING, payload: true });
       
       // Get current treatments to send to API
       const treatmentIds = state.treatments.map(t => t.id);
+      
+      if (treatmentIds.length === 0) {
+        throw new Error('Please select at least one treatment before applying a promo code');
+      }
       
       // Call API to validate and calculate discount
       const response = await axios.post('/api/promo-codes/apply', {
@@ -130,17 +134,19 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
       return response.data;
     },
     onSuccess: (data) => {
+      console.log('Promo code applied successfully:', data);
+      
       // Update state with validated promo code
       dispatch({
         type: ACTIONS.SET_PROMO_CODE,
         payload: {
           code: data.code,
-          discountAmount: data.discountAmount
+          discountAmount: data.discountAmount || 0
         }
       });
       
-      // Invalidate quotes cache to ensure fresh data
-      queryClient.invalidateQueries({ queryKey: ['quote'] });
+      // No need to invalidate query cache for this local state change
+      // queryClient.invalidateQueries({ queryKey: ['quote'] });
     },
     onError: (error) => {
       console.error('Promo code application failed:', error);

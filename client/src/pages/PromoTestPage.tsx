@@ -129,19 +129,28 @@ function PromoCodeTester({ treatments }: { treatments: Array<{ id: string; name:
     if (quoteContext) {
       const { addTreatment, removeTreatment, treatments: contextTreatments } = quoteContext;
       
-      // First remove all existing treatments
-      if (contextTreatments && contextTreatments.length > 0) {
-        [...contextTreatments].forEach(treatment => {
-          if (treatment && treatment.id) {
-            removeTreatment(treatment.id);
-          }
+      // Check if the treatments have actually changed before updating
+      const currentIds = contextTreatments.map(t => t.id).sort().join(',');
+      const newIds = treatments.map(t => t.id).sort().join(',');
+      
+      // Only update if the selection has changed to prevent flickering
+      if (currentIds !== newIds) {
+        // First remove all existing treatments
+        if (contextTreatments && contextTreatments.length > 0) {
+          // Create a copy of the array to avoid mutation during iteration
+          const treatmentsToRemove = [...contextTreatments];
+          treatmentsToRemove.forEach(treatment => {
+            if (treatment && treatment.id) {
+              removeTreatment(treatment.id);
+            }
+          });
+        }
+        
+        // Then add the new selected treatments
+        treatments.forEach(treatment => {
+          addTreatment(treatment);
         });
       }
-      
-      // Then add the new selected treatments
-      treatments.forEach(treatment => {
-        addTreatment(treatment);
-      });
     }
   }, [treatments, quoteContext]);
   
