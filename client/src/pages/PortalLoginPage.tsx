@@ -666,7 +666,7 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full" disabled={isLoading}>
+                      <Button type="submit" className="w-full">
                         {isLoading ? t("portal.login.signing_in", "Signing in...") : t("portal.login.signin", "Sign In")}
                       </Button>
                     </form>
