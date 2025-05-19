@@ -521,10 +521,94 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   ];
   
-  // Filter clinics based on the promo code clinic ID if one exists
+  // Define the full list of clinics
+  const allClinicsDataList = [
+    {
+      id: 'dentspa',
+      name: 'DentSpa Dental Clinic',
+      tier: 'premium',
+      description: 'DentSpa is a premier dental clinic in Istanbul specializing in cosmetic and restorative dentistry with a spa-like atmosphere.',
+      priceFactor: 0.25, // 25% of UK price (premium)
+      ratings: {
+        overall: 4.9,
+        reviews: 453,
+        cleanliness: 4.9,
+        staff: 4.9,
+        value: 4.8,
+        location: 4.8
+      },
+      location: {
+        area: 'Kadıköy',
+        city: 'Istanbul',
+        fullAddress: 'Bağdat Caddesi No:35, Kadıköy, Istanbul'
+      },
+      features: [
+        'Free Airport Transfer',
+        'Hotel Arrangement',
+        'Multilingual Staff',
+        'Spa-like Environment',
+        'VIP Treatment Options'
+      ]
+    },
+    {
+      id: 'beyazada',
+      name: 'Beyaz Ada Dental Clinic',
+      tier: 'standard',
+      description: 'A well-established mid-range clinic offering quality dental treatments at competitive prices. Includes hotel arrangements and airport pickup.',
+      priceFactor: 0.35, // 35% of UK price (standard)
+      ratings: {
+        overall: 4.7,
+        reviews: 243,
+        cleanliness: 4.8,
+        staff: 4.7,
+        value: 4.9,
+        location: 4.5
+      },
+      location: {
+        area: 'Kadıköy',
+        city: 'Istanbul',
+        fullAddress: 'Caferağa Mahallesi, Kadıköy, Istanbul'
+      },
+      features: [
+        'Modern clinic facilities',
+        'Complimentary airport pickup',
+        'Affordable hotel arrangements',
+        'Multi-language service'
+      ]
+    },
+    {
+      id: 'dentalharmony',
+      name: 'Dental Harmony',
+      tier: 'affordable',
+      description: 'Budget-friendly clinic providing essential dental services at very competitive rates. Great value for routine treatments and basic cosmetic procedures.',
+      priceFactor: 0.45, // 45% of UK price (affordable)
+      ratings: {
+        overall: 4.5,
+        reviews: 178,
+        cleanliness: 4.6,
+        staff: 4.4,
+        value: 4.9,
+        location: 4.2
+      },
+      location: {
+        area: 'Şişli',
+        city: 'Istanbul',
+        fullAddress: 'Halaskargazi Caddesi, Şişli, Istanbul'
+      },
+      features: [
+        'Budget-friendly options',
+        'Basic airport transfer',
+        'Hotel recommendations',
+        'English-speaking staff'
+      ]
+    }
+  ];
+  
+  // Apply clinic filtering based on promo code
   useEffect(() => {
     // If a promo code has a specific clinic ID, only show that clinic
     if (promoCodeClinicId) {
+      console.log('Filtering clinics for promo code clinic ID:', promoCodeClinicId);
       const filtered = allClinicsDataList.filter(clinic => clinic.id === promoCodeClinicId);
       if (filtered.length > 0) {
         setFilteredClinics(filtered);
