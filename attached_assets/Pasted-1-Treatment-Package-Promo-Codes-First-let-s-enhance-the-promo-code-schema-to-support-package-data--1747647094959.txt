@@ -1,0 +1,1037 @@
+1. Treatment Package Promo Codes
+First, let's enhance the promo code schema to support package data:
+
+
+Copy
+// server/models/promo-code.ts
+interface PackageTreatment {
+  id: string;
+  quantity: number;
+}
+
+interface PackageData {
+  name: string;
+  description: string;
+  treatments: PackageTreatment[];
+  originalPrice: number;
+  packagePrice: number;
+}
+
+interface PromoCode {
+  id: string;
+  code: string;
+  type: 'discount' | 'package'; // New field to differentiate between discount and package codes
+  discountType?: 'percentage' | 'fixed_amount';
+  discountValue?: number;
+  packageData?: PackageData; // Only used for package type codes
+  clinicId?: string; // For clinic-specific codes
+  isActive: boolean;
+  expiresAt?: Date;
+}
+Backend Changes
+Let's create the necessary endpoints to handle package promo codes:
+
+
+Copy
+// server/routes/promo-codes.ts
+// Add a new endpoint to handle package promo codes
+router.post('/apply-package', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code) {
+      return res.status(400).json({ error: 'Promo code is required' });
+    }
+    
+    // Find the promo code in the database
+    const promoCode = await db.query.promoCodes.findFirst({
+      where: eq(promoCodes.code, code.toUpperCase())
+    });
+    
+    if (!promoCode) {
+      return res.status(404).json({ error: 'Invalid promo code' });
+    }
+    
+    if (promoCode.type !== 'package' || !promoCode.packageData) {
+      return res.status(400).json({ error: 'This is not a package promo code' });
+    }
+    
+    // Fetch complete treatment data for each treatment in the package
+    const packageTreatments = [];
+    for (const item of promoCode.packageData.treatments) {
+      const treatment = await db.query.treatments.findFirst({
+        where: eq(treatments.id, item.id)
+      });
+      
+      if (treatment) {
+        packageTreatments.push({
+          ...treatment,
+          quantity: item.quantity || 1
+        });
+      }
+    }
+    
+    // Return the package data with full treatment information
+    res.json({
+      code: promoCode.code,
+      type: 'package',
+      packageName: promoCode.packageData.name,
+      packageDescription: promoCode.packageData.description,
+      treatments: packageTreatments,
+      originalPrice: promoCode.packageData.originalPrice,
+      packagePrice: promoCode.packageData.packagePrice,
+      clinicId: promoCode.clinicId,
+      savings: promoCode.packageData.originalPrice - promoCode.packageData.packagePrice
+    });
+  } catch (error) {
+    console.error('Error applying package promo code:', error);
+    res.status(500).json({ error: 'Failed to apply package promo code' });
+  }
+});
+Frontend Changes
+Now let's update the QuoteContext to handle package promo codes:
+
+
+Copy
+// client/src/contexts/QuoteContext.tsx
+// Add to the state interface
+interface QuoteState {
+  // Existing fields...
+  isPackage: boolean;
+  packageName: string | null;
+  packageDescription: string | null;
+  clinicId: string | null;
+}
+
+// Initialize new state fields
+const initialState: QuoteState = {
+  // Existing fields...
+  isPackage: false,
+  packageName: null,
+  packageDescription: null,
+  clinicId: null
+};
+
+// Add a new action type
+const ACTIONS = {
+  // Existing actions...
+  APPLY_PACKAGE_PROMO: 'apply_package_promo'
+};
+
+// Update the reducer
+function quoteReducer(state, action) {
+  switch (action.type) {
+    // Existing cases...
+    
+    case ACTIONS.APPLY_PACKAGE_PROMO:
+      return {
+        ...state,
+        treatments: action.payload.treatments,
+        isPackage: true,
+        packageName: action.payload.packageName,
+        packageDescription: action.payload.packageDescription,
+        promoCode: action.payload.code,
+        subtotal: action.payload.originalPrice,
+        discount: action.payload.savings,
+        total: action.payload.packagePrice,
+        clinicId: action.payload.clinicId,
+        loading: false
+      };
+      
+    case ACTIONS.CLEAR_PROMO_CODE:
+      return {
+        ...state,
+        promoCode: null,
+        discount: 0,
+        isPackage: false,
+        packageName: null,
+        packageDescription: null,
+        clinicId: null,
+        // Don't reset treatments here, just clear the promo code
+        total: state.subtotal,
+        loading: false
+      };
+    
+    // Other cases...
+  }
+}
+
+// Add function to apply package promo code
+const applyPackagePromo = async (code) => {
+  try {
+    dispatch({ type: 'SET_LOADING', payload: true });
+    
+    const response = await fetch('/api/promo-codes/apply-package', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to apply package promo code');
+    }
+    
+    const data = await response.json();
+    
+    // Update state with package data
+    dispatch({
+      type: ACTIONS.APPLY_PACKAGE_PROMO,
+      payload: {
+        code: data.code,
+        treatments: data.treatments,
+        packageName: data.packageName,
+        packageDescription: data.packageDescription,
+        originalPrice: data.originalPrice,
+        packagePrice: data.packagePrice,
+        savings: data.savings,
+        clinicId: data.clinicId
+      }
+    });
+    
+    // Show success message
+    setTimeout(() => {
+      toast({
+        title: "Package Applied!",
+        description: `${data.packageName} package has been applied with a savings of £${data.savings.toFixed(2)}`,
+        variant: "success"
+      });
+    }, 100);
+    
+    return true;
+  } catch (error) {
+    console.error('Error applying package promo:', error);
+    dispatch({ type: 'SET_LOADING', payload: false });
+    
+    toast({
+      title: "Error",
+      description: error.message || 'Failed to apply package',
+      variant: "destructive"
+    });
+    
+    return false;
+  }
+};
+
+// Expose the new function in the context
+return (
+  <QuoteContext.Provider value={{
+    // Existing values...
+    applyPackagePromo,
+    isPackage: state.isPackage,
+    packageName: state.packageName,
+    packageDescription: state.packageDescription,
+    clinicId: state.clinicId
+  }}>
+    {children}
+  </QuoteContext.Provider>
+);
+Update PromoCodeInput Component
+Now let's enhance the PromoCodeInput component to handle both regular discount codes and package codes:
+
+
+Copy
+// client/src/components/PromoCodeInput.tsx
+import React, { useState } from 'react';
+import { useQuote } from '../contexts/QuoteContext';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { CheckCircle, Package, X } from 'lucide-react';
+
+export function PromoCodeInput() {
+  const [inputCode, setInputCode] = useState('');
+  const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { 
+    promoCode, 
+    applyPromoCode, 
+    applyPackagePromo,
+    clearPromoCode, 
+    discount,
+    isPackage,
+    packageName
+  } = useQuote();
+  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    
+    if (!inputCode.trim()) {
+      setError('Please enter a promo code');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // First try as a package code
+      const packageResult = await applyPackagePromo(inputCode.trim());
+      
+      if (!packageResult) {
+        // If not a package code, try as a regular discount code
+        await applyPromoCode(inputCode.trim());
+      }
+      
+      setInputCode('');
+    } catch (err) {
+      setError(err.message || 'Failed to apply promo code');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  // If promo code is already applied, show active state
+  if (promoCode) {
+    return (
+      <div className="bg-green-50 p-4 rounded-md border border-green-200">
+        <div className="flex items-center">
+          {isPackage ? (
+            <Package className="h-5 w-5 text-green-600 mr-2" />
+          ) : (
+            <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+          )}
+          
+          <div className="flex-1">
+            <p className="font-medium text-green-800">
+              {isPackage ? 'Package Applied' : 'Promo Code Applied'}
+            </p>
+            <p className="text-sm text-green-700">
+              {isPackage ? (
+                <>Package: <strong>{packageName}</strong></>
+              ) : (
+                <>Code: <strong>{promoCode}</strong> - You saved £{discount.toFixed(2)}</>
+              )}
+            </p>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearPromoCode}
+            className="h-8 w-8 p-0 rounded-full"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Remove promo code</span>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  return (
+    <div>
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <Input
+          type="text"
+          placeholder="Enter promo code"
+          value={inputCode}
+          onChange={(e) => setInputCode(e.target.value)}
+          className="flex-1"
+          disabled={isSubmitting}
+        />
+        <Button type="submit" disabled={isSubmitting || !inputCode.trim()}>
+          {isSubmitting ? 'Applying...' : 'Apply'}
+        </Button>
+      </form>
+      
+      {error && (
+        <p className="text-red-500 text-sm mt-1">{error}</p>
+      )}
+    </div>
+  );
+}
+Update Quote Summary Component
+Let's enhance the Quote Summary to display package information when a package promo is applied:
+
+
+Copy
+// client/src/components/QuoteSummary.tsx
+import React from 'react';
+import { useQuote } from '../contexts/QuoteContext';
+import { formatCurrency } from '../utils/format';
+import { Package } from 'lucide-react';
+
+export function QuoteSummary() {
+  const { 
+    treatments, 
+    subtotal, 
+    total, 
+    discount,
+    promoCode,
+    isPackage,
+    packageName,
+    packageDescription
+  } = useQuote();
+  
+  return (
+    <div className="bg-white rounded-lg border p-4 shadow-sm">
+      <h3 className="font-semibold text-lg mb-4">Quote Summary</h3>
+      
+      {/* Package information */}
+      {isPackage && packageName && (
+        <div className="bg-blue-50 p-3 rounded-md mb-4 border border-blue-100">
+          <div className="flex items-center gap-2 mb-1">
+            <Package className="h-4 w-4 text-blue-600" />
+            <h4 className="font-medium text-blue-800">{packageName}</h4>
+          </div>
+          {packageDescription && (
+            <p className="text-sm text-blue-700 mb-2">{packageDescription}</p>
+          )}
+          <p className="text-sm text-blue-900">
+            <strong>Package savings:</strong> {formatCurrency(discount)}
+          </p>
+        </div>
+      )}
+      
+      {/* Treatment list */}
+      <div className="space-y-2 mb-4">
+        <h4 className="font-medium text-sm text-gray-700 mb-1">Treatments</h4>
+        
+        {treatments.length === 0 ? (
+          <p className="text-gray-500 text-sm">No treatments selected</p>
+        ) : (
+          treatments.map((treatment) => (
+            <div key={treatment.id} className="flex justify-between text-sm">
+              <span>
+                {treatment.name}
+                {treatment.quantity > 1 && ` (x${treatment.quantity})`}
+              </span>
+              <span className="font-medium">
+                {formatCurrency(treatment.price * (treatment.quantity || 1))}
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+      
+      {/* Pricing breakdown */}
+      <div className="border-t pt-2 space-y-2">
+        <div className="flex justify-between text-sm">
+          <span>Subtotal</span>
+          <span>{formatCurrency(subtotal)}</span>
+        </div>
+        
+        {discount > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>
+              {isPackage ? 'Package Discount' : `Promo (${promoCode})`}
+            </span>
+            <span>-{formatCurrency(discount)}</span>
+          </div>
+        )}
+        
+        <div className="flex justify-between font-semibold pt-1 border-t">
+          <span>Total</span>
+          <span>{formatCurrency(total)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+2. Clinic-Specific Results Filtering
+When a promo code is applied that's associated with a specific clinic, we need to filter the results page to only show that clinic.
+
+Update Clinic Results Page
+
+Copy
+// client/src/pages/ClinicResultsPage.tsx
+import React, { useEffect, useState } from 'react';
+import { useQuote } from '../contexts/QuoteContext';
+import { ClinicCard } from '../components/ClinicCard';
+import { Spinner } from '../components/ui/spinner';
+
+export function ClinicResultsPage() {
+  const [clinics, setClinics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  const { 
+    treatments, 
+    clinicId // This comes from the QuoteContext when a clinic-specific promo is applied
+  } = useQuote();
+  
+  useEffect(() => {
+    async function fetchClinics() {
+      try {
+        setLoading(true);
+        
+        // If we have a specific clinicId from a promo code, only fetch that clinic
+        if (clinicId) {
+          const response = await fetch(`/api/clinics/${clinicId}`);
+          
+          if (!response.ok) {
+            throw new Error('Failed to load clinic data');
+          }
+          
+          const clinic = await response.json();
+          setClinics(clinic ? [clinic] : []);
+        } else {
+          // Otherwise fetch clinics based on selected treatments
+          const treatmentIds = treatments.map(t => t.id);
+          
+          const response = await fetch('/api/clinics/match', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ treatmentIds })
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to load matching clinics');
+          }
+          
+          const matchingClinics = await response.json();
+          setClinics(matchingClinics || []);
+        }
+        
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching clinics:', err);
+        setError(err.message || 'Failed to load clinics');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchClinics();
+  }, [treatments, clinicId]);
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Spinner />
+      </div>
+    );
+  }
+  
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
+        <p className="font-medium">Error loading clinics</p>
+        <p className="text-sm">{error}</p>
+      </div>
+    );
+  }
+  
+  if (clinics.length === 0) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 p-4 rounded-md">
+        <p className="font-medium">No matching clinics found</p>
+        <p className="text-sm">Try selecting different treatments or adjusting your preferences.</p>
+      </div>
+    );
+  }
+  
+  // Show special message for promo-specific clinic
+  const isPromoSpecificClinic = clinicId && clinics.length === 1;
+  
+  return (
+    <div className="space-y-6">
+      {isPromoSpecificClinic && (
+        <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-md">
+          <p className="font-medium">Exclusive Promotion</p>
+          <p className="text-sm">This is a clinic-specific promotion only available at the clinic below.</p>
+        </div>
+      )}
+      
+      <h2 className="text-2xl font-bold">
+        {isPromoSpecificClinic 
+          ? 'Your Promotional Clinic' 
+          : `${clinics.length} Matching Clinics`}
+      </h2>
+      
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {clinics.map(clinic => (
+          <ClinicCard 
+            key={clinic.id} 
+            clinic={clinic} 
+            isPromoClinic={isPromoSpecificClinic}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+Create API Endpoints for Clinic Matching
+
+Copy
+// server/routes/clinics.ts
+// Get a specific clinic by ID (for promo codes)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const clinic = await db.query.clinics.findFirst({
+      where: eq(clinics.id, id)
+    });
+    
+    if (!clinic) {
+      return res.status(404).json({ error: 'Clinic not found' });
+    }
+    
+    res.json(clinic);
+  } catch (error) {
+    console.error('Error fetching clinic:', error);
+    res.status(500).json({ error: 'Failed to fetch clinic' });
+  }
+});
+
+// Match clinics based on treatment IDs
+router.post('/match', async (req, res) => {
+  try {
+    const { treatmentIds } = req.body;
+    
+    if (!Array.isArray(treatmentIds) || treatmentIds.length === 0) {
+      return res.status(400).json({ error: 'Treatment IDs are required' });
+    }
+    
+    // Find clinics that offer all the selected treatments
+    // This is a placeholder - you'll need to implement the actual query
+    // based on your database schema
+    const matchingClinics = await db.query.clinics.findMany({
+      where: /* Your logic to match clinics that offer all the treatments */
+    });
+    
+    res.json(matchingClinics || []);
+  } catch (error) {
+    console.error('Error matching clinics:', error);
+    res.status(500).json({ error: 'Failed to match clinics' });
+  }
+});
+3. Admin Interface for Package Promo Codes
+To make it easy to create and manage package promo codes, let's build a simple admin interface:
+
+
+Copy
+// client/src/pages/admin/PackagePromoCodeEditor.tsx
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
+import { Select } from '../../components/ui/select';
+import { Textarea } from '../../components/ui/textarea';
+import { Switch } from '../../components/ui/switch';
+import { toast } from '../../components/ui/use-toast';
+
+export function PackagePromoCodeEditor({ promoCodeId = null }) {
+  const [loading, setLoading] = useState(false);
+  const [clinics, setClinics] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [selectedTreatments, setSelectedTreatments] = useState([]);
+  
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      code: '',
+      type: 'package',
+      packageName: '',
+      packageDescription: '',
+      originalPrice: 0,
+      packagePrice: 0,
+      clinicId: '',
+      isActive: true,
+      expiresAt: ''
+    }
+  });
+  
+  // Fetch clinics and treatments
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [clinicsRes, treatmentsRes] = await Promise.all([
+          fetch('/api/admin/clinics'),
+          fetch('/api/admin/treatments')
+        ]);
+        
+        if (clinicsRes.ok && treatmentsRes.ok) {
+          const [clinicsData, treatmentsData] = await Promise.all([
+            clinicsRes.json(),
+            treatmentsRes.json()
+          ]);
+          
+          setClinics(clinicsData || []);
+          setTreatments(treatmentsData || []);
+        }
+        
+        // If editing existing promo code, fetch its data
+        if (promoCodeId) {
+          const promoRes = await fetch(`/api/admin/promo-codes/${promoCodeId}`);
+          
+          if (promoRes.ok) {
+            const promoData = await promoRes.json();
+            
+            // Set form values
+            setValue('code', promoData.code);
+            setValue('type', promoData.type);
+            setValue('isActive', promoData.isActive);
+            setValue('clinicId', promoData.clinicId || '');
+            setValue('expiresAt', promoData.expiresAt ? new Date(promoData.expiresAt).toISOString().split('T')[0] : '');
+            
+            if (promoData.packageData) {
+              setValue('packageName', promoData.packageData.name);
+              setValue('packageDescription', promoData.packageData.description);
+              setValue('originalPrice', promoData.packageData.originalPrice);
+              setValue('packagePrice', promoData.packageData.packagePrice);
+              setSelectedTreatments(promoData.packageData.treatments || []);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load form data',
+          variant: 'destructive'
+        });
+      }
+    }
+    
+    fetchData();
+  }, [promoCodeId, setValue]);
+  
+  // Add a treatment to the package
+  const handleAddTreatment = (treatmentId) => {
+    const treatment = treatments.find(t => t.id === treatmentId);
+    if (treatment && !selectedTreatments.some(t => t.id === treatmentId)) {
+      setSelectedTreatments([
+        ...selectedTreatments,
+        { id: treatmentId, name: treatment.name, price: treatment.price, quantity: 1 }
+      ]);
+    }
+  };
+  
+  // Remove a treatment from the package
+  const handleRemoveTreatment = (treatmentId) => {
+    setSelectedTreatments(selectedTreatments.filter(t => t.id !== treatmentId));
+  };
+  
+  // Update treatment quantity
+  const handleQuantityChange = (treatmentId, quantity) => {
+    setSelectedTreatments(
+      selectedTreatments.map(t => 
+        t.id === treatmentId ? { ...t, quantity: parseInt(quantity) || 1 } : t
+      )
+    );
+  };
+  
+  // Calculate total original price
+  const calculateOriginalPrice = () => {
+    return selectedTreatments.reduce((total, t) => {
+      return total + (t.price * (t.quantity || 1));
+    }, 0);
+  };
+  
+  // Submit the form
+  const onSubmit = async (data) => {
+    try {
+      setLoading(true);
+      
+      if (selectedTreatments.length === 0) {
+        toast({
+          title: 'Error',
+          description: 'Please add at least one treatment to the package',
+          variant: 'destructive'
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // Prepare package data
+      const packageData = {
+        name: data.packageName,
+        description: data.packageDescription,
+        treatments: selectedTreatments.map(t => ({
+          id: t.id,
+          quantity: t.quantity || 1
+        })),
+        originalPrice: data.originalPrice || calculateOriginalPrice(),
+        packagePrice: data.packagePrice
+      };
+      
+      // Prepare promo code data
+      const promoCodeData = {
+        code: data.code.toUpperCase(),
+        type: 'package',
+        packageData,
+        clinicId: data.clinicId || null,
+        isActive: data.isActive,
+        expiresAt: data.expiresAt || null
+      };
+      
+      // Save to API
+      const url = promoCodeId 
+        ? `/api/admin/promo-codes/${promoCodeId}` 
+        : '/api/admin/promo-codes';
+        
+      const method = promoCodeId ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promoCodeData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save promo code');
+      }
+      
+      toast({
+        title: 'Success',
+        description: promoCodeId 
+          ? 'Package promo code updated successfully' 
+          : 'Package promo code created successfully',
+        variant: 'success'
+      });
+      
+      // Clear form if creating new code
+      if (!promoCodeId) {
+        setValue('code', '');
+        setValue('packageName', '');
+        setValue('packageDescription', '');
+        setValue('originalPrice', 0);
+        setValue('packagePrice', 0);
+        setSelectedTreatments([]);
+      }
+    } catch (error) {
+      console.error('Error saving package promo code:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to save promo code',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">
+        {promoCodeId ? 'Edit Package Promo Code' : 'Create Package Promo Code'}
+      </h1>
+      
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Basic Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Promo Code</label>
+            <Input 
+              {...register('code', { required: 'Promo code is required' })}
+              className="uppercase"
+              placeholder="e.g., IMPLANT50"
+            />
+            {errors.code && (
+              <p className="text-red-500 text-sm mt-1">{errors.code.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Clinic</label>
+            <Select {...register('clinicId')}>
+              <option value="">All Clinics</option>
+              {clinics.map(clinic => (
+                <option key={clinic.id} value={clinic.id}>
+                  {clinic.name}
+                </option>
+              ))}
+            </Select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Package Name</label>
+            <Input 
+              {...register('packageName', { required: 'Package name is required' })}
+              placeholder="e.g., Complete Smile Makeover"
+            />
+            {errors.packageName && (
+              <p className="text-red-500 text-sm mt-1">{errors.packageName.message}</p>
+            )}
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Expiration Date</label>
+            <Input 
+              type="date"
+              {...register('expiresAt')}
+            />
+          </div>
+          
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium mb-1">Package Description</label>
+            <Textarea 
+              {...register('packageDescription')}
+              rows={2}
+              placeholder="Describe what's included in this package"
+            />
+          </div>
+        </div>
+        
+        {/* Treatments Selection */}
+        <div className="border rounded-md p-4">
+          <h3 className="text-lg font-medium mb-4">Package Treatments</h3>
+          
+          <div className="flex gap-2 mb-4">
+            <Select 
+              className="flex-1"
+              onChange={(e) => {
+                handleAddTreatment(e.target.value);
+                e.target.value = '';
+              }}
+              defaultValue=""
+            >
+              <option value="" disabled>Select treatment to add</option>
+              {treatments.map(treatment => (
+                <option key={treatment.id} value={treatment.id}>
+                  {treatment.name} - £{treatment.price.toFixed(2)}
+                </option>
+              ))}
+            </Select>
+            <Button 
+              type="button" 
+              onClick={() => document.getElementById('treatment-select')?.focus()}
+            >
+              Add
+            </Button>
+          </div>
+          
+          {selectedTreatments.length === 0 ? (
+            <p className="text-gray-500 text-sm">No treatments added to this package yet</p>
+          ) : (
+            <div className="space-y-2">
+              {selectedTreatments.map(treatment => (
+                <div 
+                  key={treatment.id}
+                  className="flex items-center justify-between bg-gray-50 p-2 rounded-md"
+                >
+                  <div>
+                    <p className="font-medium">{treatment.name}</p>
+                    <p className="text-sm text-gray-500">
+                      £{treatment.price.toFixed(2)} each
+                    </p>
+                  </div>
+                  
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <label className="text-sm">Qty:</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        className="w-16 h-8"
+                        value={treatment.quantity || 1}
+                        onChange={(e) => handleQuantityChange(treatment.id, e.target.value)}
+                      />
+                    </div>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemoveTreatment(treatment.id)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="pt-2 border-t mt-2">
+                <p className="flex justify-between font-medium">
+                  <span>Original Value:</span>
+                  <span>£{calculateOriginalPrice().toFixed(2)}</span>
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* Pricing */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Original Price (£)</label>
+            <Input 
+              type="number"
+              step="0.01"
+              {...register('originalPrice', { valueAsNumber: true })}
+              placeholder={`Default: £${calculateOriginalPrice().toFixed(2)}`}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              Leave at 0 to use calculated value from treatments
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Package Price (£)</label>
+            <Input 
+              type="number"
+              step="0.01"
+              {...register('packagePrice', { 
+                required: 'Package price is required',
+                valueAsNumber: true,
+                validate: value => value > 0 || 'Price must be greater than 0'
+              })}
+            />
+            {errors.packagePrice && (
+              <p className="text-red-500 text-sm mt-1">{errors.packagePrice.message}</p>
+            )}
+          </div>
+        </div>
+        
+        {/* Active Status */}
+        <div className="flex items-center space-x-2">
+          <Switch id="is-active" {...register('isActive')} />
+          <label htmlFor="is-active" className="text-sm font-medium">
+            Active
+          </label>
+        </div>
+        
+        {/* Form Actions */}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="outline">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? 'Saving...' : promoCodeId ? 'Update' : 'Create'}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
+Integration Plan
+To implement these features, I recommend this phased approach:
+
+Phase 1: Backend Implementation
+Update the promo code schema to support package and clinic-specific codes
+Create the new API endpoints for package promo codes
+Implement the clinic filtering by ID endpoint
+Phase 2: Frontend Implementation
+Update the QuoteContext to handle package promo codes
+Enhance the PromoCodeInput component
+Update the Quote Summary to display package information
+Modify the Clinic Results page to filter by clinic ID
+Phase 3: Admin Interface
+Create the Package Promo Code Editor
+Add routes to access the admin interface
+Implement CRUD operations for promo codes
+Phase 4: Testing
+Create test package promo codes
+Verify that applying a package code replaces treatments correctly
+Test clinic-specific filtering
+Validate the admin interface
+Summary
+This implementation provides:
+
+Treatment Package Promo Codes
+
+Replace selected treatments with a predefined package
+Show package name, description, and savings
+Support for treatment quantities within packages
+Clinic-Specific Filtering
+
+Show only the specific clinic when a clinic-specific code is applied
+Provide clear UI feedback about exclusive promotions
+Admin Interface
+
+Create and manage package promo codes
+Assign codes to specific clinics
+Set package pricing and expiration dates

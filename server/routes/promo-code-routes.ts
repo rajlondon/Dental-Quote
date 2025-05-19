@@ -26,6 +26,7 @@ promoCodeRouter.post('/validate', async (req: Request, res: Response) => {
       success: true,
       valid: validationResult.valid,
       code: validationResult.code,
+      type: validationResult.type || 'discount',
       discountType: validationResult.discountType,
       discountValue: validationResult.discountValue,
       message: validationResult.valid 
@@ -64,6 +65,14 @@ promoCodeRouter.post('/apply', async (req: Request, res: Response) => {
       });
     }
     
+    // If this is a package code, redirect to the package endpoint
+    if (validationResult.type === 'package') {
+      return res.status(400).json({
+        valid: false,
+        error: 'This is a package promo code. Please use the /apply-package endpoint.'
+      });
+    }
+    
     // Then calculate the discount
     const calculationResult = await promoCodeService.calculateDiscount({
       code: validationResult.code,
@@ -75,6 +84,7 @@ promoCodeRouter.post('/apply', async (req: Request, res: Response) => {
     // Return the discount information
     return res.json({
       code: validationResult.code,
+      type: 'discount',
       discountType: validationResult.discountType,
       discountValue: validationResult.discountValue,
       discountAmount: calculationResult.discountAmount,
@@ -84,6 +94,47 @@ promoCodeRouter.post('/apply', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error applying promo code:', error);
     return res.status(500).json({ error: 'Failed to apply promo code' });
+  }
+});
+
+// Apply a package promo code
+promoCodeRouter.post('/apply-package', async (req: Request, res: Response) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Promo code is required' });
+    }
+    
+    // Get the package promo code
+    const packagePromo = await promoCodeService.getPackagePromoCode(code);
+    
+    if (!packagePromo) {
+      return res.status(404).json({ error: 'Invalid package promo code' });
+    }
+    
+    if (packagePromo.type !== 'package' || !packagePromo.packageData) {
+      return res.status(400).json({ error: 'This is not a package promo code' });
+    }
+    
+    // Fetch complete treatment data for each treatment in the package
+    const packageTreatments = await promoCodeService.getPackageTreatments(packagePromo.packageData.treatments);
+    
+    // Return the package data with full treatment information
+    res.json({
+      code: packagePromo.code,
+      type: 'package',
+      packageName: packagePromo.packageData.name,
+      packageDescription: packagePromo.packageData.description,
+      treatments: packageTreatments,
+      originalPrice: packagePromo.packageData.originalPrice,
+      packagePrice: packagePromo.packageData.packagePrice,
+      clinicId: packagePromo.clinicId,
+      savings: packagePromo.packageData.originalPrice - packagePromo.packageData.packagePrice
+    });
+  } catch (error) {
+    console.error('Error applying package promo code:', error);
+    res.status(500).json({ error: 'Failed to apply package promo code' });
   }
 });
 
@@ -133,6 +184,7 @@ promoCodeRouter.post('/calculate-discount', async (req: Request, res: Response) 
       success: true,
       valid: true,
       code: validationResult.code,
+      type: validationResult.type || 'discount',
       message: `Successfully applied promo code: ${validationResult.code}`,
       title: validationResult.title,
       discountType: validationResult.discountType,
