@@ -324,6 +324,79 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     }
   }, [treatments, onTreatmentsChange]);
   
+  // Listen for promo code package events
+  useEffect(() => {
+    const handlePackagePromo = (e: CustomEvent) => {
+      const { packageData } = e.detail;
+      
+      if (!packageData || !packageData.treatments) return;
+      
+      // Clear existing treatments if we're applying a package
+      setTreatments([]);
+      
+      // Map package treatments to our treatment format
+      const packageTreatments = packageData.treatments.map((treatment: any) => {
+        // Find matching treatment in our catalog
+        let treatmentDetails = null;
+        
+        // Search in all categories
+        for (const category of TREATMENT_CATEGORIES) {
+          const found = category.treatments.find(t => 
+            t.id.includes(treatment.id) || 
+            t.name.toLowerCase().includes(treatment.id.toLowerCase())
+          );
+          
+          if (found) {
+            treatmentDetails = { ...found, category: category.id };
+            break;
+          }
+        }
+        
+        // If no match found, create a generic treatment
+        if (!treatmentDetails) {
+          treatmentDetails = {
+            id: `generic-${treatment.id}`,
+            name: treatment.id.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            priceGBP: 400, // Default price
+            priceUSD: 520,
+            category: 'other'
+          };
+        }
+        
+        // Calculate Istanbul prices (35% of UK costs)
+        const istanbulPriceGBP = Math.round(treatmentDetails.priceGBP * 0.35);
+        const istanbulPriceUSD = Math.round(treatmentDetails.priceUSD * 0.35);
+        const quantity = treatment.quantity || 1;
+        
+        return {
+          id: `${treatmentDetails.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+          category: treatmentDetails.category,
+          name: treatmentDetails.name,
+          quantity: quantity,
+          priceGBP: istanbulPriceGBP,
+          priceUSD: istanbulPriceUSD,
+          subtotalGBP: istanbulPriceGBP * quantity,
+          subtotalUSD: istanbulPriceUSD * quantity,
+          guarantee: treatmentDetails.guarantee,
+          ukPriceGBP: treatmentDetails.priceGBP,
+          ukPriceUSD: treatmentDetails.priceUSD,
+          fromPackage: true
+        };
+      });
+      
+      // Update state with new treatments
+      setTreatments(packageTreatments);
+    };
+    
+    // Add event listener
+    window.addEventListener('packagePromoApplied', handlePackagePromo as EventListener);
+    
+    // Clean up
+    return () => {
+      window.removeEventListener('packagePromoApplied', handlePackagePromo as EventListener);
+    };
+  }, []);
+  
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
   
