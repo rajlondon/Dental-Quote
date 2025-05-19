@@ -2,6 +2,7 @@
 
 export interface PackageTreatment {
   id: string;
+  name: string;
   quantity: number;
 }
 
