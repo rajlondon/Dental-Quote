@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -176,27 +176,146 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Mock data for clinics
   const treatmentPlan = treatmentItems;
   
-  // Get promo code clinic ID from session storage if available
+  // Get promo code information from session storage if available
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
   const [filteredClinics, setFilteredClinics] = useState<any[]>([]);
   const [ukTotalPrice, setUkTotalPrice] = useState<number>(0);
   
-  React.useEffect(() => {
+  useEffect(() => {
     // Calculate value for UK for comparison (MOCK DATA)
     const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
     
+    // Define the clinics data first
+    const allClinicsDataList = [
+      {
+        id: 'dentspa',
+        name: 'DentSpa Dental Clinic',
+        city: 'Istanbul',
+        country: 'Turkey',
+        rating: 4.9,
+        reviewCount: 453,
+        address: 'Bağdat Caddesi No:35, Kadıköy',
+        specialties: ['Implants', 'Veneers', 'Full Mouth Reconstruction'],
+        accreditations: ['JCI Accredited', 'ISO Certified'],
+        technologies: ['3D CBCT Scanning', 'Digital Smile Design', 'CAD/CAM'],
+        languages: ['English', 'Turkish', 'German', 'Arabic'],
+        acceptsInsurance: true,
+        features: ['Free Airport Transfer', 'Hotel Arrangement', 'Multilingual Staff'],
+        mainImage: 'https://example.com/dentspa.jpg',
+        gallery: ['https://example.com/dentspa1.jpg', 'https://example.com/dentspa2.jpg'],
+        priceLevel: 'mid-range',
+        description: 'DentSpa is a premier dental clinic in Istanbul specializing in cosmetic and restorative dentistry with a spa-like atmosphere.',
+        doctors: [
+          {
+            name: 'Dr. Mehmet Yilmaz',
+            title: 'Chief Dental Surgeon',
+            specialties: ['Implantology', 'Cosmetic Dentistry'],
+            qualifications: ['DDS, Istanbul University', 'PhD in Implantology'],
+            experience: '15+ years',
+            photo: 'https://example.com/dr-yilmaz.jpg'
+          },
+          {
+            name: 'Dr. Ayşe Kaya',
+            title: 'Cosmetic Dentistry Specialist',
+            specialties: ['Veneers', 'Smile Design'],
+            qualifications: ['DDS, Ankara University', 'Certificate in Advanced Cosmetic Dentistry'],
+            experience: '12+ years',
+            photo: 'https://example.com/dr-kaya.jpg'
+          }
+        ],
+        certificates: ['ISO 9001', 'European Dental Association']
+      },
+      {
+        id: 'dentalharmony',
+        name: 'Dental Harmony Center',
+        city: 'Istanbul',
+        country: 'Turkey',
+        rating: 4.8,
+        reviewCount: 389,
+        address: 'Nişantaşı, Şişli',
+        specialties: ['Cosmetic Dentistry', 'Orthodontics', 'Dental Implants'],
+        accreditations: ['Turkish Dental Association Certified', 'European Dental Certification'],
+        technologies: ['Laser Dentistry', 'Digital X-rays', 'Intraoral Cameras'],
+        languages: ['English', 'Turkish', 'French', 'Russian'],
+        acceptsInsurance: true,
+        features: ['Airport Shuttle', 'Accommodation Assistance', 'Virtual Consultations'],
+        mainImage: 'https://example.com/harmony.jpg',
+        gallery: ['https://example.com/harmony1.jpg', 'https://example.com/harmony2.jpg'],
+        priceLevel: 'premium',
+        description: 'Dental Harmony Center offers state-of-the-art dental care with a focus on precision, comfort, and aesthetic results.',
+        doctors: [
+          {
+            name: 'Dr. Emre Demir',
+            title: 'Orthodontics Specialist',
+            specialties: ['Invisible Braces', 'Functional Orthodontics'],
+            qualifications: ['DDS, Marmara University', 'Orthodontics Specialty'],
+            experience: '20+ years',
+            photo: 'https://example.com/dr-demir.jpg'
+          },
+          {
+            name: 'Dr. Selin Aksoy',
+            title: 'Cosmetic Dentistry Expert',
+            specialties: ['Smile Makeovers', 'Dental Veneers'],
+            qualifications: ['DDS, Ege University', 'Advanced Cosmetic Dentistry Certificate'],
+            experience: '10+ years',
+            photo: 'https://example.com/dr-aksoy.jpg'
+          }
+        ],
+        certificates: ['Turkish Health Ministry Approved', 'International Dental Federation']
+      },
+      {
+        id: 'smiledesigners',
+        name: 'Smile Designers Clinic',
+        city: 'Istanbul',
+        country: 'Turkey',
+        rating: 4.7,
+        reviewCount: 312,
+        address: 'Levent, Beşiktaş',
+        specialties: ['Hollywood Smile', 'Dental Implants', 'Zirconium Crowns'],
+        accreditations: ['JCI Accredited', 'American Dental Association Recognized'],
+        technologies: ['Computer-Guided Implantology', '3D Printing', 'Digital Smile Design'],
+        languages: ['English', 'Turkish', 'Arabic', 'Spanish'],
+        acceptsInsurance: false,
+        features: ['Luxury Patient Lounge', 'VIP Transportation', 'Concierge Service'],
+        mainImage: 'https://example.com/smiledesigners.jpg',
+        gallery: ['https://example.com/smiledesign1.jpg', 'https://example.com/smiledesign2.jpg'],
+        priceLevel: 'luxury',
+        description: 'Smile Designers Clinic is a luxury dental center specializing in advanced cosmetic dentistry and smile transformations.',
+        doctors: [
+          {
+            name: 'Dr. Kemal Özturk',
+            title: 'Celebrity Smile Specialist',
+            specialties: ['Porcelain Veneers', 'Full Mouth Reconstruction'],
+            qualifications: ['DDS, Harvard University', 'Cosmetic Dentistry Fellowship'],
+            experience: '18+ years',
+            photo: 'https://example.com/dr-ozturk.jpg'
+          },
+          {
+            name: 'Dr. Zeynep Yildiz',
+            title: 'Implantology Expert',
+            specialties: ['All-on-4 Implants', 'Bone Grafting'],
+            qualifications: ['DDS, Istanbul University', 'PhD in Implantology'],
+            experience: '15+ years',
+            photo: 'https://example.com/dr-yildiz.jpg'
+          }
+        ],
+        certificates: ['ISO 9001', 'European Quality in Dentistry']
+      }
+    ];
+    
     // Filter clinics if there's a promo code with a specific clinic ID
-    if (promoCodeClinicId) {
-      const filtered = allClinicsData.filter(clinic => clinic.id === promoCodeClinicId);
-      setFilteredClinics(filtered.length > 0 ? filtered : allClinicsData);
+    const codeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+    if (codeClinicId) {
+      const filtered = allClinicsDataList.filter(clinic => clinic.id === codeClinicId);
+      setFilteredClinics(filtered.length > 0 ? filtered : allClinicsDataList);
       
       // If we have exactly one clinic, automatically select the tab
       if (filtered.length === 1) {
         setSelectedTab(filtered[0].id);
       }
     } else {
-      setFilteredClinics(allClinicsData);
+      setFilteredClinics(allClinicsDataList);
     }
     
     // Clear promo code session storage after navigation away
@@ -213,10 +332,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         sessionStorage.setItem('visitedMatchedClinics', 'true');
       }
     };
-  }, [totalGBP, promoCodeClinicId]);
+  }, [totalGBP]);
   
-  // Define the clinics data
-  const allClinicsData = [
+  // Define clinic data
+  const allClinics = [
     {
       id: 'dentspa',
       name: 'DentSpa Istanbul',
@@ -433,6 +552,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   
   // Calculate UK total
   const ukTotal = treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  
+  // Extract promo code information from session storage
+  const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+  const pendingPackageData = sessionStorage.getItem('pendingPackageData') 
+    ? JSON.parse(sessionStorage.getItem('pendingPackageData') || '{}') 
+    : null;
   
   if (!treatmentPlan.length) {
     return (

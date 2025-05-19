@@ -68,7 +68,7 @@ export function QuoteSummary() {
                   <li key={index} className="flex justify-between">
                     <div>
                       <span className="font-medium">{attraction.name}</span>
-                      <p className="text-blue-600">{attraction.description}</p>
+                      {attraction.description && <p className="text-blue-600">{attraction.description}</p>}
                     </div>
                     <span className="text-green-700">{formatCurrency(attraction.value)}</span>
                   </li>
