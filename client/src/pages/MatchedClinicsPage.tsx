@@ -174,7 +174,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Mock data for clinics
   const treatmentPlan = treatmentItems;
   
-  const clinicsData = [
+  // Get promo code clinic ID from session storage if available
+  const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+  
+  // Define the clinics data
+  const allClinicsData = [
     {
       id: 'dentspa',
       name: 'DentSpa Istanbul',
