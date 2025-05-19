@@ -48,7 +48,8 @@ const packagePromoCodes: PromoCode[] = [
         { id: 'cleaning', quantity: 1 }
       ],
       originalPrice: 1700,
-      packagePrice: 1400
+      packagePrice: 1400,
+      attractions: []
     },
     clinicId: '1' // Associated with clinic ID 1
   },
@@ -66,7 +67,95 @@ const packagePromoCodes: PromoCode[] = [
         { id: 'cleaning', quantity: 1 }
       ],
       originalPrice: 1350,
-      packagePrice: 1100
+      packagePrice: 1100,
+      attractions: []
+    },
+  },
+  {
+    id: 'pkg003',
+    code: 'FULLMOUTH2023',
+    type: 'package',
+    isActive: true,
+    packageData: {
+      name: 'Full Mouth Restoration',
+      description: 'Complete dental restoration with 6 implants, 6 crowns and sinus lift procedure',
+      treatments: [
+        { id: 'dental-implants', quantity: 6 },
+        { id: 'crowns', quantity: 6 },
+        { id: 'sinus-lift', quantity: 1 },
+        { id: 'cleaning', quantity: 2 },
+        { id: 'checkup', quantity: 3 }
+      ],
+      originalPrice: 5700,
+      packagePrice: 4200,
+      attractions: [
+        {
+          name: "Bosphorus Cruise Tour",
+          description: "Enjoy a relaxing 2-hour cruise along the Bosphorus Strait",
+          value: 75,
+          included: true
+        },
+        {
+          name: "Topkapi Palace Guided Tour",
+          description: "Explore the historical Ottoman palace with a professional guide",
+          value: 60,
+          included: true
+        }
+      ],
+      additionalServices: [
+        "Airport Transfer (Round trip)",
+        "3 Nights Accommodation",
+        "24/7 Dedicated Patient Coordinator",
+        "Translation Services",
+        "Post-treatment Checkup"
+      ]
+    },
+    clinicId: '1' 
+  },
+  {
+    id: 'pkg004',
+    code: 'HEALTHVACATION',
+    type: 'package',
+    isActive: true,
+    packageData: {
+      name: 'Health & Vacation Premium Package',
+      description: 'Luxury dental treatment combined with exclusive Istanbul tourism experiences',
+      treatments: [
+        { id: 'dental-implants', quantity: 4 },
+        { id: 'crowns', quantity: 4 },
+        { id: 'root-canal', quantity: 2 },
+        { id: 'whitening', quantity: 1 }
+      ],
+      originalPrice: 4500,
+      packagePrice: 3500,
+      attractions: [
+        {
+          name: "Blue Mosque & Hagia Sophia Tour",
+          description: "Private guided tour of Istanbul's most iconic historical sites",
+          value: 120,
+          included: true
+        },
+        {
+          name: "Turkish Hammam Experience",
+          description: "Traditional Turkish bath at a luxury spa",
+          value: 90,
+          included: true
+        },
+        {
+          name: "Grand Bazaar Shopping Experience",
+          description: "Guided shopping tour with personal shopper and translator",
+          value: 70,
+          included: true
+        }
+      ],
+      additionalServices: [
+        "VIP Airport Transfer (Round Trip)",
+        "5 Nights Luxury Hotel Accommodation",
+        "Private Chauffeur Service",
+        "English/Arabic Speaking Coordinator",
+        "All Medical Follow-up Appointments",
+        "International Warranty Certificate"
+      ]
     },
     clinicId: '2' // Associated with clinic ID 2
   }
