@@ -2,6 +2,7 @@ import React from 'react';
 import { useQuote } from '../contexts/QuoteContext';
 import { PromoCodeInput } from './PromoCodeInput';
 import { Button } from '@/components/ui/button';
+import { Package } from 'lucide-react';
 
 export function QuoteSummary() {
   const quoteContext = useQuote();
@@ -20,21 +21,47 @@ export function QuoteSummary() {
   const total = quoteContext?.total || 0;
   const discountAmount = quoteContext?.discountAmount || 0;
   const promoCode = quoteContext?.promoCode || null;
+  const isPackage = quoteContext?.isPackage || false;
+  const packageName = quoteContext?.packageName || null;
+  const packageDescription = quoteContext?.packageDescription || null;
   const saveQuote = quoteContext?.saveQuote;
   
   return (
     <div className="rounded-lg border bg-card p-6 shadow-sm">
       <h3 className="text-lg font-semibold mb-4">Quote Summary</h3>
       
+      {/* Package information */}
+      {isPackage && packageName && (
+        <div className="bg-blue-50 p-3 rounded-md mb-4 border border-blue-100">
+          <div className="flex items-center gap-2 mb-1">
+            <Package className="h-4 w-4 text-blue-600" />
+            <h4 className="font-medium text-blue-800">{packageName}</h4>
+          </div>
+          {packageDescription && (
+            <p className="text-sm text-blue-700 mb-2">{packageDescription}</p>
+          )}
+          <p className="text-sm text-blue-900">
+            <strong>Package savings:</strong> {formatCurrency(discountAmount)}
+          </p>
+        </div>
+      )}
+      
       {/* Treatment list */}
       <div className="space-y-2 mb-6">
+        <h4 className="font-medium text-sm text-gray-700 mb-1">Treatments</h4>
+        
         {treatments.length === 0 ? (
           <p className="text-muted-foreground">No treatments selected</p>
         ) : (
           treatments.map((treatment) => (
             <div key={treatment.id} className="flex justify-between" data-treatment-id={treatment.id}>
-              <span>{treatment.name}</span>
-              <span className="font-medium">{formatCurrency(treatment.price)}</span>
+              <span>
+                {treatment.name}
+                {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
+              </span>
+              <span className="font-medium">
+                {formatCurrency(treatment.price * (treatment.quantity || 1))}
+              </span>
             </div>
           ))
         )}
@@ -49,7 +76,9 @@ export function QuoteSummary() {
       {/* Discount (if applied) */}
       {discountAmount > 0 && (
         <div className="flex justify-between py-2 text-green-600">
-          <span>Discount {promoCode && `(${promoCode})`}</span>
+          <span>
+            {isPackage ? 'Package Discount' : `Discount ${promoCode && `(${promoCode})`}`}
+          </span>
           <span className="font-medium">-{formatCurrency(discountAmount)}</span>
         </div>
       )}

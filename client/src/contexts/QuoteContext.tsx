@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
+import { useToast } from '@/hooks/use-toast';
+
+// Treatment interface
+interface Treatment {
+  id: string;
+  name: string;
+  price: number;
+  quantity?: number;
+}
 
 // Define action types for state changes
 const ACTIONS = {
@@ -9,24 +18,44 @@ const ACTIONS = {
   REMOVE_TREATMENT: 'remove_treatment',
   SET_PROMO_CODE: 'set_promo_code',
   CLEAR_PROMO_CODE: 'clear_promo_code',
+  APPLY_PACKAGE_PROMO: 'apply_package_promo',
   UPDATE_TOTALS: 'update_totals',
   SET_LOADING: 'set_loading',
   RESET: 'reset'
 };
 
+// Define state interface
+interface QuoteState {
+  treatments: Treatment[];
+  promoCode: string | null;
+  discountAmount: number;
+  subtotal: number;
+  total: number;
+  loading: boolean;
+  error: Error | null;
+  isPackage: boolean;
+  packageName: string | null;
+  packageDescription: string | null;
+  clinicId: string | null;
+}
+
 // Initial state
-const initialState = {
+const initialState: QuoteState = {
   treatments: [],
   promoCode: null,
   discountAmount: 0,
   subtotal: 0,
   total: 0,
   loading: false,
-  error: null
+  error: null,
+  isPackage: false,
+  packageName: null,
+  packageDescription: null,
+  clinicId: null
 };
 
 // Reducer to handle all state changes
-function quoteReducer(state, action) {
+function quoteReducer(state: QuoteState, action: any): QuoteState {
   switch (action.type) {
     case ACTIONS.SET_TREATMENTS:
       return {
@@ -50,12 +79,30 @@ function quoteReducer(state, action) {
         discountAmount: action.payload.discountAmount,
         loading: false
       };
+    case ACTIONS.APPLY_PACKAGE_PROMO:
+      return {
+        ...state,
+        treatments: action.payload.treatments,
+        isPackage: true,
+        packageName: action.payload.packageName,
+        packageDescription: action.payload.packageDescription,
+        promoCode: action.payload.code,
+        subtotal: action.payload.originalPrice,
+        discountAmount: action.payload.savings,
+        total: action.payload.packagePrice,
+        clinicId: action.payload.clinicId,
+        loading: false
+      };
     case ACTIONS.CLEAR_PROMO_CODE:
       return {
         ...state,
         promoCode: null,
         discountAmount: 0,
-        loading: false
+        loading: false,
+        isPackage: false,
+        packageName: null,
+        packageDescription: null,
+        clinicId: null
       };
     case ACTIONS.UPDATE_TOTALS:
       return {
@@ -78,7 +125,7 @@ function quoteReducer(state, action) {
 
 // Define the context types
 interface QuoteContextType {
-  treatments: any[];
+  treatments: Treatment[];
   promoCode: string | null;
   discountAmount: number;
   subtotal: number;
@@ -86,7 +133,11 @@ interface QuoteContextType {
   loading: boolean;
   error: Error | null;
   isApplyingPromo: boolean;
-  addTreatment: (treatment: any) => void;
+  isPackage: boolean;
+  packageName: string | null;
+  packageDescription: string | null;
+  clinicId: string | null;
+  addTreatment: (treatment: Treatment) => void;
   removeTreatment: (treatmentId: string) => void;
   applyPromoCode: (code: string) => void;
   clearPromoCode: () => void;
@@ -100,19 +151,27 @@ const QuoteContext = createContext<QuoteContextType | null>(null);
 export function QuoteProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(quoteReducer, initialState);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Calculate totals whenever treatments or discount changes
   useEffect(() => {
-    const subtotal = state.treatments.reduce((sum, t) => sum + t.price, 0);
+    // Skip total recalculation for packages since they have fixed pricing
+    if (state.isPackage) return;
+    
+    const subtotal = state.treatments.reduce((sum: number, t: Treatment) => {
+      const quantity = t.quantity || 1;
+      return sum + (t.price * quantity);
+    }, 0);
+    
     const total = Math.max(0, subtotal - state.discountAmount);
     
     dispatch({
       type: ACTIONS.UPDATE_TOTALS,
       payload: { subtotal, total }
     });
-  }, [state.treatments, state.discountAmount]);
+  }, [state.treatments, state.discountAmount, state.isPackage]);
   
-  // Apply promo code mutation
+  // Apply regular promo code mutation
   const applyPromoMutation = useMutation({
     mutationFn: async (code: string) => {
       // Set loading state
@@ -145,29 +204,104 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         }
       });
       
-      // No need to invalidate query cache for this local state change
-      // queryClient.invalidateQueries({ queryKey: ['quote'] });
+      // Show success toast
+      toast({
+        title: "Promo Code Applied!",
+        description: `Successfully applied ${data.code} with a discount of ${new Intl.NumberFormat('en-GB', { 
+          style: 'currency', 
+          currency: 'GBP' 
+        }).format(data.discountAmount)}`,
+      });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Promo code application failed:', error);
       dispatch({ type: ACTIONS.CLEAR_PROMO_CODE });
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || error.message || "Failed to apply promo code",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Apply package promo code mutation
+  const applyPackagePromoMutation = useMutation({
+    mutationFn: async (code: string) => {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      const response = await axios.post('/api/promo-codes/apply-package', {
+        code
+      });
+      
+      return response.data;
+    },
+    onSuccess: (data) => {
+      console.log('Package promo code applied successfully:', data);
+      
+      // Update state with package data
+      dispatch({
+        type: ACTIONS.APPLY_PACKAGE_PROMO,
+        payload: {
+          code: data.code,
+          treatments: data.treatments,
+          packageName: data.packageName,
+          packageDescription: data.packageDescription,
+          originalPrice: data.originalPrice,
+          packagePrice: data.packagePrice,
+          savings: data.savings,
+          clinicId: data.clinicId
+        }
+      });
+      
+      // Show success toast
+      toast({
+        title: "Package Applied!",
+        description: `${data.packageName} package has been applied with a savings of ${new Intl.NumberFormat('en-GB', { 
+          style: 'currency', 
+          currency: 'GBP' 
+        }).format(data.savings)}`,
+      });
+    },
+    onError: (error: any) => {
+      console.error('Package promo code application failed:', error);
+      dispatch({ type: ACTIONS.CLEAR_PROMO_CODE });
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || error.message || "Failed to apply package code",
+        variant: "destructive"
+      });
     }
   });
   
   // Clear promo code
   const clearPromoCode = () => {
     dispatch({ type: ACTIONS.CLEAR_PROMO_CODE });
+    
+    toast({
+      title: "Promo Code Removed",
+      description: "The promo code has been removed from your quote.",
+    });
   };
   
   // Add treatment with validation
-  const addTreatment = (treatment) => {
+  const addTreatment = (treatment: Treatment) => {
     if (!state.treatments.some(t => t.id === treatment.id)) {
       dispatch({ type: ACTIONS.ADD_TREATMENT, payload: treatment });
+      
+      // Show toast notification
+      toast({
+        title: "Treatment Added",
+        description: `${treatment.name} has been added to your quote.`,
+      });
     }
   };
   
   // Remove treatment
-  const removeTreatment = (treatmentId) => {
+  const removeTreatment = (treatmentId: string) => {
     dispatch({ type: ACTIONS.REMOVE_TREATMENT, payload: treatmentId });
   };
   
@@ -177,16 +311,76 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
       const quoteData = {
         treatments: state.treatments.map(t => t.id),
         promoCode: state.promoCode,
+        isPackage: state.isPackage,
+        packageName: state.packageName,
         subtotal: state.subtotal,
         discount: state.discountAmount,
-        total: state.total
+        total: state.total,
+        clinicId: state.clinicId
       };
       
       const response = await axios.post('/api/quotes', quoteData);
+      
+      toast({
+        title: "Quote Saved",
+        description: "Your quote has been saved successfully.",
+      });
+      
       return response.data;
     } catch (error) {
       console.error('Failed to save quote:', error);
+      
+      toast({
+        title: "Error",
+        description: "Failed to save quote. Please try again.",
+        variant: "destructive"
+      });
+      
       throw error;
+    }
+  };
+  
+  // Apply a promo code (handles both regular and package codes)
+  const applyPromoCode = async (code: string) => {
+    if (!code) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid promo code",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      dispatch({ type: ACTIONS.SET_LOADING, payload: true });
+      
+      // First check if it's a package code
+      try {
+        const validationResponse = await axios.post('/api/promo-codes/validate', { code });
+        
+        if (validationResponse.data.valid) {
+          // If it's a package type, use the package endpoint
+          if (validationResponse.data.type === 'package') {
+            applyPackagePromoMutation.mutate(code);
+            return;
+          }
+        }
+      } catch (err) {
+        console.log('Error validating promo code type:', err);
+        // Continue to try as a regular code
+      }
+      
+      // If not a package or validation failed, try as a regular discount code
+      applyPromoMutation.mutate(code);
+    } catch (error: any) {
+      console.error('Error applying promo code:', error);
+      dispatch({ type: ACTIONS.SET_LOADING, payload: false });
+      
+      toast({
+        title: "Error",
+        description: error.message || "Failed to apply promo code",
+        variant: "destructive"
+      });
     }
   };
   
@@ -196,10 +390,10 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         ...state,
         addTreatment,
         removeTreatment,
-        applyPromoCode: (code) => applyPromoMutation.mutate(code),
+        applyPromoCode,
         clearPromoCode,
         saveQuote,
-        isApplyingPromo: applyPromoMutation.isPending
+        isApplyingPromo: applyPromoMutation.isPending || applyPackagePromoMutation.isPending
       }}
     >
       {children}
