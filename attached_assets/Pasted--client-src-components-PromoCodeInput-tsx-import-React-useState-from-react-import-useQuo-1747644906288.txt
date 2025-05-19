@@ -1,8 +1,9 @@
+// client/src/components/PromoCodeInput.tsx
 import React, { useState } from 'react';
 import { useQuote } from '../contexts/QuoteContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Alert, AlertDescription } from './ui/alert';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 export function PromoCodeInput() {

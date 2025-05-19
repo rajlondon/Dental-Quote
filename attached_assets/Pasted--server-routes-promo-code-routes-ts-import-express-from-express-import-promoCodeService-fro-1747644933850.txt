@@ -1,0 +1,83 @@
+// server/routes/promo-code-routes.ts
+import express from 'express';
+import { promoCodeService } from '../services/promo-code-service';
+
+const router = express.Router();
+
+// Validate promo code
+router.post('/validate', async (req, res) => {
+  try {
+    const { code } = req.body;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid promo code format' });
+    }
+    
+    const validationResult = await promoCodeService.validateCode(code);
+    
+    if (validationResult.valid) {
+      return res.json({
+        valid: true,
+        code: validationResult.code,
+        discountType: validationResult.discountType,
+        discountValue: validationResult.discountValue
+      });
+    } else {
+      return res.status(400).json({
+        valid: false,
+        error: validationResult.error
+      });
+    }
+  } catch (error) {
+    console.error('Promo code validation error:', error);
+    return res.status(500).json({ error: 'Failed to validate promo code' });
+  }
+});
+
+// Apply promo code and calculate discount
+router.post('/apply', async (req, res) => {
+  try {
+    const { code, treatmentIds } = req.body;
+    
+    if (!code || typeof code !== 'string') {
+      return res.status(400).json({ error: 'Invalid promo code format' });
+    }
+    
+    if (!Array.isArray(treatmentIds)) {
+      return res.status(400).json({ error: 'Treatment IDs must be an array' });
+    }
+    
+    // First validate the code
+    const validationResult = await promoCodeService.validateCode(code);
+    
+    if (!validationResult.valid) {
+      return res.status(400).json({
+        valid: false,
+        error: validationResult.error
+      });
+    }
+    
+    // Then calculate the discount
+    const calculationResult = await promoCodeService.calculateDiscount({
+      code: validationResult.code,
+      discountType: validationResult.discountType,
+      discountValue: validationResult.discountValue,
+      treatmentIds
+    });
+    
+    // Return the discount information
+    return res.json({
+      code: validationResult.code,
+      discountType: validationResult.discountType,
+      discountValue: validationResult.discountValue,
+      discountAmount: calculationResult.discountAmount,
+      originalTotal: calculationResult.originalTotal,
+      newTotal: calculationResult.newTotal
+    });
+  } catch (error) {
+    console.error('Promo code application error:', error);
+    return res.status(500).json({ error: 'Failed to apply promo code' });
+  }
+});
+
+export const promoCodeRoutes = router;
