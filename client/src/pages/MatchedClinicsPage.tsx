@@ -739,7 +739,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                     
                     <div className="flex items-start gap-2 text-sm text-gray-700 mb-3">
                       <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                      <span>{clinic.location.area}, {clinic.location.city}</span>
+                      <span>{clinic.location ? `${clinic.location.area}, ${clinic.location.city}` : 'Location information unavailable'}</span>
                     </div>
                     
                     <p className="text-sm text-gray-600 mb-4 line-clamp-3">
