@@ -35,9 +35,19 @@ promoCodeRouter.get('/validate/:code', async (req: Request, res: Response) => {
     let sampleDiscountAmount = null;
     if (validationResult.valid && validationResult.discountType && validationResult.discountValue) {
       if (validationResult.discountType === 'percentage') {
-        sampleDiscountAmount = `${validationResult.discountValue}%`;
+        // Calculate a concrete example amount based on a £1000 sample price
+        const sampleAmount = Math.round((validationResult.discountValue / 100) * 1000);
+        sampleDiscountAmount = `£${sampleAmount} (${validationResult.discountValue}%)`;
       } else if (validationResult.discountType === 'fixed_amount') {
         sampleDiscountAmount = `£${validationResult.discountValue}`;
+      }
+    }
+    
+    // For package promos, include the savings
+    if (validationResult.valid && validationResult.type === 'package' && packageData) {
+      const savings = packageData.originalPrice - packageData.packagePrice;
+      if (savings > 0) {
+        sampleDiscountAmount = `£${savings}`;
       }
     }
     

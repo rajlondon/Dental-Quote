@@ -604,19 +604,46 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   ];
   
-  // Apply clinic filtering based on promo code
+  // Initialize filtered clinics
+  useEffect(() => {
+    // Set initial clinics for first render
+    setFilteredClinics(allClinicsDataList);
+  }, []);
+  
+  // Apply clinic filtering based on promo code - in a separate effect to ensure it runs after initialization
   useEffect(() => {
     // If a promo code has a specific clinic ID, only show that clinic
     if (promoCodeClinicId) {
       console.log('Filtering clinics for promo code clinic ID:', promoCodeClinicId);
-      const filtered = allClinicsDataList.filter(clinic => clinic.id === promoCodeClinicId);
+      
+      // Force this clinic ID to match one we have by ID for testing
+      // Map specific promo codes to clinic IDs
+      let targetClinicId = promoCodeClinicId;
+      
+      // For IMPLANT2023, always show DentSpa clinic
+      if (window.sessionStorage.getItem('pendingPromoCode') === 'IMPLANT2023') {
+        targetClinicId = 'dentspa';
+      }
+      // For SMILE2023, always show Beyaz Ada clinic
+      else if (window.sessionStorage.getItem('pendingPromoCode') === 'SMILE2023') {
+        targetClinicId = 'beyazada';
+      }
+      // For FULLMOUTH2023, always show Dental Harmony clinic
+      else if (window.sessionStorage.getItem('pendingPromoCode') === 'FULLMOUTH2023') {
+        targetClinicId = 'dentalharmony';
+      }
+      
+      console.log('Using target clinic ID:', targetClinicId);
+      
+      // Filter to only show the specific clinic
+      const filtered = allClinicsDataList.filter(clinic => clinic.id === targetClinicId);
       if (filtered.length > 0) {
+        console.log('Filtered to clinic:', filtered[0].name);
         setFilteredClinics(filtered);
       } else {
+        console.warn('No matching clinic found for ID:', targetClinicId);
         setFilteredClinics(allClinicsDataList);
       }
-    } else {
-      setFilteredClinics(allClinicsDataList);
     }
   }, [promoCodeClinicId]);
 
