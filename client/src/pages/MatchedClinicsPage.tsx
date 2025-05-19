@@ -938,16 +938,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <Star 
                                       key={i} 
                                       className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.overall) 
+                                        clinic.ratings && i < Math.floor(clinic.ratings.overall || 0) 
                                           ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.overall 
+                                          : clinic.ratings && i < (clinic.ratings.overall || 0)
                                             ? 'text-yellow-500 fill-yellow-500 opacity-50' 
                                             : 'text-gray-300'
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.overall}</span>
+                                <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.overall : 'N/A'}</span>
                               </div>
                             </div>
                             
@@ -959,16 +959,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <Star 
                                       key={i} 
                                       className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.cleanliness) 
+                                        clinic.ratings && i < Math.floor(clinic.ratings.cleanliness || 0) 
                                           ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.cleanliness 
+                                          : clinic.ratings && i < (clinic.ratings.cleanliness || 0)
                                             ? 'text-yellow-500 fill-yellow-500 opacity-50' 
                                             : 'text-gray-300'
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.cleanliness}</span>
+                                <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.cleanliness : 'N/A'}</span>
                               </div>
                             </div>
                             
@@ -980,16 +980,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <Star 
                                       key={i} 
                                       className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.staff) 
+                                        clinic.ratings && i < Math.floor(clinic.ratings.staff || 0) 
                                           ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.staff 
+                                          : clinic.ratings && i < (clinic.ratings.staff || 0)
                                             ? 'text-yellow-500 fill-yellow-500 opacity-50' 
                                             : 'text-gray-300'
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.staff}</span>
+                                <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.staff : 'N/A'}</span>
                               </div>
                             </div>
                             
@@ -1001,16 +1001,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <Star 
                                       key={i} 
                                       className={`h-4 w-4 ${
-                                        i < Math.floor(clinic.ratings.value) 
+                                        clinic.ratings && i < Math.floor(clinic.ratings.value || 0) 
                                           ? 'text-yellow-500 fill-yellow-500' 
-                                          : i < clinic.ratings.value 
+                                          : clinic.ratings && i < (clinic.ratings.value || 0)
                                             ? 'text-yellow-500 fill-yellow-500 opacity-50' 
                                             : 'text-gray-300'
                                       }`} 
                                     />
                                   ))}
                                 </div>
-                                <span className="ml-2 text-sm font-medium">{clinic.ratings.value}</span>
+                                <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.value : 'N/A'}</span>
                               </div>
                             </div>
                             
