@@ -1,0 +1,39 @@
+The above error occurred in the <MatchedClinicsPage> component:
+
+    at MatchedClinicsPage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/MatchedClinicsPage.tsx?t=1747688411880:36:3)
+    at div
+    at main
+    at YourQuotePage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/YourQuotePage2.tsx?t=1747688433988:250:35)
+    at Route (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:323:16)
+    at Switch (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:379:17)
+    at Router
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/App.tsx?t=1747688433988&v=tEPA2o1PSRAn368Vvv1J8:637:3)
+    at RTLProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/rtl-provider.tsx:21:31)
+    at Suspense
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+
+React will try to recreate this component tree from scratch using the error boundary you provided, ErrorBoundary.
+ERROR DETAILS:
+Message: Cannot read properties of undefined (reading 'reviews')
+Stack: TypeError: Cannot read properties of undefined (reading 'reviews')
+    at https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/MatchedClinicsPage.tsx?t=1747688411880:1561:207
+    at Array.map (<anonymous>)
+    at MatchedClinicsPage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/MatchedClinicsPage.tsx?t=1747688411880:784:190)
+    at renderWithHooks (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:11548:26)
+    at updateFunctionComponent (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:14582:28)
+    at beginWork (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:15924:22)
+    at beginWork$1 (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:19753:22)
+    at performUnitOfWork (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:19198:20)
+    at workLoopSync (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:19137:13)
+    at renderRootSync (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-276SZO74.js?v=62d0e4bd:19116:15)
+Additional Context: 
+Object {componentStack: "↵    at MatchedClinicsPage…", componentName: "Router"}
+
