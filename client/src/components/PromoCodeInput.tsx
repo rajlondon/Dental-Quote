@@ -163,11 +163,14 @@ export function PromoCodeInput() {
               <div className="mt-2">
                 <p className="text-xs font-medium text-blue-800">Included treatments:</p>
                 <ul className="mt-1 text-xs text-blue-700 list-disc pl-5">
-                  {packageInfo.treatments.slice(0, 3).map((treatment: any, i: number) => (
-                    <li key={i}>{treatment.name}</li>
+                  {packageInfo.treatments.map((treatment: any, i: number) => (
+                    <li key={i}>{treatment.name} {treatment.quantity > 1 ? `(x${treatment.quantity})` : ''}</li>
                   ))}
-                  {packageInfo.treatments.length > 3 && (
-                    <li>+{packageInfo.treatments.length - 3} more treatments</li>
+                  
+                  {packageInfo.savings && (
+                    <div className="mt-2 text-green-700 text-xs font-medium">
+                      You save: £{packageInfo.savings} ({Math.round((packageInfo.savings / packageInfo.originalPrice) * 100)}% off UK prices)
+                    </div>
                   )}
                 </ul>
               </div>
