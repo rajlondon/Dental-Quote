@@ -88,30 +88,41 @@ export function PromoCodeInput() {
                 // Store clinic ID if provided
                 if (response.data.clinicId) {
                   sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
+                } else {
+                  // Clear any previous clinic ID if not specified for this package
+                  sessionStorage.removeItem('pendingPromoCodeClinicId');
                 }
                 
                 // Emit a custom event to notify TreatmentPlanBuilder about the package
-                const packageEvent = new CustomEvent('packagePromoApplied', {
-                  detail: {
-                    code: inputCode.trim(),
-                    packageData: response.data.packageData,
-                    clinicId: response.data.clinicId
-                  }
-                });
-                window.dispatchEvent(packageEvent);
+                try {
+                  const packageEvent = new CustomEvent('packagePromoApplied', {
+                    detail: {
+                      code: inputCode.trim(),
+                      packageData: response.data.packageData,
+                      clinicId: response.data.clinicId || null
+                    }
+                  });
+                  window.dispatchEvent(packageEvent);
+                } catch (eventError) {
+                  console.error('Error dispatching package event:', eventError);
+                }
               } else {
                 // Store discount code in session storage
                 sessionStorage.setItem('pendingPromoCode', inputCode.trim());
                 
                 // Emit a custom event to notify about discount code
-                const discountEvent = new CustomEvent('discountPromoApplied', {
-                  detail: {
-                    code: inputCode.trim(),
-                    discountType: response.data.discountType,
-                    discountValue: response.data.discountValue
-                  }
-                });
-                window.dispatchEvent(discountEvent);
+                try {
+                  const discountEvent = new CustomEvent('discountPromoApplied', {
+                    detail: {
+                      code: inputCode.trim(),
+                      discountType: response.data.discountType || 'fixed_amount',
+                      discountValue: response.data.discountValue || 0
+                    }
+                  });
+                  window.dispatchEvent(discountEvent);
+                } catch (eventError) {
+                  console.error('Error dispatching discount event:', eventError);
+                }
               }
             } else {
               setError('Invalid promo code. Please try again.');
