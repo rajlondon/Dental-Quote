@@ -1,9 +1,10 @@
 import React, { useState, useContext } from 'react';
-import { useQuote, QuoteContext } from '../contexts/QuoteContext';
+import { useOptionalQuote, QuoteContext } from '../contexts/QuoteContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Package } from 'lucide-react';
+import axios from 'axios';
 
 export function PromoCodeInput() {
   const [inputCode, setInputCode] = useState('');
@@ -12,8 +13,8 @@ export function PromoCodeInput() {
   // Check if QuoteContext is available before using useQuote
   const quoteContextAvailable = useContext(QuoteContext) !== null;
   
-  // Only use useQuote if context is available, otherwise use default values
-  const quoteContext = quoteContextAvailable ? useQuote() : null;
+  // Only use the context directly if it's available
+  const quoteContext = useOptionalQuote();
   
   // Extract values from context
   const promoCode = quoteContext?.promoCode || null;
@@ -46,16 +47,52 @@ export function PromoCodeInput() {
     }
   };
   
-  // If context is not available, show simplified input
+  // State for standalone mode
+  const [success, setSuccess] = useState<string | null>(null);
+  const [packageInfo, setPackageInfo] = useState<any>(null);
+  const [isValidating, setIsValidating] = useState(false);
+  
+  // If context is not available, show enhanced standalone input
   if (!quoteContextAvailable) {
     return (
       <div className="space-y-4">
-        <form onSubmit={(e) => {
+        <form onSubmit={async (e) => {
           e.preventDefault();
-          if (inputCode.trim()) {
-            setError('Please continue to the quote page to use promo codes');
-          } else {
+          setError('');
+          setSuccess(null);
+          setPackageInfo(null);
+          
+          if (!inputCode.trim()) {
             setError('Please enter a promo code');
+            return;
+          }
+          
+          // Try to validate the promo code
+          try {
+            setIsValidating(true);
+            const response = await axios.get(`/api/promo-codes/validate/${inputCode.trim()}`);
+            
+            if (response.data.valid) {
+              setSuccess(`Promo code "${inputCode}" is valid!`);
+              
+              // If it's a package, show package info
+              if (response.data.isPackage && response.data.packageData) {
+                setPackageInfo(response.data.packageData);
+                
+                // Store package data in session storage for later use
+                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
+                sessionStorage.setItem('pendingPackageData', JSON.stringify(response.data.packageData));
+              } else {
+                // Store discount code in session storage
+                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
+              }
+            } else {
+              setError('Invalid promo code. Please try again.');
+            }
+          } catch (err: any) {
+            setError(err?.response?.data?.message || err?.message || 'Failed to validate promo code');
+          } finally {
+            setIsValidating(false);
           }
         }} className="flex space-x-2">
           <Input
@@ -64,12 +101,14 @@ export function PromoCodeInput() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputCode(e.target.value)}
             placeholder="Enter promo or package code"
             className="flex-1"
+            disabled={isValidating}
           />
           <Button 
             type="submit"
             className="whitespace-nowrap"
+            disabled={isValidating}
           >
-            Apply Code
+            {isValidating ? 'Checking...' : 'Apply Code'}
           </Button>
         </form>
         
@@ -80,8 +119,47 @@ export function PromoCodeInput() {
           </Alert>
         )}
         
+        {success && (
+          <Alert variant="success" className="bg-green-50 border-green-200 text-green-800">
+            <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+            <AlertDescription>{success}</AlertDescription>
+          </Alert>
+        )}
+        
+        {packageInfo && (
+          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-md">
+            <h4 className="font-medium text-blue-800 flex items-center">
+              <Package className="h-4 w-4 mr-2" />
+              {packageInfo.name || 'Treatment Package'}
+            </h4>
+            <p className="text-sm text-blue-700 mt-1">{packageInfo.description || 'Special package with multiple treatments'}</p>
+            
+            {packageInfo.treatments && packageInfo.treatments.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs font-medium text-blue-800">Included treatments:</p>
+                <ul className="mt-1 text-xs text-blue-700 list-disc pl-5">
+                  {packageInfo.treatments.slice(0, 3).map((treatment: any, i: number) => (
+                    <li key={i}>{treatment.name}</li>
+                  ))}
+                  {packageInfo.treatments.length > 3 && (
+                    <li>+{packageInfo.treatments.length - 3} more treatments</li>
+                  )}
+                </ul>
+              </div>
+            )}
+            
+            <p className="text-xs text-blue-800 mt-2 font-medium">Continue to the quote page to apply this package</p>
+          </div>
+        )}
+        
         <div className="text-xs text-gray-500">
-          <p>Continue to the quote page to apply promo codes</p>
+          <p>Try these sample codes:</p>
+          <ul className="list-disc pl-4 mt-1 space-y-1">
+            <li><strong>TEST50</strong> - 50% off any treatment</li>
+            <li><strong>SAVE100</strong> - £100 off your total</li>
+            <li><strong>IMPLANT2023</strong> - Dental implant package</li>
+            <li><strong>SMILE2023</strong> - Smile makeover package</li>
+          </ul>
         </div>
       </div>
     );

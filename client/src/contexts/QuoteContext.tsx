@@ -459,3 +459,9 @@ export function useQuote() {
   }
   return context;
 }
+
+// Helper hook to safely check if quote context is available
+export function useOptionalQuote() {
+  const context = useContext(QuoteContext);
+  return context; // Returns null if not in a QuoteProvider
+}
