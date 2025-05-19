@@ -82,9 +82,34 @@ export function PromoCodeInput() {
                 // Store package data in session storage for later use
                 sessionStorage.setItem('pendingPromoCode', inputCode.trim());
                 sessionStorage.setItem('pendingPackageData', JSON.stringify(response.data.packageData));
+                
+                // Store clinic ID if provided
+                if (response.data.clinicId) {
+                  sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
+                }
+                
+                // Emit a custom event to notify TreatmentPlanBuilder about the package
+                const packageEvent = new CustomEvent('packagePromoApplied', {
+                  detail: {
+                    code: inputCode.trim(),
+                    packageData: response.data.packageData,
+                    clinicId: response.data.clinicId
+                  }
+                });
+                window.dispatchEvent(packageEvent);
               } else {
                 // Store discount code in session storage
                 sessionStorage.setItem('pendingPromoCode', inputCode.trim());
+                
+                // Emit a custom event to notify about discount code
+                const discountEvent = new CustomEvent('discountPromoApplied', {
+                  detail: {
+                    code: inputCode.trim(),
+                    discountType: response.data.discountType,
+                    discountValue: response.data.discountValue
+                  }
+                });
+                window.dispatchEvent(discountEvent);
               }
             } else {
               setError('Invalid promo code. Please try again.');
