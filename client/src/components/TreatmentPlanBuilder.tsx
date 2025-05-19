@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { PromoCodeInput } from './PromoCodeInput';
 
 // Define TreatmentData structure
 export interface TreatmentItem {
@@ -1695,6 +1696,27 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <p className="mb-2"><strong>IMPORTANT:</strong> These prices are estimates based on average Istanbul clinic rates. You will receive clinic-specific quotes in the next step.</p>
                 <p className="mb-2">Your final treatment quote will be confirmed by your chosen clinic after they've reviewed your dental information — including any X-rays, CT scans, or images you provide. Payment for treatment is only made in-person at the clinic, ensuring the treatment plan is accurate and agreed by you.</p>
               </div>
+              {/* Promo Code Entry - Added early in treatment selection flow */}
+              <div className="mt-6 mb-6 border rounded-md p-4 bg-gradient-to-r from-blue-50 to-blue-50/30">
+                <h3 className="font-medium mb-3 flex items-center text-blue-800">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M5 2a2 2 0 00-2 2v14l3.5-2 3.5 2 3.5-2 3.5 2V4a2 2 0 00-2-2H5zm4.707 4.707a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L8.414 9H10a3 3 0 013 3v1a1 1 0 102 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clipRule="evenodd" />
+                  </svg>
+                  Have a Promo Code or Package?
+                </h3>
+                
+                <div className="mt-2">
+                  <PromoCodeInput />
+                </div>
+                
+                <div className="mt-3 text-sm text-blue-700 flex items-start">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <p>Apply a promo code to access special discounts and packages. Some packages include tourist attractions and additional services!</p>
+                </div>
+              </div>
+
               <div className="mt-4">
                 <Button 
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" 
