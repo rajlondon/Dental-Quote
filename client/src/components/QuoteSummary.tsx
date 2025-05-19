@@ -4,14 +4,7 @@ import { PromoCodeInput } from './PromoCodeInput';
 import { Button } from '@/components/ui/button';
 
 export function QuoteSummary() {
-  const { 
-    treatments, 
-    subtotal, 
-    total, 
-    discountAmount, 
-    promoCode,
-    saveQuote 
-  } = useQuote();
+  const quoteContext = useQuote();
   
   // Helper function to format currency
   const formatCurrency = (value: number) => {
@@ -20,6 +13,14 @@ export function QuoteSummary() {
       currency: 'GBP' 
     }).format(value);
   };
+  
+  // Extract values from context if available
+  const treatments = quoteContext?.treatments || [];
+  const subtotal = quoteContext?.subtotal || 0;
+  const total = quoteContext?.total || 0;
+  const discountAmount = quoteContext?.discountAmount || 0;
+  const promoCode = quoteContext?.promoCode || null;
+  const saveQuote = quoteContext?.saveQuote;
   
   return (
     <div className="rounded-lg border bg-card p-6 shadow-sm">
@@ -31,7 +32,7 @@ export function QuoteSummary() {
           <p className="text-muted-foreground">No treatments selected</p>
         ) : (
           treatments.map((treatment) => (
-            <div key={treatment.id} className="flex justify-between">
+            <div key={treatment.id} className="flex justify-between" data-treatment-id={treatment.id}>
               <span>{treatment.name}</span>
               <span className="font-medium">{formatCurrency(treatment.price)}</span>
             </div>
@@ -70,7 +71,7 @@ export function QuoteSummary() {
       {/* Action buttons */}
       <div className="flex flex-col space-y-2">
         <Button 
-          onClick={saveQuote}
+          onClick={() => saveQuote && saveQuote()}
           disabled={treatments.length === 0}
         >
           Continue to Booking

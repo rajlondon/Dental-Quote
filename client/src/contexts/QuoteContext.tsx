@@ -76,11 +76,28 @@ function quoteReducer(state, action) {
   }
 }
 
+// Define the context types
+interface QuoteContextType {
+  treatments: any[];
+  promoCode: string | null;
+  discountAmount: number;
+  subtotal: number;
+  total: number;
+  loading: boolean;
+  error: Error | null;
+  isApplyingPromo: boolean;
+  addTreatment: (treatment: any) => void;
+  removeTreatment: (treatmentId: string) => void;
+  applyPromoCode: (code: string) => void;
+  clearPromoCode: () => void;
+  saveQuote: () => Promise<any>;
+}
+
 // Create the context
-const QuoteContext = createContext(null);
+const QuoteContext = createContext<QuoteContextType | null>(null);
 
 // Provider component
-export function QuoteProvider({ children }) {
+export function QuoteProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(quoteReducer, initialState);
   const queryClient = useQueryClient();
   
