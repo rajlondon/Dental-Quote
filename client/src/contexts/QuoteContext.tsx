@@ -124,7 +124,8 @@ function quoteReducer(state: QuoteState, action: any): QuoteState {
       return {
         ...state,
         subtotal: action.payload.subtotal,
-        total: action.payload.total,
+        // Calculate the total by subtracting the discount amount from the subtotal
+        total: action.payload.subtotal - state.discountAmount,
         loading: false
       };
     case ACTIONS.SET_LOADING:
