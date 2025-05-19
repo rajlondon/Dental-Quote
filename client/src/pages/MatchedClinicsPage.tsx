@@ -181,7 +181,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [filteredClinics, setFilteredClinics] = useState<any[]>([]);
   const [ukTotalPrice, setUkTotalPrice] = useState<number>(0);
   
-  useEffect(() => {
+  React.useEffect(() => {
     // Calculate value for UK for comparison (MOCK DATA)
     const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
@@ -396,7 +396,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   ];
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
-    const clinic = clinicsData.find(c => c.id === clinicId);
+    const clinic = allClinicsData.find((c: any) => c.id === clinicId);
     const priceFactor = clinic?.priceFactor || 0.35; // Default to 35% if clinic not found
     
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
@@ -499,7 +499,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           <div>
             <h1 className="text-3xl font-bold mb-2">Your Matched Clinics</h1>
             <p className="text-gray-600">
-              We've matched your treatment needs with {clinicsData.length} top-rated Istanbul dental clinics
+              We've matched your treatment needs with {filteredClinics.length} top-rated Istanbul dental clinics
             </p>
           </div>
           
@@ -547,7 +547,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       
       {/* Clinic Comparison */}
       <div className="space-y-8">
-        {clinicsData.map((clinic) => {
+        {filteredClinics.map((clinic: any) => {
           const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
           const tierInfo = getTierLabel(clinic.tier);
           
