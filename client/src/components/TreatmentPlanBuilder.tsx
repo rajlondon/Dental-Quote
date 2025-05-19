@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight, CheckCircle } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ export interface TreatmentItem {
   guarantee?: string;
   ukPriceGBP?: number;
   ukPriceUSD?: number;
+  fromPackage?: boolean; // Flag to indicate if the treatment is from a package promo code
   specialOffer?: {
     id: string;
     title: string;
@@ -400,6 +401,64 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
   
+  // Get promo code from session storage
+  const [promoCode, setPromoCode] = useState<string | null>(null);
+  const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | null>(null);
+  const [discountValue, setDiscountValue] = useState<number>(0);
+  
+  // Load promo code from session storage on mount and auto-populate treatments
+  useEffect(() => {
+    const storedPromoCode = sessionStorage.getItem('pendingPromoCode');
+    if (storedPromoCode) {
+      setPromoCode(storedPromoCode);
+      
+      // Try to get discount info from session storage
+      const packageData = sessionStorage.getItem('pendingPackageData');
+      if (packageData) {
+        try {
+          const parsedPackage = JSON.parse(packageData);
+          if (parsedPackage.originalPrice && parsedPackage.packagePrice) {
+            setDiscountAmount(parsedPackage.originalPrice - parsedPackage.packagePrice);
+          }
+          
+          // Auto-populate treatments from package data
+          if (parsedPackage.treatments && Array.isArray(parsedPackage.treatments) && 
+              parsedPackage.treatments.length > 0 && treatments.length === 0) {
+            
+            // Map package treatments to our treatment format and add them
+            const packageTreatments = parsedPackage.treatments.map((treatment: any) => ({
+              id: `package-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+              category: treatment.category || 'Package',
+              name: treatment.name,
+              quantity: treatment.quantity || 1,
+              priceGBP: treatment.priceGBP || treatment.price || 0, 
+              priceUSD: treatment.priceUSD || Math.round((treatment.priceGBP || treatment.price || 0) * 1.25),
+              subtotalGBP: (treatment.priceGBP || treatment.price || 0) * (treatment.quantity || 1),
+              subtotalUSD: Math.round(((treatment.priceGBP || treatment.price || 0) * (treatment.quantity || 1)) * 1.25),
+              guarantee: treatment.guarantee || "2-5 years",
+              fromPackage: true // Mark as coming from a package
+            }));
+            
+            // Update treatments
+            if (packageTreatments.length > 0 && onTreatmentsChange) {
+              onTreatmentsChange(packageTreatments);
+            }
+          }
+          
+          // If there's discount type and value information, save it
+          if (parsedPackage.discountType && parsedPackage.discountValue) {
+            setDiscountType(parsedPackage.discountType);
+            setDiscountValue(parsedPackage.discountValue);
+          }
+          
+        } catch (e) {
+          console.error('Failed to parse package data from session storage', e);
+        }
+      }
+    }
+  }, [treatments.length, onTreatmentsChange]);
+  
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
   
@@ -529,6 +588,37 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 Add Special Treatment
               </Button>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Promo Code Summary - shows when a promo code is active */}
+      {promoCode && (
+        <div className="mb-6 p-4 border rounded-md bg-green-50 border-green-200">
+          <div className="flex items-start">
+            <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2" />
+            <div>
+              <h3 className="font-medium text-green-800">Promo Code Applied: {promoCode}</h3>
+              {discountAmount > 0 && (
+                <p className="text-sm text-green-700 mt-1">
+                  Discount: £{discountAmount} {discountType === 'percentage' && `(${discountValue}% off)`}
+                </p>
+              )}
+              
+              {/* If it's a package code from storage, show that info */}
+              {sessionStorage.getItem('pendingPackageData') && (
+                <div className="mt-2">
+                  <div className="text-sm text-green-700">
+                    This is a special treatment package that includes multiple treatments.
+                  </div>
+                  {treatments.length > 0 && treatments.some(t => t.fromPackage) && (
+                    <div className="mt-1 text-xs text-green-800">
+                      Package treatments have been auto-populated above.
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
