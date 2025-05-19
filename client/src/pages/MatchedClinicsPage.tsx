@@ -85,8 +85,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // New function to handle direct PDF download
   const downloadPdf = (clinicId: string) => {
     try {
-      // Get the clinic data
-      const clinic = allClinicsData.find((c: any) => c.id === clinicId);
+      // Get the clinic data from filtered clinics state
+      const clinic = filteredClinics.find((c: any) => c.id === clinicId);
       if (!clinic) return;
       
       const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
@@ -313,6 +313,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       // If we have exactly one clinic, automatically select the tab
       if (filtered.length === 1) {
         setSelectedTab(filtered[0].id);
+        toast({
+          title: "Package Clinic Selected",
+          description: `Your package is available at ${filtered[0].name}`,
+        });
       }
     } else {
       setFilteredClinics(allClinicsDataList);
@@ -515,7 +519,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   ];
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
-    const clinic = allClinicsData.find((c: any) => c.id === clinicId);
+    const clinic = filteredClinics.find((c: any) => c.id === clinicId);
     const priceFactor = clinic?.priceFactor || 0.35; // Default to 35% if clinic not found
     
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
@@ -869,10 +873,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               
                               // Save clinic pricing data for use in the portal
                               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+                              
+                              // If there's a pending promo code, include the discount info
+                              const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+                              const hasDiscount = pendingPromoCode && pendingPromoCode.length > 0;
+                              
                               localStorage.setItem('selectedClinicData', JSON.stringify({
                                 name: clinic.name,
                                 treatments: clinicTreatments,
-                                totalPrice: totalPrice
+                                totalPrice: totalPrice,
+                                discountApplied: hasDiscount ? pendingPromoCode : null
                               }));
                               
                               // Call the onSelectClinic callback if provided
