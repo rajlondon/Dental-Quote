@@ -43,9 +43,9 @@ const packagePromoCodes: PromoCode[] = [
       name: 'Premium Implant Package',
       description: 'Complete implant treatment with consultation and aftercare',
       treatments: [
-        { id: 'dental-implants', quantity: 2 },
-        { id: 'crowns', quantity: 2 },
-        { id: 'cleaning', quantity: 1 }
+        { id: 'dental-implants', name: 'Dental Implants', quantity: 2 },
+        { id: 'crowns', name: 'Crowns', quantity: 2 },
+        { id: 'cleaning', name: 'Dental Check-up & Cleaning', quantity: 1 }
       ],
       originalPrice: 1700,
       packagePrice: 1400,
@@ -62,9 +62,9 @@ const packagePromoCodes: PromoCode[] = [
       name: 'Smile Makeover Package',
       description: 'Transform your smile with our complete cosmetic package',
       treatments: [
-        { id: 'veneers', quantity: 4 },
-        { id: 'whitening', quantity: 1 },
-        { id: 'cleaning', quantity: 1 }
+        { id: 'veneers', name: 'Porcelain Veneers', quantity: 4 },
+        { id: 'whitening', name: 'Teeth Whitening', quantity: 1 },
+        { id: 'cleaning', name: 'Dental Check-up & Cleaning', quantity: 1 }
       ],
       originalPrice: 1350,
       packagePrice: 1100,
@@ -80,11 +80,11 @@ const packagePromoCodes: PromoCode[] = [
       name: 'Full Mouth Restoration',
       description: 'Complete dental restoration with 6 implants, 6 crowns and sinus lift procedure',
       treatments: [
-        { id: 'dental-implants', quantity: 6 },
-        { id: 'crowns', quantity: 6 },
-        { id: 'sinus-lift', quantity: 1 },
-        { id: 'cleaning', quantity: 2 },
-        { id: 'checkup', quantity: 3 }
+        { id: 'dental-implants', name: 'Dental Implants', quantity: 6 },
+        { id: 'crowns', name: 'Porcelain Crowns', quantity: 6 },
+        { id: 'sinus-lift', name: 'Sinus Lift Procedure', quantity: 1 },
+        { id: 'cleaning', name: 'Dental Check-up & Cleaning', quantity: 2 },
+        { id: 'checkup', name: 'Follow-up Check-up', quantity: 3 }
       ],
       originalPrice: 5700,
       packagePrice: 4200,
@@ -121,10 +121,10 @@ const packagePromoCodes: PromoCode[] = [
       name: 'Health & Vacation Premium Package',
       description: 'Luxury dental treatment combined with exclusive Istanbul tourism experiences',
       treatments: [
-        { id: 'dental-implants', quantity: 4 },
-        { id: 'crowns', quantity: 4 },
-        { id: 'root-canal', quantity: 2 },
-        { id: 'whitening', quantity: 1 }
+        { id: 'dental-implants', name: 'Premium Dental Implants', quantity: 4 },
+        { id: 'crowns', name: 'Porcelain Crowns', quantity: 4 },
+        { id: 'root-canal', name: 'Root Canal Treatment', quantity: 2 },
+        { id: 'whitening', name: 'Advanced Teeth Whitening', quantity: 1 }
       ],
       originalPrice: 4500,
       packagePrice: 3500,
