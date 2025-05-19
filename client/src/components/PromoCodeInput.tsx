@@ -74,7 +74,10 @@ export function PromoCodeInput() {
             const response = await axios.get(`/api/promo-codes/validate/${inputCode.trim()}`);
             
             if (response.data.valid) {
-              setSuccess(`Promo code "${inputCode}" is valid!`);
+              const discountMsg = response.data.discountType === 'percentage'
+                ? `${response.data.discountValue}% off`
+                : `£${response.data.discountValue} off`;
+              setSuccess(`Promo code "${inputCode}" is valid! You'll save ${discountMsg}`);
               setValidationData(response.data);
               
               // If it's a package, show package info
