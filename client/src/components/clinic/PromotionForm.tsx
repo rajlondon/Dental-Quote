@@ -337,7 +337,7 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
     <div className="space-y-6">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value)}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="details">
@@ -638,11 +638,11 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
                                       >
                                         <FormControl>
                                           <Checkbox
-                                            checked={field.value?.includes(treatment.id)}
+                                            checked={Array.isArray(field.value) && field.value.indexOf(treatment.id) !== -1}
                                             onCheckedChange={(checked) => {
-                                              const current = field.value || [];
+                                              const current = Array.isArray(field.value) ? [...field.value] : [];
                                               const updated = checked
-                                                ? [...current, treatment.id]
+                                                ? [...current, treatment.id as never]
                                                 : current.filter((value) => value !== treatment.id);
                                               field.onChange(updated);
                                             }}

@@ -88,8 +88,14 @@ const PromotionsList: React.FC<PromotionsListProps> = ({ status, refreshTrigger,
 
   // Fetch all promotions for this clinic
   const { data, isLoading, isError } = useQuery({
-    queryKey: ['/api/clinic/promotions'],
-    queryFn: () => apiRequest('GET', '/api/clinic/promotions'),
+    queryKey: ['/api/clinic/promotions', status, refreshTrigger],
+    queryFn: async () => {
+      const endpoint = status === 'ALL' 
+        ? '/api/clinic/promotions' 
+        : `/api/clinic/promotions?status=${status}`;
+      const response = await apiRequest('GET', endpoint);
+      return response.json();
+    },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
@@ -195,10 +201,12 @@ const PromotionsList: React.FC<PromotionsListProps> = ({ status, refreshTrigger,
     );
   }
 
+  // Safely extract promotions from response data
+  const promotions: Promotion[] = data?.promotions || [];
+  
   // Categorize promotions by status
-  const promotions = data?.promotions || [];
   const draftPromotions = promotions.filter(promo => promo.status === 'draft');
-  const pendingPromotions = promotions.filter(promo => promo.status === 'pending_approval');
+  const pendingPromotions = promotions.filter(promo => promo.status === 'pending_approval'); 
   const approvedPromotions = promotions.filter(promo => promo.status === 'approved');
   const rejectedPromotions = promotions.filter(promo => promo.status === 'rejected');
 
@@ -207,20 +215,11 @@ const PromotionsList: React.FC<PromotionsListProps> = ({ status, refreshTrigger,
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Get the active promotions based on the selected tab
+  // For this status-based view, we'll directly use the filtered promotions
+  // instead of the tab-based filtering from the tabs component
   const getActivePromotions = () => {
-    switch (activeTab) {
-      case 'drafts':
-        return draftPromotions;
-      case 'pending':
-        return pendingPromotions;
-      case 'approved':
-        return approvedPromotions;
-      case 'rejected':
-        return rejectedPromotions;
-      default:
-        return sortedPromotions;
-    }
+    // Already filtered by the API based on status parameter
+    return sortedPromotions;
   };
 
   // Format date for display
