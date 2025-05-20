@@ -23,6 +23,9 @@ export interface AppointmentData {
   createdById: number;
   createdAt: string;
   updatedAt: string;
+  promotionCode?: string;
+  promotionDiscount?: number;
+  promotionId?: number;
 }
 
 export interface CreateAppointmentData {
@@ -37,6 +40,9 @@ export interface CreateAppointmentData {
   clinicNotes?: string;
   reminderSent?: boolean;
   followUpRequired?: boolean;
+  promotionCode?: string | null;
+  promotionDiscount?: number;
+  promotionId?: number;
 }
 
 export function useAppointments(bookingId?: number) {

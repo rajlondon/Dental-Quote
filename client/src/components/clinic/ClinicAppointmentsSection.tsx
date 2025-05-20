@@ -62,6 +62,7 @@ import { useAppointments, AppointmentData, CreateAppointmentData } from '@/hooks
 import { useAuth } from '@/hooks/use-auth';
 import { useBookings } from '@/hooks/use-bookings';
 import { useToast } from '@/hooks/use-toast';
+import { useApprovedPromotions, Promotion } from '@/hooks/use-promotions';
 
 // Types for appointments
 interface Appointment {
@@ -121,10 +122,35 @@ const ClinicAppointmentsSection: React.FC = () => {
     isCreating
   } = useAppointments();
   
-  // Use bookings data to get patient information
+  // Initialize with an empty array for bookings
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [isLoadingBookings, setIsLoadingBookings] = useState<boolean>(true);
+  
+  // Use the bookings hook to fetch clinic bookings
   const bookingsHook = useBookings();
-  const bookings = bookingsHook.data;
-  const isLoadingBookings = bookingsHook.isLoading;
+  
+  // Set up bookings data when user is available
+  useEffect(() => {
+    if (user?.clinicId) {
+      const fetchBookings = async () => {
+        setIsLoadingBookings(true);
+        try {
+          const bookingsData = await apiRequest('GET', `/api/bookings/clinic/${user.clinicId}`);
+          const json = await bookingsData.json();
+          setBookings(json.data || []);
+        } catch (error) {
+          console.error('Error fetching bookings:', error);
+        } finally {
+          setIsLoadingBookings(false);
+        }
+      };
+      
+      fetchBookings();
+    }
+  }, [user?.clinicId]);
+  
+  // Fetch available promotions for this clinic
+  const { data: availablePromotionsData = [], isLoading: isLoadingPromotions } = useApprovedPromotions(user?.clinicId);
   
   // Sync the selectedDate in the UI with the API hook
   useEffect(() => {
@@ -312,8 +338,8 @@ const ClinicAppointmentsSection: React.FC = () => {
       status: 'scheduled',
       reminderSent: false,
       followUpRequired: false,
-      promoCodeApplied: selectedPromoCode || null, // Add promotion code if selected
-      discountAmount: selectedPromoDiscount || 0 // Add discount amount if applicable
+      promotionCode: selectedPromoCode || null, // Add promotion code if selected
+      promotionDiscount: selectedPromoDiscount || 0 // Add discount amount if applicable
     };
     
     try {
