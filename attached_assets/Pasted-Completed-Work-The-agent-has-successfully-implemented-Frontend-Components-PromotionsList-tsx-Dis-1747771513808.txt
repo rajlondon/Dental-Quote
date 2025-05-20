@@ -1,0 +1,250 @@
+Completed Work
+The agent has successfully implemented:
+
+Frontend Components
+PromotionsList.tsx - Displays promotions for clinic users
+PromotionForm.tsx - Multi-step form for creating/editing promotions
+PendingApprovalsList.tsx - Shows promotions awaiting admin review
+PromotionReview.tsx - Tabbed interface for admins to review promotions
+FeaturedPromotions.tsx - Displays approved promotions on homepage
+Page Components
+PromotionsPage.tsx - Main page for clinic promotion management
+PendingApprovals.tsx - Admin portal for managing approvals
+Documentation
+Comprehensive documentation in CLINIC_INITIATED_PROMOTIONS.md
+Key Features Implemented
+Complete promotion creation workflow for clinics
+Support for both discount and package-type promotions
+Treatment selection and package bundling
+Tourist attractions and additional services for packages
+Calendar-based scheduling controls
+Admin review interface with date modification
+Homepage display configuration with preview
+Approval/rejection system with feedback
+Next Steps
+To complete the implementation, the Replit agent should focus on:
+
+1. Frontend Routing Integration
+
+Copy
+// Update App.tsx to include routes for the new pages
+
+// Clinic Portal Routes
+<Route 
+  path="/clinic-portal/promotions" 
+  element={
+    <ClinicAuthGuard>
+      <ClinicLayout>
+        <PromotionsPage />
+      </ClinicLayout>
+    </ClinicAuthGuard>
+  } 
+/>
+
+// Admin Portal Routes
+<Route 
+  path="/admin-portal/promotions/pending" 
+  element={
+    <AdminAuthGuard>
+      <AdminLayout>
+        <PendingApprovals />
+      </AdminLayout>
+    </AdminAuthGuard>
+  } 
+/>
+
+// Add link in clinic sidebar navigation
+<NavItem 
+  icon={<TagIcon className="h-5 w-5" />}
+  href="/clinic-portal/promotions"
+  text="Promotions"
+/>
+
+// Add link in admin sidebar navigation
+<NavItem 
+  icon={<TicketIcon className="h-5 w-5" />}
+  href="/admin-portal/promotions/pending"
+  text="Pending Promotions"
+/>
+2. Homepage Integration
+
+Copy
+// Add FeaturedPromotions component to Homepage.tsx
+import { FeaturedPromotions } from '../components/homepage/FeaturedPromotions';
+
+export default function Homepage() {
+  return (
+    <div>
+      {/* Existing homepage content */}
+      
+      {/* Add featured promotions section */}
+      <FeaturedPromotions />
+      
+      {/* Rest of homepage content */}
+    </div>
+  );
+}
+3. Backend API Endpoint Completion
+Ensure all necessary API endpoints are properly implemented:
+
+
+Copy
+// In server/routes/clinic-promotion-routes.ts
+
+// Make sure the following endpoints are implemented:
+// 1. GET /api/clinic/promotions - List clinic promotions
+// 2. POST /api/clinic/promotions - Create new promotion
+// 3. GET /api/clinic/promotions/:id - Get promotion details
+// 4. PUT /api/clinic/promotions/:id - Update promotion
+// 5. DELETE /api/clinic/promotions/:id - Delete promotion
+// 6. POST /api/clinic/promotions/:id/submit - Submit for approval
+
+// In server/routes/admin-promotion-routes.ts
+
+// Make sure the following endpoints are implemented:
+// 1. GET /api/admin/promotions/pending - List pending approvals
+// 2. GET /api/admin/promotions/:id - Get promotion details
+// 3. PUT /api/admin/promotions/:id/approve - Approve promotion
+// 4. PUT /api/admin/promotions/:id/reject - Reject promotion
+// 5. PUT /api/admin/promotions/:id/homepage - Configure homepage display
+
+// In server/routes/promotion-routes.ts
+
+// Public endpoint for homepage display:
+// GET /api/promotions/featured - Get featured promotions
+4. Type Definitions and Error Handling
+Ensure proper TypeScript definitions for all components:
+
+
+Copy
+// Create or update client/src/types/promotion.ts with all necessary types
+
+export type PromotionStatus = 
+  | 'DRAFT' 
+  | 'PENDING_APPROVAL' 
+  | 'APPROVED' 
+  | 'ACTIVE' 
+  | 'REJECTED' 
+  | 'EXPIRED';
+
+export type DiscountType = 'percentage' | 'fixed_amount';
+export type PromotionType = 'discount' | 'package';
+
+export interface PackageItem {
+  treatment_id: string;
+  treatment_name: string;
+  quantity: number;
+  regular_price: number;
+  package_price: number;
+}
+
+export interface TouristAttraction {
+  name: string;
+  description: string;
+  image_url?: string;
+}
+
+export interface Promotion {
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  clinic_id: string;
+  clinic_name?: string;
+  type: PromotionType;
+  
+  // For discount type promotions
+  discount_type?: DiscountType;
+  discount_value?: number;
+  applicable_treatments?: string[];
+  
+  // For package type promotions
+  package_items?: PackageItem[];
+  tourist_attractions?: TouristAttraction[];
+  additional_services?: string[];
+  
+  // Scheduling
+  start_date: string;
+  end_date: string;
+  max_uses: number;
+  is_active: boolean;
+  
+  // Approval workflow
+  status: PromotionStatus;
+  created_by: string;
+  created_at: string;
+  submitted_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  rejection_reason?: string;
+  approval_notes?: string;
+  
+  // Homepage display
+  display_on_homepage: boolean;
+  homepage_priority: number;
+  homepage_image_url?: string;
+  homepage_short_description?: string;
+  
+  // Admin scheduling
+  admin_modified_dates: boolean;
+  original_start_date?: string;
+  original_end_date?: string;
+}
+
+// Create query hooks for promotions
+export function usePromotions(clinicId: string) {
+  return useQuery(['promotions', clinicId], 
+    () => fetch(`/api/clinic/promotions?clinicId=${clinicId}`).then(res => res.json())
+  );
+}
+
+export function usePendingApprovals() {
+  return useQuery('pendingApprovals', 
+    () => fetch('/api/admin/promotions/pending').then(res => res.json())
+  );
+}
+
+export function useFeaturedPromotions() {
+  return useQuery('featuredPromotions', 
+    () => fetch('/api/promotions/featured').then(res => res.json())
+  );
+}
+5. Testing Plan
+Implement a testing plan to validate the full promotion lifecycle:
+
+Clinic Creates Promotion:
+
+Test creating both discount and package promotions
+Validate form validation for required fields
+Test saving as draft and submitting for approval
+Admin Reviews Promotion:
+
+Test the review interface with different promotion types
+Validate date modification functionality
+Test homepage display configuration
+Promotion Lifecycle:
+
+Test approval process and notification
+Verify rejected promotions can be edited and resubmitted
+Confirm approved promotions appear on homepage
+Edge Cases:
+
+Test handling of expired promotions
+Validate behavior when max uses is reached
+Test responsive design on various screen sizes
+Suggested Implementation Priorities
+The Replit agent should prioritize implementation in this order:
+
+Complete any missing backend API endpoints
+Update type definitions to ensure consistency
+Implement frontend routing integration
+Add the FeaturedPromotions component to the homepage
+Test the full promotion lifecycle
+Final Recommendations
+To ensure a smooth implementation, the agent should:
+
+Maintain Consistent Error Handling: Use a consistent approach to error handling across all components
+Add Loading States: Implement skeleton loaders for better user experience
+Include Responsive Design: Ensure all components work well on mobile devices
+Add Analytics Tracking: Consider adding analytics to track promotion performance
+Implement Caching: Use React Query's caching capabilities for better performance
