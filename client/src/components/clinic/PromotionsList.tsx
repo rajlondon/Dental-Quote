@@ -1,28 +1,38 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiRequest } from '@/lib/queryClient';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { Link } from 'wouter';
+import { format } from 'date-fns';
+import { 
+  Edit, 
+  Trash2, 
+  AlertTriangle, 
+  Clock, 
+  CheckCircle, 
+  XCircle,
+  Tag,
+  Package
+} from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Dialog,
   DialogContent,
@@ -31,370 +41,411 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MoreHorizontal, Plus, Star, Edit, Send, Trash2, Search } from 'lucide-react';
-import { format } from 'date-fns';
-import { Link } from 'wouter';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 
-// Type for promotion status
-type PromoStatusType = 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'ACTIVE' | 'REJECTED' | 'EXPIRED';
-
-// Type for promotion
+// Define the Promotion interface to match our backend
 interface Promotion {
   id: string;
   code: string;
   title: string;
+  description: string;
   type: 'discount' | 'package';
   discountType?: 'percentage' | 'fixed_amount';
   discountValue?: number;
+  clinicId: string;
+  applicable_treatments: string[];
   start_date: string;
   end_date: string;
-  status: PromoStatusType;
-  display_on_homepage: boolean;
-  homepage_priority: number;
+  status: 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'expired';
   created_at: string;
   submitted_at?: string;
-  rejected_reason?: string;
+  packageData?: {
+    name: string;
+    description: string;
+    treatments: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+    }>;
+    originalPrice: number;
+    packagePrice: number;
+  };
 }
 
-const PromotionsList = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<PromoStatusType | 'ALL'>('ALL');
+const PromotionsList: React.FC = () => {
+  const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promotionToDelete, setPromotionToDelete] = useState<string | null>(null);
-  
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState<string>('all');
 
-  // Fetch promotions
-  const { data, isLoading, error } = useQuery<{ success: boolean; promotions: Promotion[] }>({
+  // Fetch all promotions for this clinic
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['/api/clinic/promotions'],
-    queryFn: () => apiRequest('GET', '/clinic/promotions'),
+    queryFn: () => apiRequest('GET', '/api/clinic/promotions'),
+    refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   // Delete promotion mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest('DELETE', `/clinic/promotions/${id}`);
+      await apiRequest('DELETE', `/api/clinic/promotions/${id}`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/promotions'] });
       toast({
         title: 'Promotion deleted',
-        description: 'The promotion draft has been deleted successfully.',
+        description: 'The promotion has been successfully deleted.',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/clinic/promotions'] });
       setDeleteDialogOpen(false);
       setPromotionToDelete(null);
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: 'Failed to delete promotion',
-        description: error.message || 'An error occurred while deleting the promotion.',
+        title: 'Error',
+        description: `Failed to delete promotion: ${error.message}`,
         variant: 'destructive',
       });
     },
   });
 
-  // Submit promotion mutation
+  // Submit promotion for approval mutation
   const submitMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest('POST', `/clinic/promotions/${id}/submit`);
+      await apiRequest('POST', `/api/clinic/promotions/${id}/submit`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/clinic/promotions'] });
       toast({
         title: 'Promotion submitted',
         description: 'Your promotion has been submitted for approval.',
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/clinic/promotions'] });
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast({
-        title: 'Failed to submit promotion',
-        description: error.message || 'An error occurred while submitting the promotion.',
+        title: 'Error',
+        description: `Failed to submit promotion: ${error.message}`,
         variant: 'destructive',
       });
     },
   });
 
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'MMM dd, yyyy');
-    } catch (e) {
-      return dateString;
+  // Handle promotion deletion
+  const confirmDelete = () => {
+    if (promotionToDelete) {
+      deleteMutation.mutate(promotionToDelete);
     }
   };
 
-  // Handle delete confirmation
-  const confirmDelete = (id: string) => {
-    setPromotionToDelete(id);
-    setDeleteDialogOpen(true);
+  // Handle promotion submission
+  const submitPromotion = (id: string) => {
+    submitMutation.mutate(id);
   };
 
-  // Filter promotions
-  const filteredPromotions = data?.promotions
-    .filter((promo) => {
-      // Apply status filter
-      if (statusFilter !== 'ALL' && promo.status !== statusFilter) {
-        return false;
-      }
-      
-      // Apply search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase();
-        return (
-          promo.title.toLowerCase().includes(query) ||
-          promo.code.toLowerCase().includes(query)
-        );
-      }
-      
-      return true;
-    })
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-  // Get status badge
-  const getStatusBadge = (status: PromoStatusType) => {
-    const variants: Record<PromoStatusType, 'default' | 'secondary' | 'destructive' | 'outline' | 'success'> = {
-      DRAFT: 'outline',
-      PENDING_APPROVAL: 'secondary',
-      APPROVED: 'default',
-      ACTIVE: 'success',
-      REJECTED: 'destructive',
-      EXPIRED: 'outline',
-    };
-    
-    return <Badge variant={variants[status]}>{status.replace('_', ' ')}</Badge>;
-  };
-
-  // Render loading state
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="overflow-hidden">
+            <CardHeader className="pb-2">
+              <Skeleton className="h-6 w-1/3" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-2/3" />
+            </CardContent>
+            <CardFooter>
+              <Skeleton className="h-9 w-24 mr-2" />
+              <Skeleton className="h-9 w-24" />
+            </CardFooter>
+          </Card>
+        ))}
       </div>
     );
   }
 
-  // Render error state
-  if (error) {
+  if (isError) {
     return (
-      <div className="bg-destructive/10 text-destructive p-4 rounded-md">
-        <p>Error loading promotions. Please try again.</p>
-      </div>
+      <Card className="bg-destructive/10 border-destructive">
+        <CardHeader>
+          <CardTitle className="flex items-center text-destructive">
+            <AlertTriangle className="h-5 w-5 mr-2" />
+            Error Loading Promotions
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p>There was an error loading your promotions. Please try again later.</p>
+        </CardContent>
+        <CardFooter>
+          <Button
+            variant="outline"
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/clinic/promotions'] })}
+          >
+            Retry
+          </Button>
+        </CardFooter>
+      </Card>
     );
   }
+
+  // Categorize promotions by status
+  const promotions = data?.promotions || [];
+  const draftPromotions = promotions.filter(promo => promo.status === 'draft');
+  const pendingPromotions = promotions.filter(promo => promo.status === 'pending_approval');
+  const approvedPromotions = promotions.filter(promo => promo.status === 'approved');
+  const rejectedPromotions = promotions.filter(promo => promo.status === 'rejected');
+
+  // Sort promotions by creation date (newest first)
+  const sortedPromotions = [...promotions].sort((a, b) => {
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
+  // Get the active promotions based on the selected tab
+  const getActivePromotions = () => {
+    switch (activeTab) {
+      case 'drafts':
+        return draftPromotions;
+      case 'pending':
+        return pendingPromotions;
+      case 'approved':
+        return approvedPromotions;
+      case 'rejected':
+        return rejectedPromotions;
+      default:
+        return sortedPromotions;
+    }
+  };
+
+  // Format date for display
+  const formatDate = (dateString: string) => {
+    return format(new Date(dateString), 'MMM d, yyyy');
+  };
+
+  // Get status badge color
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <span className="text-blue-500 bg-blue-50 px-2 py-1 rounded-full text-xs font-medium flex items-center"><Clock className="h-3 w-3 mr-1" /> Draft</span>;
+      case 'pending_approval':
+        return <span className="text-amber-500 bg-amber-50 px-2 py-1 rounded-full text-xs font-medium flex items-center"><Clock className="h-3 w-3 mr-1" /> Pending Approval</span>;
+      case 'approved':
+        return <span className="text-green-500 bg-green-50 px-2 py-1 rounded-full text-xs font-medium flex items-center"><CheckCircle className="h-3 w-3 mr-1" /> Approved</span>;
+      case 'rejected':
+        return <span className="text-red-500 bg-red-50 px-2 py-1 rounded-full text-xs font-medium flex items-center"><XCircle className="h-3 w-3 mr-1" /> Rejected</span>;
+      case 'expired':
+        return <span className="text-gray-500 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium flex items-center"><XCircle className="h-3 w-3 mr-1" /> Expired</span>;
+      default:
+        return <span className="text-gray-500 bg-gray-50 px-2 py-1 rounded-full text-xs font-medium">{status}</span>;
+    }
+  };
+
+  // Calculate savings for package promotions
+  const calculateSavings = (originalPrice: number, packagePrice: number) => {
+    const savingsAmount = originalPrice - packagePrice;
+    const savingsPercentage = Math.round((savingsAmount / originalPrice) * 100);
+    return { amount: savingsAmount, percentage: savingsPercentage };
+  };
+
+  // Render promotion card based on promotion type and status
+  const renderPromotionCard = (promotion: any) => {
+    return (
+      <Card key={promotion.id} className="overflow-hidden border">
+        <CardHeader className="pb-2">
+          <div className="flex justify-between items-start">
+            <CardTitle className="flex items-center">
+              {promotion.type === 'discount' ? (
+                <Tag className="h-5 w-5 mr-2 text-primary" />
+              ) : (
+                <Package className="h-5 w-5 mr-2 text-primary" />
+              )}
+              {promotion.title}
+            </CardTitle>
+            {getStatusBadge(promotion.status)}
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Code: <span className="font-mono bg-muted p-1 rounded">{promotion.code}</span>
+          </p>
+        </CardHeader>
+
+        <CardContent>
+          <p className="text-sm mb-2">{promotion.description}</p>
+          
+          {promotion.type === 'discount' && (
+            <div className="bg-muted/50 p-2 rounded-md text-sm">
+              <p className="font-medium">
+                {promotion.discountType === 'percentage' 
+                  ? `${promotion.discountValue}% off` 
+                  : `£${promotion.discountValue} off`}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Applicable to {promotion.applicable_treatments.length} treatment{promotion.applicable_treatments.length !== 1 ? 's' : ''}
+              </p>
+            </div>
+          )}
+
+          {promotion.type === 'package' && promotion.packageData && (
+            <div className="bg-muted/50 p-2 rounded-md text-sm">
+              <p className="font-medium">Package: {promotion.packageData.name}</p>
+              <div className="flex justify-between mt-1">
+                <p className="text-xs text-muted-foreground">
+                  {promotion.packageData.treatments.length} treatment{promotion.packageData.treatments.length !== 1 ? 's' : ''}
+                </p>
+                <p className="text-xs font-medium">
+                  Save £{(promotion.packageData.originalPrice - promotion.packageData.packagePrice).toFixed(2)} 
+                  ({Math.round(((promotion.packageData.originalPrice - promotion.packageData.packagePrice) / promotion.packageData.originalPrice) * 100)}%)
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="text-xs text-muted-foreground mt-2">
+            <p>Valid: {formatDate(promotion.start_date)} to {formatDate(promotion.end_date)}</p>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex justify-between border-t pt-3 bg-muted/20">
+          <div className="text-xs text-muted-foreground">
+            Created: {formatDate(promotion.created_at)}
+          </div>
+          
+          <div className="flex space-x-2">
+            {promotion.status === 'draft' && (
+              <>
+                <Link href={`/clinic/promotions/edit/${promotion.id}`}>
+                  <Button size="sm" variant="outline">
+                    <Edit className="h-3.5 w-3.5 mr-1" />
+                    Edit
+                  </Button>
+                </Link>
+                <Button 
+                  size="sm" 
+                  onClick={() => submitPromotion(promotion.id)}
+                  disabled={submitMutation.isPending}
+                >
+                  Submit
+                </Button>
+              </>
+            )}
+
+            {promotion.status === 'rejected' && (
+              <Link href={`/clinic/promotions/edit/${promotion.id}`}>
+                <Button size="sm" variant="outline">
+                  <Edit className="h-3.5 w-3.5 mr-1" />
+                  Revise
+                </Button>
+              </Link>
+            )}
+
+            {(promotion.status === 'draft' || promotion.status === 'rejected') && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" variant="ghost">
+                    <span className="sr-only">Actions</span>
+                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem 
+                    onClick={() => {
+                      setPromotionToDelete(promotion.id);
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="text-destructive"
+                  >
+                    Delete Promotion
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+
+            {promotion.status === 'pending_approval' && (
+              <span className="text-sm text-muted-foreground">
+                Under review...
+              </span>
+            )}
+
+            {promotion.status === 'approved' && (
+              <span className="text-sm text-green-600 font-medium">
+                Active
+              </span>
+            )}
+          </div>
+        </CardFooter>
+      </Card>
+    );
+  };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Promotions</CardTitle>
-            <CardDescription>Manage your special offers and discount packages</CardDescription>
-          </div>
-          <Link href="/clinic/promotions/create">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Promotion
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center justify-between mb-4">
-          <div className="relative w-64">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search promotions..."
-              className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <Button
-              variant={statusFilter === 'ALL' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setStatusFilter('ALL')}
-            >
-              All
-            </Button>
-            <Button
-              variant={statusFilter === 'DRAFT' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setStatusFilter('DRAFT')}
-            >
-              Drafts
-            </Button>
-            <Button
-              variant={statusFilter === 'PENDING_APPROVAL' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setStatusFilter('PENDING_APPROVAL')}
-            >
-              Pending
-            </Button>
-            <Button
-              variant={statusFilter === 'ACTIVE' ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setStatusFilter('ACTIVE')}
-            >
-              Active
-            </Button>
-          </div>
-        </div>
+    <>
+      <Tabs
+        defaultValue="all"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full"
+      >
+        <TabsList className="grid grid-cols-5 mb-4">
+          <TabsTrigger value="all">
+            All ({promotions.length})
+          </TabsTrigger>
+          <TabsTrigger value="drafts">
+            Drafts ({draftPromotions.length})
+          </TabsTrigger>
+          <TabsTrigger value="pending">
+            Pending ({pendingPromotions.length})
+          </TabsTrigger>
+          <TabsTrigger value="approved">
+            Approved ({approvedPromotions.length})
+          </TabsTrigger>
+          <TabsTrigger value="rejected">
+            Rejected ({rejectedPromotions.length})
+          </TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value={activeTab} className="space-y-4 mt-0">
+          {getActivePromotions().length > 0 ? (
+            getActivePromotions().map(renderPromotionCard)
+          ) : (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center pt-6 pb-6">
+                <p className="text-muted-foreground mb-2">No promotions found</p>
+                <Link href="/clinic/promotions/create">
+                  <Button>Create a Promotion</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Title</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Dates</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Homepage</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPromotions?.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                  No promotions found. Create your first promotion to get started.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredPromotions?.map((promotion) => (
-                <TableRow key={promotion.id}>
-                  <TableCell className="font-medium">{promotion.title}</TableCell>
-                  <TableCell><code>{promotion.code}</code></TableCell>
-                  <TableCell>
-                    {promotion.type === 'discount' ? (
-                      <span>
-                        {promotion.discountType === 'percentage' ? 
-                          `${promotion.discountValue}% off` : 
-                          `£${promotion.discountValue} off`}
-                      </span>
-                    ) : (
-                      <span>Package</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="text-xs">
-                      <div>From: {formatDate(promotion.start_date)}</div>
-                      <div>To: {formatDate(promotion.end_date)}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(promotion.status)}</TableCell>
-                  <TableCell className="text-center">
-                    {promotion.display_on_homepage && (
-                      <div className="flex justify-center">
-                        <Star className="h-4 w-4 text-amber-500" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/clinic/promotions/${promotion.id}`}>
-                            <div className="w-full flex items-center">
-                              <Edit className="mr-2 h-4 w-4" />
-                              <span>View Details</span>
-                            </div>
-                          </Link>
-                        </DropdownMenuItem>
-                        
-                        {promotion.status === 'DRAFT' && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/clinic/promotions/${promotion.id}/edit`}>
-                                <div className="w-full flex items-center">
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Edit</span>
-                                </div>
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => submitMutation.mutate(promotion.id)}
-                              disabled={submitMutation.isPending}
-                            >
-                              <Send className="mr-2 h-4 w-4" />
-                              <span>Submit for Approval</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => confirmDelete(promotion.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              <span>Delete</span>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        
-                        {promotion.status === 'REJECTED' && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link href={`/clinic/promotions/${promotion.id}/edit`}>
-                                <div className="w-full flex items-center">
-                                  <Edit className="mr-2 h-4 w-4" />
-                                  <span>Edit & Resubmit</span>
-                                </div>
-                              </Link>
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-      
-      {/* Delete Confirmation Dialog */}
+      {/* Confirmation Dialog for Deletion */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Delete Promotion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this promotion draft? This action cannot be undone.
+              Are you sure you want to delete this promotion? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
+            <Button 
               variant="outline" 
               onClick={() => setDeleteDialogOpen(false)}
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => promotionToDelete && deleteMutation.mutate(promotionToDelete)}
+            <Button 
+              variant="destructive" 
+              onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                'Delete'
-              )}
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
+    </>
   );
 };
 
