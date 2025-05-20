@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function FeaturedPromotions() {
-  const [, setLocation] = useLocation();
+  const [, navigate] = useLocation();
   
   // Fetch featured promotions
   const { data, isLoading, isError } = useQuery({
@@ -46,10 +46,10 @@ export function FeaturedPromotions() {
   const handlePromotionClick = (promotion: any) => {
     // If it's a package promotion, navigate to the package detail page
     if (promotion.type === 'package' && promotion.packageData) {
-      setLocation(`/package/${promotion.id}`);
+      navigate(`/package/${promotion.id}`);
     } else {
       // For discount promotions, navigate to clinic with promo code applied
-      setLocation(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
+      navigate(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
     }
   };
   
