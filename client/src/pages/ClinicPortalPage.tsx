@@ -18,7 +18,8 @@ import {
   Building, Users, ClipboardList, Calendar, MessageSquare, 
   FileText, BarChart3, Settings, FileBarChart, 
   Menu, LogOut, ChevronRight, Grid3X3, TestTube,
-  Clock, TrendingUp, CalendarDays, Tag, Image
+  Clock, TrendingUp, CalendarDays, Tag, Image,
+  BadgePercent
 } from 'lucide-react';
 import { 
   Card, 
@@ -48,6 +49,7 @@ import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
 import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
+import PromotionsPage from '@/pages/clinic/PromotionsPage';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
@@ -297,6 +299,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
     { id: 'quotes', label: t("clinic.nav.quotes", "Quotes"), icon: <ClipboardList className="h-5 w-5" /> },
     { id: 'treatmentplans', label: t("clinic.nav.treatment_plans", "Treatment Plans"), icon: <FileText className="h-5 w-5" /> },
     { id: 'special_offers', label: t("clinic.nav.special_offers", "Special Offers"), icon: <Tag className="h-5 w-5" /> },
+    { id: 'promotions', label: t("clinic.nav.promotions", "Promotions"), icon: <BadgePercent className="h-5 w-5" /> },
     { id: 'treatment_mapper', label: t("clinic.nav.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
     { id: 'appointments', label: t("clinic.nav.appointments", "Appointments"), icon: <Calendar className="h-5 w-5" /> },
     { id: 'messages', label: t("clinic.nav.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
