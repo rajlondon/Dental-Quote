@@ -481,6 +481,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         return <ClinicTreatmentPlansSection />;
       case 'special_offers':
         return <SpecialOffersManager />;
+      case 'promotions':
+        return <PromotionsPage />;
       case 'treatment_mapper':
         return <ClinicTreatmentMapperPage />;
       case 'appointments':
