@@ -63,6 +63,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useBookings } from '@/hooks/use-bookings';
 import { useToast } from '@/hooks/use-toast';
 import { useApprovedPromotions, Promotion } from '@/hooks/use-promotions';
+import { apiRequest } from '@/lib/queryClient';
 
 // Types for appointments
 interface Appointment {
@@ -135,11 +136,19 @@ const ClinicAppointmentsSection: React.FC = () => {
       const fetchBookings = async () => {
         setIsLoadingBookings(true);
         try {
-          const bookingsData = await apiRequest('GET', `/api/bookings/clinic/${user.clinicId}`);
-          const json = await bookingsData.json();
-          setBookings(json.data || []);
+          const response = await apiRequest('GET', `/api/bookings/clinic/${user.clinicId}`);
+          const json = await response.json();
+          
+          // Make sure we have a valid response before updating state
+          if (json && (json.data || json.bookings)) {
+            setBookings(json.data || json.bookings || []);
+          } else {
+            console.warn('No booking data returned from API');
+            setBookings([]);
+          }
         } catch (error) {
           console.error('Error fetching bookings:', error);
+          setBookings([]);
         } finally {
           setIsLoadingBookings(false);
         }
@@ -191,7 +200,9 @@ const ClinicAppointmentsSection: React.FC = () => {
       notes: app.clinicNotes || '',
       virtualOption: false, // API doesn't have virtual option yet
       doctorName: 'Dr. Example', // API doesn't have doctor info yet
-      doctorId: 'n/a'
+      doctorId: 'n/a',
+      promotionCode: app.promotionCode,
+      promotionDiscount: app.promotionDiscount
     };
   });
   
@@ -596,6 +607,11 @@ const ClinicAppointmentsSection: React.FC = () => {
                               <div className="flex items-center gap-2">
                                 <Badge variant="secondary">{appointment.type}</Badge>
                                 {getStatusBadge(appointment.status)}
+                                {appointment.promotionCode && (
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-2">
+                                    Promo: {appointment.promotionCode}
+                                  </Badge>
+                                )}
                               </div>
                               <Button variant="ghost" size="icon" onClick={(e) => {
                                 e.stopPropagation();
@@ -1032,6 +1048,49 @@ const ClinicAppointmentsSection: React.FC = () => {
               />
             </div>
             
+            <div className="space-y-2">
+              <label htmlFor="promotion" className="text-sm font-medium">Apply Promotion</label>
+              <Select 
+                value={selectedPromoCode || ''}
+                onValueChange={(value) => {
+                  setSelectedPromoCode(value === '' ? null : value);
+                  
+                  // Find the promotion details to set the discount amount
+                  if (value) {
+                    const selectedPromo = availablePromotionsData.find((promo: Promotion) => promo.code === value);
+                    if (selectedPromo) {
+                      if (selectedPromo.type === 'discount' && selectedPromo.discountValue) {
+                        setSelectedPromoDiscount(selectedPromo.discountValue);
+                      } else if (selectedPromo.type === 'package' && selectedPromo.packageData) {
+                        const discountAmount = 
+                          selectedPromo.packageData.originalPrice - selectedPromo.packageData.packagePrice;
+                        setSelectedPromoDiscount(discountAmount > 0 ? discountAmount : 0);
+                      }
+                    }
+                  } else {
+                    setSelectedPromoDiscount(0);
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a promotion (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">No promotion</SelectItem>
+                  {availablePromotionsData.map((promo: Promotion) => (
+                    <SelectItem key={promo.id} value={promo.code}>
+                      {promo.title} - {promo.code}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedPromoCode && (
+                <div className="text-sm text-green-600">
+                  Promotion applied: Discount of {selectedPromoDiscount} {selectedPromoDiscount > 0 ? '€' : ''}
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="virtual" 
