@@ -1,16 +1,6 @@
 import { db } from "../db";
-import crypto from "crypto";
 import { sql } from "drizzle-orm";
 import { v4 as uuidv4 } from "uuid";
-
-interface RefreshToken {
-  id: number;
-  token: string;
-  userId: number;
-  expiresAt: Date;
-  createdAt: Date;
-  isRevoked: boolean;
-}
 
 /**
  * Creates a refresh token for a user
@@ -42,7 +32,7 @@ export async function createRefreshToken(userId: number, expiresInDays: number =
  */
 export async function validateRefreshToken(token: string): Promise<number | null> {
   // Get token from database
-  const result = await db.execute<RefreshToken>(sql`
+  const result = await db.execute(sql`
     SELECT * FROM refresh_tokens 
     WHERE token = ${token} 
     AND expires_at > NOW() 
@@ -50,11 +40,12 @@ export async function validateRefreshToken(token: string): Promise<number | null
   `);
   
   // Check if token exists and is valid
-  if (result.length === 0) {
+  if (!result.rows || result.rows.length === 0) {
     return null;
   }
   
-  return result[0].userId;
+  const row = result.rows[0] as any;
+  return row.user_id;
 }
 
 /**
@@ -88,6 +79,32 @@ export async function cleanupExpiredRefreshTokens(): Promise<void> {
   await db.execute(sql`
     DELETE FROM refresh_tokens
     WHERE expires_at < NOW()
+  `);
+}
+
+/**
+ * Ensures the refresh token table exists
+ */
+export async function ensureRefreshTokenTable(): Promise<void> {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id SERIAL PRIMARY KEY,
+      token TEXT NOT NULL UNIQUE,
+      user_id INTEGER NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP NOT NULL,
+      is_revoked BOOLEAN NOT NULL DEFAULT false
+    )
+  `);
+  
+  // Create index on token for faster lookups
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS refresh_tokens_token_idx ON refresh_tokens (token)
+  `);
+  
+  // Create index on user_id for faster lookups
+  await db.execute(sql`
+    CREATE INDEX IF NOT EXISTS refresh_tokens_user_id_idx ON refresh_tokens (user_id)
   `);
 }
 

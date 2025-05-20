@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: false // Disable refetching on window focus to prevent loops
   });
   
-  // Login mutation with enhanced verification handling
+  // Login mutation with enhanced verification handling and refresh token support
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
       // Server expects email/password
@@ -173,6 +173,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       const data = await res.json();
+      
+      // Store refresh token if provided
+      if (data.refreshToken) {
+        localStorage.setItem('auth_refresh_token', data.refreshToken);
+        console.log('Refresh token stored');
+      }
       
       // Store any warnings for display
       if (data.warnings && data.warnings.length > 0) {
@@ -292,7 +298,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  // Logout mutation
+  // Add refresh token functionality
+  const refreshTokenMutation = useMutation({
+    mutationFn: async (token: string) => {
+      const res = await apiRequest("POST", "/api/auth/refresh-token", { refreshToken: token });
+      if (!res.ok) {
+        throw new Error("Token refresh failed");
+      }
+      return res.json();
+    },
+    onSuccess: (data) => {
+      // Update user in cache
+      queryClient.setQueryData(["/api/auth/user"], data.user);
+      
+      // Update refresh token
+      if (data.refreshToken) {
+        localStorage.setItem('auth_refresh_token', data.refreshToken);
+      }
+      
+      // Update session storage cache
+      sessionStorage.setItem('cached_user_data', JSON.stringify(data.user));
+      sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+    },
+    onError: () => {
+      // Clean up invalid refresh token
+      localStorage.removeItem('auth_refresh_token');
+    }
+  });
+  
+  // Try to restore session from refresh token on mount
+  React.useEffect(() => {
+    const refreshToken = localStorage.getItem('auth_refresh_token');
+    
+    // Only attempt restore if we don't already have a user and we have a refresh token
+    if (!user && refreshToken && !isLoading) {
+      // Use the token to refresh the session
+      refreshTokenMutation.mutate(refreshToken);
+    }
+  }, [user, isLoading]);
+
+  // Logout mutation with refresh token cleanup
   const logoutMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/auth/logout");
@@ -309,7 +354,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem('cached_user_timestamp');
       sessionStorage.removeItem('clinic_portal_timestamp');
       
-      console.log("Auth cache cleared during logout");
+      // Clear refresh token
+      localStorage.removeItem('auth_refresh_token');
+      
+      console.log("Auth cache and refresh token cleared during logout");
       
       toast({
         title: "Logged out",

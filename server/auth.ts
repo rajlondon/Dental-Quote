@@ -357,7 +357,7 @@ export async function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  // Logout endpoint
+  // Logout endpoint - also revokes refresh tokens
   app.post("/api/auth/logout", (req, res) => {
     // Get user ID before logout to clear from cache
     const userId = req.user?.id;
@@ -369,10 +369,106 @@ export async function setupAuth(app: Express) {
       if (userId && userSessionCache.has(userId)) {
         userSessionCache.delete(userId);
         console.log(`Cleared user ${userId} from session cache on logout`);
+        
+        // Revoke all refresh tokens for the user if available
+        try {
+          if (revokeAllUserRefreshTokens) {
+            revokeAllUserRefreshTokens(userId).then(() => {
+              console.log(`Revoked all refresh tokens for user ${userId}`);
+            }).catch(tokenErr => {
+              console.error(`Failed to revoke refresh tokens for user ${userId}:`, tokenErr);
+            });
+          }
+        } catch (tokenErr) {
+          console.error("Error revoking refresh tokens:", tokenErr);
+        }
       }
       
       res.json({ success: true, message: "Logged out successfully" });
     });
+  });
+  
+  // Refresh token endpoint - exchange a valid refresh token for a new session
+  app.post("/api/auth/refresh-token", async (req, res) => {
+    try {
+      const { refreshToken } = req.body;
+      
+      if (!refreshToken) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Refresh token is required" 
+        });
+      }
+      
+      // Check if refresh token function is available
+      if (!validateRefreshToken) {
+        return res.status(500).json({ 
+          success: false, 
+          message: "Token validation service not available" 
+        });
+      }
+      
+      // Validate refresh token
+      const userId = await validateRefreshToken(refreshToken);
+      
+      if (!userId) {
+        return res.status(401).json({ 
+          success: false, 
+          message: "Invalid or expired refresh token" 
+        });
+      }
+      
+      // Get user data
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      
+      if (!user) {
+        return res.status(404).json({ 
+          success: false, 
+          message: "User not found" 
+        });
+      }
+      
+      // Log the user in with a new session
+      const userForAuth = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        profileImage: user.profileImage || undefined,
+        clinicId: user.clinicId || undefined,
+        emailVerified: user.emailVerified || false,
+        status: user.status || 'pending'
+      };
+      
+      req.login(userForAuth, async (loginErr) => {
+        if (loginErr) {
+          return res.status(500).json({ 
+            success: false, 
+            message: "Failed to create new session" 
+          });
+        }
+        
+        // Create a new refresh token
+        const newRefreshToken = await createRefreshToken(userId);
+        
+        // Revoke the old refresh token
+        await revokeRefreshToken(refreshToken);
+        
+        // Return new user data and refresh token
+        return res.json({ 
+          success: true, 
+          user: userForAuth,
+          refreshToken: newRefreshToken
+        });
+      });
+    } catch (error: any) {
+      console.error("Refresh token error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Token refresh failed: " + error.message 
+      });
+    }
   });
 
   // Add diagnostic middleware to log session and cookie information
