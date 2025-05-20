@@ -1,0 +1,62 @@
+## Clinic-Initiated Promotions
+
+### Process Flow
+
+1. **Creation in Clinic Portal**
+   - Clinic staff create promotion drafts through their dedicated portal
+   - They configure all promotion details including treatments, pricing, and benefits
+   - Promotions are saved with "PENDING_APPROVAL" status
+
+2. **Admin Review**
+   - Admins receive notifications of pending promotion approvals
+   - They review details for accuracy, pricing, and alignment with platform policies
+   - They can approve, reject with feedback, or modify and approve
+
+3. **Activation**
+   - Upon approval, promotions become active based on their configured start date
+   - Clinics receive notifications when their promotions are approved or rejected
+   - Active promotions appear in the clinic's dashboard with performance metrics
+
+### Clinic Portal Features
+
+The clinic portal provides a dedicated "Promotions" section where clinic staff can:
+
+1. **Create New Promotions**
+   - Select promotion type (discount or package)
+   - Configure discount details or package components
+   - Add tourist attractions and additional benefits
+   - Set validity periods and usage limits
+   - Preview how the promotion will appear to patients
+
+2. **Manage Existing Promotions**
+   - View all promotions with their current status
+   - Filter by status (Draft, Pending Approval, Approved, Active, Expired, Rejected)
+   - Edit drafts and pending promotions
+   - Deactivate active promotions if needed
+   - View performance metrics for active/past promotions
+
+3. **Promotion Analytics**
+   - Track views, applications, and conversion rates
+   - Monitor revenue generated through promotions
+   - Compare performance across different promotions
+   - Receive insights for optimization
+
+### Admin Approval Interface
+
+The admin portal includes a "Promotion Approvals" section where platform administrators can:
+
+1. **Review Pending Promotions**
+   - View all details submitted by clinics
+   - Compare with similar promotions on the platform
+   - Check pricing against platform guidelines
+
+2. **Approval Actions**
+   - Approve as submitted
+   - Reject with detailed feedback
+   - Modify specific details and approve
+   - Request changes from the clinic
+
+3. **Bulk Processing**
+   - Approve multiple similar promotions
+   - Apply standardized feedback for common issues
+   - Prioritize promotions by clinic tier or submission date
