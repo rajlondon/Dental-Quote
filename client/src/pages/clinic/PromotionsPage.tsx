@@ -104,79 +104,81 @@ export default function PromotionsPage({
       <Separator />
       
       <div className="flex justify-between items-center">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList>
-            <TabsTrigger value="active">Active</TabsTrigger>
-            <TabsTrigger value="pending">Pending Approval</TabsTrigger>
-            <TabsTrigger value="draft">Drafts</TabsTrigger>
-            <TabsTrigger value="rejected">Rejected</TabsTrigger>
-            <TabsTrigger value="expired">Expired</TabsTrigger>
-            <TabsTrigger value="all">All</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="flex-1">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList>
+              <TabsTrigger value="active">Active</TabsTrigger>
+              <TabsTrigger value="pending">Pending Approval</TabsTrigger>
+              <TabsTrigger value="draft">Drafts</TabsTrigger>
+              <TabsTrigger value="rejected">Rejected</TabsTrigger>
+              <TabsTrigger value="expired">Expired</TabsTrigger>
+              <TabsTrigger value="all">All</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="active" className="mt-4">
+              <PromotionsList 
+                status="ACTIVE" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="pending" className="mt-4">
+              <PromotionsList 
+                status="PENDING_APPROVAL" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="draft" className="mt-4">
+              <PromotionsList 
+                status="DRAFT" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="rejected" className="mt-4">
+              <PromotionsList 
+                status="REJECTED" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="expired" className="mt-4">
+              <PromotionsList 
+                status="EXPIRED" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+            
+            <TabsContent value="all" className="mt-4">
+              <PromotionsList 
+                status="ALL" 
+                refreshTrigger={refreshTrigger}
+                onEdit={handleEdit} 
+              />
+            </TabsContent>
+          </Tabs>
+        </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-4">
           <Button 
             onClick={handleCreate}
-            className="ml-auto"
+            className="whitespace-nowrap"
           >
             <PlusCircle className="h-4 w-4 mr-2" />
             Create Promotion
           </Button>
         </div>
       </div>
-      
-      <TabsContent value="active" className="mt-0">
-        <PromotionsList 
-          status="ACTIVE" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
-      
-      <TabsContent value="pending" className="mt-0">
-        <PromotionsList 
-          status="PENDING_APPROVAL" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
-      
-      <TabsContent value="draft" className="mt-0">
-        <PromotionsList 
-          status="DRAFT" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
-      
-      <TabsContent value="rejected" className="mt-0">
-        <PromotionsList 
-          status="REJECTED" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
-      
-      <TabsContent value="expired" className="mt-0">
-        <PromotionsList 
-          status="EXPIRED" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
-      
-      <TabsContent value="all" className="mt-0">
-        <PromotionsList 
-          status="ALL" 
-          refreshTrigger={refreshTrigger}
-          onEdit={handleEdit} 
-        />
-      </TabsContent>
     </div>
   );
 }

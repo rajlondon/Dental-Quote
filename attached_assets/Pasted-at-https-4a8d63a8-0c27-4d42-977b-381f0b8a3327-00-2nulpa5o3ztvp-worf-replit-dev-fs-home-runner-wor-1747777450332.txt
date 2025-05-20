@@ -1,0 +1,26 @@
+at https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tabs.js?v=62d0e4bd:175:13
+    at _c5 (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/tabs.tsx:72:12)
+    at div
+    at PromotionsPage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/clinic/PromotionsPage.tsx:27:3)
+    at main
+    at div
+    at div
+    at ClinicPortalPage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/ClinicPortalPage.tsx:82:3)
+    at ClinicQueryProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-clinic-queries.tsx:23:39)
+    at ClinicGuard (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ClinicGuard.tsx:24:24)
+    at Route (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:323:16)
+    at Switch (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:379:17)
+    at Router
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/App.tsx?v=p2_A3cxkiyIu2so_N4Lq:715:3)
+    at RTLProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/rtl-provider.tsx:21:31)
+    at Suspense
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+Try Again
