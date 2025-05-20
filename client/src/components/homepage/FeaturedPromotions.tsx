@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, differenceInDays } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { ChevronRight, Calendar, Tag, Package, Timer } from 'lucide-react';
-import { useNavigate } from 'wouter';
+import { Link, useLocation } from 'wouter';
 
 import {
   Card,
@@ -18,7 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function FeaturedPromotions() {
-  const [, navigate] = useNavigate();
+  const [, setLocation] = useLocation();
   
   // Fetch featured promotions
   const { data, isLoading, isError } = useQuery({
@@ -46,10 +46,10 @@ export function FeaturedPromotions() {
   const handlePromotionClick = (promotion: any) => {
     // If it's a package promotion, navigate to the package detail page
     if (promotion.type === 'package' && promotion.packageData) {
-      navigate(`/package/${promotion.id}`);
+      setLocation(`/package/${promotion.id}`);
     } else {
       // For discount promotions, navigate to clinic with promo code applied
-      navigate(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
+      setLocation(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
     }
   };
   

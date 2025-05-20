@@ -11,6 +11,7 @@ import clinicsData from "@/data/clinics.json";
 import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
+import { FeaturedPromotions } from "@/components/homepage/FeaturedPromotions";
 
 // Clinic Card Component
 const ClinicCard = ({ 
@@ -295,6 +296,9 @@ const HomePage: React.FC = () => {
       
       {/* Premium Offers Carousel */}
       <EnhancedOffersCarousel className="px-4" />
+      
+      {/* Featured Promotions Section */}
+      <FeaturedPromotions />
       
       {/* Popular Clinics Section */}
       <section className="py-16">
