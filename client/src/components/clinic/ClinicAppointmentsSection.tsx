@@ -84,6 +84,8 @@ interface Appointment {
   meetLink?: string;
   doctorName: string;
   doctorId: string;
+  promotionCode?: string;
+  promotionDiscount?: number;
 }
 
 const ClinicAppointmentsSection: React.FC = () => {
@@ -819,6 +821,22 @@ const ClinicAppointmentsSection: React.FC = () => {
                     )}
                   </div>
                 </div>
+                
+                {selectedAppointment.promotionCode && (
+                  <div className="bg-green-50 p-3 rounded-md">
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-500">Promotion Applied</div>
+                        <div className="font-medium text-green-700">{selectedAppointment.promotionCode}</div>
+                        {typeof selectedAppointment.promotionDiscount === 'number' && selectedAppointment.promotionDiscount > 0 && (
+                          <div className="text-sm text-green-600 mt-1">
+                            Discount: {selectedAppointment.promotionDiscount}€
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 {selectedAppointment.notes && (
                   <div className="bg-amber-50 p-3 rounded-md">

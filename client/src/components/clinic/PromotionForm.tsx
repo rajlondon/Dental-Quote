@@ -93,7 +93,7 @@ const promotionSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     packagePrice: z.number().min(0).optional(),
-    treatments: z.array(z.any()).optional(),
+    treatments: z.array(z.string()).optional(),
     accommodationIncluded: z.boolean().optional(),
     accommodationDetails: z.string().optional(),
     transportIncluded: z.boolean().optional(),
@@ -638,11 +638,12 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
                                       >
                                         <FormControl>
                                           <Checkbox
-                                            checked={Array.isArray(field.value) && field.value.indexOf(treatment.id) !== -1}
+                                            checked={Array.isArray(field.value) && field.value.some(item => item === treatment.id)}
                                             onCheckedChange={(checked) => {
+                                              // Ensure field.value is always an array
                                               const current = Array.isArray(field.value) ? [...field.value] : [];
                                               const updated = checked
-                                                ? [...current, treatment.id as never]
+                                                ? [...current, treatment.id]
                                                 : current.filter((value) => value !== treatment.id);
                                               field.onChange(updated);
                                             }}
