@@ -105,6 +105,9 @@ const ClinicAppointmentsSection: React.FC = () => {
   const [appointmentDoctor, setAppointmentDoctor] = useState<string>('');
   const [appointmentNotes, setAppointmentNotes] = useState<string>('');
   const [isVirtualAppointment, setIsVirtualAppointment] = useState<boolean>(false);
+  const [selectedPromoCode, setSelectedPromoCode] = useState<string | null>(null);
+  const [selectedPromoDiscount, setSelectedPromoDiscount] = useState<number>(0);
+  const [availablePromotions, setAvailablePromotions] = useState<any[]>([]);
   
   // Use the real API data
   const { 
@@ -308,7 +311,9 @@ const ClinicAppointmentsSection: React.FC = () => {
       endTime: endTimeISO,
       status: 'scheduled',
       reminderSent: false,
-      followUpRequired: false
+      followUpRequired: false,
+      promoCodeApplied: selectedPromoCode || null, // Add promotion code if selected
+      discountAmount: selectedPromoDiscount || 0 // Add discount amount if applicable
     };
     
     try {

@@ -93,7 +93,7 @@ const promotionSchema = z.object({
     title: z.string().optional(),
     description: z.string().optional(),
     packagePrice: z.number().min(0).optional(),
-    treatments: z.array(z.string()).optional(),
+    treatments: z.array(z.any()).optional(),
     accommodationIncluded: z.boolean().optional(),
     accommodationDetails: z.string().optional(),
     transportIncluded: z.boolean().optional(),
