@@ -253,6 +253,31 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // Import refresh token service
+  let createRefreshToken: (userId: number, expiresInDays?: number) => Promise<string>;
+  let validateRefreshToken: (token: string) => Promise<number | null>;
+  let revokeRefreshToken: (token: string) => Promise<void>;
+  let revokeAllUserRefreshTokens: (userId: number) => Promise<void>;
+  let ensureRefreshTokenTable: () => Promise<void>;
+  
+  // Import refresh token service (lazy loading)
+  import('./services/refresh-token-service').then(module => {
+    createRefreshToken = module.createRefreshToken;
+    validateRefreshToken = module.validateRefreshToken;
+    revokeRefreshToken = module.revokeRefreshToken;
+    revokeAllUserRefreshTokens = module.revokeAllUserRefreshTokens;
+    ensureRefreshTokenTable = module.ensureRefreshTokenTable;
+    
+    // Ensure refresh token table exists
+    ensureRefreshTokenTable().then(() => {
+      console.log("Refresh token table is ready");
+    }).catch(err => {
+      console.error("Failed to prepare refresh token table:", err);
+    });
+  }).catch(err => {
+    console.error("Failed to import refresh token service:", err);
+  });
+
   // Login endpoint with enhanced email verification handling and clinic session optimization
   app.post("/api/auth/login", (req, res, next) => {
     // Special session optimization for clinic staff to prevent double login
@@ -271,7 +296,7 @@ export async function setupAuth(app: Express) {
       });
     }
     
-    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
+    passport.authenticate("local", async (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
       if (err) return next(err);
       
       if (!user) {
@@ -292,14 +317,28 @@ export async function setupAuth(app: Express) {
         });
       }
       
-      req.login(user, (err: Error | null) => {
+      req.login(user, async (err: Error | null) => {
         if (err) return next(err);
+        
+        let refreshToken = "";
+        
+        // Create refresh token for persistent sessions
+        try {
+          // Set longer expiry for clinic staff to reduce login frequency
+          const expiryDays = user.role === 'clinic_staff' ? 60 : 30;
+          refreshToken = await createRefreshToken(user.id, expiryDays);
+          console.log(`Created refresh token for user ${user.id}`);
+        } catch (tokenErr) {
+          console.error("Error creating refresh token:", tokenErr);
+          // Continue without refresh token if there's an error
+        }
         
         // Include unverified status warning in the response if needed
         if (user.role === 'patient' && !user.emailVerified) {
           return res.json({ 
             success: true, 
             user,
+            refreshToken: refreshToken || undefined,
             warnings: ["Your email is not verified. Some features may be limited."]
           });
         }
@@ -309,7 +348,11 @@ export async function setupAuth(app: Express) {
           console.log(`Authenticated clinic staff: ${user.id} (${user.email})`);
         }
         
-        return res.json({ success: true, user });
+        return res.json({ 
+          success: true, 
+          user,
+          refreshToken: refreshToken || undefined
+        });
       });
     })(req, res, next);
   });
