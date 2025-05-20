@@ -222,18 +222,30 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
     enabled: !!id,
   });
 
+  // Get current user/clinic info
+  const { data: userData } = useQuery({
+    queryKey: ['/api/auth/user'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/auth/user');
+      return res.json();
+    },
+  });
+
   // Handle form submission
   const mutation = useMutation({
     mutationFn: async (data: z.infer<typeof promotionSchema>) => {
-      // Add current clinic ID if not present
-      if (!data.clinic_id) {
-        // In a real app, you would get this from auth context or API
-        data.clinic_id = 1; // Hardcoded for demo
+      // Add current clinic ID from user data
+      if (!data.clinic_id && userData?.user?.clinicId) {
+        data.clinic_id = userData.user.clinicId;
+      } else if (!data.clinic_id) {
+        throw new Error("Unable to determine clinic ID. Please try again.");
       }
       
-      // Create or update promotion
+      // Create or update promotion - use the clinic API endpoint
       const method = isEditing ? 'PUT' : 'POST';
-      const endpoint = isEditing ? `/api/promotions/${id}` : '/api/promotions';
+      const endpoint = isEditing 
+        ? `/api/clinic/promotions/${id}` 
+        : '/api/clinic/promotions';
       
       const res = await apiRequest(method, endpoint, data);
       return res.json();
