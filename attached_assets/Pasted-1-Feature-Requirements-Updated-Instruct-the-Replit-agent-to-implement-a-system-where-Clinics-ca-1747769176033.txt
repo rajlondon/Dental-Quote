@@ -1,0 +1,309 @@
+1. Feature Requirements (Updated)
+Instruct the Replit agent to implement a system where:
+
+Clinics can create their own promotional offers through their portal
+Promotions are submitted for admin review before becoming active
+Admins can set/modify the start date, end date, and duration of promotions
+Approved promotions are displayed on the homepage based on admin configuration
+The system tracks the status of promotions through their lifecycle
+2. Technical Implementation Details
+Database Schema Extensions (Updated)
+
+Copy
+// Extensions to PromoCode model
+interface PromoCode {
+  // Existing fields
+  id: string;
+  code: string;
+  title: string;
+  description: string;
+  clinic_id: string;
+  discount_type: "percentage" | "fixed_amount";
+  discount_value: number;
+  applicable_treatments: string[];
+  start_date: string;
+  end_date: string;
+  max_uses: number;
+  is_active: boolean;
+  type: "discount" | "package";
+  packageData?: {...};
+  
+  // New fields for approval workflow
+  status: "DRAFT" | "PENDING_APPROVAL" | "APPROVED" | "ACTIVE" | "REJECTED" | "EXPIRED";
+  created_by: string; // Clinic user ID
+  created_at: string;
+  submitted_at?: string;
+  reviewed_by?: string; // Admin user ID
+  reviewed_at?: string;
+  rejection_reason?: string;
+  approval_notes?: string;
+  version: number;
+  
+  // New fields for homepage display
+  display_on_homepage: boolean;
+  homepage_priority: number; // For ordering promotions on homepage
+  homepage_image_url: string; // Banner image for homepage
+  homepage_short_description: string; // Short teaser text
+  
+  // New fields for admin scheduling
+  admin_modified_dates: boolean; // Indicates if admin changed the dates
+  original_start_date?: string; // Original date suggested by clinic
+  original_end_date?: string; // Original date suggested by clinic
+}
+API Endpoints to Implement (Updated)
+
+Copy
+// Clinic Portal Endpoints
+POST /api/clinic/promotions - Create new promotion draft
+GET /api/clinic/promotions - List all clinic promotions
+GET /api/clinic/promotions/:id - Get promotion details
+PUT /api/clinic/promotions/:id - Update draft promotion
+POST /api/clinic/promotions/:id/submit - Submit for approval
+DELETE /api/clinic/promotions/:id - Delete draft promotion
+
+// Admin Portal Endpoints
+GET /api/admin/promotions/pending - List pending approvals
+PUT /api/admin/promotions/:id/approve - Approve promotion
+PUT /api/admin/promotions/:id/reject - Reject with feedback
+PUT /api/admin/promotions/:id/schedule - Update promotion scheduling
+PUT /api/admin/promotions/:id/homepage - Configure homepage display
+
+// Homepage Display Endpoints
+GET /api/promotions/featured - Get promotions for homepage display
+3. Component Structure (Updated)
+Instruct the Replit agent to create these React components:
+
+Clinic Portal Components
+PromotionsList Component
+
+Displays all clinic promotions with status
+Allows filtering by status
+Provides actions (edit, delete, submit)
+Indicators for homepage featured promotions
+PromotionForm Component
+
+Form for creating/editing promotions
+Fields for all promotion details
+Validation for required fields
+Preview of how it will appear to patients
+Optional homepage display assets section
+Admin Portal Components (Updated)
+PendingApprovalsList Component
+
+Lists all promotions pending approval
+Sorting and filtering capabilities
+Bulk action options
+PromotionReview Component
+
+Displays promotion details for review
+Provides approve/reject actions
+Form for providing feedback
+Scheduling Section:
+Date picker for start/end dates
+Duration selector (1 week, 2 weeks, 1 month, etc.)
+Auto-calculation of end date based on duration
+Homepage Display Section:
+Toggle for homepage display
+Priority setting (1-10)
+Image uploader for homepage banner
+Short description editor
+HomepagePromotionsManager Component (New)
+
+Drag-and-drop interface for arranging homepage promotions
+Preview of how promotions will appear on homepage
+Quick edit of homepage-specific fields
+Scheduling calendar view for planning promotions
+Homepage Components (New)
+FeaturedPromotions Component
+Carousel/grid display of featured promotions
+"Limited Time" indicators for promotions ending soon
+Direct links to promotion details
+4. State Management (Updated)
+
+Copy
+// Promotion status reducer with scheduling and homepage features
+const promotionReducer = (state, action) => {
+  switch (action.type) {
+    case 'SUBMIT_FOR_APPROVAL':
+      return { ...state, status: 'PENDING_APPROVAL', submitted_at: new Date().toISOString() };
+    case 'APPROVE':
+      return { 
+        ...state, 
+        status: 'APPROVED', 
+        reviewed_by: action.payload.adminId,
+        reviewed_at: new Date().toISOString(),
+        approval_notes: action.payload.notes,
+        // If admin modified dates during approval
+        ...(action.payload.modifiedDates ? {
+          start_date: action.payload.startDate,
+          end_date: action.payload.endDate,
+          admin_modified_dates: true,
+          original_start_date: state.start_date,
+          original_end_date: state.end_date
+        } : {})
+      };
+    case 'UPDATE_HOMEPAGE_DISPLAY':
+      return {
+        ...state,
+        display_on_homepage: action.payload.displayOnHomepage,
+        homepage_priority: action.payload.priority,
+        homepage_image_url: action.payload.imageUrl,
+        homepage_short_description: action.payload.shortDescription
+      };
+    // Additional cases...
+    default:
+      return state;
+  }
+};
+5. Implementation Steps for Replit Agent (Updated)
+Create Database Migrations
+
+Add new fields to the PromoCode table including homepage display fields
+Create indexes for efficient queries
+Backend Implementation
+
+Create API controllers for all endpoints
+Implement validation logic
+Set up authentication middleware
+Create scheduling logic for promotions
+Frontend Implementation
+
+Build clinic portal components
+Implement admin review interface with scheduling controls
+Create homepage promotion display components
+Implement admin homepage promotion manager
+Notification System
+
+Implement email notifications for status changes
+Add in-app notifications for pending reviews
+Create reminders for promotions about to expire
+Homepage Integration
+
+Implement featured promotions carousel/grid on homepage
+Create caching mechanism for fast homepage loading
+Set up automatic refresh of homepage content when promotions change
+Testing
+
+Unit tests for status transitions
+Integration tests for the approval workflow
+UI tests for form validation
+Tests for scheduling logic and homepage display
+6. Sample Code for Key Functions (Updated)
+
+Copy
+// Example: Admin approval with scheduling
+async function approvePromotionWithScheduling(
+  promotionId: string, 
+  notes: string,
+  startDate: string,
+  endDate: string,
+  displayOnHomepage: boolean,
+  homepagePriority: number = 5
+) {
+  try {
+    const response = await fetch(`/api/admin/promotions/${promotionId}/approve`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ 
+        notes,
+        startDate,
+        endDate,
+        displayOnHomepage,
+        homepagePriority
+      })
+    });
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message);
+    }
+    
+    const result = await response.json();
+    toast.success('Promotion approved and scheduled successfully');
+    return result;
+  } catch (error) {
+    toast.error(`Failed to approve promotion: ${error.message}`);
+    throw error;
+  }
+}
+
+// Example: Get featured promotions for homepage
+async function getFeaturedPromotions() {
+  try {
+    const response = await fetch('/api/promotions/featured');
+    
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch featured promotions:', error);
+    return [];
+  }
+}
+
+// Example: Calculate end date based on duration
+function calculateEndDate(startDate: Date, durationInDays: number): Date {
+  const endDate = new Date(startDate);
+  endDate.setDate(startDate.getDate() + durationInDays);
+  return endDate;
+}
+7. UI Mockups Description (Updated)
+Admin Portal - Promotion Review with Scheduling
+Review section with promotion details
+Scheduling Panel:
+Start date picker with calendar
+Duration dropdown (7 days, 14 days, 30 days, 60 days, 90 days, Custom)
+End date picker (auto-updates when duration changes)
+"Override clinic dates" toggle with confirmation
+Homepage Display Panel:
+"Feature on homepage" toggle switch
+Priority slider (1-10) with visual explanation
+Image uploader with crop/resize tools
+Short description text area with character counter
+Preview of how it will appear on homepage
+Homepage Featured Promotions
+Responsive grid/carousel of promotion cards
+Each card shows:
+Promotion image
+Clinic name and logo
+Short description
+Discount percentage/amount
+"Ends in X days" countdown for urgency
+"View Details" button
+Admin Portal - Homepage Promotions Manager
+Calendar view showing when promotions are scheduled
+Drag-and-drop interface for arranging promotion order
+Quick filters for active/upcoming/expired promotions
+Preview of current homepage layout
+Analytics section showing click-through rates for featured promotions
+8. Testing Scenarios (Updated)
+Admin modifies promotion dates during approval
+
+Verify original dates are preserved
+Confirm new dates are applied
+Check notification to clinic includes date change information
+Admin features promotion on homepage
+
+Verify promotion appears on homepage
+Confirm priority affects display order
+Check that promotion is removed from homepage after end date
+Multiple promotions competing for homepage space
+
+Verify higher priority promotions are more prominent
+Confirm maximum number of promotions is enforced
+Test rotation logic if implemented
+Promotion scheduling edge cases
+
+Test scheduling a promotion to start in the past
+Verify handling of promotions with very short durations
+Test scheduling conflicts between promotions
+Homepage performance
+
+Measure load time with multiple featured promotions
+Test caching mechanisms
+Verify mobile responsiveness of homepage promotion display
