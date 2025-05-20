@@ -1,0 +1,373 @@
+Backend Infrastructure:
+
+Extended the promo code model in
+
+Copy
+server/models/promo-code.ts
+Created clinic promotion service in
+
+Copy
+server/services/clinic-promotion-service.ts
+Added API routes in
+
+Copy
+server/routes/clinic-promotion-routes.ts
+Registered routes in the main
+
+Copy
+server/routes.ts
+file
+Client-Side Components:
+
+Clinic portal components:
+
+Copy
+PromotionsList.tsx
+- Displays all clinic promotions
+
+Copy
+PromotionForm.tsx
+- For creating/editing promotions
+
+Copy
+PromotionsPage.tsx
+- Main page for clinic promotion management
+Admin portal components:
+
+Copy
+PendingApprovalsList.tsx
+- Shows promotions awaiting approval
+
+Copy
+PromotionReview.tsx
+- Interface for reviewing promotions
+
+Copy
+PendingApprovals.tsx
+- Main admin page for approvals
+Homepage components:
+
+Copy
+FeaturedPromotions.tsx
+- Displays approved promotions
+Documentation:
+
+Created comprehensive documentation in
+
+Copy
+docs/CLINIC_INITIATED_PROMOTIONS.md
+Next Steps
+To complete the implementation, the agent should focus on:
+
+Finalize the PromotionForm Component:
+
+Add scheduling controls for clinics to propose start/end dates
+Implement treatment selection with pricing calculations
+Add validation for all required fields
+Create a preview section to show how the promotion will appear
+Enhance the Admin Review Interface:
+
+Add the ability for admins to modify promotion dates during review
+Implement homepage display configuration (toggle, priority settings)
+Create a scheduling calendar view for planning promotions
+Add approval/rejection with feedback functionality
+Connect to Homepage Display:
+
+Finalize the FeaturedPromotions component
+Implement the carousel/grid display for approved promotions
+Add "Limited Time" indicators for promotions ending soon
+Ensure mobile responsiveness
+Implement State Management:
+
+Create context providers for managing promotion state
+Implement reducers for handling promotion status changes
+Add caching mechanisms for efficient data retrieval
+Add Notification System:
+
+Implement notifications for status changes
+Create email alerts for pending reviews and approvals
+Add in-app notifications for both clinics and admins
+Implementation Priorities
+The agent should prioritize implementation in this order:
+
+First, complete the core workflow (create → submit → review → approve/reject)
+Then add the scheduling functionality for admins to control dates
+Finally, implement the homepage display features
+Code Suggestions for Key Functionality
+Here are some specific code suggestions for the agent to implement:
+
+1. Admin Date Modification in PromotionReview Component
+
+Copy
+// In PromotionReview.tsx
+const [useCustomDates, setUseCustomDates] = useState(false);
+const [startDate, setStartDate] = useState(new Date(promotion.start_date));
+const [endDate, setEndDate] = useState(new Date(promotion.end_date));
+const [duration, setDuration] = useState(7); // Default 7 days
+
+// Calculate end date based on duration
+const updateEndDate = (start: Date, durationDays: number) => {
+  const end = new Date(start);
+  end.setDate(start.getDate() + durationDays);
+  setEndDate(end);
+};
+
+// Duration options
+const durationOptions = [
+  { value: 7, label: '1 Week' },
+  { value: 14, label: '2 Weeks' },
+  { value: 30, label: '1 Month' },
+  { value: 60, label: '2 Months' },
+  { value: 90, label: '3 Months' },
+  { value: 0, label: 'Custom' }
+];
+
+return (
+  // ... existing review fields
+  <div className="mt-6 border-t pt-4">
+    <h3 className="text-lg font-medium">Promotion Scheduling</h3>
+    
+    <div className="flex items-center mt-2">
+      <Switch
+        checked={useCustomDates}
+        onCheckedChange={setUseCustomDates}
+        id="custom-dates"
+      />
+      <Label htmlFor="custom-dates" className="ml-2">
+        Override clinic-suggested dates
+      </Label>
+    </div>
+    
+    <div className={cn("mt-4 grid grid-cols-1 gap-4 md:grid-cols-2", 
+      !useCustomDates && "opacity-50 pointer-events-none")}>
+      <div>
+        <Label htmlFor="start-date">Start Date</Label>
+        <DatePicker
+          id="start-date"
+          selected={startDate}
+          onChange={(date) => {
+            setStartDate(date);
+            if (duration > 0) updateEndDate(date, duration);
+          }}
+          minDate={new Date()}
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="duration">Duration</Label>
+        <Select
+          value={duration.toString()}
+          onValueChange={(value) => {
+            const days = parseInt(value);
+            setDuration(days);
+            if (days > 0) updateEndDate(startDate, days);
+          }}
+        >
+          {durationOptions.map(option => (
+            <SelectItem key={option.value} value={option.value.toString()}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
+      
+      <div>
+        <Label htmlFor="end-date">End Date</Label>
+        <DatePicker
+          id="end-date"
+          selected={endDate}
+          onChange={setEndDate}
+          minDate={new Date(startDate.getTime() + 86400000)} // Min 1 day after start
+        />
+      </div>
+    </div>
+  </div>
+);
+2. Homepage Display Configuration in Admin Review
+
+Copy
+// In PromotionReview.tsx - Add this section after scheduling
+<div className="mt-6 border-t pt-4">
+  <h3 className="text-lg font-medium">Homepage Display</h3>
+  
+  <div className="flex items-center mt-2">
+    <Switch
+      checked={displayOnHomepage}
+      onCheckedChange={setDisplayOnHomepage}
+      id="homepage-display"
+    />
+    <Label htmlFor="homepage-display" className="ml-2">
+      Feature this promotion on homepage
+    </Label>
+  </div>
+  
+  <div className={cn("mt-4 space-y-4", 
+    !displayOnHomepage && "opacity-50 pointer-events-none")}>
+    <div>
+      <Label htmlFor="priority">Display Priority (1-10)</Label>
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">Low</span>
+        <Slider
+          id="priority"
+          min={1}
+          max={10}
+          step={1}
+          value={[priority]}
+          onValueChange={([value]) => setPriority(value)}
+          className="flex-1"
+        />
+        <span className="text-sm text-muted-foreground">High</span>
+      </div>
+      <p className="text-xs text-muted-foreground mt-1">
+        Higher priority promotions will be displayed more prominently
+      </p>
+    </div>
+    
+    <div>
+      <Label htmlFor="homepage-image">Homepage Image</Label>
+      <div className="mt-1">
+        <FileUpload
+          id="homepage-image"
+          accept="image/*"
+          maxSize={2 * 1024 * 1024} // 2MB
+          onUpload={handleImageUpload}
+          currentUrl={homepageImageUrl}
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          Recommended size: 1200×600px, max 2MB
+        </p>
+      </div>
+    </div>
+    
+    <div>
+      <Label htmlFor="short-description">
+        Short Description <span className="text-muted-foreground">({shortDescription.length}/120)</span>
+      </Label>
+      <Textarea
+        id="short-description"
+        value={shortDescription}
+        onChange={(e) => setShortDescription(e.target.value)}
+        maxLength={120}
+        placeholder="Brief, compelling description for homepage display"
+        className="mt-1"
+      />
+    </div>
+  </div>
+</div>
+3. FeaturedPromotions Component for Homepage
+
+Copy
+// In FeaturedPromotions.tsx
+import { useQuery } from 'react-query';
+import { Promotion } from '../../types/promotion';
+import { Card, CardContent, CardFooter } from '../ui/card';
+import { Button } from '../ui/button';
+import { formatCurrency, formatDate } from '../../utils/format';
+
+export function FeaturedPromotions() {
+  const { data: promotions, isLoading, error } = useQuery<Promotion[]>(
+    'featuredPromotions',
+    () => fetch('/api/promotions/featured').then(res => res.json())
+  );
+
+  if (isLoading) return <div className="py-12 text-center">Loading promotions...</div>;
+  if (error) return <div className="py-12 text-center">Failed to load promotions</div>;
+  if (!promotions?.length) return null;
+
+  // Calculate days remaining for a promotion
+  const getDaysRemaining = (endDate: string) => {
+    const end = new Date(endDate);
+    const today = new Date();
+    const diffTime = end.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  // Sort promotions by priority (highest first)
+  const sortedPromotions = [...promotions].sort((a, b) => 
+    b.homepage_priority - a.homepage_priority
+  );
+
+  return (
+    <section className="py-12 bg-gray-50">
+      <div className="container">
+        <h2 className="text-3xl font-bold text-center mb-8">Featured Promotions</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedPromotions.map(promotion => {
+            const daysRemaining = getDaysRemaining(promotion.end_date);
+            
+            return (
+              <Card key={promotion.id} className="overflow-hidden">
+                {promotion.homepage_image_url && (
+                  <div className="aspect-video relative overflow-hidden">
+                    <img 
+                      src={promotion.homepage_image_url} 
+                      alt={promotion.title}
+                      className="object-cover w-full h-full"
+                    />
+                    {daysRemaining <= 7 && daysRemaining > 0 && (
+                      <div className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Ends in {daysRemaining} days
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <CardContent className="pt-6">
+                  <div className="flex items-center mb-3">
+                    <img 
+                      src={`/api/clinics/${promotion.clinic_id}/logo`} 
+                      alt="Clinic logo"
+                      className="w-8 h-8 rounded-full mr-2"
+                    />
+                    <span className="text-sm font-medium text-gray-500">
+                      {promotion.clinic_name}
+                    </span>
+                  </div>
+                  
+                  <h3 className="text-xl font-bold mb-2">{promotion.title}</h3>
+                  
+                  <p className="text-gray-600 mb-4">
+                    {promotion.homepage_short_description || promotion.description.substring(0, 100) + '...'}
+                  </p>
+                  
+                  <div className="text-lg font-bold text-primary">
+                    {promotion.discount_type === 'percentage' 
+                      ? `${promotion.discount_value}% Off` 
+                      : `Save ${formatCurrency(promotion.discount_value)}`}
+                  </div>
+                  
+                  <div className="text-sm text-gray-500 mt-1">
+                    Valid until {formatDate(promotion.end_date)}
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="pt-0">
+                  <Button variant="default" className="w-full">
+                    View Details
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+Testing Plan
+Once these components are implemented, the Replit agent should test:
+
+The complete promotion lifecycle:
+
+Clinic creates a draft promotion
+Clinic submits for approval
+Admin reviews and modifies dates
+Admin configures homepage display
+Promotion appears on homepage
+Edge cases:
+
+Handling expired promotions
+Dealing with rejected promotions that are resubmitted
+Managing multiple promotions competing for homepage space
