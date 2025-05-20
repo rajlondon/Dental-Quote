@@ -197,7 +197,8 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
   // Set up form with validation
   const form = useForm({
     resolver: zodResolver(promotionSchema),
-    defaultValues
+    defaultValues,
+    mode: "onChange"
   });
 
   // Fetch promotion data if editing
@@ -312,11 +313,18 @@ export default function PromotionForm({ id, onSubmitSuccess, onCancel }: Promoti
     }
   };
 
-  // Handle form submission
-  const onSubmit = async (data: z.infer<typeof promotionSchema>) => {
+  // Handle form submission with proper type casting
+  const onSubmit = async (formData: any) => {
     setIsLoading(true);
     
     try {
+      // Ensure the type is properly set as one of the valid enum values
+      const data = {
+        ...formData,
+        type: formData.type === 'discount' ? 'discount' : 'package',
+        status: formData.status || 'DRAFT',
+      };
+      
       await mutation.mutateAsync(data);
     } catch (error) {
       console.error('Error submitting form:', error);

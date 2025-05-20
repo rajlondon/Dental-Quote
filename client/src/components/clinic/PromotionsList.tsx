@@ -74,7 +74,13 @@ interface Promotion {
   };
 }
 
-const PromotionsList: React.FC = () => {
+interface PromotionsListProps {
+  status: string;
+  refreshTrigger: number;
+  onEdit: (id: string) => void;
+}
+
+const PromotionsList: React.FC<PromotionsListProps> = ({ status, refreshTrigger, onEdit }) => {
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [promotionToDelete, setPromotionToDelete] = useState<string | null>(null);

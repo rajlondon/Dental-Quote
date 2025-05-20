@@ -118,7 +118,7 @@ export default function PromotionsPage({
               <TabsTrigger value="expired">Expired</TabsTrigger>
               <TabsTrigger value="all">All</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="active" className="mt-4">
               <PromotionsList 
                 status="ACTIVE" 
