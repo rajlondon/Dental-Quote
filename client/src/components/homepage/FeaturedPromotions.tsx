@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format, differenceInDays } from 'date-fns';
 import { apiRequest } from '@/lib/queryClient';
 import { ChevronRight, Calendar, Tag, Package, Timer } from 'lucide-react';
-import { Link, useLocation } from 'wouter';
+import { Link } from 'wouter';
 
 import {
   Card,
@@ -18,7 +18,6 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function FeaturedPromotions() {
-  const [, navigate] = useLocation();
   
   // Fetch featured promotions
   const { data, isLoading, isError } = useQuery({
@@ -42,16 +41,7 @@ export function FeaturedPromotions() {
     return format(new Date(dateString), 'MMMM d, yyyy');
   };
   
-  // Handle clicking on a promotion
-  const handlePromotionClick = (promotion: any) => {
-    // If it's a package promotion, navigate to the package detail page
-    if (promotion.type === 'package' && promotion.packageData) {
-      navigate(`/package/${promotion.id}`);
-    } else {
-      // For discount promotions, navigate to clinic with promo code applied
-      navigate(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
-    }
-  };
+  // We'll use Button with Link from wouter instead of direct navigation
   
   // Render loading state
   if (isLoading) {
@@ -191,14 +181,17 @@ export function FeaturedPromotions() {
                 </CardContent>
                 
                 <CardFooter className="pt-0">
-                  <Button 
-                    className="w-full group"
-                    onClick={() => handlePromotionClick(promotion)}
-                  >
-                    <span className="mr-1">
-                      {promotion.type === 'package' ? 'View Package' : 'Get Discount'}
-                    </span>
-                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <Button asChild className="w-full group">
+                    <Link href={
+                      promotion.type === 'package' && promotion.packageData 
+                        ? `/package/${promotion.id}`
+                        : `/clinic/${promotion.clinic_id}?promo=${promotion.code}`
+                    }>
+                      <span className="mr-1">
+                        {promotion.type === 'package' ? 'View Package' : 'Get Discount'}
+                      </span>
+                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
                   </Button>
                 </CardFooter>
               </Card>
