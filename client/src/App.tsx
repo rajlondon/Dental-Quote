@@ -213,6 +213,29 @@ function Router() {
         )}
       </Route>
       
+      {/* Admin Promotions Routes */}
+      <Route path="/admin-portal/promotions/pending">
+        {() => (
+          <AdminPortalGuard>
+            <AdminPortalPage disableAutoRefresh={true} initialSection="promotions" subView="pending" />
+          </AdminPortalGuard>
+        )}
+      </Route>
+      <Route path="/admin-portal/promotions/approved">
+        {() => (
+          <AdminPortalGuard>
+            <AdminPortalPage disableAutoRefresh={true} initialSection="promotions" subView="approved" />
+          </AdminPortalGuard>
+        )}
+      </Route>
+      <Route path="/admin-portal/promotions/rejected">
+        {() => (
+          <AdminPortalGuard>
+            <AdminPortalPage disableAutoRefresh={true} initialSection="promotions" subView="rejected" />
+          </AdminPortalGuard>
+        )}
+      </Route>
+      
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
       
@@ -244,6 +267,30 @@ function Router() {
           </ClinicGuard>
         )}
       </Route>
+      
+      {/* Clinic Promotions Routes */}
+      <Route path="/clinic-portal/promotions">
+        {() => (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} initialSection="promotions" />
+          </ClinicGuard>
+        )}
+      </Route>
+      <Route path="/clinic-portal/promotions/create">
+        {() => (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} initialSection="promotions" subView="create" />
+          </ClinicGuard>
+        )}
+      </Route>
+      <Route path="/clinic-portal/promotions/edit/:id">
+        {(params) => (
+          <ClinicGuard>
+            <ClinicPortalPage disableAutoRefresh={true} initialSection="promotions" subView="edit" promotionId={params.id} />
+          </ClinicGuard>
+        )}
+      </Route>
+      
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
       

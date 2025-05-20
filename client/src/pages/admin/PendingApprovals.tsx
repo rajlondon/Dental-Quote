@@ -1,92 +1,128 @@
-import React from 'react';
-import { Helmet } from 'react-helmet';
-
+import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { RefreshCw } from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 import PendingApprovalsList from '@/components/admin/PendingApprovalsList';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import PromotionReview from '@/components/admin/PromotionReview';
 
-const PendingApprovalsPage: React.FC = () => {
+interface PendingApprovalsPageProps {
+  initialSection?: string;
+  subView?: string;
+}
+
+export default function PendingApprovalsPage({
+  initialSection = 'pending',
+  subView,
+}: PendingApprovalsPageProps) {
+  const [activeTab, setActiveTab] = useState(initialSection);
+  const [loading, setLoading] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedPromotionId, setSelectedPromotionId] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  // Refresh promotions
+  const handleRefresh = () => {
+    setLoading(true);
+    // Trigger refresh by incrementing the refreshTrigger state
+    setRefreshTrigger(prev => prev + 1);
+    
+    // Simulate loading for a better UX
+    setTimeout(() => {
+      setLoading(false);
+      toast({
+        title: 'Refreshed',
+        description: 'Promotions list has been refreshed',
+      });
+    }, 1000);
+  };
+
+  // Open the review dialog for a specific promotion
+  const handleOpenReview = (promotionId: string) => {
+    setSelectedPromotionId(promotionId);
+    setReviewDialogOpen(true);
+  };
+
+  // Callback when a promotion has been approved or rejected
+  const handleApproveReject = () => {
+    setReviewDialogOpen(false);
+    // Trigger a refresh
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <Helmet>
-        <title>Promotion Approvals | Admin Portal | MyDentalFly</title>
-      </Helmet>
-      
-      <div>
-        <h1 className="text-3xl font-bold">Promotion Approvals</h1>
+    <div className="container py-6 space-y-6">
+      <div className="flex flex-col space-y-1">
+        <h1 className="text-3xl font-bold tracking-tight">Promotion Management</h1>
         <p className="text-muted-foreground">
-          Review and approve clinic-initiated promotions
+          Review and manage clinic-initiated promotions
         </p>
       </div>
       
-      <PendingApprovalsList />
+      <Separator />
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>Approval Guidelines</CardTitle>
-            <CardDescription>
-              Criteria for reviewing clinic promotions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <h3 className="font-medium">Verify Pricing</h3>
-              <p className="text-sm text-muted-foreground">
-                Ensure that prices are reasonable and offer genuine savings. Packages should show clear value compared to individual treatment prices.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium">Check Treatment Combinations</h3>
-              <p className="text-sm text-muted-foreground">
-                Verify that bundled treatments make clinical sense and are typically requested together.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium">Review Marketing Claims</h3>
-              <p className="text-sm text-muted-foreground">
-                Ensure that all claims made in the promotion are accurate, ethical, and comply with our guidelines.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex justify-between items-center">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full"
+        >
+          <TabsList>
+            <TabsTrigger value="pending">Pending Approval</TabsTrigger>
+            <TabsTrigger value="approved">Approved</TabsTrigger>
+            <TabsTrigger value="rejected">Rejected</TabsTrigger>
+          </TabsList>
+        </Tabs>
         
-        <Card>
-          <CardHeader>
-            <CardTitle>Homepage Promotion Tips</CardTitle>
-            <CardDescription>
-              Best practices for featuring promotions
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div>
-              <h3 className="font-medium">Use High Priority Sparingly</h3>
-              <p className="text-sm text-muted-foreground">
-                Reserve high priority (8-10) for exceptional promotions or limited-time offers to maintain homepage balance.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium">Require Quality Images</h3>
-              <p className="text-sm text-muted-foreground">
-                For homepage display, ensure promotions have high-quality, relevant images. Generated images should be appropriate and professional.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-medium">Promote Diversity</h3>
-              <p className="text-sm text-muted-foreground">
-                Feature a variety of clinics and treatment types on the homepage to showcase our platform's diversity.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="icon"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+          </Button>
+        </div>
       </div>
+      
+      <TabsContent value="pending" className="mt-0">
+        <PendingApprovalsList 
+          status="PENDING_APPROVAL" 
+          refreshTrigger={refreshTrigger}
+          onOpenReview={handleOpenReview}
+        />
+      </TabsContent>
+      
+      <TabsContent value="approved" className="mt-0">
+        <PendingApprovalsList 
+          status="APPROVED" 
+          refreshTrigger={refreshTrigger} 
+          onOpenReview={handleOpenReview}
+        />
+      </TabsContent>
+      
+      <TabsContent value="rejected" className="mt-0">
+        <PendingApprovalsList 
+          status="REJECTED" 
+          refreshTrigger={refreshTrigger}
+          onOpenReview={handleOpenReview} 
+        />
+      </TabsContent>
+      
+      {/* Promotion Review Dialog */}
+      {selectedPromotionId && (
+        <PromotionReview
+          promotionId={selectedPromotionId}
+          open={reviewDialogOpen}
+          onOpenChange={setReviewDialogOpen}
+          onApproveReject={handleApproveReject}
+        />
+      )}
     </div>
   );
-};
-
-export default PendingApprovalsPage;
+}

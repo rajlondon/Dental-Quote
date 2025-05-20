@@ -1,16 +1,10 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'wouter';
-import { format } from 'date-fns';
-import { 
-  Tag, 
-  Package, 
-  ChevronRight,
-  CalendarDays,
-  Smile
-} from 'lucide-react';
+import { format, differenceInDays } from 'date-fns';
+import { apiRequest } from '@/lib/queryClient';
+import { ChevronRight, Calendar, Tag, Package, Timer } from 'lucide-react';
+import { useNavigate } from 'wouter';
 
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -19,211 +13,199 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { apiRequest } from '@/lib/queryClient';
 
-// Define the Promotion interface to match our backend
-interface Promotion {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  type: 'discount' | 'package';
-  discountType?: 'percentage' | 'fixed_amount';
-  discountValue?: number;
-  clinicId: string;
-  clinic_name?: string;
-  start_date: string;
-  end_date: string;
-  status: string;
-  homepage_short_description?: string;
-  homepage_image_url?: string;
-  packageData?: {
-    name: string;
-    description: string;
-    originalPrice: number;
-    packagePrice: number;
-    treatments: Array<{
-      id: string;
-      name: string;
-      quantity: number;
-    }>;
-  };
-}
-
-const FeaturedPromotions: React.FC = () => {
+export function FeaturedPromotions() {
+  const [, navigate] = useNavigate();
+  
   // Fetch featured promotions
   const { data, isLoading, isError } = useQuery({
     queryKey: ['/api/promotions/featured'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/promotions/featured');
-      const data = await response.json();
-      return data;
+      return response.json();
     },
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 300000, // 5 minutes
   });
-
-  if (isLoading) {
-    return (
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Special Promotions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <Skeleton className="h-6 w-2/3 mb-2" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-32 w-full mb-4 rounded-md" />
-                <Skeleton className="h-4 w-full mb-2" />
-                <Skeleton className="h-4 w-3/4" />
-              </CardContent>
-              <CardFooter>
-                <Skeleton className="h-9 w-full" />
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !data?.promotions || data.promotions.length === 0) {
-    return null; // Don't show anything if there are no promotions or an error
-  }
-
-  const promotions = data.promotions;
-
+  
+  // Calculate days remaining for a promotion
+  const getDaysRemaining = (endDate: string) => {
+    const end = new Date(endDate);
+    const today = new Date();
+    return Math.max(0, differenceInDays(end, today));
+  };
+  
   // Format date for display
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMM d, yyyy');
+    return format(new Date(dateString), 'MMMM d, yyyy');
   };
-
-  // Calculate savings for package promotions
-  const calculateSavings = (originalPrice: number, packagePrice: number) => {
-    const savingsAmount = originalPrice - packagePrice;
-    const savingsPercentage = Math.round((savingsAmount / originalPrice) * 100);
-    return { amount: savingsAmount, percentage: savingsPercentage };
+  
+  // Handle clicking on a promotion
+  const handlePromotionClick = (promotion: any) => {
+    // If it's a package promotion, navigate to the package detail page
+    if (promotion.type === 'package' && promotion.packageData) {
+      navigate(`/package/${promotion.id}`);
+    } else {
+      // For discount promotions, navigate to clinic with promo code applied
+      navigate(`/clinic/${promotion.clinic_id}?promo=${promotion.code}`);
+    }
   };
-
-  // Render promotion card
-  const PromotionCard = ({ promotion }: { promotion: Promotion }) => {
-    const getDefaultImageUrl = () => {
-      // Fallback image URLs based on promotion type
-      if (promotion.type === 'discount') {
-        return '/images/discount-default.jpg';
-      }
-      return '/images/package-default.jpg';
-    };
-
+  
+  // Render loading state
+  if (isLoading) {
     return (
-      <Card className="overflow-hidden h-full flex flex-col">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            {promotion.type === 'discount' ? (
-              <Tag className="h-4 w-4 text-primary" />
-            ) : (
-              <Package className="h-4 w-4 text-primary" />
-            )}
-            <CardTitle className="text-lg">
-              {promotion.title}
-            </CardTitle>
+      <section className="py-12 bg-gray-50">
+        <div className="container">
+          <div className="text-center mb-8">
+            <Skeleton className="h-8 w-64 mx-auto" />
+            <Skeleton className="h-4 w-96 mx-auto mt-2" />
           </div>
-          <CardDescription>
-            {promotion.clinic_name ? `By ${promotion.clinic_name}` : 'Limited time offer'}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex-grow">
-          {promotion.homepage_image_url && (
-            <div className="mb-4 rounded-md overflow-hidden h-40 bg-muted">
-              <img 
-                src={promotion.homepage_image_url || getDefaultImageUrl()} 
-                alt={promotion.title}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = getDefaultImageUrl();
-                }}
-              />
-            </div>
-          )}
-
-          <p className="text-sm mb-3">
-            {promotion.homepage_short_description || promotion.description}
-          </p>
-
-          {promotion.type === 'discount' && (
-            <div className="bg-primary/10 p-3 rounded-md text-sm flex items-center justify-between">
-              <div>
-                <p className="font-medium text-primary">
-                  {promotion.discountType === 'percentage' 
-                    ? `${promotion.discountValue}% OFF` 
-                    : `£${promotion.discountValue} OFF`}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Use code: <span className="font-mono font-medium">{promotion.code}</span>
-                </p>
-              </div>
-              <Smile className="h-8 w-8 text-primary/40" />
-            </div>
-          )}
-
-          {promotion.type === 'package' && promotion.packageData && (
-            <div className="bg-primary/10 p-3 rounded-md text-sm flex items-center justify-between">
-              <div>
-                <p className="font-medium text-primary">
-                  Save £{(promotion.packageData.originalPrice - promotion.packageData.packagePrice).toFixed(2)}
-                </p>
-                <div className="flex items-center text-xs text-muted-foreground mt-1">
-                  <span className="font-mono font-medium mr-1">{promotion.code}</span>
-                  <span className="mx-1">•</span>
-                  <span>{Math.round(((promotion.packageData.originalPrice - promotion.packageData.packagePrice) / promotion.packageData.originalPrice) * 100)}% OFF</span>
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="text-xs line-through text-muted-foreground">£{promotion.packageData.originalPrice}</p>
-                <p className="font-bold text-base">£{promotion.packageData.packagePrice}</p>
-              </div>
-            </div>
-          )}
-
-          <div className="flex items-center text-xs text-muted-foreground mt-3">
-            <CalendarDays className="h-3 w-3 mr-1" />
-            <span>Valid until {formatDate(promotion.end_date)}</span>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(3)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <Skeleton className="h-48 w-full" />
+                <CardContent className="pt-6">
+                  <Skeleton className="h-5 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full mb-2" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardContent>
+                <CardFooter>
+                  <Skeleton className="h-10 w-full" />
+                </CardFooter>
+              </Card>
+            ))}
           </div>
-        </CardContent>
-
-        <CardFooter className="pt-2 pb-4">
-          <Button className="w-full" asChild>
-            <Link href={`/quote?promo=${promotion.code}`}>
-              Get This Offer <ChevronRight className="h-4 w-4 ml-1" />
-            </Link>
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </section>
     );
-  };
-
-  return (
-    <div className="py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Special Promotions</h2>
-        <Button variant="ghost" asChild>
-          <Link href="/promotions">
-            View all <ChevronRight className="h-4 w-4 ml-1" />
-          </Link>
-        </Button>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {promotions.map((promotion: Promotion) => (
-          <PromotionCard key={promotion.id} promotion={promotion} />
-        ))}
-      </div>
-    </div>
+  }
+  
+  // If no promotions or error, don't render anything
+  if (isError || !data?.promotions || data.promotions.length === 0) {
+    return null;
+  }
+  
+  // Sort by priority (highest first)
+  const sortedPromotions = [...data.promotions].sort((a, b) => 
+    b.homepage_priority - a.homepage_priority
   );
-};
-
-export default FeaturedPromotions;
+  
+  return (
+    <section className="py-12 bg-gray-50">
+      <div className="container">
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-bold">Featured Promotions</h2>
+          <p className="text-muted-foreground mt-2">
+            Exclusive dental treatment packages and special offers from our partner clinics
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {sortedPromotions.map((promotion) => {
+            const daysRemaining = getDaysRemaining(promotion.end_date);
+            const isEnding = daysRemaining <= 7 && daysRemaining > 0;
+            
+            return (
+              <Card 
+                key={promotion.id} 
+                className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-md"
+              >
+                {promotion.homepage_image_url && (
+                  <div className="aspect-video relative overflow-hidden">
+                    <img 
+                      src={promotion.homepage_image_url} 
+                      alt={promotion.title}
+                      className="object-cover w-full h-full"
+                    />
+                    {isEnding && (
+                      <Badge 
+                        className="absolute top-2 right-2 bg-red-500 text-white font-medium border-none"
+                      >
+                        <Timer className="h-3 w-3 mr-1" />
+                        {daysRemaining === 1 
+                          ? 'Ends tomorrow!' 
+                          : `Ends in ${daysRemaining} days`}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                <CardContent className="pt-6 flex-grow">
+                  <div className="flex items-center mb-3">
+                    <img 
+                      src={`/api/clinics/${promotion.clinic_id}/logo`} 
+                      alt="Clinic logo"
+                      className="w-8 h-8 rounded-full mr-2"
+                      onError={(e) => {
+                        e.currentTarget.src = '/placeholder-clinic-logo.png';
+                      }}
+                    />
+                    <span className="text-sm font-medium text-muted-foreground">
+                      {promotion.clinic_name || 'Partner Clinic'}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-start gap-2 mb-2">
+                    {promotion.type === 'discount' ? (
+                      <Tag className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    ) : (
+                      <Package className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    )}
+                    <h3 className="text-xl font-bold">{promotion.title}</h3>
+                  </div>
+                  
+                  <p className="text-muted-foreground mb-4 line-clamp-3">
+                    {promotion.homepage_short_description || promotion.description}
+                  </p>
+                  
+                  <div className="flex justify-between items-end">
+                    <div>
+                      {promotion.type === 'discount' ? (
+                        <Badge className="bg-primary/10 text-primary border-none font-medium">
+                          {promotion.discountType === 'percentage' 
+                            ? `${promotion.discountValue}% OFF` 
+                            : `£${promotion.discountValue} OFF`}
+                        </Badge>
+                      ) : promotion.packageData && (
+                        <div>
+                          <div className="text-sm line-through text-muted-foreground">
+                            £{promotion.packageData.originalPrice}
+                          </div>
+                          <div className="text-lg font-bold text-primary">
+                            £{promotion.packageData.packagePrice}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground flex items-center">
+                      <Calendar className="h-3 w-3 mr-1" />
+                      <span>
+                        Until {formatDate(promotion.end_date)}
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
+                
+                <CardFooter className="pt-0">
+                  <Button 
+                    className="w-full group"
+                    onClick={() => handlePromotionClick(promotion)}
+                  >
+                    <span className="mr-1">
+                      {promotion.type === 'package' ? 'View Package' : 'Get Discount'}
+                    </span>
+                    <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
