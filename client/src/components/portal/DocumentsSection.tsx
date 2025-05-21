@@ -687,76 +687,77 @@ const DocumentsSection: React.FC = () => {
           }
         }}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] p-0 sm:p-6">
-          {selectedDocument && (
-            <>
-              {selectedDocument.url || selectedDocument.fileKey ? (
-                <MedicalDocumentViewer 
-                  document={{
-                    id: selectedDocument.id,
-                    fileName: selectedDocument.name,
-                    fileType: selectedDocument.format,
-                    fileSize: parseInt(selectedDocument.size.replace(/[^0-9.]/g, '')) || 0,
-                    uploadDate: selectedDocument.uploadedAt,
-                    url: selectedDocument.url,
-                    downloadUrl: selectedDocument.url,
-                    category: selectedDocument.type,
-                    notes: selectedDocument.notes || null,
-                    isSharedWithClinic: selectedDocument.uploadedBy === 'clinic',
-                    treatmentPlanId: selectedDocument.type === 'treatment-plan' ? selectedDocument.id : null,
-                    fileKey: selectedDocument.fileKey
-                  }}
-                  onClose={() => setShowViewerDialog(false)}
-                  onDelete={() => {
-                    if (!selectedDocument.locked && selectedDocument.uploadedBy === 'you') {
-                      setShowViewerDialog(false);
-                      setTimeout(() => setShowDeleteConfirm(true), 100);
-                    } else {
-                      toast({
-                        title: "Cannot Delete",
-                        description: "You don't have permission to delete this document.",
-                        variant: "destructive"
-                      });
-                    }
-                  }}
-                  onDownload={() => {
-                    if (selectedDocument.url) {
-                      const link = document.createElement('a');
-                      link.href = selectedDocument.url;
-                      link.download = selectedDocument.name;
-                      link.target = '_blank';
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    } else {
-                      toast({
-                        title: "Download Unavailable",
-                        description: "This document cannot be downloaded at this time.",
-                        variant: "destructive",
-                      });
-                    }
-                  }}
-                  securityLevel={selectedDocument.locked ? 'high' : 'medium'}
-                />
-              ) : (
-                <div className="w-full">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                      {getDocumentIcon(selectedDocument)}
-                      <span className="ml-2">{selectedDocument.name}</span>
-                  {selectedDocument.locked && (
-                    <Badge variant="outline" className="ml-2 bg-gray-100">
-                      <CheckCircle2 className="h-3 w-3 mr-1 text-gray-500" />
-                      Official
-                    </Badge>
-                  )}
-                </DialogTitle>
-                <DialogDescription>
-                  Uploaded {formatDate(selectedDocument.uploadedAt)} by {" "}
-                  {selectedDocument.uploadedBy === 'you' ? 'You' : 
-                   selectedDocument.uploadedBy === 'clinic' ? 'Clinic' : 'MyDentalFly Admin'}
-                </DialogDescription>
-              </DialogHeader>
+        {selectedDocument && (
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            {selectedDocument.url ? (
+              // Use our advanced MedicalDocumentViewer for documents with URL/S3 access
+              <MedicalDocumentViewer 
+                document={{
+                  id: selectedDocument.id,
+                  fileName: selectedDocument.name,
+                  fileType: selectedDocument.format,
+                  fileSize: parseInt(selectedDocument.size.replace(/[^0-9.]/g, '')) || 0,
+                  uploadDate: selectedDocument.uploadedAt,
+                  url: selectedDocument.url,
+                  downloadUrl: selectedDocument.url,
+                  category: selectedDocument.type,
+                  notes: selectedDocument.notes || null,
+                  isSharedWithClinic: selectedDocument.uploadedBy === 'clinic',
+                  treatmentPlanId: selectedDocument.type === 'treatment-plan' ? selectedDocument.id : null,
+                  fileKey: selectedDocument.fileKey
+                }}
+                onClose={() => setShowViewerDialog(false)}
+                onDelete={() => {
+                  if (!selectedDocument.locked && selectedDocument.uploadedBy === 'you') {
+                    setShowViewerDialog(false);
+                    setTimeout(() => setShowDeleteConfirm(true), 100);
+                  } else {
+                    toast({
+                      title: "Cannot Delete",
+                      description: "You don't have permission to delete this document.",
+                      variant: "destructive"
+                    });
+                  }
+                }}
+                onDownload={() => {
+                  if (selectedDocument.url) {
+                    const link = document.createElement('a');
+                    link.href = selectedDocument.url;
+                    link.download = selectedDocument.name;
+                    link.target = '_blank';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                  } else {
+                    toast({
+                      title: "Download Unavailable",
+                      description: "This document cannot be downloaded at this time.",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                securityLevel={selectedDocument.locked ? 'high' : 'medium'}
+              />
+            ) : (
+              // Fallback display for documents without URL
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center">
+                    {getDocumentIcon(selectedDocument)}
+                    <span className="ml-2">{selectedDocument.name}</span>
+                    {selectedDocument.locked && (
+                      <Badge variant="outline" className="ml-2 bg-gray-100">
+                        <CheckCircle2 className="h-3 w-3 mr-1 text-gray-500" />
+                        Official
+                      </Badge>
+                    )}
+                  </DialogTitle>
+                  <DialogDescription>
+                    Uploaded {formatDate(selectedDocument.uploadedAt)} by {" "}
+                    {selectedDocument.uploadedBy === 'you' ? 'You' : 
+                     selectedDocument.uploadedBy === 'clinic' ? 'Clinic' : 'MyDentalFly Admin'}
+                  </DialogDescription>
+                </DialogHeader>
               
               <div className="mt-2">
                 {selectedDocument.editable ? (
