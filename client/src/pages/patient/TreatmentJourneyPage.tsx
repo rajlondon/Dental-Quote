@@ -853,20 +853,46 @@ const TreatmentJourneyPage: React.FC = () => {
                                   ) : (
                                     // Treatment plan summary
                                     <div>
-                                      <p className="text-sm text-muted-foreground mb-2">
+                                      <p className="text-sm text-muted-foreground mb-3">
                                         {(item as TreatmentPlan).description || 'Your personalized treatment plan'}
                                       </p>
-                                      <div className="flex items-center text-sm mb-2">
-                                        <Building className="h-4 w-4 mr-1 text-muted-foreground" />
-                                        <span>{(item as TreatmentPlan).clinicName}</span>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="flex items-center text-sm">
+                                          <Building className="h-4 w-4 mr-2 text-green-500" />
+                                          <span>{(item as TreatmentPlan).clinicName}</span>
+                                        </div>
+                                        <div className="flex items-center text-sm font-medium">
+                                          <Receipt className="h-4 w-4 mr-2 text-green-500" />
+                                          <span>{new Intl.NumberFormat('en-GB', {
+                                            style: 'currency',
+                                            currency: (item as TreatmentPlan).currency || 'GBP'
+                                          }).format((item as TreatmentPlan).totalAmount)}</span>
+                                        </div>
                                       </div>
-                                      <div className="flex items-center text-sm font-medium">
-                                        <Receipt className="h-4 w-4 mr-1 text-muted-foreground" />
-                                        <span>{new Intl.NumberFormat('en-GB', {
-                                          style: 'currency',
-                                          currency: (item as TreatmentPlan).currency || 'GBP'
-                                        }).format((item as TreatmentPlan).totalAmount)}</span>
-                                      </div>
+                                      
+                                      {/* Add treatment progress when available */}
+                                      {(item as TreatmentPlan).treatmentProgress !== undefined && (
+                                        <div className="mt-3">
+                                          <div className="flex justify-between items-center mb-1">
+                                            <span className="text-xs text-muted-foreground">Treatment Progress</span>
+                                            <span className="text-xs font-medium">{(item as TreatmentPlan).treatmentProgress}%</span>
+                                          </div>
+                                          <Progress value={(item as TreatmentPlan).treatmentProgress} className="h-1.5" />
+                                        </div>
+                                      )}
+                                      
+                                      {/* Show appointment info if available */}
+                                      {(item as TreatmentPlan).nextAppointment && (
+                                        <div className="mt-3 p-2 bg-blue-50 border border-blue-100 rounded-md text-xs flex items-center">
+                                          <CalendarClock className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
+                                          <span className="text-blue-700">Next appointment: {new Date((item as TreatmentPlan).nextAppointment || '').toLocaleDateString('en-GB', {
+                                            weekday: 'long',
+                                            day: 'numeric',
+                                            month: 'long',
+                                            year: 'numeric'
+                                          })}</span>
+                                        </div>
+                                      )}
                                     </div>
                                   )}
                                 </CardContent>
