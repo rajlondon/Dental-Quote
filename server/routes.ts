@@ -224,6 +224,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register document management routes (for secure file uploads and management)
   app.use('/api/patient/documents', isAuthenticated, documentRoutes);
   
+  // Register dental chart routes for patient portal
+  app.use('/api/dental-chart', isAuthenticated, setupDentalChartRoutes());
+  
   // Register new treatment management routes for clinics
   app.use(treatmentRoutes);
   

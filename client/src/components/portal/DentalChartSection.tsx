@@ -169,7 +169,7 @@ const DentalChartSection = () => {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>{t('patient.dental_chart.title', 'Dental Chart')}</CardTitle>
-            <CardDescription>{t('patient.dental_chart.description', 'View and manage your dental chart')}</CardDescription>
+            <CardDescription>{t('patient.dental_chart.description', 'View and manage your dental health record')}</CardDescription>
           </div>
           {chartData && (
             <div className="flex gap-2">
@@ -188,6 +188,7 @@ const DentalChartSection = () => {
                     variant="outline"
                     onClick={() => refreshChartMutation.mutate()}
                     disabled={refreshChartMutation.isPending}
+                    title={t('patient.dental_chart.refresh_tooltip', 'Update your dental chart with the latest data from your quote')}
                   >
                     {refreshChartMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <RefreshCcw className="h-4 w-4 mr-2" />
@@ -214,24 +215,47 @@ const DentalChartSection = () => {
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <div className="flex items-center bg-muted px-3 py-1 rounded text-sm">
-                        <Info className="h-4 w-4 mr-2 text-muted-foreground" />
+                      <div className={`flex items-center px-3 py-1 rounded text-sm ${
+                        chartSource === 'quote' 
+                          ? 'bg-blue-50 text-blue-700 border border-blue-200' 
+                          : 'bg-green-50 text-green-700 border border-green-200'
+                      }`}>
+                        <Info className="h-4 w-4 mr-2" />
                         {chartSource === 'quote' 
-                          ? t('patient.dental_chart.source_quote', 'From quote system') 
-                          : t('patient.dental_chart.source_portal', 'From patient portal')}
+                          ? t('patient.dental_chart.source_quote', 'Data from your dental quote') 
+                          : t('patient.dental_chart.source_portal', 'Data updated in patient portal')}
                         {quoteRequestId && (
-                          <span className="ml-2 text-muted-foreground">
+                          <span className="ml-2 font-medium">
                             (Quote #{quoteRequestId})
                           </span>
                         )}
                       </div>
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>{t('patient.dental_chart.source_tooltip', 'This shows where your dental chart data originated from. Any changes made here will be synced with your quote data.')}</p>
+                      <p>{t('patient.dental_chart.source_tooltip', 'This shows where your dental chart data originated from. Any changes made here will be synced with your quote data for continuity of care.')}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+                
+                {quoteRequestId && chartSource === 'quote' && (
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    {t('patient.dental_chart.synced_with_quote_note', 'Your dental chart is synchronized with your treatment quote')}
+                  </span>
+                )}
               </div>
+            )}
+            
+            {/* Instructions for editing mode */}
+            {editMode && (
+              <Alert className="mb-4" variant="outline">
+                <div className="flex items-center">
+                  <Info className="h-4 w-4 mr-2 text-blue-500" />
+                  <AlertTitle>{t('patient.dental_chart.edit_instructions_title', 'Editing Mode Active')}</AlertTitle>
+                </div>
+                <AlertDescription className="mt-2">
+                  {t('patient.dental_chart.edit_instructions', 'Click on teeth to mark issues or treatments. Your changes will be saved to both your patient record and associated quote.')}
+                </AlertDescription>
+              </Alert>
             )}
             
             <DentalChart 
@@ -241,39 +265,43 @@ const DentalChartSection = () => {
             />
             
             {lastSyncDate && (
-              <div className="flex justify-between items-center mt-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 border-t pt-3 text-sm text-muted-foreground">
+                <div className="flex items-center">
+                  <RefreshCcw className="h-3 w-3 mr-1" />
                   {t('patient.dental_chart.last_updated', 'Last updated')}: {new Date(lastSyncDate).toLocaleString()}
-                </p>
+                </div>
                 
                 {quoteRequestId && (
-                  <p className="text-sm text-muted-foreground">
-                    {t('patient.dental_chart.synced_with_quote', 'Synced with Quote')} #{quoteRequestId}
-                  </p>
+                  <div className="flex items-center mt-1 md:mt-0">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-medium rounded px-2 py-0.5">
+                      {t('patient.dental_chart.synced_with_quote', 'Synced with Quote')} #{quoteRequestId}
+                    </span>
+                  </div>
                 )}
               </div>
             )}
           </div>
         ) : (
-          <div className="text-center p-8">
-            <p className="text-muted-foreground mb-4">
-              {t('patient.dental_chart.no_chart', 'You don\'t have a dental chart yet.')}
+          <div className="text-center p-8 border rounded-lg">
+            <p className="text-muted-foreground mb-6">
+              {t('patient.dental_chart.no_chart', 'You don\'t have a dental chart yet. You can create one or load data from your existing quote.')}
             </p>
-            <div className="flex gap-2 justify-center">
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
               <Button
                 variant="outline"
                 onClick={() => refreshChartMutation.mutate()}
                 disabled={refreshChartMutation.isPending}
+                className="sm:mr-2"
               >
                 {refreshChartMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 <RefreshCcw className="h-4 w-4 mr-2" />
-                {t('patient.dental_chart.load_from_quote', 'Load from Quote')}
+                {t('patient.dental_chart.load_from_quote', 'Load from Dental Quote')}
               </Button>
               <Button
                 onClick={() => setEditMode(true)}
               >
                 <Pencil className="h-4 w-4 mr-2" />
-                {t('patient.dental_chart.create', 'Create Dental Chart')}
+                {t('patient.dental_chart.create', 'Create New Dental Chart')}
               </Button>
             </div>
           </div>
