@@ -577,58 +577,34 @@ const DocumentsSection: React.FC = () => {
       
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center">
               <Upload className="h-5 w-5 mr-2 text-blue-500" />
-              {t('portal.documents.upload_title', 'Upload Document')}
+              {t('portal.documents.upload_title', 'Upload Medical Document')}
             </DialogTitle>
             <DialogDescription>
-              {t('portal.documents.upload_description', 'Upload X-rays, CT scans, or other documents related to your dental treatment.')}
+              {t('portal.documents.upload_description', 'Upload X-rays, scans, or other documents to your secure cloud storage.')}
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
-              <Label>{t('portal.documents.document_type', 'Document Type')}</Label>
-              <select 
-                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                value={documentType}
-                onChange={(e) => setDocumentType(e.target.value)}
-              >
-                <option value="x-ray">{t('portal.documents.x_ray', 'X-Ray')}</option>
-                <option value="treatment-plan">Treatment Plan</option>
-                <option value="medical">Medical Document</option>
-                <option value="other">{t('portal.documents.other', 'Other')}</option>
-              </select>
-            </div>
-            
-            <div>
-              <Label>Document Notes (Optional)</Label>
-              <textarea 
-                className="w-full mt-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background min-h-[80px]"
-                placeholder="Add any relevant notes about this document..."
-                value={documentNotes}
-                onChange={(e) => setDocumentNotes(e.target.value)}
-              />
-            </div>
-            
-            <div className="border-2 border-dashed rounded-md p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <input 
-                type="file" 
-                className="hidden" 
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                multiple
-                accept=".pdf,.jpg,.jpeg,.png"
-              />
-              <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-              <p className="text-sm font-medium mb-1">{t('portal.documents.select_files', 'Select Files')}</p>
-              <p className="text-xs text-gray-500">{t('portal.documents.drag_drop', 'Click or drag and drop files')}</p>
-              <p className="text-xs text-gray-500 mt-1">{t('portal.documents.supported_formats', 'Supported formats: PDF, JPG, PNG')}</p>
-            </div>
+          <div className="p-4">
+            {/* New FileUploader Component */}
+            <FileUploader
+              onUpload={handleUploadFiles}
+              onCancel={() => {
+                setShowUploadDialog(false);
+                setUploadFiles([]);
+                setDocumentNotes('');
+              }}
+              multiple={true}
+              accept=".pdf,.jpg,.jpeg,.png,.dicom,application/pdf,image/jpeg,image/png,application/dicom"
+              maxSize={10}
+              showDocumentTypeSelector={true}
+              showNotes={true}
+              containerClassName="py-2"
+            />
+          </div>
             
             {uploadFiles.length > 0 && (
               <div className="mt-4">
