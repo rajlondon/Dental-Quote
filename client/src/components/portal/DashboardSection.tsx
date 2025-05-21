@@ -376,50 +376,54 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
       </Card>
 
       {/* Travel Arrangements */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle>{t("portal.dashboard.travel_arrangements", "Travel Arrangements")}</CardTitle>
+      <Card id="travel-section" className="border border-blue-100 shadow-md">
+        <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-transparent">
+          <CardTitle>{t("portal.dashboard.travel_arrangements", "Travel & Hotel Arrangements")}</CardTitle>
           <CardDescription>
             {t("portal.dashboard.travel_desc", "Your upcoming trip to Istanbul for dental treatment")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow" id="flight-section">
               <div className="flex items-center mb-3">
                 <div className="p-2 bg-blue-50 rounded-full mr-3">
                   <Plane className="h-5 w-5 text-blue-600" />
                 </div>
                 <h3 className="font-medium">{t("portal.dashboard.flight", "Flight")}</h3>
               </div>
-              <p className="text-sm">{treatmentOverview.trip.flight}</p>
+              <p className="text-sm font-medium">Departure: {treatmentOverview.trip.flight}</p>
+              <p className="text-sm text-gray-600">Turkish Airlines TK1984</p>
+              <p className="text-sm text-gray-600 mb-2">London Heathrow → Istanbul</p>
               <Button 
                 variant="link" 
                 className="px-0 py-1 h-auto text-sm"
                 onClick={() => setActiveSection('travel')}
               >
-                {t("portal.dashboard.view_details", "View Details")}
+                {t("portal.dashboard.view_details", "View Flight Details")}
               </Button>
             </div>
             
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow" id="hotel-section">
               <div className="flex items-center mb-3">
                 <div className="p-2 bg-amber-50 rounded-full mr-3">
                   <Home className="h-5 w-5 text-amber-600" />
                 </div>
                 <h3 className="font-medium">{t("portal.dashboard.accommodation", "Accommodation")}</h3>
               </div>
-              <p className="text-sm">{treatmentOverview.trip.hotel}</p>
+              <p className="text-sm font-medium">{treatmentOverview.trip.hotel}</p>
+              <p className="text-sm text-gray-600">5 nights, Deluxe Room</p>
+              <p className="text-sm text-gray-600 mb-2">Near Clinic Location</p>
               <Button 
                 variant="link" 
                 className="px-0 py-1 h-auto text-sm"
                 onClick={() => setActiveSection('travel')}
               >
-                {t("portal.dashboard.view_details", "View Details")}
+                {t("portal.dashboard.view_details", "View Hotel Details")}
               </Button>
             </div>
             
-            <div className="border rounded-lg p-4">
+            <div className="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow" id="transfer-section">
               <div className="flex items-center mb-3">
                 <div className="p-2 bg-green-50 rounded-full mr-3">
                   <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -428,16 +432,26 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                 </div>
                 <h3 className="font-medium">{t("portal.dashboard.transfers", "Transfers")}</h3>
               </div>
-              <p className="text-sm">{treatmentOverview.trip.transfer}</p>
-              <Button variant="link" className="px-0 py-1 h-auto text-sm">
-                {t("portal.dashboard.view_details", "View Details")}
+              <p className="text-sm font-medium">{treatmentOverview.trip.transfer}</p>
+              <p className="text-sm text-gray-600">Private Car Service</p>
+              <p className="text-sm text-gray-600 mb-2">Airport ↔ Hotel ↔ Clinic</p>
+              <Button 
+                variant="link" 
+                className="px-0 py-1 h-auto text-sm"
+                onClick={() => setActiveSection('travel')}
+              >
+                {t("portal.dashboard.view_details", "View Transfer Details")}
               </Button>
             </div>
           </div>
         </CardContent>
         <CardFooter className="pt-0 flex justify-center">
-          <Button variant="outline" className="gap-1 text-sm">
-            {t("portal.dashboard.manage_travel", "Manage Travel Arrangements")}
+          <Button 
+            variant="outline" 
+            className="gap-1 text-sm bg-blue-50 hover:bg-blue-100"
+            onClick={() => setActiveSection('travel')}
+          >
+            {t("portal.dashboard.manage_travel", "Manage All Travel Arrangements")}
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardFooter>
