@@ -32,6 +32,14 @@ export interface IStorage {
   updateUser(id: number, data: Partial<User>): Promise<User | undefined>;
   getUsersByClinicId(clinicId: number): Promise<User[]>;
   
+  // Document management
+  getUserDocuments(userId: number): Promise<any[]>;
+  getTreatmentPlanDocuments(treatmentPlanId: number): Promise<any[]>;
+  getDocumentById(documentId: string): Promise<any | undefined>;
+  createDocument(documentData: any): Promise<any>;
+  updateDocument(documentId: string, data: any): Promise<any>;
+  deleteDocument(documentId: string): Promise<boolean>;
+  
   // Quote management
   getQuoteRequest(id: number): Promise<QuoteRequest | undefined>;
   getQuoteRequestsByUserId(userId: number): Promise<QuoteRequest[]>;
