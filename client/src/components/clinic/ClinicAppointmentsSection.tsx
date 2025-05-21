@@ -622,23 +622,29 @@ const ClinicAppointmentsSection: React.FC = () => {
                               )}
                             </div>
                             
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="secondary">{appointment.type}</Badge>
-                                {getStatusBadge(appointment.status)}
+                            <div className="flex justify-between">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2 mb-1">
+                                  <Badge variant="secondary">{appointment.type}</Badge>
+                                  {getStatusBadge(appointment.status)}
+                                </div>
+                                
+                                {/* Promotion information */}
                                 {appointment.promotionCode && (
-                                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 ml-2">
-                                    Promo: {appointment.promotionCode}
-                                  </Badge>
-                                )}
-                              </div>
-                              <div className="flex flex-col">
-                                {appointment.promotionDiscount && appointment.promotionDiscount > 0 && (
-                                  <div className="text-xs text-green-600 font-medium mt-1">
-                                    {appointment.promotionDiscount}€ discount applied
+                                  <div className="mt-1">
+                                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                      Promo: {appointment.promotionCode}
+                                    </Badge>
+                                    
+                                    {appointment.promotionDiscount && appointment.promotionDiscount > 0 && (
+                                      <span className="text-xs text-green-600 font-medium ml-2">
+                                        {appointment.promotionDiscount}€ discount
+                                      </span>
+                                    )}
                                   </div>
                                 )}
                               </div>
+                              
                               <Button variant="ghost" size="icon" onClick={(e) => {
                                 e.stopPropagation();
                                 // Add options menu logic here
@@ -1127,58 +1133,117 @@ const ClinicAppointmentsSection: React.FC = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="promotion" className="text-sm font-medium">Apply Promotion</label>
-              <Select 
-                value={selectedPromoCode || ''}
-                onValueChange={(value) => {
-                  setSelectedPromoCode(value === '' ? null : value);
-                  
-                  // Find the promotion details to set the discount amount
-                  if (value) {
-                    const selectedPromo = availablePromotions.find((promo: Promotion) => promo.code === value);
-                    if (selectedPromo) {
-                      setSelectedPromotion(selectedPromo);
-                      
-                      // Calculate base price for selected treatment
-                      const basePrice = 100; // In a real app, this would be fetched from treatment pricing data
-                      setOriginalAppointmentPrice(basePrice);
-                      
-                      // Calculate discount based on promotion type
-                      const discount = calculatePromotionDiscount(selectedPromo, basePrice);
-                      setSelectedPromoDiscount(discount);
+              <div className="flex items-center justify-between">
+                <label htmlFor="promotion" className="text-sm font-medium">Apply Promotion</label>
+                {!isLoadingPromotions && availablePromotions.length > 0 && (
+                  <Badge variant="outline" className="text-xs bg-primary/5">
+                    {availablePromotions.length} Active
+                  </Badge>
+                )}
+              </div>
+              
+              {isLoadingPromotions ? (
+                <div className="h-10 flex items-center justify-center bg-muted rounded-md">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <Select 
+                  value={selectedPromoCode || ''}
+                  onValueChange={(value) => {
+                    setSelectedPromoCode(value === '' ? null : value);
+                    
+                    // Find the promotion details to set the discount amount
+                    if (value) {
+                      const selectedPromo = availablePromotions.find((promo: Promotion) => promo.code === value);
+                      if (selectedPromo) {
+                        setSelectedPromotion(selectedPromo);
+                        
+                        // Calculate base price for selected treatment
+                        const basePrice = 100; // In a real app, this would be fetched from treatment pricing data
+                        setOriginalAppointmentPrice(basePrice);
+                        
+                        // Calculate discount based on promotion type
+                        const discount = calculatePromotionDiscount(selectedPromo, basePrice);
+                        setSelectedPromoDiscount(discount);
+                      }
+                    } else {
+                      setSelectedPromotion(null);
+                      setSelectedPromoDiscount(0);
                     }
-                  } else {
-                    setSelectedPromotion(null);
-                    setSelectedPromoDiscount(0);
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select a promotion (optional)" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">No promotion</SelectItem>
-                  {availablePromotions.map((promo: Promotion) => (
-                    <SelectItem key={promo.id} value={promo.code}>
-                      {promo.title} - {promo.code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  }}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder={availablePromotions.length === 0 ? "No active promotions" : "Select a promotion (optional)"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No promotion</SelectItem>
+                    {availablePromotions.map((promo: Promotion) => (
+                      <SelectItem key={promo.id} value={promo.code}>
+                        <div className="flex items-center">
+                          {promo.type === 'discount' ? (
+                            <Percent className="h-3.5 w-3.5 mr-2 text-green-600" />
+                          ) : (
+                            <Package className="h-3.5 w-3.5 mr-2 text-primary" />
+                          )}
+                          {promo.title} - {promo.code}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
               {selectedPromotion && (
-                <div className="mt-2 space-y-2">
-                  <div className="text-sm text-green-600 font-medium">
-                    Promotion applied: {selectedPromotion.title}
+                <div className="mt-2 space-y-2 border border-green-100 rounded-md p-3 bg-green-50/50">
+                  <div className="flex justify-between items-center">
+                    <div className="text-sm text-green-700 font-medium flex items-center">
+                      {selectedPromotion.type === 'discount' ? (
+                        <Percent className="h-4 w-4 mr-1.5 text-green-600" />
+                      ) : (
+                        <Package className="h-4 w-4 mr-1.5 text-green-600" />
+                      )}
+                      {selectedPromotion.title}
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                      {selectedPromotion.code}
+                    </Badge>
                   </div>
+                  
                   {selectedPromoDiscount > 0 && (
-                    <div className="flex items-center justify-between text-sm bg-green-50 p-2 rounded-md">
-                      <span>Discount amount:</span>
-                      <span className="font-medium">{selectedPromoDiscount} €</span>
+                    <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-green-100">
+                      <span className="text-gray-600">Original price:</span>
+                      <span className="line-through text-gray-500">{originalAppointmentPrice} €</span>
                     </div>
                   )}
+                  
+                  {selectedPromoDiscount > 0 && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600">Discount amount:</span>
+                      <span className="font-medium text-green-700">{selectedPromoDiscount} €</span>
+                    </div>
+                  )}
+                  
+                  {selectedPromoDiscount > 0 && (
+                    <div className="flex items-center justify-between text-sm font-medium">
+                      <span className="text-gray-600">Final price:</span>
+                      <span className="text-green-700">{originalAppointmentPrice - selectedPromoDiscount} €</span>
+                    </div>
+                  )}
+                  
                   {selectedPromotion.type === 'package' && selectedPromotion.packageData && (
-                    <div className="text-xs text-muted-foreground">
-                      Package includes: {selectedPromotion.packageData.treatments?.length || 0} treatments
+                    <div className="mt-2 pt-2 border-t border-green-100">
+                      <div className="text-xs font-medium text-gray-600 mb-1">
+                        Package includes:
+                      </div>
+                      {selectedPromotion.packageData.treatments && selectedPromotion.packageData.treatments.length > 0 ? (
+                        <ul className="text-xs text-gray-600 list-disc pl-4 space-y-0.5">
+                          {selectedPromotion.packageData.treatments.map((treatment, index) => (
+                            <li key={index}>{treatment}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="text-xs text-gray-500 italic">No specific treatments listed</div>
+                      )}
                     </div>
                   )}
                 </div>
