@@ -43,6 +43,12 @@ export interface CreateAppointmentData {
   promotionCode?: string | null;
   promotionDiscount?: number;
   promotionId?: number;
+  promotionDetails?: {
+    packageDetails?: any;
+    discountType?: 'percentage' | 'fixed';
+    originalPrice?: number;
+    finalPrice?: number;
+  };
 }
 
 export function useAppointments(bookingId?: number) {

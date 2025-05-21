@@ -1,0 +1,586 @@
+AWS storage integration
+Basic authentication with refresh tokens
+Initial clinic promotion system
+Partial appointment booking integration
+Missing Functionality by Portal
+1. Clinic Portal
+Clinic Onboarding
+
+Copy
+// client/src/pages/clinic/SignupPage.tsx - Complete clinic onboarding flow
+
+// Step 1: Basic Information
+const [clinicData, setClinicData] = useState({
+  name: "",
+  address: "",
+  city: "",
+  country: "",
+  contactEmail: "",
+  contactPhone: "",
+  description: "",
+  specialties: []
+});
+
+// Step 2: Treatment Pricing
+const [treatments, setTreatments] = useState<TreatmentPrice[]>([]);
+
+// Add treatment pricing form with bulk import option
+function addTreatment() {
+  setTreatments([...treatments, {
+    name: "",
+    description: "",
+    duration: 60,
+    basePrice: 0,
+    currency: "USD"
+  }]);
+}
+
+// Step 3: Special Offers
+const [specialOffers, setSpecialOffers] = useState<SpecialOffer[]>([]);
+
+// Step 4: Treatment Packages
+const [packages, setPackages] = useState<TreatmentPackage[]>([]);
+
+// Save all clinic data
+async function saveClinicData() {
+  try {
+    // Save basic info
+    const clinicId = await apiClient.post("/api/clinics", clinicData);
+    
+    // Save treatments with pricing
+    await apiClient.post(`/api/clinics/${clinicId}/treatments`, { treatments });
+    
+    // Save special offers
+    await apiClient.post(`/api/clinics/${clinicId}/special-offers`, { specialOffers });
+    
+    // Save treatment packages
+    await apiClient.post(`/api/clinics/${clinicId}/packages`, { packages });
+    
+    // Notify admin of new clinic registration
+    await apiClient.post(`/api/admin/notifications`, {
+      type: "NEW_CLINIC_REGISTRATION",
+      clinicId
+    });
+    
+    navigate("/clinic-portal/dashboard?onboarding=complete");
+  } catch (error) {
+    setError("Failed to save clinic data. Please try again.");
+  }
+}
+Treatment Management
+
+Copy
+// client/src/pages/clinic/TreatmentsPage.tsx - Complete CRUD for treatments
+
+// Data persistence for treatment prices
+const { data: treatments, isLoading, error, refetch } = useQuery(
+  ["clinic-treatments", clinicId],
+  () => apiClient.get(`/api/clinics/${clinicId}/treatments`)
+);
+
+// Save treatment updates
+async function updateTreatment(treatmentId, updatedData) {
+  await apiClient.put(`/api/clinics/${clinicId}/treatments/${treatmentId}`, updatedData);
+  refetch(); // Refresh the list
+  toast.success("Treatment updated successfully");
+}
+2. Patient Portal
+Quote Management
+
+Copy
+// client/src/components/patient/QuoteDetails.tsx
+
+// Show saved quotes
+function QuoteDetails({ quoteId }) {
+  const { data: quote, isLoading } = useQuery(
+    ["quote", quoteId],
+    () => apiClient.get(`/api/quotes/${quoteId}`)
+  );
+  
+  // Accept quote function
+  async function acceptQuote() {
+    await apiClient.put(`/api/quotes/${quoteId}/accept`);
+    
+    // Notify clinic
+    await apiClient.post(`/api/notifications`, {
+      recipientId: quote.clinicId,
+      type: "QUOTE_ACCEPTED",
+      quoteId: quote.id,
+      patientId: currentUser.id
+    });
+    
+    // Create treatment plan
+    await apiClient.post(`/api/treatment-plans`, {
+      quoteId: quote.id,
+      patientId: currentUser.id,
+      clinicId: quote.clinicId,
+      treatments: quote.treatments
+    });
+    
+    toast.success("Quote accepted! The clinic has been notified.");
+  }
+}
+Documents Section
+
+Copy
+// client/src/pages/patient/DocumentsPage.tsx
+
+function DocumentsPage() {
+  const { data: documents, isLoading } = useQuery(
+    ["patient-documents", currentUser.id],
+    () => apiClient.get(`/api/patients/${currentUser.id}/documents`)
+  );
+  
+  // Upload document
+  async function uploadDocument(file) {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("type", documentType);
+    formData.append("description", description);
+    
+    await apiClient.post(`/api/patients/${currentUser.id}/documents`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    
+    // Notify clinic if document is related to treatment
+    if (documentType === "MEDICAL" || documentType === "DENTAL_RECORDS") {
+      await apiClient.post(`/api/notifications`, {
+        recipientId: clinicId,
+        type: "NEW_PATIENT_DOCUMENT",
+        patientId: currentUser.id,
+        documentType
+      });
+    }
+    
+    refetch();
+  }
+  
+  return (
+    <div>
+      <h1>My Documents</h1>
+      
+      <DocumentUploader onUpload={uploadDocument} />
+      
+      <DocumentsList 
+        documents={documents} 
+        onDelete={deleteDocument} 
+        onShare={shareDocument} 
+      />
+    </div>
+  );
+}
+Appointments Section
+
+Copy
+// client/src/pages/patient/AppointmentsPage.tsx
+
+function AppointmentsPage() {
+  const { data: appointments, isLoading } = useQuery(
+    ["patient-appointments", currentUser.id],
+    () => apiClient.get(`/api/patients/${currentUser.id}/appointments`)
+  );
+  
+  // Cancel appointment
+  async function cancelAppointment(appointmentId) {
+    await apiClient.put(`/api/appointments/${appointmentId}/cancel`);
+    
+    // Notify clinic
+    await apiClient.post(`/api/notifications`, {
+      recipientId: appointment.clinicId,
+      type: "APPOINTMENT_CANCELLED",
+      appointmentId,
+      patientId: currentUser.id
+    });
+    
+    refetch();
+  }
+  
+  // Reschedule appointment
+  async function requestReschedule(appointmentId, preferredDates) {
+    await apiClient.post(`/api/appointments/${appointmentId}/reschedule-request`, {
+      preferredDates
+    });
+    
+    // Notify clinic
+    await apiClient.post(`/api/notifications`, {
+      recipientId: appointment.clinicId,
+      type: "RESCHEDULE_REQUESTED",
+      appointmentId,
+      patientId: currentUser.id,
+      preferredDates
+    });
+    
+    toast.success("Reschedule request sent to clinic");
+  }
+}
+Treatment Plan Section
+
+Copy
+// client/src/pages/patient/TreatmentPlanPage.tsx
+
+function TreatmentPlanPage() {
+  const { data: treatmentPlan, isLoading } = useQuery(
+    ["patient-treatment-plan", currentUser.id],
+    () => apiClient.get(`/api/patients/${currentUser.id}/treatment-plan`)
+  );
+  
+  // Accept treatment plan
+  async function acceptTreatmentPlan() {
+    await apiClient.put(`/api/treatment-plans/${treatmentPlan.id}/accept`);
+    
+    // Notify clinic
+    await apiClient.post(`/api/notifications`, {
+      recipientId: treatmentPlan.clinicId,
+      type: "TREATMENT_PLAN_ACCEPTED",
+      treatmentPlanId: treatmentPlan.id,
+      patientId: currentUser.id
+    });
+    
+    // Generate deposit payment
+    await apiClient.post(`/api/payments`, {
+      patientId: currentUser.id,
+      clinicId: treatmentPlan.clinicId,
+      treatmentPlanId: treatmentPlan.id,
+      amount: treatmentPlan.depositAmount,
+      type: "DEPOSIT",
+      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days from now
+    });
+    
+    toast.success("Treatment plan accepted!");
+  }
+}
+Hotel and Flights Section
+
+Copy
+// client/src/pages/patient/TravelPage.tsx
+
+function TravelPage() {
+  const [travelPreferences, setTravelPreferences] = useState({
+    arrivalDate: null,
+    departureDate: null,
+    hotelPreferences: {
+      maxBudget: 0,
+      starRating: 3,
+      amenities: []
+    },
+    flightPreferences: {
+      class: "ECONOMY",
+      directOnly: false,
+      maxBudget: 0
+    }
+  });
+  
+  // Save travel preferences
+  async function saveTravelPreferences() {
+    await apiClient.post(`/api/patients/${currentUser.id}/travel-preferences`, travelPreferences);
+    
+    // Notify travel coordinator
+    await apiClient.post(`/api/admin/notifications`, {
+      type: "NEW_TRAVEL_REQUEST",
+      patientId: currentUser.id,
+      preferences: travelPreferences
+    });
+    
+    toast.success("Travel preferences saved! Our team will contact you with options.");
+  }
+  
+  // Show hotel recommendations
+  const { data: hotelRecommendations } = useQuery(
+    ["hotel-recommendations", currentUser.id],
+    () => apiClient.get(`/api/travel/hotels/recommendations?patientId=${currentUser.id}`)
+  );
+  
+  // Show flight recommendations
+  const { data: flightRecommendations } = useQuery(
+    ["flight-recommendations", currentUser.id],
+    () => apiClient.get(`/api/travel/flights/recommendations?patientId=${currentUser.id}`)
+  );
+}
+Dental Chart Section
+
+Copy
+// client/src/pages/patient/DentalChartPage.tsx
+
+function DentalChartPage() {
+  const { data: dentalRecords, isLoading } = useQuery(
+    ["dental-chart", currentUser.id],
+    () => apiClient.get(`/api/patients/${currentUser.id}/dental-chart`)
+  );
+  
+  // Interactive dental chart component
+  return (
+    <div>
+      <h1>My Dental Chart</h1>
+      
+      <DentalChart 
+        records={dentalRecords} 
+        readOnly={true} 
+      />
+      
+      <TreatmentHistory records={dentalRecords.treatments} />
+      
+      <DentalConditions conditions={dentalRecords.conditions} />
+    </div>
+  );
+}
+Support Section
+
+Copy
+// client/src/pages/patient/SupportPage.tsx
+
+function SupportPage() {
+  const [tickets, setTickets] = useState([]);
+  const [newTicket, setNewTicket] = useState({
+    subject: "",
+    message: "",
+    priority: "MEDIUM",
+    attachments: []
+  });
+  
+  // Load existing tickets
+  useEffect(() => {
+    async function loadTickets() {
+      const response = await apiClient.get(`/api/patients/${currentUser.id}/support-tickets`);
+      setTickets(response.data);
+    }
+    
+    loadTickets();
+  }, [currentUser.id]);
+  
+  // Submit new ticket
+  async function submitTicket() {
+    const formData = new FormData();
+    formData.append("subject", newTicket.subject);
+    formData.append("message", newTicket.message);
+    formData.append("priority", newTicket.priority);
+    
+    newTicket.attachments.forEach((file, index) => {
+      formData.append(`attachment-${index}`, file);
+    });
+    
+    await apiClient.post(`/api/patients/${currentUser.id}/support-tickets`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
+    
+    // Notify support team
+    await apiClient.post(`/api/admin/notifications`, {
+      type: "NEW_SUPPORT_TICKET",
+      patientId: currentUser.id,
+      ticketSubject: newTicket.subject,
+      priority: newTicket.priority
+    });
+    
+    toast.success("Support ticket submitted! Our team will respond shortly.");
+  }
+}
+Payment Section
+
+Copy
+// client/src/pages/patient/PaymentsPage.tsx
+
+function PaymentsPage() {
+  const { data: payments, isLoading } = useQuery(
+    ["patient-payments", currentUser.id],
+    () => apiClient.get(`/api/patients/${currentUser.id}/payments`)
+  );
+  
+  // Process payment via Stripe
+  async function processStripePayment(paymentId) {
+    const payment = payments.find(p => p.id === paymentId);
+    
+    // Calculate amount with Stripe fee
+    const amountWithFee = payment.amount * 1.029 + 0.30; // 2.9% + $0.30 Stripe fee
+    
+    // Create Stripe payment intent
+    const { clientSecret } = await apiClient.post(`/api/payments/stripe/create-payment-intent`, {
+      paymentId,
+      amountWithFee
+    });
+    
+    // Open Stripe payment element
+    const stripe = await loadStripe(process.env.STRIPE_PUBLIC_KEY);
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: elements.getElement(CardElement),
+        billing_details: {
+          name: currentUser.name,
+          email: currentUser.email
+        }
+      }
+    });
+    
+    if (result.error) {
+      toast.error(`Payment failed: ${result.error.message}`);
+    } else {
+      // Update payment status
+      await apiClient.put(`/api/payments/${paymentId}/complete`, {
+        transactionId: result.paymentIntent.id,
+        method: "STRIPE"
+      });
+      
+      // Notify clinic
+      await apiClient.post(`/api/notifications`, {
+        recipientId: payment.clinicId,
+        type: "PAYMENT_RECEIVED",
+        paymentId,
+        patientId: currentUser.id,
+        amount: payment.amount,
+        paymentType: payment.type
+      });
+      
+      toast.success("Payment processed successfully!");
+    }
+  }
+  
+  // Process bank transfer
+  async function initiateWireTransfer(paymentId) {
+    const payment = payments.find(p => p.id === paymentId);
+    
+    // Get bank details
+    const { bankDetails } = await apiClient.get(`/api/clinics/${payment.clinicId}/bank-details`);
+    
+    // Mark payment as pending bank transfer
+    await apiClient.put(`/api/payments/${paymentId}/initiate-transfer`);
+    
+    // Show bank details to patient
+    setBankDetails(bankDetails);
+    setShowBankDetailsModal(true);
+    
+    // Notify clinic
+    await apiClient.post(`/api/notifications`, {
+      recipientId: payment.clinicId,
+      type: "BANK_TRANSFER_INITIATED",
+      paymentId,
+      patientId: currentUser.id
+    });
+  }
+}
+3. Admin Portal
+Messaging System
+
+Copy
+// client/src/components/messaging/MessageCenter.tsx
+
+function MessageCenter({ portalType, userId }) {
+  const [conversations, setConversations] = useState([]);
+  const [activeConversation, setActiveConversation] = useState(null);
+  const [message, setMessage] = useState("");
+  
+  // Load conversations based on portal type
+  useEffect(() => {
+    async function loadConversations() {
+      let endpoint;
+      
+      switch (portalType) {
+        case "PATIENT":
+          endpoint = `/api/messages/patient/${userId}/conversations`;
+          break;
+        case "CLINIC":
+          endpoint = `/api/messages/clinic/${userId}/conversations`;
+          break;
+        case "ADMIN":
+          endpoint = `/api/messages/admin/conversations`;
+          break;
+      }
+      
+      const response = await apiClient.get(endpoint);
+      setConversations(response.data);
+    }
+    
+    loadConversations();
+  }, [portalType, userId]);
+  
+  // Load messages for active conversation
+  useEffect(() => {
+    if (!activeConversation) return;
+    
+    async function loadMessages() {
+      const response = await apiClient.get(`/api/messages/conversations/${activeConversation.id}/messages`);
+      setActiveConversation(prev => ({
+        ...prev,
+        messages: response.data
+      }));
+      
+      // Mark messages as read
+      await apiClient.put(`/api/messages/conversations/${activeConversation.id}/read`);
+    }
+    
+    loadMessages();
+    
+    // Set up real-time updates
+    const socket = io(process.env.SOCKET_URL);
+    socket.on(`new-message-${activeConversation.id}`, newMessage => {
+      setActiveConversation(prev => ({
+        ...prev,
+        messages: [...prev.messages, newMessage]
+      }));
+    });
+    
+    return () => {
+      socket.disconnect();
+    };
+  }, [activeConversation?.id]);
+  
+  // Send message
+  async function sendMessage() {
+    if (!message.trim()) return;
+    
+    await apiClient.post(`/api/messages/conversations/${activeConversation.id}/messages`, {
+      content: message,
+      senderId: userId,
+      senderType: portalType
+    });
+    
+    setMessage("");
+  }
+  
+  // Start new conversation
+  async function startNewConversation(recipientId, recipientType) {
+    const response = await apiClient.post(`/api/messages/conversations`, {
+      participants: [
+        { id: userId, type: portalType },
+        { id: recipientId, type: recipientType }
+      ],
+      title: `Conversation with ${recipientType.toLowerCase()}`
+    });
+    
+    setConversations([...conversations, response.data]);
+    setActiveConversation(response.data);
+  }
+}
+Implementation Strategy
+To ensure complete functionality across all portals, I recommend implementing these features in the following order:
+
+Phase 1: Core Data Flow
+Messaging System - As you mentioned, this is a critical component
+Patient Portal Basic Functionality - Documents, appointments, treatment plans
+Clinic Portal Basic Functionality - Treatment management, appointment handling
+Phase 2: Financial & Travel Features
+Payment Processing - Implement deposit and full payment functionality
+Hotel & Flights Section - Reimplement the travel section
+Special Offers Integration - Complete integration with appointments
+Phase 3: Advanced Features
+Dental Chart - Interactive dental chart with treatment history
+Support System - Ticket management and resolution tracking
+Treatment Packages - Advanced package creation and management
+Testing Strategy
+For each implemented feature, we should:
+
+Unit Test - Test individual components in isolation
+Integration Test - Test data flow between components
+End-to-End Test - Test complete user workflows
+For example, to test the quote-to-payment flow:
+
+Create a quote for a patient
+Patient accepts quote
+Treatment plan is generated
+Patient accepts treatment plan
+Deposit payment is generated
+Patient makes payment
+Clinic receives notification
+Appointment is scheduled
+Final payment is processed

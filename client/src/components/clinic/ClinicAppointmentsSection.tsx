@@ -62,7 +62,7 @@ import { useAppointments, AppointmentData, CreateAppointmentData } from '@/hooks
 import { useAuth } from '@/hooks/use-auth';
 import { useBookings } from '@/hooks/use-bookings';
 import { useToast } from '@/hooks/use-toast';
-import { useApprovedPromotions, Promotion } from '@/hooks/use-promotions';
+import { useActiveClinicPromotions, Promotion, calculatePromotionDiscount } from '@/hooks/use-clinic-promotions';
 import { apiRequest } from '@/lib/queryClient';
 
 // Types for appointments
@@ -109,9 +109,10 @@ const ClinicAppointmentsSection: React.FC = () => {
   const [appointmentDoctor, setAppointmentDoctor] = useState<string>('');
   const [appointmentNotes, setAppointmentNotes] = useState<string>('');
   const [isVirtualAppointment, setIsVirtualAppointment] = useState<boolean>(false);
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
   const [selectedPromoCode, setSelectedPromoCode] = useState<string | null>(null);
   const [selectedPromoDiscount, setSelectedPromoDiscount] = useState<number>(0);
-  const [availablePromotions, setAvailablePromotions] = useState<any[]>([]);
+  const [originalAppointmentPrice, setOriginalAppointmentPrice] = useState<number>(0);
   
   // Use the real API data
   const { 
@@ -161,7 +162,7 @@ const ClinicAppointmentsSection: React.FC = () => {
   }, [user?.clinicId]);
   
   // Fetch available promotions for this clinic
-  const { data: availablePromotionsData = [], isLoading: isLoadingPromotions } = useApprovedPromotions(user?.clinicId);
+  const { data: availablePromotions = [], isLoading: isLoadingPromotions } = useActiveClinicPromotions(user?.clinicId);
   
   // Sync the selectedDate in the UI with the API hook
   useEffect(() => {
@@ -1075,17 +1076,20 @@ const ClinicAppointmentsSection: React.FC = () => {
                   
                   // Find the promotion details to set the discount amount
                   if (value) {
-                    const selectedPromo = availablePromotionsData.find((promo: Promotion) => promo.code === value);
+                    const selectedPromo = availablePromotions.find((promo: Promotion) => promo.code === value);
                     if (selectedPromo) {
-                      if (selectedPromo.type === 'discount' && selectedPromo.discountValue) {
-                        setSelectedPromoDiscount(selectedPromo.discountValue);
-                      } else if (selectedPromo.type === 'package' && selectedPromo.packageData) {
-                        const discountAmount = 
-                          selectedPromo.packageData.originalPrice - selectedPromo.packageData.packagePrice;
-                        setSelectedPromoDiscount(discountAmount > 0 ? discountAmount : 0);
-                      }
+                      setSelectedPromotion(selectedPromo);
+                      
+                      // Calculate base price for selected treatment
+                      const basePrice = 100; // In a real app, this would be fetched from treatment pricing data
+                      setOriginalAppointmentPrice(basePrice);
+                      
+                      // Calculate discount based on promotion type
+                      const discount = calculatePromotionDiscount(selectedPromo, basePrice);
+                      setSelectedPromoDiscount(discount);
                     }
                   } else {
+                    setSelectedPromotion(null);
                     setSelectedPromoDiscount(0);
                   }
                 }}
@@ -1095,16 +1099,29 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">No promotion</SelectItem>
-                  {availablePromotionsData.map((promo: Promotion) => (
+                  {availablePromotions.map((promo: Promotion) => (
                     <SelectItem key={promo.id} value={promo.code}>
                       {promo.title} - {promo.code}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {selectedPromoCode && (
-                <div className="text-sm text-green-600">
-                  Promotion applied: Discount of {selectedPromoDiscount} {selectedPromoDiscount > 0 ? '€' : ''}
+              {selectedPromotion && (
+                <div className="mt-2 space-y-2">
+                  <div className="text-sm text-green-600 font-medium">
+                    Promotion applied: {selectedPromotion.title}
+                  </div>
+                  {selectedPromoDiscount > 0 && (
+                    <div className="flex items-center justify-between text-sm bg-green-50 p-2 rounded-md">
+                      <span>Discount amount:</span>
+                      <span className="font-medium">{selectedPromoDiscount} €</span>
+                    </div>
+                  )}
+                  {selectedPromotion.type === 'package' && selectedPromotion.packageData && (
+                    <div className="text-xs text-muted-foreground">
+                      Package includes: {selectedPromotion.packageData.treatments?.length || 0} treatments
+                    </div>
+                  )}
                 </div>
               )}
             </div>
