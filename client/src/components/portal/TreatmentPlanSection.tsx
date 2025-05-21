@@ -1,1148 +1,1017 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { format } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
 import { 
-  CheckCircle2, 
   FileText, 
-  AlertCircle, 
-  ArrowRight, 
-  Download, 
-  ShieldCheck, 
-  Calendar, 
-  ThumbsUp, 
+  Tooth, 
+  CheckCircle, 
   Clock, 
-  Info,
-  FileUp,
-  Edit,
-  PencilLine,
-  BarChart3,
-  Briefcase,
-  Plane,
-  PiggyBank,
-  Percent,
-  History,
+  CalendarDays, 
+  CreditCard,
+  AlertCircle,
+  Download,
+  ListChecks,
   Receipt,
-  PlusCircle,
-  CreditCard
+  MessageSquare,
+  HelpCircle,
+  User,
+  Building,
+  Loader2
 } from 'lucide-react';
-import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { generateQuotePdf } from '@/components/PdfGenerator';
-import { ToothData } from '@/types/clientPortal';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { 
-  Accordion, 
-  AccordionContent, 
-  AccordionItem, 
-  AccordionTrigger 
-} from '@/components/ui/accordion';
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { 
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { useToast } from '@/hooks/use-toast';
-import type { TreatmentPlan, TreatmentItem, TreatmentPlanVersion } from '@/types/clientPortal';
-import { addUKPriceComparisons } from '@/data/treatmentPrices';
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import TreatmentPlanViewer from '@/components/TreatmentPlanViewer';
 
-// Mock dental chart data for development
-const mockDentalChart: ToothData[] = [
-  { id: 11, name: 'Central Incisor', position: 'Upper Right', section: 'Upper', selected: true, treatments: ['Porcelain Crown'] },
-  { id: 12, name: 'Lateral Incisor', position: 'Upper Right', section: 'Upper', selected: false, treatments: [] },
-  { id: 21, name: 'Central Incisor', position: 'Upper Left', section: 'Upper', selected: true, treatments: ['Porcelain Crown'] },
-  { id: 22, name: 'Lateral Incisor', position: 'Upper Left', section: 'Upper', selected: false, treatments: [] },
-  { id: 14, name: 'First Premolar', position: 'Upper Right', section: 'Upper', selected: true, treatments: ['Dental Implant'] },
-  { id: 24, name: 'First Premolar', position: 'Upper Left', section: 'Upper', selected: true, treatments: ['Dental Implant'] },
-  { id: 36, name: 'First Molar', position: 'Lower Left', section: 'Lower', selected: false, treatments: [] },
-  { id: 46, name: 'First Molar', position: 'Lower Right', section: 'Lower', selected: false, treatments: [] }
-];
+// Types
+interface TreatmentItem {
+  id: string;
+  name: string;
+  description?: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  currency: string;
+  status: 'pending' | 'scheduled' | 'completed' | 'cancelled';
+  scheduled?: string;
+  completed?: string;
+  notes?: string;
+}
 
-// Mock data for development
-const mockTreatmentPlan: TreatmentPlan = {
-  items: [
-    {
-      id: "1",
-      treatment: "Dental Implant (Straumann)",
-      priceGBP: 550,
-      priceUSD: 720,
-      quantity: 2,
-      subtotalGBP: 1100,
-      subtotalUSD: 1440,
-      guarantee: "Lifetime guarantee on implant, 5 years on crown"
-    },
-    {
-      id: "2",
-      treatment: "Porcelain Crown",
-      priceGBP: 175,
-      priceUSD: 230,
-      quantity: 4,
-      subtotalGBP: 700,
-      subtotalUSD: 920,
-      guarantee: "5-year guarantee"
-    },
-    {
-      id: "3",
-      treatment: "Teeth Whitening (Professional)",
-      priceGBP: 120,
-      priceUSD: 155,
-      quantity: 1,
-      subtotalGBP: 120,
-      subtotalUSD: 155,
-      guarantee: "1-year guarantee"
-    }
-  ],
-  totalGBP: 1920,
-  totalUSD: 2515,
-  notes: "Treatment plan includes all materials, laboratory work, and follow-up appointments during your stay. The treatment will be completed over 5-7 days with 2-3 appointments.",
-  guaranteeDetails: "All procedures come with guarantees ranging from 1-5 years depending on the treatment. Dental implants have a lifetime guarantee on the implant fixture itself. Guarantee conditions apply as detailed in your contract.",
-  version: 1,
-  lastUpdated: "2025-04-10T14:30:00Z",
-  approvedByPatient: false,
-  approvedByClinic: true
-};
+interface TreatmentPlan {
+  id: string;
+  title: string;
+  description?: string;
+  clinicId: number;
+  clinicName: string;
+  patientId: number;
+  patientName: string;
+  createdAt: string;
+  updatedAt: string;
+  status: 'draft' | 'proposed' | 'approved' | 'in_treatment' | 'completed' | 'cancelled';
+  paymentStatus: 'unpaid' | 'deposit_paid' | 'partially_paid' | 'fully_paid' | 'refunded';
+  totalAmount: number;
+  currency: string;
+  deposit?: number;
+  depositPaid?: boolean;
+  items: TreatmentItem[];
+  doctorId?: string;
+  doctorName?: string;
+  startDate?: string;
+  endDate?: string;
+  nextAppointment?: string;
+  treatmentProgress?: number;
+  additionalNotes?: string;
+  financingAvailable: boolean;
+  documentIds?: string[];
+  pendingApproval?: boolean;
+}
 
-// FAQ items for treatment details
-const treatmentFaqs = [
-  {
-    question: "What is a dental implant?",
-    answer: "A dental implant is an artificial tooth root made of titanium that is placed into your jaw to hold a replacement tooth or bridge. Implants are an ideal option for people with good general oral health who have lost a tooth or teeth due to periodontal disease, an injury, or some other reason."
-  },
-  {
-    question: "How long does the treatment take?",
-    answer: "The entire treatment process for implants typically takes 5-7 days in Istanbul. You'll need 2-3 appointments spaced over this period to complete the treatment. For crowns and veneers, the process usually takes 5 days with 2 appointments."
-  },
-  {
-    question: "Is the procedure painful?",
-    answer: "Dental procedures are performed under local anesthesia to minimize discomfort. Most patients report minimal pain during the recovery period, which can be managed with over-the-counter pain medication."
-  },
-  {
-    question: "What aftercare is required?",
-    answer: "After treatment, you'll receive detailed aftercare instructions specific to your procedure. Generally, this includes guidelines on oral hygiene, temporary dietary restrictions, and follow-up care. Our team provides continuous support during your recovery period, both in person and remotely after you return home."
-  }
-];
+interface PaymentOption {
+  id: string;
+  name: string;
+  description: string;
+  type: 'full' | 'deposit' | 'installment' | 'financing';
+  amount: number;
+  discount?: number;
+  installments?: number;
+  installmentAmount?: number;
+  interestRate?: number;
+  depositAmount?: number;
+}
 
 interface TreatmentPlanSectionProps {
   bookingId?: number;
 }
 
-const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId = 123 }) => {
+const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }) => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { toast } = useToast();
+  
+  // State variables for treatment plans
+  const [isLoading, setIsLoading] = useState(true);
+  const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
+  const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
-  const [isApproving, setIsApproving] = useState(false);
-  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentPlan>(mockTreatmentPlan);
-  const [showTreatmentPlanViewer, setShowTreatmentPlanViewer] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [activeTab, setActiveTab] = useState('summary');
+  const [approvalNotes, setApprovalNotes] = useState('');
+  const [isSubmittingApproval, setIsSubmittingApproval] = useState(false);
+  const [showPaymentOptions, setShowPaymentOptions] = useState(false);
+  const [paymentOptions, setPaymentOptions] = useState<PaymentOption[]>([]);
+  const [selectedPaymentOption, setSelectedPaymentOption] = useState<string | null>(null);
+  const [isLoadingPaymentOptions, setIsLoadingPaymentOptions] = useState(false);
+  const [showDetailedPlan, setShowDetailedPlan] = useState(false);
   
-  // Apply UK price comparisons when component mounts
+  // Fetch treatment plans
   useEffect(() => {
-    // Process treatment plan to add UK price comparisons
-    const treatmentPlanWithUKComparisons = addUKPriceComparisons(treatmentPlan);
-    console.log("Treatment plan with UK comparisons:", treatmentPlanWithUKComparisons);
-    setTreatmentPlan(treatmentPlanWithUKComparisons);
-  }, []);
-  
-  // Function to format currency
-  const formatCurrency = (amount: number, currency: 'GBP' | 'USD') => {
-    return new Intl.NumberFormat('en-GB', {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-  
-  // States for deposit flow
-  const [showDepositDialog, setShowDepositDialog] = useState(false);
-  const [isPayingDeposit, setIsPayingDeposit] = useState(false);
-  const [depositPaid, setDepositPaid] = useState(false);
-  
-  // Function to handle treatment plan approval
-  const handleApproveTreatmentPlan = () => {
-    setIsApproving(true);
-    
-    // In a real app, this would be an API call to approve the treatment plan
-    setTimeout(() => {
-      setTreatmentPlan({
-        ...treatmentPlan,
-        approvedByPatient: true
-      });
-      setIsApproving(false);
-      setShowApproveDialog(false);
+    const fetchTreatmentPlans = async () => {
+      if (!user?.id) return;
       
-      toast({
-        title: t('portal.treatment_plan.approved', 'Treatment Plan Approved'),
-        description: t('portal.treatment_plan.approved_desc', 'Your treatment plan has been approved successfully.'),
-      });
-      
-      // Show deposit dialog after approval
-      setTimeout(() => {
-        setShowDepositDialog(true);
-      }, 500);
-    }, 1500);
-  };
-  
-  // Function to handle deposit payment
-  const handlePayDeposit = () => {
-    setIsPayingDeposit(true);
-    
-    // In a real app, this would integrate with Stripe
-    setTimeout(() => {
-      setDepositPaid(true);
-      setIsPayingDeposit(false);
-      setShowDepositDialog(false);
-      
-      toast({
-        title: 'Deposit Paid',
-        description: 'Your £200 refundable deposit has been successfully processed.',
-      });
-    }, 1500);
-  };
-  
-  // Function to handle deposit cancellation
-  const handleCancelDeposit = () => {
-    setShowDepositDialog(false);
-    
-    // Show toast with warning about pricing guarantee
-    toast({
-      title: 'Deposit Payment Postponed',
-      description: 'Remember: Current pricing is guaranteed for 14 days only. After that, prices may change based on availability.',
-      variant: 'destructive',
-    });
-    
-    // After a brief delay, show a reminder toast about the deposit
-    setTimeout(() => {
-      toast({
-        title: 'Payment Reminder',
-        description: 'You can pay your deposit anytime from your treatment plan page by clicking "Pay Deposit Now".',
-      });
-    }, 3000);
-  };
-  
-  // Function to download treatment plan as PDF
-  const handleDownloadPlan = () => {
-    toast({
-      title: t('portal.treatment_plan.generating', 'Generating Treatment Plan PDF'),
-      description: t('portal.treatment_plan.please_wait', 'Please wait while we generate your PDF...'),
-    });
-    
-    // Get the first name from the full name (if available) for a personalized PDF
-    const user = {
-      name: 'John Doe', // This would come from user context in a real app
-      email: 'patient@example.com',
-      phone: '+44 1234 567890',
-    };
-    
-    // Get travel info if it exists
-    const travelInfo = {
-      departureCity: 'London',
-      travelMonth: 'June',
-    };
-    
-    try {
-      // Call the PDF generator with treatment plan data including dental chart
-      generateQuotePdf({
-        items: treatmentPlan.items,
-        totalGBP: treatmentPlan.totalGBP,
-        totalUSD: treatmentPlan.totalUSD,
-        patientName: user.name,
-        patientEmail: user.email,
-        patientPhone: user.phone,
-        departureCity: travelInfo.departureCity,
-        travelMonth: travelInfo.travelMonth,
-        dentalChart: mockDentalChart, // Pass the dental chart data
-        onComplete: () => {
-          toast({
-            title: t('portal.treatment_plan.download_complete', 'PDF Generated Successfully'),
-            description: t('portal.treatment_plan.download_desc', 'Your treatment plan PDF has been generated and downloaded.'),
-          });
+      setIsLoading(true);
+      try {
+        const res = await apiRequest('GET', '/api/patient/treatment-plans');
+        const data = await res.json();
+        
+        if (data.success && data.treatmentPlans) {
+          setTreatmentPlans(data.treatmentPlans);
+          
+          if (data.treatmentPlans.length > 0) {
+            // Set the first (presumably active) treatment plan as selected
+            setSelectedPlan(data.treatmentPlans[0]);
+          }
+        } else {
+          // If API fails or is not built yet, use sample data
+          console.warn('Using sample treatment plan data');
+          const samplePlans: TreatmentPlan[] = [
+            {
+              id: '1',
+              title: 'Full Dental Restoration Plan',
+              description: 'Comprehensive dental restoration including implants, crowns, and whitening.',
+              clinicId: 1,
+              clinicName: 'DentSpa Istanbul',
+              patientId: user.id,
+              patientName: user.fullName || user.email,
+              createdAt: '2025-05-10T14:30:00Z',
+              updatedAt: '2025-05-15T09:45:00Z',
+              status: 'proposed',
+              paymentStatus: 'unpaid',
+              totalAmount: 4250,
+              currency: 'GBP',
+              deposit: 500,
+              depositPaid: false,
+              items: [
+                {
+                  id: '1',
+                  name: 'Dental Implant',
+                  description: 'Titanium implant with abutment',
+                  quantity: 3,
+                  unitPrice: 850,
+                  totalPrice: 2550,
+                  currency: 'GBP',
+                  status: 'pending'
+                },
+                {
+                  id: '2',
+                  name: 'Porcelain Crown',
+                  description: 'High-quality porcelain crown',
+                  quantity: 5,
+                  unitPrice: 280,
+                  totalPrice: 1400,
+                  currency: 'GBP',
+                  status: 'pending'
+                },
+                {
+                  id: '3',
+                  name: 'Professional Whitening',
+                  description: 'In-office teeth whitening session',
+                  quantity: 1,
+                  unitPrice: 300,
+                  totalPrice: 300,
+                  currency: 'GBP',
+                  status: 'pending'
+                }
+              ],
+              doctorName: 'Dr. Mehmet Yılmaz',
+              doctorId: '1',
+              financingAvailable: true,
+              pendingApproval: true
+            }
+          ];
+          
+          setTreatmentPlans(samplePlans);
+          
+          if (samplePlans.length > 0) {
+            setSelectedPlan(samplePlans[0]);
+          }
         }
-      });
-    } catch (error) {
-      console.error('Error generating PDF:', error);
+      } catch (error) {
+        console.error('Error fetching treatment plans:', error);
+        toast({
+          title: t('common.error', 'Error'),
+          description: t('patient.treatment_plans.fetch_error', 'Failed to load treatment plans'),
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTreatmentPlans();
+  }, [user?.id, t, toast]);
+  
+  // Handle treatment plan approval
+  const handleApproveTreatmentPlan = async () => {
+    if (!selectedPlan) return;
+    
+    setIsSubmittingApproval(true);
+    try {
+      // In a real application, this would be an API call
+      console.log('Approving treatment plan:', selectedPlan.id, 'Notes:', approvalNotes);
+      
+      // Update the local state to simulate approval
+      const updatedPlans = treatmentPlans.map(plan => 
+        plan.id === selectedPlan.id 
+          ? { ...plan, status: 'approved' as const, pendingApproval: false } 
+          : plan
+      );
+      
+      setTreatmentPlans(updatedPlans);
+      setSelectedPlan(prevPlan => 
+        prevPlan ? { ...prevPlan, status: 'approved', pendingApproval: false } : null
+      );
+      
       toast({
-        title: t('portal.treatment_plan.pdf_error', 'PDF Generation Error'),
-        description: t('portal.treatment_plan.pdf_error_desc', 'There was an error generating your PDF. Please try again.'),
-        variant: 'destructive',
+        title: t('patient.treatment_plans.approved', 'Treatment Plan Approved'),
+        description: t('patient.treatment_plans.approval_success', 'Your treatment plan has been successfully approved'),
       });
+      
+      setShowApproveDialog(false);
+    } catch (error) {
+      console.error('Error approving treatment plan:', error);
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('patient.treatment_plans.approval_error', 'Failed to approve treatment plan'),
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmittingApproval(false);
+      setApprovalNotes('');
     }
   };
   
+  // Load payment options
+  const handleShowPaymentOptions = async () => {
+    if (!selectedPlan) return;
+    
+    setIsLoadingPaymentOptions(true);
+    try {
+      // In a real application, this would fetch payment options from the API
+      // For now, create sample payment options based on the selected plan
+      const sampleOptions: PaymentOption[] = [
+        {
+          id: 'full',
+          name: 'Full Payment',
+          description: 'Pay the entire amount upfront and receive a 5% discount',
+          type: 'full',
+          amount: Math.round(selectedPlan.totalAmount * 0.95),
+          discount: 5
+        },
+        {
+          id: 'deposit',
+          name: 'Pay Deposit Now',
+          description: 'Pay the deposit now and the remainder at the clinic',
+          type: 'deposit',
+          amount: selectedPlan.deposit || 500,
+          depositAmount: selectedPlan.deposit || 500
+        },
+        {
+          id: 'installment',
+          name: '3-Month Payment Plan',
+          description: 'Split your payment into 3 monthly installments',
+          type: 'installment',
+          amount: selectedPlan.totalAmount,
+          installments: 3,
+          installmentAmount: Math.round(selectedPlan.totalAmount / 3)
+        },
+        {
+          id: 'financing',
+          name: 'Dental Financing',
+          description: 'Finance your treatment with our partner credit provider',
+          type: 'financing',
+          amount: selectedPlan.totalAmount,
+          installments: 12,
+          installmentAmount: Math.round((selectedPlan.totalAmount * 1.08) / 12),
+          interestRate: 8
+        }
+      ];
+      
+      setPaymentOptions(sampleOptions);
+      setSelectedPaymentOption(sampleOptions[0].id);
+      setShowPaymentOptions(true);
+    } catch (error) {
+      console.error('Error fetching payment options:', error);
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('patient.treatment_plans.payment_options_error', 'Failed to load payment options'),
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingPaymentOptions(false);
+    }
+  };
+  
+  // Process payment selection
+  const handleProcessPayment = () => {
+    if (!selectedPaymentOption || !selectedPlan) return;
+    
+    // In a real application, this would redirect to a payment page or initiate a payment flow
+    console.log('Processing payment option:', selectedPaymentOption);
+    
+    // For now, just show a success message and close the dialog
+    toast({
+      title: 'Payment Option Selected',
+      description: 'You will be redirected to the payment page.',
+    });
+    
+    // Redirect to payment page (in a real app)
+    // For now, just simulate with a local navigation
+    window.location.href = `/treatment-payment/${selectedPlan.id}?option=${selectedPaymentOption}`;
+    
+    setShowPaymentOptions(false);
+  };
+  
+  // Function to format date string
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'dd MMM yyyy');
+    } catch (error) {
+      return dateString;
+    }
+  };
+  
+  // Get status badge UI
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'draft':
+        return <Badge variant="outline">Draft</Badge>;
+      case 'proposed':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Proposed</Badge>;
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Approved</Badge>;
+      case 'in_treatment':
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">In Treatment</Badge>;
+      case 'completed':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>;
+      case 'cancelled':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+  
+  // Get payment status badge UI
+  const getPaymentStatusBadge = (status: string) => {
+    switch (status) {
+      case 'unpaid':
+        return <Badge variant="outline">Unpaid</Badge>;
+      case 'deposit_paid':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Deposit Paid</Badge>;
+      case 'partially_paid':
+        return <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-200">Partially Paid</Badge>;
+      case 'fully_paid':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Fully Paid</Badge>;
+      case 'refunded':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Refunded</Badge>;
+      default:
+        return <Badge variant="outline">Unknown</Badge>;
+    }
+  };
+  
+  // Calculate treatment progress
+  const calculateProgress = (plan: TreatmentPlan) => {
+    if (plan.treatmentProgress !== undefined) {
+      return plan.treatmentProgress;
+    }
+    
+    // If no explicit progress is provided, calculate based on item status
+    if (!plan.items || plan.items.length === 0) return 0;
+    
+    const completedItems = plan.items.filter(item => item.status === 'completed').length;
+    return Math.round((completedItems / plan.items.length) * 100);
+  };
+  
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex flex-col h-full">
-        {/* Pricing expiration warning - shows after approval, before deposit */}
-        {treatmentPlan.approvedByPatient && !depositPaid && (
-          <div className="bg-amber-50 border-b border-amber-200 px-4 py-3 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-medium text-amber-800">Pricing Valid for Limited Time</h4>
-              <p className="text-xs text-amber-700 mt-1">
-                Your approved treatment plan prices are guaranteed for 14 days only. Please secure your booking 
-                with a £200 deposit to lock in these rates.
-              </p>
-              <div className="mt-2">
-                <Button 
-                  size="sm" 
-                  variant="default" 
-                  className="h-8 bg-amber-600 hover:bg-amber-700"
-                  onClick={() => setShowDepositDialog(true)}
-                >
-                  <PiggyBank className="h-3.5 w-3.5 mr-1.5" />
-                  Pay £200 Deposit Now
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-        
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle>{t('portal.treatment_plan.title', 'Treatment Plan')}</CardTitle>
-            <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap justify-end gap-2">
-              <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
-                <PencilLine className="h-4 w-4 mr-2" />
-                Edit
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleDownloadPlan}>
-                <Download className="h-4 w-4 mr-2" />
-                {t('portal.treatment_plan.download', 'Download')}
-              </Button>
-              {treatmentPlan.approvedByPatient ? (
-                depositPaid ? (
-                  <Badge className="bg-green-600">
-                    <PiggyBank className="h-3 w-3 mr-1" />
-                    Deposit Paid
-                  </Badge>
-                ) : (
-                  <div className="flex flex-wrap gap-2 mt-2 sm:mt-0">
-                    <Badge className="bg-green-600">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      {t('portal.treatment_plan.approved_badge', 'Approved')}
-                    </Badge>
-                    <Button 
-                      size="sm" 
-                      onClick={() => setShowDepositDialog(true)}
-                      className="whitespace-nowrap"
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">{t('patient.treatment_plans.title', 'My Treatment Plan')}</h2>
+          <p className="text-muted-foreground">{t('patient.treatment_plans.description', 'View and manage your dental treatment plans')}</p>
+        </div>
+      </div>
+      
+      {isLoading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : treatmentPlans.length === 0 ? (
+        <Card className="py-8">
+          <CardContent className="text-center">
+            <Tooth className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <h3 className="text-lg font-medium mb-2">No Treatment Plans</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              You don't have any dental treatment plans yet. Please contact your clinic or request a quote.
+            </p>
+            <Button>Request Treatment Plan</Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {treatmentPlans.length > 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Your Treatment Plans</CardTitle>
+                <CardDescription>
+                  You have {treatmentPlans.length} treatment plans
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {treatmentPlans.map(plan => (
+                    <div 
+                      key={plan.id}
+                      className={`p-3 rounded-md cursor-pointer flex justify-between items-center
+                        ${selectedPlan?.id === plan.id ? 'bg-primary/5 border border-primary/20' : 'hover:bg-muted'}
+                      `}
+                      onClick={() => setSelectedPlan(plan)}
                     >
-                      <PiggyBank className="h-4 w-4 mr-2" />
-                      Pay Deposit
-                    </Button>
-                  </div>
-                )
-              ) : (
-                <Button 
-                  size="sm" 
-                  onClick={() => setShowApproveDialog(true)}
-                >
-                  <ThumbsUp className="h-4 w-4 mr-2" />
-                  {t('portal.treatment_plan.approve', 'Approve Plan')}
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-muted-foreground mt-2">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-4 w-4" />
-              <span>
-                {t('portal.treatment_plan.version', 'Version')}: {treatmentPlan.version}
-              </span>
-            </div>
-            
-            <div className="flex items-center space-x-2 mt-2 sm:mt-0">
-              <Clock className="h-4 w-4" />
-              <span>
-                {t('portal.treatment_plan.last_updated', 'Last updated')}: {new Date(treatmentPlan.lastUpdated).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-          
-          {/* Add option to toggle between legacy view and new treatment plan viewer */}
-          <div className="mt-4 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setShowTreatmentPlanViewer(!showTreatmentPlanViewer)}>
-              <FileUp className="h-4 w-4 mr-2" />
-              {showTreatmentPlanViewer ? 'Switch to Summary View' : 'View with File Manager'}
-            </Button>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="flex-grow overflow-hidden p-0">
-          {showTreatmentPlanViewer ? (
-            // New enhanced treatment plan viewer with file management
-            <TreatmentPlanViewer 
-              treatmentPlanId={123} // In real implementation, use actual treatment plan ID
-              canUploadFiles={true}
-              patientView={true}
-              onFileUploaded={(file) => {
-                toast({
-                  title: 'File Uploaded',
-                  description: `${file.filename} has been added to your treatment plan.`
-                });
-              }}
-            />
-          ) : (
-            // Legacy view with summary information
-            <ScrollArea className="h-[calc(65vh-8rem)]">
-              <div className="px-6 py-4">
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center">
-                    <Receipt className="h-5 w-5 mr-2 text-blue-500" />
-                    {t('portal.treatment_plan.treatment_details', 'Treatment Details')}
-                  </h3>
-                  
-                  <Tabs defaultValue="details" className="mb-4">
-                    <TabsList className="grid w-full grid-cols-2">
-                      <TabsTrigger value="details">Treatment Details</TabsTrigger>
-                      <TabsTrigger value="savings">UK Price Comparison</TabsTrigger>
-                    </TabsList>
-                    
-                    <TabsContent value="details">
-                      <div className="bg-gray-50 rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-12 px-4 py-3 bg-gray-100 text-sm font-medium">
-                          <div className="col-span-5">{t('portal.treatment_plan.treatment', 'Treatment')}</div>
-                          <div className="col-span-2 text-center">{t('portal.treatment_plan.quantity', 'Qty')}</div>
-                          <div className="col-span-2 text-right">{t('portal.treatment_plan.price_per_unit', 'Price')}</div>
-                          <div className="col-span-3 text-right">{t('portal.treatment_plan.subtotal', 'Subtotal')}</div>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full ${selectedPlan?.id === plan.id ? 'bg-primary/10' : 'bg-muted'}`}>
+                          <FileText className={`h-4 w-4 ${selectedPlan?.id === plan.id ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
-                        
-                        {treatmentPlan.items.map((item, index) => (
-                          <div 
-                            key={item.id} 
-                            className={`grid grid-cols-12 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                          >
-                            <div className="col-span-5">
-                              <div className="font-medium">{item.treatment}</div>
-                              <div className="text-gray-500 text-xs mt-1">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger className="flex items-center">
-                                      <ShieldCheck className="h-3 w-3 text-green-600 mr-1" />
-                                      <span>{t('portal.treatment_plan.guaranteed', 'Guaranteed')}</span>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="max-w-xs">
-                                      <p>{item.guarantee}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </div>
-                            <div className="col-span-2 text-center self-center">{item.quantity}</div>
-                            <div className="col-span-2 text-right self-center">
-                              <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
-                              <div className="text-xs text-gray-500">{formatCurrency(item.priceUSD, 'USD')}</div>
-                            </div>
-                            <div className="col-span-3 text-right self-center">
-                              <div>{formatCurrency(item.subtotalGBP, 'GBP')}</div>
-                              <div className="text-xs text-gray-500">{formatCurrency(item.subtotalUSD, 'USD')}</div>
-                            </div>
-                          </div>
-                        ))}
-                        
-                        <div className="grid grid-cols-12 px-4 py-3 bg-blue-50 text-sm font-medium border-t border-blue-100">
-                          <div className="col-span-9 text-right">{t('portal.treatment_plan.total', 'Total')}</div>
-                          <div className="col-span-3 text-right">
-                            <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
-                            <div className="text-gray-600">{formatCurrency(treatmentPlan.totalUSD, 'USD')}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-                    
-                    <TabsContent value="savings">
-                      {/* UK Price Comparison View */}
-                      <div className="bg-gray-50 rounded-lg overflow-hidden">
-                        <div className="grid grid-cols-12 px-4 py-3 bg-gray-100 text-sm font-medium">
-                          <div className="col-span-4">Treatment</div>
-                          <div className="col-span-1 text-center">Qty</div>
-                          <div className="col-span-3 text-right">UK Price</div>
-                          <div className="col-span-3 text-right">Our Price</div>
-                          <div className="col-span-1 text-right">Savings</div>
-                        </div>
-                        
-                        {treatmentPlan.items.map((item, index) => (
-                          <div 
-                            key={item.id} 
-                            className={`grid grid-cols-12 px-4 py-3 text-sm ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}
-                          >
-                            <div className="col-span-4">
-                              <div className="font-medium">{item.treatment}</div>
-                            </div>
-                            <div className="col-span-1 text-center self-center">{item.quantity}</div>
-                            <div className="col-span-3 text-right self-center">
-                              {item.homeCountryPriceGBP && (
-                                <>
-                                  <div>{formatCurrency(item.homeCountryPriceGBP, 'GBP')}</div>
-                                  <div className="text-xs text-gray-500">{formatCurrency(item.homeCountrySubtotalGBP || 0, 'GBP')} total</div>
-                                </>
-                              )}
-                            </div>
-                            <div className="col-span-3 text-right self-center">
-                              <div>{formatCurrency(item.priceGBP, 'GBP')}</div>
-                              <div className="text-xs text-gray-500">{formatCurrency(item.subtotalGBP, 'GBP')} total</div>
-                            </div>
-                            <div className="col-span-1 text-right self-center">
-                              {item.savingsPercentage && (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  {item.savingsPercentage}%
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                        
-                        {/* Total row with savings */}
-                        <div className="grid grid-cols-12 px-4 py-4 bg-blue-50 text-sm font-medium border-t border-blue-100">
-                          <div className="col-span-5 text-right">Total</div>
-                          <div className="col-span-3 text-right">
-                            <div className="font-bold">{formatCurrency(treatmentPlan.totalHomeCountryGBP || 0, 'GBP')}</div>
-                            <div className="text-xs text-gray-500">UK Price</div>
-                          </div>
-                          <div className="col-span-3 text-right">
-                            <div className="font-bold">{formatCurrency(treatmentPlan.totalGBP, 'GBP')}</div>
-                            <div className="text-xs text-gray-500">Turkey Price</div>
-                          </div>
-                          <div className="col-span-1 text-right">
-                            <div className="text-green-600 font-bold">{treatmentPlan.totalSavingsPercentage}%</div>
-                          </div>
-                        </div>
-                        
-                        {/* Savings highlight box */}
-                        <div className="p-4 bg-green-50 border-t border-green-100">
-                          <div className="flex items-center gap-3">
-                            <div className="bg-green-100 p-2 rounded-full">
-                              <PiggyBank className="h-6 w-6 text-green-600" />
-                            </div>
-                            <div>
-                              <h4 className="font-semibold text-green-800">Total Savings: {formatCurrency(treatmentPlan.totalSavingsGBP || 0, 'GBP')}</h4>
-                              <p className="text-sm text-green-700">
-                                You save {treatmentPlan.totalSavingsPercentage}% compared to UK prices for the same treatments
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {treatmentPlan.totalSavingsGBP && treatmentPlan.totalSavingsGBP > 0 && (
-                            <div className="mt-3">
-                              <div className="text-xs text-green-700 mb-1">Savings amount</div>
-                              <Progress 
-                                value={treatmentPlan.totalSavingsPercentage} 
-                                className="h-2 bg-green-200"
-                              />
-                              <div className="flex justify-between text-xs mt-1">
-                                <span>0%</span>
-                                <span>{treatmentPlan.totalSavingsPercentage}%</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </div>
-                
-                {treatmentPlan.notes && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-2">
-                      {t('portal.treatment_plan.notes', 'Treatment Notes')}
-                    </h3>
-                    <Card className="bg-blue-50 border-blue-100">
-                      <CardContent className="p-4">
-                        <div className="flex">
-                          <Info className="h-5 w-5 text-blue-500 mr-2 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-blue-800">{treatmentPlan.notes}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-                
-                {treatmentPlan.guaranteeDetails && (
-                  <div className="mb-6">
-                    <h3 className="text-lg font-semibold mb-2">
-                      {t('portal.treatment_plan.guarantee_details', 'Guarantee Information')}
-                    </h3>
-                    <Card className="bg-green-50 border-green-100">
-                      <CardContent className="p-4">
-                        <div className="flex">
-                          <ShieldCheck className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                          <p className="text-sm text-green-800">{treatmentPlan.guaranteeDetails}</p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-                
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3">
-                    {t('portal.treatment_plan.faq', 'Frequently Asked Questions')}
-                  </h3>
-                  
-                  <Accordion type="single" collapsible className="bg-white rounded-lg border">
-                    {treatmentFaqs.map((faq, index) => (
-                      <AccordionItem key={index} value={`item-${index}`}>
-                        <AccordionTrigger className="px-4 py-3 hover:bg-gray-50 text-left">
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent className="px-4 pb-3">
-                          <p className="text-gray-700">{faq.answer}</p>
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
-                </div>
-                
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold mb-3 flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-                    {t('portal.treatment_plan.timeline', 'Treatment Timeline')}
-                  </h3>
-                  
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="relative border-l-2 border-blue-200 pl-5 pb-2">
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Free Online Consultation</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Choose a time and date in the appointment section. You'll receive email confirmations and calendar invites.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Before Travel
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-[25px] bg-yellow-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Review & Confirm Treatment Plan</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            After your consultation, review your detailed treatment plan. Click "Approve Plan" and pay a £200 refundable deposit to secure your booking.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                              Before Travel
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Day 1: Arrival & Initial Consultation</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Fill out the new patient form (bring passport/ID). X-rays and a full consultation will be done. Any treatment changes will be discussed, with you having full control. Check the price list in your treatment plan for transparency.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              In Istanbul
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Days 1-2: Treatment & Recovery</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Treatment begins. Healing and medicine will be provided by the clinic. Rest at your hotel where special dietary needs (e.g., soft foods) can be accommodated.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              In Istanbul
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="mb-8 relative">
-                          <div className="absolute -left-[25px] bg-blue-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Day 3: Clinic Check-up & Laboratory Work</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Return to the clinic for a check-up. Any laboratory work for custom dental pieces will be processed.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              In Istanbul
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        <div className="relative">
-                          <div className="absolute -left-[25px] bg-green-500 rounded-full h-4 w-4 mt-1 border-2 border-white"></div>
-                          <h4 className="font-medium">Day 4: Final Placement</h4>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Final placement of any crowns, veneers, or other restorations. Final adjustments and post-treatment care instructions will be provided.
-                          </p>
-                          <div className="mt-2">
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              In Istanbul
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </ScrollArea>
-          )}
-        </CardContent>
-        
-        <CardFooter className="border-t pt-4">
-          {!treatmentPlan.approvedByPatient ? (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 w-full">
-              <div className="flex">
-                <AlertCircle className="h-5 w-5 text-yellow-500 mr-2 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800">
-                    {t('portal.treatment_plan.approval_needed', 'Treatment Plan Approval Required')}
-                  </p>
-                  <p className="text-xs text-yellow-700 mt-1">
-                    {t('portal.treatment_plan.approval_desc', 'Please review and approve your treatment plan to proceed with scheduling your appointments.')}
-                  </p>
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => setShowApproveDialog(true)}
-                  >
-                    <ThumbsUp className="h-4 w-4 mr-2" />
-                    {t('portal.treatment_plan.approve', 'Approve Treatment Plan')}
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3 w-full">
-              <div className="flex">
-                <CheckCircle2 className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                <div className="w-full">
-                  <p className="text-sm font-medium text-green-800">
-                    {t('portal.treatment_plan.approved_status', 'Treatment Plan Approved')}
-                  </p>
-                  <p className="text-xs text-green-700 mt-1">
-                    {t('portal.treatment_plan.next_steps', 'Your treatment plan has been approved. The clinic will contact you to schedule your appointments.')}
-                  </p>
-                  
-                  {/* Deposit section */}
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex-1">
-                      {depositPaid ? (
-                        <div className="flex items-center mt-2 bg-green-100 rounded-lg p-2">
-                          <div className="bg-green-200 p-1 rounded-full mr-2">
-                            <CheckCircle2 className="h-4 w-4 text-green-700" />
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-green-800">£200 Deposit Paid</p>
-                            <p className="text-xs text-green-700">Refundable if canceled 14+ days before appointment</p>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center mt-2 bg-blue-50 rounded-lg p-2">
-                          <div className="bg-blue-100 p-1 rounded-full mr-2">
-                            <PiggyBank className="h-4 w-4 text-blue-700" />
-                          </div>
-                          <div className="mr-4">
-                            <p className="text-xs font-medium text-blue-800">£200 Refundable Deposit Required</p>
-                            <p className="text-xs text-blue-700">Secures your appointment and is deducted from final cost</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div>
-                      {depositPaid ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="bg-white"
-                          onClick={() => {
-                            // Navigate to appointments in a real app
-                            toast({
-                              title: t('portal.treatment_plan.scheduling', 'Appointments'),
-                              description: t('portal.treatment_plan.schedule_desc', 'Appointment scheduling will be available soon.'),
-                            });
-                          }}
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Schedule Appointment
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => setShowDepositDialog(true)}
-                        >
-                          <PiggyBank className="h-4 w-4 mr-2" />
-                          Pay Deposit Now
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {depositPaid && (
-                    <div className="mt-3">
-                      <p className="text-xs text-green-700">
-                        Your appointment is confirmed for <span className="font-medium">May 15-19, 2025</span>. 
-                        For any changes, please contact the MyDentalFly team at least 14 days before to maintain deposit refund eligibility.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </CardFooter>
-      </Card>
-      
-      {/* Approve Dialog */}
-      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('portal.treatment_plan.approve_dialog_title', 'Approve Treatment Plan')}</DialogTitle>
-            <DialogDescription>
-              {t('portal.treatment_plan.approve_dialog_desc', 'By approving this treatment plan, you confirm that you understand and accept the proposed treatments, costs, and timeline.')}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="bg-gray-50 p-3 rounded-md text-sm">
-            <p className="font-medium text-gray-800">{t('portal.treatment_plan.summary', 'Summary')}</p>
-            <ul className="mt-2 space-y-1 text-gray-600">
-              <li className="flex items-start">
-                <ArrowRight className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-                <span>{t('portal.treatment_plan.summary_treatments', 'Treatments')}: {treatmentPlan.items.map(item => item.treatment).join(', ')}</span>
-              </li>
-              <li className="flex items-start">
-                <ArrowRight className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-                <span>{t('portal.treatment_plan.summary_total', 'Total Cost')}: {formatCurrency(treatmentPlan.totalGBP, 'GBP')} / {formatCurrency(treatmentPlan.totalUSD, 'USD')}</span>
-              </li>
-              <li className="flex items-start">
-                <ArrowRight className="h-4 w-4 mr-1 mt-0.5 flex-shrink-0" />
-                <span>{t('portal.treatment_plan.summary_duration', 'Expected Duration')}: 5-7 days</span>
-              </li>
-            </ul>
-          </div>
-          
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowApproveDialog(false)}
-              disabled={isApproving}
-            >
-              {t('portal.treatment_plan.cancel', 'Cancel')}
-            </Button>
-            <Button
-              variant="default"
-              onClick={handleApproveTreatmentPlan}
-              disabled={isApproving}
-            >
-              {isApproving ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-b-transparent border-white"></div>
-                  {t('portal.treatment_plan.approving', 'Approving...')}
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-4 w-4 mr-2" />
-                  {t('portal.treatment_plan.confirm_approve', 'Confirm Approval')}
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Deposit Payment Dialog */}
-      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <PiggyBank className="h-5 w-5 mr-2 text-blue-500" />
-              Secure Your Treatment with £200 Deposit
-            </DialogTitle>
-            <DialogDescription>
-              Your deposit secures your treatment slot and is fully refundable if canceled 14+ days before your appointment.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div className="bg-blue-50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold mb-2 flex items-center">
-                <FileText className="h-4 w-4 mr-2 text-blue-600" />
-                Deposit Contract
-              </h3>
-              
-              <div className="bg-white border rounded-md p-4 text-sm">
-                <div className="flex justify-between items-start">
-                  <p className="font-semibold mb-2">MyDentalFly.com Deposit Agreement</p>
-                  <div className="bg-amber-50 px-2 py-1 rounded text-xs flex items-center">
-                    <Clock className="h-3 w-3 text-amber-500 mr-1" />
-                    <span className="text-amber-700 font-medium">Expires in 14 days</span>
-                  </div>
-                </div>
-                
-                <p className="mb-2">This agreement confirms that the patient agrees to pay a £200 deposit to secure their dental treatment as described in the approved treatment plan.</p>
-                
-                <div className="bg-gray-50 p-3 rounded-md border mb-3">
-                  <div className="flex items-start">
-                    <AlertCircle className="h-4 w-4 text-amber-500 mr-2 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-gray-700">
-                      <span className="font-medium">Important:</span> The prices in your treatment plan are only guaranteed for 14 days from approval ({new Date(treatmentPlan.lastUpdated).toLocaleDateString()}). 
-                      After this period, prices may change based on clinic availability and material costs.
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="space-y-2 mb-3">
-                  <p className="font-medium">Key Terms:</p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>The £200 deposit will be deducted from your final treatment cost</li>
-                    <li>100% refundable if canceled 14+ days before your scheduled appointment</li>
-                    <li>50% refundable if canceled 7-13 days before your scheduled appointment</li>
-                    <li>Non-refundable if canceled less than 7 days before your scheduled appointment</li>
-                  </ul>
-                </div>
-                
-                <p>By clicking "Pay Deposit Now", you confirm you have read and understood these terms.</p>
-              </div>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-semibold mb-2 flex items-center">
-                <CreditCard className="h-4 w-4 mr-2 text-gray-600" />
-                Payment Details
-              </h3>
-              
-              <div className="p-4 border rounded-md bg-white">
-                <div className="flex justify-between items-center mb-4">
-                  <div>
-                    <p className="font-medium">Refundable Deposit</p>
-                    <p className="text-gray-500 text-sm">Secures your treatment appointment</p>
-                  </div>
-                  <div className="text-xl font-bold">£200</div>
-                </div>
-                
-                {/* This would be replaced with actual Stripe payment form */}
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                      <label className="block text-sm mb-1">Card Number</label>
-                      <div className="border rounded-md p-2 bg-gray-50">
-                        <div className="flex items-center">
-                          <span className="text-gray-400">••••</span>
-                          <span className="mx-1 text-gray-400">••••</span>
-                          <span className="mx-1 text-gray-400">••••</span>
-                          <span className="mx-1">4242</span>
-                          <CreditCard className="ml-auto h-4 w-4 text-gray-400" />
-                        </div>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">Expiration</label>
-                      <div className="border rounded-md p-2 bg-gray-50">
-                        <span>12/25</span>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">CVC</label>
-                      <div className="border rounded-md p-2 bg-gray-50">
-                        <span className="text-gray-400">•••</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={handleCancelDeposit}
-              disabled={isPayingDeposit}
-            >
-              Remind Me Later
-            </Button>
-            <Button
-              variant="default"
-              onClick={handlePayDeposit}
-              disabled={isPayingDeposit}
-            >
-              {isPayingDeposit ? (
-                <>
-                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-b-transparent border-white"></div>
-                  Processing Payment...
-                </>
-              ) : (
-                <>
-                  <PiggyBank className="h-4 w-4 mr-2" />
-                  Pay Deposit Now
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
-      {/* Edit Dialog */}
-      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Edit className="h-5 w-5 mr-2 text-blue-500" />
-              Edit Treatment Plan
-            </DialogTitle>
-            <DialogDescription>
-              Make changes to your treatment plan. All changes will be tracked in the version history.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <Tabs defaultValue="treatments" className="mb-4">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="treatments">Treatments</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
-              <TabsTrigger value="history">Version History</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="treatments" className="max-h-[60vh] overflow-y-auto p-1">
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-2">Current Treatment Items</h3>
-                  
-                  <div className="space-y-3">
-                    {treatmentPlan.items.map((item, index) => (
-                      <div key={item.id} className="flex items-center justify-between bg-white p-3 rounded-md border">
                         <div>
-                          <div className="font-medium">{item.treatment}</div>
-                          <div className="text-sm text-gray-500">
-                            {item.quantity} × {formatCurrency(item.priceGBP, 'GBP')} = {formatCurrency(item.subtotalGBP, 'GBP')}
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <PencilLine className="h-4 w-4" />
-                          </Button>
+                          <p className="font-medium text-sm">{plan.title}</p>
+                          <p className="text-xs text-muted-foreground">{plan.clinicName}</p>
                         </div>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(plan.status)}
+                        <ArrowRightIcon className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {selectedPlan && (
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                      <CardTitle>{selectedPlan.title}</CardTitle>
+                      <CardDescription>
+                        {selectedPlan.clinicName} • Created on {formatDate(selectedPlan.createdAt)}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {getStatusBadge(selectedPlan.status)}
+                      {getPaymentStatusBadge(selectedPlan.paymentStatus)}
+                    </div>
                   </div>
-                  
-                  <Button className="mt-4 w-full" variant="outline">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Treatment Item
-                  </Button>
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="notes" className="max-h-[60vh] overflow-y-auto p-1">
-              <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-2">Treatment Notes</h3>
-                  <textarea 
-                    className="w-full min-h-[120px] rounded-md border border-input bg-white p-3 text-sm"
-                    defaultValue={treatmentPlan.notes}
-                    placeholder="Enter treatment notes here..."
-                  />
-                </div>
+                </CardHeader>
                 
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-2">Guarantee Details</h3>
-                  <textarea 
-                    className="w-full min-h-[120px] rounded-md border border-input bg-white p-3 text-sm"
-                    defaultValue={treatmentPlan.guaranteeDetails}
-                    placeholder="Enter guarantee details here..."
-                  />
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="history" className="max-h-[60vh] overflow-y-auto p-1">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <h3 className="text-sm font-medium mb-3 flex items-center">
-                  <History className="h-4 w-4 mr-2 text-blue-500" />
-                  Version History
-                </h3>
-                
-                <div className="relative border-l-2 border-gray-200 pl-5 space-y-6">
-                  {treatmentPlan.versionHistory ? (
-                    treatmentPlan.versionHistory.map((version, index) => (
-                      <div key={index} className="relative">
-                        <div className="absolute -left-[15px] bg-blue-500 rounded-full h-3 w-3 mt-1.5 border-2 border-white"></div>
-                        <div className="mb-1">
-                          <span className="text-sm font-medium">Version {version.versionNumber}</span>
-                          <span className="text-xs text-gray-500 ml-2">
-                            {new Date(version.timestamp).toLocaleDateString()} {new Date(version.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                <CardContent className="space-y-6">
+                  {/* Overview Section */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Treatment Summary & Progress */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center">
+                        <ListChecks className="h-5 w-5 mr-2 text-primary" />
+                        Treatment Summary
+                      </h3>
+                      
+                      <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm">Treatment Progress</span>
+                          <span className="text-sm font-medium">{calculateProgress(selectedPlan)}%</span>
+                        </div>
+                        <Progress value={calculateProgress(selectedPlan)} className="h-2" />
+                      </div>
+                      
+                      <div className="rounded-md border p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Treatment Items</span>
+                          <span className="text-sm font-medium">{selectedPlan.items.length}</span>
+                        </div>
+                        
+                        <Separator />
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Treatments Completed</span>
+                          <span className="text-sm font-medium">
+                            {selectedPlan.items.filter(item => item.status === 'completed').length}
                           </span>
                         </div>
-                        <div className="text-sm">
-                          <span className="text-gray-600">Edited by: </span>
-                          <span className="font-medium">{version.editedBy}</span>
-                          <Badge className="ml-2 text-xs" variant="outline">{version.editedByRole}</Badge>
+                        
+                        <Separator />
+                        
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Treatments Pending</span>
+                          <span className="text-sm font-medium">
+                            {selectedPlan.items.filter(item => item.status === 'pending' || item.status === 'scheduled').length}
+                          </span>
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{version.changes}</p>
+                        
+                        {selectedPlan.doctorName && (
+                          <>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Assigned Doctor</span>
+                              <span className="text-sm font-medium">{selectedPlan.doctorName}</span>
+                            </div>
+                          </>
+                        )}
+                        
+                        {selectedPlan.nextAppointment && (
+                          <>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Next Appointment</span>
+                              <span className="text-sm font-medium">{formatDate(selectedPlan.nextAppointment)}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <div className="py-3 text-center text-sm text-gray-500">
-                      No version history available
+                    </div>
+                    
+                    {/* Payment Summary */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium flex items-center">
+                        <Receipt className="h-5 w-5 mr-2 text-primary" />
+                        Payment Summary
+                      </h3>
+                      
+                      <div className="rounded-md border p-4 space-y-2">
+                        <div className="flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">Total Treatment Cost</span>
+                          <span className="text-sm font-medium">
+                            {selectedPlan.totalAmount} {selectedPlan.currency}
+                          </span>
+                        </div>
+                        
+                        {selectedPlan.deposit && (
+                          <>
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Required Deposit</span>
+                              <span className="text-sm font-medium">
+                                {selectedPlan.deposit} {selectedPlan.currency}
+                              </span>
+                            </div>
+                            
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Deposit Status</span>
+                              <span className="text-sm font-medium">
+                                {selectedPlan.depositPaid ? (
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">
+                                    Paid
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-amber-50 text-amber-700 hover:bg-amber-100">
+                                    Not Paid
+                                  </Badge>
+                                )}
+                              </span>
+                            </div>
+                            
+                            <Separator />
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Remaining Balance</span>
+                              <span className="text-sm font-medium">
+                                {selectedPlan.totalAmount - (selectedPlan.depositPaid ? selectedPlan.deposit : 0)} {selectedPlan.currency}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                        
+                        <Separator />
+                        <div className="pt-2">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium">Payment Options</span>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={handleShowPaymentOptions}
+                            >
+                              View Options
+                            </Button>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {selectedPlan.financingAvailable
+                              ? "Financing options available for this treatment plan."
+                              : "Multiple payment options available for your convenience."}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Treatment Details */}
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-lg font-medium flex items-center">
+                        <Tooth className="h-5 w-5 mr-2 text-primary" />
+                        Treatment Details
+                      </h3>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setShowDetailedPlan(true)}
+                      >
+                        Detailed View
+                      </Button>
+                    </div>
+                    
+                    <div className="rounded-md border overflow-hidden">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-muted/50">
+                            <th className="text-left p-3 text-sm font-medium text-muted-foreground">Treatment</th>
+                            <th className="text-center p-3 text-sm font-medium text-muted-foreground">Qty</th>
+                            <th className="text-right p-3 text-sm font-medium text-muted-foreground">Price</th>
+                            <th className="text-right p-3 text-sm font-medium text-muted-foreground">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedPlan.items.map((item, index) => (
+                            <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-muted/20'}>
+                              <td className="p-3 text-sm">
+                                <div className="font-medium">{item.name}</div>
+                                {item.description && (
+                                  <div className="text-xs text-muted-foreground">{item.description}</div>
+                                )}
+                              </td>
+                              <td className="p-3 text-sm text-center">{item.quantity}</td>
+                              <td className="p-3 text-sm text-right">{item.totalPrice} {item.currency}</td>
+                              <td className="p-3 text-sm text-right">
+                                {item.status === 'pending' && (
+                                  <Badge variant="outline">Pending</Badge>
+                                )}
+                                {item.status === 'scheduled' && (
+                                  <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Scheduled</Badge>
+                                )}
+                                {item.status === 'completed' && (
+                                  <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Completed</Badge>
+                                )}
+                                {item.status === 'cancelled' && (
+                                  <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                          <tr className="bg-primary/5 font-medium">
+                            <td className="p-3 text-sm" colSpan={2}>Total</td>
+                            <td className="p-3 text-sm text-right" colSpan={2}>
+                              {selectedPlan.totalAmount} {selectedPlan.currency}
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  
+                  {/* Additional Information or Notes */}
+                  {selectedPlan.additionalNotes && (
+                    <div className="rounded-md border p-4 bg-muted/20">
+                      <h4 className="text-sm font-medium mb-2">Additional Notes</h4>
+                      <p className="text-sm text-muted-foreground">{selectedPlan.additionalNotes}</p>
                     </div>
                   )}
+                </CardContent>
+                
+                <CardFooter className="flex flex-wrap gap-3 border-t pt-6">
+                  {/* Action buttons based on treatment plan status */}
+                  {selectedPlan.status === 'proposed' && selectedPlan.pendingApproval && (
+                    <Button 
+                      className="gap-2"
+                      onClick={() => setShowApproveDialog(true)}
+                    >
+                      <CheckCircle className="h-4 w-4" />
+                      Approve Treatment Plan
+                    </Button>
+                  )}
                   
-                  {/* Current version */}
-                  <div className="relative">
-                    <div className="absolute -left-[15px] bg-green-500 rounded-full h-3 w-3 mt-1.5 border-2 border-white"></div>
-                    <div className="mb-1">
-                      <span className="text-sm font-medium">Version {treatmentPlan.version} (Current)</span>
-                      <span className="text-xs text-gray-500 ml-2">
-                        {new Date(treatmentPlan.lastUpdated).toLocaleDateString()} {new Date(treatmentPlan.lastUpdated).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                      </span>
+                  {['proposed', 'approved'].includes(selectedPlan.status) && !selectedPlan.depositPaid && (
+                    <Button 
+                      variant={selectedPlan.status === 'proposed' && selectedPlan.pendingApproval ? 'outline' : 'default'}
+                      className="gap-2"
+                      onClick={handleShowPaymentOptions}
+                    >
+                      <CreditCard className="h-4 w-4" />
+                      Make Payment
+                    </Button>
+                  )}
+                  
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => {
+                      toast({
+                        title: "Message Sent",
+                        description: "Your message has been sent to the clinic.",
+                      });
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4" />
+                    Message Clinic
+                  </Button>
+                  
+                  <Button 
+                    variant="outline" 
+                    className="gap-2"
+                    onClick={() => {
+                      toast({
+                        title: "Plan Downloaded",
+                        description: "Treatment plan has been downloaded.",
+                      });
+                    }}
+                  >
+                    <Download className="h-4 w-4" />
+                    Download Plan
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Patient Actions or Next Steps */}
+              {selectedPlan.status !== 'completed' && selectedPlan.status !== 'cancelled' && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center">
+                      <Clock className="h-4 w-4 mr-2 text-primary" />
+                      Next Steps
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {selectedPlan.status === 'proposed' && selectedPlan.pendingApproval && (
+                        <div className="flex gap-4 p-3 rounded-md bg-amber-50 border border-amber-100">
+                          <div className="flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-amber-100 flex items-center justify-center">
+                              <CheckCircle className="h-4 w-4 text-amber-600" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-amber-800">Review and Approve Treatment Plan</h4>
+                            <p className="text-sm text-amber-700 mt-1">
+                              Please review your treatment plan details and approve it to proceed with your dental care.
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="mt-2 bg-amber-600 hover:bg-amber-700"
+                              onClick={() => setShowApproveDialog(true)}
+                            >
+                              Approve Now
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {!selectedPlan.depositPaid && (
+                        <div className="flex gap-4 p-3 rounded-md bg-blue-50 border border-blue-100">
+                          <div className="flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                              <CreditCard className="h-4 w-4 text-blue-600" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-blue-800">Make Deposit Payment</h4>
+                            <p className="text-sm text-blue-700 mt-1">
+                              Pay your deposit to secure your treatment slot and confirm your booking.
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="mt-2 bg-blue-600 hover:bg-blue-700"
+                              onClick={handleShowPaymentOptions}
+                            >
+                              Pay Now
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {['approved', 'in_treatment'].includes(selectedPlan.status) && !selectedPlan.nextAppointment && (
+                        <div className="flex gap-4 p-3 rounded-md bg-green-50 border border-green-100">
+                          <div className="flex-shrink-0">
+                            <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                              <CalendarDays className="h-4 w-4 text-green-600" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-green-800">Schedule Your Appointment</h4>
+                            <p className="text-sm text-green-700 mt-1">
+                              Schedule your first or next treatment appointment with the clinic.
+                            </p>
+                            <Button 
+                              size="sm" 
+                              className="mt-2 bg-green-600 hover:bg-green-700"
+                              onClick={() => {
+                                toast({
+                                  title: "Redirecting",
+                                  description: "Taking you to appointment scheduling.",
+                                });
+                              }}
+                            >
+                              Schedule Now
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-sm">
-                      <span className="text-gray-600">Edited by: </span>
-                      <span className="font-medium">{treatmentPlan.lastEditedBy || 'Clinic Staff'}</span>
-                      <Badge className="ml-2 text-xs" variant="outline">{treatmentPlan.lastEditedByRole || 'clinic'}</Badge>
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">Initial treatment plan created</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+      
+      {/* Approval Dialog */}
+      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <CheckCircle className="h-5 w-5 mr-2 text-primary" />
+              Approve Treatment Plan
+            </DialogTitle>
+            <DialogDescription>
+              Please confirm that you want to approve this treatment plan
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {selectedPlan && (
+              <div className="p-3 rounded-md bg-muted/50">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-medium">{selectedPlan.title}</p>
+                    <p className="text-xs text-muted-foreground">{selectedPlan.clinicName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">{selectedPlan.totalAmount} {selectedPlan.currency}</p>
+                    <p className="text-xs text-muted-foreground">{selectedPlan.items.length} treatments</p>
                   </div>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            )}
+            
+            <div className="space-y-2">
+              <Label htmlFor="approvalNotes">Additional Notes (Optional)</Label>
+              <Textarea
+                id="approvalNotes"
+                value={approvalNotes}
+                onChange={(e) => setApprovalNotes(e.target.value)}
+                placeholder="Any comments or questions about your treatment plan"
+                className="min-h-[100px]"
+              />
+            </div>
+            
+            <div className="p-3 rounded-md bg-blue-50 border border-blue-100">
+              <div className="flex items-start">
+                <HelpCircle className="h-4 w-4 text-blue-500 mt-0.5 mr-2 flex-shrink-0" />
+                <p className="text-sm text-blue-700">
+                  By approving this treatment plan, you're confirming that you understand the proposed treatments and agree to proceed with the dental work. You can still discuss details with your dental provider.
+                </p>
+              </div>
+            </div>
+          </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowApproveDialog(false)}
+            >
               Cancel
             </Button>
             <Button 
-              onClick={() => {
-                // In a real app, this would save the edited treatment plan
-                toast({
-                  title: "Treatment Plan Updated",
-                  description: "Your changes have been saved and a new version has been created.",
-                });
-                setShowEditDialog(false);
-              }}
+              onClick={handleApproveTreatmentPlan}
+              disabled={isSubmittingApproval}
             >
-              <CheckCircle2 className="h-4 w-4 mr-2" />
-              Save Changes
+              {isSubmittingApproval && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm Approval
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Payment Options Dialog */}
+      <Dialog open={showPaymentOptions} onOpenChange={setShowPaymentOptions}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <CreditCard className="h-5 w-5 mr-2 text-primary" />
+              Payment Options
+            </DialogTitle>
+            <DialogDescription>
+              Select how you would like to pay for your treatment
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-2">
+            {isLoadingPaymentOptions ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {paymentOptions.map(option => (
+                  <div 
+                    key={option.id}
+                    className={`p-3 rounded-md border cursor-pointer
+                      ${selectedPaymentOption === option.id ? 'border-primary bg-primary/5' : 'border-muted hover:border-primary/30'}
+                    `}
+                    onClick={() => setSelectedPaymentOption(option.id)}
+                  >
+                    <div className="flex items-start">
+                      <div className={`p-1.5 rounded-full mt-0.5 mr-3 ${selectedPaymentOption === option.id ? 'bg-primary text-white' : 'bg-muted'}`}>
+                        {option.type === 'full' && <Receipt className="h-4 w-4" />}
+                        {option.type === 'deposit' && <CreditCard className="h-4 w-4" />}
+                        {option.type === 'installment' && <CalendarDays className="h-4 w-4" />}
+                        {option.type === 'financing' && <Building className="h-4 w-4" />}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium">{option.name}</h4>
+                          <span className="font-bold text-primary">
+                            {option.type === 'deposit' ? `${option.amount} ${selectedPlan?.currency}` : 
+                              option.type === 'installment' ? `${option.installmentAmount} ${selectedPlan?.currency}/mo` :
+                              `${option.amount} ${selectedPlan?.currency}`}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{option.description}</p>
+                        
+                        {option.discount && (
+                          <Badge className="mt-2 bg-green-100 text-green-800">
+                            {option.discount}% Discount
+                          </Badge>
+                        )}
+                        
+                        {option.type === 'installment' && option.installments && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            {option.installments} monthly payments of {option.installmentAmount} {selectedPlan?.currency}
+                          </div>
+                        )}
+                        
+                        {option.type === 'financing' && option.interestRate && (
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            {option.interestRate}% APR, {option.installments} monthly payments
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowPaymentOptions(false)}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleProcessPayment}
+              disabled={!selectedPaymentOption || isLoadingPaymentOptions}
+            >
+              Proceed to Payment
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Detailed Treatment Plan Dialog */}
+      <Dialog open={showDetailedPlan} onOpenChange={setShowDetailedPlan} className="max-w-4xl">
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2 text-primary" />
+              Detailed Treatment Plan
+            </DialogTitle>
+            <DialogDescription>
+              Comprehensive view of your treatment plan
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="pt-2">
+            {selectedPlan && (
+              <TreatmentPlanViewer treatmentPlanId={selectedPlan.id} patientView={true} />
+            )}
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              onClick={() => setShowDetailedPlan(false)}
+            >
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

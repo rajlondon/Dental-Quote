@@ -1,532 +1,456 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  Phone, 
-  Mail, 
-  CheckSquare, 
-  AlertTriangle,
-  CalendarClock,
-  ArrowRight,
-  Video
-} from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle,
-  DialogTrigger 
-} from '@/components/ui/dialog';
-import { 
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger
-} from '@/components/ui/tabs';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { format, isSameDay, parseISO } from 'date-fns';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import { CalendarIcon, Clock, MapPin, Video, MessageSquare, AlertCircle, ClipboardCheck, Pencil, Loader2 } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
+// Types
 interface Appointment {
   id: string;
-  type: string;
+  clinicId: number;
+  clinicName: string;
+  clinicLogo?: string;
+  clinicAddress: string;
   date: string;
   time: string;
-  clinic: string;
-  clinicAddress: string;
-  doctorName: string;
-  status: 'confirmed' | 'pending' | 'completed' | 'cancelled';
+  duration: string;
+  endTime: string;
+  type: string;
+  status: 'confirmed' | 'pending' | 'cancelled' | 'completed';
   notes?: string;
-  virtualOption?: boolean;
+  virtualOption: boolean;
   meetLink?: string;
+  doctorName: string;
+  doctorId: string;
+  promotionCode?: string;
+  promotionDiscount?: number;
+  patientName?: string;
+  confirmationNotes?: string;
+  directions?: string;
 }
-
-// Mock data for appointments
-const mockAppointments: Appointment[] = [
-  {
-    id: "1",
-    type: "Initial Consultation",
-    date: "2025-05-10",
-    time: "10:00 - 11:00",
-    clinic: "Beyaz Ada Dental Clinic",
-    clinicAddress: "Maltepe, Istanbul, Turkey",
-    doctorName: "Dr. Mehmet Yilmaz",
-    status: "confirmed",
-    notes: "Please arrive 15 minutes early to complete paperwork. Bring any recent X-rays if available.",
-    virtualOption: true,
-    meetLink: "https://meet.google.com/abc-defg-hij"
-  },
-  {
-    id: "2",
-    type: "Dental Implant Procedure",
-    date: "2025-05-12",
-    time: "09:00 - 12:00",
-    clinic: "Beyaz Ada Dental Clinic",
-    clinicAddress: "Maltepe, Istanbul, Turkey",
-    doctorName: "Dr. Mehmet Yilmaz",
-    status: "pending",
-    notes: "Please do not eat or drink for 2 hours before the procedure. Arrange for someone to accompany you."
-  },
-  {
-    id: "3",
-    type: "Crown Fitting",
-    date: "2025-05-15",
-    time: "14:00 - 15:30",
-    clinic: "Beyaz Ada Dental Clinic",
-    clinicAddress: "Maltepe, Istanbul, Turkey",
-    doctorName: "Dr. Ayşe Kaya",
-    status: "pending"
-  },
-  {
-    id: "4",
-    type: "Final Check-up",
-    date: "2025-05-16",
-    time: "11:00 - 12:00",
-    clinic: "Beyaz Ada Dental Clinic",
-    clinicAddress: "Maltepe, Istanbul, Turkey",
-    doctorName: "Dr. Mehmet Yilmaz",
-    status: "pending"
-  }
-];
 
 const AppointmentsSection: React.FC = () => {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const { toast } = useToast();
-  const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [showAppointmentDetails, setShowAppointmentDetails] = useState(false);
-  const [showVirtualDialog, setShowVirtualDialog] = useState(false);
-  
-  // Function to format date
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-GB', { 
-      weekday: 'long', 
-      day: 'numeric', 
-      month: 'long', 
-      year: 'numeric' 
-    });
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
+  const [tab, setTab] = useState('upcoming');
+
+  // Fetch appointments
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      if (!user?.id) return;
+      
+      setIsLoading(true);
+      try {
+        const res = await apiRequest('GET', '/api/patient/appointments');
+        const data = await res.json();
+        
+        if (data.success && data.appointments) {
+          setAppointments(data.appointments);
+        } else {
+          // If API fails or is not built yet, use sample data
+          console.warn('Using sample appointment data');
+          const sampleData: Appointment[] = [
+            {
+              id: '1',
+              clinicId: 1,
+              clinicName: 'DentSpa Istanbul',
+              clinicLogo: '',
+              clinicAddress: 'Bağdat Caddesi No:123, Kadıköy, Istanbul',
+              date: '2025-05-25',
+              time: '10:00',
+              duration: '60',
+              endTime: '11:00',
+              type: 'Initial Consultation',
+              status: 'confirmed',
+              notes: 'Please arrive 15 minutes early to complete paperwork.',
+              virtualOption: false,
+              doctorName: 'Dr. Mehmet Yılmaz',
+              doctorId: '1',
+              directions: 'Located on the 3rd floor of the Bağdat Plaza shopping center. Public transportation available - bus stops 5 min walk away.'
+            },
+            {
+              id: '2',
+              clinicId: 2,
+              clinicName: 'Beyaz Ada Dental Clinic',
+              clinicLogo: '',
+              clinicAddress: 'Teşvikiye Mah, Nişantaşı, Istanbul',
+              date: '2025-06-10',
+              time: '14:30',
+              duration: '120',
+              endTime: '16:30',
+              type: 'Dental Implant Procedure',
+              status: 'pending',
+              notes: 'First session of dental implant treatment. Please follow pre-procedure instructions.',
+              virtualOption: false,
+              doctorName: 'Dr. Ayşe Demir',
+              doctorId: '2'
+            },
+            {
+              id: '3',
+              clinicId: 1,
+              clinicName: 'DentSpa Istanbul',
+              clinicLogo: '',
+              clinicAddress: 'Bağdat Caddesi No:123, Kadıköy, Istanbul',
+              date: '2025-05-20',
+              time: '13:00',
+              duration: '30',
+              endTime: '13:30',
+              type: 'Virtual Consultation',
+              status: 'completed',
+              virtualOption: true,
+              meetLink: 'https://meet.google.com/abc-defg-hij',
+              doctorName: 'Dr. Mehmet Yılmaz',
+              doctorId: '1'
+            }
+          ];
+          setAppointments(sampleData);
+        }
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+        toast({
+          title: t('common.error', 'Error'),
+          description: t('patient.appointments.fetch_error', 'Failed to load appointments'),
+          variant: 'destructive'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [user?.id, t, toast]);
+
+  // Filter appointments based on selected tab
+  const filteredAppointments = appointments.filter(appointment => {
+    const appointmentDate = new Date(appointment.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (tab === 'upcoming') {
+      return (appointmentDate >= today && appointment.status !== 'cancelled');
+    } else if (tab === 'past') {
+      return (appointmentDate < today || appointment.status === 'completed');
+    } else if (tab === 'cancelled') {
+      return appointment.status === 'cancelled';
+    }
+    return true;
+  });
+
+  // Group appointments by date
+  const groupedAppointments = filteredAppointments.reduce((groups: Record<string, Appointment[]>, appointment) => {
+    const date = appointment.date;
+    if (!groups[date]) {
+      groups[date] = [];
+    }
+    groups[date].push(appointment);
+    return groups;
+  }, {});
+
+  // Dates with appointments for the calendar
+  const datesWithAppointments = appointments.map(appointment => 
+    new Date(appointment.date)
+  );
+
+  // Cancel appointment
+  const handleCancelAppointment = async () => {
+    if (!selectedAppointment) return;
+    
+    setIsCancelling(true);
+    try {
+      // In a real app, this would send the cancellation reason to the server
+      const res = await apiRequest('POST', `/api/patient/appointments/${selectedAppointment.id}/cancel`, {
+        reason: cancelReason
+      });
+      
+      // Update local state (simulated response)
+      const updatedAppointments = appointments.map(appointment => 
+        appointment.id === selectedAppointment.id 
+          ? {...appointment, status: 'cancelled'} 
+          : appointment
+      );
+      
+      setAppointments(updatedAppointments);
+      setShowCancelDialog(false);
+      setShowAppointmentDetails(false);
+      
+      toast({
+        title: t('patient.appointments.cancelled', 'Appointment Cancelled'),
+        description: t('patient.appointments.cancellation_success', 'Your appointment has been successfully cancelled'),
+      });
+    } catch (error) {
+      console.error('Error cancelling appointment:', error);
+      toast({
+        title: t('common.error', 'Error'),
+        description: t('patient.appointments.cancel_error', 'Failed to cancel appointment'),
+        variant: 'destructive'
+      });
+    } finally {
+      setIsCancelling(false);
+      setCancelReason('');
+    }
   };
-  
-  // Function to get status badge
-  const getStatusBadge = (status: Appointment['status']) => {
+
+  // Get status badge UI
+  const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge className="bg-green-600">Confirmed</Badge>;
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Confirmed</Badge>;
       case 'pending':
-        return <Badge variant="outline" className="text-amber-600 border-amber-400 bg-amber-50">Scheduled</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-600">Completed</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Pending</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-200">Cancelled</Badge>;
+      case 'completed':
+        return <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Completed</Badge>;
       default:
-        return null;
+        return <Badge variant="outline">Unknown</Badge>;
     }
   };
-  
-  // Function to handle appointment confirmation
-  const handleConfirmAppointment = (appointmentId: string) => {
-    setAppointments(appointments.map(app => 
-      app.id === appointmentId 
-        ? { ...app, status: 'confirmed' } 
-        : app
-    ));
-    
-    setSelectedAppointment(null);
-    setShowAppointmentDetails(false);
-    
-    toast({
-      title: "Appointment Confirmed",
-      description: "Your appointment has been confirmed successfully.",
-    });
-  };
-  
-  // Function to handle appointment cancellation
-  const handleCancelAppointment = (appointmentId: string) => {
-    setAppointments(appointments.map(app => 
-      app.id === appointmentId 
-        ? { ...app, status: 'cancelled' } 
-        : app
-    ));
-    
-    setSelectedAppointment(null);
-    setShowAppointmentDetails(false);
-    
-    toast({
-      title: "Appointment Cancelled",
-      description: "Your appointment has been cancelled.",
-      variant: "destructive"
-    });
-  };
-  
-  // Function to join virtual appointment
-  const handleJoinVirtual = (appointment: Appointment) => {
-    if (appointment.meetLink) {
-      // Open Google Meet in a new tab
-      window.open(appointment.meetLink, '_blank');
-      
-      toast({
-        title: "Google Meet",
-        description: "Opening your virtual appointment in Google Meet...",
-      });
-    } else {
-      // If no meet link exists, show the virtual dialog
-      setShowVirtualDialog(true);
-      setSelectedAppointment(appointment);
-      
-      toast({
-        title: "Video Call",
-        description: "Setting up your virtual appointment...",
-      });
-    }
-  };
-  
+
+  // Function to render appointment card
+  const renderAppointmentCard = (appointment: Appointment) => (
+    <Card 
+      key={appointment.id} 
+      className={`mb-4 ${appointment.status === 'cancelled' ? 'opacity-60' : ''}`}
+    >
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div className="flex items-center">
+            <div className="mr-3">
+              <Avatar className="h-10 w-10 bg-primary/10">
+                <AvatarFallback className="text-primary">
+                  {appointment.clinicName.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+            </div>
+            <div>
+              <CardTitle className="text-base">{appointment.clinicName}</CardTitle>
+              <CardDescription className="text-xs flex items-center mt-1">
+                <Clock className="h-3 w-3 mr-1" />
+                {format(new Date(appointment.date), 'EEEE, MMMM d, yyyy')}
+              </CardDescription>
+            </div>
+          </div>
+          {getStatusBadge(appointment.status)}
+        </div>
+      </CardHeader>
+      <CardContent className="pb-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-2 text-sm">
+          <div className="flex items-start">
+            <Clock className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="font-medium">{appointment.time} - {appointment.endTime}</p>
+              <p className="text-xs text-muted-foreground">{appointment.duration} minutes</p>
+            </div>
+          </div>
+          <div className="flex items-start">
+            <ClipboardCheck className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
+            <div>
+              <p className="font-medium">{appointment.type}</p>
+              <p className="text-xs text-muted-foreground">with Dr. {appointment.doctorName}</p>
+            </div>
+          </div>
+        </div>
+        
+        {appointment.virtualOption && appointment.meetLink && (
+          <div className="mt-3 flex items-center">
+            <Video className="h-4 w-4 mr-2 text-blue-600" />
+            <span className="text-sm text-blue-600 font-medium">Virtual Appointment</span>
+          </div>
+        )}
+        
+        {appointment.notes && (
+          <div className="mt-3 p-2 bg-muted/50 rounded-md">
+            <p className="text-xs">{appointment.notes}</p>
+          </div>
+        )}
+      </CardContent>
+      <CardFooter className="pt-0">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+          onClick={() => {
+            setSelectedAppointment(appointment);
+            setShowAppointmentDetails(true);
+          }}
+        >
+          View Details
+        </Button>
+      </CardFooter>
+    </Card>
+  );
+
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex flex-col h-full">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>My Appointments</CardTitle>
-            <Button 
-              size="sm"
-              onClick={() => {
-                toast({
-                  title: "Scheduling Appointment",
-                  description: "Opening appointment scheduler...",
-                });
-                // Open the booking page in a new tab
-                window.open('/booking', '_blank');
-              }}
-            >
-              <Calendar className="h-4 w-4 mr-2" />
-              Schedule New
-            </Button>
-          </div>
-          <CardDescription>
-            View and manage your upcoming dental appointments
-          </CardDescription>
-        </CardHeader>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">{t('patient.appointments.title', 'My Appointments')}</h2>
+          <p className="text-muted-foreground">{t('patient.appointments.description', 'View and manage your dental appointments')}</p>
+        </div>
+      </div>
+      
+      <Tabs 
+        defaultValue="upcoming" 
+        className="w-full"
+        value={tab}
+        onValueChange={setTab}
+      >
+        <TabsList className="mb-4">
+          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+          <TabsTrigger value="past">Past</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+        </TabsList>
         
-        <CardContent className="flex-grow p-0">
-          <Tabs defaultValue="upcoming" className="h-full">
-            <div className="px-6 pt-2">
-              <TabsList className="grid w-full grid-cols-4">
-                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-                <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-                <TabsTrigger value="past">Past</TabsTrigger>
-                <TabsTrigger value="all">All</TabsTrigger>
-              </TabsList>
+        <TabsContent value="upcoming" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2 space-y-4">
+              {isLoading ? (
+                <div className="flex justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : filteredAppointments.length === 0 ? (
+                <Card className="py-8">
+                  <CardContent className="text-center">
+                    <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                    <h3 className="text-lg font-medium mb-2">No Upcoming Appointments</h3>
+                    <p className="text-sm text-muted-foreground">
+                      You don't have any upcoming appointments scheduled.
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div>
+                  {Object.keys(groupedAppointments).sort().map(date => (
+                    <div key={date}>
+                      <h3 className="text-sm font-medium mb-2 text-muted-foreground">
+                        {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                      </h3>
+                      {groupedAppointments[date]
+                        .sort((a, b) => a.time.localeCompare(b.time))
+                        .map(appointment => renderAppointmentCard(appointment))
+                      }
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
-            <TabsContent value="upcoming" className="flex-grow mt-0">
-              <ScrollArea className="h-[calc(65vh-8rem)]">
-                <div className="px-6 py-4 space-y-4">
-                  {appointments
-                    .filter(app => app.status !== 'completed' && app.status !== 'cancelled')
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    .map(appointment => (
-                      <Card key={appointment.id} className={`
-                        ${appointment.status === 'confirmed' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-amber-400'}
-                      `}>
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center mb-2">
-                                <h3 className="font-semibold text-lg mr-3">{appointment.type}</h3>
-                                {getStatusBadge(appointment.status)}
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                  <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                                  {formatDate(appointment.date)}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.time}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.clinic}, {appointment.clinicAddress}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <User className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.doctorName}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="flex flex-col space-y-2 ml-4">
-                              <Button 
-                                size="sm" 
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  setShowAppointmentDetails(true);
-                                }}
-                              >
-                                View Details
-                              </Button>
-                              
-                              {appointment.virtualOption && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  onClick={() => handleJoinVirtual(appointment)}
-                                >
-                                  <Video className="h-4 w-4 mr-2" />
-                                  {appointment.meetLink ? "Join Google Meet" : "Virtual Option"}
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    
-                    {appointments.filter(app => app.status !== 'completed' && app.status !== 'cancelled').length === 0 && (
-                      <div className="text-center py-16">
-                        <Calendar className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-600 mb-2">No Upcoming Appointments</h3>
-                        <p className="text-gray-500 max-w-md mx-auto mb-6">
-                          You don't have any upcoming appointments scheduled. Would you like to schedule one?
-                        </p>
-                        <Button
-                          onClick={() => {
-                            toast({
-                              title: "Scheduling Appointment",
-                              description: "Opening appointment scheduler...",
-                            });
-                            // Open the booking page in a new tab
-                            window.open('/booking', '_blank');
-                          }}
-                        >
-                          <Calendar className="h-4 w-4 mr-2" />
-                          Schedule New Appointment
-                        </Button>
-                      </div>
-                    )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="confirmed" className="flex-grow mt-0">
-              <ScrollArea className="h-[calc(65vh-8rem)]">
-                <div className="px-6 py-4 space-y-4">
-                  {appointments
-                    .filter(app => app.status === 'confirmed')
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    .map(appointment => (
-                      <Card key={appointment.id} className="border-l-4 border-l-green-500">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center mb-2">
-                                <h3 className="font-semibold text-lg mr-3">{appointment.type}</h3>
-                                {getStatusBadge(appointment.status)}
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                  <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                                  {formatDate(appointment.date)}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.time}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.clinic}, {appointment.clinicAddress}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Button 
-                                size="sm" 
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  setShowAppointmentDetails(true);
-                                }}
-                              >
-                                View Details
-                              </Button>
-                              
-                              {appointment.virtualOption && (
-                                <Button 
-                                  size="sm" 
-                                  variant="outline"
-                                  className="mt-2"
-                                  onClick={() => handleJoinVirtual(appointment)}
-                                >
-                                  <Video className="h-4 w-4 mr-2" />
-                                  {appointment.meetLink ? "Join Google Meet" : "Virtual Option"}
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    
-                    {appointments.filter(app => app.status === 'confirmed').length === 0 && (
-                      <div className="text-center py-16">
-                        <CheckSquare className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-600 mb-2">No Confirmed Appointments</h3>
-                        <p className="text-gray-500 max-w-md mx-auto">
-                          You don't have any confirmed appointments. Appointments will appear here once confirmed.
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="past" className="flex-grow mt-0">
-              <ScrollArea className="h-[calc(65vh-8rem)]">
-                <div className="px-6 py-4 space-y-4">
-                  {appointments
-                    .filter(app => app.status === 'completed')
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                    .map(appointment => (
-                      <Card key={appointment.id} className="border-l-4 border-l-blue-500 opacity-80">
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center mb-2">
-                                <h3 className="font-semibold text-lg mr-3">{appointment.type}</h3>
-                                {getStatusBadge(appointment.status)}
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                  <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                                  {formatDate(appointment.date)}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.time}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <User className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.doctorName}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Button 
-                                size="sm" 
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  setShowAppointmentDetails(true);
-                                }}
-                              >
-                                View Summary
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    
-                    {appointments.filter(app => app.status === 'completed').length === 0 && (
-                      <div className="text-center py-16">
-                        <Clock className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                        <h3 className="text-lg font-medium text-gray-600 mb-2">No Past Appointments</h3>
-                        <p className="text-gray-500 max-w-md mx-auto">
-                          You don't have any past appointments. Completed appointments will appear here.
-                        </p>
-                      </div>
-                    )}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-            
-            <TabsContent value="all" className="flex-grow mt-0">
-              <ScrollArea className="h-[calc(65vh-8rem)]">
-                <div className="px-6 py-4 space-y-4">
-                  {appointments
-                    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-                    .map(appointment => (
-                      <Card 
-                        key={appointment.id} 
-                        className={`
-                          ${appointment.status === 'confirmed' ? 'border-l-4 border-l-green-500' : ''}
-                          ${appointment.status === 'pending' ? 'border-l-4 border-l-amber-400' : ''}
-                          ${appointment.status === 'completed' ? 'border-l-4 border-l-blue-500 opacity-80' : ''}
-                          ${appointment.status === 'cancelled' ? 'border-l-4 border-l-red-500 opacity-70' : ''}
-                        `}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center mb-2">
-                                <h3 className="font-semibold text-lg mr-3">{appointment.type}</h3>
-                                {getStatusBadge(appointment.status)}
-                              </div>
-                              
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center text-gray-600">
-                                  <Calendar className="h-4 w-4 mr-2 text-blue-500" />
-                                  {formatDate(appointment.date)}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <Clock className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.time}
-                                </div>
-                                <div className="flex items-center text-gray-600">
-                                  <MapPin className="h-4 w-4 mr-2 text-blue-500" />
-                                  {appointment.clinic}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div>
-                              <Button 
-                                size="sm" 
-                                variant={appointment.status === 'completed' ? 'outline' : 'default'}
-                                onClick={() => {
-                                  setSelectedAppointment(appointment);
-                                  setShowAppointmentDetails(true);
-                                }}
-                              >
-                                View Details
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
-              </ScrollArea>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-        
-        <CardFooter className="border-t bg-gray-50 p-4">
-          <div className="w-full flex items-center justify-between">
-            <div className="text-sm text-gray-500 flex items-center">
-              <CalendarClock className="h-4 w-4 mr-2 text-gray-400" />
-              All times are in local Istanbul time (UTC+3)
+            {/* Calendar with appointment dates */}
+            <div className="hidden md:block">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">Appointment Calendar</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <CalendarComponent
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    className="rounded-md border"
+                    modifiers={{
+                      appointment: datesWithAppointments
+                    }}
+                    modifiersStyles={{
+                      appointment: {
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(var(--primary), 0.1)',
+                        color: 'var(--primary)'
+                      }
+                    }}
+                  />
+                </CardContent>
+              </Card>
             </div>
-            
-            <Button variant="outline" size="sm">
-              <Phone className="h-4 w-4 mr-2" />
-              Contact Clinic
-            </Button>
           </div>
-        </CardFooter>
-      </Card>
+        </TabsContent>
+        
+        <TabsContent value="past" className="space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <Card className="py-8">
+              <CardContent className="text-center">
+                <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">No Past Appointments</h3>
+                <p className="text-sm text-muted-foreground">
+                  You don't have any past appointments to view.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {Object.keys(groupedAppointments).sort().reverse().map(date => (
+                <div key={date}>
+                  <h3 className="text-sm font-medium mb-2 text-muted-foreground">
+                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                  </h3>
+                  {groupedAppointments[date]
+                    .sort((a, b) => a.time.localeCompare(b.time))
+                    .map(appointment => renderAppointmentCard(appointment))
+                  }
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="cancelled" className="space-y-4">
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredAppointments.length === 0 ? (
+            <Card className="py-8">
+              <CardContent className="text-center">
+                <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                <h3 className="text-lg font-medium mb-2">No Cancelled Appointments</h3>
+                <p className="text-sm text-muted-foreground">
+                  You don't have any cancelled appointments to view.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {Object.keys(groupedAppointments).sort().reverse().map(date => (
+                <div key={date}>
+                  <h3 className="text-sm font-medium mb-2 text-muted-foreground">
+                    {format(new Date(date), 'EEEE, MMMM d, yyyy')}
+                  </h3>
+                  {groupedAppointments[date]
+                    .sort((a, b) => a.time.localeCompare(b.time))
+                    .map(appointment => renderAppointmentCard(appointment))
+                  }
+                </div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
       
       {/* Appointment Details Dialog */}
       <Dialog open={showAppointmentDetails} onOpenChange={setShowAppointmentDetails}>
@@ -535,182 +459,195 @@ const AppointmentsSection: React.FC = () => {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-blue-500" />
-                  {selectedAppointment.type}
+                  <CalendarIcon className="h-5 w-5 mr-2 text-primary" />
+                  Appointment Details
                 </DialogTitle>
                 <DialogDescription>
-                  Appointment details and information
+                  {format(new Date(selectedAppointment.date), 'EEEE, MMMM d, yyyy')}
                 </DialogDescription>
               </DialogHeader>
               
               <div className="space-y-4">
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Status</div>
-                    <div>{getStatusBadge(selectedAppointment.status)}</div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
+                  <Avatar className="h-10 w-10 bg-primary/10">
+                    <AvatarFallback className="text-primary">
+                      {selectedAppointment.clinicName.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h3 className="font-medium">{selectedAppointment.clinicName}</h3>
+                    <p className="text-sm text-muted-foreground">{selectedAppointment.type}</p>
                   </div>
-                  
-                  <Separator />
-                  
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Date</div>
-                    <div className="text-sm">{formatDate(selectedAppointment.date)}</div>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Time</div>
-                    <div className="text-sm">{selectedAppointment.time}</div>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Clinic</div>
-                    <div className="text-sm">{selectedAppointment.clinic}</div>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Address</div>
-                    <div className="text-sm">{selectedAppointment.clinicAddress}</div>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <div className="text-sm font-medium">Doctor</div>
-                    <div className="text-sm">{selectedAppointment.doctorName}</div>
+                  <div className="ml-auto">
+                    {getStatusBadge(selectedAppointment.status)}
                   </div>
                 </div>
                 
-                {selectedAppointment.notes && (
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2 flex items-center">
-                      <AlertTriangle className="h-4 w-4 mr-2 text-blue-600" />
-                      Important Notes
-                    </h4>
-                    <p className="text-sm text-blue-800">{selectedAppointment.notes}</p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-3 bg-gray-50 rounded-md space-y-3">
+                    <div className="flex items-start">
+                      <Clock className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Time</p>
+                        <p className="text-sm">
+                          {selectedAppointment.time} - {selectedAppointment.endTime} ({selectedAppointment.duration} min)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <MapPin className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Location</p>
+                        <p className="text-sm">{selectedAppointment.clinicAddress}</p>
+                        {selectedAppointment.directions && (
+                          <p className="text-xs text-muted-foreground mt-1">{selectedAppointment.directions}</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start">
+                      <ClipboardCheck className="h-4 w-4 mr-2 text-muted-foreground mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Provider</p>
+                        <p className="text-sm">Dr. {selectedAppointment.doctorName}</p>
+                      </div>
+                    </div>
+                    
+                    {selectedAppointment.virtualOption && selectedAppointment.meetLink && (
+                      <div className="flex items-start">
+                        <Video className="h-4 w-4 mr-2 text-blue-600 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-600">Virtual Meeting Link</p>
+                          <a 
+                            href={selectedAppointment.meetLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            {selectedAppointment.meetLink}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
-                
-                {selectedAppointment.status === 'pending' && (
-                  <div className="bg-amber-50 rounded-lg p-4">
-                    <h4 className="text-sm font-medium mb-2">Appointment Confirmation</h4>
-                    <p className="text-sm text-amber-800 mb-3">
-                      Please confirm this appointment to secure your time slot. You can reschedule up to 48 hours before the appointment.
-                    </p>
-                    <Button 
-                      size="sm" 
-                      className="w-full"
-                      onClick={() => handleConfirmAppointment(selectedAppointment.id)}
-                    >
-                      <CheckSquare className="h-4 w-4 mr-2" />
-                      Confirm Appointment
-                    </Button>
-                  </div>
-                )}
+                  
+                  {selectedAppointment.notes && (
+                    <div className="p-3 bg-gray-50 rounded-md">
+                      <p className="text-sm font-medium">Appointment Notes</p>
+                      <p className="text-sm mt-1">{selectedAppointment.notes}</p>
+                    </div>
+                  )}
+                  
+                  {selectedAppointment.promotionCode && (
+                    <div className="p-3 bg-green-50 rounded-md">
+                      <p className="text-sm font-medium text-green-700">Applied Promotion</p>
+                      <p className="text-sm mt-1 text-green-700">
+                        Code: <span className="font-medium">{selectedAppointment.promotionCode}</span>
+                      </p>
+                      {selectedAppointment.promotionDiscount && (
+                        <p className="text-sm text-green-700">
+                          Discount: <span className="font-medium">€{selectedAppointment.promotionDiscount}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
               
-              <DialogFooter className="gap-2 sm:gap-0">
+              <DialogFooter className="flex flex-col gap-2 sm:flex-row mt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowAppointmentDetails(false)}
+                  className="w-full sm:w-auto"
+                >
+                  Close
+                </Button>
+                
                 {selectedAppointment.status !== 'cancelled' && selectedAppointment.status !== 'completed' && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleCancelAppointment(selectedAppointment.id)}
-                    className="border-red-200 text-red-600 hover:bg-red-50"
+                  <Button 
+                    variant="outline" 
+                    className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => {
+                      setShowCancelDialog(true);
+                      setShowAppointmentDetails(false);
+                    }}
                   >
                     Cancel Appointment
                   </Button>
                 )}
                 
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAppointmentDetails(false)}
-                >
-                  Close
-                </Button>
+                {selectedAppointment.status === 'confirmed' && (
+                  <Button 
+                    className="w-full sm:w-auto"
+                    onClick={() => {
+                      toast({
+                        title: "Message Sent",
+                        description: "Your message has been sent to the clinic.",
+                      });
+                      setShowAppointmentDetails(false);
+                    }}
+                  >
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Message Clinic
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}
         </DialogContent>
       </Dialog>
       
-      {/* Virtual Appointment Dialog */}
-      <Dialog open={showVirtualDialog} onOpenChange={setShowVirtualDialog}>
+      {/* Cancel Appointment Dialog */}
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Video className="h-5 w-5 mr-2 text-blue-500" />
-              Google Meet Consultation
-            </DialogTitle>
+            <DialogTitle className="text-red-600">Cancel Appointment</DialogTitle>
             <DialogDescription>
-              Connect with your dental professional online
+              Are you sure you want to cancel this appointment? Please provide a reason for cancellation.
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div className="rounded-lg bg-blue-50 p-4">
-              <h3 className="text-sm font-medium mb-2">About to join virtual consultation</h3>
-              <p className="text-sm text-blue-800 mb-4">
-                {selectedAppointment && (
-                  <>Your virtual consultation with {selectedAppointment.doctorName} is about to begin. You'll be redirected to Google Meet.</>
-                )}
-                Please ensure your camera and microphone are working properly.
-              </p>
-              
-              <div className="bg-white rounded-md border p-3 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Camera</div>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">Ready</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Microphone</div>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">Ready</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm font-medium">Internet Connection</div>
-                  <Badge variant="outline" className="bg-green-50 text-green-700">Good</Badge>
-                </div>
+          <div className="space-y-4 py-2">
+            <div className="flex items-center p-3 bg-gray-50 rounded-md">
+              <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+              <div className="text-sm">
+                <span className="font-medium">
+                  {selectedAppointment?.clinicName}
+                </span>
+                <span className="text-muted-foreground ml-1">
+                  on {selectedAppointment?.date ? format(new Date(selectedAppointment.date), 'MMMM d, yyyy') : ''} 
+                  at {selectedAppointment?.time}
+                </span>
               </div>
             </div>
             
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h4 className="text-sm font-medium mb-2">Tips for a Successful Consultation</h4>
-              <ul className="text-sm space-y-2">
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
-                  <span>Find a quiet, well-lit space where you won't be disturbed</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
-                  <span>Have your dental records or concerns ready to discuss</span>
-                </li>
-                <li className="flex items-start">
-                  <ArrowRight className="h-4 w-4 mr-2 text-gray-500 mt-0.5 flex-shrink-0" />
-                  <span>Test your equipment before the call starts</span>
-                </li>
-              </ul>
+            <div className="space-y-2">
+              <Label htmlFor="cancelReason">Reason for cancellation</Label>
+              <Textarea
+                id="cancelReason"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                placeholder="Please provide a reason for cancelling this appointment"
+                className="min-h-[100px]"
+              />
             </div>
           </div>
           
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setShowVirtualDialog(false)}
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowCancelDialog(false)}
             >
-              Cancel
+              Go Back
             </Button>
-            <Button
-              onClick={() => {
-                setShowVirtualDialog(false);
-                
-                // If the selected appointment has a Google Meet link, open it
-                if (selectedAppointment?.meetLink) {
-                  window.open(selectedAppointment.meetLink, '_blank');
-                }
-                
-                toast({
-                  title: "Joining Google Meet",
-                  description: "Connecting to your virtual consultation...",
-                });
-              }}
+            <Button 
+              variant="destructive"
+              onClick={handleCancelAppointment}
+              disabled={!cancelReason.trim() || isCancelling}
             >
-              <Video className="h-4 w-4 mr-2" />
-              Join Google Meet
+              {isCancelling && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Confirm Cancellation
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -46,15 +46,18 @@ const mockBookingData = {
 
 // Import components 
 import MessagesSection from '@/components/portal/MessagesSection';
+import AppointmentsSection from '@/components/portal/AppointmentsSection';
+import TreatmentPlanSection from '@/components/portal/TreatmentPlanSection';
+import TravelSection from '@/components/portal/TravelSection';
 import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
-const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
+
+// Placeholder components until implemented
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
-const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details would go here</div>;
 const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
 
