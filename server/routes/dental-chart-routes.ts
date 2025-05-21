@@ -23,7 +23,10 @@ export const setupDentalChartRoutes = () => {
       // Look for a dental chart associated with this user
       let userChart = null;
       
-      for (const [chartId, chart] of dentalChartStorage.entries()) {
+      // Use Array.from instead of for...of with entries() to avoid compatibility issues
+      const entries = Array.from(dentalChartStorage.entries());
+      for (let i = 0; i < entries.length; i++) {
+        const [chartId, chart] = entries[i];
         if (chart.userId === userId || chart.patientEmail === user.email) {
           userChart = chart;
           break;
@@ -35,7 +38,7 @@ export const setupDentalChartRoutes = () => {
         const newChartId = `chart_${userId}_${Date.now()}`;
         userChart = {
           chartId: newChartId,
-          patientName: user.name || user.email,
+          patientName: user.email || 'Patient',
           patientEmail: user.email,
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString(),
@@ -102,7 +105,7 @@ export const setupDentalChartRoutes = () => {
       const updatedChart = {
         ...existingChart,
         chartId,
-        patientName: user.name || user.email,
+        patientName: user.email || 'Patient',
         patientEmail: user.email,
         userId,
         teethData,

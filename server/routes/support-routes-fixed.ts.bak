@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 
-// Simple in-memory storage for support tickets (replace with database in production)
+// Simple in-memory storage for support tickets
 const supportTicketStorage = new Map<string, any>();
 
 export const setupSupportRoutes = () => {
@@ -60,7 +60,7 @@ export const setupSupportRoutes = () => {
       
       const user = req.user as Express.User;
       const userId = user.id;
-      const userName = user.email || 'Patient';
+      const userName = user.email || 'Patient'; // Fall back to email if username/name not found
       const userEmail = user.email;
       
       if (!userEmail) {
