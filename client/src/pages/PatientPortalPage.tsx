@@ -16,9 +16,12 @@ import {
   BarChart2,
   TestTube,
   Bell,
-  Plane
+  Plane,
+  Home,
+  ArrowRight
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -318,7 +321,89 @@ const PatientPortalPage: React.FC = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <DashboardSection setActiveSection={setActiveSection} />;
+        return (
+          <div className="space-y-6">
+            {/* Welcome Banner */}
+            <Card className="bg-primary text-white border-none">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-2">
+                      {t("portal.dashboard.welcome", "Welcome back!")}
+                    </h2>
+                    <p className="text-primary-foreground/80">
+                      {t("portal.dashboard.welcome_message", "Your journey to a beautiful new smile is underway.")}
+                    </p>
+                  </div>
+                  <Avatar className="h-16 w-16 border-2 border-white">
+                    <AvatarFallback className="text-xl bg-primary-foreground text-primary">
+                      P
+                    </AvatarFallback>
+                  </Avatar>
+                </div>
+              </CardContent>
+            </Card>
+            
+            {/* Travel Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-transparent">
+                  <div className="flex items-center">
+                    <Plane className="h-5 w-5 text-blue-600 mr-2" />
+                    <CardTitle className="text-lg">{t("portal.dashboard.flight", "Flight Details")}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium">Departure: June 14, 2025</p>
+                      <p className="text-sm text-gray-600">Turkish Airlines TK1984</p>
+                      <p className="text-sm text-gray-600">London Heathrow → Istanbul</p>
+                    </div>
+                    <div className="mt-auto">
+                      <Button 
+                        size="sm"
+                        className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border border-blue-200"
+                        onClick={() => setActiveSection('travel')}
+                      >
+                        {t("portal.dashboard.view_flight", "Manage Flight")}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card className="border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
+                <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-transparent">
+                  <div className="flex items-center">
+                    <Home className="h-5 w-5 text-amber-600 mr-2" />
+                    <CardTitle className="text-lg">{t("portal.dashboard.accommodation", "Hotel Details")}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="flex flex-col md:flex-row justify-between gap-4">
+                    <div>
+                      <p className="text-sm font-medium">Grand Hyatt Istanbul</p>
+                      <p className="text-sm text-gray-600">5 nights, Deluxe Room</p>
+                      <p className="text-sm text-gray-600">Near Clinic Location</p>
+                    </div>
+                    <div className="mt-auto">
+                      <Button 
+                        size="sm"
+                        className="bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border border-amber-200"
+                        onClick={() => setActiveSection('travel')}
+                      >
+                        {t("portal.dashboard.view_hotel", "Manage Hotel")}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <DashboardSection setActiveSection={setActiveSection} />
+          </div>
+        );
       case 'messages':
         return <MessagesSection />;
       case 'quotes':
