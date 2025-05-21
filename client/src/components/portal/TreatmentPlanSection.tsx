@@ -118,26 +118,81 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
   const [isLoadingPaymentOptions, setIsLoadingPaymentOptions] = useState(false);
   const [showDetailedPlan, setShowDetailedPlan] = useState(false);
   
-  // Fetch treatment plans
+  // Fetch treatment plans from quotes and existing treatment plans
   useEffect(() => {
     const fetchTreatmentPlans = async () => {
       if (!user?.id) return;
       
       setIsLoading(true);
       try {
-        const res = await apiRequest('GET', '/api/patient/treatment-plans');
-        const data = await res.json();
+        // First, get any existing treatment plans
+        const treatmentPlansRes = await apiRequest('GET', '/api/patient/treatment-plans');
+        const treatmentPlansData = await treatmentPlansRes.json();
         
-        if (data.success && data.treatmentPlans) {
-          setTreatmentPlans(data.treatmentPlans);
+        // Next, get the patient's quotes to convert them to treatment plans
+        const quotesRes = await apiRequest('GET', '/api/patient/quotes');
+        const quotesData = await quotesRes.json();
+        
+        let allTreatmentPlans: TreatmentPlan[] = [];
+        
+        // Process existing treatment plans if available
+        if (treatmentPlansData.success && treatmentPlansData.treatmentPlans) {
+          allTreatmentPlans = [...treatmentPlansData.treatmentPlans];
+        }
+        
+        // Convert quotes to treatment plans if available
+        if (quotesData.success && quotesData.quotes) {
+          const quoteBasedPlans = quotesData.quotes.map((quote: any) => {
+            // Map the quote data to the treatment plan structure
+            const treatmentItems = quote.treatments?.map((treatment: any, index: number) => ({
+              id: `${quote.id}-item-${index}`,
+              name: treatment.name,
+              description: treatment.description,
+              quantity: treatment.quantity || 1,
+              unitPrice: treatment.price,
+              totalPrice: treatment.price * (treatment.quantity || 1),
+              currency: quote.currency || 'GBP',
+              status: 'pending' as const
+            })) || [];
+            
+            return {
+              id: `quote-${quote.id}`,
+              title: `Treatment Plan from Quote #${quote.quoteNumber || quote.id}`,
+              description: quote.notes || 'Treatment plan based on your quote request',
+              clinicId: quote.clinicId,
+              clinicName: quote.clinicName,
+              patientId: user.id,
+              patientName: user.name || user.email || "Patient",
+              createdAt: quote.createdAt || new Date().toISOString(),
+              updatedAt: quote.updatedAt || new Date().toISOString(),
+              status: 'proposed' as const,
+              paymentStatus: 'unpaid' as const,
+              totalAmount: quote.totalAmount || treatmentItems.reduce((sum: number, item: any) => sum + item.totalPrice, 0),
+              currency: quote.currency || 'GBP',
+              deposit: quote.depositAmount || Math.round(quote.totalAmount * 0.2),
+              depositPaid: false,
+              items: treatmentItems,
+              doctorName: quote.doctorName,
+              doctorId: quote.doctorId,
+              financingAvailable: true,
+              pendingApproval: true,
+              fromQuote: true,
+              quoteId: quote.id
+            };
+          });
           
-          if (data.treatmentPlans.length > 0) {
-            // Set the first (presumably active) treatment plan as selected
-            setSelectedPlan(data.treatmentPlans[0]);
-          }
+          // Add quote-based plans to all treatment plans
+          allTreatmentPlans = [...allTreatmentPlans, ...quoteBasedPlans];
+        }
+        
+        if (allTreatmentPlans.length > 0) {
+          setTreatmentPlans(allTreatmentPlans);
+          
+          // Set the first treatment plan as selected
+          setSelectedPlan(allTreatmentPlans[0]);
         } else {
-          // If API fails or is not built yet, use sample data
-          console.warn('Using sample treatment plan data');
+          // If no treatment plans or quotes are available, use sample data
+          console.warn('No treatment plans or quotes found, using sample data');
           const samplePlans: TreatmentPlan[] = [
             {
               id: '1',

@@ -1,5 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/hooks/use-auth';
+import { uploadFileToS3, getUserDocuments } from '@/services/s3Service';
 import { 
   FileText, 
   Upload, 
@@ -18,7 +20,9 @@ import {
   Save,
   X,
   FilePlus2,
-  FileUp
+  FileUp,
+  Shield,
+  Cloud
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -215,32 +219,116 @@ const DocumentsSection: React.FC = () => {
     });
   };
   
+  // Import the S3 upload service
+  import { uploadFileToS3, getUserDocuments } from '@/services/s3Service';
+  
+  // State for upload progress
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
+  
   // Function to handle file upload
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (uploadFiles.length === 0) return;
     
-    // In a real app, this would upload the files to the server
-    const newDocuments = uploadFiles.map((file, index) => ({
-      id: (Date.now() + index).toString(),
-      name: file.name,
-      type: documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'other',
-      format: file.name.split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
-      size: `${(file.size / 1024).toFixed(0)} KB`,
-      uploadedBy: 'you' as const,
-      uploadedAt: new Date().toISOString(),
-      notes: documentNotes || undefined
-    }));
+    setIsUploading(true);
+    const uploadedDocuments: Document[] = [];
+    const totalFiles = uploadFiles.length;
+    let successCount = 0;
     
-    setDocuments([...documents, ...newDocuments]);
-    setUploadFiles([]);
-    setDocumentType('other');
-    setDocumentNotes('');
-    setShowUploadDialog(false);
-    
-    toast({
-      title: "Documents Uploaded",
-      description: `Successfully uploaded ${uploadFiles.length} document(s).`,
-    });
+    try {
+      // Process each file sequentially
+      for (let i = 0; i < uploadFiles.length; i++) {
+        const file = uploadFiles[i];
+        const fileId = `file-${i}`;
+        
+        // Initialize progress for this file
+        setUploadProgress(prev => ({
+          ...prev,
+          [fileId]: 0
+        }));
+        
+        // Update progress indication
+        const updateProgress = (percent: number) => {
+          setUploadProgress(prev => ({
+            ...prev,
+            [fileId]: percent
+          }));
+        };
+        
+        // Start at 10% to show something is happening
+        updateProgress(10);
+        
+        try {
+          // Upload the file to S3
+          const uploadResult = await uploadFileToS3(
+            file,
+            documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'other',
+            documentNotes
+          );
+          
+          updateProgress(90);
+          
+          if (uploadResult.success) {
+            // Create document record from the upload result
+            const newDocument: Document = {
+              id: uploadResult.fileKey,
+              name: file.name,
+              type: documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'other',
+              format: file.name.split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
+              size: `${(file.size / 1024).toFixed(0)} KB`,
+              uploadedBy: 'you' as const,
+              uploadedAt: new Date().toISOString(),
+              notes: documentNotes || undefined,
+              url: uploadResult.fileUrl
+            };
+            
+            uploadedDocuments.push(newDocument);
+            successCount++;
+            updateProgress(100);
+          } else {
+            console.error('Failed to upload file:', file.name, uploadResult.error);
+            toast({
+              title: "Upload Failed",
+              description: `Failed to upload ${file.name}: ${uploadResult.error}`,
+              variant: "destructive"
+            });
+            updateProgress(0);
+          }
+        } catch (error) {
+          console.error('Error uploading file:', file.name, error);
+          toast({
+            title: "Upload Error",
+            description: `Error uploading ${file.name}. Please try again.`,
+            variant: "destructive"
+          });
+          updateProgress(0);
+        }
+      }
+      
+      // Add the successfully uploaded documents to the state
+      if (uploadedDocuments.length > 0) {
+        setDocuments([...documents, ...uploadedDocuments]);
+        
+        toast({
+          title: "Documents Uploaded",
+          description: `Successfully uploaded ${successCount} of ${totalFiles} document(s) to secure cloud storage.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error in upload process:', error);
+      toast({
+        title: "Upload Process Failed",
+        description: "An unexpected error occurred during the upload process.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUploading(false);
+      setUploadProgress({});
+      setUploadFiles([]);
+      setDocumentType('other');
+      setDocumentNotes('');
+      setShowUploadDialog(false);
+    }
   };
   
   // Function to handle file selection
