@@ -4,6 +4,7 @@ import { format, addDays } from 'date-fns';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
+import type { Matcher } from 'react-day-picker';
 import { 
   Plane, 
   Hotel, 
@@ -181,7 +182,7 @@ const TravelSection: React.FC = () => {
             arrivalDate: '2025-06-15',
             arrivalTime: '16:35',
             status: 'confirmed',
-            passengerName: user.fullName || user.email,
+            passengerName: user.username || user.email,
             bookingAgency: 'MyDentalFly',
             returnFlightNumber: 'TK1985',
             returnDepartureDate: '2025-06-22',
@@ -340,7 +341,7 @@ const TravelSection: React.FC = () => {
         arrivalDate: selfFlightData.arrivalDate || selfFlightData.departureDate,
         arrivalTime: selfFlightData.arrivalTime || '00:00',
         status: 'confirmed',
-        passengerName: user?.fullName || user?.email || 'Patient',
+        passengerName: user?.username || user?.email || 'Patient',
         returnFlightNumber: selfFlightData.isRoundTrip ? selfFlightData.returnFlightNumber : undefined,
         returnDepartureDate: selfFlightData.isRoundTrip ? selfFlightData.returnDepartureDate : undefined,
         returnDepartureTime: selfFlightData.isRoundTrip ? selfFlightData.returnDepartureTime : undefined,
