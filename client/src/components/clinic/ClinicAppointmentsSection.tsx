@@ -353,7 +353,14 @@ const ClinicAppointmentsSection: React.FC = () => {
       reminderSent: false,
       followUpRequired: false,
       promotionCode: selectedPromoCode || null, // Add promotion code if selected
-      promotionDiscount: selectedPromoDiscount || 0 // Add discount amount if applicable
+      promotionDiscount: selectedPromoDiscount || 0, // Add discount amount if applicable
+      promotionId: selectedPromotion?.id ? parseInt(selectedPromotion.id) : undefined,
+      promotionDetails: selectedPromotion ? {
+        discountType: selectedPromotion.discount_type,
+        originalPrice: originalAppointmentPrice,
+        finalPrice: originalAppointmentPrice - selectedPromoDiscount,
+        packageDetails: selectedPromotion.type === 'package' ? selectedPromotion.packageData : undefined
+      } : undefined
     };
     
     try {
