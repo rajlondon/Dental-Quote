@@ -18,6 +18,7 @@ import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
 import { createPaymentIntent, createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
 import { setupSupportRoutes } from "./routes/support-routes";
+import { setupDentalChartRoutes } from "./routes/dental-chart-routes";
 import Stripe from "stripe";
 import { isAuthenticated, ensureRole } from "./middleware/auth";
 // Import authentication and portal routes
@@ -1083,6 +1084,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register support routes
   app.use('/api/support', setupSupportRoutes());
+  
+  // Register dental chart routes
+  app.use('/api/dental-chart', setupDentalChartRoutes());
   
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
