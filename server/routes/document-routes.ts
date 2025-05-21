@@ -121,7 +121,7 @@ router.post(['/upload', '/patient/documents/upload'], upload.single('file'), asy
     }
     
     // Validate file type and size
-    const validation = validateDocument(file.mimetype, file.size);
+    const validation = validateDocument(file.originalname, file.size, file.mimetype);
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
