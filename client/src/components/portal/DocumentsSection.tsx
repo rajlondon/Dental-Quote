@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
 import { uploadFileToS3, getUserDocuments, deleteDocument } from '@/services/s3Service';
 import FileUploader from '@/components/FileUploader';
+import MedicalDocumentViewer from '@/components/MedicalDocumentViewer';
 import { 
   FileText, 
   Upload, 
@@ -23,7 +24,8 @@ import {
   FilePlus2,
   FileUp,
   Shield,
-  Cloud
+  Cloud,
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
