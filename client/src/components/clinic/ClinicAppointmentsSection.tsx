@@ -86,6 +86,13 @@ interface Appointment {
   doctorId: string;
   promotionCode?: string;
   promotionDiscount?: number;
+  promotionId?: number;
+  promotionDetails?: {
+    packageDetails?: any;
+    discountType?: 'percentage' | 'fixed';
+    originalPrice?: number;
+    finalPrice?: number;
+  };
 }
 
 const ClinicAppointmentsSection: React.FC = () => {
@@ -696,12 +703,19 @@ const ClinicAppointmentsSection: React.FC = () => {
                               >
                                 <div className="font-medium">{appointment.time}</div>
                                 <div className="truncate">{appointment.patientName}</div>
-                                <div className="flex items-center mt-1">
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                    {appointment.type.split(' ')[0]}
-                                  </Badge>
-                                  {appointment.virtualOption && (
-                                    <Video className="h-3 w-3 ml-1 text-blue-500" />
+                                <div className="flex items-center justify-between mt-1">
+                                  <div className="flex items-center">
+                                    <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                      {appointment.type.split(' ')[0]}
+                                    </Badge>
+                                    {appointment.virtualOption && (
+                                      <Video className="h-3 w-3 ml-1 text-blue-500" />
+                                    )}
+                                  </div>
+                                  {appointment.promotionCode && (
+                                    <Badge variant="outline" className="text-[10px] px-1 py-0 bg-green-50 text-green-700 border-green-200">
+                                      Promo
+                                    </Badge>
                                   )}
                                 </div>
                               </div>
