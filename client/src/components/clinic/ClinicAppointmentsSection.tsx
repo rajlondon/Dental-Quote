@@ -631,6 +631,11 @@ const ClinicAppointmentsSection: React.FC = () => {
                                     Promo: {appointment.promotionCode}
                                   </Badge>
                                 )}
+                                {appointment.promotionDiscount > 0 && (
+                                  <div className="text-xs text-green-600 font-medium mt-1">
+                                    {appointment.promotionDiscount}€ discount applied
+                                  </div>
+                                )}
                               </div>
                               <Button variant="ghost" size="icon" onClick={(e) => {
                                 e.stopPropagation();
@@ -852,9 +857,38 @@ const ClinicAppointmentsSection: React.FC = () => {
                       <div className="flex-1">
                         <div className="text-sm text-gray-500">Promotion Applied</div>
                         <div className="font-medium text-green-700">{selectedAppointment.promotionCode}</div>
-                        {typeof selectedAppointment.promotionDiscount === 'number' && selectedAppointment.promotionDiscount > 0 && (
+                        {selectedAppointment.promotionDiscount && selectedAppointment.promotionDiscount > 0 && (
                           <div className="text-sm text-green-600 mt-1">
                             Discount: {selectedAppointment.promotionDiscount}€
+                          </div>
+                        )}
+                        
+                        {selectedAppointment.promotionDetails && (
+                          <div className="mt-2 pt-2 border-t border-green-100">
+                            {selectedAppointment.promotionDetails.discountType && (
+                              <div className="text-xs text-green-600">
+                                Discount type: {selectedAppointment.promotionDetails.discountType === 'percentage' ? 'Percentage' : 'Fixed amount'}
+                              </div>
+                            )}
+                            
+                            {selectedAppointment.promotionDetails.originalPrice && (
+                              <div className="text-xs text-gray-500 mt-1">
+                                <span className="line-through">{selectedAppointment.promotionDetails.originalPrice}€</span>
+                                {" → "}
+                                <span className="font-medium text-green-700">{selectedAppointment.promotionDetails.finalPrice}€</span>
+                              </div>
+                            )}
+                            
+                            {selectedAppointment.promotionDetails.packageDetails && (
+                              <div className="mt-1 text-xs text-gray-600">
+                                <div className="font-medium">Part of treatment package</div>
+                                {selectedAppointment.promotionDetails.packageDetails.treatments && (
+                                  <div className="mt-1">
+                                    Includes: {selectedAppointment.promotionDetails.packageDetails.treatments.join(', ')}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

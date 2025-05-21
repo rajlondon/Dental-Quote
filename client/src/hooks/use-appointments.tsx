@@ -26,6 +26,12 @@ export interface AppointmentData {
   promotionCode?: string;
   promotionDiscount?: number;
   promotionId?: number;
+  promotionDetails?: {
+    packageDetails?: any;
+    discountType?: 'percentage' | 'fixed';
+    originalPrice?: number;
+    finalPrice?: number;
+  };
 }
 
 export interface CreateAppointmentData {
