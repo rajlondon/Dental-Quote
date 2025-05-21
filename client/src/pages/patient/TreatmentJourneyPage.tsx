@@ -799,12 +799,20 @@ const TreatmentJourneyPage: React.FC = () => {
                                 </Badge>
                               </div>
                               
-                              <Card className="mt-1">
-                                <CardHeader className="p-4">
+                              <Card className={`mt-1 border ${
+                                isQuote 
+                                  ? 'border-blue-100 hover:border-blue-200' 
+                                  : 'border-green-100 hover:border-green-200'
+                              } transition-all hover:shadow-md`}>
+                                <CardHeader className={`p-4 ${
+                                  isQuote 
+                                    ? 'bg-gradient-to-r from-blue-50 to-transparent' 
+                                    : 'bg-gradient-to-r from-green-50 to-transparent'
+                                }`}>
                                   <CardTitle className="text-base flex items-center">
                                     {isQuote 
-                                      ? <FileText className="h-4 w-4 mr-2 text-primary" />
-                                      : <PencilRuler className="h-4 w-4 mr-2 text-primary" />
+                                      ? <FileText className="h-4 w-4 mr-2 text-blue-600" />
+                                      : <PencilRuler className="h-4 w-4 mr-2 text-green-600" />
                                     }
                                     {title}
                                   </CardTitle>
@@ -813,22 +821,32 @@ const TreatmentJourneyPage: React.FC = () => {
                                   {isQuote ? (
                                     // Quote summary
                                     <div>
-                                      <p className="text-sm text-muted-foreground mb-2">
+                                      <p className="text-sm text-muted-foreground mb-3">
                                         {(item as any).treatment || 'Dental treatment quote'}
                                       </p>
-                                      {isQuote && ((item as any).selectedClinicName || (item as any).selectedClinic) && (
-                                        <div className="flex items-center text-sm mb-2">
-                                          <Building className="h-4 w-4 mr-1 text-muted-foreground" />
-                                          <span>{(item as any).selectedClinicName || (item as any).selectedClinic?.name || 'Selected Clinic'}</span>
-                                        </div>
-                                      )}
-                                      {(isQuote ? (item as any).totalAmount !== undefined : true) && (
-                                        <div className="flex items-center text-sm font-medium">
-                                          <Receipt className="h-4 w-4 mr-1 text-muted-foreground" />
-                                          <span>{new Intl.NumberFormat('en-GB', {
-                                            style: 'currency',
-                                            currency: isQuote ? ((item as any).currency || 'GBP') : (item as TreatmentPlan).currency
-                                          }).format(isQuote ? ((item as any).totalAmount || 0) : (item as TreatmentPlan).totalAmount)}</span>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {isQuote && ((item as any).selectedClinicName || (item as any).selectedClinic) && (
+                                          <div className="flex items-center text-sm">
+                                            <Building className="h-4 w-4 mr-2 text-blue-500" />
+                                            <span>{(item as any).selectedClinicName || (item as any).selectedClinic?.name || 'Selected Clinic'}</span>
+                                          </div>
+                                        )}
+                                        {(isQuote ? (item as any).totalAmount !== undefined : true) && (
+                                          <div className="flex items-center text-sm font-medium">
+                                            <Receipt className="h-4 w-4 mr-2 text-blue-500" />
+                                            <span>{new Intl.NumberFormat('en-GB', {
+                                              style: 'currency',
+                                              currency: isQuote ? ((item as any).currency || 'GBP') : (item as TreatmentPlan).currency
+                                            }).format(isQuote ? ((item as any).totalAmount || 0) : (item as TreatmentPlan).totalAmount)}</span>
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      {/* Show promo applied if available */}
+                                      {(item as any).promoApplied && (
+                                        <div className="mt-3 p-2 bg-green-50 border border-green-100 rounded-md text-xs text-green-700 flex items-center">
+                                          <Tag className="h-3.5 w-3.5 mr-1.5" />
+                                          <span>Promotional discount applied</span>
                                         </div>
                                       )}
                                     </div>
