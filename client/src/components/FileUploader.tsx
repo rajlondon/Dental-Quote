@@ -16,7 +16,7 @@ export interface FileUploaderProps {
   description?: string;
   bookingId?: number;
   quoteRequestId?: number;
-  treatmentPlanId?: number;
+  treatmentPlanId?: string | number;
   label?: string;
   helperText?: string;
   multiple?: boolean;

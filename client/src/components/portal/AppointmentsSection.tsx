@@ -78,9 +78,10 @@ const AppointmentsSection: React.FC = () => {
           }));
           setAppointments(processedAppointments);
         } else {
-          // If API doesn't have data yet, use sample data for development only
-          console.warn('No appointment data found in API response, using development placeholders');
-          const sampleData: Appointment[] = [
+          // If no appointments found, set empty array
+          console.warn('No appointment data found in API response');
+          setAppointments([]);
+        }
             {
               id: '1',
               clinicId: 1,
