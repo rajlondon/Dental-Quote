@@ -80,9 +80,48 @@ const AppointmentsSection: React.FC = () => {
             if (['confirmed', 'pending', 'cancelled', 'completed'].includes(appt.status)) {
               status = appt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed';
             }
+            
+            // Handle date and time from startTime/endTime if provided
+            let appointmentDate = appt.date || '';
+            let appointmentTime = appt.time || '';
+            
+            // If we have startTime but not properly formatted date/time
+            if (appt.startTime && (!appointmentDate || !appointmentTime)) {
+              const startDate = new Date(appt.startTime);
+              appointmentDate = format(startDate, 'yyyy-MM-dd');
+              appointmentTime = format(startDate, 'HH:mm');
+            }
+            
+            // Calculate duration if we have both start and end times
+            let duration = appt.duration || '30';
+            if (appt.startTime && appt.endTime && !appt.duration) {
+              const start = new Date(appt.startTime);
+              const end = new Date(appt.endTime);
+              duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60)).toString();
+            }
+            
             return {
-              ...appt,
-              status
+              id: appt.id.toString(),
+              clinicId: appt.clinicId || 0,
+              clinicName: appt.clinicName || 'Dental Clinic',
+              clinicLogo: appt.clinicLogo,
+              clinicAddress: appt.clinicAddress || 'Clinic Address',
+              date: appointmentDate,
+              time: appointmentTime,
+              duration: duration,
+              endTime: appt.endTime ? format(new Date(appt.endTime), 'HH:mm') : '',
+              type: appt.appointmentType || appt.type || 'Dental Appointment',
+              status,
+              notes: appt.notes,
+              virtualOption: appt.virtualOption || false,
+              meetLink: appt.meetLink,
+              doctorName: appt.doctorName || 'Dr. Specialist',
+              doctorId: appt.doctorId ? appt.doctorId.toString() : '1',
+              promotionCode: appt.promotionCode,
+              promotionDiscount: appt.promotionDiscount,
+              patientName: appt.patientName,
+              confirmationNotes: appt.confirmationNotes,
+              directions: appt.directions
             };
           });
           setAppointments(processedAppointments);
