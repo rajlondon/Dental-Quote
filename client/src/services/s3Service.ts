@@ -1,152 +1,172 @@
+/**
+ * S3 Service for Client
+ * 
+ * Handles client-side functionality for uploading files to S3 via the server API,
+ * retrieving document lists, and managing patient documents.
+ */
+
 import { apiRequest } from '@/lib/queryClient';
 
-// Type definitions
-export interface UploadResult {
-  success: boolean;
-  fileKey: string;
-  fileUrl: string;
-  message?: string;
-  error?: string;
-}
-
-export interface DocumentMetadata {
-  fileName: string;
-  fileType: string;
-  fileSize: number;
-  documentType: string;
-  notes?: string;
-  patientId: number;
-  isPublic?: boolean;
-}
-
-// Function to generate a presigned URL for uploading files to S3
-export const getPresignedUploadUrl = async (file: File, documentType: string, isPublic = false): Promise<{ presignedUrl: string, fileKey: string }> => {
-  const fileExtension = file.name.split('.').pop()?.toLowerCase();
-  
-  // Request a presigned URL from the server
-  const response = await apiRequest('POST', '/api/documents/presigned-upload', {
-    fileName: file.name,
-    fileType: file.type,
-    fileSize: file.size,
-    documentType,
-    isPublic
-  });
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to get upload URL');
-  }
-  
-  const data = await response.json();
-  return {
-    presignedUrl: data.presignedUrl,
-    fileKey: data.fileKey
-  };
-};
-
-// Function to upload a file to S3 using a presigned URL
-export const uploadFileToS3 = async (
+/**
+ * Upload a file to S3 through the server API
+ * 
+ * @param file - File to upload
+ * @param documentType - Type of document (x-ray, treatment-plan, medical, etc.)
+ * @param notes - Optional notes about the document
+ * @returns Upload result with success status and metadata
+ */
+export async function uploadFileToS3(
   file: File, 
-  documentType: string, 
-  notes?: string,
-  isPublic = false
-): Promise<UploadResult> => {
+  documentType: 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
+  notes?: string
+): Promise<{
+  success: boolean;
+  fileKey?: string;
+  fileUrl?: string;
+  error?: string;
+}> {
   try {
-    // Step 1: Get a presigned URL from our server
-    const { presignedUrl, fileKey } = await getPresignedUploadUrl(file, documentType, isPublic);
+    // Create form data for the file upload
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('documentType', documentType);
     
-    // Step 2: Upload the file directly to S3 using the presigned URL
-    const uploadResponse = await fetch(presignedUrl, {
-      method: 'PUT',
-      body: file,
-      headers: {
-        'Content-Type': file.type,
-      },
-    });
-    
-    if (!uploadResponse.ok) {
-      throw new Error(`Failed to upload to S3: ${uploadResponse.statusText}`);
+    if (notes) {
+      formData.append('notes', notes);
     }
     
-    // Step 3: Register the upload in our database to keep track of it
-    const registerResponse = await apiRequest('POST', '/api/documents/register', {
-      fileKey,
-      fileName: file.name,
-      fileType: file.type,
-      fileSize: file.size,
-      documentType,
-      notes,
-      isPublic
+    // Send the upload request
+    const response = await fetch('/api/patient/documents/upload', {
+      method: 'POST',
+      credentials: 'include',
+      body: formData
     });
     
-    if (!registerResponse.ok) {
-      const registerErrorData = await registerResponse.json();
-      throw new Error(registerErrorData.message || 'Failed to register document');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Failed to upload file');
     }
     
-    const registerData = await registerResponse.json();
-    
+    const data = await response.json();
     return {
       success: true,
-      fileKey,
-      fileUrl: registerData.fileUrl,
-      message: 'File uploaded successfully'
+      fileKey: data.document.fileKey,
+      fileUrl: data.document.fileUrl || data.document.url
     };
   } catch (error) {
-    console.error('Error uploading file:', error);
+    console.error('Error uploading file to S3:', error);
     return {
       success: false,
-      fileKey: '',
-      fileUrl: '',
-      error: error instanceof Error ? error.message : 'Unknown error during upload'
+      error: error.message || 'File upload failed'
     };
   }
-};
+}
 
-// Function to get document details
-export const getDocumentDetails = async (documentId: string) => {
-  const response = await apiRequest('GET', `/api/documents/${documentId}`);
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to get document details');
+/**
+ * Get all documents for the current user
+ * 
+ * @returns List of user documents
+ */
+export async function getUserDocuments(): Promise<{
+  success: boolean;
+  documents?: any[];
+  error?: string;
+}> {
+  try {
+    const response = await apiRequest('GET', '/api/patient/documents');
+    const data = await response.json();
+    
+    return {
+      success: data.success,
+      documents: data.documents
+    };
+  } catch (error) {
+    console.error('Error fetching user documents:', error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch documents'
+    };
   }
-  
-  return await response.json();
-};
+}
 
-// Function to get all user documents
-export const getUserDocuments = async () => {
-  const response = await apiRequest('GET', '/api/documents/user');
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to get user documents');
+/**
+ * Get a specific document by ID
+ * 
+ * @param documentId - ID of the document to retrieve
+ * @returns Document details
+ */
+export async function getDocument(documentId: string): Promise<{
+  success: boolean;
+  document?: any;
+  error?: string;
+}> {
+  try {
+    const response = await apiRequest('GET', `/api/patient/documents/${documentId}`);
+    const data = await response.json();
+    
+    return {
+      success: data.success,
+      document: data.document
+    };
+  } catch (error) {
+    console.error(`Error fetching document ${documentId}:`, error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch document'
+    };
   }
-  
-  return await response.json();
-};
+}
 
-// Function to delete a document
-export const deleteDocument = async (documentId: string) => {
-  const response = await apiRequest('DELETE', `/api/documents/${documentId}`);
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to delete document');
+/**
+ * Delete a document by ID
+ * 
+ * @param documentId - ID of the document to delete
+ * @returns Success status
+ */
+export async function deleteDocument(documentId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const response = await apiRequest('DELETE', `/api/patient/documents/${documentId}`);
+    const data = await response.json();
+    
+    return {
+      success: data.success
+    };
+  } catch (error) {
+    console.error(`Error deleting document ${documentId}:`, error);
+    return {
+      success: false,
+      error: error.message || 'Failed to delete document'
+    };
   }
-  
-  return await response.json();
-};
+}
 
-// Function to update document metadata
-export const updateDocumentMetadata = async (documentId: string, metadata: Partial<DocumentMetadata>) => {
-  const response = await apiRequest('PATCH', `/api/documents/${documentId}`, metadata);
-  
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.message || 'Failed to update document metadata');
+/**
+ * Get all documents attached to a treatment plan
+ * 
+ * @param planId - ID of the treatment plan
+ * @returns List of documents associated with the treatment plan
+ */
+export async function getTreatmentPlanDocuments(planId: string | number): Promise<{
+  success: boolean;
+  documents?: any[];
+  error?: string;
+}> {
+  try {
+    const response = await apiRequest('GET', `/api/patient/treatment-plans/${planId}/documents`);
+    const data = await response.json();
+    
+    return {
+      success: data.success,
+      documents: data.documents
+    };
+  } catch (error) {
+    console.error(`Error fetching documents for treatment plan ${planId}:`, error);
+    return {
+      success: false,
+      error: error.message || 'Failed to fetch treatment plan documents'
+    };
   }
-  
-  return await response.json();
-};
+}

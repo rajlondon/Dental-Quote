@@ -1,128 +1,161 @@
 /**
- * AWS S3 Service for MyDentalFly
+ * S3 Service
  * 
- * This service handles secure file storage operations using AWS S3
- * for dental records, medical documents, and other patient files.
+ * Handles AWS S3 integration for secure document storage and retrieval.
+ * Used for storing sensitive medical documents like x-rays and
+ * treatment plans with proper security controls.
  */
 
-import { 
-  S3Client, 
-  PutObjectCommand, 
-  GetObjectCommand,
-  DeleteObjectCommand 
-} from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v4 as uuidv4 } from 'uuid';
 
-// S3 client configuration
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || ''
-  }
-});
+// Configure S3 client
+let s3Client: S3Client | null = null;
+let bucketName: string | null = null;
+let bucketRegion: string | null = null;
 
-// S3 bucket name from environment
-const BUCKET_NAME = process.env.AWS_S3_BUCKET_NAME || 'mydentalfly-documents';
-
-// Default expiration times for signed URLs (in seconds)
-const UPLOAD_URL_EXPIRATION = 300; // 5 minutes
-const DOWNLOAD_URL_EXPIRATION = 3600; // 1 hour
-
-/**
- * Generates a presigned URL for uploading a file to S3
- * 
- * @param fileKey - The key to use for the S3 object
- * @param contentType - The MIME type of the file
- * @param isPublic - Whether the file should be publicly accessible
- * @param expiresIn - URL expiration time in seconds (default: 5 minutes)
- * @returns Promise resolving to a presigned URL
- */
-export async function generateS3PresignedUrl(
-  fileKey: string,
-  contentType: string,
-  isPublic: boolean = false,
-  expiresIn: number = UPLOAD_URL_EXPIRATION
-): Promise<string> {
-  try {
-    const command = new PutObjectCommand({
-      Bucket: BUCKET_NAME,
-      Key: fileKey,
-      ContentType: contentType,
-      // Set appropriate ACL based on public flag
-      ACL: isPublic ? 'public-read' : 'private',
-      // Add metadata with encryption flag and security indicators
-      Metadata: {
-        'x-amz-meta-encrypted': 'true',
-        'x-amz-meta-security-level': isPublic ? 'public' : 'private',
-        'x-amz-meta-upload-date': new Date().toISOString()
+// Initialize S3 client if credentials are available
+try {
+  if (process.env.AWS_ACCESS_KEY_ID && 
+      process.env.AWS_SECRET_ACCESS_KEY && 
+      process.env.S3_BUCKET_NAME) {
+    
+    bucketName = process.env.S3_BUCKET_NAME;
+    bucketRegion = process.env.AWS_REGION || 'eu-west-2';
+    
+    s3Client = new S3Client({
+      region: bucketRegion,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
       }
     });
+    
+    console.log('S3 client initialized successfully');
+  } else {
+    console.log('S3 client not initialized - environment variables missing');
+  }
+} catch (error) {
+  console.error('Error initializing S3 client:', error);
+}
 
-    // Generate the presigned URL for upload
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-    return presignedUrl;
+/**
+ * Checks if S3 is properly configured
+ */
+export function isS3Configured(): boolean {
+  return s3Client !== null && bucketName !== null;
+}
+
+/**
+ * Uploads a file to S3 bucket
+ * 
+ * @param fileBuffer - The file data buffer
+ * @param fileName - Original file name
+ * @param contentType - MIME type of the file
+ * @param userId - ID of the user uploading the file
+ * @param folder - Optional subfolder within the user's directory
+ * @returns Object with file key and other metadata
+ */
+export async function uploadToS3(
+  fileBuffer: Buffer,
+  fileName: string,
+  contentType: string,
+  userId: number,
+  folder: string = 'documents'
+): Promise<{ fileKey: string; fileUrl?: string }> {
+  // Check if S3 is configured
+  if (!isS3Configured()) {
+    throw new Error('S3 is not configured');
+  }
+  
+  try {
+    // Generate a unique key for the file
+    const fileId = uuidv4();
+    const extension = fileName.split('.').pop();
+    const fileKey = `users/${userId}/${folder}/${fileId}.${extension}`;
+    
+    // Set up the upload parameters
+    const params = {
+      Bucket: bucketName!,
+      Key: fileKey,
+      Body: fileBuffer,
+      ContentType: contentType,
+      Metadata: {
+        'user-id': userId.toString(),
+        'original-name': fileName
+      }
+    };
+    
+    // Upload to S3
+    const command = new PutObjectCommand(params);
+    await s3Client!.send(command);
+    
+    // Return the file key and a temporary URL
+    const fileUrl = await getS3DownloadUrl(fileKey);
+    
+    return {
+      fileKey,
+      fileUrl
+    };
   } catch (error) {
-    console.error('Error generating S3 presigned URL:', error);
-    throw new Error(`Failed to generate upload URL: ${error.message}`);
+    console.error('Error uploading to S3:', error);
+    throw new Error(`Failed to upload file to S3: ${(error as Error).message}`);
   }
 }
 
 /**
- * Gets a presigned URL for downloading a file from S3
+ * Gets a temporary download URL for a file in S3
  * 
- * @param fileKey - The key of the S3 object
- * @param expiresIn - URL expiration time in seconds (default: 1 hour)
- * @returns Promise resolving to a presigned URL
+ * @param fileKey - The file key in S3
+ * @param expiresIn - URL expiration time in seconds (default: 3600 = 1 hour)
+ * @returns Presigned URL for downloading the file
  */
 export async function getS3DownloadUrl(
   fileKey: string,
-  expiresIn: number = DOWNLOAD_URL_EXPIRATION
+  expiresIn: number = 3600
 ): Promise<string> {
+  // Check if S3 is configured
+  if (!isS3Configured()) {
+    throw new Error('S3 is not configured');
+  }
+  
   try {
     const command = new GetObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName!,
       Key: fileKey
     });
-
-    // Generate the presigned URL for download
-    const presignedUrl = await getSignedUrl(s3Client, command, { expiresIn });
-    return presignedUrl;
+    
+    const url = await getSignedUrl(s3Client!, command, { expiresIn });
+    return url;
   } catch (error) {
     console.error('Error generating S3 download URL:', error);
-    throw new Error(`Failed to generate download URL: ${error.message}`);
+    throw new Error(`Failed to generate download URL: ${(error as Error).message}`);
   }
 }
 
 /**
- * Deletes an object from S3
+ * Deletes a file from S3
  * 
- * @param fileKey - The key of the S3 object to delete
- * @returns Promise that resolves when the object is deleted
+ * @param fileKey - The file key in S3
+ * @returns Success status
  */
-export async function deleteS3Object(fileKey: string): Promise<void> {
+export async function deleteFromS3(fileKey: string): Promise<boolean> {
+  // Check if S3 is configured
+  if (!isS3Configured()) {
+    throw new Error('S3 is not configured');
+  }
+  
   try {
     const command = new DeleteObjectCommand({
-      Bucket: BUCKET_NAME,
+      Bucket: bucketName!,
       Key: fileKey
     });
-
-    await s3Client.send(command);
+    
+    await s3Client!.send(command);
+    return true;
   } catch (error) {
-    console.error('Error deleting S3 object:', error);
-    throw new Error(`Failed to delete file: ${error.message}`);
+    console.error('Error deleting file from S3:', error);
+    throw new Error(`Failed to delete file from S3: ${(error as Error).message}`);
   }
-}
-
-/**
- * Checks if S3 service is properly configured
- * 
- * @returns Boolean indicating if S3 credentials are available
- */
-export function isS3Configured(): boolean {
-  return !!(
-    process.env.AWS_ACCESS_KEY_ID && 
-    process.env.AWS_SECRET_ACCESS_KEY && 
-    process.env.AWS_S3_BUCKET_NAME
-  );
 }

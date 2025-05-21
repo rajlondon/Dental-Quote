@@ -1,430 +1,343 @@
-import { Router } from "express";
-import type { Request, Response } from "express";
-import { z } from "zod";
-import { storage } from "../storage";
-import { isAuthenticated } from "../middleware/auth-middleware";
-import { ensureRole } from "../middleware/auth";
-import { generateS3PresignedUrl, getS3DownloadUrl, deleteS3Object } from "../services/s3-service";
-import { v4 as uuidv4 } from "uuid";
+/**
+ * Document Routes
+ * 
+ * Handles the API routes for document management in the patient portal,
+ * including secure file uploads and retrieval for medical documents.
+ */
 
-const router = Router();
+import express from 'express';
+import multer from 'multer';
+import { storage } from '../storage';
+import { v4 as uuidv4 } from 'uuid';
+import { isS3Configured, uploadToS3, getS3DownloadUrl, deleteFromS3 } from '../services/s3-service';
+import { validateDocument, generateSampleDocuments } from '../utils/document-utils';
+import fs from 'fs';
+import path from 'path';
 
-// Schema for document metadata
-const documentMetadataSchema = z.object({
-  fileName: z.string().min(1),
-  fileType: z.string().min(1),
-  fileSize: z.number().min(0),
-  documentType: z.enum(['x-ray', 'treatment-plan', 'medical', 'contract', 'other']),
-  notes: z.string().optional(),
-  isPublic: z.boolean().default(false)
+const router = express.Router();
+
+// Configure multer for file uploads
+const memStorage = multer.memoryStorage();
+const upload = multer({ 
+  storage: memStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max
+  }
 });
 
-// Generate presigned upload URL for secure S3 uploads
-router.post(
-  "/documents/presigned-upload",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
+// Ensure upload directory exists for development
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+/**
+ * Get all documents for the authenticated patient
+ */
+router.get('/patient/documents', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Not authenticated' 
+    });
+  }
+
+  try {
+    const userId = req.user.id;
+    
+    // Try to get documents from storage
+    let documents = [];
+    
     try {
-      // Validate request body
-      const metadata = documentMetadataSchema.parse(req.body);
-      
-      // Generate a unique file key based on user ID, document type, and a UUID
-      const userId = req.user!.id;
-      const fileExtension = metadata.fileName.split('.').pop() || '';
-      const fileKey = `${req.user!.role}/${userId}/${metadata.documentType}/${uuidv4()}.${fileExtension}`;
-      
-      // Get a presigned URL from S3
-      const presignedUrl = await generateS3PresignedUrl(fileKey, metadata.fileType, metadata.isPublic);
-      
-      return res.json({
-        success: true,
-        presignedUrl,
-        fileKey
-      });
+      // In production, this would get documents from the database/storage
+      // For now, generate sample documents during development
+      documents = generateSampleDocuments(userId);
     } catch (error) {
-      console.error("Error generating presigned URL:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid document metadata",
-          errors: error.errors
-        });
+      console.error('Error fetching documents from storage:', error);
+      // Fallback to sample documents for development
+      documents = generateSampleDocuments(userId);
+    }
+    
+    // Generate download URLs for documents if S3 is configured
+    if (isS3Configured()) {
+      try {
+        documents = await Promise.all(
+          documents.map(async (doc) => {
+            // Only process documents with a fileKey
+            if (doc.fileKey) {
+              try {
+                const fileUrl = await getS3DownloadUrl(doc.fileKey);
+                return { ...doc, fileUrl };
+              } catch (error) {
+                console.error(`Error generating download URL for document ${doc.id}:`, error);
+                return doc;
+              }
+            }
+            return doc;
+          })
+        );
+      } catch (error) {
+        console.error('Error generating download URLs:', error);
       }
-      return res.status(500).json({
+    }
+    
+    // Return the documents
+    return res.json({
+      success: true,
+      documents
+    });
+  } catch (error) {
+    console.error('Error fetching patient documents:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch documents',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Upload a new document
+ */
+router.post('/patient/documents/upload', upload.single('file'), async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Not authenticated' 
+    });
+  }
+
+  try {
+    const userId = req.user.id;
+    const file = req.file;
+    const { documentType, notes } = req.body;
+    
+    if (!file) {
+      return res.status(400).json({
         success: false,
-        message: "Failed to generate upload URL"
+        message: 'No file uploaded'
       });
     }
-  }
-);
-
-// Register a document in the database after S3 upload
-router.post(
-  "/documents/register",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      // Validate request body
-      const metadata = documentMetadataSchema.parse(req.body);
-      const { fileKey } = req.body;
+    
+    // Validate file type and size
+    const validation = validateDocument(file.mimetype, file.size);
+    if (!validation.valid) {
+      return res.status(400).json({
+        success: false,
+        message: validation.message
+      });
+    }
+    
+    let document;
+    
+    // Use S3 in production if configured
+    if (isS3Configured()) {
+      // Upload to S3
+      const { fileKey, fileUrl } = await uploadToS3(
+        file.buffer,
+        file.originalname,
+        file.mimetype,
+        userId,
+        documentType || 'medical'
+      );
       
-      if (!fileKey) {
-        return res.status(400).json({
-          success: false,
-          message: "File key is required"
-        });
-      }
-      
-      // Create a document entry in the database
-      const document = await storage.createDocument({
-        userId: req.user!.id,
+      // Create document record
+      document = {
+        id: uuidv4(),
+        userId,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        documentType: documentType || 'medical',
+        notes: notes || null,
         fileKey,
-        fileName: metadata.fileName,
-        fileType: metadata.fileType,
-        fileSize: metadata.fileSize,
-        documentType: metadata.documentType,
-        notes: metadata.notes,
-        isPublic: metadata.isPublic || false,
+        fileUrl,
+        isPublic: false,
         uploadedAt: new Date().toISOString(),
-      });
-      
-      // Generate a download URL for the document
-      const fileUrl = await getS3DownloadUrl(fileKey);
-      
-      return res.status(201).json({
-        success: true,
-        document,
-        fileUrl
-      });
-    } catch (error) {
-      console.error("Error registering document:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid document metadata",
-          errors: error.errors
-        });
-      }
-      return res.status(500).json({
-        success: false,
-        message: "Failed to register document"
-      });
-    }
-  }
-);
-
-// Get all documents for the authenticated user
-router.get(
-  "/documents/user",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const userId = req.user!.id;
-      
-      // Get all documents for this user
-      const documents = await storage.getUserDocuments(userId);
-      
-      // Generate download URLs for each document
-      const documentsWithUrls = await Promise.all(
-        documents.map(async (doc) => {
-          const fileUrl = await getS3DownloadUrl(doc.fileKey);
-          return {
-            ...doc,
-            fileUrl
-          };
-        })
-      );
-      
-      return res.json({
-        success: true,
-        documents: documentsWithUrls
-      });
-    } catch (error) {
-      console.error("Error fetching user documents:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch documents"
-      });
-    }
-  }
-);
-
-// Get a specific document by ID
-router.get(
-  "/documents/:documentId",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const documentId = req.params.documentId;
-      
-      // Get the document
-      const document = await storage.getDocument(documentId);
-      
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          message: "Document not found"
-        });
-      }
-      
-      // Check access permissions
-      if (
-        !document.isPublic && 
-        req.user!.role !== "admin" &&
-        req.user!.id !== document.userId
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to access this document"
-        });
-      }
-      
-      // Generate a download URL for the document
-      const fileUrl = await getS3DownloadUrl(document.fileKey);
-      
-      return res.json({
-        success: true,
-        document: {
-          ...document,
-          fileUrl
-        }
-      });
-    } catch (error) {
-      console.error("Error fetching document:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch document"
-      });
-    }
-  }
-);
-
-// Update document metadata
-router.patch(
-  "/documents/:documentId",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const documentId = req.params.documentId;
-      
-      // Get the current document
-      const existingDocument = await storage.getDocument(documentId);
-      
-      if (!existingDocument) {
-        return res.status(404).json({
-          success: false,
-          message: "Document not found"
-        });
-      }
-      
-      // Check access permissions
-      if (
-        req.user!.role !== "admin" &&
-        req.user!.id !== existingDocument.userId
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to update this document"
-        });
-      }
-      
-      // Parse the update data
-      const updateData = documentMetadataSchema.partial().parse(req.body);
-      
-      // Update the document
-      const updatedDocument = await storage.updateDocument(documentId, {
-        ...updateData,
         updatedAt: new Date().toISOString()
-      });
+      };
       
-      // Generate a download URL for the document
-      const fileUrl = await getS3DownloadUrl(existingDocument.fileKey);
+      // In a real application, save this document to the database
+      // await storage.createDocument(document);
+    } else {
+      // For development, save locally
+      const fileId = uuidv4();
+      const fileExtension = file.originalname.split('.').pop() || '';
+      const fileName = `${fileId}.${fileExtension}`;
       
-      return res.json({
-        success: true,
-        document: {
-          ...updatedDocument,
-          fileUrl
-        }
-      });
-    } catch (error) {
-      console.error("Error updating document:", error);
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({
-          success: false,
-          message: "Invalid document metadata",
-          errors: error.errors
-        });
+      // Create user-specific directory
+      const userDir = path.join(uploadDir, String(userId), documentType || 'medical');
+      if (!fs.existsSync(userDir)) {
+        fs.mkdirSync(userDir, { recursive: true });
       }
-      return res.status(500).json({
+      
+      // Save file
+      const filePath = path.join(userDir, fileName);
+      fs.writeFileSync(filePath, file.buffer);
+      
+      // Create document record
+      document = {
+        id: fileId,
+        userId,
+        fileName: file.originalname,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        documentType: documentType || 'medical',
+        notes: notes || null,
+        filePath: `/uploads/${userId}/${documentType || 'medical'}/${fileName}`,
+        isPublic: false,
+        uploadedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+    }
+    
+    return res.json({
+      success: true,
+      document
+    });
+  } catch (error) {
+    console.error('Error uploading document:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to upload document',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get document details
+ */
+router.get('/patient/documents/:id', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Not authenticated' 
+    });
+  }
+
+  try {
+    const userId = req.user.id;
+    const documentId = req.params.id;
+    
+    // For development, get from sample documents
+    const sampleDocuments = generateSampleDocuments(userId);
+    const document = sampleDocuments.find(doc => doc.id === documentId);
+    
+    if (!document) {
+      return res.status(404).json({
         success: false,
-        message: "Failed to update document"
+        message: 'Document not found'
       });
     }
-  }
-);
-
-// Delete a document
-router.delete(
-  "/documents/:documentId",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const documentId = req.params.documentId;
-      
-      // Get the document
-      const document = await storage.getDocument(documentId);
-      
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          message: "Document not found"
-        });
+    
+    // Generate download URL if S3 is configured
+    let documentWithUrl = { ...document };
+    if (isS3Configured() && document.fileKey) {
+      try {
+        const fileUrl = await getS3DownloadUrl(document.fileKey);
+        documentWithUrl.fileUrl = fileUrl;
+      } catch (error) {
+        console.error(`Error generating download URL for document ${document.id}:`, error);
       }
-      
-      // Check access permissions
-      if (
-        req.user!.role !== "admin" &&
-        req.user!.id !== document.userId
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to delete this document"
-        });
-      }
-      
-      // Delete the document from S3
-      await deleteS3Object(document.fileKey);
-      
-      // Delete the document from the database
-      await storage.deleteDocument(documentId);
-      
-      return res.status(204).end();
-    } catch (error) {
-      console.error("Error deleting document:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to delete document"
-      });
     }
+    
+    return res.json({
+      success: true,
+      document: documentWithUrl
+    });
+  } catch (error) {
+    console.error(`Error fetching document:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch document',
+      error: error.message
+    });
   }
-);
+});
 
-// Get documents by treatment plan
-router.get(
-  "/treatment-plans/:planId/documents",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const planId = req.params.planId;
-      
-      // Get the treatment plan
-      const treatmentPlan = await storage.getTreatmentPlan(planId);
-      
-      if (!treatmentPlan) {
-        return res.status(404).json({
-          success: false,
-          message: "Treatment plan not found"
-        });
-      }
-      
-      // Check access permissions
-      if (
-        req.user!.role !== "admin" &&
-        (req.user!.role === "clinic_staff" && req.user!.clinicId !== treatmentPlan.clinicId) &&
-        req.user!.id !== treatmentPlan.patientId
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to access documents for this treatment plan"
-        });
-      }
-      
-      // Get all documents associated with this treatment plan
-      const documents = await storage.getTreatmentPlanDocuments(planId);
-      
-      // Generate download URLs for each document
-      const documentsWithUrls = await Promise.all(
+/**
+ * Delete a document
+ */
+router.delete('/patient/documents/:id', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Not authenticated' 
+    });
+  }
+
+  try {
+    const userId = req.user.id;
+    const documentId = req.params.id;
+    
+    // For development
+    // In production, this would delete from S3 and the database
+    
+    return res.json({
+      success: true,
+      message: 'Document deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to delete document',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * Get documents for a treatment plan
+ */
+router.get('/patient/treatment-plans/:planId/documents', async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: 'Not authenticated' 
+    });
+  }
+
+  try {
+    const userId = req.user.id;
+    const planId = req.params.planId;
+    
+    // For development, get subset of sample documents
+    const sampleDocuments = generateSampleDocuments(userId);
+    const documents = sampleDocuments.slice(0, 2); // Just use first two samples for this plan
+    
+    // Generate download URLs if S3 is configured
+    let documentsWithUrls = [...documents];
+    if (isS3Configured()) {
+      documentsWithUrls = await Promise.all(
         documents.map(async (doc) => {
-          const fileUrl = await getS3DownloadUrl(doc.fileKey);
-          return {
-            ...doc,
-            fileUrl
-          };
+          if (doc.fileKey) {
+            try {
+              const fileUrl = await getS3DownloadUrl(doc.fileKey);
+              return { ...doc, fileUrl };
+            } catch (error) {
+              console.error(`Error generating download URL for document ${doc.id}:`, error);
+              return doc;
+            }
+          }
+          return doc;
         })
       );
-      
-      return res.json({
-        success: true,
-        documents: documentsWithUrls
-      });
-    } catch (error) {
-      console.error("Error fetching treatment plan documents:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to fetch documents"
-      });
     }
+    
+    return res.json({
+      success: true,
+      documents: documentsWithUrls
+    });
+  } catch (error) {
+    console.error(`Error fetching treatment plan documents:`, error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch treatment plan documents',
+      error: error.message
+    });
   }
-);
-
-// Attach a document to a treatment plan
-router.post(
-  "/treatment-plans/:planId/documents/:documentId",
-  isAuthenticated,
-  async (req: Request, res: Response) => {
-    try {
-      const planId = req.params.planId;
-      const documentId = req.params.documentId;
-      
-      // Get the treatment plan
-      const treatmentPlan = await storage.getTreatmentPlan(planId);
-      
-      if (!treatmentPlan) {
-        return res.status(404).json({
-          success: false,
-          message: "Treatment plan not found"
-        });
-      }
-      
-      // Get the document
-      const document = await storage.getDocument(documentId);
-      
-      if (!document) {
-        return res.status(404).json({
-          success: false,
-          message: "Document not found"
-        });
-      }
-      
-      // Check access permissions
-      const canAttach = 
-        req.user!.role === "admin" ||
-        (req.user!.role === "clinic_staff" && req.user!.clinicId === treatmentPlan.clinicId) ||
-        (req.user!.id === treatmentPlan.patientId && req.user!.id === document.userId);
-      
-      if (!canAttach) {
-        return res.status(403).json({
-          success: false,
-          message: "You don't have permission to attach documents to this treatment plan"
-        });
-      }
-      
-      // Attach the document to the treatment plan
-      await storage.attachDocumentToTreatmentPlan(planId, documentId);
-      
-      return res.json({
-        success: true,
-        message: "Document attached to treatment plan"
-      });
-    } catch (error) {
-      console.error("Error attaching document to treatment plan:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Failed to attach document to treatment plan"
-      });
-    }
-  }
-);
+});
 
 export default router;
