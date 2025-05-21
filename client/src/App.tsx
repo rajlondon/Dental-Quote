@@ -62,6 +62,7 @@ import HollywoodSmilePage from "@/pages/HollywoodSmilePage";
 import FullMouthPage from "@/pages/FullMouthPage";
 import BookingPage from "@/pages/BookingPage";
 import PatientPortalPage from "@/pages/PatientPortalPage";
+import TreatmentJourneyPage from "@/pages/patient/TreatmentJourneyPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
@@ -159,6 +160,7 @@ function Router() {
       {/* Patient Portal Routes - Publicly accessible */}
       <Route path="/client-portal" component={PatientPortalPage} />
       <Route path="/patient-portal" component={PatientPortalPage} />
+      <Route path="/patient/treatment-journey/:id?" component={TreatmentJourneyPage} />
       <Route path="/dental-chart" component={DentalChartPage} />
       <Route path="/my-dental-chart" component={PatientDentalChart} />
       <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
