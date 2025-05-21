@@ -37,7 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
+import TreatmentPlanViewer from '@/components/TreatmentPlanViewer';
 
 // Types
 interface TreatmentItem {

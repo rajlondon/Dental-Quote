@@ -605,57 +605,29 @@ const DocumentsSection: React.FC = () => {
               containerClassName="py-2"
             />
           </div>
-            
-            {uploadFiles.length > 0 && (
-              <div className="mt-4">
-                <h4 className="text-sm font-medium mb-2">Selected Files</h4>
-                <div className="space-y-2">
-                  {uploadFiles.map((file, index) => (
-                    <div key={index} className="flex items-center p-2 rounded-md bg-gray-50 border">
-                      {file.type.includes('image') ? 
-                        <ImageIcon className="h-4 w-4 text-blue-500 mr-2" /> : 
-                        <FileText className="h-4 w-4 text-red-500 mr-2" />}
-                      <span className="text-sm truncate">{file.name}</span>
-                      <span className="text-xs text-gray-500 ml-auto">
-                        {(file.size / 1024).toFixed(0)} KB
-                      </span>
-                      <button 
-                        type="button"
-                        className="ml-2 text-gray-500 hover:text-red-500"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setUploadFiles(uploadFiles.filter((_, i) => i !== index));
-                        }}
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ))}
+          
+          {/* Upload progress indicators */}
+          {isUploading && (
+            <div className="px-4 pb-4">
+              <div className="text-sm font-medium mb-2">Uploading...</div>
+              {Object.entries(uploadProgress).map(([fileId, progress]) => (
+                <div key={fileId} className="space-y-1 mb-2">
+                  <div className="flex justify-between text-xs">
+                    <span>File {parseInt(fileId.replace('file-', '')) + 1}</span>
+                    <span>{progress}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
+                </div>
+              ))}
+              
+              <div className="flex justify-between items-center bg-blue-50 p-3 rounded-md mt-2">
+                <div className="text-xs text-blue-700 flex items-start">
+                  <Shield className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                  Your documents are encrypted and stored securely using AWS S3.
                 </div>
               </div>
-            )}
-          </div>
-          
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowUploadDialog(false);
-                setUploadFiles([]);
-                setDocumentType('other');
-                setDocumentNotes('');
-              }}
-            >
-              {t('portal.documents.cancel', 'Cancel')}
-            </Button>
-            <Button
-              onClick={handleUpload}
-              disabled={uploadFiles.length === 0}
-            >
-              <Upload className="h-4 w-4 mr-2" />
-              {t('portal.documents.upload', 'Upload')}
-            </Button>
-          </DialogFooter>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
       
