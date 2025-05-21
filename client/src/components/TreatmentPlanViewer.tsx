@@ -55,9 +55,9 @@ export function TreatmentPlanViewer({
     error: planError,
     refetch: refetchPlan
   } = useQuery({
-    queryKey: ['/api/treatment-plans', treatmentPlanId],
+    queryKey: ['/api/treatment-plans', treatmentPlanId.toString()],
     queryFn: async () => {
-      const response = await apiRequest('GET', `/api/treatment-plans/${treatmentPlanId}`);
+      const response = await apiRequest('GET', `/api/treatment-plans/${treatmentPlanId.toString()}`);
       if (!response.ok) {
         throw new Error('Failed to fetch treatment plan');
       }

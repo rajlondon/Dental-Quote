@@ -39,7 +39,14 @@ interface Appointment {
   directions?: string;
 }
 
-export const AppointmentsSection: React.FC = () => {
+// Format date groups for displaying appointments by date
+interface DateGroup {
+  date: string;
+  formattedDate: string;
+  appointments: Appointment[];
+}
+
+const AppointmentsSection: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -94,7 +101,6 @@ export const AppointmentsSection: React.FC = () => {
     };
 
     fetchAppointments();
-    // We want this to run once when the component mounts and anytime the user changes
   }, [user?.id, t, toast]);
 
   // Filter appointments based on their status and date
@@ -193,7 +199,7 @@ export const AppointmentsSection: React.FC = () => {
   };
 
   // Group appointments by date for better organization
-  const groupAppointmentsByDate = (appointments: Appointment[]) => {
+  const groupAppointmentsByDate = (appointments: Appointment[]): DateGroup[] => {
     const grouped: Record<string, Appointment[]> = {};
     
     appointments.forEach(appointment => {
@@ -341,7 +347,6 @@ export const AppointmentsSection: React.FC = () => {
                         ? t('patient.appointments.no_appointments_for_date', 'No appointments for selected date')
                         : t('patient.appointments.no_upcoming', 'No upcoming appointments')}
                     </p>
-                    {/* Add a button to book a new appointment if needed */}
                   </CardContent>
                 </Card>
               ) : (
