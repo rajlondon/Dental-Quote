@@ -162,12 +162,12 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
               clinicId: quote.clinicId,
               clinicName: quote.clinicName,
               patientId: user.id,
-              patientName: user.email || "Patient",
+              patientName: user.name || user.email || "Patient",
               createdAt: quote.createdAt || new Date().toISOString(),
               updatedAt: quote.updatedAt || new Date().toISOString(),
               status: 'proposed' as const,
               paymentStatus: 'unpaid' as const,
-              totalAmount: typeof quote.totalAmount === 'string' ? parseFloat(quote.totalAmount) : (quote.totalAmount || treatmentItems.reduce((sum: number, item: any) => sum + item.totalPrice, 0)),
+              totalAmount: quote.totalAmount || treatmentItems.reduce((sum: number, item: any) => sum + item.totalPrice, 0),
               currency: quote.currency || 'GBP',
               deposit: quote.depositAmount || Math.round(quote.totalAmount * 0.2),
               depositPaid: false,
@@ -254,9 +254,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
             }
           ];
           
-          // Set empty treatment plans when no data is available
+          // Just set empty treatment plans
           setTreatmentPlans([]);
-          setSelectedPlan(null);
         }
       } catch (error) {
         console.error('Error fetching treatment plans:', error);
