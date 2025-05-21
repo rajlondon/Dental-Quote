@@ -60,6 +60,8 @@ interface Document {
   thumbnail?: string;
   locked?: boolean;
   editable?: boolean;
+  url?: string; // S3 URL for the document
+  fileKey?: string; // S3 file key
 }
 
 // Mock documents
@@ -186,6 +188,48 @@ const DocumentsSection: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const { user } = useAuth();
+  
+  // Fetch real documents from API/S3
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const result = await getUserDocuments();
+        if (result.success && result.documents) {
+          // Transform API documents to our format
+          const fetchedDocs = result.documents.map((doc: any) => ({
+            id: doc.id || doc.fileKey,
+            name: doc.fileName,
+            type: doc.documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
+            format: doc.fileName.split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
+            size: doc.size || `${Math.round(doc.fileSize / 1024)} KB`,
+            uploadedBy: doc.uploadedBy || 'you',
+            uploadedAt: doc.uploadedAt || doc.createdAt,
+            notes: doc.notes,
+            url: doc.fileUrl,
+            fileKey: doc.fileKey,
+            locked: doc.locked || false
+          }));
+          
+          if (fetchedDocs.length > 0) {
+            // Combine with mock documents for now, in production would only use real data
+            setDocuments([...fetchedDocs, ...mockDocuments]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+        toast({
+          title: "Failed to Load Documents",
+          description: "Could not retrieve your documents. Please try again later.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    fetchDocuments();
+  }, [user?.id, toast]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
@@ -218,9 +262,6 @@ const DocumentsSection: React.FC = () => {
       return matchesTab && matchesSearch;
     });
   };
-  
-  // Import the S3 upload service
-  import { uploadFileToS3, getUserDocuments } from '@/services/s3Service';
   
   // State for upload progress
   const [isUploading, setIsUploading] = useState(false);

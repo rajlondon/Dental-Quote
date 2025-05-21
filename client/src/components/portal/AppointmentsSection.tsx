@@ -67,8 +67,15 @@ const AppointmentsSection: React.FC = () => {
         const res = await apiRequest('GET', '/api/patient/appointments');
         const data = await res.json();
         
-        if (data.success && data.appointments) {
-          setAppointments(data.appointments);
+        if (data.success && data.appointments && data.appointments.length > 0) {
+          // Process real appointment data from the API
+          setSampleAppointments(data.appointments.map((appt: any) => ({
+            ...appt,
+            // Ensure status is one of the valid status types
+            status: ['confirmed', 'pending', 'cancelled', 'completed'].includes(appt.status) 
+              ? appt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed'
+              : 'pending'
+          })));
         } else {
           // If API fails or is not built yet, use sample data
           console.warn('Using sample appointment data');
