@@ -146,7 +146,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
               clinicId: 1,
               clinicName: 'DentSpa Istanbul',
               patientId: user.id,
-              patientName: user.fullName || user.email,
+              patientName: user.username || user.email,
               createdAt: '2025-05-10T14:30:00Z',
               updatedAt: '2025-05-15T09:45:00Z',
               status: 'proposed',
@@ -412,7 +412,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
       ) : treatmentPlans.length === 0 ? (
         <Card className="py-8">
           <CardContent className="text-center">
-            <Tooth className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <PencilRuler className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium mb-2">No Treatment Plans</h3>
             <p className="text-sm text-muted-foreground mb-4">
               You don't have any dental treatment plans yet. Please contact your clinic or request a quote.
@@ -451,7 +451,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(plan.status)}
-                        <ArrowRightIcon className="h-4 w-4 text-muted-foreground" />
+                        <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   ))}
@@ -618,7 +618,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
                       <h3 className="text-lg font-medium flex items-center">
-                        <Tooth className="h-5 w-5 mr-2 text-primary" />
+                        <PencilRuler className="h-5 w-5 mr-2 text-primary" />
                         Treatment Details
                       </h3>
                       <Button 
@@ -990,7 +990,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
       </Dialog>
       
       {/* Detailed Treatment Plan Dialog */}
-      <Dialog open={showDetailedPlan} onOpenChange={setShowDetailedPlan} className="max-w-4xl">
+      <Dialog open={showDetailedPlan} onOpenChange={setShowDetailedPlan}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle className="flex items-center">
