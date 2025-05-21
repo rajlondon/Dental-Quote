@@ -19,7 +19,8 @@ export async function getPatientDocuments(userId: number, includeSample = true) 
     
     // Try to fetch from storage first
     try {
-      documents = await storage.getUserDocuments(userId);
+      // Use the existing getFilesByUserId method instead
+      documents = await storage.getFilesByUserId(userId);
     } catch (error) {
       console.error('Failed to fetch documents from storage:', error);
       // If storage method doesn't exist yet, return sample data for development
@@ -62,7 +63,7 @@ export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId:
     
     // Try to fetch from storage first
     try {
-      documents = await storage.getTreatmentPlanDocuments(treatmentPlanId, userId);
+      documents = await storage.getFilesByTreatmentPlanId(treatmentPlanId);
     } catch (error) {
       console.error(`Failed to fetch documents for treatment plan ${treatmentPlanId}:`, error);
       // Return filtered sample data for development
@@ -142,7 +143,7 @@ export async function createDocument(data: {
     
     let document;
     try {
-      document = await storage.createDocument(documentData);
+      document = await storage.createFile(documentData);
     } catch (error) {
       console.error('Failed to create document record:', error);
       
