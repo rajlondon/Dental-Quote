@@ -146,7 +146,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
               clinicId: 1,
               clinicName: 'DentSpa Istanbul',
               patientId: user.id,
-              patientName: user.username || user.email,
+              patientName: user.email || "Patient",
               createdAt: '2025-05-10T14:30:00Z',
               updatedAt: '2025-05-15T09:45:00Z',
               status: 'proposed',
@@ -393,7 +393,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
     if (!plan.items || plan.items.length === 0) return 0;
     
     const completedItems = plan.items.filter(item => item.status === 'completed').length;
-    return Math.round((completedItems / plan.items.length) * 100);
+    return Math.round((completedItems / plan.items.length) * 100) as number;
   };
   
   return (
