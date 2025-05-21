@@ -78,7 +78,11 @@ const timelineEvents = [
   { date: "July 15, 2025", event: "Follow-up Consultation", status: "upcoming" },
 ];
 
-const DashboardSection: React.FC = () => {
+interface DashboardSectionProps {
+  setActiveSection: (section: string) => void;
+}
+
+const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const { t } = useTranslation();
 
   return (
@@ -392,7 +396,7 @@ const DashboardSection: React.FC = () => {
               <Button 
                 variant="link" 
                 className="px-0 py-1 h-auto text-sm"
-                onClick={() => window.dispatchEvent(new CustomEvent('navigate-section', { detail: 'travel' }))}
+                onClick={() => setActiveSection('travel')}
               >
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
@@ -409,7 +413,7 @@ const DashboardSection: React.FC = () => {
               <Button 
                 variant="link" 
                 className="px-0 py-1 h-auto text-sm"
-                onClick={() => window.dispatchEvent(new CustomEvent('navigate-section', { detail: 'travel' }))}
+                onClick={() => setActiveSection('travel')}
               >
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
