@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { quoteRequests } from '@shared/schema';
-import { eq } from 'drizzle-orm';
+import { eq, desc } from 'drizzle-orm';
 
 // Simple in-memory storage for dental charts
 const dentalChartStorage = new Map<string, any>();
@@ -40,7 +40,11 @@ export const setupDentalChartRoutes = () => {
       if (!userChart) {
         try {
           // Look up quotes from this user to find dental chart data
-          const userQuotes = await db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+          const userQuotes = await db
+            .select()
+            .from(quoteRequests)
+            .where(eq(quoteRequests.userId, userId))
+            .orderBy(desc(quoteRequests.createdAt)); // Order by most recent first
           
           // Find the most recent quote with dental chart data
           let quoteWithChart = null;
@@ -54,7 +58,7 @@ export const setupDentalChartRoutes = () => {
           }
           
           if (quoteWithChart && quoteWithChart.dentalChartData) {
-            console.log(`Found dental chart data in quote for user ${userId}`);
+            console.log(`Found dental chart data in quote #${quoteWithChart.id} for user ${userId}`);
             // Create a new chart using the quote dental chart data
             const newChartId = `chart_${userId}_${Date.now()}`;
             userChart = {
@@ -64,7 +68,9 @@ export const setupDentalChartRoutes = () => {
               createdAt: new Date().toISOString(),
               lastUpdated: new Date().toISOString(),
               userId: userId,
-              teethData: quoteWithChart.dentalChartData
+              teethData: quoteWithChart.dentalChartData,
+              source: 'quote',
+              quoteRequestId: quoteWithChart.id
             };
             
             // Store the chart for future use
@@ -86,7 +92,8 @@ export const setupDentalChartRoutes = () => {
           createdAt: new Date().toISOString(),
           lastUpdated: new Date().toISOString(),
           userId: userId,
-          teethData: {}
+          teethData: {},
+          source: 'patient_portal'
         };
         
         // Store the empty chart
@@ -119,7 +126,7 @@ export const setupDentalChartRoutes = () => {
       
       const user = req.user as Express.User;
       const userId = user.id;
-      const { teethData } = req.body;
+      const { teethData, quoteRequestId, source = 'patient_portal' } = req.body;
       
       if (!teethData) {
         return res.status(400).json({
@@ -156,39 +163,61 @@ export const setupDentalChartRoutes = () => {
         userId,
         teethData,
         lastUpdated: new Date().toISOString(),
-        createdAt: existingChart?.createdAt || new Date().toISOString()
+        createdAt: existingChart?.createdAt || new Date().toISOString(),
+        source, // Where the chart update originated from
+        quoteRequestId // Associated quote request ID (if any)
       };
       
       // Store the updated chart in memory
       dentalChartStorage.set(chartId, updatedChart);
       
-      // Also update the dental chart data in the user's latest quote
-      try {
-        // Find the user's most recent quote
-        const userQuotes = await db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
-        
-        if (userQuotes.length > 0) {
-          // Sort by creation date to get the most recent quote
-          const sortedQuotes = userQuotes.sort((a, b) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-          });
-          
-          const latestQuoteId = sortedQuotes[0].id;
-          
-          // Update the dental chart data in the latest quote
+      // Update quote data if a specific quote ID was provided
+      if (quoteRequestId) {
+        try {
           await db
             .update(quoteRequests)
             .set({
               dentalChartData: teethData,
               updatedAt: new Date()
             })
-            .where(eq(quoteRequests.id, latestQuoteId));
+            .where(eq(quoteRequests.id, quoteRequestId));
           
-          console.log(`Updated dental chart data in quote ${latestQuoteId} for user ${userId}`);
+          console.log(`Updated dental chart data in specified quote ${quoteRequestId} for user ${userId}`);
+        } catch (dbError) {
+          console.error(`Error updating dental chart data in quote ${quoteRequestId}:`, dbError);
         }
-      } catch (dbError) {
-        console.error('Error updating dental chart data in quote:', dbError);
-        // Continue even if there's a database error - the in-memory chart is still updated
+      } else {
+        // Update the most recent quote if no specific quote ID provided
+        try {
+          // Find the user's most recent quote
+          const userQuotes = await db
+            .select()
+            .from(quoteRequests)
+            .where(eq(quoteRequests.userId, userId))
+            .orderBy(desc(quoteRequests.createdAt))
+            .limit(1);
+          
+          if (userQuotes.length > 0) {
+            const latestQuoteId = userQuotes[0].id;
+            
+            // Update the dental chart data in the latest quote
+            await db
+              .update(quoteRequests)
+              .set({
+                dentalChartData: teethData,
+                updatedAt: new Date()
+              })
+              .where(eq(quoteRequests.id, latestQuoteId));
+            
+            // Update the return data with the quote ID
+            updatedChart.quoteRequestId = latestQuoteId;
+            
+            console.log(`Updated dental chart data in latest quote ${latestQuoteId} for user ${userId}`);
+          }
+        } catch (dbError) {
+          console.error('Error updating dental chart data in latest quote:', dbError);
+          // Continue even if there's a database error - the in-memory chart is still updated
+        }
       }
       
       console.log(`Dental chart data saved for user ${userId}`);
@@ -203,6 +232,97 @@ export const setupDentalChartRoutes = () => {
       return res.status(500).json({
         success: false,
         error: 'Failed to save dental chart data'
+      });
+    }
+  });
+
+  // Refresh dental chart from quotes
+  router.post('/refresh', async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+      
+      const user = req.user as Express.User;
+      const userId = user.id;
+      
+      // Find the most recent quote with dental chart data
+      const userQuotes = await db
+        .select()
+        .from(quoteRequests)
+        .where(eq(quoteRequests.userId, userId))
+        .orderBy(desc(quoteRequests.createdAt));
+      
+      // Find the most recent quote with dental chart data
+      let quoteWithChart = null;
+      for (const quote of userQuotes) {
+        if (quote.dentalChartData && 
+            typeof quote.dentalChartData === 'object' && 
+            Object.keys(quote.dentalChartData).length > 0) {
+          quoteWithChart = quote;
+          break;
+        }
+      }
+      
+      if (!quoteWithChart || !quoteWithChart.dentalChartData) {
+        return res.status(404).json({
+          success: false,
+          error: 'No dental chart data found in any quotes'
+        });
+      }
+      
+      // Look for an existing dental chart to update
+      let chartId: string | null = null;
+      let existingChart: any = null;
+      
+      // Use Array.from to avoid compatibility issues
+      const entries = Array.from(dentalChartStorage.entries());
+      for (let i = 0; i < entries.length; i++) {
+        const [id, chart] = entries[i];
+        if (chart.userId === userId || chart.patientEmail === user.email) {
+          chartId = id;
+          existingChart = chart;
+          break;
+        }
+      }
+      
+      // If no chart exists, create a new one
+      if (!chartId) {
+        chartId = `chart_${userId}_${Date.now()}`;
+      }
+      
+      const refreshedChart = {
+        ...existingChart,
+        chartId,
+        patientName: user.email || 'Patient',
+        patientEmail: user.email,
+        userId,
+        teethData: quoteWithChart.dentalChartData,
+        lastUpdated: new Date().toISOString(),
+        createdAt: existingChart?.createdAt || new Date().toISOString(),
+        source: 'quote',
+        quoteRequestId: quoteWithChart.id
+      };
+      
+      // Store the updated chart in memory
+      dentalChartStorage.set(chartId, refreshedChart);
+      
+      console.log(`Dental chart refreshed from quote ${quoteWithChart.id} for user ${userId}`);
+      
+      return res.status(200).json({
+        success: true,
+        message: 'Dental chart data refreshed successfully from quote',
+        chartData: refreshedChart
+      });
+    } catch (error) {
+      console.error('Error refreshing dental chart data:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to refresh dental chart data'
       });
     }
   });
