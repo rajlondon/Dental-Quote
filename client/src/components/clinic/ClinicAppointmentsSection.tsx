@@ -806,7 +806,7 @@ const ClinicAppointmentsSection: React.FC = () => {
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center">
-                  <Calendar className="h-5 w-5 mr-2 text-primary" />
+                  <CalendarIcon2 className="h-5 w-5 mr-2 text-primary" />
                   Appointment Details
                 </DialogTitle>
                 <DialogDescription>
@@ -1276,32 +1276,31 @@ const ClinicAppointmentsSection: React.FC = () => {
                   )}
                   
                   {/* Warning message for expiring promotions */}
-                  {(() => {
-                    // Get promotion expiration info
-                    const { isExpiringSoon, isExpired, daysRemaining } = checkPromotionExpiration(selectedPromotion);
-                    
-                    // Get the selected appointment date if available, otherwise use today
-                    const apptDate = formData.date ? new Date(formData.date) : new Date();
-                    const endDate = selectedPromotion.end_date ? new Date(selectedPromotion.end_date) : new Date();
-                    
-                    // Check if appointment date is after promo expiration
-                    if (selectedPromotion.end_date && apptDate > endDate) {
-                      return (
-                        <div className="mt-2 bg-red-50 text-red-800 p-2 rounded-md text-xs flex items-center">
-                          <AlertCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                          <span>Warning: This promotion will expire before the appointment date.</span>
-                        </div>
-                      );
-                    } else if (isExpiringSoon && !isExpired) {
-                      return (
-                        <div className="mt-2 bg-amber-50 text-amber-800 p-2 rounded-md text-xs flex items-center">
-                          <AlertTriangle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
-                          <span>This promotion expires soon. Consider offering an alternative for later appointments.</span>
-                        </div>
-                      );
-                    }
-                    return null;
-                  })()}
+                  {selectedPromotion && selectedPromotion.end_date && (
+                    <div className="mt-2">
+                      {(() => {
+                        // Get promotion expiration info
+                        const { isExpiringSoon, isExpired, daysRemaining } = checkPromotionExpiration(selectedPromotion);
+                        
+                        if (isExpired) {
+                          return (
+                            <div className="bg-red-50 text-red-800 p-2 rounded-md text-xs flex items-center">
+                              <AlertCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                              <span>This promotion has expired and cannot be applied to appointments.</span>
+                            </div>
+                          );
+                        } else if (isExpiringSoon) {
+                          return (
+                            <div className="bg-amber-50 text-amber-800 p-2 rounded-md text-xs flex items-center">
+                              <AlertTriangle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                              <span>This promotion expires in {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'}. Consider offering an alternative for later appointments.</span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  )}
                   
                   {/* Pricing details */}
                   {selectedPromoDiscount > 0 && (
