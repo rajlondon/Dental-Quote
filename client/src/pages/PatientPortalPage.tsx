@@ -58,12 +58,13 @@ import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 
-// Placeholder components until implemented
-// Import the DocumentsSection component
+// Import portal section components
 import DocumentsSection from '@/components/portal/DocumentsSection';
-const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
+import SupportSection from '@/components/portal/SupportSection';
+import DentalChartSection from '@/components/portal/DentalChartSection';
+
+// Placeholder components until implemented
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
-const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
 
 // Dashboard section component interface
