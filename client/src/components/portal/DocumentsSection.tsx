@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/hooks/use-auth';
-import { uploadFileToS3, getUserDocuments } from '@/services/s3Service';
+import { uploadFileToS3, getUserDocuments, deleteDocument } from '@/services/s3Service';
+import FileUploader from '@/components/FileUploader';
 import { 
   FileText, 
   Upload, 
@@ -236,7 +237,7 @@ const DocumentsSection: React.FC = () => {
   const [showViewerDialog, setShowViewerDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
-  const [documentType, setDocumentType] = useState('other');
+  const [documentType, setDocumentType] = useState('medical');
   const [documentNotes, setDocumentNotes] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -267,19 +268,19 @@ const DocumentsSection: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   
-  // Function to handle file upload
-  const handleUpload = async () => {
-    if (uploadFiles.length === 0) return;
+  // Function to handle file upload with our new FileUploader component
+  const handleUploadFiles = async (files: File[]) => {
+    if (files.length === 0) return;
     
     setIsUploading(true);
     const uploadedDocuments: Document[] = [];
-    const totalFiles = uploadFiles.length;
+    const totalFiles = files.length;
     let successCount = 0;
     
     try {
       // Process each file sequentially
-      for (let i = 0; i < uploadFiles.length; i++) {
-        const file = uploadFiles[i];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const fileId = `file-${i}`;
         
         // Initialize progress for this file
@@ -303,7 +304,7 @@ const DocumentsSection: React.FC = () => {
           // Upload the file to S3
           const uploadResult = await uploadFileToS3(
             file,
-            documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'other',
+            documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
             documentNotes
           );
           
@@ -312,15 +313,16 @@ const DocumentsSection: React.FC = () => {
           if (uploadResult.success) {
             // Create document record from the upload result
             const newDocument: Document = {
-              id: uploadResult.fileKey,
+              id: uploadResult.fileKey || String(Date.now()),
               name: file.name,
-              type: documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'other',
+              type: documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
               format: file.name.split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
               size: `${(file.size / 1024).toFixed(0)} KB`,
               uploadedBy: 'you' as const,
               uploadedAt: new Date().toISOString(),
               notes: documentNotes || undefined,
-              url: uploadResult.fileUrl
+              url: uploadResult.fileUrl,
+              fileKey: uploadResult.fileKey
             };
             
             uploadedDocuments.push(newDocument);
@@ -366,7 +368,7 @@ const DocumentsSection: React.FC = () => {
       setIsUploading(false);
       setUploadProgress({});
       setUploadFiles([]);
-      setDocumentType('other');
+      setDocumentType('medical');
       setDocumentNotes('');
       setShowUploadDialog(false);
     }
