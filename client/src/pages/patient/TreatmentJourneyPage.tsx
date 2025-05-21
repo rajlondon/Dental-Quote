@@ -757,13 +757,26 @@ const TreatmentJourneyPage: React.FC = () => {
                         
                         return (
                           <div key={id} className="flex">
-                            {/* Timeline connector */}
+                            {/* Enhanced timeline connector with visual cues */}
                             <div className="flex flex-col items-center mr-4">
-                              <div className={`w-3 h-3 rounded-full mt-1.5 ${
-                                index === 0 ? 'bg-primary' : 'bg-muted-foreground'
-                              }`} />
+                              <div className={`
+                                w-4 h-4 rounded-full mt-1.5 flex items-center justify-center
+                                ${index === 0 
+                                  ? 'bg-primary text-white ring-4 ring-primary/20' 
+                                  : isQuote 
+                                    ? 'bg-blue-100 text-blue-600 border border-blue-300' 
+                                    : 'bg-green-100 text-green-600 border border-green-300'
+                                }
+                              `}>
+                                {isQuote 
+                                  ? <FileText className="h-2.5 w-2.5" /> 
+                                  : <PencilRuler className="h-2.5 w-2.5" />
+                                }
+                              </div>
                               {index < [...(userQuotesQuery.data || []), ...treatmentPlans].length - 1 && (
-                                <div className="w-0.5 h-full bg-muted" />
+                                <div className={`w-0.5 h-full ${
+                                  isQuote ? 'bg-blue-200' : 'bg-green-200'
+                                }`} />
                               )}
                             </div>
                             
