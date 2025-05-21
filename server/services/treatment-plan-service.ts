@@ -5,6 +5,25 @@
  * It provides data transformation and business logic for treatment plans.
  */
 
+// Add missing function for transforming quote to treatment plan
+export function transformQuoteToTreatmentPlan(quote: any) {
+  // Logic to transform a quote object into a treatment plan
+  return {
+    id: quote.id,
+    userId: quote.userId,
+    name: `Treatment Plan based on Quote #${quote.id}`,
+    status: 'pending',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    quoteId: quote.id,
+    treatmentDetails: quote.treatmentDetails || [],
+    totalAmount: quote.totalAmount || 0,
+    currency: quote.currency || 'USD',
+    clinicId: quote.clinicId || null,
+    clinicName: quote.clinicName || 'Unknown Clinic'
+  };
+}
+
 import { storage } from '../storage';
 
 /**

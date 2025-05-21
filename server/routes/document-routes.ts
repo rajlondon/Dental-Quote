@@ -47,7 +47,7 @@ router.get('/', async (req, res) => {
     const userId = req.user.id;
     
     // Use the document service to get documents with download URLs
-    const documents = await getPatientDocuments(userId, true);
+    let documents = await getPatientDocuments(userId, true);
     
     // Generate download URLs for documents if S3 is configured
     if (isS3Configured()) {

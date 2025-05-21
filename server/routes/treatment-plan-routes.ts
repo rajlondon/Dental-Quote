@@ -7,8 +7,8 @@
 
 import express from 'express';
 import { storage } from '../storage';
-import { transformQuoteToTreatmentPlan } from '../services/treatment-plan-service';
-import { Json } from 'drizzle-orm/pg-core';
+import { getPatientTreatmentPlans } from '../services/treatment-plan-service';
+import { json } from 'drizzle-orm/pg-core';
 import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
