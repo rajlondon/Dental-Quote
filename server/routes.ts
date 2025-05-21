@@ -28,6 +28,7 @@ import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentRoutes from "./routes/treatment-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
+import documentRouter from "./routes/document-routes";
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
 import bookingRoutes from "./routes/booking-routes";

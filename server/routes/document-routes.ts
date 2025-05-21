@@ -10,7 +10,8 @@ import multer from 'multer';
 import { storage } from '../storage';
 import { v4 as uuidv4 } from 'uuid';
 import { isS3Configured, uploadToS3, getS3DownloadUrl, deleteFromS3 } from '../services/s3-service';
-import { validateDocument, generateSampleDocuments } from '../utils/document-utils';
+import { validateDocument, generateSampleDocuments, determineDocumentCategory } from '../utils/document-utils';
+import { getPatientDocuments, createDocument, deleteDocument, updateDocumentMetadata, getTreatmentPlanDocuments } from '../services/document-service';
 import fs from 'fs';
 import path from 'path';
 
