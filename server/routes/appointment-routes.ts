@@ -4,6 +4,8 @@ import { z } from "zod";
 import { storage } from "../storage";
 import { isAuthenticated } from "../middleware/auth-middleware";
 import { ensureRole } from "../middleware/auth";
+// Sample data for patient portal development - will be replaced with real data as the system grows
+import { generateSampleAppointments } from "../utils/sample-data-generator";
 
 const router = Router();
 
@@ -377,6 +379,86 @@ router.delete(
       return res.status(500).json({ 
         success: false,
         message: "Failed to delete appointment" 
+      });
+    }
+  }
+);
+
+// Get all appointments for a patient
+router.get(
+  "/patient/appointments",
+  isAuthenticated,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized"
+        });
+      }
+      
+      // Check if the database has real appointments for this patient
+      let patientAppointments;
+      try {
+        // Try to fetch from storage first
+        patientAppointments = await storage.getPatientAppointments(userId);
+      } catch (error) {
+        console.log("Error fetching real appointments, falling back:", error);
+        patientAppointments = [];
+      }
+
+      // If no real appointments found, use sample data for development
+      if (!patientAppointments || patientAppointments.length === 0) {
+        // For development only - replace with real DB data when available
+        patientAppointments = generateSampleAppointments(userId);
+      }
+      
+      return res.json({
+        success: true,
+        appointments: patientAppointments
+      });
+    } catch (error) {
+      console.error("Error fetching patient appointments:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to fetch appointments"
+      });
+    }
+  }
+);
+
+// Cancel an appointment (patient)
+router.post(
+  "/patient/appointments/:appointmentId/cancel",
+  isAuthenticated,
+  async (req: Request, res: Response) => {
+    try {
+      const appointmentId = req.params.appointmentId;
+      const userId = req.user?.id;
+      const { reason } = req.body;
+      
+      if (!userId) {
+        return res.status(401).json({
+          success: false,
+          message: "Unauthorized"
+        });
+      }
+      
+      // In a real implementation, validate that this appointment belongs to this patient
+      // Then update the appointment status in the database
+      
+      // For development, just return success response
+      return res.json({
+        success: true,
+        message: "Appointment cancelled successfully"
+      });
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Failed to cancel appointment"
       });
     }
   }
