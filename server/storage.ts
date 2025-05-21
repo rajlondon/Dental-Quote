@@ -733,6 +733,48 @@ export class DatabaseStorage implements IStorage {
       .where(eq(appointments.clinicId, clinicId))
       .orderBy(asc(appointments.startTime));
   }
+  
+  // Get all appointments for a patient (user)
+  async getPatientAppointments(patientId: number): Promise<Appointment[]> {
+    try {
+      // Get all bookings for this patient
+      const userBookings = await db
+        .select()
+        .from(bookings)
+        .where(eq(bookings.userId, patientId));
+      
+      // Get all booking IDs
+      const bookingIds = userBookings.map(booking => booking.id);
+      
+      // If there are bookings, get appointments for all of them
+      let patientAppointments: Appointment[] = [];
+      
+      if (bookingIds.length > 0) {
+        patientAppointments = await db
+          .select()
+          .from(appointments)
+          .where(
+            or(
+              ...bookingIds.map(id => eq(appointments.bookingId, id)),
+              eq(appointments.userId, patientId) // Also get appointments directly linked to user
+            )
+          )
+          .orderBy(desc(appointments.startTime));
+      } else {
+        // If no bookings, try to find appointments directly associated with the user
+        patientAppointments = await db
+          .select()
+          .from(appointments)
+          .where(eq(appointments.userId, patientId))
+          .orderBy(desc(appointments.startTime));
+      }
+      
+      return patientAppointments;
+    } catch (error) {
+      console.error("Error fetching patient appointments:", error);
+      return []; // Return empty array on error for graceful fallback
+    }
+  }
 
   async createAppointment(data: InsertAppointment): Promise<Appointment> {
     // Ensure dates are properly converted to Date objects and are valid
