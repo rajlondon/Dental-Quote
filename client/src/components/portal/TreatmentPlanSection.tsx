@@ -256,7 +256,6 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
           
           // Just set empty treatment plans
           setTreatmentPlans([]);
-          }
         }
       } catch (error) {
         console.error('Error fetching treatment plans:', error);
