@@ -9,6 +9,7 @@ import express from 'express';
 import multer from 'multer';
 import { storage } from '../storage';
 import { v4 as uuidv4 } from 'uuid';
+// Import from s3-service.ts without the .js extension
 import { isS3Configured, uploadToS3, getS3DownloadUrl, deleteFromS3 } from '../services/s3-service';
 import { validateDocument, generateSampleDocuments, determineDocumentCategory } from '../utils/document-utils';
 import { getPatientDocuments, createDocument, deleteDocument, updateDocumentMetadata, getTreatmentPlanDocuments } from '../services/document-service';
