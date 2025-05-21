@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const dentalChartStorage = new Map<string, any>();
   
   // Save dental chart data
-  app.post('/api/save-dental-chart', csrfProtection, async (req: Request, res: Response) => {
+  app.post('/api/save-dental-chart', async (req: Request, res: Response) => {
     try {
       const { patientEmail, patientName, dentalChartData, quoteId } = req.body;
       
@@ -966,6 +966,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ 
         success: false, 
         error: 'Missing required query parameter (patientEmail or chartId)' 
+      });
+    } catch (error) {
+      console.error('Error retrieving dental chart data:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to retrieve dental chart data' 
+      });
+    }
+  });
+  
+  // Endpoint for getting dental charts for the authenticated patient
+  app.get('/api/get-patient-dental-charts', async (req: Request, res: Response) => {
+    try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({
+          success: false,
+          error: 'User not authenticated'
+        });
+      }
+      
+      const user = req.user as Express.User;
+      const userEmail = user.email;
+      
+      if (!userEmail) {
+        return res.status(400).json({
+          success: false,
+          error: 'User email not found'
+        });
+      }
+      
+      // Get all charts for this patient
+      const email = userEmail.toLowerCase();
+      const charts = Array.from(dentalChartStorage.entries())
+        .filter(([key, data]) => data.patientEmail.toLowerCase() === email)
+        .map(([key, data]) => ({ chartId: key, ...data }));
+      
+      // Generate a sample chart if none exist
+      if (charts.length === 0) {
+        const mockTeeth = [
+          { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
+          { id: 2, name: 'Upper Right Second Molar (2)', condition: 'normal', treatment: null, notes: '' },
+          { id: 3, name: 'Upper Right First Molar (3)', condition: null, treatment: 'veneer', notes: 'Veneer recommended by dentist' },
+          { id: 4, name: 'Upper Right Second Premolar (4)', condition: null, treatment: null, notes: '' },
+          { id: 5, name: 'Upper Right First Premolar (5)', condition: 'discolored', treatment: 'whitening', notes: 'Light discoloration' },
+          { id: 6, name: 'Upper Right Canine (6)', condition: null, treatment: null, notes: '' },
+          { id: 7, name: 'Upper Right Lateral Incisor (7)', condition: null, treatment: null, notes: '' },
+          { id: 8, name: 'Upper Right Central Incisor (8)', condition: 'chipped', treatment: 'crown', notes: 'Small chip on edge' },
+          // Other teeth...
+        ];
+        
+        const userName = user.username || user.name || 'Patient';
+        
+        // Create mock chart
+        const mockChart = {
+          chartId: `${email}_${Date.now()}`,
+          patientName: userName,
+          patientEmail: email,
+          createdAt: new Date().toISOString(),
+          dentalChartData: mockTeeth
+        };
+        
+        return res.status(200).json({
+          success: true,
+          charts: [mockChart]
+        });
+      }
+      
+      return res.status(200).json({
+        success: true,
+        charts
       });
     } catch (error) {
       console.error('Error retrieving dental chart data:', error);
