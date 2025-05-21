@@ -1,126 +1,243 @@
 /**
  * Document Service
  * 
- * This service handles document operations for the patient portal.
- * It provides a bridge between the S3 storage service and the database.
+ * Handles business logic for document management in the patient portal,
+ * including CRUD operations for medical documents and secure file handling.
  */
 
 import { storage } from '../storage';
-import { generateSampleDocuments, createLocalDocument } from '../utils/document-utils';
-import { isS3Configured, getS3DownloadUrl } from '../services/s3-service';
+import { determineDocumentCategory, generateSampleDocuments } from '../utils/document-utils';
+import { isS3Configured, uploadToS3, getS3DownloadUrl, deleteFromS3 } from './s3-service';
 
 /**
- * Gets documents for a specific patient
- * During development, if no documents are found, returns sample documents
+ * Get all documents for a patient
  */
-export async function getPatientDocuments(userId: number) {
+export async function getPatientDocuments(userId: number, includeSample = true) {
   try {
-    // Try to get real documents from the database
+    // Attempt to get documents from database
     let documents = [];
     
+    // Try to fetch from storage first
     try {
       documents = await storage.getUserDocuments(userId);
     } catch (error) {
-      console.log('Error fetching real documents, falling back to sample data:', error);
-      documents = [];
+      console.error('Failed to fetch documents from storage:', error);
+      // If storage method doesn't exist yet, return sample data for development
+      if (includeSample) {
+        return generateSampleDocuments(userId);
+      }
     }
     
-    // If no real documents found, use sample documents during development
-    if (!documents || documents.length === 0) {
-      documents = generateSampleDocuments(userId);
+    if (documents.length === 0 && includeSample) {
+      // If no documents found, generate sample data for development
+      return generateSampleDocuments(userId);
     }
     
-    // Generate presigned download URLs for each document if S3 is configured
-    if (isS3Configured()) {
-      documents = await Promise.all(
-        documents.map(async (doc) => {
-          try {
-            // Only process documents with a fileKey
-            if (doc.fileKey) {
-              const fileUrl = await getS3DownloadUrl(doc.fileKey);
-              return { ...doc, fileUrl };
-            }
-            return doc;
-          } catch (error) {
-            console.error(`Error generating download URL for document ${doc.id}:`, error);
-            return doc;
-          }
-        })
-      );
+    // Enrich documents with download URLs if needed
+    for (const doc of documents) {
+      if (doc.fileKey && !doc.downloadUrl) {
+        try {
+          doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
+        } catch (error) {
+          console.error(`Failed to generate download URL for document ${doc.id}:`, error);
+          doc.downloadUrl = null;
+        }
+      }
     }
     
     return documents;
   } catch (error) {
-    console.error('Error in getPatientDocuments:', error);
-    return generateSampleDocuments(userId);
+    console.error('Error in document service:', error);
+    throw error;
   }
 }
 
 /**
- * Gets documents associated with a specific treatment plan
+ * Get documents related to a specific treatment plan
  */
-export async function getTreatmentPlanDocuments(planId: string, userId: number) {
+export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId: number) {
   try {
-    // Try to get real documents from the database
+    // Attempt to get treatment plan documents from database
     let documents = [];
     
+    // Try to fetch from storage first
     try {
-      documents = await storage.getTreatmentPlanDocuments(planId);
+      documents = await storage.getTreatmentPlanDocuments(treatmentPlanId, userId);
     } catch (error) {
-      console.log(`Error fetching treatment plan (${planId}) documents, falling back:`, error);
-      documents = [];
+      console.error(`Failed to fetch documents for treatment plan ${treatmentPlanId}:`, error);
+      // Return filtered sample data for development
+      const allSamples = generateSampleDocuments(userId);
+      return allSamples.filter(doc => doc.treatmentPlanId === treatmentPlanId);
     }
     
-    // If no real documents found, use some of the sample documents during development
-    if (!documents || documents.length === 0) {
-      const samples = generateSampleDocuments(userId);
-      documents = samples.slice(0, 2); // Just use first two samples for this treatment plan
-    }
-    
-    // Generate presigned download URLs for each document if S3 is configured
-    if (isS3Configured()) {
-      documents = await Promise.all(
-        documents.map(async (doc) => {
-          try {
-            // Only process documents with a fileKey
-            if (doc.fileKey) {
-              const fileUrl = await getS3DownloadUrl(doc.fileKey);
-              return { ...doc, fileUrl };
-            }
-            return doc;
-          } catch (error) {
-            console.error(`Error generating download URL for document ${doc.id}:`, error);
-            return doc;
-          }
-        })
-      );
+    // Enrich documents with download URLs if needed
+    for (const doc of documents) {
+      if (doc.fileKey && !doc.downloadUrl) {
+        try {
+          doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
+        } catch (error) {
+          console.error(`Failed to generate download URL for document ${doc.id}:`, error);
+          doc.downloadUrl = null;
+        }
+      }
     }
     
     return documents;
   } catch (error) {
-    console.error(`Error in getTreatmentPlanDocuments for plan ${planId}:`, error);
-    return [];
+    console.error('Error fetching treatment plan documents:', error);
+    throw error;
   }
 }
 
 /**
- * Creates a document in the system
- * - If S3 is configured, registers the document in the database
- * - If S3 is not configured, creates a local document for development
+ * Create a new document
  */
-export async function createDocument(userData: any, fileBuffer?: Buffer) {
+export async function createDocument(data: {
+  userId: number;
+  fileName: string;
+  fileBuffer: Buffer;
+  fileSize: number;
+  fileType: string;
+  documentType?: string;
+  notes?: string;
+  treatmentPlanId?: number;
+}) {
   try {
-    if (isS3Configured()) {
-      // In production with S3, the document is registered in the database
-      return await storage.createDocument(userData);
-    } else if (fileBuffer) {
-      // In development without S3, create a local document
-      return await createLocalDocument(userData, fileBuffer);
-    } else {
-      throw new Error('File buffer is required when S3 is not configured');
+    const {
+      userId,
+      fileName,
+      fileBuffer,
+      fileSize,
+      fileType,
+      documentType,
+      notes,
+      treatmentPlanId
+    } = data;
+    
+    // Determine document category
+    const category = determineDocumentCategory(fileName, documentType);
+    
+    // Upload file to S3 (or local filesystem if S3 not configured)
+    let fileKey;
+    try {
+      fileKey = await uploadToS3(fileBuffer, fileName, fileType);
+    } catch (error) {
+      console.error('Failed to upload document:', error);
+      throw new Error('Document upload failed');
     }
+    
+    // Create document record in database
+    const documentData = {
+      userId,
+      fileName,
+      fileKey,
+      fileSize,
+      fileType,
+      category,
+      notes: notes || null,
+      treatmentPlanId: treatmentPlanId || null,
+      uploadDate: new Date(),
+      isSharedWithClinic: true // Default to shared with clinic
+    };
+    
+    let document;
+    try {
+      document = await storage.createDocument(documentData);
+    } catch (error) {
+      console.error('Failed to create document record:', error);
+      
+      // If database insert fails, delete the uploaded file
+      try {
+        await deleteFromS3(fileKey);
+      } catch (deleteError) {
+        console.error('Failed to delete file after database error:', deleteError);
+      }
+      
+      throw new Error('Failed to save document information');
+    }
+    
+    // Generate download URL for the created document
+    try {
+      document.downloadUrl = await getS3DownloadUrl(fileKey);
+    } catch (error) {
+      console.error('Failed to generate download URL:', error);
+      document.downloadUrl = null;
+    }
+    
+    return document;
   } catch (error) {
-    console.error('Error in createDocument:', error);
+    console.error('Document creation error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a document
+ */
+export async function deleteDocument(documentId: string, userId: number) {
+  try {
+    const document = await storage.getDocumentById(documentId);
+    
+    if (!document) {
+      throw new Error('Document not found');
+    }
+    
+    // Security check - ensure user owns the document
+    if (document.userId !== userId) {
+      throw new Error('Not authorized to delete this document');
+    }
+    
+    // Delete file from S3 or local storage
+    if (document.fileKey) {
+      try {
+        await deleteFromS3(document.fileKey);
+      } catch (error) {
+        console.error('Failed to delete file:', error);
+        // Continue with database deletion even if file deletion fails
+      }
+    }
+    
+    // Delete document record from database
+    const success = await storage.deleteDocument(documentId);
+    
+    return success;
+  } catch (error) {
+    console.error('Document deletion error:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update document metadata
+ */
+export async function updateDocumentMetadata(
+  documentId: string,
+  userId: number,
+  updates: {
+    notes?: string;
+    category?: string;
+    isSharedWithClinic?: boolean;
+    treatmentPlanId?: number | null;
+  }
+) {
+  try {
+    const document = await storage.getDocumentById(documentId);
+    
+    if (!document) {
+      throw new Error('Document not found');
+    }
+    
+    // Security check - ensure user owns the document
+    if (document.userId !== userId) {
+      throw new Error('Not authorized to update this document');
+    }
+    
+    // Update document
+    const updatedDocument = await storage.updateDocument(documentId, updates);
+    
+    return updatedDocument;
+  } catch (error) {
+    console.error('Document update error:', error);
     throw error;
   }
 }

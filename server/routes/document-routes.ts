@@ -34,7 +34,7 @@ if (!fs.existsSync(uploadDir)) {
 /**
  * Get all documents for the authenticated patient
  */
-router.get('/patient/documents', async (req, res) => {
+router.get('/', async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ 
       success: false, 
@@ -99,7 +99,7 @@ router.get('/patient/documents', async (req, res) => {
 /**
  * Upload a new document
  */
-router.post('/patient/documents/upload', upload.single('file'), async (req, res) => {
+router.post('/upload', upload.single('file'), async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ 
       success: false, 
