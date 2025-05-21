@@ -696,7 +696,7 @@ const TreatmentJourneyPage: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Timeline className="h-5 w-5 mr-2" />
+                  <GitBranch className="h-5 w-5 mr-2" />
                   Your Treatment Timeline
                 </CardTitle>
                 <CardDescription>
@@ -803,19 +803,19 @@ const TreatmentJourneyPage: React.FC = () => {
                                       <p className="text-sm text-muted-foreground mb-2">
                                         {(item as any).treatment || 'Dental treatment quote'}
                                       </p>
-                                      {(item as any).selectedClinicName && (
+                                      {isQuote && ((item as any).selectedClinicName || (item as any).selectedClinic) && (
                                         <div className="flex items-center text-sm mb-2">
                                           <Building className="h-4 w-4 mr-1 text-muted-foreground" />
-                                          <span>{(item as any).selectedClinicName}</span>
+                                          <span>{(item as any).selectedClinicName || (item as any).selectedClinic?.name || 'Selected Clinic'}</span>
                                         </div>
                                       )}
-                                      {(item as any).totalAmount && (
+                                      {(isQuote ? (item as any).totalAmount !== undefined : true) && (
                                         <div className="flex items-center text-sm font-medium">
                                           <Receipt className="h-4 w-4 mr-1 text-muted-foreground" />
                                           <span>{new Intl.NumberFormat('en-GB', {
                                             style: 'currency',
-                                            currency: (item as any).currency || 'GBP'
-                                          }).format((item as any).totalAmount)}</span>
+                                            currency: isQuote ? ((item as any).currency || 'GBP') : (item as TreatmentPlan).currency
+                                          }).format(isQuote ? ((item as any).totalAmount || 0) : (item as TreatmentPlan).totalAmount)}</span>
                                         </div>
                                       )}
                                     </div>
