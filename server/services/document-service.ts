@@ -8,19 +8,68 @@
 import { storage } from '../storage';
 import { determineDocumentCategory, generateSampleDocuments } from '../utils/document-utils';
 import { isS3Configured, uploadToS3, getS3DownloadUrl, deleteFromS3 } from './s3-service';
+import { files } from '@shared/schema';
+
+// Define the document type that we're using throughout this service
+export interface DocumentFile {
+  id: number;
+  userId: number;
+  fileName: string;
+  fileSize: number;
+  fileType: string;
+  fileKey?: string;
+  fileUrl?: string;
+  category: string;
+  notes?: string | null;
+  description?: string | null;
+  uploadDate?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+  treatmentPlanId?: number | null;
+  isSharedWithClinic?: boolean;
+  visibility?: string;
+  fileCategory?: string;
+  downloadUrl?: string | null;
+  mimetype?: string;
+  originalName?: string;
+}
 
 /**
  * Get all documents for a patient
  */
-export async function getPatientDocuments(userId: number, includeSample = true) {
+export async function getPatientDocuments(userId: number, includeSample = true): Promise<DocumentFile[]> {
   try {
     // Attempt to get documents from database
-    let documents = [];
+    let documents: DocumentFile[] = [];
     
     // Try to fetch from storage first
     try {
       // Use the existing getFilesByUserId method instead
-      documents = await storage.getFilesByUserId(userId);
+      const files = await storage.getFilesByUserId(userId);
+      
+      // Map database records to our DocumentFile interface
+      documents = files.map(file => ({
+        id: file.id,
+        userId: file.userId,
+        fileName: file.filename || file.originalName || "Unknown Document",
+        fileSize: file.fileSize || 0,
+        fileType: file.mimetype || file.fileType || "application/octet-stream",
+        fileKey: file.fileUrl, // Use fileUrl as the S3 key
+        fileUrl: file.fileUrl,
+        category: file.fileCategory || "other",
+        notes: file.description || null,
+        description: file.description || null,
+        uploadDate: file.createdAt,
+        createdAt: file.createdAt,
+        updatedAt: file.updatedAt,
+        treatmentPlanId: file.treatmentPlanId || null,
+        isSharedWithClinic: file.visibility === "clinic",
+        visibility: file.visibility || "private",
+        fileCategory: file.fileCategory || null,
+        downloadUrl: null, // Will be set below
+        mimetype: file.mimetype,
+        originalName: file.originalName
+      }));
     } catch (error) {
       console.error('Failed to fetch documents from storage:', error);
       // If storage method doesn't exist yet, return sample data for development
@@ -35,13 +84,15 @@ export async function getPatientDocuments(userId: number, includeSample = true) 
     }
     
     // Enrich documents with download URLs if needed
-    for (const doc of documents) {
-      if (doc.fileKey && !doc.downloadUrl) {
-        try {
-          doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
-        } catch (error) {
-          console.error(`Failed to generate download URL for document ${doc.id}:`, error);
-          doc.downloadUrl = null;
+    if (isS3Configured()) {
+      for (const doc of documents) {
+        if (doc.fileKey && !doc.downloadUrl) {
+          try {
+            doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
+          } catch (error) {
+            console.error(`Failed to generate download URL for document ${doc.id}:`, error);
+            doc.downloadUrl = null;
+          }
         }
       }
     }
@@ -49,21 +100,45 @@ export async function getPatientDocuments(userId: number, includeSample = true) 
     return documents;
   } catch (error) {
     console.error('Error in document service:', error);
-    throw error;
+    throw new Error('Failed to retrieve patient documents');
   }
 }
 
 /**
  * Get documents related to a specific treatment plan
  */
-export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId: number) {
+export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId: number): Promise<DocumentFile[]> {
   try {
     // Attempt to get treatment plan documents from database
-    let documents = [];
+    let documents: DocumentFile[] = [];
     
     // Try to fetch from storage first
     try {
-      documents = await storage.getFilesByTreatmentPlanId(treatmentPlanId);
+      const files = await storage.getFilesByTreatmentPlanId(treatmentPlanId);
+      
+      // Map database records to our DocumentFile interface
+      documents = files.map(file => ({
+        id: file.id,
+        userId: file.userId,
+        fileName: file.filename || file.originalName || "Unknown Document",
+        fileSize: file.fileSize || 0,
+        fileType: file.mimetype || file.fileType || "application/octet-stream",
+        fileKey: file.fileUrl, // Use fileUrl as the S3 key
+        fileUrl: file.fileUrl,
+        category: file.fileCategory || "other",
+        notes: file.description || null,
+        description: file.description || null,
+        uploadDate: file.createdAt,
+        createdAt: file.createdAt,
+        updatedAt: file.updatedAt,
+        treatmentPlanId: file.treatmentPlanId || null,
+        isSharedWithClinic: file.visibility === "clinic",
+        visibility: file.visibility || "private",
+        fileCategory: file.fileCategory || null,
+        downloadUrl: null, // Will be set below
+        mimetype: file.mimetype,
+        originalName: file.originalName
+      }));
     } catch (error) {
       console.error(`Failed to fetch documents for treatment plan ${treatmentPlanId}:`, error);
       // Return filtered sample data for development
@@ -72,13 +147,15 @@ export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId:
     }
     
     // Enrich documents with download URLs if needed
-    for (const doc of documents) {
-      if (doc.fileKey && !doc.downloadUrl) {
-        try {
-          doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
-        } catch (error) {
-          console.error(`Failed to generate download URL for document ${doc.id}:`, error);
-          doc.downloadUrl = null;
+    if (isS3Configured()) {
+      for (const doc of documents) {
+        if (doc.fileKey && !doc.downloadUrl) {
+          try {
+            doc.downloadUrl = await getS3DownloadUrl(doc.fileKey);
+          } catch (error) {
+            console.error(`Failed to generate download URL for document ${doc.id}:`, error);
+            doc.downloadUrl = null;
+          }
         }
       }
     }
@@ -86,7 +163,7 @@ export async function getTreatmentPlanDocuments(treatmentPlanId: number, userId:
     return documents;
   } catch (error) {
     console.error('Error fetching treatment plan documents:', error);
-    throw error;
+    throw new Error(`Failed to retrieve documents for treatment plan ${treatmentPlanId}`);
   }
 }
 
@@ -227,7 +304,7 @@ export async function updateDocumentMetadata(
     isSharedWithClinic?: boolean;
     treatmentPlanId?: number | null;
   }
-) {
+): Promise<DocumentFile> {
   try {
     const document = await storage.getFile(parseInt(documentId));
     
@@ -240,8 +317,8 @@ export async function updateDocumentMetadata(
       throw new Error('Not authorized to update this document');
     }
     
-    // Prepare updates in the format expected by updateFile
-    const fileUpdates: Partial<File> = {};
+    // Prepare updates in the format expected by the storage layer
+    const fileUpdates: Record<string, any> = {};
     
     if (updates.notes) {
       fileUpdates.description = updates.notes;
@@ -260,11 +337,42 @@ export async function updateDocumentMetadata(
     }
     
     // Update document
-    const updatedDocument = await storage.updateFile(parseInt(documentId), fileUpdates);
+    const updated = await storage.updateFile(parseInt(documentId), fileUpdates);
+    
+    // Convert to DocumentFile format
+    const updatedDocument: DocumentFile = {
+      id: updated.id,
+      userId: updated.userId,
+      fileName: updated.filename || updated.originalName || "Unknown Document",
+      fileSize: updated.fileSize || 0,
+      fileType: updated.mimetype || updated.fileType || "application/octet-stream",
+      fileKey: updated.fileUrl,
+      fileUrl: updated.fileUrl,
+      category: updated.fileCategory || "other",
+      notes: updated.description || null,
+      description: updated.description || null,
+      uploadDate: updated.createdAt,
+      createdAt: updated.createdAt,
+      updatedAt: updated.updatedAt,
+      treatmentPlanId: updated.treatmentPlanId || null,
+      isSharedWithClinic: updated.visibility === "clinic",
+      visibility: updated.visibility || "private",
+      fileCategory: updated.fileCategory || null,
+      downloadUrl: null
+    };
+    
+    // Generate download URL if possible
+    if (isS3Configured() && updatedDocument.fileKey) {
+      try {
+        updatedDocument.downloadUrl = await getS3DownloadUrl(updatedDocument.fileKey);
+      } catch (downloadError) {
+        console.error('Failed to generate download URL:', downloadError);
+      }
+    }
     
     return updatedDocument;
   } catch (error) {
     console.error('Document update error:', error);
-    throw error;
+    throw new Error('Failed to update document metadata');
   }
 }
