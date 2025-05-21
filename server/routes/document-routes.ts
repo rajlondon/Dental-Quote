@@ -105,6 +105,14 @@ router.post(['/upload', '/patient/documents/upload'], upload.single('file'), asy
     const file = req.file;
     const { documentType, notes, treatmentPlanId } = req.body;
     
+    console.log('Document upload request received:', {
+      userId,
+      fileName: file?.originalname,
+      documentType,
+      notes: notes || 'none',
+      treatmentPlanId: treatmentPlanId || 'none'
+    });
+    
     if (!file) {
       return res.status(400).json({
         success: false,
