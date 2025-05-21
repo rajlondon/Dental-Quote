@@ -27,7 +27,7 @@ export interface TreatmentPlan {
 }
 
 export interface TreatmentPlanViewerProps {
-  treatmentPlanId: number;
+  treatmentPlanId: string | number;
   readOnly?: boolean;
   canUploadFiles?: boolean;
   patientView?: boolean;

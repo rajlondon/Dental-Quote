@@ -169,7 +169,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
               paymentStatus: 'unpaid' as const,
               totalAmount: typeof quote.totalAmount === 'string' ? parseFloat(quote.totalAmount) : (quote.totalAmount || treatmentItems.reduce((sum: number, item: any) => sum + item.totalPrice, 0)),
               currency: quote.currency || 'GBP',
-              deposit: quote.depositAmount || Math.round(quote.totalAmount * 0.2),
+              deposit: typeof quote.depositAmount === 'string' ? parseFloat(quote.depositAmount) : 
+                (quote.depositAmount || Math.round((typeof quote.totalAmount === 'string' ? parseFloat(quote.totalAmount) : quote.totalAmount || 0) * 0.2)),
               depositPaid: false,
               items: treatmentItems,
               doctorName: quote.doctorName,
@@ -1062,7 +1063,7 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
           
           <div className="pt-2">
             {selectedPlan && (
-              <TreatmentPlanViewer treatmentPlanId={selectedPlan.id} patientView={true} />
+              <TreatmentPlanViewer treatmentPlanId={String(selectedPlan.id)} patientView={true} />
             )}
           </div>
           
