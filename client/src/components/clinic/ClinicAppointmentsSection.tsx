@@ -212,7 +212,9 @@ const ClinicAppointmentsSection: React.FC = () => {
       doctorName: 'Dr. Example', // API doesn't have doctor info yet
       doctorId: 'n/a',
       promotionCode: app.promotionCode,
-      promotionDiscount: app.promotionDiscount
+      promotionDiscount: app.promotionDiscount,
+      promotionId: app.promotionId,
+      promotionDetails: app.promotionDetails
     };
   });
   
