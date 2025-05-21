@@ -15,7 +15,7 @@ type DentalChartProps = {
   editable?: boolean;
 };
 
-const DentalChart: React.FC<DentalChartProps> = ({ 
+export const DentalChart: React.FC<DentalChartProps> = ({ 
   initialData = {}, 
   onChange = () => {}, 
   editable = false 

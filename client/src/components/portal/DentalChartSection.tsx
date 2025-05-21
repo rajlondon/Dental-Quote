@@ -6,7 +6,7 @@ import { Loader2, AlertCircle, Pencil, Save } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-import DentalChart from '@/components/DentalChart';
+import { DentalChart } from '@/components/DentalChart';
 import { toast } from '@/hooks/use-toast';
 
 type DentalChartData = {
