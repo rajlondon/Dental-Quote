@@ -344,8 +344,108 @@ const PatientPortalPage: React.FC = () => {
               </CardContent>
             </Card>
             
+            {/* Main Dashboard */}
+            <h2 className="text-xl font-bold mt-6">Dashboard</h2>
+            
+            {/* Primary Dashboard Sections */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Booking Status */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{t("portal.dashboard.booking_status", "Booking Status")}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-500">Confirmed</Badge>
+                      <span>{t("portal.dashboard.deposit_paid", "Deposit Paid")}</span>
+                    </div>
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">{t("portal.dashboard.clinic", "Clinic")}:</span> DentSpa Istanbul
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              {/* Treatment Plan */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{t("portal.dashboard.treatment_plan", "Treatment Plan")}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm">Dental Implant</span>
+                      <span className="text-sm font-medium">x4</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Porcelain Crown</span>
+                      <span className="text-sm font-medium">x6</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm">Root Canal</span>
+                      <span className="text-sm font-medium">x2</span>
+                    </div>
+                    <Separator className="my-1" />
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">{t("portal.dashboard.total", "Total")}:</span>
+                      <span className="text-sm font-medium">£3200</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2 pb-3">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => setActiveSection('treatment_plan')}
+                  >
+                    {t("portal.dashboard.view_treatment_plan", "View Full Treatment Plan")}
+                  </Button>
+                </CardFooter>
+              </Card>
+              
+              {/* Notifications */}
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">{t("portal.dashboard.notifications", "Notifications")}</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-2">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <MessageSquare className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm">
+                          {t("portal.dashboard.unread_messages", "Unread Messages")}
+                        </span>
+                      </div>
+                      <Badge className="bg-blue-500">3</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-green-500" />
+                        <span className="text-sm">
+                          {t("portal.dashboard.upcoming_appointments", "Upcoming Appointments")}
+                        </span>
+                      </div>
+                      <Badge className="bg-green-500">1</Badge>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="pt-2 pb-3">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full text-gray-500 hover:text-gray-800"
+                  >
+                    {t("portal.dashboard.view_all", "View All Notifications")}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+            
             {/* Travel Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <Card className="border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-transparent">
                   <div className="flex items-center">
@@ -400,8 +500,6 @@ const PatientPortalPage: React.FC = () => {
                 </CardContent>
               </Card>
             </div>
-            
-            <DashboardSection setActiveSection={setActiveSection} />
           </div>
         );
       case 'messages':
