@@ -28,7 +28,7 @@ import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentRoutes from "./routes/treatment-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
-import documentRouter from "./routes/document-routes";
+// Document routes imported above
 import testRoutes from "./routes/test-routes";
 import messagingRoutes from "./routes/messaging-routes";
 import bookingRoutes from "./routes/booking-routes";
@@ -46,7 +46,8 @@ import treatmentPackageRoutes from "./routes/treatment-package-routes";
 import clinicRoutes from "./routes/clinic-routes";
 import clinicPromotionRouter from "./routes/clinic-promotion-routes";
 import patientTreatmentPlanRouter from "./routes/treatment-plan-routes";
-import documentRouter from "./routes/document-routes";
+// Import document routes
+import documentRoutes from "./routes/document-routes";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -219,7 +220,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/treatment-plans', treatmentPlanRoutes);
   
   // Register document management routes (for secure file uploads and management)
-  app.use('/api/patient/documents', isAuthenticated, documentRouter);
+  app.use('/api/patient/documents', isAuthenticated, documentRoutes);
   
   // Register new treatment management routes for clinics
   app.use(treatmentRoutes);
@@ -333,7 +334,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', patientTreatmentPlanRouter);
   
   // Register document management routes for medical files
-  app.use('/api', documentRouter);
+  app.use('/api', documentRoutes);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {

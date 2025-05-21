@@ -46,18 +46,8 @@ router.get('/', async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Try to get documents from storage
-    let documents = [];
-    
-    try {
-      // In production, this would get documents from the database/storage
-      // For now, generate sample documents during development
-      documents = generateSampleDocuments(userId);
-    } catch (error) {
-      console.error('Error fetching documents from storage:', error);
-      // Fallback to sample documents for development
-      documents = generateSampleDocuments(userId);
-    }
+    // Use the document service to get documents with download URLs
+    const documents = await getPatientDocuments(userId, true);
     
     // Generate download URLs for documents if S3 is configured
     if (isS3Configured()) {
