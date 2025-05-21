@@ -1082,7 +1082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
   
   // Register support routes
-  app.use('/api/patient/support', setupSupportRoutes());
+  app.use('/api/support', setupSupportRoutes());
   
   // Initialize WebSocket Service for real-time data synchronization
   const wsService = setupWebSocketService(httpServer);
