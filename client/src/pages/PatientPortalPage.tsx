@@ -59,8 +59,8 @@ import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPa
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 
 // Placeholder components until implemented
-// Import the actual DocumentsSection component
-import { DocumentsSection } from '@/components/portal/DocumentsSection';
+// Import the DocumentsSection component
+import DocumentsSection from '@/components/portal/DocumentsSection';
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
 const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
