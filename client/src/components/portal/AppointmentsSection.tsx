@@ -57,7 +57,7 @@ const AppointmentsSection: React.FC = () => {
   const [showRescheduleDialog, setShowRescheduleDialog] = useState(false);
   const [tab, setTab] = useState('upcoming');
 
-  // Fetch appointments
+  // Fetch appointments from the backend API
   useEffect(() => {
     const fetchAppointments = async () => {
       if (!user?.id) return;
@@ -69,16 +69,17 @@ const AppointmentsSection: React.FC = () => {
         
         if (data.success && data.appointments && data.appointments.length > 0) {
           // Process real appointment data from the API
-          setSampleAppointments(data.appointments.map((appt: any) => ({
+          const processedAppointments = data.appointments.map((appt: any) => ({
             ...appt,
             // Ensure status is one of the valid status types
             status: ['confirmed', 'pending', 'cancelled', 'completed'].includes(appt.status) 
               ? appt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed'
               : 'pending'
-          })));
+          }));
+          setAppointments(processedAppointments);
         } else {
-          // If API fails or is not built yet, use sample data
-          console.warn('Using sample appointment data');
+          // If API doesn't have data yet, use sample data for development only
+          console.warn('No appointment data found in API response, using development placeholders');
           const sampleData: Appointment[] = [
             {
               id: '1',

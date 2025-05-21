@@ -191,9 +191,14 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
           // Set the first treatment plan as selected
           setSelectedPlan(allTreatmentPlans[0]);
         } else {
-          // If no treatment plans or quotes are available, use sample data
-          console.warn('No treatment plans or quotes found, using sample data');
-          const samplePlans: TreatmentPlan[] = [
+          // If we have no treatment plans/quotes we should inform the user
+          toast({
+            title: "No Treatment Plans Found",
+            description: "You don't have any active treatment plans yet. Complete a quote to see it here.",
+            variant: "default"
+          });
+          // Initialize with empty array instead of sample data
+          const emptyPlans: TreatmentPlan[] = [
             {
               id: '1',
               title: 'Full Dental Restoration Plan',
@@ -249,10 +254,8 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
             }
           ];
           
-          setTreatmentPlans(samplePlans);
-          
-          if (samplePlans.length > 0) {
-            setSelectedPlan(samplePlans[0]);
+          // Just set empty treatment plans
+          setTreatmentPlans([]);
           }
         }
       } catch (error) {
