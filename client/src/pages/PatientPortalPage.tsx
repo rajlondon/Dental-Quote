@@ -57,6 +57,7 @@ import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
+import TreatmentJourneyPage from '@/pages/patient/TreatmentJourneyPage';
 
 // Import portal section components
 import DocumentsSection from '@/components/portal/DocumentsSection';
@@ -263,10 +264,10 @@ const PatientPortalPage: React.FC = () => {
       notificationCount: notifications.filter(n => n.type === 'message' && !n.read).length 
     },
     { 
-      id: 'quotes', 
-      label: 'My Quotes', 
-      icon: <FileText className="h-5 w-5" />,
-      notificationCount: notifications.filter(n => n.type === 'update' && !n.read).length
+      id: 'treatment_journey', 
+      label: 'Treatment Journey', 
+      icon: <Stethoscope className="h-5 w-5" />,
+      notificationCount: notifications.filter(n => (n.type === 'update' || n.type === 'treatment') && !n.read).length
     },
     { 
       id: 'appointments', 
@@ -276,7 +277,6 @@ const PatientPortalPage: React.FC = () => {
     },
     { id: 'travel', label: 'Travel & Hotel', icon: <Plane className="h-5 w-5" /> },
     { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
-    { id: 'treatment_plan', label: 'Treatment Plan', icon: <Stethoscope className="h-5 w-5" /> },
     { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
     { id: 'support', label: 'Support', icon: <Users className="h-5 w-5" /> },
     { id: 'testing', label: 'Testing', icon: <TestTube className="h-5 w-5" /> }
@@ -506,6 +506,8 @@ const PatientPortalPage: React.FC = () => {
         );
       case 'messages':
         return <MessagesSection />;
+      case 'treatment_journey':
+        return <TreatmentJourneyPage />;
       case 'quotes':
         return <PatientQuotesPage />;
       case 'quote_upload_xrays':
