@@ -687,10 +687,10 @@ const DocumentsSection: React.FC = () => {
           }
         }}
       >
-        {selectedDocument && (
-          <DialogContent className="max-w-4xl max-h-[90vh]">
-            {selectedDocument.url ? (
-              // Use our advanced MedicalDocumentViewer for documents with URL/S3 access
+        <DialogContent className="max-w-4xl max-h-[90vh]">
+          {selectedDocument ? (
+            selectedDocument.url ? (
+              // Use enhanced MedicalDocumentViewer for documents with URL/S3 access
               <MedicalDocumentViewer 
                 document={{
                   id: selectedDocument.id,
@@ -739,8 +739,8 @@ const DocumentsSection: React.FC = () => {
                 securityLevel={selectedDocument.locked ? 'high' : 'medium'}
               />
             ) : (
-              // Fallback display for documents without URL
-              <>
+              // Standard viewer for documents without URL
+              <div className="w-full">
                 <DialogHeader>
                   <DialogTitle className="flex items-center">
                     {getDocumentIcon(selectedDocument)}
@@ -857,8 +857,13 @@ const DocumentsSection: React.FC = () => {
                   </Button>
                 )}
               </DialogFooter>
-            </>
+            </div>
           )}
+        ) : (
+          <div className="flex items-center justify-center h-[60vh]">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          </div>
+        )}
         </DialogContent>
       </Dialog>
       
