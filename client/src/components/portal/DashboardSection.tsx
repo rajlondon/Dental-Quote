@@ -107,6 +107,63 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </div>
         </CardContent>
       </Card>
+      
+      {/* Quick Travel Info - Highlighted at the top */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4 mb-4">
+        <Card className="border border-blue-100 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2 bg-gradient-to-r from-blue-50 to-transparent">
+            <div className="flex items-center">
+              <Plane className="h-5 w-5 text-blue-600 mr-2" />
+              <CardTitle className="text-lg">{t("portal.dashboard.flight", "Flight Details")}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex gap-4">
+              <div>
+                <p className="text-sm font-medium">Departure: {treatmentOverview.trip.flight}</p>
+                <p className="text-sm text-gray-600">Turkish Airlines TK1984</p>
+                <p className="text-sm text-gray-600">London Heathrow → Istanbul</p>
+              </div>
+              <div className="mt-auto">
+                <Button 
+                  size="sm"
+                  className="bg-blue-50 text-blue-700 hover:bg-blue-100 hover:text-blue-800 border border-blue-200"
+                  onClick={() => setActiveSection('travel')}
+                >
+                  {t("portal.dashboard.view_flight", "Manage Flight")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card className="border border-amber-100 shadow-sm hover:shadow-md transition-shadow">
+          <CardHeader className="pb-2 bg-gradient-to-r from-amber-50 to-transparent">
+            <div className="flex items-center">
+              <Home className="h-5 w-5 text-amber-600 mr-2" />
+              <CardTitle className="text-lg">{t("portal.dashboard.accommodation", "Hotel Details")}</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            <div className="flex gap-4">
+              <div>
+                <p className="text-sm font-medium">{treatmentOverview.trip.hotel}</p>
+                <p className="text-sm text-gray-600">5 nights, Deluxe Room</p>
+                <p className="text-sm text-gray-600">Near Clinic Location</p>
+              </div>
+              <div className="mt-auto">
+                <Button 
+                  size="sm"
+                  className="bg-amber-50 text-amber-700 hover:bg-amber-100 hover:text-amber-800 border border-amber-200"
+                  onClick={() => setActiveSection('travel')}
+                >
+                  {t("portal.dashboard.view_hotel", "Manage Hotel")}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Treatment Progress */}
       <Card>
