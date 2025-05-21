@@ -35,6 +35,8 @@ export async function uploadFileToS3(
       formData.append('notes', notes);
     }
     
+    console.log(`Uploading document: ${file.name}, type: ${documentType}, notes: ${notes || 'none'}`);
+    
     // Send the upload request
     const response = await fetch('/api/patient/documents/upload', {
       method: 'POST',

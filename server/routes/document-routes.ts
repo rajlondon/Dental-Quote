@@ -90,8 +90,9 @@ router.get('/', async (req, res) => {
 
 /**
  * Upload a new document
+ * Route handles both /upload and /patient/documents/upload endpoints
  */
-router.post('/upload', upload.single('file'), async (req, res) => {
+router.post(['/upload', '/patient/documents/upload'], upload.single('file'), async (req, res) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ 
       success: false, 
