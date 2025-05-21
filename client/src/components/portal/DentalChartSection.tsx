@@ -27,9 +27,9 @@ const DentalChartSection = () => {
 
   // Fetch dental chart data
   const { data: chartData, isLoading, isError } = useQuery({
-    queryKey: ['/api/get-dental-chart'],
+    queryKey: ['/api/dental-chart'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/get-dental-chart');
+      const res = await apiRequest('GET', '/api/dental-chart');
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch dental chart');
@@ -44,7 +44,7 @@ const DentalChartSection = () => {
   // Save dental chart mutation
   const saveDentalChartMutation = useMutation({
     mutationFn: async (teethData: Record<string, any>) => {
-      const res = await apiRequest('POST', '/api/save-dental-chart', { teethData });
+      const res = await apiRequest('POST', '/api/dental-chart', { teethData });
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to save dental chart');
@@ -53,7 +53,7 @@ const DentalChartSection = () => {
     },
     onSuccess: (updatedChartData) => {
       setEditMode(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/get-dental-chart'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dental-chart'] });
       
       toast({
         title: 'Dental chart saved',
