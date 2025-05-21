@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { 
   FileText, 
-  Tooth, 
+  PencilRuler, 
   CheckCircle, 
   Clock, 
   CalendarDays, 
@@ -19,7 +19,8 @@ import {
   HelpCircle,
   User,
   Building,
-  Loader2
+  Loader2,
+  ArrowRight
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +37,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import TreatmentPlanViewer from '@/components/TreatmentPlanViewer';
+import { TreatmentPlanViewer } from '@/components/TreatmentPlanViewer';
 
 // Types
 interface TreatmentItem {
