@@ -137,48 +137,124 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
         
         // Process existing treatment plans if available
         if (treatmentPlansData.success && treatmentPlansData.treatmentPlans) {
+          console.log('Found existing treatment plans:', treatmentPlansData.treatmentPlans.length);
           allTreatmentPlans = [...treatmentPlansData.treatmentPlans];
         }
         
         // Convert quotes to treatment plans if available
         if (quotesData.success && quotesData.quotes) {
+          console.log('Found quotes to convert to treatment plans:', quotesData.quotes.length);
           const quoteBasedPlans = quotesData.quotes.map((quote: any) => {
-            // Map the quote data to the treatment plan structure
-            const treatmentItems = quote.treatments?.map((treatment: any, index: number) => ({
-              id: `${quote.id}-item-${index}`,
-              name: treatment.name,
-              description: treatment.description,
-              quantity: treatment.quantity || 1,
-              unitPrice: treatment.price,
-              totalPrice: treatment.price * (treatment.quantity || 1),
-              currency: quote.currency || 'GBP',
-              status: 'pending' as const
-            })) || [];
+            // Handle different formats of treatments data
+            let treatmentItems: TreatmentItem[] = [];
+            
+            if (quote.treatments && Array.isArray(quote.treatments)) {
+              treatmentItems = quote.treatments.map((treatment: any, index: number) => {
+                // Convert treatment prices which might be strings to numbers
+                const unitPrice = typeof treatment.price === 'string' 
+                  ? parseFloat(treatment.price) 
+                  : treatment.price || 0;
+                  
+                const quantity = treatment.quantity || 1;
+                
+                return {
+                  id: typeof treatment.id === 'number' ? `${treatment.id}` : (treatment.id || `${quote.id}-item-${index}`),
+                  name: treatment.name || 'Unnamed Treatment',
+                  description: treatment.description || '',
+                  quantity,
+                  unitPrice,
+                  totalPrice: unitPrice * quantity,
+                  currency: quote.currency || 'GBP',
+                  status: 'pending' as const
+                };
+              });
+            } else if (quote.treatmentDetails) {
+              // Alternative format for treatments
+              treatmentItems = Object.entries(quote.treatmentDetails).map(([name, details]: [string, any], index) => ({
+                id: `${quote.id}-item-${index}`,
+                name,
+                description: details.description || '',
+                quantity: details.quantity || 1,
+                unitPrice: typeof details.price === 'string' ? parseFloat(details.price) : details.price || 0,
+                totalPrice: (typeof details.price === 'string' ? parseFloat(details.price) : details.price || 0) * (details.quantity || 1),
+                currency: quote.currency || 'GBP',
+                status: 'pending' as const
+              }));
+            } else if (quote.selectedTreatments && Array.isArray(quote.selectedTreatments)) {
+              // Format from the quote selection flow
+              treatmentItems = quote.selectedTreatments.map((treatment: any, index: number) => {
+                const unitPrice = typeof treatment.price === 'string' 
+                  ? parseFloat(treatment.price) 
+                  : treatment.price || 0;
+                  
+                const quantity = treatment.quantity || 1;
+                
+                return {
+                  id: typeof treatment.id === 'number' ? `${treatment.id}` : (treatment.id || `${quote.id}-item-${index}`),
+                  name: treatment.name || treatment.treatmentName || 'Unnamed Treatment',
+                  description: treatment.description || '',
+                  quantity,
+                  unitPrice,
+                  totalPrice: unitPrice * quantity,
+                  currency: quote.currency || 'GBP',
+                  status: 'pending' as const
+                };
+              });
+            }
+            
+            // Calculate total amount from treatments if not provided
+            const calculatedTotal = treatmentItems.reduce((sum, item) => sum + item.totalPrice, 0);
+            
+            // Parse the total amount, handling string values
+            let totalAmount = calculatedTotal;
+            if (quote.totalAmount) {
+              totalAmount = typeof quote.totalAmount === 'string' 
+                ? parseFloat(quote.totalAmount) 
+                : quote.totalAmount;
+            }
+            
+            // Calculate deposit (20% of total by default)
+            let deposit = Math.round(totalAmount * 0.2);
+            if (quote.depositAmount) {
+              deposit = typeof quote.depositAmount === 'string' 
+                ? parseFloat(quote.depositAmount) 
+                : quote.depositAmount;
+            }
+            
+            // Get clinic information
+            const clinicId = quote.clinicId || quote.selectedClinicId || 0;
+            const clinicName = quote.clinicName || 'Selected Clinic';
             
             return {
               id: `quote-${quote.id}`,
               title: `Treatment Plan from Quote #${quote.quoteNumber || quote.id}`,
               description: quote.notes || 'Treatment plan based on your quote request',
-              clinicId: quote.clinicId,
-              clinicName: quote.clinicName,
+              clinicId,
+              clinicName,
               patientId: user.id,
-              patientName: user.email || "Patient",
+              patientName: user.firstName ? `${user.firstName} ${user.lastName || ''}` : (user.email || "Patient"),
               createdAt: quote.createdAt || new Date().toISOString(),
               updatedAt: quote.updatedAt || new Date().toISOString(),
               status: 'proposed' as const,
               paymentStatus: 'unpaid' as const,
-              totalAmount: typeof quote.totalAmount === 'string' ? parseFloat(quote.totalAmount) : (quote.totalAmount || treatmentItems.reduce((sum: number, item: any) => sum + item.totalPrice, 0)),
+              totalAmount,
               currency: quote.currency || 'GBP',
-              deposit: typeof quote.depositAmount === 'string' ? parseFloat(quote.depositAmount) : 
-                (quote.depositAmount || Math.round((typeof quote.totalAmount === 'string' ? parseFloat(quote.totalAmount) : quote.totalAmount || 0) * 0.2)),
+              deposit,
               depositPaid: false,
               items: treatmentItems,
-              doctorName: quote.doctorName,
-              doctorId: quote.doctorId,
+              doctorName: quote.doctorName || quote.dentistName || undefined,
+              doctorId: quote.doctorId || quote.dentistId || undefined,
               financingAvailable: true,
               pendingApproval: true,
               fromQuote: true,
-              quoteId: quote.id
+              quoteId: quote.id,
+              promoApplied: quote.promoCode ? true : false,
+              promoDetails: quote.promoCode ? {
+                code: quote.promoCode,
+                discount: quote.promoDiscount || 0,
+                type: quote.promoDiscountType || 'percentage'
+              } : undefined,
+              appointmentDate: quote.preferredDate || undefined
             };
           });
           
@@ -187,6 +263,12 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
         }
         
         if (allTreatmentPlans.length > 0) {
+          console.log('Setting treatment plans:', allTreatmentPlans.length);
+          // Sort treatment plans by date (newest first)
+          allTreatmentPlans.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          
           setTreatmentPlans(allTreatmentPlans);
           
           // Set the first treatment plan as selected
@@ -198,62 +280,6 @@ const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId }
             description: "You don't have any active treatment plans yet. Complete a quote to see it here.",
             variant: "default"
           });
-          // Initialize with empty array instead of sample data
-          const emptyPlans: TreatmentPlan[] = [
-            {
-              id: '1',
-              title: 'Full Dental Restoration Plan',
-              description: 'Comprehensive dental restoration including implants, crowns, and whitening.',
-              clinicId: 1,
-              clinicName: 'DentSpa Istanbul',
-              patientId: user.id,
-              patientName: user.email || "Patient",
-              createdAt: '2025-05-10T14:30:00Z',
-              updatedAt: '2025-05-15T09:45:00Z',
-              status: 'proposed',
-              paymentStatus: 'unpaid',
-              totalAmount: 4250,
-              currency: 'GBP',
-              deposit: 500,
-              depositPaid: false,
-              items: [
-                {
-                  id: '1',
-                  name: 'Dental Implant',
-                  description: 'Titanium implant with abutment',
-                  quantity: 3,
-                  unitPrice: 850,
-                  totalPrice: 2550,
-                  currency: 'GBP',
-                  status: 'pending'
-                },
-                {
-                  id: '2',
-                  name: 'Porcelain Crown',
-                  description: 'High-quality porcelain crown',
-                  quantity: 5,
-                  unitPrice: 280,
-                  totalPrice: 1400,
-                  currency: 'GBP',
-                  status: 'pending'
-                },
-                {
-                  id: '3',
-                  name: 'Professional Whitening',
-                  description: 'In-office teeth whitening session',
-                  quantity: 1,
-                  unitPrice: 300,
-                  totalPrice: 300,
-                  currency: 'GBP',
-                  status: 'pending'
-                }
-              ],
-              doctorName: 'Dr. Mehmet Yılmaz',
-              doctorId: '1',
-              financingAvailable: true,
-              pendingApproval: true
-            }
-          ];
           
           // Set empty treatment plans when no data is available
           setTreatmentPlans([]);
