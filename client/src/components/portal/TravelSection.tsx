@@ -862,9 +862,9 @@ const TravelSection: React.FC = () => {
                         selected={returnDate}
                         onSelect={setReturnDate}
                         initialFocus
-                        disabled={(date) => 
+                        disabled={(date: Date): boolean => 
                           date < new Date() || 
-                          (departureDate && date < departureDate)
+                          (departureDate !== undefined && date < departureDate)
                         }
                       />
                     </PopoverContent>
@@ -999,9 +999,9 @@ const TravelSection: React.FC = () => {
                       selected={checkOutDate}
                       onSelect={setCheckOutDate}
                       initialFocus
-                      disabled={(date) => 
+                      disabled={(date: Date): boolean => 
                         date < new Date() || 
-                        (checkInDate && date <= checkInDate)
+                        (checkInDate !== undefined && date <= checkInDate)
                       }
                     />
                   </PopoverContent>
