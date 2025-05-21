@@ -109,3 +109,32 @@ export function calculatePromotionDiscount(promotion: Promotion, originalAmount:
   
   return 0;
 }
+
+/**
+ * Check if a promotion is expiring soon
+ * @param promotion The promotion to check
+ * @param daysThreshold Number of days to consider as "soon" (default: 7)
+ * @returns Object with expiration status and days remaining
+ */
+export function checkPromotionExpiration(promotion: Promotion, daysThreshold: number = 7) {
+  if (!promotion || !promotion.end_date) {
+    return { isExpiringSoon: false, daysRemaining: 0 };
+  }
+  
+  const endDate = new Date(promotion.end_date);
+  const today = new Date();
+  
+  // Set both dates to midnight for accurate day calculation
+  endDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  
+  // Calculate difference in days
+  const differenceMs = endDate.getTime() - today.getTime();
+  const daysRemaining = Math.ceil(differenceMs / (1000 * 60 * 60 * 24));
+  
+  return {
+    isExpiringSoon: daysRemaining <= daysThreshold && daysRemaining >= 0,
+    isExpired: daysRemaining < 0,
+    daysRemaining: daysRemaining
+  };
+}

@@ -39,7 +39,7 @@ import {
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { CalendarIcon } from "lucide-react";
 import { 
-  Calendar, 
+  Calendar as CalendarIcon2, 
   ArrowLeft, 
   ArrowRight, 
   Search, 
@@ -62,8 +62,20 @@ import { useAppointments, AppointmentData, CreateAppointmentData } from '@/hooks
 import { useAuth } from '@/hooks/use-auth';
 import { useBookings } from '@/hooks/use-bookings';
 import { useToast } from '@/hooks/use-toast';
-import { useActiveClinicPromotions, Promotion, calculatePromotionDiscount } from '@/hooks/use-clinic-promotions';
+import { 
+  useActiveClinicPromotions, 
+  Promotion, 
+  calculatePromotionDiscount,
+  checkPromotionExpiration 
+} from '@/hooks/use-clinic-promotions';
 import { apiRequest } from '@/lib/queryClient';
+import { 
+  Percent, 
+  Package, 
+  AlarmClock, 
+  AlertCircle,
+  CalendarClock
+} from 'lucide-react';
 
 // Types for appointments
 interface Appointment {
@@ -1177,18 +1189,42 @@ const ClinicAppointmentsSection: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">No promotion</SelectItem>
-                    {availablePromotions.map((promo: Promotion) => (
-                      <SelectItem key={promo.id} value={promo.code}>
-                        <div className="flex items-center">
-                          {promo.type === 'discount' ? (
-                            <Percent className="h-3.5 w-3.5 mr-2 text-green-600" />
-                          ) : (
-                            <Package className="h-3.5 w-3.5 mr-2 text-primary" />
-                          )}
-                          {promo.title} - {promo.code}
-                        </div>
-                      </SelectItem>
-                    ))}
+                    {availablePromotions.map((promo: Promotion) => {
+                      const { isExpiringSoon, isExpired, daysRemaining } = checkPromotionExpiration(promo);
+                      return (
+                        <SelectItem key={promo.id} value={promo.code}>
+                          <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center">
+                              {promo.type === 'discount' ? (
+                                <Percent className="h-3.5 w-3.5 mr-2 text-green-600" />
+                              ) : (
+                                <Package className="h-3.5 w-3.5 mr-2 text-primary" />
+                              )}
+                              <span>{promo.title}</span>
+                            </div>
+                            <div className="flex items-center ml-2">
+                              {isExpiringSoon && !isExpired && (
+                                <div className="flex items-center text-amber-600 text-xs">
+                                  <AlarmClock className="h-3 w-3 mr-1" />
+                                  <span>{daysRemaining}d left</span>
+                                </div>
+                              )}
+                              {!isExpiringSoon && !isExpired && (
+                                <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                                  {promo.code}
+                                </Badge>
+                              )}
+                              {isExpired && (
+                                <div className="text-red-500 text-xs flex items-center">
+                                  <AlertCircle className="h-3 w-3 mr-1" />
+                                  <span>Expired</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               )}
@@ -1209,6 +1245,65 @@ const ClinicAppointmentsSection: React.FC = () => {
                     </Badge>
                   </div>
                   
+                  {/* Promotion validity period */}
+                  {selectedPromotion.start_date && selectedPromotion.end_date && (
+                    <div className="text-xs flex items-center justify-between mt-1">
+                      <div className="flex items-center text-gray-600">
+                        <CalendarClock className="h-3.5 w-3.5 mr-1" />
+                        <span>
+                          Valid: {new Date(selectedPromotion.start_date).toLocaleDateString()} - {new Date(selectedPromotion.end_date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      
+                      {/* Expiration warning if needed */}
+                      {(() => {
+                        const { isExpiringSoon, isExpired, daysRemaining } = checkPromotionExpiration(selectedPromotion);
+                        if (isExpired) {
+                          return (
+                            <Badge variant="destructive" className="text-xs">Expired</Badge>
+                          );
+                        } else if (isExpiringSoon) {
+                          return (
+                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50">
+                              <AlarmClock className="h-3 w-3 mr-1" />
+                              Expires in {daysRemaining} days
+                            </Badge>
+                          );
+                        }
+                        return null;
+                      })()}
+                    </div>
+                  )}
+                  
+                  {/* Warning message for expiring promotions */}
+                  {(() => {
+                    // Get promotion expiration info
+                    const { isExpiringSoon, isExpired, daysRemaining } = checkPromotionExpiration(selectedPromotion);
+                    
+                    // Get the selected appointment date if available, otherwise use today
+                    const apptDate = formData.date ? new Date(formData.date) : new Date();
+                    const endDate = selectedPromotion.end_date ? new Date(selectedPromotion.end_date) : new Date();
+                    
+                    // Check if appointment date is after promo expiration
+                    if (selectedPromotion.end_date && apptDate > endDate) {
+                      return (
+                        <div className="mt-2 bg-red-50 text-red-800 p-2 rounded-md text-xs flex items-center">
+                          <AlertCircle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                          <span>Warning: This promotion will expire before the appointment date.</span>
+                        </div>
+                      );
+                    } else if (isExpiringSoon && !isExpired) {
+                      return (
+                        <div className="mt-2 bg-amber-50 text-amber-800 p-2 rounded-md text-xs flex items-center">
+                          <AlertTriangle className="h-3.5 w-3.5 mr-1.5 flex-shrink-0" />
+                          <span>This promotion expires soon. Consider offering an alternative for later appointments.</span>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* Pricing details */}
                   {selectedPromoDiscount > 0 && (
                     <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-green-100">
                       <span className="text-gray-600">Original price:</span>
@@ -1230,6 +1325,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                     </div>
                   )}
                   
+                  {/* Package details if applicable */}
                   {selectedPromotion.type === 'package' && selectedPromotion.packageData && (
                     <div className="mt-2 pt-2 border-t border-green-100">
                       <div className="text-xs font-medium text-gray-600 mb-1">
