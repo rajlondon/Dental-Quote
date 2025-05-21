@@ -130,15 +130,18 @@ export async function createDocument(data: {
     // Create document record in database
     const documentData = {
       userId,
-      fileName,
-      fileKey,
+      filename: fileName, // Match the field name to what the files table expects
+      originalName: fileName,
+      mimetype: fileType,
+      fileType: category,
+      fileCategory: category,
       fileSize,
-      fileType,
-      category,
-      notes: notes || null,
+      fileUrl: fileKey, // Store the S3 key in the fileUrl field
+      description: notes || null,
       treatmentPlanId: treatmentPlanId || null,
-      uploadDate: new Date(),
-      isSharedWithClinic: true // Default to shared with clinic
+      visibility: 'clinic', // Default to shared with clinic
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
     
     let document;
@@ -177,7 +180,7 @@ export async function createDocument(data: {
  */
 export async function deleteDocument(documentId: string, userId: number) {
   try {
-    const document = await storage.getDocumentById(documentId);
+    const document = await storage.getFile(parseInt(documentId));
     
     if (!document) {
       throw new Error('Document not found');
@@ -189,9 +192,13 @@ export async function deleteDocument(documentId: string, userId: number) {
     }
     
     // Delete file from S3 or local storage
-    if (document.fileKey) {
+    if (document.fileUrl) {
       try {
-        await deleteFromS3(document.fileKey);
+        // Extract the file key from the URL if possible
+        const urlParts = document.fileUrl.split('/');
+        const fileKey = urlParts[urlParts.length - 1];
+        
+        await deleteFromS3(fileKey);
       } catch (error) {
         console.error('Failed to delete file:', error);
         // Continue with database deletion even if file deletion fails
@@ -199,9 +206,9 @@ export async function deleteDocument(documentId: string, userId: number) {
     }
     
     // Delete document record from database
-    const success = await storage.deleteDocument(documentId);
+    await storage.deleteFile(parseInt(documentId));
     
-    return success;
+    return true;
   } catch (error) {
     console.error('Document deletion error:', error);
     throw error;
@@ -222,7 +229,7 @@ export async function updateDocumentMetadata(
   }
 ) {
   try {
-    const document = await storage.getDocumentById(documentId);
+    const document = await storage.getFile(parseInt(documentId));
     
     if (!document) {
       throw new Error('Document not found');
@@ -233,8 +240,27 @@ export async function updateDocumentMetadata(
       throw new Error('Not authorized to update this document');
     }
     
+    // Prepare updates in the format expected by updateFile
+    const fileUpdates: Partial<File> = {};
+    
+    if (updates.notes) {
+      fileUpdates.description = updates.notes;
+    }
+    
+    if (updates.category) {
+      fileUpdates.fileCategory = updates.category;
+    }
+    
+    if (updates.treatmentPlanId !== undefined) {
+      fileUpdates.treatmentPlanId = updates.treatmentPlanId;
+    }
+    
+    if (updates.isSharedWithClinic !== undefined) {
+      fileUpdates.visibility = updates.isSharedWithClinic ? 'clinic' : 'private';
+    }
+    
     // Update document
-    const updatedDocument = await storage.updateDocument(documentId, updates);
+    const updatedDocument = await storage.updateFile(parseInt(documentId), fileUpdates);
     
     return updatedDocument;
   } catch (error) {

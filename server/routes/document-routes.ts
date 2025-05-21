@@ -102,7 +102,7 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const userId = req.user.id;
     const file = req.file;
-    const { documentType, notes } = req.body;
+    const { documentType, notes, treatmentPlanId } = req.body;
     
     if (!file) {
       return res.status(400).json({
@@ -120,68 +120,17 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       });
     }
     
-    let document;
-    
-    // Use S3 in production if configured
-    if (isS3Configured()) {
-      // Upload to S3
-      const { fileKey, fileUrl } = await uploadToS3(
-        file.buffer,
-        file.originalname,
-        file.mimetype,
-        userId,
-        documentType || 'medical'
-      );
-      
-      // Create document record
-      document = {
-        id: uuidv4(),
-        userId,
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        documentType: documentType || 'medical',
-        notes: notes || null,
-        fileKey,
-        fileUrl,
-        isPublic: false,
-        uploadedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      
-      // In a real application, save this document to the database
-      // await storage.createDocument(document);
-    } else {
-      // For development, save locally
-      const fileId = uuidv4();
-      const fileExtension = file.originalname.split('.').pop() || '';
-      const fileName = `${fileId}.${fileExtension}`;
-      
-      // Create user-specific directory
-      const userDir = path.join(uploadDir, String(userId), documentType || 'medical');
-      if (!fs.existsSync(userDir)) {
-        fs.mkdirSync(userDir, { recursive: true });
-      }
-      
-      // Save file
-      const filePath = path.join(userDir, fileName);
-      fs.writeFileSync(filePath, file.buffer);
-      
-      // Create document record
-      document = {
-        id: fileId,
-        userId,
-        fileName: file.originalname,
-        fileType: file.mimetype,
-        fileSize: file.size,
-        documentType: documentType || 'medical',
-        notes: notes || null,
-        filePath: `/uploads/${userId}/${documentType || 'medical'}/${fileName}`,
-        isPublic: false,
-        uploadedAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-    }
+    // Use the document service to create the document
+    const document = await createDocument({
+      userId,
+      fileName: file.originalname,
+      fileBuffer: file.buffer,
+      fileSize: file.size,
+      fileType: file.mimetype,
+      documentType: documentType || 'medical',
+      notes: notes || null,
+      treatmentPlanId: treatmentPlanId ? parseInt(treatmentPlanId) : undefined
+    });
     
     return res.json({
       success: true,
@@ -212,9 +161,8 @@ router.get('/patient/documents/:id', async (req, res) => {
     const userId = req.user.id;
     const documentId = req.params.id;
     
-    // For development, get from sample documents
-    const sampleDocuments = generateSampleDocuments(userId);
-    const document = sampleDocuments.find(doc => doc.id === documentId);
+    // Get the document from the database
+    const document = await storage.getFile(parseInt(documentId));
     
     if (!document) {
       return res.status(404).json({
@@ -223,12 +171,33 @@ router.get('/patient/documents/:id', async (req, res) => {
       });
     }
     
+    // Security check - ensure user owns the document
+    if (document.userId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to access this document'
+      });
+    }
+    
     // Generate download URL if S3 is configured
-    let documentWithUrl = { ...document };
-    if (isS3Configured() && document.fileKey) {
+    let documentWithUrl = { 
+      id: document.id,
+      userId: document.userId,
+      fileName: document.filename || document.originalName,
+      fileSize: document.fileSize,
+      fileType: document.mimetype || document.fileType,
+      category: document.fileCategory || document.fileType,
+      notes: document.description || null,
+      treatmentPlanId: document.treatmentPlanId,
+      uploadDate: document.createdAt,
+      isSharedWithClinic: document.visibility === 'clinic',
+      downloadUrl: null
+    };
+    
+    if (isS3Configured() && document.fileUrl) {
       try {
-        const fileUrl = await getS3DownloadUrl(document.fileKey);
-        documentWithUrl.fileUrl = fileUrl;
+        const downloadUrl = await getS3DownloadUrl(document.fileUrl);
+        documentWithUrl.downloadUrl = downloadUrl;
       } catch (error) {
         console.error(`Error generating download URL for document ${document.id}:`, error);
       }
@@ -263,20 +232,41 @@ router.delete('/patient/documents/:id', async (req, res) => {
     const userId = req.user.id;
     const documentId = req.params.id;
     
-    // For development
-    // In production, this would delete from S3 and the database
+    // Use document service to handle deletion
+    const result = await deleteDocument(documentId, userId);
     
-    return res.json({
-      success: true,
-      message: 'Document deleted successfully'
-    });
+    if (result) {
+      return res.json({
+        success: true,
+        message: 'Document deleted successfully'
+      });
+    } else {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found or could not be deleted'
+      });
+    }
   } catch (error) {
     console.error('Error deleting document:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Failed to delete document',
-      error: error.message
-    });
+    
+    // Return appropriate error response based on error type
+    if (error.message === 'Document not found') {
+      return res.status(404).json({
+        success: false,
+        message: 'Document not found'
+      });
+    } else if (error.message === 'Not authorized to delete this document') {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to delete this document'
+      });
+    } else {
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to delete document',
+        error: error.message
+      });
+    }
   }
 });
 
