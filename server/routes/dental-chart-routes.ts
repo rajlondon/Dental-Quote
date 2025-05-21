@@ -89,7 +89,10 @@ export const setupDentalChartRoutes = () => {
       let chartId: string | null = null;
       let existingChart: any = null;
       
-      for (const [id, chart] of dentalChartStorage.entries()) {
+      // Use Array.from to avoid compatibility issues
+      const entries = Array.from(dentalChartStorage.entries());
+      for (let i = 0; i < entries.length; i++) {
+        const [id, chart] = entries[i];
         if (chart.userId === userId || chart.patientEmail === user.email) {
           chartId = id;
           existingChart = chart;
