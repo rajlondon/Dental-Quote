@@ -44,6 +44,8 @@ import promoCodeRoutes from "./routes/promo-code-routes";
 import treatmentPackageRoutes from "./routes/treatment-package-routes";
 import clinicRoutes from "./routes/clinic-routes";
 import clinicPromotionRouter from "./routes/clinic-promotion-routes";
+import patientTreatmentPlanRouter from "./routes/treatment-plan-routes";
+import documentRouter from "./routes/document-routes";
 import { initializeSpecialOfferImageCache } from "./utils/special-offers-cache-init";
 import { setupTreatmentMapperApi } from "./treatment-mapper-api";
 import { registerClinicRoutes } from "./clinic-api";
@@ -322,6 +324,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register booking and appointment routes
   app.use('/api/bookings', bookingRoutes);
   app.use('/api', appointmentRoutes);
+  
+  // Register patient treatment plan routes
+  app.use('/api', patientTreatmentPlanRouter);
+  
+  // Register document management routes for medical files
+  app.use('/api', documentRouter);
   
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
