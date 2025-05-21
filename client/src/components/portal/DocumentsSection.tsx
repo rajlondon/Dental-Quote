@@ -189,7 +189,8 @@ VAT No: GB123456789
 const DocumentsSection: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   
   // Fetch real documents from API/S3
@@ -197,28 +198,31 @@ const DocumentsSection: React.FC = () => {
     const fetchDocuments = async () => {
       if (!user?.id) return;
       
+      setLoading(true);
+      
       try {
         const result = await getUserDocuments();
         if (result.success && result.documents) {
           // Transform API documents to our format
           const fetchedDocs = result.documents.map((doc: any) => ({
-            id: doc.id || doc.fileKey,
-            name: doc.fileName,
-            type: doc.documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
-            format: doc.fileName.split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
-            size: doc.size || `${Math.round(doc.fileSize / 1024)} KB`,
-            uploadedBy: doc.uploadedBy || 'you',
-            uploadedAt: doc.uploadedAt || doc.createdAt,
-            notes: doc.notes,
-            url: doc.fileUrl,
-            fileKey: doc.fileKey,
-            locked: doc.locked || false
+            id: String(doc.id) || doc.fileKey,
+            name: doc.fileName || doc.filename || doc.originalName,
+            type: doc.category || doc.fileCategory || doc.fileType || 'other' as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
+            format: (doc.fileName || doc.filename || doc.originalName || '').split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
+            size: doc.size || (doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '0 KB'),
+            uploadedBy: 'you',
+            uploadedAt: doc.uploadDate || doc.createdAt || new Date().toISOString(),
+            notes: doc.notes || doc.description || '',
+            url: doc.downloadUrl || doc.fileUrl,
+            fileKey: doc.fileKey || doc.fileUrl,
+            locked: doc.isProtected || doc.isLocked || false,
+            treatmentPlanId: doc.treatmentPlanId,
+            isSharedWithClinic: doc.isSharedWithClinic || doc.visibility === 'clinic' || false
           }));
           
-          if (fetchedDocs.length > 0) {
-            // Combine with mock documents for now, in production would only use real data
-            setDocuments([...fetchedDocs, ...mockDocuments]);
-          }
+          setDocuments(fetchedDocs);
+        } else {
+          setDocuments([]);
         }
       } catch (error) {
         console.error('Error fetching documents:', error);
@@ -227,6 +231,9 @@ const DocumentsSection: React.FC = () => {
           description: "Could not retrieve your documents. Please try again later.",
           variant: "destructive"
         });
+        setDocuments([]);
+      } finally {
+        setLoading(false);
       }
     };
     
@@ -302,7 +309,7 @@ const DocumentsSection: React.FC = () => {
         updateProgress(10);
         
         try {
-          // Upload the file to S3
+          // Upload the file to S3 through our secure service
           const uploadResult = await uploadFileToS3(
             file,
             documentType as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
@@ -323,7 +330,9 @@ const DocumentsSection: React.FC = () => {
               uploadedAt: new Date().toISOString(),
               notes: documentNotes || undefined,
               url: uploadResult.fileUrl,
-              fileKey: uploadResult.fileKey
+              fileKey: uploadResult.fileKey,
+              treatmentPlanId: null,
+              isSharedWithClinic: false
             };
             
             uploadedDocuments.push(newDocument);
@@ -351,7 +360,7 @@ const DocumentsSection: React.FC = () => {
       
       // Add the successfully uploaded documents to the state
       if (uploadedDocuments.length > 0) {
-        setDocuments([...documents, ...uploadedDocuments]);
+        setDocuments(prev => [...prev, ...uploadedDocuments]);
         
         toast({
           title: "Documents Uploaded",

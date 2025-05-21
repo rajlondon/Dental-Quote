@@ -283,34 +283,21 @@ router.get('/patient/treatment-plans/:planId/documents', async (req, res) => {
 
   try {
     const userId = req.user.id;
-    const planId = req.params.planId;
+    const planId = parseInt(req.params.planId);
     
-    // For development, get subset of sample documents
-    const sampleDocuments = generateSampleDocuments(userId);
-    const documents = sampleDocuments.slice(0, 2); // Just use first two samples for this plan
-    
-    // Generate download URLs if S3 is configured
-    let documentsWithUrls = [...documents];
-    if (isS3Configured()) {
-      documentsWithUrls = await Promise.all(
-        documents.map(async (doc) => {
-          if (doc.fileKey) {
-            try {
-              const fileUrl = await getS3DownloadUrl(doc.fileKey);
-              return { ...doc, fileUrl };
-            } catch (error) {
-              console.error(`Error generating download URL for document ${doc.id}:`, error);
-              return doc;
-            }
-          }
-          return doc;
-        })
-      );
+    if (isNaN(planId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid treatment plan ID'
+      });
     }
+    
+    // Use document service to get treatment plan documents
+    const documents = await getTreatmentPlanDocuments(planId, userId);
     
     return res.json({
       success: true,
-      documents: documentsWithUrls
+      documents
     });
   } catch (error) {
     console.error(`Error fetching treatment plan documents:`, error);
