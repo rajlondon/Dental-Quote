@@ -1,4 +1,7 @@
 import { Router, Request, Response } from 'express';
+import { db } from '../db';
+import { quoteRequests } from '@shared/schema';
+import { eq } from 'drizzle-orm';
 
 // Simple in-memory storage for dental charts
 const dentalChartStorage = new Map<string, any>();
@@ -33,7 +36,47 @@ export const setupDentalChartRoutes = () => {
         }
       }
       
-      // If no chart exists, create a placeholder to avoid "failed to load"
+      // If no chart exists in memory, try to get it from quote data
+      if (!userChart) {
+        try {
+          // Look up quotes from this user to find dental chart data
+          const userQuotes = await db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+          
+          // Find the most recent quote with dental chart data
+          let quoteWithChart = null;
+          for (const quote of userQuotes) {
+            if (quote.dentalChartData && 
+                typeof quote.dentalChartData === 'object' && 
+                Object.keys(quote.dentalChartData).length > 0) {
+              quoteWithChart = quote;
+              break;
+            }
+          }
+          
+          if (quoteWithChart && quoteWithChart.dentalChartData) {
+            console.log(`Found dental chart data in quote for user ${userId}`);
+            // Create a new chart using the quote dental chart data
+            const newChartId = `chart_${userId}_${Date.now()}`;
+            userChart = {
+              chartId: newChartId,
+              patientName: user.email || 'Patient',
+              patientEmail: user.email,
+              createdAt: new Date().toISOString(),
+              lastUpdated: new Date().toISOString(),
+              userId: userId,
+              teethData: quoteWithChart.dentalChartData
+            };
+            
+            // Store the chart for future use
+            dentalChartStorage.set(newChartId, userChart);
+          }
+        } catch (dbError) {
+          console.error('Error fetching quote data for dental chart:', dbError);
+          // Continue with empty chart if there's a database error
+        }
+      }
+      
+      // If still no chart exists, create an empty placeholder
       if (!userChart) {
         const newChartId = `chart_${userId}_${Date.now()}`;
         userChart = {
@@ -116,8 +159,37 @@ export const setupDentalChartRoutes = () => {
         createdAt: existingChart?.createdAt || new Date().toISOString()
       };
       
-      // Store the updated chart
+      // Store the updated chart in memory
       dentalChartStorage.set(chartId, updatedChart);
+      
+      // Also update the dental chart data in the user's latest quote
+      try {
+        // Find the user's most recent quote
+        const userQuotes = await db.select().from(quoteRequests).where(eq(quoteRequests.userId, userId));
+        
+        if (userQuotes.length > 0) {
+          // Sort by creation date to get the most recent quote
+          const sortedQuotes = userQuotes.sort((a, b) => {
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          });
+          
+          const latestQuoteId = sortedQuotes[0].id;
+          
+          // Update the dental chart data in the latest quote
+          await db
+            .update(quoteRequests)
+            .set({
+              dentalChartData: teethData,
+              updatedAt: new Date()
+            })
+            .where(eq(quoteRequests.id, latestQuoteId));
+          
+          console.log(`Updated dental chart data in quote ${latestQuoteId} for user ${userId}`);
+        }
+      } catch (dbError) {
+        console.error('Error updating dental chart data in quote:', dbError);
+        // Continue even if there's a database error - the in-memory chart is still updated
+      }
       
       console.log(`Dental chart data saved for user ${userId}`);
       

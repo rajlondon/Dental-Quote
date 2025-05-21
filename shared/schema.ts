@@ -109,6 +109,8 @@ export const quoteRequests = pgTable("quote_requests", {
   // Quote tracking
   status: varchar("status", { length: 50 }).default("pending").notNull(), // pending, sent, approved, declined, converted
   quoteData: json("quote_data"),
+  // Dental chart data from the interactive dental chart
+  dentalChartData: json("dental_chart_data"),
   // Special offer data
   specialOffer: json("special_offer"),
   // Selected clinic
