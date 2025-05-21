@@ -39,7 +39,14 @@ interface Appointment {
   directions?: string;
 }
 
-export const AppointmentsSection: React.FC = () => {
+// Format date groups for displaying appointments by date
+interface DateGroup {
+  date: string;
+  formattedDate: string;
+  appointments: Appointment[];
+}
+
+const AppointmentsSection: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -67,13 +74,17 @@ export const AppointmentsSection: React.FC = () => {
         
         if (data.success && data.appointments && data.appointments.length > 0) {
           // Process real appointment data from the API
-          const processedAppointments = data.appointments.map((appt: any) => ({
-            ...appt,
-            // Ensure status is one of the valid status types
-            status: ['confirmed', 'pending', 'cancelled', 'completed'].includes(appt.status) 
-              ? appt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed'
-              : 'pending'
-          }));
+          const processedAppointments: Appointment[] = data.appointments.map((appt: any) => {
+            // Make sure we're working with a valid status that matches our type
+            let status: 'confirmed' | 'pending' | 'cancelled' | 'completed' = 'pending';
+            if (['confirmed', 'pending', 'cancelled', 'completed'].includes(appt.status)) {
+              status = appt.status as 'confirmed' | 'pending' | 'cancelled' | 'completed';
+            }
+            return {
+              ...appt,
+              status
+            };
+          });
           setAppointments(processedAppointments);
         } else {
           // If no appointments found, set empty array
@@ -94,7 +105,6 @@ export const AppointmentsSection: React.FC = () => {
     };
 
     fetchAppointments();
-    // We want this to run once when the component mounts and anytime the user changes
   }, [user?.id, t, toast]);
 
   // Filter appointments based on their status and date
@@ -158,11 +168,15 @@ export const AppointmentsSection: React.FC = () => {
       
       if (res.ok) {
         // Update the local appointment status
-        const updatedAppointments = appointments.map(appointment => 
-          appointment.id === selectedAppointment.id
-            ? { ...appointment, status: 'cancelled' }
-            : appointment
-        );
+        const updatedAppointments: Appointment[] = appointments.map(appointment => {
+          if (appointment.id === selectedAppointment.id) {
+            return {
+              ...appointment,
+              status: 'cancelled' as 'confirmed' | 'pending' | 'cancelled' | 'completed'
+            };
+          }
+          return appointment;
+        });
         
         setAppointments(updatedAppointments);
         setShowCancelDialog(false);
@@ -193,7 +207,7 @@ export const AppointmentsSection: React.FC = () => {
   };
 
   // Group appointments by date for better organization
-  const groupAppointmentsByDate = (appointments: Appointment[]) => {
+  const groupAppointmentsByDate = (appointments: Appointment[]): DateGroup[] => {
     const grouped: Record<string, Appointment[]> = {};
     
     appointments.forEach(appointment => {
@@ -341,7 +355,6 @@ export const AppointmentsSection: React.FC = () => {
                         ? t('patient.appointments.no_appointments_for_date', 'No appointments for selected date')
                         : t('patient.appointments.no_upcoming', 'No upcoming appointments')}
                     </p>
-                    {/* Add a button to book a new appointment if needed */}
                   </CardContent>
                 </Card>
               ) : (
