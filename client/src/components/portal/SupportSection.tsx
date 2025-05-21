@@ -48,9 +48,9 @@ const SupportSection = () => {
 
   // Fetch all support tickets
   const { data: tickets, isLoading, isError } = useQuery({
-    queryKey: ['/api/patient/support/tickets'],
+    queryKey: ['/api/support/tickets'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/patient/support/tickets');
+      const res = await apiRequest('GET', '/api/support/tickets');
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to fetch support tickets');
@@ -62,7 +62,7 @@ const SupportSection = () => {
   // Create new ticket mutation
   const createTicketMutation = useMutation({
     mutationFn: async (newTicket: { subject: string; message: string; category: string }) => {
-      const res = await apiRequest('POST', '/api/patient/support/ticket', newTicket);
+      const res = await apiRequest('POST', '/api/support/ticket', newTicket);
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to create ticket');
@@ -96,7 +96,7 @@ const SupportSection = () => {
   // Reply to ticket mutation
   const replyToTicketMutation = useMutation({
     mutationFn: async ({ ticketId, message }: { ticketId: string; message: string }) => {
-      const res = await apiRequest('POST', `/api/patient/support/ticket/${ticketId}/reply`, { message });
+      const res = await apiRequest('POST', `/api/support/ticket/${ticketId}/reply`, { message });
       const data = await res.json();
       if (!data.success) {
         throw new Error(data.error || 'Failed to send reply');
