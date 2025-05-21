@@ -393,17 +393,38 @@ const DocumentsSection: React.FC = () => {
   };
   
   // Function to handle document deletion
-  const handleDeleteDocument = () => {
+  const handleDeleteDocument = async () => {
     if (!selectedDocument) return;
     
-    setDocuments(documents.filter(doc => doc.id !== selectedDocument.id));
-    setSelectedDocument(null);
-    setShowDeleteConfirm(false);
-    
-    toast({
-      title: "Document Deleted",
-      description: `${selectedDocument.name} has been deleted.`,
-    });
+    try {
+      // Call the API to delete the document from cloud storage
+      const result = await deleteDocument(selectedDocument.id);
+      
+      if (result.success) {
+        // Remove the document from local state
+        setDocuments(prevDocs => prevDocs.filter(doc => doc.id !== selectedDocument.id));
+        setSelectedDocument(null);
+        setShowDeleteConfirm(false);
+        
+        toast({
+          title: "Document Deleted",
+          description: `${selectedDocument.name} has been securely deleted from storage.`,
+        });
+      } else {
+        toast({
+          title: "Deletion Failed",
+          description: result.error || "Failed to delete document. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting document:', error);
+      toast({
+        title: "Deletion Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+        variant: "destructive"
+      });
+    }
   };
   
   // Function to format date
@@ -491,6 +512,14 @@ const DocumentsSection: React.FC = () => {
                 <TabsTrigger value="other">{t('portal.documents.other_tab', 'Other')}</TabsTrigger>
               </TabsList>
             </div>
+            
+            {/* Loading state */}
+            {loading && (
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-sm text-muted-foreground">{t('portal.documents.loading', 'Loading your secure documents...')}</p>
+              </div>
+            )}
             
             {['all', 'x-rays', 'treatment-plans', 'medical', 'other'].map(tab => (
               <TabsContent key={tab} value={tab} className="flex-grow mt-0">
