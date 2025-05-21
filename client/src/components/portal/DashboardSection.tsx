@@ -389,7 +389,11 @@ const DashboardSection: React.FC = () => {
                 <h3 className="font-medium">{t("portal.dashboard.flight", "Flight")}</h3>
               </div>
               <p className="text-sm">{treatmentOverview.trip.flight}</p>
-              <Button variant="link" className="px-0 py-1 h-auto text-sm">
+              <Button 
+                variant="link" 
+                className="px-0 py-1 h-auto text-sm"
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate-section', { detail: 'travel' }))}
+              >
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
             </div>
@@ -402,7 +406,11 @@ const DashboardSection: React.FC = () => {
                 <h3 className="font-medium">{t("portal.dashboard.accommodation", "Accommodation")}</h3>
               </div>
               <p className="text-sm">{treatmentOverview.trip.hotel}</p>
-              <Button variant="link" className="px-0 py-1 h-auto text-sm">
+              <Button 
+                variant="link" 
+                className="px-0 py-1 h-auto text-sm"
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate-section', { detail: 'travel' }))}
+              >
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
             </div>
