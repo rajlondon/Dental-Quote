@@ -631,7 +631,9 @@ const ClinicAppointmentsSection: React.FC = () => {
                                     Promo: {appointment.promotionCode}
                                   </Badge>
                                 )}
-                                {appointment.promotionDiscount > 0 && (
+                              </div>
+                              <div className="flex flex-col">
+                                {appointment.promotionDiscount && appointment.promotionDiscount > 0 && (
                                   <div className="text-xs text-green-600 font-medium mt-1">
                                     {appointment.promotionDiscount}€ discount applied
                                   </div>
