@@ -140,7 +140,24 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
   const handleToothClick = (toothNumber: number) => {
     if (editMode) {
       setSelectedTooth(toothNumber);
-      setIsToothModalOpen(true);
+      // Directly update the tooth condition for now (simpler interaction)
+      const currentCondition = currentChartData[toothNumber.toString()]?.status || 'healthy';
+      const nextCondition = currentCondition === 'healthy' ? 'decay' : 
+                           currentCondition === 'decay' ? 'crown' : 'healthy';
+      
+      setCurrentChartData(prev => ({
+        ...prev,
+        [toothNumber.toString()]: {
+          ...prev[toothNumber.toString()],
+          status: nextCondition,
+          lastUpdated: new Date().toISOString()
+        }
+      }));
+      
+      toast({
+        title: `Tooth #${toothNumber} Updated`,
+        description: `Condition changed to: ${nextCondition}`,
+      });
     }
   };
 
