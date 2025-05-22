@@ -36,7 +36,7 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       description: 'Good condition'
     },
     decay: { 
-      color: '#f59e0b', 
+      color: '#fbbf24', 
       bgColor: '#fef3c7',
       borderColor: '#d97706',
       icon: AlertTriangle,
@@ -60,9 +60,9 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       description: 'Needs/has crown'
     },
     missing: { 
-      color: '#6b7280', 
+      color: '#9ca3af', 
       bgColor: '#f9fafb',
-      borderColor: '#9ca3af',
+      borderColor: '#6b7280',
       icon: XCircle,
       label: 'Missing',
       description: 'Tooth missing'
@@ -90,6 +90,38 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       icon: XCircle,
       label: 'Extraction',
       description: 'Needs extraction'
+    },
+    bridge: { 
+      color: '#06b6d4', 
+      bgColor: '#ecfeff',
+      borderColor: '#0891b2',
+      icon: Square,
+      label: 'Bridge',
+      description: 'Bridge treatment'
+    },
+    veneer: { 
+      color: '#10b981', 
+      bgColor: '#ecfdf5',
+      borderColor: '#059669',
+      icon: Square,
+      label: 'Veneer',
+      description: 'Veneer treatment'
+    },
+    whitening: { 
+      color: '#f3f4f6', 
+      bgColor: '#f9fafb',
+      borderColor: '#e5e7eb',
+      icon: CheckCircle,
+      label: 'Whitening',
+      description: 'Whitening treatment'
+    },
+    chipped: { 
+      color: '#fcd34d', 
+      bgColor: '#fefce8',
+      borderColor: '#f59e0b',
+      icon: AlertTriangle,
+      label: 'Chipped',
+      description: 'Chipped tooth'
     }
   };
 

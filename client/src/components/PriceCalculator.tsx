@@ -954,12 +954,11 @@ export default function PriceCalculator() {
                               Click on teeth to indicate conditions (chipped, painful, missing) or desired treatments (implants, crowns, veneers).
                             </p>
                             <DentalChart 
-                              onTeethUpdate={(teethData) => {
+                              onChange={(teethData) => {
                                 console.log('Teeth data updated:', teethData);
-                                // Here you can store the teeth data in your form or state
-                                // For example, you could add it to localStorage or your form data
                                 localStorage.setItem('dentalChartData', JSON.stringify(teethData));
                               }}
+                              editable={true}
                             />
                           </div>
                           
