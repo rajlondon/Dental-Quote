@@ -6,7 +6,7 @@ import { Loader2, AlertCircle, Pencil, Save, RefreshCcw, Info } from 'lucide-rea
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-import { DentalChart } from '@/components/DentalChart';
+import { DentalChart3D } from '@/components/DentalChart3D';
 import { toast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -258,10 +258,10 @@ const DentalChartSection = () => {
               </Alert>
             )}
             
-            <DentalChart 
-              initialData={currentChartData}
-              onChange={handleTeethDataChange}
-              editable={editMode}
+            <DentalChart3D 
+              initialTeeth={currentChartData?.teeth || []}
+              onTeethUpdate={handleTeethDataChange}
+              readOnly={!editMode}
             />
             
             {lastSyncDate && (
