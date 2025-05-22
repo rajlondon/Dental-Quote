@@ -277,41 +277,59 @@ const DentalChartSection = () => {
                 {/* Center tongue area */}
                 <div className="absolute w-[40%] h-[25%] bg-[#e57373] rounded-[100%/50%] z-5"></div>
                 
-                {/* Upper Teeth Row */}
+                {/* Upper Teeth Row - Interactive with edit mode */}
                 <div className="absolute z-20" style={{ top: '25%', transform: 'translateY(-50%)' }}>
                   <div className="flex justify-center space-x-1">
-                    {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((toothNum, index) => (
-                      <div
-                        key={toothNum}
-                        className="w-4 h-5 bg-white border border-gray-400 rounded-sm cursor-pointer hover:bg-blue-100 transition-colors flex items-center justify-center"
-                        title={`Tooth #${toothNum}`}
-                        style={{ fontSize: '8px', fontWeight: 'bold' }}
-                      >
-                        {toothNum}
-                      </div>
-                    ))}
+                    {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((toothNum, index) => {
+                      const toothData = currentChartData?.[toothNum.toString()];
+                      const hasIssue = toothData?.status && toothData.status !== 'healthy';
+                      return (
+                        <div
+                          key={toothNum}
+                          className={`w-4 h-5 border border-gray-400 rounded-sm cursor-pointer transition-colors flex items-center justify-center ${
+                            hasIssue 
+                              ? 'bg-red-200 hover:bg-red-300' 
+                              : 'bg-white hover:bg-blue-100'
+                          } ${editMode ? 'hover:scale-110' : ''}`}
+                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
+                          style={{ fontSize: '8px', fontWeight: 'bold' }}
+                          onClick={() => editMode && handleToothClick?.(toothNum.toString())}
+                        >
+                          {toothNum}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 
-                {/* Lower Teeth Row */}
+                {/* Lower Teeth Row - Interactive with edit mode */}
                 <div className="absolute z-20" style={{ top: '75%', transform: 'translateY(-50%)' }}>
                   <div className="flex justify-center space-x-1">
-                    {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((toothNum, index) => (
-                      <div
-                        key={toothNum}
-                        className="w-4 h-5 bg-white border border-gray-400 rounded-sm cursor-pointer hover:bg-blue-100 transition-colors flex items-center justify-center"
-                        title={`Tooth #${toothNum}`}
-                        style={{ fontSize: '8px', fontWeight: 'bold' }}
-                      >
-                        {toothNum}
-                      </div>
-                    ))}
+                    {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((toothNum, index) => {
+                      const toothData = currentChartData?.[toothNum.toString()];
+                      const hasIssue = toothData?.status && toothData.status !== 'healthy';
+                      return (
+                        <div
+                          key={toothNum}
+                          className={`w-4 h-5 border border-gray-400 rounded-sm cursor-pointer transition-colors flex items-center justify-center ${
+                            hasIssue 
+                              ? 'bg-red-200 hover:bg-red-300' 
+                              : 'bg-white hover:bg-blue-100'
+                          } ${editMode ? 'hover:scale-110' : ''}`}
+                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
+                          style={{ fontSize: '8px', fontWeight: 'bold' }}
+                          onClick={() => editMode && handleToothClick?.(toothNum.toString())}
+                        >
+                          {toothNum}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
                 
                 {/* Mouth Label */}
                 <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-sm text-gray-600 font-medium">
-                  Interactive Dental Chart - Click teeth to edit
+                  {editMode ? 'Click teeth to edit conditions' : 'Professional Dental Chart'}
                 </div>
               </div>
               
