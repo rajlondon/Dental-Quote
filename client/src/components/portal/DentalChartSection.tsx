@@ -1,21 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, Pencil, Save, RefreshCcw, Info } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-
-import { toast } from '@/hooks/use-toast';
 import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import { 
+  Button 
+} from '@/components/ui/button';
+import { 
+  Alert, 
+  AlertDescription, 
+  AlertTitle 
+} from '@/components/ui/alert';
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from '@/components/ui/tooltip';
+import { 
+  Loader2, 
+  RefreshCcw, 
+  Save, 
+  Edit, 
+  Pencil, 
+  Info,
+  Heart,
+  FileText
+} from 'lucide-react';
+import { apiRequest } from '@/lib/queryClient';
+import { useToast } from '@/hooks/use-toast';
 
 type DentalChartData = {
   chartId: string;
@@ -29,141 +47,147 @@ type DentalChartData = {
   source?: 'quote' | 'patient_portal';
 };
 
-const DentalChartSection = () => {
+interface DentalChartSectionProps {
+  initialData?: DentalChartData;
+  onChartUpdate?: (data: DentalChartData) => void;
+}
+
+const DentalChartSection: React.FC<DentalChartSectionProps> = ({ 
+  initialData, 
+  onChartUpdate 
+}) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  
   const [editMode, setEditMode] = useState(false);
   const [currentChartData, setCurrentChartData] = useState<Record<string, any>>({});
-  const [chartSource, setChartSource] = useState<'quote' | 'patient_portal' | undefined>(undefined);
-  const [quoteRequestId, setQuoteRequestId] = useState<number | undefined>(undefined);
-  const [lastSyncDate, setLastSyncDate] = useState<string | undefined>(undefined);
+  const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
+  const [isToothModalOpen, setIsToothModalOpen] = useState(false);
 
   // Fetch dental chart data
-  const { data: chartData, isLoading, isError, refetch } = useQuery({
-    queryKey: ['/api/dental-chart'],
+  const { 
+    data: chartData, 
+    isLoading, 
+    error 
+  } = useQuery<DentalChartData>({
+    queryKey: ['/api/patient/dental-chart'],
     queryFn: async () => {
-      const res = await apiRequest('GET', '/api/dental-chart');
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to fetch dental chart');
-      }
-      if (data.chartData) {
-        setCurrentChartData(data.chartData.teethData || {});
-        setChartSource(data.chartData.source);
-        setQuoteRequestId(data.chartData.quoteRequestId);
-        setLastSyncDate(data.chartData.lastUpdated);
-      }
-      return data.chartData;
-    }
+      const response = await apiRequest('GET', '/api/patient/dental-chart');
+      return response.json();
+    },
+    initialData,
   });
 
   // Save dental chart mutation
   const saveDentalChartMutation = useMutation({
-    mutationFn: async (teethData: Record<string, any>) => {
-      const res = await apiRequest('POST', '/api/dental-chart', { 
-        teethData,
-        quoteRequestId,
+    mutationFn: async (data: Record<string, any>) => {
+      const response = await apiRequest('POST', '/api/patient/dental-chart', {
+        teethData: data,
         source: 'patient_portal'
       });
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to save dental chart');
-      }
-      return data.chartData;
+      return response.json();
     },
-    onSuccess: (updatedChartData) => {
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/dental-chart'] });
       setEditMode(false);
-      queryClient.invalidateQueries({ queryKey: ['/api/dental-chart'] });
-      setLastSyncDate(new Date().toISOString());
-      
+      onChartUpdate?.(data);
       toast({
-        title: 'Dental chart saved',
-        description: 'Your dental chart has been saved successfully.',
+        title: t('patient.dental_chart.save_success', 'Chart Saved'),
+        description: t('patient.dental_chart.save_success_desc', 'Your dental chart has been updated successfully.'),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to save dental chart',
+        title: t('patient.dental_chart.save_error', 'Save Failed'),
         description: error.message,
         variant: 'destructive',
       });
     },
   });
-  
-  // Force refresh chart data from quotes if available
+
+  // Refresh from quote mutation
   const refreshChartMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest('POST', '/api/dental-chart/refresh', {});
-      const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to refresh dental chart');
-      }
-      return data.chartData;
+      const response = await apiRequest('POST', '/api/patient/dental-chart/refresh-from-quote');
+      return response.json();
     },
-    onSuccess: (updatedChartData) => {
-      if (updatedChartData) {
-        setCurrentChartData(updatedChartData.teethData || {});
-        setChartSource(updatedChartData.source);
-        setQuoteRequestId(updatedChartData.quoteRequestId);
-        setLastSyncDate(updatedChartData.lastUpdated);
-      }
-      refetch();
-      
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/patient/dental-chart'] });
+      onChartUpdate?.(data);
       toast({
-        title: 'Dental chart refreshed',
-        description: 'Your dental chart has been refreshed with the latest data.',
+        title: t('patient.dental_chart.refresh_success', 'Chart Refreshed'),
+        description: t('patient.dental_chart.refresh_success_desc', 'Your dental chart has been updated with the latest quote data.'),
       });
     },
     onError: (error: Error) => {
       toast({
-        title: 'Failed to refresh dental chart',
+        title: t('patient.dental_chart.refresh_error', 'Refresh Failed'),
         description: error.message,
         variant: 'destructive',
       });
     },
   });
 
-  const handleTeethDataChange = (newTeethData: Record<string, any>) => {
-    setCurrentChartData(newTeethData);
+  // Initialize chart data
+  useEffect(() => {
+    if (chartData?.teethData) {
+      setCurrentChartData(chartData.teethData);
+    }
+  }, [chartData]);
+
+  // Handle tooth click
+  const handleToothClick = (toothNumber: number) => {
+    if (editMode) {
+      setSelectedTooth(toothNumber);
+      setIsToothModalOpen(true);
+    }
   };
 
-  const handleToothClick = (toothId: string) => {
-    if (!editMode) return;
-    // Here you could open a modal or show tooth editing options
-    console.log('Clicked tooth:', toothId);
+  // Handle tooth condition update
+  const handleToothConditionUpdate = (condition: string) => {
+    if (selectedTooth) {
+      setCurrentChartData(prev => ({
+        ...prev,
+        [selectedTooth.toString()]: {
+          ...prev[selectedTooth.toString()],
+          status: condition,
+          lastUpdated: new Date().toISOString()
+        }
+      }));
+      setIsToothModalOpen(false);
+      setSelectedTooth(null);
+    }
   };
 
+  // Handle save chart
   const handleSaveChart = () => {
     saveDentalChartMutation.mutate(currentChartData);
   };
 
+  const chartSource = chartData?.source;
+  const quoteRequestId = chartData?.quoteRequestId;
+  const lastSyncDate = chartData?.lastUpdated;
+
   if (isLoading) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>{t('patient.dental_chart.title', 'Dental Chart')}</CardTitle>
-          <CardDescription>{t('patient.dental_chart.description', 'View and manage your dental chart')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex justify-center items-center p-8">
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-2">{t('patient.dental_chart.loading', 'Loading dental chart...')}</span>
         </CardContent>
       </Card>
     );
   }
 
-  if (isError) {
+  if (error) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>{t('patient.dental_chart.title', 'Dental Chart')}</CardTitle>
-          <CardDescription>{t('patient.dental_chart.description', 'View and manage your dental chart')}</CardDescription>
-        </CardHeader>
-        <CardContent>
+      <Card>
+        <CardContent className="p-8">
           <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{t('patient.dental_chart.error_title', 'Error')}</AlertTitle>
+            <AlertTitle>{t('patient.dental_chart.error', 'Error Loading Chart')}</AlertTitle>
             <AlertDescription>
-              {t('patient.dental_chart.fetch_error', 'Failed to load dental chart. Please try again later.')}
+              {t('patient.dental_chart.error_desc', 'Unable to load your dental chart. Please try again later.')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -172,15 +196,21 @@ const DentalChartSection = () => {
   }
 
   return (
-    <Card className="w-full">
+    <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
           <div>
-            <CardTitle>{t('patient.dental_chart.title', 'Dental Chart')}</CardTitle>
-            <CardDescription>{t('patient.dental_chart.description', 'View and manage your dental health record')}</CardDescription>
+            <CardTitle className="flex items-center">
+              <Heart className="h-5 w-5 mr-2 text-red-500" />
+              {t('patient.dental_chart.title', 'My Dental Chart')}
+            </CardTitle>
+            <CardDescription className="mt-1">
+              {t('patient.dental_chart.description', 'Track your dental health and treatment progress')}
+            </CardDescription>
           </div>
+          
           {chartData && (
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-4 md:mt-0">
               {editMode ? (
                 <Button 
                   onClick={handleSaveChart}
@@ -200,13 +230,10 @@ const DentalChartSection = () => {
                   >
                     {refreshChartMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     <RefreshCcw className="h-4 w-4 mr-2" />
-                    {t('patient.dental_chart.refresh', 'Refresh from Quote')}
+                    {t('patient.dental_chart.refresh', 'Refresh')}
                   </Button>
-                  <Button 
-                    variant="outline"
-                    onClick={() => setEditMode(true)}
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
+                  <Button onClick={() => setEditMode(true)}>
+                    <Edit className="h-4 w-4 mr-2" />
                     {t('patient.dental_chart.edit', 'Edit Chart')}
                   </Button>
                 </>
@@ -255,7 +282,7 @@ const DentalChartSection = () => {
             
             {/* Instructions for editing mode */}
             {editMode && (
-              <Alert className="mb-4" variant="outline">
+              <Alert className="mb-4">
                 <div className="flex items-center">
                   <Info className="h-4 w-4 mr-2 text-blue-500" />
                   <AlertTitle>{t('patient.dental_chart.edit_instructions_title', 'Editing Mode Active')}</AlertTitle>
@@ -300,10 +327,11 @@ const DentalChartSection = () => {
                               : 'bg-white hover:bg-blue-100'
                           } ${editMode ? 'hover:scale-110' : ''}`}
                           title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
-                          style={{ fontSize: '8px', fontWeight: 'bold' }}
-                          onClick={() => editMode && handleToothClick?.(toothNum.toString())}
+                          onClick={() => handleToothClick(toothNum)}
                         >
-                          {toothNum}
+                          {hasIssue && (
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          )}
                         </div>
                       );
                     })}
@@ -311,7 +339,7 @@ const DentalChartSection = () => {
                 </div>
                 
                 {/* Lower Teeth Row - Interactive with edit mode */}
-                <div className="absolute z-20" style={{ top: '75%', transform: 'translateY(-50%)' }}>
+                <div className="absolute z-20" style={{ bottom: '25%', transform: 'translateY(50%)' }}>
                   <div className="flex justify-center space-x-1">
                     {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((toothNum, index) => {
                       const toothData = currentChartData?.[toothNum.toString()];
@@ -325,10 +353,11 @@ const DentalChartSection = () => {
                               : 'bg-white hover:bg-blue-100'
                           } ${editMode ? 'hover:scale-110' : ''}`}
                           title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
-                          style={{ fontSize: '8px', fontWeight: 'bold' }}
-                          onClick={() => editMode && handleToothClick?.(toothNum.toString())}
+                          onClick={() => handleToothClick(toothNum)}
                         >
-                          {toothNum}
+                          {hasIssue && (
+                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          )}
                         </div>
                       );
                     })}
