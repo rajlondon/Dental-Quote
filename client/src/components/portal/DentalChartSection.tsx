@@ -63,6 +63,7 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
   const [editMode, setEditMode] = useState(false);
   const [currentChartData, setCurrentChartData] = useState<Record<string, any>>({});
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
+  const [selectedCondition, setSelectedCondition] = useState<string>('decay');
   const [isToothModalOpen, setIsToothModalOpen] = useState(false);
 
   // Fetch dental chart data
@@ -150,23 +151,14 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
     return colors[status as keyof typeof colors] || '#ffffff';
   };
 
-  // Handle tooth click
+  // Handle tooth click - apply selected condition to clicked tooth
   const handleToothClick = (toothNumber: number) => {
-    if (editMode) {
-      setSelectedTooth(toothNumber);
-      
-      // Define all available conditions in cycle order that match the visual display
-      const conditions = ['healthy', 'decay', 'filling', 'crown', 'missing', 'implant', 'root_canal'];
-      const currentCondition = currentChartData[toothNumber.toString()]?.status || 'healthy';
-      const currentIndex = conditions.indexOf(currentCondition);
-      const nextIndex = (currentIndex + 1) % conditions.length;
-      const nextCondition = conditions[nextIndex];
-      
+    if (editMode && selectedCondition) {
       setCurrentChartData(prev => ({
         ...prev,
         [toothNumber.toString()]: {
           ...prev[toothNumber.toString()],
-          status: nextCondition,
+          status: selectedCondition,
           lastUpdated: new Date().toISOString()
         }
       }));
@@ -184,7 +176,7 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
       
       toast({
         title: `Tooth #${toothNumber} Updated`,
-        description: `Condition changed to: ${friendlyNames[nextCondition as keyof typeof friendlyNames]}`,
+        description: `Applied: ${friendlyNames[selectedCondition as keyof typeof friendlyNames]}`,
       });
     }
   };
@@ -423,25 +415,59 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
                 </div>
               </div>
               
-              {/* Legend */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div>
-                  <span className="text-sm">Healthy</span>
+              {/* Interactive Color Legend - Select condition first, then click teeth */}
+              {editMode ? (
+                <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                  <h4 className="text-sm font-medium mb-3 text-gray-700">Select condition, then click on teeth:</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {[
+                      { key: 'healthy', label: 'Healthy', color: '#ffffff' },
+                      { key: 'decay', label: 'Needs Treatment', color: '#fbbf24' },
+                      { key: 'filling', label: 'Treated', color: '#3b82f6' },
+                      { key: 'missing', label: 'Missing', color: '#9ca3af' }
+                    ].map((condition) => (
+                      <div 
+                        key={condition.key}
+                        className={`flex items-center space-x-2 p-3 rounded cursor-pointer transition-all ${
+                          selectedCondition === condition.key 
+                            ? 'bg-blue-100 border-2 border-blue-500 shadow-sm' 
+                            : 'hover:bg-gray-100 border-2 border-transparent'
+                        }`}
+                        onClick={() => setSelectedCondition(condition.key)}
+                      >
+                        <div 
+                          className="w-6 h-6 border-2 border-gray-400 rounded"
+                          style={{ backgroundColor: condition.color }}
+                        ></div>
+                        <span className="text-sm text-gray-700 font-medium">{condition.label}</span>
+                        {selectedCondition === condition.key && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full ml-auto"></div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2">✨ Selected: {selectedCondition === 'healthy' ? 'Healthy' : selectedCondition === 'decay' ? 'Needs Treatment' : selectedCondition === 'filling' ? 'Treated' : 'Missing'}</p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-red-200 border border-red-400 rounded-sm"></div>
-                  <span className="text-sm">Needs Treatment</span>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div>
+                    <span className="text-sm">Healthy</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-yellow-300 border border-yellow-400 rounded-sm"></div>
+                    <span className="text-sm">Needs Treatment</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-blue-400 border border-blue-500 rounded-sm"></div>
+                    <span className="text-sm">Treated</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 bg-gray-400 border border-gray-500 rounded-sm"></div>
+                    <span className="text-sm">Missing</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded-sm"></div>
-                  <span className="text-sm">Treated</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded-sm"></div>
-                  <span className="text-sm">Missing</span>
-                </div>
-              </div>
+              )}
             </div>
             
             {lastSyncDate && (
