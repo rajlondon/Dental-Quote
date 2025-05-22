@@ -135,6 +135,20 @@ function loadEnvironment() {
 // Load environment variables
 loadEnvironment();
 
+// Domain redirect middleware - redirect .com to .co.uk
+app.use((req, res, next) => {
+  const host = req.get('host');
+  
+  // If request comes from .com domain, redirect to .co.uk
+  if (host && host.includes('mydentalfly.com')) {
+    const redirectUrl = `https://mydentalfly.co.uk${req.originalUrl}`;
+    console.log(`Redirecting ${host} to mydentalfly.co.uk`);
+    return res.redirect(301, redirectUrl);
+  }
+  
+  next();
+});
+
 // Configure Express
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

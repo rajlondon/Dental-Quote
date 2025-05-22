@@ -1,0 +1,17 @@
+{
+  "name": "MyDentalFly",
+  "description": "Premium Dental Tourism Platform for UK & Europe",
+  "domains": {
+    "primary": "mydentalfly.co.uk",
+    "redirect": "mydentalfly.com"
+  },
+  "environment": "production",
+  "build": {
+    "command": "npm run build",
+    "output": "dist"
+  },
+  "server": {
+    "start": "node server.js",
+    "port": 5000
+  }
+}
