@@ -13,6 +13,29 @@ import { v4 as uuidv4 } from 'uuid';
 
 const router = express.Router();
 
+// Helper function to convert quote to treatment plan format
+function transformQuoteToTreatmentPlan(quote: any) {
+  if (!quote) return null;
+  
+  return {
+    id: quote.id,
+    patientName: quote.name,
+    email: quote.email,
+    phone: quote.phone,
+    treatment: quote.treatment,
+    specificTreatment: quote.specificTreatment,
+    status: quote.status,
+    createdAt: quote.createdAt,
+    updatedAt: quote.updatedAt,
+    quoteData: quote.quoteData,
+    selectedClinicId: quote.selectedClinicId,
+    departureCity: quote.departureCity,
+    travelMonth: quote.travelMonth,
+    budget: quote.budget,
+    notes: quote.notes
+  };
+}
+
 /**
  * Get all treatment plans for a patient
  * 
