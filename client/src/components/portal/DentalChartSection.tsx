@@ -136,6 +136,20 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
     }
   }, [chartData]);
 
+  // Get tooth color based on condition
+  const getToothColor = (status: string) => {
+    const colors = {
+      healthy: '#ffffff',
+      decay: '#fbbf24',     // Yellow for decay
+      filling: '#3b82f6',   // Blue for filling  
+      crown: '#f59e0b',     // Orange for crown
+      missing: '#9ca3af',   // Gray for missing
+      implant: '#8b5cf6',   // Purple for implant
+      root_canal: '#ef4444' // Red for root canal
+    };
+    return colors[status as keyof typeof colors] || '#ffffff';
+  };
+
   // Handle tooth click
   const handleToothClick = (toothNumber: number) => {
     if (editMode) {
@@ -352,16 +366,20 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
                       return (
                         <div
                           key={toothNum}
-                          className={`w-4 h-5 border border-gray-400 rounded-sm cursor-pointer transition-colors flex items-center justify-center ${
-                            hasIssue 
-                              ? 'bg-red-200 hover:bg-red-300' 
-                              : 'bg-white hover:bg-blue-100'
-                          } ${editMode ? 'hover:scale-110' : ''}`}
-                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
+                          className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editMode ? 'hover:scale-110' : ''}`}
+                          style={{
+                            backgroundColor: getToothColor(toothData?.status || 'healthy'),
+                            borderColor: hasIssue ? '#374151' : '#9ca3af',
+                            borderWidth: '2px'
+                          }}
+                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
                           onClick={() => handleToothClick(toothNum)}
                         >
-                          {hasIssue && (
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          {hasIssue && toothData?.status !== 'missing' && (
+                            <div 
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ backgroundColor: '#1f2937' }}
+                            ></div>
                           )}
                         </div>
                       );
@@ -378,16 +396,20 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
                       return (
                         <div
                           key={toothNum}
-                          className={`w-4 h-5 border border-gray-400 rounded-sm cursor-pointer transition-colors flex items-center justify-center ${
-                            hasIssue 
-                              ? 'bg-red-200 hover:bg-red-300' 
-                              : 'bg-white hover:bg-blue-100'
-                          } ${editMode ? 'hover:scale-110' : ''}`}
-                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ''}`}
+                          className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editMode ? 'hover:scale-110' : ''}`}
+                          style={{
+                            backgroundColor: getToothColor(toothData?.status || 'healthy'),
+                            borderColor: hasIssue ? '#374151' : '#9ca3af',
+                            borderWidth: '2px'
+                          }}
+                          title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
                           onClick={() => handleToothClick(toothNum)}
                         >
-                          {hasIssue && (
-                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                          {hasIssue && toothData?.status !== 'missing' && (
+                            <div 
+                              className="w-1.5 h-1.5 rounded-full"
+                              style={{ backgroundColor: '#1f2937' }}
+                            ></div>
                           )}
                         </div>
                       );
