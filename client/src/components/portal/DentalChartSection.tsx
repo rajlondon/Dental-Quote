@@ -140,10 +140,13 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
   const handleToothClick = (toothNumber: number) => {
     if (editMode) {
       setSelectedTooth(toothNumber);
-      // Directly update the tooth condition for now (simpler interaction)
+      
+      // Define all available conditions in cycle order
+      const conditions = ['healthy', 'decay', 'filling', 'crown', 'missing'];
       const currentCondition = currentChartData[toothNumber.toString()]?.status || 'healthy';
-      const nextCondition = currentCondition === 'healthy' ? 'decay' : 
-                           currentCondition === 'decay' ? 'crown' : 'healthy';
+      const currentIndex = conditions.indexOf(currentCondition);
+      const nextIndex = (currentIndex + 1) % conditions.length;
+      const nextCondition = conditions[nextIndex];
       
       setCurrentChartData(prev => ({
         ...prev,
