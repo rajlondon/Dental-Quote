@@ -140,13 +140,18 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
   // Get tooth color based on condition
   const getToothColor = (status: string) => {
     const colors = {
-      healthy: '#ffffff',
-      decay: '#fbbf24',     // Yellow for decay
-      filling: '#3b82f6',   // Blue for filling  
-      crown: '#f59e0b',     // Orange for crown
-      missing: '#9ca3af',   // Gray for missing
-      implant: '#8b5cf6',   // Purple for implant
-      root_canal: '#ef4444' // Red for root canal
+      healthy: '#ffffff',     // White for healthy
+      decay: '#fbbf24',       // Yellow for decay/cavity
+      filling: '#3b82f6',     // Blue for filling  
+      crown: '#f59e0b',       // Orange for crown
+      missing: '#9ca3af',     // Gray for missing
+      implant: '#8b5cf6',     // Purple for implant
+      root_canal: '#ef4444',  // Red for root canal
+      extraction: '#dc2626',  // Dark red for extraction needed
+      bridge: '#06b6d4',      // Cyan for bridge
+      veneer: '#10b981',      // Green for veneer
+      whitening: '#f3f4f6',   // Light gray for whitening
+      chipped: '#fcd34d'      // Light yellow for chipped
     };
     return colors[status as keyof typeof colors] || '#ffffff';
   };
@@ -171,7 +176,12 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
         crown: 'Crown',
         missing: 'Missing',
         implant: 'Implant',
-        root_canal: 'Root Canal'
+        root_canal: 'Root Canal',
+        extraction: 'Extraction',
+        bridge: 'Bridge',
+        veneer: 'Veneer',
+        whitening: 'Whitening',
+        chipped: 'Chipped'
       };
       
       toast({
@@ -419,12 +429,20 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
               {editMode ? (
                 <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
                   <h4 className="text-sm font-medium mb-3 text-gray-700">Select condition, then click on teeth:</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                     {[
                       { key: 'healthy', label: 'Healthy', color: '#ffffff' },
-                      { key: 'decay', label: 'Needs Treatment', color: '#fbbf24' },
-                      { key: 'filling', label: 'Treated', color: '#3b82f6' },
-                      { key: 'missing', label: 'Missing', color: '#9ca3af' }
+                      { key: 'decay', label: 'Decay/Cavity', color: '#fbbf24' },
+                      { key: 'filling', label: 'Filling', color: '#3b82f6' },
+                      { key: 'crown', label: 'Crown', color: '#f59e0b' },
+                      { key: 'missing', label: 'Missing', color: '#9ca3af' },
+                      { key: 'implant', label: 'Implant', color: '#8b5cf6' },
+                      { key: 'root_canal', label: 'Root Canal', color: '#ef4444' },
+                      { key: 'extraction', label: 'Extraction', color: '#dc2626' },
+                      { key: 'bridge', label: 'Bridge', color: '#06b6d4' },
+                      { key: 'veneer', label: 'Veneer', color: '#10b981' },
+                      { key: 'whitening', label: 'Whitening', color: '#f3f4f6' },
+                      { key: 'chipped', label: 'Chipped', color: '#fcd34d' }
                     ].map((condition) => (
                       <div 
                         key={condition.key}
