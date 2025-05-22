@@ -141,8 +141,8 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
     if (editMode) {
       setSelectedTooth(toothNumber);
       
-      // Define all available conditions in cycle order
-      const conditions = ['healthy', 'decay', 'filling', 'crown', 'missing'];
+      // Define all available conditions in cycle order that match the visual display
+      const conditions = ['healthy', 'decay', 'filling', 'crown', 'missing', 'implant', 'root_canal'];
       const currentCondition = currentChartData[toothNumber.toString()]?.status || 'healthy';
       const currentIndex = conditions.indexOf(currentCondition);
       const nextIndex = (currentIndex + 1) % conditions.length;
@@ -157,9 +157,20 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
         }
       }));
       
+      // Show user-friendly names in the toast
+      const friendlyNames = {
+        healthy: 'Healthy',
+        decay: 'Decay/Cavity', 
+        filling: 'Filling',
+        crown: 'Crown',
+        missing: 'Missing',
+        implant: 'Implant',
+        root_canal: 'Root Canal'
+      };
+      
       toast({
         title: `Tooth #${toothNumber} Updated`,
-        description: `Condition changed to: ${nextCondition}`,
+        description: `Condition changed to: ${friendlyNames[nextCondition as keyof typeof friendlyNames]}`,
       });
     }
   };
