@@ -109,15 +109,17 @@ const TreatmentJourneyPage: React.FC = () => {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const params = useParams();
-  const detailId = params?.id;
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Quotes state
+  // Always call hooks in the same order
   const {
     userQuotesQuery,
     getQuoteQuery
   } = useQuotes();
+  
+  // Parse detail ID after hooks
+  const detailId = params?.id;
   
   // Treatment plans state
   const [isLoading, setIsLoading] = useState(true);
@@ -133,6 +135,11 @@ const TreatmentJourneyPage: React.FC = () => {
   
   // Load all data when component mounts
   useEffect(() => {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+
     const loadData = async () => {
       setIsLoading(true);
       
@@ -141,9 +148,7 @@ const TreatmentJourneyPage: React.FC = () => {
         await userQuotesQuery.refetch();
         
         // Load treatment plans
-        if (user?.id) {
-          await fetchTreatmentPlans();
-        }
+        await fetchTreatmentPlans();
       } catch (error) {
         console.error('Error loading treatment journey data:', error);
         toast({
@@ -157,7 +162,7 @@ const TreatmentJourneyPage: React.FC = () => {
     };
     
     loadData();
-  }, [user?.id]);
+  }, [user?.id, toast]);
   
   // Parse detail ID from URL if provided
   useEffect(() => {
@@ -183,12 +188,8 @@ const TreatmentJourneyPage: React.FC = () => {
     if (!user?.id) return;
     
     try {
-      // First, get any existing treatment plans
-      const treatmentPlansRes = await apiRequest('GET', '/api/patient/treatment-plans');
-      const treatmentPlansData = await treatmentPlansRes.json();
-      
-      // Next, get the patient's quotes to convert them to treatment plans
-      const quotesRes = await apiRequest('GET', '/api/patient/quotes');
+      // For now, just get the user's quotes to display as treatment journey
+      const quotesRes = await apiRequest('GET', '/api/quotes/user');
       const quotesData = await quotesRes.json();
       
       let allTreatmentPlans: TreatmentPlan[] = [];
