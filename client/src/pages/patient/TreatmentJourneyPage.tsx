@@ -1,62 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useLocation } from 'wouter';
 import { useTranslation } from 'react-i18next';
-import { format } from 'date-fns';
+import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useQuotes } from '@/hooks/use-quotes';
 import { apiRequest } from '@/lib/queryClient';
-import { PageHeader } from '@/components/page-header';
-import TreatmentPlanViewer from '@/components/TreatmentPlanViewer';
-import QuoteDetail from '@/components/quotes/quote-detail';
-
-import { 
-  Tabs, 
-  TabsList, 
-  TabsTrigger, 
-  TabsContent 
-} from '@/components/ui/tabs';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import {
-  FileText,
-  Plus,
-  PencilRuler,
-  CheckCircle,
-  Clock,
-  CalendarDays,
-  CreditCard,
-  AlertCircle,
-  Download,
-  ListChecks,
-  Receipt,
-  MessageSquare,
-  HelpCircle,
-  User,
-  Building,
-  Loader2,
-  ArrowRight,
-  ChevronLeft,
-  GitBranch
-} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { 
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ArrowLeft, Calendar, Clock, MapPin, FileText, CreditCard, CheckCircle, AlertCircle, Timer } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
 
-// Types
 interface TreatmentItem {
   id: string;
   name: string;
@@ -108,49 +63,62 @@ interface TreatmentPlan {
 const TreatmentJourneyPage: React.FC = () => {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
-  const params = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
   
-  // Always call hooks in the same order
-  const {
-    userQuotesQuery,
-    getQuoteQuery
-  } = useQuotes();
+  // Always call hooks first - never conditionally
+  const { userQuotesQuery } = useQuotes();
   
-  // Parse detail ID after hooks
-  const detailId = params?.id;
-  
-  // Treatment plans state
+  // State management
   const [isLoading, setIsLoading] = useState(true);
   const [treatmentPlans, setTreatmentPlans] = useState<TreatmentPlan[]>([]);
-  const [selectedPlan, setSelectedPlan] = useState<TreatmentPlan | null>(null);
-  const [showDetailedPlan, setShowDetailedPlan] = useState(false);
-  const [activeTab, setActiveTab] = useState<"quotes" | "plans" | "all">("all");
-  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
-  
-  // Specific detail states
-  const [selectedQuoteId, setSelectedQuoteId] = useState<number | undefined>(undefined);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | undefined>(undefined);
-  
-  // Load all data when component mounts
-  useEffect(() => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
+  const [activeTab, setActiveTab] = useState('timeline');
+  const [viewMode, setViewMode] = useState<'list' | 'detail'>('list');
 
+  // Load data effect
+  useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
-      
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
-        // Load user quotes
+        setIsLoading(true);
+        
+        // Refetch user quotes
         await userQuotesQuery.refetch();
         
-        // Load treatment plans
-        await fetchTreatmentPlans();
+        // Convert quotes to treatment plans for display
+        if (userQuotesQuery.data?.success && userQuotesQuery.data.data) {
+          const quotesData = userQuotesQuery.data.data;
+          const convertedPlans = quotesData
+            .filter((quote: any) => quote && quote.id)
+            .map((quote: any) => ({
+              id: quote.id.toString(),
+              title: `Treatment Quote #${quote.id}`,
+              patientName: quote.name || 'Unknown',
+              email: quote.email || '',
+              phone: quote.phone || '',
+              status: 'proposed' as const,
+              createdAt: quote.createdAt || new Date().toISOString(),
+              updatedAt: quote.updatedAt || new Date().toISOString(),
+              totalAmount: 0,
+              currency: 'EUR',
+              items: [],
+              clinicId: quote.selectedClinicId || 0,
+              clinicName: 'Selected Clinic',
+              patientId: quote.userId || 0,
+              paymentStatus: 'unpaid' as const,
+              financingAvailable: false,
+              fromQuote: true,
+              quoteId: quote.id
+            }));
+          
+          setTreatmentPlans(convertedPlans);
+        }
       } catch (error) {
-        console.error('Error loading treatment journey data:', error);
+        console.error('Error loading treatment journey:', error);
         toast({
           title: 'Error',
           description: 'Failed to load your treatment data',
@@ -160,963 +128,318 @@ const TreatmentJourneyPage: React.FC = () => {
         setIsLoading(false);
       }
     };
-    
+
     loadData();
-  }, [user?.id, toast]);
-  
-  // Parse detail ID from URL if provided
-  useEffect(() => {
-    if (detailId) {
-      if (detailId.startsWith('quote-')) {
-        const quoteId = parseInt(detailId.replace('quote-', ''));
-        setSelectedQuoteId(quoteId);
-        setViewMode('detail');
-        setActiveTab('quotes');
-      } else if (detailId.startsWith('plan-')) {
-        const planId = detailId.replace('plan-', '');
-        setSelectedPlanId(planId);
-        setViewMode('detail');
-        setActiveTab('plans');
-      }
-    } else {
-      setViewMode('list');
-    }
-  }, [detailId]);
-  
-  // Fetch treatment plans
-  const fetchTreatmentPlans = async () => {
-    if (!user?.id) return;
-    
-    try {
-      // For now, just get the user's quotes to display as treatment journey
-      const quotesRes = await apiRequest('GET', '/api/quotes/user');
-      const quotesData = await quotesRes.json();
-      
-      let allTreatmentPlans: TreatmentPlan[] = [];
-      
-      // Process existing treatment plans if available
-      if (treatmentPlansData.success && treatmentPlansData.treatmentPlans) {
-        console.log('Found existing treatment plans:', treatmentPlansData.treatmentPlans.length);
-        allTreatmentPlans = [...treatmentPlansData.treatmentPlans];
-      }
-      
-      // Convert quotes to treatment plans if available
-      if (quotesData.success && quotesData.quotes) {
-        console.log('Found quotes to convert to treatment plans:', quotesData.quotes.length);
-        const quoteBasedPlans = quotesData.quotes.map((quote: any) => {
-          // Handle different formats of treatments data
-          let treatmentItems: TreatmentItem[] = [];
-          
-          if (quote.treatments && Array.isArray(quote.treatments)) {
-            treatmentItems = quote.treatments.map((treatment: any, index: number) => {
-              // Convert treatment prices which might be strings to numbers
-              const unitPrice = typeof treatment.price === 'string' 
-                ? parseFloat(treatment.price) 
-                : treatment.price || 0;
-                
-              const quantity = treatment.quantity || 1;
-              
-              return {
-                id: typeof treatment.id === 'number' ? `${treatment.id}` : (treatment.id || `${quote.id}-item-${index}`),
-                name: treatment.name || 'Unnamed Treatment',
-                description: treatment.description || '',
-                quantity,
-                unitPrice,
-                totalPrice: unitPrice * quantity,
-                currency: quote.currency || 'GBP',
-                status: 'pending' as const
-              };
-            });
-          } else if (quote.treatmentDetails) {
-            // Alternative format for treatments
-            treatmentItems = Object.entries(quote.treatmentDetails).map(([name, details]: [string, any], index) => ({
-              id: `${quote.id}-item-${index}`,
-              name,
-              description: details.description || '',
-              quantity: details.quantity || 1,
-              unitPrice: typeof details.price === 'string' ? parseFloat(details.price) : details.price || 0,
-              totalPrice: (typeof details.price === 'string' ? parseFloat(details.price) : details.price || 0) * (details.quantity || 1),
-              currency: quote.currency || 'GBP',
-              status: 'pending' as const
-            }));
-          } else if (quote.selectedTreatments && Array.isArray(quote.selectedTreatments)) {
-            // Format from the quote selection flow
-            treatmentItems = quote.selectedTreatments.map((treatment: any, index: number) => {
-              const unitPrice = typeof treatment.price === 'string' 
-                ? parseFloat(treatment.price) 
-                : treatment.price || 0;
-                
-              const quantity = treatment.quantity || 1;
-              
-              return {
-                id: typeof treatment.id === 'number' ? `${treatment.id}` : (treatment.id || `${quote.id}-item-${index}`),
-                name: treatment.name || treatment.treatmentName || 'Unnamed Treatment',
-                description: treatment.description || '',
-                quantity,
-                unitPrice,
-                totalPrice: unitPrice * quantity,
-                currency: quote.currency || 'GBP',
-                status: 'pending' as const
-              };
-            });
-          }
-          
-          // Calculate total amount from treatments if not provided
-          const calculatedTotal = treatmentItems.reduce((sum, item) => sum + item.totalPrice, 0);
-          
-          // Parse the total amount, handling string values
-          let totalAmount = calculatedTotal;
-          if (quote.totalAmount) {
-            totalAmount = typeof quote.totalAmount === 'string' 
-              ? parseFloat(quote.totalAmount) 
-              : quote.totalAmount;
-          }
-          
-          // Calculate deposit (20% of total by default)
-          let deposit = Math.round(totalAmount * 0.2);
-          if (quote.depositAmount) {
-            deposit = typeof quote.depositAmount === 'string' 
-              ? parseFloat(quote.depositAmount) 
-              : quote.depositAmount;
-          }
-          
-          // Get clinic information
-          const clinicId = quote.clinicId || quote.selectedClinicId || 0;
-          const clinicName = quote.clinicName || 'Selected Clinic';
-          
-          return {
-            id: `quote-${quote.id}`,
-            title: `Treatment Plan from Quote #${quote.quoteNumber || quote.id}`,
-            description: quote.notes || 'Treatment plan based on your quote request',
-            clinicId,
-            clinicName,
-            patientId: user.id,
-            patientName: user.firstName ? `${user.firstName} ${user.lastName || ''}` : (user.email || "Patient"),
-            createdAt: quote.createdAt || new Date().toISOString(),
-            updatedAt: quote.updatedAt || new Date().toISOString(),
-            status: 'proposed' as const,
-            paymentStatus: 'unpaid' as const,
-            totalAmount,
-            currency: quote.currency || 'GBP',
-            deposit,
-            depositPaid: false,
-            items: treatmentItems,
-            doctorName: quote.doctorName || quote.dentistName || undefined,
-            doctorId: quote.doctorId || quote.dentistId || undefined,
-            financingAvailable: true,
-            pendingApproval: true,
-            fromQuote: true,
-            quoteId: quote.id,
-            promoApplied: quote.promoCode ? true : false,
-            promoDetails: quote.promoCode ? {
-              code: quote.promoCode,
-              discount: quote.promoDiscount || 0,
-              type: quote.promoDiscountType || 'percentage'
-            } : undefined,
-            appointmentDate: quote.preferredDate || undefined
-          };
-        });
-        
-        // Add quote-based plans to all treatment plans
-        allTreatmentPlans = [...allTreatmentPlans, ...quoteBasedPlans];
-      }
-      
-      if (allTreatmentPlans.length > 0) {
-        console.log('Setting treatment plans:', allTreatmentPlans.length);
-        // Sort treatment plans by date (newest first)
-        allTreatmentPlans.sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
-        
-        setTreatmentPlans(allTreatmentPlans);
-        
-        // Set the first treatment plan as selected if none is selected
-        if (!selectedPlan) {
-          setSelectedPlan(allTreatmentPlans[0]);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching treatment plans:', error);
-      toast({
-        title: t('common.error', 'Error'),
-        description: t('patient.treatment_plans.fetch_error', 'Failed to load treatment plans'),
-        variant: 'destructive'
-      });
-    }
-  };
-  
-  // Handle selecting a specific quote
-  const handleSelectQuote = (quoteId: number) => {
-    setSelectedQuoteId(quoteId);
-    setViewMode('detail');
-    setActiveTab('quotes');
-    setLocation(`/patient/treatment-journey/quote-${quoteId}`);
-  };
-  
-  // Handle selecting a specific treatment plan
-  const handleSelectPlan = (planId: string) => {
-    setSelectedPlanId(planId);
-    setViewMode('detail');
-    setActiveTab('plans');
-    setLocation(`/patient/treatment-journey/plan-${planId}`);
-  };
-  
-  // Handle navigating back to the list view
-  const handleBackToList = () => {
-    setViewMode('list');
-    setSelectedQuoteId(undefined);
-    setSelectedPlanId(undefined);
-    setLocation('/patient/treatment-journey');
-  };
-  
-  // Get the specific quote details
-  const quoteQuery = selectedQuoteId ? getQuoteQuery(selectedQuoteId) : null;
-  
-  // Get the specific treatment plan
-  const selectedTreatmentPlan = selectedPlanId 
-    ? treatmentPlans.find(plan => plan.id === selectedPlanId) 
-    : null;
-  
-  // Filter quotes by status (active/completed)
-  const getFilteredQuotes = () => {
-    return userQuotesQuery.data || [];
-  };
-  
-  // Loading state
-  if (isLoading || userQuotesQuery.isLoading) {
+  }, [user?.id, userQuotesQuery.data]);
+
+  // Early return if no user - after all hooks
+  if (!user) {
     return (
-      <div className="container mx-auto py-6 px-4">
-        <div className="flex flex-col items-center justify-center min-h-[50vh]">
-          <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-          <p className="text-lg text-muted-foreground">Loading your treatment journey...</p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Detail view for a specific quote
-  if (viewMode === 'detail' && activeTab === 'quotes' && selectedQuoteId) {
-    if (quoteQuery?.isLoading) {
-      return (
-        <div className="container mx-auto py-6 px-4">
-          <div className="flex flex-col items-center justify-center min-h-[50vh]">
-            <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-            <p className="text-lg text-muted-foreground">Loading quote details...</p>
-          </div>
-        </div>
-      );
-    }
-    
-    if (quoteQuery?.error) {
-      return (
-        <div className="container mx-auto py-6 px-4">
-          <div className="text-center py-12">
-            <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
-            <p className="text-destructive text-lg mb-4">Error loading quote: {quoteQuery?.error.message}</p>
-            <Button onClick={handleBackToList}>Back to Treatment Journey</Button>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="container mx-auto py-6 px-4">
-        <Button 
-          variant="outline" 
-          className="mb-6" 
-          onClick={handleBackToList}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back to Treatment Journey
-        </Button>
-        
-        {quoteQuery?.data && (
-          <QuoteDetail
-            quoteRequest={quoteQuery.data.quoteRequest}
-            versions={quoteQuery.data.versions}
-            portalType="patient"
-            onBack={handleBackToList}
-          />
-        )}
-      </div>
-    );
-  }
-  
-  // Detail view for a specific treatment plan
-  if (viewMode === 'detail' && activeTab === 'plans' && selectedTreatmentPlan) {
-    return (
-      <div className="container mx-auto py-6 px-4">
-        <Button 
-          variant="outline" 
-          className="mb-6" 
-          onClick={handleBackToList}
-        >
-          <ChevronLeft className="h-4 w-4 mr-2" />
-          Back to Treatment Journey
-        </Button>
-        
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-2xl">{selectedTreatmentPlan.title}</CardTitle>
-                <CardDescription className="mt-2">
-                  {selectedTreatmentPlan.description || 'Your personalized treatment plan'}
-                </CardDescription>
-              </div>
-              <Badge className={
-                selectedTreatmentPlan.status === 'completed' ? 'bg-green-100 text-green-800' :
-                selectedTreatmentPlan.status === 'in_treatment' ? 'bg-blue-100 text-blue-800' :
-                selectedTreatmentPlan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                'bg-amber-100 text-amber-800'
-              }>
-                {selectedTreatmentPlan.status === 'proposed' ? 'Proposed' :
-                 selectedTreatmentPlan.status === 'approved' ? 'Approved' :
-                 selectedTreatmentPlan.status === 'in_treatment' ? 'In Treatment' :
-                 selectedTreatmentPlan.status === 'completed' ? 'Completed' :
-                 selectedTreatmentPlan.status === 'cancelled' ? 'Cancelled' : 'Draft'}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Clinic</h3>
-                <p className="text-base flex items-center">
-                  <Building className="h-4 w-4 mr-2 inline text-primary" />
-                  {selectedTreatmentPlan.clinicName}
-                </p>
-              </div>
-              
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Created On</h3>
-                <p className="text-base flex items-center">
-                  <CalendarDays className="h-4 w-4 mr-2 inline text-primary" />
-                  {format(new Date(selectedTreatmentPlan.createdAt), 'PPP')}
-                </p>
-              </div>
-              
-              {selectedTreatmentPlan.doctorName && (
-                <div className="space-y-2">
-                  <h3 className="text-sm font-medium text-muted-foreground">Doctor</h3>
-                  <p className="text-base flex items-center">
-                    <User className="h-4 w-4 mr-2 inline text-primary" />
-                    {selectedTreatmentPlan.doctorName}
-                  </p>
-                </div>
-              )}
-              
-              <div className="space-y-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Amount</h3>
-                <p className="text-xl font-semibold flex items-center text-primary">
-                  <Receipt className="h-4 w-4 mr-2 inline" />
-                  {new Intl.NumberFormat('en-GB', {
-                    style: 'currency',
-                    currency: selectedTreatmentPlan.currency || 'GBP'
-                  }).format(selectedTreatmentPlan.totalAmount)}
-                </p>
-              </div>
-            </div>
-            
-            {selectedTreatmentPlan.fromQuote && selectedTreatmentPlan.quoteId && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <div className="flex items-center mb-2">
-                  <FileText className="h-5 w-5 mr-2 text-blue-600" />
-                  <h3 className="text-base font-medium text-blue-600">This treatment plan is based on your quote</h3>
-                </div>
-                <p className="text-sm text-blue-700 mb-3">
-                  View the original quote for more details on your treatment options.
-                </p>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="border-blue-600 text-blue-600 hover:bg-blue-100"
-                  onClick={() => handleSelectQuote(selectedTreatmentPlan.quoteId!)}
-                >
-                  View Related Quote
-                </Button>
-              </div>
-            )}
-            
-            <Accordion type="single" collapsible defaultValue="treatments" className="w-full">
-              <AccordionItem value="treatments">
-                <AccordionTrigger>
-                  <div className="flex items-center">
-                    <ListChecks className="h-5 w-5 mr-2" />
-                    <span>Treatment Details</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="py-2 px-3 text-left text-sm font-medium text-muted-foreground">Treatment</th>
-                          <th className="py-2 px-3 text-center text-sm font-medium text-muted-foreground">Quantity</th>
-                          <th className="py-2 px-3 text-right text-sm font-medium text-muted-foreground">Unit Price</th>
-                          <th className="py-2 px-3 text-right text-sm font-medium text-muted-foreground">Total</th>
-                          <th className="py-2 px-3 text-right text-sm font-medium text-muted-foreground">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedTreatmentPlan.items.map((item) => (
-                          <tr key={item.id} className="border-b">
-                            <td className="py-2 px-3 text-sm">
-                              <div className="font-medium">{item.name}</div>
-                              {item.description && (
-                                <div className="text-xs text-muted-foreground mt-1">{item.description}</div>
-                              )}
-                            </td>
-                            <td className="py-2 px-3 text-center text-sm">{item.quantity}</td>
-                            <td className="py-2 px-3 text-right text-sm">
-                              {new Intl.NumberFormat('en-GB', {
-                                style: 'currency',
-                                currency: item.currency || 'GBP'
-                              }).format(item.unitPrice)}
-                            </td>
-                            <td className="py-2 px-3 text-right text-sm font-medium">
-                              {new Intl.NumberFormat('en-GB', {
-                                style: 'currency',
-                                currency: item.currency || 'GBP'
-                              }).format(item.totalPrice)}
-                            </td>
-                            <td className="py-2 px-3 text-right">
-                              <Badge variant={
-                                item.status === 'completed' ? 'default' :
-                                item.status === 'scheduled' ? 'outline' :
-                                item.status === 'cancelled' ? 'destructive' : 'secondary'
-                              } className="text-xs">
-                                {item.status === 'pending' ? 'Pending' :
-                                 item.status === 'scheduled' ? 'Scheduled' :
-                                 item.status === 'completed' ? 'Completed' : 'Cancelled'}
-                              </Badge>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr>
-                          <td colSpan={3} className="py-3 px-3 text-right font-medium">Total</td>
-                          <td className="py-3 px-3 text-right font-bold text-primary">
-                            {new Intl.NumberFormat('en-GB', {
-                              style: 'currency',
-                              currency: selectedTreatmentPlan.currency || 'GBP'
-                            }).format(selectedTreatmentPlan.totalAmount)}
-                          </td>
-                          <td></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-              
-              {selectedTreatmentPlan.additionalNotes && (
-                <AccordionItem value="notes">
-                  <AccordionTrigger>
-                    <div className="flex items-center">
-                      <MessageSquare className="h-5 w-5 mr-2" />
-                      <span>Additional Notes</span>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="p-3 whitespace-pre-wrap text-sm">
-                      {selectedTreatmentPlan.additionalNotes}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              )}
-            </Accordion>
-          </CardContent>
-          <CardFooter className="flex flex-col md:flex-row gap-3 items-center justify-between pt-6">
-            <div className="flex gap-2 w-full md:w-auto">
-              {selectedTreatmentPlan.quoteId && (
-                <Button
-                  variant="outline"
-                  onClick={() => handleSelectQuote(selectedTreatmentPlan.quoteId!)}
-                  className="flex items-center"
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  View Quote
-                </Button>
-              )}
-              
-              {selectedTreatmentPlan.status === 'proposed' && selectedTreatmentPlan.pendingApproval && (
-                <Button className="flex items-center">
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Approve Plan
-                </Button>
-              )}
-              
-              {selectedTreatmentPlan.status === 'approved' && selectedTreatmentPlan.paymentStatus === 'unpaid' && (
-                <Button className="flex items-center">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Pay Deposit
-                </Button>
-              )}
-            </div>
-            
-            <span className="text-sm text-muted-foreground">
-              Last updated: {format(new Date(selectedTreatmentPlan.updatedAt), 'PPP')}
-            </span>
-          </CardFooter>
-        </Card>
-      </div>
-    );
-  }
-  
-  // List view showing all quotes and treatment plans
-  return (
-    <div className="container mx-auto py-6 px-4">
-      <PageHeader
-        title="Treatment Journey"
-        description="Track your dental treatment journey from quotes to treatment plans"
-        actions={
-          <Button asChild>
-            <a href="/quote-request" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" /> New Quote Request
-            </a>
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please log in to view your treatment journey</h1>
+          <Button onClick={() => setLocation('/auth')}>
+            Log In
           </Button>
-        }
-      />
-      
-      <Tabs
-        value={activeTab}
-        onValueChange={(value) => setActiveTab(value as "quotes" | "plans" | "all")}
-        className="mt-6"
-      >
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="quotes">Quotes</TabsTrigger>
-          <TabsTrigger value="plans">Treatment Plans</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="all" className="mt-6">
-          <div className="space-y-8">
-            {/* Timeline View */}
-            <Card>
+        </div>
+      </div>
+    );
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'in_treatment': return 'bg-blue-100 text-blue-800';
+      case 'approved': return 'bg-purple-100 text-purple-800';
+      case 'proposed': return 'bg-yellow-100 text-yellow-800';
+      case 'draft': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="h-4 w-4" />;
+      case 'in_treatment': return <Timer className="h-4 w-4" />;
+      case 'approved': return <CheckCircle className="h-4 w-4" />;
+      case 'proposed': return <Clock className="h-4 w-4" />;
+      case 'draft': return <FileText className="h-4 w-4" />;
+      case 'cancelled': return <AlertCircle className="h-4 w-4" />;
+      default: return <FileText className="h-4 w-4" />;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-4 mb-6">
+          <Skeleton className="h-10 w-10" />
+          <Skeleton className="h-8 w-64" />
+        </div>
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <Card key={i}>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <GitBranch className="h-5 w-5 mr-2" />
-                  Your Treatment Timeline
-                </CardTitle>
-                <CardDescription>
-                  A complete view of your dental journey from quotes to treatment plans
-                </CardDescription>
+                <Skeleton className="h-6 w-48" />
+                <Skeleton className="h-4 w-32" />
               </CardHeader>
               <CardContent>
-                {/* Check if we have any data to display */}
-                {(!userQuotesQuery.data || userQuotesQuery.data.length === 0) && 
-                 (!treatmentPlans || treatmentPlans.length === 0) ? (
-                  <div className="text-center py-8">
-                    <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No treatment journey started yet</h3>
-                    <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                      Start your dental journey by requesting a quote from our partner clinics.
-                      Compare options and prices to find the best treatment plan for you.
-                    </p>
-                    <Button asChild>
-                      <a href="/quote-request">Get Your First Quote</a>
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Combine quotes and plans and sort by date */}
-                    {[...(userQuotesQuery.data || []), ...treatmentPlans]
-                      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-                      .map((item, index) => {
-                        const isQuote = 'quoteNumber' in item || !('fromQuote' in item);
-                        const id = isQuote ? (item as any).id : (item as TreatmentPlan).id;
-                        const title = isQuote 
-                          ? `Quote #${(item as any).quoteNumber || (item as any).id}` 
-                          : (item as TreatmentPlan).title;
-                        const date = format(new Date(item.createdAt), 'PPP');
-                        const status = isQuote 
-                          ? (item as any).status 
-                          : (item as TreatmentPlan).status;
-                        
-                        // Calculate badge variant based on status
-                        const getBadgeVariant = () => {
-                          if (isQuote) {
-                            const quoteStatus = (item as any).status;
-                            return quoteStatus === 'completed' || quoteStatus === 'accepted' 
-                              ? 'bg-green-100 text-green-800'
-                              : quoteStatus === 'rejected' || quoteStatus === 'cancelled'
-                                ? 'bg-red-100 text-red-800'
-                                : 'bg-blue-100 text-blue-800';
-                          } else {
-                            const planStatus = (item as TreatmentPlan).status;
-                            return planStatus === 'completed'
-                              ? 'bg-green-100 text-green-800'
-                              : planStatus === 'cancelled'
-                                ? 'bg-red-100 text-red-800'
-                                : planStatus === 'in_treatment' || planStatus === 'approved'
-                                  ? 'bg-blue-100 text-blue-800'
-                                  : 'bg-amber-100 text-amber-800';
-                          }
-                        };
-                        
-                        return (
-                          <div key={id} className="flex">
-                            {/* Enhanced timeline connector with visual cues */}
-                            <div className="flex flex-col items-center mr-4">
-                              <div className={`
-                                w-4 h-4 rounded-full mt-1.5 flex items-center justify-center
-                                ${index === 0 
-                                  ? 'bg-primary text-white ring-4 ring-primary/20' 
-                                  : isQuote 
-                                    ? 'bg-blue-100 text-blue-600 border border-blue-300' 
-                                    : 'bg-green-100 text-green-600 border border-green-300'
-                                }
-                              `}>
-                                {isQuote 
-                                  ? <FileText className="h-2.5 w-2.5" /> 
-                                  : <PencilRuler className="h-2.5 w-2.5" />
-                                }
-                              </div>
-                              {index < [...(userQuotesQuery.data || []), ...treatmentPlans].length - 1 && (
-                                <div className={`w-0.5 h-full ${
-                                  isQuote ? 'bg-blue-200' : 'bg-green-200'
-                                }`} />
-                              )}
-                            </div>
-                            
-                            {/* Timeline content */}
-                            <div className="flex-1 mb-8">
-                              <div className="flex justify-between items-start mb-1">
-                                <div className="text-sm text-muted-foreground">{date}</div>
-                                <Badge className={getBadgeVariant()}>
-                                  {status === 'pending' ? 'Pending' :
-                                   status === 'in_progress' ? 'In Progress' :
-                                   status === 'completed' ? 'Completed' :
-                                   status === 'proposed' ? 'Proposed' :
-                                   status === 'approved' ? 'Approved' :
-                                   status === 'in_treatment' ? 'In Treatment' :
-                                   status === 'cancelled' ? 'Cancelled' :
-                                   status === 'rejected' ? 'Rejected' :
-                                   status === 'accepted' ? 'Accepted' :
-                                   status === 'expired' ? 'Expired' :
-                                   status === 'sent' ? 'Sent' : 'Draft'}
-                                </Badge>
-                              </div>
-                              
-                              <Card className={`mt-1 border ${
-                                isQuote 
-                                  ? 'border-blue-100 hover:border-blue-200' 
-                                  : 'border-green-100 hover:border-green-200'
-                              } transition-all hover:shadow-md`}>
-                                <CardHeader className={`p-4 ${
-                                  isQuote 
-                                    ? 'bg-gradient-to-r from-blue-50 to-transparent' 
-                                    : 'bg-gradient-to-r from-green-50 to-transparent'
-                                }`}>
-                                  <CardTitle className="text-base flex items-center">
-                                    {isQuote 
-                                      ? <FileText className="h-4 w-4 mr-2 text-blue-600" />
-                                      : <PencilRuler className="h-4 w-4 mr-2 text-green-600" />
-                                    }
-                                    {title}
-                                  </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0">
-                                  {isQuote ? (
-                                    // Quote summary
-                                    <div>
-                                      <p className="text-sm text-muted-foreground mb-3">
-                                        {(item as any).treatment || 'Dental treatment quote'}
-                                      </p>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {isQuote && ((item as any).selectedClinicName || (item as any).selectedClinic) && (
-                                          <div className="flex items-center text-sm">
-                                            <Building className="h-4 w-4 mr-2 text-blue-500" />
-                                            <span>{(item as any).selectedClinicName || (item as any).selectedClinic?.name || 'Selected Clinic'}</span>
-                                          </div>
-                                        )}
-                                        {(isQuote ? (item as any).totalAmount !== undefined : true) && (
-                                          <div className="flex items-center text-sm font-medium">
-                                            <Receipt className="h-4 w-4 mr-2 text-blue-500" />
-                                            <span>{new Intl.NumberFormat('en-GB', {
-                                              style: 'currency',
-                                              currency: isQuote ? ((item as any).currency || 'GBP') : (item as TreatmentPlan).currency
-                                            }).format(isQuote ? ((item as any).totalAmount || 0) : (item as TreatmentPlan).totalAmount)}</span>
-                                          </div>
-                                        )}
-                                      </div>
-                                      
-                                      {/* Show promo applied if available */}
-                                      {(item as any).promoApplied && (
-                                        <div className="mt-3 p-2 bg-green-50 border border-green-100 rounded-md text-xs text-green-700 flex items-center">
-                                          <Tag className="h-3.5 w-3.5 mr-1.5" />
-                                          <span>Promotional discount applied</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    // Treatment plan summary
-                                    <div>
-                                      <p className="text-sm text-muted-foreground mb-3">
-                                        {(item as TreatmentPlan).description || 'Your personalized treatment plan'}
-                                      </p>
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div className="flex items-center text-sm">
-                                          <Building className="h-4 w-4 mr-2 text-green-500" />
-                                          <span>{(item as TreatmentPlan).clinicName}</span>
-                                        </div>
-                                        <div className="flex items-center text-sm font-medium">
-                                          <Receipt className="h-4 w-4 mr-2 text-green-500" />
-                                          <span>{new Intl.NumberFormat('en-GB', {
-                                            style: 'currency',
-                                            currency: (item as TreatmentPlan).currency || 'GBP'
-                                          }).format((item as TreatmentPlan).totalAmount)}</span>
-                                        </div>
-                                      </div>
-                                      
-                                      {/* Add treatment progress when available */}
-                                      {(item as TreatmentPlan).treatmentProgress !== undefined && (
-                                        <div className="mt-3">
-                                          <div className="flex justify-between items-center mb-1">
-                                            <span className="text-xs text-muted-foreground">Treatment Progress</span>
-                                            <span className="text-xs font-medium">{(item as TreatmentPlan).treatmentProgress}%</span>
-                                          </div>
-                                          <Progress value={(item as TreatmentPlan).treatmentProgress} className="h-1.5" />
-                                        </div>
-                                      )}
-                                      
-                                      {/* Show appointment info if available */}
-                                      {(item as TreatmentPlan).nextAppointment && (
-                                        <div className="mt-3 p-2 bg-blue-50 border border-blue-100 rounded-md text-xs flex items-center">
-                                          <CalendarClock className="h-3.5 w-3.5 mr-1.5 text-blue-600" />
-                                          <span className="text-blue-700">Next appointment: {new Date((item as TreatmentPlan).nextAppointment || '').toLocaleDateString('en-GB', {
-                                            weekday: 'long',
-                                            day: 'numeric',
-                                            month: 'long',
-                                            year: 'numeric'
-                                          })}</span>
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </CardContent>
-                                <CardFooter className="p-4 pt-0 flex justify-end">
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      if (isQuote) {
-                                        handleSelectQuote((item as any).id);
-                                      } else {
-                                        handleSelectPlan((item as TreatmentPlan).id);
-                                      }
-                                    }}
-                                  >
-                                    View Details
-                                    <ArrowRight className="h-3 w-3 ml-1" />
-                                  </Button>
-                                </CardFooter>
-                              </Card>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                )}
+                <Skeleton className="h-4 w-full mb-2" />
+                <Skeleton className="h-4 w-3/4" />
               </CardContent>
             </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      {/* Header */}
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setLocation('/patient-portal')}
+          className="flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Portal
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Treatment Journey
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Track your dental treatment progress and milestones
+          </p>
+        </div>
+      </div>
+
+      {/* Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="timeline">Timeline</TabsTrigger>
+          <TabsTrigger value="quotes">My Quotes ({userQuotesQuery.data?.data?.length || 0})</TabsTrigger>
+          <TabsTrigger value="plans">Treatment Plans ({treatmentPlans.length})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="timeline" className="space-y-6">
+          {/* Timeline View */}
+          <div className="space-y-4">
+            {treatmentPlans.length === 0 && userQuotesQuery.data?.data?.length === 0 ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Treatment Journey Yet</h3>
+                  <p className="text-gray-600 mb-4">
+                    Start your journey by getting your first quote
+                  </p>
+                  <Button onClick={() => setLocation('/quote-request')}>
+                    Get Your First Quote
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Quotes Timeline */}
+                {userQuotesQuery.data?.data?.map((quote: any, index: number) => (
+                  <Card key={`quote-${quote.id}`} className="border-l-4 border-l-blue-500">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <FileText className="h-4 w-4 text-blue-600" />
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              Quote Request #{quote.id}
+                            </CardTitle>
+                            <CardDescription>
+                              Created {formatDate(quote.createdAt)}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                          Quote
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">{quote.departureCity || 'Not specified'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">{quote.travelMonth || 'Flexible'}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">Budget: €{quote.budget || 'Open'}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Treatment: {quote.treatment}</p>
+                        {quote.specificTreatment && (
+                          <p className="text-sm text-gray-600">Details: {quote.specificTreatment}</p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+
+                {/* Treatment Plans Timeline */}
+                {treatmentPlans.map((plan, index) => (
+                  <Card key={`plan-${plan.id}`} className="border-l-4 border-l-green-500">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 rounded-full">
+                            {getStatusIcon(plan.status)}
+                          </div>
+                          <div>
+                            <CardTitle className="text-lg">
+                              {plan.title}
+                            </CardTitle>
+                            <CardDescription>
+                              {plan.clinicName} • {formatDate(plan.createdAt)}
+                            </CardDescription>
+                          </div>
+                        </div>
+                        <Badge className={getStatusColor(plan.status)}>
+                          {plan.status.replace('_', ' ').toUpperCase()}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm">€{plan.totalAmount} {plan.currency}</span>
+                        </div>
+                        {plan.nextAppointment && (
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm">Next: {formatDate(plan.nextAppointment)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={
+                            plan.paymentStatus === 'fully_paid' ? 'bg-green-50 text-green-700' :
+                            plan.paymentStatus === 'deposit_paid' ? 'bg-yellow-50 text-yellow-700' :
+                            'bg-red-50 text-red-700'
+                          }>
+                            {plan.paymentStatus.replace('_', ' ').toUpperCase()}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
         </TabsContent>
-        
-        <TabsContent value="quotes" className="mt-6">
-          {userQuotesQuery.data && userQuotesQuery.data.length > 0 ? (
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {userQuotesQuery.data.map((quote) => (
-                <Card key={quote.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-base">Quote #{quote.quoteNumber || quote.id}</CardTitle>
-                      <Badge className={
-                        quote.status === 'completed' || quote.status === 'accepted' 
-                          ? 'bg-green-100 text-green-800' 
-                          : quote.status === 'rejected' || quote.status === 'cancelled'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-blue-100 text-blue-800'
-                      }>
-                        {quote.status === 'pending' ? 'Pending' :
-                         quote.status === 'in_progress' ? 'In Progress' :
-                         quote.status === 'completed' ? 'Completed' :
-                         quote.status === 'sent' ? 'Sent' :
-                         quote.status === 'accepted' ? 'Accepted' :
-                         quote.status === 'rejected' ? 'Rejected' :
-                         quote.status === 'cancelled' ? 'Cancelled' :
-                         quote.status === 'expired' ? 'Expired' : 'Processing'}
+
+        <TabsContent value="quotes" className="space-y-4">
+          {userQuotesQuery.data?.data?.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Quotes Yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Get started by requesting your first dental treatment quote
+                </p>
+                <Button onClick={() => setLocation('/quote-request')}>
+                  Request Quote
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {userQuotesQuery.data?.data?.map((quote: any) => (
+                <Card key={quote.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Quote #{quote.id}</CardTitle>
+                      <Badge variant="outline">
+                        {quote.status || 'Pending'}
                       </Badge>
                     </div>
-                    <CardDescription className="mt-1 flex items-center">
-                      <CalendarDays className="h-3 w-3 mr-1" />
-                      {format(new Date(quote.createdAt), 'PPP')}
+                    <CardDescription>
+                      {quote.treatment} • {formatDate(quote.createdAt)}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="p-4 pt-2">
+                  <CardContent>
                     <div className="space-y-2">
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Treatment: </span>
-                        <span>{quote.treatment || 'Multiple treatments'}</span>
-                      </div>
-                      
-                      {quote.selectedClinicName && (
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">Clinic: </span>
-                          <span>{quote.selectedClinicName}</span>
-                        </div>
+                      <p className="text-sm"><strong>Treatment:</strong> {quote.treatment}</p>
+                      {quote.specificTreatment && (
+                        <p className="text-sm"><strong>Details:</strong> {quote.specificTreatment}</p>
                       )}
-                      
-                      {quote.totalAmount && (
-                        <div className="text-sm font-medium mt-3">
-                          <span className="text-muted-foreground">Total: </span>
-                          <span className="text-primary">{new Intl.NumberFormat('en-GB', {
-                            style: 'currency',
-                            currency: quote.currency || 'GBP'
-                          }).format(quote.totalAmount)}</span>
-                        </div>
-                      )}
+                      <p className="text-sm"><strong>Travel from:</strong> {quote.departureCity}</p>
+                      <p className="text-sm"><strong>Preferred month:</strong> {quote.travelMonth}</p>
+                      <p className="text-sm"><strong>Budget:</strong> €{quote.budget}</p>
                     </div>
                   </CardContent>
-                  <CardFooter className="p-4 pt-0 flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSelectQuote(quote.id)}
-                    >
-                      View Quote
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </CardFooter>
                 </Card>
               ))}
             </div>
-          ) : (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Get Your Dental Treatment Quote</CardTitle>
-                <CardDescription>
-                  Request a personalized quote from our partner clinics for your dental treatment
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center text-center space-y-4 py-6">
-                <FileText className="h-16 w-16 text-primary" />
-                <div className="max-w-md">
-                  <h3 className="text-xl font-semibold mb-2">Start Your Dental Journey Today</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Get detailed quotes from top dental clinics in Turkey. Compare prices, read reviews, and make informed decisions about your dental treatment.
-                  </p>
-                  <Button size="lg" asChild>
-                    <a href="/quote-request" className="flex items-center gap-2">
-                      <Plus className="h-4 w-4" /> Request a Quote
-                    </a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           )}
         </TabsContent>
-        
-        <TabsContent value="plans" className="mt-6">
-          {treatmentPlans && treatmentPlans.length > 0 ? (
-            <div className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+
+        <TabsContent value="plans" className="space-y-4">
+          {treatmentPlans.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Treatment Plans Yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Treatment plans will appear here once clinics respond to your quotes
+                </p>
+                <Button onClick={() => setActiveTab('quotes')}>
+                  View My Quotes
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
               {treatmentPlans.map((plan) => (
-                <Card key={plan.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-base">{plan.title}</CardTitle>
-                      <Badge className={
-                        plan.status === 'completed' ? 'bg-green-100 text-green-800' :
-                        plan.status === 'in_treatment' || plan.status === 'approved' ? 'bg-blue-100 text-blue-800' :
-                        plan.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-amber-100 text-amber-800'
-                      }>
-                        {plan.status === 'proposed' ? 'Proposed' :
-                         plan.status === 'approved' ? 'Approved' :
-                         plan.status === 'in_treatment' ? 'In Treatment' :
-                         plan.status === 'completed' ? 'Completed' :
-                         plan.status === 'cancelled' ? 'Cancelled' : 'Draft'}
+                <Card key={plan.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>{plan.title}</CardTitle>
+                      <Badge className={getStatusColor(plan.status)}>
+                        {plan.status.replace('_', ' ').toUpperCase()}
                       </Badge>
                     </div>
-                    <CardDescription className="mt-1 flex items-center">
-                      <CalendarDays className="h-3 w-3 mr-1" />
-                      {format(new Date(plan.createdAt), 'PPP')}
+                    <CardDescription>
+                      {plan.clinicName} • {formatDate(plan.createdAt)}
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="p-4 pt-2">
+                  <CardContent>
                     <div className="space-y-2">
-                      <div className="text-sm">
-                        <span className="text-muted-foreground">Clinic: </span>
-                        <span>{plan.clinicName}</span>
-                      </div>
-                      
-                      {plan.items.length > 0 && (
-                        <div className="text-sm">
-                          <span className="text-muted-foreground">Treatments: </span>
-                          <span>{plan.items.length}</span>
-                        </div>
-                      )}
-                      
-                      {plan.totalAmount && (
-                        <div className="text-sm font-medium mt-3">
-                          <span className="text-muted-foreground">Total: </span>
-                          <span className="text-primary">{new Intl.NumberFormat('en-GB', {
-                            style: 'currency',
-                            currency: plan.currency || 'GBP'
-                          }).format(plan.totalAmount)}</span>
-                        </div>
-                      )}
-                      
-                      {plan.fromQuote && plan.quoteId && (
-                        <div className="mt-3 flex items-center text-xs text-blue-600">
-                          <FileText className="h-3 w-3 mr-1" />
-                          <span>From Quote #{plan.quoteId}</span>
-                        </div>
+                      <p className="text-sm"><strong>Total Amount:</strong> €{plan.totalAmount} {plan.currency}</p>
+                      <p className="text-sm"><strong>Payment Status:</strong> {plan.paymentStatus.replace('_', ' ')}</p>
+                      {plan.nextAppointment && (
+                        <p className="text-sm"><strong>Next Appointment:</strong> {formatDate(plan.nextAppointment)}</p>
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter className="p-4 pt-0 flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleSelectPlan(plan.id)}
-                    >
-                      View Plan
-                      <ArrowRight className="h-3 w-3 ml-1" />
-                    </Button>
-                  </CardFooter>
                 </Card>
               ))}
             </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>No Treatment Plans Yet</CardTitle>
-                <CardDescription>
-                  Your treatment plans will appear here once you've accepted a quote
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col items-center text-center space-y-4 py-6">
-                <PencilRuler className="h-16 w-16 text-muted-foreground" />
-                <div className="max-w-md">
-                  <h3 className="text-xl font-semibold mb-2">Treatment Plans Coming Soon</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Once you've received and accepted a quote, your personalized treatment plan will appear here.
-                  </p>
-                  {userQuotesQuery.data && userQuotesQuery.data.length > 0 ? (
-                    <Button variant="outline" onClick={() => setActiveTab('quotes')}>
-                      View Your Quotes
-                    </Button>
-                  ) : (
-                    <Button asChild>
-                      <a href="/quote-request">Request a Quote</a>
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
           )}
         </TabsContent>
       </Tabs>
