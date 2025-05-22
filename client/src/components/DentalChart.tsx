@@ -179,19 +179,19 @@ export const DentalChart: React.FC<DentalChartProps> = ({
     );
   };
 
-  // Tooth positions for adult teeth (simplified anatomical layout)
+  // Tooth positions for adult teeth (anatomical layout with visible bottom teeth)
   const adultTeethPositions = {
-    // Upper teeth (maxilla)
-    '18': { top: '20%', left: '15%' }, '17': { top: '25%', left: '20%' }, '16': { top: '30%', left: '25%' }, '15': { top: '35%', left: '30%' },
-    '14': { top: '40%', left: '35%' }, '13': { top: '45%', left: '40%' }, '12': { top: '50%', left: '45%' }, '11': { top: '52%', left: '48%' },
-    '21': { top: '52%', left: '52%' }, '22': { top: '50%', left: '55%' }, '23': { top: '45%', left: '60%' }, '24': { top: '40%', left: '65%' },
-    '25': { top: '35%', left: '70%' }, '26': { top: '30%', left: '75%' }, '27': { top: '25%', left: '80%' }, '28': { top: '20%', left: '85%' },
+    // Upper teeth (maxilla) - positioned at top
+    '18': { top: '10%', left: '8%' }, '17': { top: '12%', left: '13%' }, '16': { top: '15%', left: '18%' }, '15': { top: '18%', left: '23%' },
+    '14': { top: '22%', left: '28%' }, '13': { top: '25%', left: '33%' }, '12': { top: '28%', left: '38%' }, '11': { top: '30%', left: '43%' },
+    '21': { top: '30%', left: '53%' }, '22': { top: '28%', left: '58%' }, '23': { top: '25%', left: '63%' }, '24': { top: '22%', left: '68%' },
+    '25': { top: '18%', left: '73%' }, '26': { top: '15%', left: '78%' }, '27': { top: '12%', left: '83%' }, '28': { top: '10%', left: '88%' },
     
-    // Lower teeth (mandible)
-    '48': { top: '75%', left: '15%' }, '47': { top: '70%', left: '20%' }, '46': { top: '65%', left: '25%' }, '45': { top: '60%', left: '30%' },
-    '44': { top: '55%', left: '35%' }, '43': { top: '52%', left: '40%' }, '42': { top: '50%', left: '45%' }, '41': { top: '48%', left: '48%' },
-    '31': { top: '48%', left: '52%' }, '32': { top: '50%', left: '55%' }, '33': { top: '52%', left: '60%' }, '34': { top: '55%', left: '65%' },
-    '35': { top: '60%', left: '70%' }, '36': { top: '65%', left: '75%' }, '37': { top: '70%', left: '80%' }, '38': { top: '75%', left: '85%' }
+    // Lower teeth (mandible) - positioned at bottom
+    '48': { top: '85%', left: '8%' }, '47': { top: '83%', left: '13%' }, '46': { top: '80%', left: '18%' }, '45': { top: '77%', left: '23%' },
+    '44': { top: '73%', left: '28%' }, '43': { top: '70%', left: '33%' }, '42': { top: '67%', left: '38%' }, '41': { top: '65%', left: '43%' },
+    '31': { top: '65%', left: '53%' }, '32': { top: '67%', left: '58%' }, '33': { top: '70%', left: '63%' }, '34': { top: '73%', left: '68%' },
+    '35': { top: '77%', left: '73%' }, '36': { top: '80%', left: '78%' }, '37': { top: '83%', left: '83%' }, '38': { top: '85%', left: '88%' }
   };
 
   // Child teeth positions (simplified)
@@ -259,12 +259,14 @@ export const DentalChart: React.FC<DentalChartProps> = ({
               )}
             </div>
             
-            {/* Mouth outline */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-40 border-4 border-pink-300 rounded-full opacity-30"></div>
+            {/* Upper jaw outline */}
+            <div className="absolute top-1/4 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-20 border-2 border-pink-300 rounded-full opacity-20"></div>
+            {/* Lower jaw outline */}
+            <div className="absolute bottom-1/4 left-1/2 transform -translate-x-1/2 translate-y-1/2 w-80 h-20 border-2 border-pink-300 rounded-full opacity-20"></div>
           </div>
           
           <div className="text-center text-sm text-gray-600">
-            Adult teeth (32 total) - Click on teeth to mark conditions
+            Adult teeth (32 total) - {editable ? 'Select a condition above, then click on teeth to mark them' : 'View tooth conditions'}
           </div>
         </TabsContent>
 
