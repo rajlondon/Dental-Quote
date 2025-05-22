@@ -1103,6 +1103,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register notification routes
   app.use(createNotificationRoutes(notificationService));
   
+  // Add patient dental chart API endpoint
+  app.get('/api/patient/dental-chart', (req: Request, res: Response) => {
+    // Return mock dental chart data to display the beautiful anatomical mouth
+    const mockChartData = {
+      chartId: 'patient_chart_001',
+      patientName: 'Patient',
+      patientEmail: 'patient@example.com',
+      createdAt: new Date().toISOString(),
+      lastUpdated: new Date().toISOString(),
+      source: 'patient_portal',
+      teethData: {
+        // Sample tooth data with conditions to show the interactive features
+        '11': { status: 'decay', lastUpdated: new Date().toISOString() },
+        '12': { status: 'healthy', lastUpdated: new Date().toISOString() },
+        '21': { status: 'crown', lastUpdated: new Date().toISOString() },
+        '22': { status: 'healthy', lastUpdated: new Date().toISOString() }
+      }
+    };
+    
+    res.json(mockChartData);
+  });
+
+  app.post('/api/patient/dental-chart', (req: Request, res: Response) => {
+    // Handle dental chart updates
+    const { teethData, source } = req.body;
+    
+    const updatedChart = {
+      chartId: 'patient_chart_001',
+      patientName: 'Patient',
+      patientEmail: 'patient@example.com',
+      lastUpdated: new Date().toISOString(),
+      source: source || 'patient_portal',
+      teethData: teethData
+    };
+    
+    res.json(updatedChart);
+  });
+
+  app.post('/api/patient/dental-chart/refresh-from-quote', (req: Request, res: Response) => {
+    // Handle refresh from quote functionality
+    const refreshedChart = {
+      chartId: 'patient_chart_001',
+      patientName: 'Patient',
+      patientEmail: 'patient@example.com',
+      lastUpdated: new Date().toISOString(),
+      source: 'quote',
+      quoteRequestId: 123,
+      teethData: {
+        '11': { status: 'decay', lastUpdated: new Date().toISOString() },
+        '12': { status: 'filling', lastUpdated: new Date().toISOString() },
+        '21': { status: 'crown', lastUpdated: new Date().toISOString() },
+        '22': { status: 'healthy', lastUpdated: new Date().toISOString() }
+      }
+    };
+    
+    res.json(refreshedChart);
+  });
+
   // Store services in app.locals for access in other routes if needed
   app.locals.wsService = wsService;
   app.locals.notificationService = notificationService;
