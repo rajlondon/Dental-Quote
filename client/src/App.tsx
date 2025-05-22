@@ -55,6 +55,7 @@ import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
+import QuoteRequestPage from "@/pages/QuoteRequestPage";
 import YourQuotePage from "@/pages/YourQuotePage2";
 import DentalImplantsPage from "@/pages/DentalImplantsPage";
 import VeneersPage from "@/pages/VeneersPage";
@@ -131,10 +132,11 @@ function Router() {
       </Route>
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
+      <Route path="/quote-request" component={QuoteRequestPage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/results" component={PackageResultsPage} />
       <Route path="/quote">
-        {() => <Redirect to="/your-quote" />}
+        {() => <Redirect to="/quote-request" />}
       </Route>
       <Route path="/booking" component={BookingPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
