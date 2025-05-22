@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectLabel, SelectTrigger, SelectValue, SelectGroup } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
@@ -1145,9 +1145,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* PACKAGES */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Packages
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
