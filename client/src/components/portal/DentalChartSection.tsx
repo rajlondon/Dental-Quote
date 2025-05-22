@@ -258,11 +258,83 @@ const DentalChartSection = () => {
               </Alert>
             )}
             
-            <DentalChart3D 
-              initialTeeth={currentChartData?.teeth || []}
-              onTeethUpdate={handleTeethDataChange}
-              readOnly={!editMode}
-            />
+            {/* Beautiful Anatomical Dental Chart */}
+            <div className="w-full">
+              {/* 3D Mouth Representation */}
+              <div className="relative w-full h-[400px] rounded-lg bg-pink-100 overflow-hidden border-2 border-red-300 flex flex-col justify-center items-center mb-6">
+                {/* Outer mouth oval - anatomical shape */}
+                <div className="absolute w-[80%] h-[90%] bg-[#ec8c74] rounded-[100%/50%] border-4 border-[#ec8c74]"></div>
+                
+                {/* Middle section - pink oral cavity area */}
+                <div className="absolute w-[70%] h-[65%] bg-[#f8a9a3] rounded-[100%/50%]"></div>
+                
+                {/* Upper gums - red bar */}
+                <div className="absolute top-[25%] w-[60%] h-[8%] bg-[#f05450] z-10"></div>
+                
+                {/* Lower gums - red bar */}
+                <div className="absolute bottom-[25%] w-[60%] h-[8%] bg-[#f05450] z-10"></div>
+                
+                {/* Center tongue area */}
+                <div className="absolute w-[40%] h-[25%] bg-[#e57373] rounded-[100%/50%] z-5"></div>
+                
+                {/* Upper Teeth Row */}
+                <div className="absolute z-20" style={{ top: '25%', transform: 'translateY(-50%)' }}>
+                  <div className="flex justify-center space-x-1">
+                    {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((toothNum, index) => (
+                      <div
+                        key={toothNum}
+                        className="w-4 h-5 bg-white border border-gray-400 rounded-sm cursor-pointer hover:bg-blue-100 transition-colors flex items-center justify-center"
+                        title={`Tooth #${toothNum}`}
+                        style={{ fontSize: '8px', fontWeight: 'bold' }}
+                      >
+                        {toothNum}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Lower Teeth Row */}
+                <div className="absolute z-20" style={{ top: '75%', transform: 'translateY(-50%)' }}>
+                  <div className="flex justify-center space-x-1">
+                    {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((toothNum, index) => (
+                      <div
+                        key={toothNum}
+                        className="w-4 h-5 bg-white border border-gray-400 rounded-sm cursor-pointer hover:bg-blue-100 transition-colors flex items-center justify-center"
+                        title={`Tooth #${toothNum}`}
+                        style={{ fontSize: '8px', fontWeight: 'bold' }}
+                      >
+                        {toothNum}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Mouth Label */}
+                <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-sm text-gray-600 font-medium">
+                  Interactive Dental Chart - Click teeth to edit
+                </div>
+              </div>
+              
+              {/* Legend */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-white border border-gray-400 rounded-sm"></div>
+                  <span className="text-sm">Healthy</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-red-200 border border-red-400 rounded-sm"></div>
+                  <span className="text-sm">Needs Treatment</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-blue-200 border border-blue-400 rounded-sm"></div>
+                  <span className="text-sm">Treated</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-gray-200 border border-gray-400 rounded-sm"></div>
+                  <span className="text-sm">Missing</span>
+                </div>
+              </div>
+            </div>
             
             {lastSyncDate && (
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 border-t pt-3 text-sm text-muted-foreground">
