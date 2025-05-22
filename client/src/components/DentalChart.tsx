@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle, XCircle, AlertTriangle, Crown, Zap, Square } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 type TeethData = Record<string, {
@@ -9,11 +10,11 @@ type TeethData = Record<string, {
   notes?: string;
 }>;
 
-type DentalChartProps = {
-  initialData?: Record<string, any>;
+interface DentalChartProps {
+  initialData?: TeethData;
   onChange?: (data: Record<string, any>) => void;
   editable?: boolean;
-};
+}
 
 export const DentalChart: React.FC<DentalChartProps> = ({ 
   initialData = {}, 
@@ -26,14 +27,70 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
 
   const toothStatuses = {
-    healthy: { color: '#4ade80', label: t('dental_chart.status.healthy', 'Healthy') },
-    decay: { color: '#f97316', label: t('dental_chart.status.decay', 'Decay') },
-    filling: { color: '#3b82f6', label: t('dental_chart.status.filling', 'Filling') },
-    crown: { color: '#ffd700', label: t('dental_chart.status.crown', 'Crown') },
-    missing: { color: '#d1d5db', label: t('dental_chart.status.missing', 'Missing') },
-    implant: { color: '#8b5cf6', label: t('dental_chart.status.implant', 'Implant') },
-    bridge: { color: '#ec4899', label: t('dental_chart.status.bridge', 'Bridge') },
-    root_canal: { color: '#ef4444', label: t('dental_chart.status.root_canal', 'Root Canal') },
+    healthy: { 
+      color: '#10b981', 
+      bgColor: '#ecfdf5',
+      borderColor: '#059669',
+      icon: CheckCircle,
+      label: 'Healthy',
+      description: 'Good condition'
+    },
+    decay: { 
+      color: '#f59e0b', 
+      bgColor: '#fef3c7',
+      borderColor: '#d97706',
+      icon: AlertTriangle,
+      label: 'Decay/Cavity',
+      description: 'Needs filling'
+    },
+    filling: { 
+      color: '#3b82f6', 
+      bgColor: '#dbeafe',
+      borderColor: '#2563eb',
+      icon: Square,
+      label: 'Filling',
+      description: 'Has filling'
+    },
+    crown: { 
+      color: '#f59e0b', 
+      bgColor: '#fef3c7',
+      borderColor: '#d97706',
+      icon: Crown,
+      label: 'Crown',
+      description: 'Needs/has crown'
+    },
+    missing: { 
+      color: '#6b7280', 
+      bgColor: '#f9fafb',
+      borderColor: '#9ca3af',
+      icon: XCircle,
+      label: 'Missing',
+      description: 'Tooth missing'
+    },
+    implant: { 
+      color: '#8b5cf6', 
+      bgColor: '#ede9fe',
+      borderColor: '#7c3aed',
+      icon: Zap,
+      label: 'Implant',
+      description: 'Needs implant'
+    },
+    root_canal: { 
+      color: '#ef4444', 
+      bgColor: '#fef2f2',
+      borderColor: '#dc2626',
+      icon: AlertTriangle,
+      label: 'Root Canal',
+      description: 'Needs root canal'
+    },
+    extraction: { 
+      color: '#dc2626', 
+      bgColor: '#fef2f2',
+      borderColor: '#b91c1c',
+      icon: XCircle,
+      label: 'Extraction',
+      description: 'Needs extraction'
+    }
   };
 
   const adultTeeth = {
@@ -77,126 +134,198 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   const renderTooth = (toothNumber: number, isUpper: boolean) => {
     const toothId = toothNumber.toString();
     const status = getToothStatus(toothId);
-    const toothColor = toothStatuses[status as keyof typeof toothStatuses]?.color || toothStatuses.healthy.color;
+    const statusInfo = toothStatuses[status as keyof typeof toothStatuses] || toothStatuses.healthy;
+    const StatusIcon = statusInfo.icon;
     
     return (
       <div 
         key={toothId}
-        className={`tooth ${selectedTooth === toothId ? 'ring-2 ring-primary' : ''} ${!editable ? 'cursor-default' : 'cursor-pointer'}`}
+        className={`
+          relative transition-all duration-200 hover:scale-105 
+          ${selectedTooth === toothId ? 'ring-2 ring-blue-500 scale-105' : ''} 
+          ${editable ? 'cursor-pointer hover:shadow-lg' : 'cursor-default'}
+        `}
         onClick={() => handleToothClick(toothId)}
         style={{ 
-          width: '40px', 
-          height: '40px', 
+          width: '50px', 
+          height: '50px', 
           margin: '4px',
-          backgroundColor: toothColor,
-          borderRadius: '4px',
+          backgroundColor: statusInfo.bgColor,
+          border: `2px solid ${statusInfo.borderColor}`,
+          borderRadius: '8px',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          fontWeight: 'bold',
-          color: status === 'healthy' ? '#000' : '#fff'
+          position: 'relative'
         }}
+        title={`Tooth #${toothNumber}: ${statusInfo.label} - ${statusInfo.description}`}
       >
-        {toothNumber}
+        {/* Tooth Number */}
+        <span 
+          className="text-sm font-bold"
+          style={{ color: statusInfo.color }}
+        >
+          {toothNumber}
+        </span>
+        
+        {/* Status Icon */}
+        {status !== 'healthy' && (
+          <StatusIcon 
+            size={14} 
+            style={{ color: statusInfo.color }}
+            className="absolute top-1 right-1"
+          />
+        )}
+        
+        {/* Status Indicator */}
+        <div 
+          className="absolute bottom-1 left-1 w-2 h-2 rounded-full"
+          style={{ backgroundColor: statusInfo.color }}
+        />
       </div>
     );
   };
 
   const renderTeethRow = (teethNumbers: number[], isUpper: boolean) => {
     return (
-      <div className="flex justify-center flex-wrap">
+      <div className="flex justify-center flex-wrap gap-1">
         {teethNumbers.map(toothNumber => renderTooth(toothNumber, isUpper))}
       </div>
     );
   };
 
+  // Calculate treatment summary
+  const getStatusSummary = () => {
+    const summary: Record<string, number> = {};
+    Object.values(teethData).forEach(tooth => {
+      const status = tooth.status || 'healthy';
+      summary[status] = (summary[status] || 0) + 1;
+    });
+    return summary;
+  };
+
+  const statusSummary = getStatusSummary();
+
   return (
-    <div className="dental-chart">
+    <div className="dental-chart w-full">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 mb-4">
-          <TabsTrigger value="adult">{t('dental_chart.adult_teeth', 'Adult Teeth')}</TabsTrigger>
-          <TabsTrigger value="child">{t('dental_chart.child_teeth', 'Child Teeth')}</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsTrigger value="adult">Adult Teeth (32)</TabsTrigger>
+          <TabsTrigger value="child">Child Teeth (20)</TabsTrigger>
         </TabsList>
         
         <TabsContent value="adult" className="mt-0">
-          <div className="mb-6">
-            <div className="text-center text-sm text-muted-foreground mb-2">
-              {t('dental_chart.upper_jaw', 'Upper Jaw')}
+          <div className="space-y-8">
+            {/* Upper Jaw */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-3 font-medium">Upper Jaw</div>
+              {renderTeethRow(adultTeeth.upper, true)}
             </div>
-            {renderTeethRow(adultTeeth.upper, true)}
-          </div>
-          
-          <div>
-            <div className="text-center text-sm text-muted-foreground mb-2">
-              {t('dental_chart.lower_jaw', 'Lower Jaw')}
+            
+            {/* Lower Jaw */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-3 font-medium">Lower Jaw</div>
+              {renderTeethRow(adultTeeth.lower, false)}
             </div>
-            {renderTeethRow(adultTeeth.lower, false)}
           </div>
         </TabsContent>
         
         <TabsContent value="child" className="mt-0">
-          <div className="mb-6">
-            <div className="text-center text-sm text-muted-foreground mb-2">
-              {t('dental_chart.upper_jaw', 'Upper Jaw')}
+          <div className="space-y-8">
+            {/* Upper Jaw */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-3 font-medium">Upper Jaw</div>
+              {renderTeethRow(childTeeth.upper, true)}
             </div>
-            {renderTeethRow(childTeeth.upper, true)}
-          </div>
-          
-          <div>
-            <div className="text-center text-sm text-muted-foreground mb-2">
-              {t('dental_chart.lower_jaw', 'Lower Jaw')}
+            
+            {/* Lower Jaw */}
+            <div className="text-center">
+              <div className="text-sm text-gray-600 mb-3 font-medium">Lower Jaw</div>
+              {renderTeethRow(childTeeth.lower, false)}
             </div>
-            {renderTeethRow(childTeeth.lower, false)}
           </div>
         </TabsContent>
       </Tabs>
       
+      {/* Selected Tooth Editor */}
       {selectedTooth && editable && (
-        <div className="mt-6 p-4 border rounded-lg">
-          <h3 className="text-md font-medium mb-3">
-            {t('dental_chart.tooth', 'Tooth')} #{selectedTooth}
+        <div className="mt-8 p-6 border rounded-lg bg-gray-50">
+          <h3 className="text-lg font-semibold mb-4">
+            Edit Tooth #{selectedTooth}
           </h3>
           
-          <RadioGroup 
-            value={getToothStatus(selectedTooth)}
-            onValueChange={handleStatusChange}
-            className="grid grid-cols-2 gap-2 md:grid-cols-4"
-          >
-            {Object.entries(toothStatuses).map(([value, { color, label }]) => (
-              <div key={value} className="flex items-center space-x-2">
-                <RadioGroupItem value={value} id={`status-${value}`} />
-                <Label htmlFor={`status-${value}`} className="flex items-center">
-                  <div 
-                    style={{ 
-                      backgroundColor: color, 
-                      width: '12px', 
-                      height: '12px', 
-                      borderRadius: '2px',
-                      marginRight: '6px'
-                    }} 
-                  />
-                  {label}
-                </Label>
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {Object.entries(toothStatuses).map(([value, statusInfo]) => (
+              <button
+                key={value}
+                onClick={() => handleStatusChange(value)}
+                className={`
+                  p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105
+                  ${getToothStatus(selectedTooth) === value 
+                    ? 'ring-2 ring-blue-500' 
+                    : 'hover:shadow-md'
+                  }
+                `}
+                style={{ 
+                  backgroundColor: statusInfo.bgColor,
+                  borderColor: statusInfo.borderColor
+                }}
+              >
+                <div className="flex items-center justify-center mb-2">
+                  <statusInfo.icon size={20} style={{ color: statusInfo.color }} />
+                </div>
+                <div className="text-sm font-medium" style={{ color: statusInfo.color }}>
+                  {statusInfo.label}
+                </div>
+              </button>
             ))}
-          </RadioGroup>
+          </div>
         </div>
       )}
       
-      <div className="mt-4">
-        <div className="flex flex-wrap gap-3 mt-4">
-          {Object.entries(toothStatuses).map(([key, { color, label }]) => (
-            <div key={key} className="flex items-center">
+      {/* Treatment Summary */}
+      {Object.keys(statusSummary).length > 1 && (
+        <div className="mt-8">
+          <h4 className="text-md font-semibold mb-4">Treatment Summary</h4>
+          <div className="flex flex-wrap gap-2">
+            {Object.entries(statusSummary).map(([status, count]) => {
+              const statusInfo = toothStatuses[status as keyof typeof toothStatuses];
+              if (!statusInfo || status === 'healthy') return null;
+              
+              return (
+                <Badge 
+                  key={status}
+                  variant="outline"
+                  className="px-3 py-1"
+                  style={{ 
+                    borderColor: statusInfo.borderColor,
+                    color: statusInfo.color,
+                    backgroundColor: statusInfo.bgColor
+                  }}
+                >
+                  {count} {statusInfo.label}
+                </Badge>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      
+      {/* Legend */}
+      <div className="mt-8">
+        <h4 className="text-md font-semibold mb-4">Legend</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {Object.entries(toothStatuses).map(([key, statusInfo]) => (
+            <div key={key} className="flex items-center space-x-2">
               <div 
+                className="w-4 h-4 rounded-full border"
                 style={{ 
-                  backgroundColor: color, 
-                  width: '12px', 
-                  height: '12px', 
-                  borderRadius: '2px',
-                  marginRight: '6px'
-                }} 
+                  backgroundColor: statusInfo.color,
+                  borderColor: statusInfo.borderColor
+                }}
               />
-              <span className="text-xs">{label}</span>
+              <span className="text-sm">{statusInfo.label}</span>
             </div>
           ))}
         </div>
