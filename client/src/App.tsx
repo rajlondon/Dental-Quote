@@ -136,7 +136,7 @@ function Router() {
       <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/results" component={PackageResultsPage} />
       <Route path="/quote">
-        {() => <Redirect to="/quote-request" />}
+        {() => <Redirect to="/your-quote" />}
       </Route>
       <Route path="/booking" component={BookingPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
