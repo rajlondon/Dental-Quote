@@ -1075,9 +1075,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* GENERAL DENTAL PROCEDURES */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             General Dental Procedures
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1116,9 +1116,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Dentures & Orthodontics
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
