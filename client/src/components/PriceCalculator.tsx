@@ -999,9 +999,9 @@ export default function PriceCalculator() {
                                         </FormControl>
                                         <SelectContent className="max-h-[400px]">
                                           {/* IMPLANTS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-1 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-1 bg-[#007B9E] rounded-sm">
                                             Implants
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1024,9 +1024,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* CROWNS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Crowns
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
@@ -1049,9 +1049,9 @@ export default function PriceCalculator() {
                                             ))}
                                           
                                           {/* VENEERS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                          <div className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Veneers
-                                          </SelectLabel>
+                                          </div>
                                           {treatments
                                             .filter(treatment => 
                                               treatment.treatment && 
