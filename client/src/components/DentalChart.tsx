@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, XCircle, AlertTriangle, Crown, Zap, Square } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, Crown, Zap, Square, Minus, Activity, Link2, Palette, Sparkles, ChevronUp } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '@/hooks/use-toast';
 
 type TeethData = Record<string, {
   status: string;
@@ -22,11 +23,13 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   editable = false 
 }) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('adult');
   const [teethData, setTeethData] = useState<TeethData>(initialData);
-  const [selectedTooth, setSelectedTooth] = useState<string | null>(null);
+  const [selectedCondition, setSelectedCondition] = useState<string>('healthy');
 
-  const toothStatuses = {
+  // Enhanced tooth conditions with 12 comprehensive types
+  const toothConditions = {
     healthy: { 
       color: '#10b981', 
       bgColor: '#ecfdf5',
@@ -36,12 +39,12 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       description: 'Good condition'
     },
     decay: { 
-      color: '#fbbf24', 
-      bgColor: '#fef3c7',
-      borderColor: '#d97706',
+      color: '#dc2626', 
+      bgColor: '#fef2f2',
+      borderColor: '#b91c1c',
       icon: AlertTriangle,
       label: 'Decay/Cavity',
-      description: 'Needs filling'
+      description: 'Needs treatment'
     },
     filling: { 
       color: '#3b82f6', 
@@ -60,10 +63,10 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       description: 'Needs/has crown'
     },
     missing: { 
-      color: '#9ca3af', 
-      bgColor: '#f9fafb',
-      borderColor: '#6b7280',
-      icon: XCircle,
+      color: '#6b7280', 
+      bgColor: '#f3f4f6',
+      borderColor: '#4b5563',
+      icon: Minus,
       label: 'Missing',
       description: 'Tooth missing'
     },
@@ -73,293 +76,235 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       borderColor: '#7c3aed',
       icon: Zap,
       label: 'Implant',
-      description: 'Needs implant'
+      description: 'Needs/has implant'
     },
     root_canal: { 
       color: '#ef4444', 
       bgColor: '#fef2f2',
       borderColor: '#dc2626',
-      icon: AlertTriangle,
+      icon: Activity,
       label: 'Root Canal',
-      description: 'Needs root canal'
+      description: 'Needs/has root canal'
     },
     extraction: { 
-      color: '#dc2626', 
+      color: '#991b1b', 
       bgColor: '#fef2f2',
-      borderColor: '#b91c1c',
+      borderColor: '#7f1d1d',
       icon: XCircle,
       label: 'Extraction',
       description: 'Needs extraction'
     },
     bridge: { 
-      color: '#06b6d4', 
-      bgColor: '#ecfeff',
-      borderColor: '#0891b2',
-      icon: Square,
+      color: '#0d9488', 
+      bgColor: '#f0fdfa',
+      borderColor: '#0f766e',
+      icon: Link2,
       label: 'Bridge',
-      description: 'Bridge treatment'
+      description: 'Part of bridge'
     },
     veneer: { 
-      color: '#10b981', 
-      bgColor: '#ecfdf5',
-      borderColor: '#059669',
-      icon: Square,
+      color: '#db2777', 
+      bgColor: '#fdf2f8',
+      borderColor: '#be185d',
+      icon: Palette,
       label: 'Veneer',
-      description: 'Veneer treatment'
+      description: 'Needs/has veneer'
     },
     whitening: { 
-      color: '#f3f4f6', 
-      bgColor: '#f9fafb',
-      borderColor: '#e5e7eb',
-      icon: CheckCircle,
+      color: '#facc15', 
+      bgColor: '#fefce8',
+      borderColor: '#eab308',
+      icon: Sparkles,
       label: 'Whitening',
-      description: 'Whitening treatment'
+      description: 'Needs whitening'
     },
     chipped: { 
-      color: '#fcd34d', 
-      bgColor: '#fefce8',
-      borderColor: '#f59e0b',
-      icon: AlertTriangle,
+      color: '#f97316', 
+      bgColor: '#fff7ed',
+      borderColor: '#ea580c',
+      icon: ChevronUp,
       label: 'Chipped',
-      description: 'Chipped tooth'
+      description: 'Chipped/damaged'
     }
   };
 
-  const adultTeeth = {
-    upper: [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28],
-    lower: [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38]
-  };
-
-  const childTeeth = {
-    upper: [55, 54, 53, 52, 51, 61, 62, 63, 64, 65],
-    lower: [85, 84, 83, 82, 81, 71, 72, 73, 74, 75]
-  };
-
-  useEffect(() => {
-    setTeethData(initialData);
-  }, [initialData]);
-
   const handleToothClick = (toothId: string) => {
     if (!editable) return;
-    setSelectedTooth(toothId);
-  };
 
-  const handleStatusChange = (status: string) => {
-    if (!selectedTooth || !editable) return;
-    
-    const updatedData = {
+    const newTeethData = {
       ...teethData,
-      [selectedTooth]: {
-        ...teethData[selectedTooth],
-        status
+      [toothId]: {
+        status: selectedCondition,
+        notes: teethData[toothId]?.notes || ''
       }
     };
-    
-    setTeethData(updatedData);
-    onChange(updatedData);
-  };
 
-  const getToothStatus = (toothId: string) => {
-    return teethData[toothId]?.status || 'healthy';
-  };
+    setTeethData(newTeethData);
+    onChange(newTeethData);
 
-  const renderTooth = (toothNumber: number, isUpper: boolean) => {
-    const toothId = toothNumber.toString();
-    const status = getToothStatus(toothId);
-    const statusInfo = toothStatuses[status as keyof typeof toothStatuses] || toothStatuses.healthy;
-    const StatusIcon = statusInfo.icon;
-    
-    return (
-      <div 
-        key={toothId}
-        className={`
-          relative transition-all duration-200 hover:scale-105 
-          ${selectedTooth === toothId ? 'ring-2 ring-blue-500 scale-105' : ''} 
-          ${editable ? 'cursor-pointer hover:shadow-lg' : 'cursor-default'}
-        `}
-        onClick={() => handleToothClick(toothId)}
-        style={{ 
-          width: '50px', 
-          height: '50px', 
-          margin: '4px',
-          backgroundColor: statusInfo.bgColor,
-          border: `2px solid ${statusInfo.borderColor}`,
-          borderRadius: '8px',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative'
-        }}
-        title={`Tooth #${toothNumber}: ${statusInfo.label} - ${statusInfo.description}`}
-      >
-        {/* Tooth Number */}
-        <span 
-          className="text-sm font-bold"
-          style={{ color: statusInfo.color }}
-        >
-          {toothNumber}
-        </span>
-        
-        {/* Status Icon */}
-        {status !== 'healthy' && (
-          <StatusIcon 
-            size={14} 
-            style={{ color: statusInfo.color }}
-            className="absolute top-1 right-1"
-          />
-        )}
-        
-        {/* Status Indicator */}
-        <div 
-          className="absolute bottom-1 left-1 w-2 h-2 rounded-full"
-          style={{ backgroundColor: statusInfo.color }}
-        />
-      </div>
-    );
-  };
-
-  const renderTeethRow = (teethNumbers: number[], isUpper: boolean) => {
-    return (
-      <div className="flex justify-center flex-wrap gap-1">
-        {teethNumbers.map(toothNumber => renderTooth(toothNumber, isUpper))}
-      </div>
-    );
-  };
-
-  // Calculate treatment summary
-  const getStatusSummary = () => {
-    const summary: Record<string, number> = {};
-    Object.values(teethData).forEach(tooth => {
-      const status = tooth.status || 'healthy';
-      summary[status] = (summary[status] || 0) + 1;
+    const condition = toothConditions[selectedCondition as keyof typeof toothConditions];
+    toast({
+      title: "Tooth Updated",
+      description: `Tooth ${toothId} marked as ${condition.label}`,
     });
-    return summary;
   };
 
-  const statusSummary = getStatusSummary();
+  const renderTooth = (toothId: string, position: { top: string; left: string }) => {
+    const toothStatus = teethData[toothId]?.status || 'healthy';
+    const condition = toothConditions[toothStatus as keyof typeof toothConditions] || toothConditions.healthy;
+    
+    return (
+      <div
+        key={toothId}
+        className={`absolute w-8 h-8 rounded-full border-2 cursor-pointer transition-all duration-200 hover:scale-110 ${
+          editable ? 'hover:shadow-lg' : ''
+        }`}
+        style={{
+          top: position.top,
+          left: position.left,
+          backgroundColor: condition.bgColor,
+          borderColor: condition.borderColor,
+          color: condition.color
+        }}
+        onClick={() => handleToothClick(toothId)}
+        title={`Tooth ${toothId}: ${condition.label}`}
+      >
+        <div className="w-full h-full flex items-center justify-center">
+          <condition.icon size={16} />
+        </div>
+        <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-600">
+          {toothId}
+        </div>
+      </div>
+    );
+  };
+
+  // Tooth positions for adult teeth (simplified anatomical layout)
+  const adultTeethPositions = {
+    // Upper teeth (maxilla)
+    '18': { top: '20%', left: '15%' }, '17': { top: '25%', left: '20%' }, '16': { top: '30%', left: '25%' }, '15': { top: '35%', left: '30%' },
+    '14': { top: '40%', left: '35%' }, '13': { top: '45%', left: '40%' }, '12': { top: '50%', left: '45%' }, '11': { top: '52%', left: '48%' },
+    '21': { top: '52%', left: '52%' }, '22': { top: '50%', left: '55%' }, '23': { top: '45%', left: '60%' }, '24': { top: '40%', left: '65%' },
+    '25': { top: '35%', left: '70%' }, '26': { top: '30%', left: '75%' }, '27': { top: '25%', left: '80%' }, '28': { top: '20%', left: '85%' },
+    
+    // Lower teeth (mandible)
+    '48': { top: '75%', left: '15%' }, '47': { top: '70%', left: '20%' }, '46': { top: '65%', left: '25%' }, '45': { top: '60%', left: '30%' },
+    '44': { top: '55%', left: '35%' }, '43': { top: '52%', left: '40%' }, '42': { top: '50%', left: '45%' }, '41': { top: '48%', left: '48%' },
+    '31': { top: '48%', left: '52%' }, '32': { top: '50%', left: '55%' }, '33': { top: '52%', left: '60%' }, '34': { top: '55%', left: '65%' },
+    '35': { top: '60%', left: '70%' }, '36': { top: '65%', left: '75%' }, '37': { top: '70%', left: '80%' }, '38': { top: '75%', left: '85%' }
+  };
+
+  // Child teeth positions (simplified)
+  const childTeethPositions = {
+    // Upper teeth
+    'A': { top: '30%', left: '25%' }, 'B': { top: '35%', left: '30%' }, 'C': { top: '45%', left: '40%' }, 'D': { top: '50%', left: '45%' }, 'E': { top: '52%', left: '48%' },
+    'F': { top: '52%', left: '52%' }, 'G': { top: '50%', left: '55%' }, 'H': { top: '45%', left: '60%' }, 'I': { top: '35%', left: '70%' }, 'J': { top: '30%', left: '75%' },
+    
+    // Lower teeth
+    'K': { top: '65%', left: '25%' }, 'L': { top: '60%', left: '30%' }, 'M': { top: '52%', left: '40%' }, 'N': { top: '50%', left: '45%' }, 'O': { top: '48%', left: '48%' },
+    'P': { top: '48%', left: '52%' }, 'Q': { top: '50%', left: '55%' }, 'R': { top: '52%', left: '60%' }, 'S': { top: '60%', left: '70%' }, 'T': { top: '65%', left: '75%' }
+  };
 
   return (
-    <div className="dental-chart w-full">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="adult">Adult Teeth (32)</TabsTrigger>
-          <TabsTrigger value="child">Child Teeth (20)</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="adult" className="mt-0">
-          <div className="space-y-8">
-            {/* Upper Jaw */}
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-3 font-medium">Upper Jaw</div>
-              {renderTeethRow(adultTeeth.upper, true)}
-            </div>
-            
-            {/* Lower Jaw */}
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-3 font-medium">Lower Jaw</div>
-              {renderTeethRow(adultTeeth.lower, false)}
-            </div>
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="child" className="mt-0">
-          <div className="space-y-8">
-            {/* Upper Jaw */}
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-3 font-medium">Upper Jaw</div>
-              {renderTeethRow(childTeeth.upper, true)}
-            </div>
-            
-            {/* Lower Jaw */}
-            <div className="text-center">
-              <div className="text-sm text-gray-600 mb-3 font-medium">Lower Jaw</div>
-              {renderTeethRow(childTeeth.lower, false)}
-            </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-      
-      {/* Selected Tooth Editor */}
-      {selectedTooth && editable && (
-        <div className="mt-8 p-6 border rounded-lg bg-gray-50">
-          <h3 className="text-lg font-semibold mb-4">
-            Edit Tooth #{selectedTooth}
-          </h3>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Object.entries(toothStatuses).map(([value, statusInfo]) => (
-              <button
-                key={value}
-                onClick={() => handleStatusChange(value)}
-                className={`
-                  p-3 rounded-lg border-2 transition-all duration-200 hover:scale-105
-                  ${getToothStatus(selectedTooth) === value 
-                    ? 'ring-2 ring-blue-500' 
-                    : 'hover:shadow-md'
-                  }
-                `}
-                style={{ 
-                  backgroundColor: statusInfo.bgColor,
-                  borderColor: statusInfo.borderColor
-                }}
-              >
-                <div className="flex items-center justify-center mb-2">
-                  <statusInfo.icon size={20} style={{ color: statusInfo.color }} />
-                </div>
-                <div className="text-sm font-medium" style={{ color: statusInfo.color }}>
-                  {statusInfo.label}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Treatment Summary */}
-      {Object.keys(statusSummary).length > 1 && (
-        <div className="mt-8">
-          <h4 className="text-md font-semibold mb-4">Treatment Summary</h4>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(statusSummary).map(([status, count]) => {
-              const statusInfo = toothStatuses[status as keyof typeof toothStatuses];
-              if (!statusInfo || status === 'healthy') return null;
-              
+    <div className="w-full">
+      {editable && (
+        <div className="mb-6">
+          <h4 className="text-lg font-semibold mb-3 text-gray-800">Select Condition First, Then Click Teeth</h4>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {Object.entries(toothConditions).map(([key, condition]) => {
+              const IconComponent = condition.icon;
               return (
-                <Badge 
-                  key={status}
-                  variant="outline"
-                  className="px-3 py-1"
-                  style={{ 
-                    borderColor: statusInfo.borderColor,
-                    color: statusInfo.color,
-                    backgroundColor: statusInfo.bgColor
+                <button
+                  key={key}
+                  onClick={() => setSelectedCondition(key)}
+                  className={`flex items-center space-x-2 p-3 rounded-lg border-2 transition-all ${
+                    selectedCondition === key 
+                      ? 'border-blue-500 bg-blue-50 shadow-md' 
+                      : 'border-gray-200 hover:border-gray-300 bg-white'
+                  }`}
+                  style={{
+                    borderColor: selectedCondition === key ? '#3b82f6' : undefined,
+                    backgroundColor: selectedCondition === key ? condition.bgColor : undefined
                   }}
                 >
-                  {count} {statusInfo.label}
-                </Badge>
+                  <div
+                    className="w-4 h-4 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: condition.color }}
+                  >
+                    <IconComponent size={12} color="white" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-sm font-medium text-gray-800">{condition.label}</div>
+                    <div className="text-xs text-gray-500">{condition.description}</div>
+                  </div>
+                </button>
               );
             })}
           </div>
         </div>
       )}
-      
-      {/* Legend */}
-      <div className="mt-8">
-        <h4 className="text-md font-semibold mb-4">Legend</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Object.entries(toothStatuses).map(([key, statusInfo]) => (
-            <div key={key} className="flex items-center space-x-2">
-              <div 
-                className="w-4 h-4 rounded-full border"
-                style={{ 
-                  backgroundColor: statusInfo.color,
-                  borderColor: statusInfo.borderColor
-                }}
-              />
-              <span className="text-sm">{statusInfo.label}</span>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="adult">Adult Teeth</TabsTrigger>
+          <TabsTrigger value="child">Child Teeth</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="adult" className="space-y-4">
+          <div className="relative w-full h-96 mx-auto bg-gradient-to-b from-pink-50 to-red-50 rounded-lg border-2 border-pink-200 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-pink-100/50 to-red-100/50"></div>
+            <div className="relative z-10">
+              {Object.entries(adultTeethPositions).map(([toothId, position]) =>
+                renderTooth(toothId, position)
+              )}
             </div>
-          ))}
+            
+            {/* Mouth outline */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-40 border-4 border-pink-300 rounded-full opacity-30"></div>
+          </div>
+          
+          <div className="text-center text-sm text-gray-600">
+            Adult teeth (32 total) - Click on teeth to mark conditions
+          </div>
+        </TabsContent>
+
+        <TabsContent value="child" className="space-y-4">
+          <div className="relative w-full h-96 mx-auto bg-gradient-to-b from-blue-50 to-cyan-50 rounded-lg border-2 border-blue-200 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-b from-blue-100/50 to-cyan-100/50"></div>
+            <div className="relative z-10">
+              {Object.entries(childTeethPositions).map(([toothId, position]) =>
+                renderTooth(toothId, position)
+              )}
+            </div>
+            
+            {/* Mouth outline */}
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-32 border-4 border-blue-300 rounded-full opacity-30"></div>
+          </div>
+          
+          <div className="text-center text-sm text-gray-600">
+            Primary teeth (20 total) - Click on teeth to mark conditions
+          </div>
+        </TabsContent>
+      </Tabs>
+
+      {/* Legend */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <h5 className="font-medium text-gray-800 mb-3">Condition Legend</h5>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+          {Object.entries(toothConditions).map(([key, condition]) => {
+            const IconComponent = condition.icon;
+            return (
+              <div key={key} className="flex items-center space-x-2">
+                <div
+                  className="w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ backgroundColor: condition.color }}
+                >
+                  <IconComponent size={10} color="white" />
+                </div>
+                <span className="text-sm text-gray-700">{condition.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
