@@ -6,7 +6,7 @@ import { Loader2, AlertCircle, Pencil, Save, RefreshCcw, Info } from 'lucide-rea
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { apiRequest } from '@/lib/queryClient';
 import { useTranslation } from 'react-i18next';
-import { DentalChart3D } from '@/components/DentalChart3D';
+
 import { toast } from '@/hooks/use-toast';
 import { 
   Tooltip,
@@ -123,6 +123,12 @@ const DentalChartSection = () => {
 
   const handleTeethDataChange = (newTeethData: Record<string, any>) => {
     setCurrentChartData(newTeethData);
+  };
+
+  const handleToothClick = (toothId: string) => {
+    if (!editMode) return;
+    // Here you could open a modal or show tooth editing options
+    console.log('Clicked tooth:', toothId);
   };
 
   const handleSaveChart = () => {
