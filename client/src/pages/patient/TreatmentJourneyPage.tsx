@@ -90,8 +90,9 @@ const TreatmentJourneyPage: React.FC = () => {
         await userQuotesQuery.refetch();
         
         // Convert quotes to treatment plans for display
-        if (userQuotesQuery.data?.success && userQuotesQuery.data.data) {
-          const quotesData = userQuotesQuery.data.data;
+        if (userQuotesQuery.data && Array.isArray(userQuotesQuery.data)) {
+          const quotesData = userQuotesQuery.data;
+          console.log('Found quotes data:', quotesData);
           const convertedPlans = quotesData
             .filter((quote: any) => quote && quote.id)
             .map((quote: any) => ({
@@ -115,7 +116,10 @@ const TreatmentJourneyPage: React.FC = () => {
               quoteId: quote.id
             }));
           
+          console.log('Converted plans:', convertedPlans);
           setTreatmentPlans(convertedPlans);
+        } else {
+          console.log('No quotes data found:', userQuotesQuery.data);
         }
       } catch (error) {
         console.error('Error loading treatment journey:', error);
@@ -230,14 +234,14 @@ const TreatmentJourneyPage: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList>
           <TabsTrigger value="timeline">Timeline</TabsTrigger>
-          <TabsTrigger value="quotes">My Quotes ({userQuotesQuery.data?.data?.length || 0})</TabsTrigger>
+          <TabsTrigger value="quotes">My Quotes ({userQuotesQuery.data?.length || 0})</TabsTrigger>
           <TabsTrigger value="plans">Treatment Plans ({treatmentPlans.length})</TabsTrigger>
         </TabsList>
 
         <TabsContent value="timeline" className="space-y-6">
           {/* Timeline View */}
           <div className="space-y-4">
-            {treatmentPlans.length === 0 && userQuotesQuery.data?.data?.length === 0 ? (
+            {treatmentPlans.length === 0 && (!userQuotesQuery.data || userQuotesQuery.data.length === 0) ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -253,7 +257,7 @@ const TreatmentJourneyPage: React.FC = () => {
             ) : (
               <div className="space-y-6">
                 {/* Quotes Timeline */}
-                {userQuotesQuery.data?.data?.map((quote: any, index: number) => (
+                {userQuotesQuery.data?.map((quote: any, index: number) => (
                   <Card key={`quote-${quote.id}`} className="border-l-4 border-l-blue-500">
                     <CardHeader>
                       <div className="flex items-center justify-between">
@@ -354,7 +358,7 @@ const TreatmentJourneyPage: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="quotes" className="space-y-4">
-          {userQuotesQuery.data?.data?.length === 0 ? (
+          {!userQuotesQuery.data || userQuotesQuery.data.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -369,7 +373,7 @@ const TreatmentJourneyPage: React.FC = () => {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {userQuotesQuery.data?.data?.map((quote: any) => (
+              {userQuotesQuery.data?.map((quote: any) => (
                 <Card key={quote.id}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
