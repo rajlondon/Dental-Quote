@@ -60,7 +60,7 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
   const { toast } = useToast();
   const queryClient = useQueryClient();
   
-  const [editMode, setEditMode] = useState(false);
+  const [editMode, setEditMode] = useState(true);
   const [currentChartData, setCurrentChartData] = useState<Record<string, any>>({});
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
   const [selectedCondition, setSelectedCondition] = useState<string>('decay');
