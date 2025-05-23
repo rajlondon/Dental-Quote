@@ -117,60 +117,70 @@ export const DentalChart: React.FC<DentalChartProps> = ({
         {/* Center tongue area */}
         <div className="absolute w-[40%] h-[25%] bg-[#e57373] rounded-[100%/50%] z-5"></div>
         
-        {/* Upper Teeth Row - Interactive */}
+        {/* Upper Teeth Row - Interactive with Numbers */}
         <div className="absolute z-20" style={{ top: '25%', transform: 'translateY(-50%)' }}>
           <div className="flex justify-center space-x-1">
             {[18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28].map((toothNum) => {
               const toothData = teethData[toothNum.toString()];
               const hasIssue = toothData?.status && toothData.status !== 'healthy';
               return (
-                <div
-                  key={toothNum}
-                  className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editable ? 'hover:scale-110' : ''}`}
-                  style={{
-                    backgroundColor: getToothColor(toothData?.status || 'healthy'),
-                    borderColor: hasIssue ? '#374151' : '#9ca3af',
-                    borderWidth: '2px'
-                  }}
-                  title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
-                  onClick={() => handleToothClick(toothNum)}
-                >
-                  {hasIssue && toothData?.status !== 'missing' && (
-                    <div 
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: '#1f2937' }}
-                    ></div>
-                  )}
+                <div key={toothNum} className="relative">
+                  <div
+                    className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editable ? 'hover:scale-110' : ''}`}
+                    style={{
+                      backgroundColor: getToothColor(toothData?.status || 'healthy'),
+                      borderColor: hasIssue ? '#374151' : '#9ca3af',
+                      borderWidth: '2px'
+                    }}
+                    title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
+                    onClick={() => handleToothClick(toothNum)}
+                  >
+                    {hasIssue && toothData?.status !== 'missing' && (
+                      <div 
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: '#1f2937' }}
+                      ></div>
+                    )}
+                  </div>
+                  {/* Tooth Number Label */}
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700">
+                    {toothNum}
+                  </div>
                 </div>
               );
             })}
           </div>
         </div>
         
-        {/* Lower Teeth Row - Interactive */}
+        {/* Lower Teeth Row - Interactive with Numbers */}
         <div className="absolute z-20" style={{ bottom: '25%', transform: 'translateY(50%)' }}>
           <div className="flex justify-center space-x-1">
             {[48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38].map((toothNum) => {
               const toothData = teethData[toothNum.toString()];
               const hasIssue = toothData?.status && toothData.status !== 'healthy';
               return (
-                <div
-                  key={toothNum}
-                  className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editable ? 'hover:scale-110' : ''}`}
-                  style={{
-                    backgroundColor: getToothColor(toothData?.status || 'healthy'),
-                    borderColor: hasIssue ? '#374151' : '#9ca3af',
-                    borderWidth: '2px'
-                  }}
-                  title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
-                  onClick={() => handleToothClick(toothNum)}
-                >
-                  {hasIssue && toothData?.status !== 'missing' && (
-                    <div 
-                      className="w-1.5 h-1.5 rounded-full"
-                      style={{ backgroundColor: '#1f2937' }}
-                    ></div>
-                  )}
+                <div key={toothNum} className="relative">
+                  <div
+                    className={`w-4 h-5 border rounded-sm cursor-pointer transition-all duration-200 flex items-center justify-center ${editable ? 'hover:scale-110' : ''}`}
+                    style={{
+                      backgroundColor: getToothColor(toothData?.status || 'healthy'),
+                      borderColor: hasIssue ? '#374151' : '#9ca3af',
+                      borderWidth: '2px'
+                    }}
+                    title={`Tooth #${toothNum}${hasIssue ? ` - ${toothData.status}` : ' - healthy'}`}
+                    onClick={() => handleToothClick(toothNum)}
+                  >
+                    {hasIssue && toothData?.status !== 'missing' && (
+                      <div 
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{ backgroundColor: '#1f2937' }}
+                      ></div>
+                    )}
+                  </div>
+                  {/* Tooth Number Label */}
+                  <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 text-xs font-medium text-gray-700">
+                    {toothNum}
+                  </div>
                 </div>
               );
             })}
