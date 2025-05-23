@@ -10,12 +10,16 @@ interface DentalChartProps {
   initialData?: TeethData;
   onChange?: (data: Record<string, any>) => void;
   editable?: boolean;
+  onTeethUpdate?: (updatedTeeth: any[]) => void;
+  initialTeeth?: any[];
 }
 
 export const DentalChart: React.FC<DentalChartProps> = ({ 
   initialData = {}, 
   onChange = () => {}, 
-  editable = false 
+  editable = true,
+  onTeethUpdate,
+  initialTeeth = []
 }) => {
   const { toast } = useToast();
   const [teethData, setTeethData] = useState<TeethData>(initialData);
@@ -28,13 +32,13 @@ export const DentalChart: React.FC<DentalChartProps> = ({
       filling: '#3b82f6',
       crown: '#f59e0b',
       missing: '#9ca3af',
-      implant: '#8b5cf6',
       root_canal: '#ef4444',
+      implant: '#06b6d4',
+      bridge: '#8b5cf6',
+      veneer: '#ec4899',
       extraction: '#dc2626',
-      bridge: '#06b6d4',
-      veneer: '#10b981',
-      whitening: '#f3f4f6',
-      chipped: '#fcd34d'
+      cleaning: '#10b981',
+      whitening: '#6366f1'
     };
     return colors[status as keyof typeof colors] || colors.healthy;
   };
@@ -192,6 +196,57 @@ export const DentalChart: React.FC<DentalChartProps> = ({
           {editable ? 'Click teeth to edit conditions' : 'Professional Dental Chart'}
         </div>
       </div>
+
+      {/* Interactive Condition Selector for editable mode */}
+      {editable && (
+        <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h5 className="font-medium text-blue-800 mb-3">Select Dental Condition</h5>
+          <p className="text-sm text-blue-600 mb-4">Choose a condition below, then click any tooth to mark it:</p>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+            {[
+              { key: 'healthy', label: 'Healthy', color: '#ffffff' },
+              { key: 'decay', label: 'Decay/Cavity', color: '#fbbf24' },
+              { key: 'filling', label: 'Filling', color: '#3b82f6' },
+              { key: 'crown', label: 'Crown', color: '#f59e0b' },
+              { key: 'root_canal', label: 'Root Canal', color: '#ef4444' },
+              { key: 'implant', label: 'Implant', color: '#06b6d4' },
+              { key: 'bridge', label: 'Bridge', color: '#8b5cf6' },
+              { key: 'veneer', label: 'Veneer', color: '#ec4899' },
+              { key: 'extraction', label: 'Extraction Needed', color: '#dc2626' },
+              { key: 'cleaning', label: 'Cleaning Needed', color: '#10b981' },
+              { key: 'whitening', label: 'Whitening', color: '#6366f1' },
+              { key: 'missing', label: 'Missing', color: '#9ca3af' }
+            ].map((condition) => {
+              const isSelected = selectedCondition === condition.key;
+              return (
+                <div 
+                  key={condition.key} 
+                  className={`flex items-center space-x-2 p-2 rounded cursor-pointer transition-all ${
+                    isSelected 
+                      ? 'bg-blue-200 border-2 border-blue-500' 
+                      : 'bg-white border border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => setSelectedCondition(condition.key)}
+                >
+                  <div
+                    className="w-4 h-4 rounded border-2"
+                    style={{ 
+                      backgroundColor: condition.color, 
+                      borderColor: isSelected ? '#2563eb' : '#9ca3af' 
+                    }}
+                  ></div>
+                  <span className={`text-sm ${isSelected ? 'font-semibold text-blue-800' : 'text-gray-700'}`}>
+                    {condition.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="mt-3 text-xs text-blue-600">
+            Currently selected: <span className="font-semibold">{selectedCondition}</span>
+          </div>
+        </div>
+      )}
 
       {/* Static Legend for viewing mode */}
       {!editable && (
