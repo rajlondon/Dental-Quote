@@ -158,6 +158,7 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
 
   // Handle tooth click - apply selected condition to clicked tooth
   const handleToothClick = (toothNumber: number) => {
+    console.log('Tooth clicked:', toothNumber, 'editMode:', editMode, 'selectedCondition:', selectedCondition);
     if (editMode && selectedCondition) {
       setCurrentChartData(prev => ({
         ...prev,
