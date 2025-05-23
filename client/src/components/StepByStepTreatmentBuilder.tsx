@@ -16,7 +16,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Info, Smile, Heart, AlertTriangle, Check, ArrowRight, HelpCircle, Timer } from 'lucide-react';
 import TreatmentPlanBuilder, { TreatmentItem } from '@/components/TreatmentPlanBuilder';
-import { DentalChart } from '@/components/DentalChart';
+import DentalChart3D from '@/components/DentalChart3D';
 
 // Define symptom tags that users can select
 const SYMPTOM_TAGS = [
@@ -584,9 +584,9 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
                 </div>
                 
                 <div className="mt-4">
-                  {/* Use the existing DentalChart component */}
+                  {/* Use the enhanced DentalChart3D component */}
                   <div className="max-w-5xl mx-auto">
-                    <DentalChart 
+                    <DentalChart3D 
                       onTeethUpdate={handleTeethUpdate}
                       initialTeeth={teeth}
                     />
