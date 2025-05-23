@@ -339,6 +339,62 @@ const DentalChartSection: React.FC<DentalChartSectionProps> = ({
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Condition Selector for editing mode */}
+            {editMode && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-medium text-gray-800 mb-3">Select Condition to Apply</h5>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                  {[
+                    { key: 'healthy', label: 'Healthy', color: '#ffffff' },
+                    { key: 'decay', label: 'Decay/Cavity', color: '#fbbf24' },
+                    { key: 'filling', label: 'Filling', color: '#3b82f6' },
+                    { key: 'crown', label: 'Crown', color: '#f59e0b' },
+                    { key: 'missing', label: 'Missing', color: '#9ca3af' },
+                    { key: 'implant', label: 'Implant', color: '#8b5cf6' },
+                    { key: 'root_canal', label: 'Root Canal', color: '#ef4444' },
+                    { key: 'extraction', label: 'Extraction', color: '#dc2626' },
+                    { key: 'bridge', label: 'Bridge', color: '#06b6d4' },
+                    { key: 'veneer', label: 'Veneer', color: '#10b981' },
+                    { key: 'whitening', label: 'Whitening', color: '#f3f4f6' },
+                    { key: 'chipped', label: 'Chipped', color: '#fcd34d' }
+                  ].map((condition) => {
+                    const isSelected = selectedCondition === condition.key;
+                    return (
+                      <button
+                        key={condition.key}
+                        className={`flex items-center space-x-2 p-2 rounded border transition-all ${
+                          isSelected 
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200' 
+                            : 'border-gray-300 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setSelectedCondition(condition.key)}
+                      >
+                        <div
+                          className="w-4 h-4 rounded border"
+                          style={{ backgroundColor: condition.color, borderColor: '#9ca3af' }}
+                        ></div>
+                        <span className="text-sm text-gray-700">{condition.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Selected: <strong>{selectedCondition === 'healthy' ? 'Healthy' : 
+                    selectedCondition === 'decay' ? 'Decay/Cavity' :
+                    selectedCondition === 'filling' ? 'Filling' :
+                    selectedCondition === 'crown' ? 'Crown' :
+                    selectedCondition === 'missing' ? 'Missing' :
+                    selectedCondition === 'implant' ? 'Implant' :
+                    selectedCondition === 'root_canal' ? 'Root Canal' :
+                    selectedCondition === 'extraction' ? 'Extraction' :
+                    selectedCondition === 'bridge' ? 'Bridge' :
+                    selectedCondition === 'veneer' ? 'Veneer' :
+                    selectedCondition === 'whitening' ? 'Whitening' :
+                    selectedCondition === 'chipped' ? 'Chipped' : 'None'}</strong>
+                </p>
+              </div>
+            )}
             
             {/* Beautiful Anatomical Dental Chart */}
             <div className="w-full">
