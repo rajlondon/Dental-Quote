@@ -22,7 +22,23 @@ export const DentalChart: React.FC<DentalChartProps> = ({
   initialTeeth = []
 }) => {
   const { toast } = useToast();
-  const [teethData, setTeethData] = useState<TeethData>(initialData);
+  
+  // Initialize teeth data from localStorage if available, otherwise use initialData
+  const [teethData, setTeethData] = useState<TeethData>(() => {
+    if (typeof window !== 'undefined') {
+      const savedData = localStorage.getItem('dentalChartData');
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          return { ...initialData, ...parsedData };
+        } catch (error) {
+          console.log('Error parsing saved dental chart data:', error);
+        }
+      }
+    }
+    return initialData;
+  });
+  
   const [selectedCondition, setSelectedCondition] = useState<string>('healthy');
 
   const getToothColor = (status: string) => {
@@ -56,6 +72,20 @@ export const DentalChart: React.FC<DentalChartProps> = ({
 
     setTeethData(newTeethData);
     onChange(newTeethData);
+
+    // Save to localStorage for quote persistence
+    localStorage.setItem('dentalChartData', JSON.stringify(newTeethData));
+
+    // If onTeethUpdate callback is provided, use it (for StepByStepTreatmentBuilder)
+    if (onTeethUpdate) {
+      // Convert teeth data to array format expected by onTeethUpdate
+      const teethArray = Object.entries(newTeethData).map(([id, data]: [string, any]) => ({
+        id: parseInt(id),
+        condition: data.status,
+        notes: data.notes || ''
+      }));
+      onTeethUpdate(teethArray);
+    }
 
     toast({
       title: "Tooth Updated",
