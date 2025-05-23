@@ -515,7 +515,7 @@ export function DentalChart3D({
                 {teeth.slice(0, 16).map(tooth => {
                   const bgColor = getToothColor(tooth);
                   const textColor = getTextColor(bgColor);
-                  const { x, y, rotation } = tooth.position;
+                  const { x, y, rotation } = tooth.position || getDefaultPosition(tooth.id);
                   
                   // Simple square tooth shape with smaller size for better aesthetics
                   const toothShape = (
