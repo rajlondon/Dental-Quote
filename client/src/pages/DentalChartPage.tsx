@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { DentalChart } from '@/components/DentalChart';
+import DentalChart3D from '@/components/DentalChart3D';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -53,7 +53,7 @@ export default function DentalChartPage() {
             </div>
             
             <div className="mb-6">
-              <DentalChart onTeethUpdate={handleTeethUpdate} />
+              <DentalChart3D onTeethUpdate={handleTeethUpdate} />
             </div>
             
             <div className="mt-8 flex justify-center space-x-4">
