@@ -156,10 +156,9 @@ const Question: React.FC<QuestionProps> = ({
           <Button 
             variant="outline" 
             onClick={() => {
-              // Preserve scroll position when going back
-              const currentPosition = window.scrollY;
+              // Scroll to top when going back
               onBack();
-              setTimeout(() => window.scrollTo(0, currentPosition), 0);
+              setTimeout(() => window.scrollTo(0, 0), 0);
             }} 
             className="px-6"
           >
@@ -171,10 +170,9 @@ const Question: React.FC<QuestionProps> = ({
         
         <Button 
           onClick={() => {
-            // Preserve scroll position when going forward
-            const currentPosition = window.scrollY;
+            // Scroll to top when going forward
             onNext();
-            setTimeout(() => window.scrollTo(0, currentPosition), 0);
+            setTimeout(() => window.scrollTo(0, 0), 0);
           }} 
           disabled={!canContinue}
           className="px-6"
@@ -199,11 +197,10 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
 }) => {
   const { toast } = useToast();
   
-  // Helper function for changing steps while preserving scroll position
+  // Helper function for changing steps and scrolling to top
   const changeStep = (newStep: number) => {
-    const currentPosition = window.scrollY;
     setCurrentStep(newStep);
-    setTimeout(() => window.scrollTo(0, currentPosition), 0);
+    setTimeout(() => window.scrollTo(0, 0), 0);
   };
   // Step tracking
   const [currentStep, setCurrentStep] = useState(0);
@@ -296,12 +293,11 @@ const StepByStepTreatmentBuilder: React.FC<StepByStepTreatmentBuilderProps> = ({
   
   // Handle final submission
   const handleComplete = () => {
-    const currentPosition = window.scrollY;
     if (onComplete) {
       onComplete(teeth, treatments);
     }
-    // Maintain scroll position after completion
-    setTimeout(() => window.scrollTo(0, currentPosition), 0);
+    // Scroll to top after completion for consistent experience
+    setTimeout(() => window.scrollTo(0, 0), 0);
   };
   
   // Handle concern selection
