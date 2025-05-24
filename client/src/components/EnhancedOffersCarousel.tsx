@@ -446,13 +446,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   // Clinic URL mapping for navigation
   const getClinicUrl = (clinicId: string | number) => {
     const clinicUrls: Record<string, string> = {
-      '1': '/clinic-detail/dentgroup-istanbul',
-      '2': '/clinic-detail/dent-istanbul', 
-      '3': '/clinic-detail/istanbul-aesthetic-center',
-      '4': '/clinic-detail/dentalpark-turkey',
-      '5': '/clinic-detail/esta-istanbul'
+      '1': '/clinic/dentgroup-istanbul',
+      '2': '/clinic/dent-istanbul', 
+      '3': '/clinic/istanbul-aesthetic-center',
+      '4': '/clinic/dentalpark-turkey',
+      '5': '/clinic/esta-istanbul'
     };
-    return clinicUrls[clinicId.toString()] || `/clinic-detail/dentgroup-istanbul`;
+    return clinicUrls[clinicId.toString()] || `/clinic/dentgroup-istanbul`;
   };
   
   // Handle quote request - go directly to quote flow like other buttons
