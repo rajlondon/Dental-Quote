@@ -1,0 +1,2101 @@
+Assigning special offers and treatment packages to clinics
+Anonymizing clinic names for the live state
+Creating a user-friendly flow for selecting offers and using promo codes
+1. Clinic Anonymization Implementation
+First, let's create a script to anonymize your clinic names:
+
+
+Copy
+// scripts/anonymize-clinics.js
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function anonymizeClinics() {
+  try {
+    const clinics = await prisma.clinic.findMany();
+    console.log(`Found ${clinics.length} clinics to anonymize`);
+
+    // Define naming components
+    const locations = ['Istanbul', 'Antalya', 'Izmir', 'Bodrum', 'Kusadasi'];
+    const qualities = ['Premium', 'Advanced', 'Elite', 'Modern', 'Professional'];
+    const specialties = ['Dental', 'Smile', 'Aesthetic', 'Oral', 'Implant'];
+    const suffixes = ['Clinic', 'Center', 'Practice', 'Care', 'Studio'];
+
+    for (const clinic of clinics) {
+      // Generate a unique name using components
+      const location = locations[Math.floor(Math.random() * locations.length)];
+      const quality = qualities[Math.floor(Math.random() * qualities.length)];
+      const specialty = specialties[Math.floor(Math.random() * specialties.length)];
+      const suffix = suffixes[Math.floor(Math.random() * suffixes.length)];
+      
+      const newName = `${location} ${quality} ${specialty} ${suffix}`;
+      
+      // Update clinic with anonymized name and contact details
+      await prisma.clinic.update({
+        where: { id: clinic.id },
+        data: { 
+          name: newName,
+          // Anonymize contact info but keep location data
+          email: `contact@${newName.toLowerCase().replace(/\s+/g, '')}.com`,
+          phone: `+90${Math.floor(500000000 + Math.random() * 499999999)}`
+        }
+      });
+      
+      console.log(`Renamed clinic: ${clinic.name} → ${newName}`);
+    }
+    
+    console.log('Clinic anonymization completed successfully');
+  } catch (error) {
+    console.error('Error anonymizing clinics:', error);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+anonymizeClinics();
+2. Database Schema for Special Offers and Treatment Packages
+Add these models to your Prisma schema:
+
+
+Copy
+// prisma/schema.prisma
+
+model SpecialOffer {
+  id               String    @id @default(cuid())
+  title            String
+  description      String    @db.Text
+  discountType     String    // "PERCENTAGE" or "FIXED_AMOUNT"
+  discountValue    Float
+  clinicId         String
+  clinic           Clinic    @relation(fields: [clinicId], references: [id])
+  treatmentIds     String[]  // Array of treatment IDs this offer applies to
+  promoCode        String    @unique
+  imageUrl         String?
+  expiryDate       DateTime
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
+model TreatmentPackage {
+  id                String             @id @default(cuid())
+  title             String
+  description       String             @db.Text
+  clinicId          String
+  clinic            Clinic             @relation(fields: [clinicId], references: [id])
+  promoCode         String             @unique
+  imageUrl          String?
+  totalPrice        Float
+  originalPrice     Float              // Sum of individual treatment prices
+  includedTreatments PackageTreatment[]
+  includedServices   PackageService[]
+  expiryDate        DateTime
+  isActive          Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model PackageTreatment {
+  id               String           @id @default(cuid())
+  packageId        String
+  package          TreatmentPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  treatmentId      String
+  treatmentName    String           // Store name for display purposes
+  treatmentPrice   Float            // Store original price
+  quantity         Int              @default(1)
+}
+
+model PackageService {
+  id               String           @id @default(cuid())
+  packageId        String
+  package          TreatmentPackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  serviceType      String           // "HOTEL", "TRANSFER", "CONSULTATION", etc.
+  name             String
+  description      String?
+  quantity         Int              @default(1)
+}
+
+// Update existing Clinic model to include relationships
+model Clinic {
+  // existing fields...
+  specialOffers     SpecialOffer[]
+  treatmentPackages TreatmentPackage[]
+}
+3. Admin Interface for Managing Special Offers
+Create a component for managing special offers:
+
+
+Copy
+// components/admin/SpecialOffersManager.jsx
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+export default function SpecialOffersManager() {
+  const [clinics, setClinics] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [specialOffers, setSpecialOffers] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedOfferId, setSelectedOfferId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      title: '',
+      description: '',
+      discountType: 'PERCENTAGE',
+      discountValue: 0,
+      clinicId: '',
+      treatmentIds: [],
+      promoCode: '',
+      expiryDate: new Date().toISOString().split('T')[0],
+      isActive: true
+    }
+  });
+
+  const watchClinicId = watch('clinicId');
+
+  // Load clinics and offers on component mount
+  useEffect(() => {
+    fetchClinics();
+    fetchSpecialOffers();
+  }, []);
+
+  // Load clinic treatments when clinic changes
+  useEffect(() => {
+    if (watchClinicId) {
+      fetchClinicTreatments(watchClinicId);
+    } else {
+      setTreatments([]);
+    }
+  }, [watchClinicId]);
+
+  const fetchClinics = async () => {
+    try {
+      const response = await axios.get('/api/admin/clinics');
+      setClinics(response.data);
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      toast.error('Failed to load clinics');
+    }
+  };
+
+  const fetchClinicTreatments = async (clinicId) => {
+    try {
+      const response = await axios.get(`/api/admin/clinics/${clinicId}/treatments`);
+      setTreatments(response.data);
+    } catch (error) {
+      console.error('Error fetching treatments:', error);
+      toast.error('Failed to load treatments');
+    }
+  };
+
+  const fetchSpecialOffers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get('/api/admin/special-offers');
+      setSpecialOffers(response.data);
+    } catch (error) {
+      console.error('Error fetching special offers:', error);
+      toast.error('Failed to load special offers');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      
+      if (isEditing) {
+        await axios.put(`/api/admin/special-offers/${selectedOfferId}`, data);
+        toast.success('Special offer updated successfully');
+      } else {
+        await axios.post('/api/admin/special-offers', data);
+        toast.success('Special offer created successfully');
+      }
+      
+      reset();
+      setIsEditing(false);
+      setSelectedOfferId(null);
+      fetchSpecialOffers();
+    } catch (error) {
+      console.error('Error saving special offer:', error);
+      toast.error(error.response?.data?.message || 'Failed to save special offer');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditOffer = (offer) => {
+    setIsEditing(true);
+    setSelectedOfferId(offer.id);
+    
+    // Populate form with offer data
+    setValue('title', offer.title);
+    setValue('description', offer.description);
+    setValue('discountType', offer.discountType);
+    setValue('discountValue', offer.discountValue);
+    setValue('clinicId', offer.clinicId);
+    setValue('treatmentIds', offer.treatmentIds || []);
+    setValue('promoCode', offer.promoCode);
+    setValue('expiryDate', new Date(offer.expiryDate).toISOString().split('T')[0]);
+    setValue('isActive', offer.isActive);
+    
+    // Load treatments for this clinic
+    fetchClinicTreatments(offer.clinicId);
+  };
+
+  const handleDeleteOffer = async (offerId) => {
+    if (!confirm('Are you sure you want to delete this special offer?')) return;
+    
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/admin/special-offers/${offerId}`);
+      toast.success('Special offer deleted');
+      fetchSpecialOffers();
+    } catch (error) {
+      console.error('Error deleting special offer:', error);
+      toast.error('Failed to delete special offer');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generatePromoCode = () => {
+    const selectedClinic = clinics.find(c => c.id === watchClinicId);
+    const prefix = selectedClinic 
+      ? selectedClinic.name.substring(0, 3).toUpperCase() 
+      : 'OFF';
+    
+    const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    setValue('promoCode', `${prefix}-${randomCode}`);
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditing ? 'Edit Special Offer' : 'Create Special Offer'}
+      </h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Form */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Clinic</label>
+              <select 
+                className="w-full p-2 border rounded"
+                {...register('clinicId', { required: 'Please select a clinic' })}
+                disabled={isLoading}
+              >
+                <option value="">Select a clinic</option>
+                {clinics.map(clinic => (
+                  <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
+                ))}
+              </select>
+              {errors.clinicId && <p className="text-red-500 text-xs mt-1">{errors.clinicId.message}</p>}
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Title</label>
+              <input 
+                type="text"
+                className="w-full p-2 border rounded"
+                placeholder="e.g., Summer Teeth Whitening Special"
+                {...register('title', { required: 'Title is required' })}
+                disabled={isLoading}
+              />
+              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea 
+                className="w-full p-2 border rounded"
+                rows="3"
+                placeholder="Describe the special offer"
+                {...register('description', { required: 'Description is required' })}
+                disabled={isLoading}
+              ></textarea>
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Discount Type</label>
+                <select 
+                  className="w-full p-2 border rounded"
+                  {...register('discountType')}
+                  disabled={isLoading}
+                >
+                  <option value="PERCENTAGE">Percentage (%)</option>
+                  <option value="FIXED_AMOUNT">Fixed Amount (£)</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Discount Value</label>
+                <input 
+                  type="number"
+                  className="w-full p-2 border rounded"
+                  step={watch('discountType') === 'PERCENTAGE' ? '1' : '0.01'}
+                  min="0"
+                  {...register('discountValue', { 
+                    required: 'Discount value is required',
+                    min: { value: 0, message: 'Must be a positive number' },
+                    valueAsNumber: true
+                  })}
+                  disabled={isLoading}
+                />
+                {errors.discountValue && <p className="text-red-500 text-xs mt-1">{errors.discountValue.message}</p>}
+              </div>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Applicable Treatments</label>
+              <div className="max-h-48 overflow-y-auto border rounded p-2">
+                {treatments.length === 0 ? (
+                  <p className="text-gray-500 text-sm">Select a clinic to see available treatments</p>
+                ) : (
+                  treatments.map(treatment => (
+                    <div key={treatment.id} className="flex items-center mb-1">
+                      <input 
+                        type="checkbox"
+                        value={treatment.id}
+                        id={`treatment-${treatment.id}`}
+                        className="mr-2"
+                        {...register('treatmentIds', { required: 'Select at least one treatment' })}
+                        disabled={isLoading}
+                      />
+                      <label htmlFor={`treatment-${treatment.id}`} className="text-sm">
+                        {treatment.name} - £{treatment.price}
+                      </label>
+                    </div>
+                  ))
+                )}
+              </div>
+              {errors.treatmentIds && <p className="text-red-500 text-xs mt-1">{errors.treatmentIds.message}</p>}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Promo Code</label>
+                <div className="flex">
+                  <input 
+                    type="text"
+                    className="w-full p-2 border rounded-l"
+                    placeholder="e.g., SUMMER25"
+                    {...register('promoCode', { required: 'Promo code is required' })}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button"
+                    className="bg-gray-200 px-3 py-2 rounded-r"
+                    onClick={generatePromoCode}
+                    disabled={isLoading || !watchClinicId}
+                  >
+                    Generate
+                  </button>
+                </div>
+                {errors.promoCode && <p className="text-red-500 text-xs mt-1">{errors.promoCode.message}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Expiry Date</label>
+                <input 
+                  type="date"
+                  className="w-full p-2 border rounded"
+                  min={new Date().toISOString().split('T')[0]}
+                  {...register('expiryDate', { required: 'Expiry date is required' })}
+                  disabled={isLoading}
+                />
+                {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate.message}</p>}
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label className="flex items-center">
+                <input 
+                  type="checkbox"
+                  className="mr-2"
+                  {...register('isActive')}
+                  disabled={isLoading}
+                />
+                <span>Active</span>
+              </label>
+            </div>
+            
+            <div className="flex justify-end">
+              {isEditing && (
+                <button
+                  type="button"
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
+                  onClick={() => {
+                    reset();
+                    setIsEditing(false);
+                    setSelectedOfferId(null);
+                  }}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              )}
+              
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Saving...' : isEditing ? 'Update Offer' : 'Create Offer'}
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        {/* List of Offers */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Special Offers</h2>
+          
+          {isLoading && specialOffers.length === 0 ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : specialOffers.length === 0 ? (
+            <p className="text-gray-500">No special offers found</p>
+          ) : (
+            <div className="space-y-4">
+              {specialOffers.map(offer => {
+                const clinic = clinics.find(c => c.id === offer.clinicId);
+                
+                return (
+                  <div key={offer.id} className="bg-white p-4 rounded-lg shadow">
+                    <div className="flex justify-between">
+                      <h3 className="font-bold">{offer.title}</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full ${offer.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {offer.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mt-1">{offer.description.substring(0, 100)}...</p>
+                    
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      <div><span className="font-medium">Clinic:</span> {clinic?.name || 'Unknown'}</div>
+                      <div><span className="font-medium">Promo Code:</span> {offer.promoCode}</div>
+                      
+                      <div>
+                        <span className="font-medium">Discount:</span> 
+                        {offer.discountType === 'PERCENTAGE' 
+                          ? `${offer.discountValue}%` 
+                          : `£${offer.discountValue}`}
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium">Expires:</span> 
+                        {new Date(offer.expiryDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-3 flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleEditOffer(offer)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        disabled={isLoading}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteOffer(offer.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        disabled={isLoading}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+4. Treatment Package Manager Interface
+Create a component for managing treatment packages:
+
+
+Copy
+// components/admin/TreatmentPackageManager.jsx
+import React, { useState, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+export default function TreatmentPackageManager() {
+  const [clinics, setClinics] = useState([]);
+  const [treatments, setTreatments] = useState([]);
+  const [packages, setPackages] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [selectedPackageId, setSelectedPackageId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [calculatedOriginalPrice, setCalculatedOriginalPrice] = useState(0);
+
+  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm({
+    defaultValues: {
+      title: '',
+      description: '',
+      clinicId: '',
+      includedTreatments: [{ treatmentId: '', treatmentName: '', treatmentPrice: 0, quantity: 1 }],
+      includedServices: [{ serviceType: 'TRANSFER', name: 'Airport Transfer', description: '', quantity: 1 }],
+      totalPrice: 0,
+      promoCode: '',
+      expiryDate: new Date().toISOString().split('T')[0],
+      isActive: true
+    }
+  });
+
+  // Field arrays for dynamic fields
+  const { 
+    fields: treatmentFields, 
+    append: appendTreatment, 
+    remove: removeTreatment 
+  } = useFieldArray({ control, name: 'includedTreatments' });
+  
+  const { 
+    fields: serviceFields, 
+    append: appendService, 
+    remove: removeService 
+  } = useFieldArray({ control, name: 'includedServices' });
+
+  const watchClinicId = watch('clinicId');
+  const watchIncludedTreatments = watch('includedTreatments');
+
+  // Load initial data
+  useEffect(() => {
+    fetchClinics();
+    fetchPackages();
+  }, []);
+
+  // Load clinic treatments when clinic changes
+  useEffect(() => {
+    if (watchClinicId) {
+      fetchClinicTreatments(watchClinicId);
+    } else {
+      setTreatments([]);
+    }
+  }, [watchClinicId]);
+
+  // Calculate original price when treatments change
+  useEffect(() => {
+    if (watchIncludedTreatments) {
+      let total = 0;
+      
+      watchIncludedTreatments.forEach(item => {
+        if (item.treatmentId && item.quantity) {
+          const treatment = treatments.find(t => t.id === item.treatmentId);
+          if (treatment) {
+            total += treatment.price * item.quantity;
+          } else if (item.treatmentPrice) {
+            // For editing existing packages that have stored prices
+            total += item.treatmentPrice * item.quantity;
+          }
+        }
+      });
+      
+      setCalculatedOriginalPrice(total);
+    }
+  }, [watchIncludedTreatments, treatments]);
+
+  const fetchClinics = async () => {
+    try {
+      const response = await axios.get('/api/admin/clinics');
+      setClinics(response.data);
+    } catch (error) {
+      console.error('Error fetching clinics:', error);
+      toast.error('Failed to load clinics');
+    }
+  };
+
+  const fetchClinicTreatments = async (clinicId) => {
+    try {
+      const response = await axios.get(`/api/admin/clinics/${clinicId}/treatments`);
+      setTreatments(response.data);
+    } catch (error) {
+      console.error('Error fetching treatments:', error);
+      toast.error('Failed to load treatments');
+    }
+  };
+
+  const fetchPackages = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get('/api/admin/treatment-packages');
+      setPackages(response.data);
+    } catch (error) {
+      console.error('Error fetching packages:', error);
+      toast.error('Failed to load treatment packages');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      
+      // Prepare data - add treatment details for each included treatment
+      const preparedData = {
+        ...data,
+        originalPrice: calculatedOriginalPrice,
+        includedTreatments: data.includedTreatments.map(item => {
+          const treatment = treatments.find(t => t.id === item.treatmentId);
+          return {
+            ...item,
+            treatmentName: treatment?.name || item.treatmentName,
+            treatmentPrice: treatment?.price || item.treatmentPrice
+          };
+        })
+      };
+      
+      if (isEditing) {
+        await axios.put(`/api/admin/treatment-packages/${selectedPackageId}`, preparedData);
+        toast.success('Treatment package updated successfully');
+      } else {
+        await axios.post('/api/admin/treatment-packages', preparedData);
+        toast.success('Treatment package created successfully');
+      }
+      
+      reset();
+      setIsEditing(false);
+      setSelectedPackageId(null);
+      fetchPackages();
+    } catch (error) {
+      console.error('Error saving package:', error);
+      toast.error(error.response?.data?.message || 'Failed to save treatment package');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEditPackage = (pkg) => {
+    setIsEditing(true);
+    setSelectedPackageId(pkg.id);
+    
+    // Populate form with package data
+    setValue('title', pkg.title);
+    setValue('description', pkg.description);
+    setValue('clinicId', pkg.clinicId);
+    setValue('includedTreatments', pkg.includedTreatments);
+    setValue('includedServices', pkg.includedServices);
+    setValue('totalPrice', pkg.totalPrice);
+    setValue('promoCode', pkg.promoCode);
+    setValue('expiryDate', new Date(pkg.expiryDate).toISOString().split('T')[0]);
+    setValue('isActive', pkg.isActive);
+    
+    // Load treatments for this clinic
+    fetchClinicTreatments(pkg.clinicId);
+  };
+
+  const handleDeletePackage = async (packageId) => {
+    if (!confirm('Are you sure you want to delete this treatment package?')) return;
+    
+    try {
+      setIsLoading(true);
+      await axios.delete(`/api/admin/treatment-packages/${packageId}`);
+      toast.success('Treatment package deleted');
+      fetchPackages();
+    } catch (error) {
+      console.error('Error deleting package:', error);
+      toast.error('Failed to delete treatment package');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTreatmentChange = (index, treatmentId) => {
+    const treatment = treatments.find(t => t.id === treatmentId);
+    if (treatment) {
+      setValue(`includedTreatments.${index}.treatmentName`, treatment.name);
+      setValue(`includedTreatments.${index}.treatmentPrice`, treatment.price);
+    }
+  };
+
+  const generatePromoCode = () => {
+    const selectedClinic = clinics.find(c => c.id === watchClinicId);
+    const prefix = selectedClinic 
+      ? selectedClinic.name.substring(0, 3).toUpperCase() 
+      : 'PKG';
+    
+    const randomCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    setValue('promoCode', `${prefix}-${randomCode}`);
+  };
+
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">
+        {isEditing ? 'Edit Treatment Package' : 'Create Treatment Package'}
+      </h1>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Form */}
+        <div className="bg-white p-6 rounded-lg shadow">
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Clinic</label>
+              <select 
+                className="w-full p-2 border rounded"
+                {...register('clinicId', { required: 'Please select a clinic' })}
+                disabled={isLoading}
+              >
+                <option value="">Select a clinic</option>
+                {clinics.map(clinic => (
+                  <option key={clinic.id} value={clinic.id}>{clinic.name}</option>
+                ))}
+              </select>
+              {errors.clinicId && <p className="text-red-500 text-xs mt-1">{errors.clinicId.message}</p>}
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Package Title</label>
+              <input 
+                type="text"
+                className="w-full p-2 border rounded"
+                placeholder="e.g., Complete Smile Makeover Package"
+                {...register('title', { required: 'Title is required' })}
+                disabled={isLoading}
+              />
+              {errors.title && <p className="text-red-500 text-xs mt-1">{errors.title.message}</p>}
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Description</label>
+              <textarea 
+                className="w-full p-2 border rounded"
+                rows="3"
+                placeholder="Describe the treatment package"
+                {...register('description', { required: 'Description is required' })}
+                disabled={isLoading}
+              ></textarea>
+              {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Included Treatments</label>
+              {treatmentFields.map((field, index) => (
+                <div key={field.id} className="flex mb-2">
+                  <select 
+                    className="flex-grow p-2 border rounded-l"
+                    {...register(`includedTreatments.${index}.treatmentId`, { required: 'Treatment is required' })}
+                    onChange={(e) => handleTreatmentChange(index, e.target.value)}
+                    disabled={isLoading}
+                  >
+                    <option value="">Select treatment</option>
+                    {treatments.map(treatment => (
+                      <option key={treatment.id} value={treatment.id}>
+                        {treatment.name} - £{treatment.price}
+                      </option>
+                    ))}
+                  </select>
+                  <input 
+                    type="number"
+                    className="w-20 p-2 border-t border-b"
+                    min="1"
+                    {...register(`includedTreatments.${index}.quantity`, { 
+                      required: 'Required',
+                      min: { value: 1, message: 'Min 1' },
+                      valueAsNumber: true
+                    })}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button"
+                    className="bg-red-500 text-white p-2 rounded-r"
+                    onClick={() => removeTreatment(index)}
+                    disabled={isLoading || treatmentFields.length <= 1}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              
+              <button 
+                type="button"
+                className="text-blue-600 text-sm mt-1"
+                onClick={() => appendTreatment({ treatmentId: '', treatmentName: '', treatmentPrice: 0, quantity: 1 })}
+                disabled={isLoading || !watchClinicId}
+              >
+                + Add Treatment
+              </button>
+            </div>
+            
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">Included Services</label>
+              {serviceFields.map((field, index) => (
+                <div key={field.id} className="flex mb-2">
+                  <select 
+                    className="w-1/3 p-2 border rounded-l"
+                    {...register(`includedServices.${index}.serviceType`)}
+                    disabled={isLoading}
+                  >
+                    <option value="TRANSFER">Transfer</option>
+                    <option value="CONSULTATION">Consultation</option>
+                    <option value="CITY_TOUR">City Tour</option>
+                    <option value="HOTEL">Hotel Stay</option>
+                  </select>
+                  <input 
+                    type="text"
+                    className="flex-grow p-2 border-t border-b"
+                    placeholder="Service name"
+                    {...register(`includedServices.${index}.name`, { required: 'Name required' })}
+                    disabled={isLoading}
+                  />
+                  <input 
+                    type="number"
+                    className="w-20 p-2 border-t border-b border-r"
+                    min="1"
+                    {...register(`includedServices.${index}.quantity`, { 
+                      required: 'Required',
+                      min: { value: 1, message: 'Min 1' },
+                      valueAsNumber: true
+                    })}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button"
+                    className="bg-red-500 text-white p-2 rounded-r"
+                    onClick={() => removeService(index)}
+                    disabled={isLoading}
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+              
+              <button 
+                type="button"
+                className="text-blue-600 text-sm mt-1"
+                onClick={() => appendService({ 
+                  serviceType: 'TRANSFER', 
+                  name: 'Airport Transfer', 
+                  description: '',
+                  quantity: 1 
+                })}
+                disabled={isLoading}
+              >
+                + Add Service
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Original Price (£)</label>
+                <input 
+                  type="number"
+                  className="w-full p-2 border rounded bg-gray-50"
+                  value={calculatedOriginalPrice.toFixed(2)}
+                  readOnly
+                />
+                <p className="text-xs text-gray-500 mt-1">Sum of individual treatments</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Package Price (£)</label>
+                <input 
+                  type="number"
+                  className="w-full p-2 border rounded"
+                  min="0"
+                  step="0.01"
+                  {...register('totalPrice', { 
+                    required: 'Price is required',
+                    min: { value: 0, message: 'Price must be positive' },
+                    valueAsNumber: true
+                  })}
+                  disabled={isLoading}
+                />
+                {errors.totalPrice && <p className="text-red-500 text-xs mt-1">{errors.totalPrice.message}</p>}
+                
+                {watch('totalPrice') > 0 && calculatedOriginalPrice > watch('totalPrice') && (
+                  <p className="text-xs text-green-600 mt-1">
+                    Savings: £{(calculatedOriginalPrice - watch('totalPrice')).toFixed(2)} 
+                    ({Math.round(((calculatedOriginalPrice - watch('totalPrice')) / calculatedOriginalPrice) * 100)}% off)
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Promo Code</label>
+                <div className="flex">
+                  <input 
+                    type="text"
+                    className="w-full p-2 border rounded-l"
+                    placeholder="e.g., IMPLANT-PKG"
+                    {...register('promoCode', { required: 'Promo code is required' })}
+                    disabled={isLoading}
+                  />
+                  <button 
+                    type="button"
+                    className="bg-gray-200 px-3 py-2 rounded-r"
+                    onClick={generatePromoCode}
+                    disabled={isLoading || !watchClinicId}
+                  >
+                    Generate
+                  </button>
+                </div>
+                {errors.promoCode && <p className="text-red-500 text-xs mt-1">{errors.promoCode.message}</p>}
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Expiry Date</label>
+                <input 
+                  type="date"
+                  className="w-full p-2 border rounded"
+                  min={new Date().toISOString().split('T')[0]}
+                  {...register('expiryDate', { required: 'Expiry date is required' })}
+                  disabled={isLoading}
+                />
+                {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate.message}</p>}
+              </div>
+            </div>
+            
+            <div className="mb-6">
+              <label className="flex items-center">
+                <input 
+                  type="checkbox"
+                  className="mr-2"
+                  {...register('isActive')}
+                  disabled={isLoading}
+                />
+                <span>Active</span>
+              </label>
+            </div>
+            
+            <div className="flex justify-end">
+              {isEditing && (
+                <button
+                  type="button"
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
+                  onClick={() => {
+                    reset();
+                    setIsEditing(false);
+                    setSelectedPackageId(null);
+                  }}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
+              )}
+              
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Saving...' : isEditing ? 'Update Package' : 'Create Package'}
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        {/* List of Packages */}
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Treatment Packages</h2>
+          
+          {isLoading && packages.length === 0 ? (
+            <div className="text-center py-8">Loading...</div>
+          ) : packages.length === 0 ? (
+            <p className="text-gray-500">No treatment packages found</p>
+          ) : (
+            <div className="space-y-4">
+              {packages.map(pkg => {
+                const clinic = clinics.find(c => c.id === pkg.clinicId);
+                
+                return (
+                  <div key={pkg.id} className="bg-white p-4 rounded-lg shadow">
+                    <div className="flex justify-between">
+                      <h3 className="font-bold">{pkg.title}</h3>
+                      <span className={`text-xs px-2 py-1 rounded-full ${pkg.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                        {pkg.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    <p className="text-sm text-gray-600 mt-1">{pkg.description.substring(0, 100)}...</p>
+                    
+                    <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                      <div><span className="font-medium">Clinic:</span> {clinic?.name || 'Unknown'}</div>
+                      <div><span className="font-medium">Promo Code:</span> {pkg.promoCode}</div>
+                      
+                      <div>
+                        <span className="font-medium">Price:</span> £{pkg.totalPrice}
+                        {pkg.originalPrice > pkg.totalPrice && (
+                          <span className="text-green-600 ml-1">
+                            (Save £{(pkg.originalPrice - pkg.totalPrice).toFixed(2)})
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <span className="font-medium">Expires:</span> 
+                        {new Date(pkg.expiryDate).toLocaleDateString()}
+                      </div>
+                    </div>
+                    
+                    <div className="mt-2">
+                      <p className="text-xs font-medium">Includes:</p>
+                      <ul className="text-xs list-disc list-inside">
+                        {pkg.includedTreatments.slice(0, 3).map((item, i) => (
+                          <li key={`t-${i}`}>
+                            {item.quantity}x {item.treatmentName}
+                          </li>
+                        ))}
+                        {pkg.includedTreatments.length > 3 && (
+                          <li>+ {pkg.includedTreatments.length - 3} more treatments</li>
+                        )}
+                      </ul>
+                    </div>
+                    
+                    <div className="mt-3 flex justify-end space-x-2">
+                      <button
+                        onClick={() => handleEditPackage(pkg)}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                        disabled={isLoading}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePackage(pkg.id)}
+                        className="text-red-600 hover:text-red-800 text-sm"
+                        disabled={isLoading}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+5. User-Facing Special Offers & Packages Display
+Create a component to display special offers and packages on the homepage:
+
+
+Copy
+// components/home/SpecialOffersSection.jsx
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useQuoteContext } from '../../contexts/QuoteContext';
+
+export default function SpecialOffersSection() {
+  const [activeTab, setActiveTab] = useState('packages');
+  const [specialOffers, setSpecialOffers] = useState([]);
+  const [treatmentPackages, setTreatmentPackages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
+  const navigate = useNavigate();
+  const { setPromoCode } = useQuoteContext();
+  
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true);
+      try {
+        // Fetch both in parallel
+        const [offersRes, packagesRes] = await Promise.all([
+          axios.get('/api/special-offers/active'),
+          axios.get('/api/treatment-packages/active')
+        ]);
+        
+        setSpecialOffers(offersRes.data);
+        setTreatmentPackages(packagesRes.data);
+      } catch (error) {
+        console.error('Error fetching offers:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, []);
+  
+  const handleSelectOffer = (offer) => {
+    // Save promo code to context
+    setPromoCode(offer.promoCode);
+    
+    // Navigate to quote flow
+    navigate('/quote/treatments');
+  };
+  
+  const handleSelectPackage = (pkg) => {
+    // Save promo code to context
+    setPromoCode(pkg.promoCode);
+    
+    // Navigate to quote flow
+    navigate('/quote/treatments');
+  };
+  
+  // Skip rendering if no offers available
+  if (specialOffers.length === 0 && treatmentPackages.length === 0 && !loading) {
+    return null;
+  }
+  
+  return (
+    <section className="py-12 bg-gray-50">
+      <div className="container mx-auto px-4">
+        <h2 className="text-3xl font-bold text-center mb-2">Special Offers</h2>
+        <p className="text-center text-gray-600 mb-8">
+          Exclusive dental treatment deals from our partner clinics in Turkey
+        </p>
+        
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+          </div>
+        ) : (
+          <>
+            <div className="flex justify-center mb-8">
+              <div className="inline-flex rounded-md shadow-sm">
+                <button
+                  onClick={() => setActiveTab('packages')}
+                  className={`px-4 py-2 text-sm font-medium rounded-l-lg ${
+                    activeTab === 'packages'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Treatment Packages
+                </button>
+                <button
+                  onClick={() => setActiveTab('offers')}
+                  className={`px-4 py-2 text-sm font-medium rounded-r-lg ${
+                    activeTab === 'offers'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Special Discounts
+                </button>
+              </div>
+            </div>
+            
+            {activeTab === 'packages' ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {treatmentPackages.map(pkg => (
+                  <div key={pkg.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="h-48 bg-gray-200 relative">
+                      <img 
+                        src={pkg.imageUrl || "/images/packages/default.jpg"} 
+                        alt={pkg.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        Save £{(pkg.originalPrice - pkg.totalPrice).toFixed(2)}
+                      </div>
+                    </div>
+                    
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2">{pkg.title}</h3>
+                      <p className="text-gray-600 mb-4">{pkg.description.substring(0, 100)}...</p>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-center mb-1">
+                          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">{pkg.clinic.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          <span>{pkg.clinic.city}, Turkey</span>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t pt-4 mb-4">
+                        <h4 className="font-semibold mb-2">Includes:</h4>
+                        <ul className="space-y-1 mb-3">
+                          {pkg.includedTreatments.slice(0, 3).map((item, index) => (
+                            <li key={index} className="flex items-center text-sm">
+                              <svg className="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              {item.quantity}x {item.treatmentName}
+                            </li>
+                          ))}
+                          
+                          {pkg.includedTreatments.length > 3 && (
+                            <li className="text-sm text-gray-500">
+                              + {pkg.includedTreatments.length - 3} more treatments
+                            </li>
+                          )}
+                          
+                          {pkg.includedServices.slice(0, 2).map((service, index) => (
+                            <li key={`service-${index}`} className="flex items-center text-sm">
+                              <svg className="w-4 h-4 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                              {service.quantity}x {service.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-sm text-gray-500">Package Price</div>
+                          <div className="flex items-center">
+                            <span className="text-2xl font-bold text-blue-600">£{pkg.totalPrice}</span>
+                            <span className="text-sm text-gray-500 line-through ml-2">£{pkg.originalPrice}</span>
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => handleSelectPackage(pkg)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                        >
+                          Select Package
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {treatmentPackages.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-gray-500">
+                    No treatment packages available at this time.
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {specialOffers.map(offer => (
+                  <div key={offer.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+                    <div className="h-48 bg-gray-200 relative">
+                      <img 
+                        src={offer.imageUrl || "/images/offers/default.jpg"} 
+                        alt={offer.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold">
+                        {offer.discountType === 'PERCENTAGE' ? 
+                          `${offer.discountValue}% OFF` : 
+                          `£${offer.discountValue} OFF`}
+                      </div>
+                    </div>
+                    
+                    <div className="p-6">
+                      <h3 className="text-xl font-bold mb-2">{offer.title}</h3>
+                      <p className="text-gray-600 mb-4">{offer.description.substring(0, 100)}...</p>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-center mb-1">
+                          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                          </svg>
+                          <span className="font-medium">{offer.clinic.name}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                          </svg>
+                          <span>{offer.clinic.city}, Turkey</span>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mt-6">
+                        <div>
+                          <div className="text-sm text-gray-500">Valid until</div>
+                          <div className="font-medium">
+                            {new Date(offer.expiryDate).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        <button
+                          onClick={() => handleSelectOffer(offer)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                        >
+                          Get Discount
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                
+                {specialOffers.length === 0 && (
+                  <div className="col-span-full text-center py-8 text-gray-500">
+                    No special offers available at this time.
+                  </div>
+                )}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+6. Quote Context with Promo Code Support
+Enhance your quote context to support promo codes:
+
+
+Copy
+// contexts/QuoteContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+const QuoteContext = createContext();
+
+export function QuoteProvider({ children }) {
+  const [selectedTreatments, setSelectedTreatments] = useState([]);
+  const [selectedClinic, setSelectedClinic] = useState(null);
+  const [promoCode, setPromoCode] = useState(null);
+  const [promoDetails, setPromoDetails] = useState(null);
+  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
+  const [promoError, setPromoError] = useState(null);
+  
+  // Calculate original price (without discounts)
+  const originalTotal = selectedTreatments.reduce(
+    (sum, treatment) => sum + treatment.price * (treatment.quantity || 1),
+    0
+  );
+  
+  // Calculate discounted price
+  const [discountedTotal, setDiscountedTotal] = useState(originalTotal);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  
+  // Validate promo code when it changes
+  useEffect(() => {
+    async function validatePromoCode() {
+      if (!promoCode) {
+        setPromoDetails(null);
+        setPromoError(null);
+        return;
+      }
+      
+      setIsValidatingPromo(true);
+      setPromoError(null);
+      
+      try {
+        const response = await axios.post('/api/promo-codes/validate', {
+          promoCode
+        });
+        
+        setPromoDetails(response.data);
+        
+        // If it's a package, we might want to pre-select the clinic
+        if (response.data.type === 'TREATMENT_PACKAGE') {
+          setSelectedClinic(response.data.package.clinic);
+        } else if (response.data.type === 'SPECIAL_OFFER') {
+          // For special offers, we might also want to pre-select the clinic
+          setSelectedClinic(response.data.offer.clinic);
+        }
+      } catch (error) {
+        console.error('Error validating promo code:', error);
+        setPromoDetails(null);
+        setPromoError(error.response?.data?.message || 'Invalid promo code');
+      } finally {
+        setIsValidatingPromo(false);
+      }
+    }
+    
+    if (promoCode) {
+      validatePromoCode();
+    } else {
+      setPromoDetails(null);
+    }
+  }, [promoCode]);
+  
+  // Calculate final price whenever treatments or promo changes
+  useEffect(() => {
+    if (!promoDetails || selectedTreatments.length === 0) {
+      setDiscountedTotal(originalTotal);
+      setDiscountAmount(0);
+      return;
+    }
+    
+    if (promoDetails.type === 'SPECIAL_OFFER') {
+      const offer = promoDetails.offer;
+      
+      // Check if any selected treatments are eligible for the discount
+      const hasEligibleTreatment = selectedTreatments.some(treatment => 
+        offer.treatmentIds.includes(treatment.id)
+      );
+      
+      if (hasEligibleTreatment) {
+        let discount = 0;
+        
+        if (offer.discountType === 'PERCENTAGE') {
+          discount = (originalTotal * offer.discountValue) / 100;
+        } else if (offer.discountType === 'FIXED_AMOUNT') {
+          discount = Math.min(originalTotal, offer.discountValue);
+        }
+        
+        setDiscountAmount(discount);
+        setDiscountedTotal(originalTotal - discount);
+      } else {
+        setDiscountedTotal(originalTotal);
+        setDiscountAmount(0);
+      }
+    } else if (promoDetails.type === 'TREATMENT_PACKAGE') {
+      // For packages, we use the package price directly
+      const pkg = promoDetails.package;
+      
+      // Check if selected treatments match the package
+      const packageTreatmentIds = pkg.includedTreatments.map(item => item.treatmentId);
+      const selectedTreatmentIds = selectedTreatments.map(item => item.id);
+      
+      // Simple check - might need more sophisticated logic in real app
+      const hasAllPackageTreatments = packageTreatmentIds.every(id => 
+        selectedTreatmentIds.includes(id)
+      );
+      
+      if (hasAllPackageTreatments && selectedClinic?.id === pkg.clinicId) {
+        setDiscountedTotal(pkg.totalPrice);
+        setDiscountAmount(originalTotal - pkg.totalPrice);
+      } else {
+        setDiscountedTotal(originalTotal);
+        setDiscountAmount(0);
+      }
+    }
+  }, [selectedTreatments, promoDetails, originalTotal, selectedClinic]);
+  
+  const clearPromoCode = () => {
+    setPromoCode(null);
+    setPromoDetails(null);
+    setPromoError(null);
+  };
+  
+  const value = {
+    // Treatments
+    selectedTreatments,
+    setSelectedTreatments,
+    
+    // Clinic
+    selectedClinic,
+    setSelectedClinic,
+    
+    // Promo code
+    promoCode,
+    setPromoCode,
+    clearPromoCode,
+    promoDetails,
+    isValidatingPromo,
+    promoError,
+    
+    // Pricing
+    originalTotal,
+    discountedTotal,
+    discountAmount,
+    
+    // Helper function to apply a treatment package
+    applyTreatmentPackage: (packageData) => {
+      // Set the promo code
+      setPromoCode(packageData.promoCode);
+      
+      // Optionally pre-select treatments
+      // This depends on your UX flow
+    }
+  };
+  
+  return (
+    <QuoteContext.Provider value={value}>
+      {children}
+    </QuoteContext.Provider>
+  );
+}
+
+export function useQuoteContext() {
+  return useContext(QuoteContext);
+}
+7. Promo Code Input Component
+Create a reusable component for entering and displaying promo codes:
+
+
+Copy
+// components/quote/PromoCodeInput.jsx
+import React, { useState } from 'react';
+import { useQuoteContext } from '../../contexts/QuoteContext';
+
+export default function PromoCodeInput() {
+  const [code, setCode] = useState('');
+  const { 
+    promoCode, 
+    setPromoCode, 
+    clearPromoCode, 
+    promoDetails, 
+    promoError, 
+    isValidatingPromo,
+    discountAmount
+  } = useQuoteContext();
+  
+  const handleApplyCode = (e) => {
+    e.preventDefault();
+    if (code.trim()) {
+      setPromoCode(code.trim());
+    }
+  };
+  
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <h3 className="text-lg font-semibold mb-3">Promotional Code</h3>
+      
+      {promoDetails ? (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <span className="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">
+                {promoCode}
+              </span>
+              <p className="text-sm mt-1">
+                {promoDetails.type === 'SPECIAL_OFFER' 
+                  ? `${promoDetails.offer.title}`
+                  : `${promoDetails.package.title}`}
+              </p>
+            </div>
+            <button
+              onClick={clearPromoCode}
+              className="text-sm text-red-600 hover:text-red-800"
+            >
+              Remove
+            </button>
+          </div>
+          
+          {discountAmount > 0 ? (
+            <div className="bg-green-50 p-3 rounded-md">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-green-800">You saved:</span>
+                <span className="text-lg font-bold text-green-800">
+                  £{discountAmount.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 p-3 rounded-md">
+              <p className="text-sm text-yellow-800">
+                This promo code may not apply to your current selections.
+              </p>
+            </div>
+          )}
+        </div>
+      ) : (
+        <form onSubmit={handleApplyCode}>
+          <div className="flex items-center">
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Enter promo code"
+              className="flex-grow p-2 border rounded-l focus:ring-blue-500 focus:border-blue-500"
+              disabled={isValidatingPromo}
+            />
+            <button
+              type="submit"
+              className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-blue-300"
+              disabled={!code.trim() || isValidatingPromo}
+            >
+              {isValidatingPromo ? 'Applying...' : 'Apply'}
+            </button>
+          </div>
+          {promoError && (
+            <p className="mt-2 text-sm text-red-600">{promoError}</p>
+          )}
+        </form>
+      )}
+    </div>
+  );
+}
+8. Backend API for Special Offers and Packages
+Create the necessary backend API endpoints:
+
+
+Copy
+// routes/api.js
+const express = require('express');
+const router = express.Router();
+const { PrismaClient } = require('@prisma/client');
+const { authenticateAdmin } = require('../middleware/auth');
+
+const prisma = new PrismaClient();
+
+// ==== PUBLIC ENDPOINTS ====
+
+// Get active special offers
+router.get('/special-offers/active', async (req, res) => {
+  try {
+    const offers = await prisma.specialOffer.findMany({
+      where: {
+        isActive: true,
+        expiryDate: { gt: new Date() }
+      },
+      include: {
+        clinic: {
+          select: { id: true, name: true, city: true, country: true }
+        }
+      }
+    });
+    
+    res.json(offers);
+  } catch (error) {
+    console.error('Error fetching special offers:', error);
+    res.status(500).json({ message: 'Failed to fetch special offers' });
+  }
+});
+
+// Get active treatment packages
+router.get('/treatment-packages/active', async (req, res) => {
+  try {
+    const packages = await prisma.treatmentPackage.findMany({
+      where: {
+        isActive: true,
+        expiryDate: { gt: new Date() }
+      },
+      include: {
+        clinic: {
+          select: { id: true, name: true, city: true, country: true }
+        },
+        includedTreatments: true,
+        includedServices: true
+      }
+    });
+    
+    res.json(packages);
+  } catch (error) {
+    console.error('Error fetching treatment packages:', error);
+    res.status(500).json({ message: 'Failed to fetch treatment packages' });
+  }
+});
+
+// Validate promo code
+router.post('/promo-codes/validate', async (req, res) => {
+  try {
+    const { promoCode } = req.body;
+    
+    if (!promoCode) {
+      return res.status(400).json({ message: 'Promo code is required' });
+    }
+    
+    // Check for special offer
+    const specialOffer = await prisma.specialOffer.findFirst({
+      where: {
+        promoCode: { equals: promoCode, mode: 'insensitive' },
+        isActive: true,
+        expiryDate: { gt: new Date() }
+      },
+      include: {
+        clinic: {
+          select: { id: true, name: true, city: true, country: true }
+        }
+      }
+    });
+    
+    if (specialOffer) {
+      return res.json({
+        type: 'SPECIAL_OFFER',
+        offer: specialOffer
+      });
+    }
+    
+    // Check for treatment package
+    const treatmentPackage = await prisma.treatmentPackage.findFirst({
+      where: {
+        promoCode: { equals: promoCode, mode: 'insensitive' },
+        isActive: true,
+        expiryDate: { gt: new Date() }
+      },
+      include: {
+        clinic: {
+          select: { id: true, name: true, city: true, country: true }
+        },
+        includedTreatments: true,
+        includedServices: true
+      }
+    });
+    
+    if (treatmentPackage) {
+      return res.json({
+        type: 'TREATMENT_PACKAGE',
+        package: treatmentPackage
+      });
+    }
+    
+    // No valid promo code found
+    return res.status(404).json({ message: 'Invalid or expired promo code' });
+  } catch (error) {
+    console.error('Error validating promo code:', error);
+    res.status(500).json({ message: 'Failed to validate promo code' });
+  }
+});
+
+// ==== ADMIN ENDPOINTS ====
+
+// Admin middleware for protected routes
+const adminRoutes = express.Router();
+adminRoutes.use(authenticateAdmin);
+
+// Special Offers CRUD
+adminRoutes.get('/special-offers', async (req, res) => {
+  try {
+    const offers = await prisma.specialOffer.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(offers);
+  } catch (error) {
+    console.error('Error fetching special offers:', error);
+    res.status(500).json({ message: 'Failed to fetch special offers' });
+  }
+});
+
+adminRoutes.post('/special-offers', async (req, res) => {
+  try {
+    const data = req.body;
+    
+    // Check if promo code already exists
+    const existingPromo = await prisma.specialOffer.findFirst({
+      where: { 
+        promoCode: { equals: data.promoCode, mode: 'insensitive' }
+      }
+    });
+    
+    if (existingPromo) {
+      return res.status(400).json({ message: 'Promo code already exists' });
+    }
+    
+    const offer = await prisma.specialOffer.create({ data });
+    res.status(201).json(offer);
+  } catch (error) {
+    console.error('Error creating special offer:', error);
+    res.status(500).json({ message: 'Failed to create special offer' });
+  }
+});
+
+adminRoutes.put('/special-offers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = req.body;
+    
+    // Check if promo code already exists (excluding this offer)
+    const existingPromo = await prisma.specialOffer.findFirst({
+      where: { 
+        promoCode: { equals: data.promoCode, mode: 'insensitive' },
+        id: { not: id }
+      }
+    });
+    
+    if (existingPromo) {
+      return res.status(400).json({ message: 'Promo code already exists' });
+    }
+    
+    const offer = await prisma.specialOffer.update({
+      where: { id },
+      data
+    });
+    
+    res.json(offer);
+  } catch (error) {
+    console.error('Error updating special offer:', error);
+    res.status(500).json({ message: 'Failed to update special offer' });
+  }
+});
+
+adminRoutes.delete('/special-offers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.specialOffer.delete({ where: { id } });
+    res.json({ message: 'Special offer deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting special offer:', error);
+    res.status(500).json({ message: 'Failed to delete special offer' });
+  }
+});
+
+// Treatment Packages CRUD
+adminRoutes.get('/treatment-packages', async (req, res) => {
+  try {
+    const packages = await prisma.treatmentPackage.findMany({
+      include: {
+        includedTreatments: true,
+        includedServices: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(packages);
+  } catch (error) {
+    console.error('Error fetching treatment packages:', error);
+    res.status(500).json({ message: 'Failed to fetch treatment packages' });
+  }
+});
+
+adminRoutes.post('/treatment-packages', async (req, res) => {
+  const { 
+    title, description, clinicId, includedTreatments, includedServices,
+    totalPrice, originalPrice, promoCode, expiryDate, isActive 
+  } = req.body;
+  
+  try {
+    // Check if promo code already exists
+    const existingPromo = await prisma.treatmentPackage.findFirst({
+      where: { 
+        promoCode: { equals: promoCode, mode: 'insensitive' }
+      }
+    });
+    
+    if (existingPromo) {
+      return res.status(400).json({ message: 'Promo code already exists' });
+    }
+    
+    const pkg = await prisma.treatmentPackage.create({
+      data: {
+        title,
+        description,
+        clinicId,
+        totalPrice,
+        originalPrice,
+        promoCode,
+        expiryDate: new Date(expiryDate),
+        isActive,
+        includedTreatments: {
+          create: includedTreatments
+        },
+        includedServices: {
+          create: includedServices
+        }
+      }
+    });
+    
+    res.status(201).json(pkg);
+  } catch (error) {
+    console.error('Error creating treatment package:', error);
+    res.status(500).json({ message: 'Failed to create treatment package' });
+  }
+});
+
+adminRoutes.put('/treatment-packages/:id', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    title, description, clinicId, includedTreatments, includedServices,
+    totalPrice, originalPrice, promoCode, expiryDate, isActive 
+  } = req.body;
+  
+  try {
+    // Check if promo code already exists (excluding this package)
+    const existingPromo = await prisma.treatmentPackage.findFirst({
+      where: { 
+        promoCode: { equals: promoCode, mode: 'insensitive' },
+        id: { not: id }
+      }
+    });
+    
+    if (existingPromo) {
+      return res.status(400).json({ message: 'Promo code already exists' });
+    }
+    
+    // Delete existing treatments and services
+    await prisma.packageTreatment.deleteMany({
+      where: { packageId: id }
+    });
+    
+    await prisma.packageService.deleteMany({
+      where: { packageId: id }
+    });
+    
+    // Update package with new data
+    const pkg = await prisma.treatmentPackage.update({
+      where: { id },
+      data: {
+        title,
+        description,
+        clinicId,
+        totalPrice,
+        originalPrice,
+        promoCode,
+        expiryDate: new Date(expiryDate),
+        isActive,
+        includedTreatments: {
+          create: includedTreatments
+        },
+        includedServices: {
+          create: includedServices
+        }
+      }
+    });
+    
+    res.json(pkg);
+  } catch (error) {
+    console.error('Error updating treatment package:', error);
+    res.status(500).json({ message: 'Failed to update treatment package' });
+  }
+});
+
+adminRoutes.delete('/treatment-packages/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Delete package (cascade will handle related records)
+    await prisma.treatmentPackage.delete({ 
+      where: { id } 
+    });
+    
+    res.json({ message: 'Treatment package deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting treatment package:', error);
+    res.status(500).json({ message: 'Failed to delete treatment package' });
+  }
+});
+
+// Get clinics for admin
+adminRoutes.get('/clinics', async (req, res) => {
+  try {
+    const clinics = await prisma.clinic.findMany({
+      select: { id: true, name: true, city: true, country: true }
+    });
+    res.json(clinics);
+  } catch (error) {
+    console.error('Error fetching clinics:', error);
+    res.status(500).json({ message: 'Failed to fetch clinics' });
+  }
+});
+
+// Get clinic treatments
+adminRoutes.get('/clinics/:id/treatments', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const treatments = await prisma.treatment.findMany({
+      where: { clinicId: id },
+      select: { id: true, name: true, price: true }
+    });
+    
+    res.json(treatments);
+  } catch (error) {
+    console.error('Error fetching clinic treatments:', error);
+    res.status(500).json({ message: 'Failed to fetch clinic treatments' });
+  }
+});
+
+// Register admin routes
+router.use('/admin', adminRoutes);
+
+module.exports = router;
+9. Integrating the Promo Code in the Quote Flow
+Add the promo code input to your quote flow:
+
+
+Copy
+// components/quote/TreatmentSummary.jsx
+import React from 'react';
+import { useQuoteContext } from '../../contexts/QuoteContext';
+import PromoCodeInput from './PromoCodeInput';
+
+export default function TreatmentSummary() {
+  const { 
+    selectedTreatments, 
+    originalTotal, 
+    discountedTotal, 
+    discountAmount,
+    selectedClinic
+  } = useQuoteContext();
+  
+  if (selectedTreatments.length === 0) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <p className="text-gray-500">No treatments selected yet.</p>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="space-y-4">
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <h2 className="text-xl font-bold mb-4">Treatment Summary</h2>
+        
+        {selectedClinic && (
+          <div className="mb-4 pb-4 border-b border-gray-100">
+            <h3 className="font-medium">Selected Clinic:</h3>
+            <p>{selectedClinic.name}</p>
+            <p className="text-sm text-gray-600">{selectedClinic.city}, Turkey</p>
+          </div>
+        )}
+        
+        <div className="space-y-3">
+          {selectedTreatments.map((treatment) => (
+            <div key={treatment.id} className="flex justify-between">
+              <div>
+                <p className="font-medium">{treatment.name}</p>
+                <p className="text-sm text-gray-600">
+                  Quantity: {treatment.quantity || 1}
+                </p>
+              </div>
+              <div className="text-right">
+                <p>£{treatment.price} per unit</p>
+                <p className="font-medium">
+                  £{(treatment.price * (treatment.quantity || 1)).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-4 pt-4 border-t border-gray-200">
+          <div className="flex justify-between text-lg">
+            <span className="font-medium">Total:</span>
+            <span className="font-bold">
+              {discountAmount > 0 ? (
+                <>
+                  <span className="text-gray-500 line-through mr-2">
+                    £{originalTotal.toFixed(2)}
+                  </span>
+                  <span className="text-green-600">
+                    £{discountedTotal.toFixed(2)}
+                  </span>
+                </>
+              ) : (
+                `£${originalTotal.toFixed(2)}`
+              )}
+            </span>
+          </div>
+          
+          {discountAmount > 0 && (
+            <div className="flex justify-between text-sm text-green-600 mt-1">
+              <span>Savings:</span>
+              <span>£{discountAmount.toFixed(2)}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Promo Code Input */}
+      <PromoCodeInput />
+    </div>
+  );
+}
+Summary of Implementation
+This comprehensive implementation delivers:
+
+Clinic Anonymization:
+
+A script to rename clinics with professional, anonymous names
+Preserves actual location data while anonymizing contact details
+Special Offers & Treatment Packages:
+
+Complete data models for special offers and treatment packages
+Admin interfaces for creating and managing offers and packages
+Ability to assign specific offers to clinics
+User-Friendly Promo Code Flow:
+
+Attractive display of offers and packages on the homepage
+Easy selection of offers that automatically applies promo codes
+Promo code validation and price adjustment in the quote flow
+Visual feedback showing savings from applied promo codes
+Backend Support:
+
+Robust API endpoints for both admin and user-facing functionality
+Validation to prevent duplicate promo codes
+Proper handling of package treatments and services
+This implementation provides a seamless experience for users to discover and apply special offers and treatment packages, while giving you full control over their management through the admin interface.

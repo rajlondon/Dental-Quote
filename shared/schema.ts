@@ -685,6 +685,124 @@ export const hotelBookingsRelations = relations(hotelBookings, ({ one }) => ({
   }),
 }));
 
+// === SPECIAL OFFERS ===
+export const specialOffers = pgTable("special_offers", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  discountType: varchar("discount_type", { length: 20 }).notNull(), // "PERCENTAGE" or "FIXED_AMOUNT"
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  treatmentIds: json("treatment_ids").$type<string[]>(), // Array of treatment IDs
+  promoCode: varchar("promo_code", { length: 50 }).notNull().unique(),
+  imageUrl: varchar("image_url", { length: 500 }),
+  expiryDate: timestamp("expiry_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  maxUses: integer("max_uses"), // Optional limit on total uses
+  currentUses: integer("current_uses").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const specialOffersRelations = relations(specialOffers, ({ one }) => ({
+  clinic: one(clinics, {
+    fields: [specialOffers.clinicId],
+    references: [clinics.id],
+  }),
+}));
+
+// === TREATMENT PACKAGES ===
+export const treatmentPackages = pgTable("treatment_packages", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description").notNull(),
+  clinicId: integer("clinic_id").notNull().references(() => clinics.id),
+  promoCode: varchar("promo_code", { length: 50 }).notNull().unique(),
+  imageUrl: varchar("image_url", { length: 500 }),
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }).notNull(),
+  expiryDate: timestamp("expiry_date").notNull(),
+  isActive: boolean("is_active").default(true),
+  maxUses: integer("max_uses"), // Optional limit on total uses
+  currentUses: integer("current_uses").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [treatmentPackages.clinicId],
+    references: [clinics.id],
+  }),
+  includedTreatments: many(packageTreatments),
+  includedServices: many(packageServices),
+}));
+
+// === PACKAGE TREATMENTS ===
+export const packageTreatments = pgTable("package_treatments", {
+  id: serial("id").primaryKey(),
+  packageId: integer("package_id").notNull().references(() => treatmentPackages.id, { onDelete: "cascade" }),
+  treatmentId: varchar("treatment_id", { length: 100 }).notNull(),
+  treatmentName: varchar("treatment_name", { length: 255 }).notNull(),
+  treatmentPrice: decimal("treatment_price", { precision: 10, scale: 2 }).notNull(),
+  quantity: integer("quantity").default(1),
+});
+
+export const packageTreatmentsRelations = relations(packageTreatments, ({ one }) => ({
+  package: one(treatmentPackages, {
+    fields: [packageTreatments.packageId],
+    references: [treatmentPackages.id],
+  }),
+}));
+
+// === PACKAGE SERVICES ===
+export const packageServices = pgTable("package_services", {
+  id: serial("id").primaryKey(),
+  packageId: integer("package_id").notNull().references(() => treatmentPackages.id, { onDelete: "cascade" }),
+  serviceType: varchar("service_type", { length: 50 }).notNull(), // "HOTEL", "TRANSFER", "CONSULTATION", etc.
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  quantity: integer("quantity").default(1),
+});
+
+export const packageServicesRelations = relations(packageServices, ({ one }) => ({
+  package: one(treatmentPackages, {
+    fields: [packageServices.packageId],
+    references: [treatmentPackages.id],
+  }),
+}));
+
+// === PROMO CODE USAGE ===
+export const promoCodeUsage = pgTable("promo_code_usage", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  promoCode: varchar("promo_code", { length: 50 }).notNull(),
+  offerId: integer("offer_id").references(() => specialOffers.id),
+  packageId: integer("package_id").references(() => treatmentPackages.id),
+  quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id),
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull(),
+  usedAt: timestamp("used_at").defaultNow().notNull(),
+});
+
+export const promoCodeUsageRelations = relations(promoCodeUsage, ({ one }) => ({
+  user: one(users, {
+    fields: [promoCodeUsage.userId],
+    references: [users.id],
+  }),
+  offer: one(specialOffers, {
+    fields: [promoCodeUsage.offerId],
+    references: [specialOffers.id],
+  }),
+  package: one(treatmentPackages, {
+    fields: [promoCodeUsage.packageId],
+    references: [treatmentPackages.id],
+  }),
+  quoteRequest: one(quoteRequests, {
+    fields: [promoCodeUsage.quoteRequestId],
+    references: [quoteRequests.id],
+  }),
+}));
+
 // === EXPORT TYPES ===
 
 // User types
@@ -756,3 +874,38 @@ export type Hotel = typeof hotels.$inferSelect;
 // Hotel booking types
 export type InsertHotelBooking = Omit<typeof hotelBookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type HotelBooking = typeof hotelBookings.$inferSelect;
+
+// Special offer types
+export const insertSpecialOfferSchema = createInsertSchema(specialOffers)
+  .extend({
+    discountValue: z.number().positive("Discount value must be positive"),
+    expiryDate: z.string().min(1, "Expiry date is required"),
+    promoCode: z.string().min(3, "Promo code must be at least 3 characters"),
+  });
+
+export type InsertSpecialOffer = Omit<typeof specialOffers.$inferInsert, "id" | "createdAt" | "updatedAt" | "currentUses">;
+export type SpecialOffer = typeof specialOffers.$inferSelect;
+
+// Treatment package types
+export const insertTreatmentPackageSchema = createInsertSchema(treatmentPackages)
+  .extend({
+    totalPrice: z.number().positive("Total price must be positive"),
+    originalPrice: z.number().positive("Original price must be positive"),
+    expiryDate: z.string().min(1, "Expiry date is required"),
+    promoCode: z.string().min(3, "Promo code must be at least 3 characters"),
+  });
+
+export type InsertTreatmentPackage = Omit<typeof treatmentPackages.$inferInsert, "id" | "createdAt" | "updatedAt" | "currentUses">;
+export type TreatmentPackage = typeof treatmentPackages.$inferSelect;
+
+// Package treatment types
+export type InsertPackageTreatment = Omit<typeof packageTreatments.$inferInsert, "id">;
+export type PackageTreatment = typeof packageTreatments.$inferSelect;
+
+// Package service types
+export type InsertPackageService = Omit<typeof packageServices.$inferInsert, "id">;
+export type PackageService = typeof packageServices.$inferSelect;
+
+// Promo code usage types
+export type InsertPromoCodeUsage = Omit<typeof promoCodeUsage.$inferInsert, "id" | "usedAt">;
+export type PromoCodeUsage = typeof promoCodeUsage.$inferSelect;
