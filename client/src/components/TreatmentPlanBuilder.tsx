@@ -405,8 +405,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
   
-  // Additional promo code state
+  // Promo code discount state
   const [discountAmount, setDiscountAmount] = useState<number>(0);
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | null>(null);
+  const [appliedPromoTitle, setAppliedPromoTitle] = useState<string>('');
   
   // Load promo code from session storage on mount and auto-populate treatments
   useEffect(() => {
@@ -599,10 +601,15 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           <div className="flex items-start">
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2" />
             <div>
-              <h3 className="font-medium text-green-800">Promo Code Applied: {promoCode}</h3>
+              <h3 className="font-medium text-green-800">
+                {appliedPromoTitle || 'Special Offer'} - FREE
+              </h3>
+              <p className="text-sm text-green-700 mt-1">
+                Promo Code: {promoCode}
+              </p>
               {discountAmount > 0 && (
                 <p className="text-sm text-green-700 mt-1">
-                  Discount: £{discountAmount} {discountType === 'percentage' && `(${discountValue}% off)`}
+                  Discount Value: £{discountAmount} {discountType === 'percentage' && `(${discountAmount}% off)`}
                 </p>
               )}
               
@@ -1876,6 +1883,12 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       // Handle valid promo code
                       setPromoCode(promoData.code || '');
                       setIsPromoValid(true);
+                      setDiscountAmount(promoData.discountValue || 0);
+                      setDiscountType(promoData.discountType || null);
+                      // Get the offer title from URL parameters
+                      const urlParams = new URLSearchParams(window.location.search);
+                      const offerTitle = urlParams.get('offerTitle') || 'Special Offer';
+                      setAppliedPromoTitle(decodeURIComponent(offerTitle));
                     }}
                     onInvalidPromoCode={() => {
                       console.log('Invalid promo code');
