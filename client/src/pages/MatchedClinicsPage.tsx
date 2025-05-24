@@ -816,27 +816,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
         </div>
         
-        {/* Treatment Summary */}
-        <div className="bg-gray-50 border rounded-lg p-4">
-          <h2 className="font-semibold mb-3">Your Treatment Plan Summary</h2>
-          <div className="space-y-1 mb-3">
-            {treatmentPlan.map((treatment) => (
-              <div key={treatment.id} className="flex justify-between">
-                <span className="text-gray-700">
-                  {treatment.name} {treatment.quantity > 1 && `x${treatment.quantity}`}
-                </span>
-                <span className="font-medium">£{treatment.subtotalGBP}</span>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-between pt-2 border-t font-semibold">
-            <span>Estimated Istanbul Price:</span>
-            <span>£{Math.round(treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0) * 0.35)}</span>
-          </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Hotel stays often included in treatment packages depending on the cost of your treatment.
-          </div>
-        </div>
+
       </div>
       
       {/* Clinic Comparison */}
