@@ -292,7 +292,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
 const PatientPortalPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { logoutMutation } = useAuth();
+  const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
   const { t } = useTranslation();
