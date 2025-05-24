@@ -67,11 +67,12 @@ export default function StripePaymentWrapper({ returnUrl }: StripePaymentWrapper
     setPaymentStatus('processing');
     
     try {
-      const { error } = await stripe.confirmPayment({
+      const { error, paymentIntent } = await stripe.confirmPayment({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}${returnUrl}`,
         },
+        redirect: 'if_required'
       });
       
       if (error) {
@@ -90,6 +91,20 @@ export default function StripePaymentWrapper({ returnUrl }: StripePaymentWrapper
           description: error.message || 'There was a problem with your payment',
           variant: 'destructive',
         });
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        // Payment succeeded without requiring redirect
+        setPaymentStatus('succeeded');
+        setMessage('Payment successful! Your deposit has been processed.');
+        toast({
+          title: 'Payment Successful',
+          description: 'Your £200 deposit has been processed successfully!',
+          variant: 'default',
+        });
+        
+        // Redirect to success page after a short delay
+        setTimeout(() => {
+          window.location.href = returnUrl;
+        }, 2000);
       }
     } catch (err) {
       console.error('Error in payment submission:', err);
