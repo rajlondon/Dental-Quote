@@ -431,26 +431,26 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
 
-  // Clinic name mapping for proper display
+  // Clinic name mapping for proper display - using authentic clinic names from database
   const getClinicName = (clinicId: string | number) => {
     const clinicNames: Record<string, string> = {
-      '1': 'DentGroup Istanbul',
-      '2': 'Beyaz Ada Clinic', 
-      '3': 'Istanbul Aesthetic Center',
-      '4': 'DentalPark Turkey',
-      '5': 'Esta Istanbul'
+      '1': 'Istanbul Dental Clinic',  // Legacy clinic
+      '2': 'DentGroup Istanbul',      // Real clinic from database
+      '3': 'Istanbul Dental Care',    // Real clinic from database
+      '4': 'Maltepe Dental Clinic',   // Real clinic from database
+      '5': 'Dentakay Istanbul'        // Real clinic from database
     };
     return clinicNames[clinicId.toString()] || `Partner Clinic #${clinicId}`;
   };
 
-  // Clinic URL mapping for navigation - maps numeric clinic IDs to actual clinic detail page IDs
+  // Clinic URL mapping for navigation - maps database clinic IDs to actual clinic detail page IDs
   const getClinicUrl = (clinicId: string | number) => {
     const clinicUrls: Record<string, string> = {
-      '1': '/clinic/dentgroup-istanbul',
-      '2': '/clinic/istanbul-dental-care', 
-      '3': '/clinic/maltepe-dental-clinic',
-      '4': '/clinic/dentakay-istanbul',
-      '5': '/clinic/dentgroup-istanbul' // Fallback to first clinic for clinic ID 5
+      '1': '/clinic/dentgroup-istanbul',    // Istanbul Dental Clinic (legacy)
+      '2': '/clinic/dentgroup-istanbul',    // DentGroup Istanbul
+      '3': '/clinic/istanbul-dental-care',  // Istanbul Dental Care
+      '4': '/clinic/maltepe-dental-clinic', // Maltepe Dental Clinic
+      '5': '/clinic/dentakay-istanbul'      // Dentakay Istanbul
     };
     return clinicUrls[clinicId.toString()] || '/clinic/dentgroup-istanbul';
   };
