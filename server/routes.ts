@@ -665,7 +665,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create a deposit payment intent (£200)
-  app.post('/api/create-deposit-payment-intent', csrfProtection, async (req, res) => {
+  app.post('/api/create-deposit-payment-intent', async (req, res) => {
     try {
       const { email, currency = 'gbp', metadata = {} } = req.body;
       
