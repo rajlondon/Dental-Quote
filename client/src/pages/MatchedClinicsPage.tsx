@@ -649,9 +649,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
     else if (pendingPromoCode === 'LUXTRAVEL') {
-      // For LUXTRAVEL, always show ONLY clinic 4 (DentSpa - the clinic offering luxury airport transfer)
-      console.log('LUXTRAVEL detected: Filtering to show only clinic 4 (DentSpa)');
-      const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === '4');
+      // For LUXTRAVEL, always show ONLY DentSpa clinic (the clinic offering luxury airport transfer)
+      console.log('LUXTRAVEL detected: Filtering to show only DentSpa clinic');
+      const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
       if (luxuryClinic) {
         // Force array with just this one clinic
         setFilteredClinics([luxuryClinic]);
