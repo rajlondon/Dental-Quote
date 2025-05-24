@@ -455,12 +455,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     return clinicUrls[clinicId.toString()] || '/clinic/dentgroup-istanbul';
   };
   
-  // Handle quote request - go directly to quote flow like other buttons
+  // Handle quote request - go directly to quote flow with promo code pre-populated
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
     
-    // Build the URL with special offer parameters for direct quote flow access
+    // Pre-populate the promo code in the quote flow, similar to package booking
     const params = new URLSearchParams({
+      promoCode: offer.promo_code || '',
       specialOffer: offer.id,
       offerTitle: offer.title,
       offerClinic: offer.clinic_id || '',
@@ -471,7 +472,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                  : 'Dental Implants'
     });
     
-    // Go directly to quote flow with special offer pre-populated (no login required)
+    // Go directly to quote flow with promo code pre-populated (no login required)
     setLocation(`/your-quote?${params.toString()}`);
   };
 

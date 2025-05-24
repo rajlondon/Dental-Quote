@@ -45,7 +45,7 @@ export function PromoCodeInput({
   // Check for promo code in URL parameters on mount for seamless homepage integration
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const promoFromUrl = urlParams.get('promo');
+    const promoFromUrl = urlParams.get('promo') || urlParams.get('promoCode');
     if (promoFromUrl) {
       setPromoCode(promoFromUrl);
       // Auto-validate the promo code from URL after a brief delay
