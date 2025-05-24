@@ -314,6 +314,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const [quantity, setQuantity] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
   
+  // Promo code state
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [isPromoValid, setIsPromoValid] = useState<boolean>(false);
+  
   // Calculate totals
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
@@ -401,11 +405,8 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
   
-  // Get promo code from session storage
-  const [promoCode, setPromoCode] = useState<string | null>(null);
+  // Additional promo code state
   const [discountAmount, setDiscountAmount] = useState<number>(0);
-  const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | null>(null);
-  const [discountValue, setDiscountValue] = useState<number>(0);
   
   // Load promo code from session storage on mount and auto-populate treatments
   useEffect(() => {
