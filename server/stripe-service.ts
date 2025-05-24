@@ -1,11 +1,13 @@
 import Stripe from 'stripe';
 
 // Initialize Stripe with the secret key from environment variables
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+// Use test keys when available for safe testing
+const stripeSecretKey = process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY;
 const isProduction = process.env.NODE_ENV === 'production';
+const isUsingTestKey = !!process.env.STRIPE_TEST_SECRET_KEY;
 
 if (!stripeSecretKey) {
-  console.error('STRIPE_SECRET_KEY environment variable is not set');
+  console.error('No Stripe secret key found. Please set STRIPE_TEST_SECRET_KEY for testing or STRIPE_SECRET_KEY for production');
 }
 
 // Enhanced Stripe configuration with proper error handling
@@ -23,7 +25,7 @@ try {
       // In production, enable proper telemetry and error monitoring
       telemetry: isProduction
     });
-    console.log('Stripe client initialized successfully');
+    console.log(`Stripe client initialized successfully${isUsingTestKey ? ' (using test keys)' : ' (using production keys)'}`);
   }
 } catch (error) {
   console.error('Failed to initialize Stripe client:', error);
