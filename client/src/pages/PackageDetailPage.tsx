@@ -37,10 +37,9 @@ const PackageDetailPage = () => {
   // Handler functions for buttons
   const handleBookPackage = () => {
     if (packageData) {
-      // Navigate to quote flow with package promo code pre-populated
-      // Find the promo code from the trending packages data
+      // Navigate directly to the public quote page with package promo code
       const promoCode = `PACKAGE_${packageData.id.toUpperCase()}`;
-      setLocation(`/?promo=${encodeURIComponent(promoCode)}&treatment=${encodeURIComponent(packageData.title)}`);
+      setLocation(`/your-quote?promo=${encodeURIComponent(promoCode)}&treatment=${encodeURIComponent(packageData.title)}`);
     }
   };
 
