@@ -430,73 +430,37 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
+
+  // Clinic name mapping for proper display
+  const getClinicName = (clinicId: string | number) => {
+    const clinicNames: Record<string, string> = {
+      '1': 'DentGroup Istanbul',
+      '2': 'Beyaz Ada Clinic', 
+      '3': 'Istanbul Aesthetic Center',
+      '4': 'DentalPark Turkey',
+      '5': 'Esta Istanbul'
+    };
+    return clinicNames[clinicId.toString()] || `Partner Clinic #${clinicId}`;
+  };
   
-  // Handle quote request with authentication check
+  // Handle quote request - go directly to quote flow like other buttons
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
     
-    // Standardize the offer data format to ensure consistency across the application
-    const standardizedOfferData = {
-      id: offer.id,
-      title: offer.title,
-      clinicId: offer.clinic_id,
-      discountValue: offer.discount_value || 0,
-      discountType: offer.discount_type || 'percentage',
-      applicableTreatment: offer.applicable_treatments && offer.applicable_treatments.length > 0 
-                           ? offer.applicable_treatments[0] 
-                           : 'Dental Implants'
-    };
-    
-    // Build query parameters for the offer
+    // Build the URL with special offer parameters for direct quote flow access
     const params = new URLSearchParams({
-      specialOffer: standardizedOfferData.id,
-      offerTitle: standardizedOfferData.title,
-      offerClinic: standardizedOfferData.clinicId || '',
-      offerDiscount: standardizedOfferData.discountValue.toString(),
-      offerDiscountType: standardizedOfferData.discountType,
-      treatment: standardizedOfferData.applicableTreatment
+      specialOffer: offer.id,
+      offerTitle: offer.title,
+      offerClinic: offer.clinic_id || '',
+      offerDiscount: (offer.discount_value || 0).toString(),
+      offerDiscountType: offer.discount_type || 'percentage',
+      treatment: (offer.applicable_treatments && offer.applicable_treatments.length > 0) 
+                 ? offer.applicable_treatments[0] 
+                 : 'Dental Implants'
     });
     
-    console.log("Generated URL params:", params.toString());
-    console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
-    
-    // Check if user is authenticated
-    if (!authLoading && user) {
-      console.log("User authenticated, proceeding to quote form with special offer context");
-      
-      // Store the special offer in sessionStorage for use by the quote form
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(standardizedOfferData));
-      console.log("Saved activeSpecialOffer to sessionStorage:", standardizedOfferData);
-      
-      // User is logged in, proceed with quote and notify
-      toast({
-        title: "Special Offer Selected",
-        description: `${offer.title} will be applied to your quote results.`,
-        variant: "default",
-      });
-      
-      // Redirect to the quote page where user can select treatments and clinics
-      // with the special offer clinic highlighted - use setLocation for SPA navigation
-      console.log("Redirecting to quote page with special offer context");
-      setLocation('/your-quote');
-    } else {
-      console.log("User not authenticated, saving offer to sessionStorage");
-      
-      // Save the standardized offer data to sessionStorage for retrieval after login
-      console.log("Saving pendingSpecialOffer:", standardizedOfferData);
-      sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-      
-      // Notify user they need to login
-      toast({
-        title: "Login Required",
-        description: "Please create an account or login to request this special offer",
-        variant: "default",
-      });
-      
-      // Redirect to login page - use setLocation for SPA navigation
-      console.log("Redirecting to portal login page");
-      setLocation('/portal-login');
-    }
+    // Go directly to quote flow with special offer pre-populated (no login required)
+    setLocation(`/your-quote?${params.toString()}`);
   };
 
   // Generate navigation dots
@@ -695,7 +659,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       />
                       <div>
                         <span className="text-sm text-gray-500">Offered by</span>
-                        <p className="font-medium">Partner Clinic #{offer.clinic_id}</p>
+                        <p className="font-medium">{getClinicName(offer.clinic_id || '')}</p>
                       </div>
                     </div>
                   )}
