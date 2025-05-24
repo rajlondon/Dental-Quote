@@ -1061,15 +1061,77 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               // Save clinic pricing data for use in the portal
                               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
                               
-                              // If there's a pending promo code, include the discount info
+                              // Enhanced promo code data for both patient and clinic portals
                               const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
-                              const hasDiscount = pendingPromoCode && pendingPromoCode.length > 0;
+                              const pendingPromoClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+                              
+                              // Build comprehensive promo details for portal display
+                              let promoDetails = null;
+                              if (pendingPromoCode) {
+                                promoDetails = {
+                                  code: pendingPromoCode,
+                                  type: 'special_offer',
+                                  clinicId: pendingPromoClinicId,
+                                  benefits: []
+                                };
+                                
+                                // Map promo codes to their specific benefits for portal display
+                                switch (pendingPromoCode) {
+                                  case 'LUXTRAVEL':
+                                    promoDetails.benefits = [
+                                      {
+                                        type: 'service',
+                                        description: 'FREE Luxury Airport Transfer',
+                                        value: '£80',
+                                        details: 'Private vehicle with professional driver included'
+                                      }
+                                    ];
+                                    break;
+                                  case 'IMPLANT2023':
+                                    promoDetails.benefits = [
+                                      {
+                                        type: 'discount',
+                                        description: '20% OFF Dental Implants',
+                                        value: '20%',
+                                        details: 'Applicable to all implant procedures'
+                                      }
+                                    ];
+                                    break;
+                                  case 'SMILE2023':
+                                    promoDetails.benefits = [
+                                      {
+                                        type: 'service',
+                                        description: 'FREE Smile Makeover Consultation',
+                                        value: '£150',
+                                        details: 'Comprehensive aesthetic evaluation included'
+                                      }
+                                    ];
+                                    break;
+                                  case 'FULLMOUTH2023':
+                                    promoDetails.benefits = [
+                                      {
+                                        type: 'package',
+                                        description: 'Full Mouth Reconstruction Package',
+                                        value: '15%',
+                                        details: 'Complete treatment plan with accommodations'
+                                      }
+                                    ];
+                                    break;
+                                }
+                              }
                               
                               localStorage.setItem('selectedClinicData', JSON.stringify({
+                                clinicId: clinic.id,
                                 name: clinic.name,
                                 treatments: clinicTreatments,
                                 totalPrice: totalPrice,
-                                discountApplied: hasDiscount ? pendingPromoCode : null
+                                promoCode: promoDetails,
+                                bookingTimestamp: new Date().toISOString(),
+                                patientInfo: {
+                                  // This will be populated from the quote form data
+                                  requiresReview: true,
+                                  hasSpecialOffer: !!promoDetails
+                                }
                               }));
                               
                               // Call the onSelectClinic callback if provided

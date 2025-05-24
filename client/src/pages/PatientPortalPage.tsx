@@ -78,6 +78,16 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
   const { t } = useTranslation();
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
+  // Get selected clinic data with promo information
+  const selectedClinicData = React.useMemo(() => {
+    try {
+      const storedData = localStorage.getItem('selectedClinicData');
+      return storedData ? JSON.parse(storedData) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -158,6 +168,38 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
         </div>
       </div>
       
+      {/* Special Offer Applied Banner - Only show if patient has promo code */}
+      {selectedClinicData?.promoCode && (
+        <Card className="bg-gradient-to-r from-purple-50 to-pink-50 border-purple-200">
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center text-purple-800">
+              <div className="bg-purple-600 text-white text-sm font-bold px-3 py-1 rounded mr-3">
+                {selectedClinicData.promoCode.code}
+              </div>
+              Special Offer Applied
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {selectedClinicData.promoCode.benefits?.map((benefit: any, index: number) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center mt-0.5">
+                    <svg className="w-4 h-4 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium text-purple-800">{benefit.description}</p>
+                    <p className="text-sm text-purple-600">{benefit.details}</p>
+                    <p className="text-sm font-bold text-purple-700">Value: {benefit.value}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Dashboard status cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
