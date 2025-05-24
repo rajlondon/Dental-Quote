@@ -31,7 +31,7 @@ interface PromoCodeInputProps {
   className?: string;
 }
 
-export default function PromoCodeInput({ 
+export function PromoCodeInput({ 
   onValidPromoCode, 
   onInvalidPromoCode, 
   userId, 
@@ -276,3 +276,5 @@ export default function PromoCodeInput({
     </div>
   );
 }
+
+export default PromoCodeInput;

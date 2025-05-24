@@ -22,6 +22,7 @@ import PdfGenerator from "./PdfGenerator";
 import JourneyPdf from "./JourneyPdf";
 import JSPDFGenerator from "./JSPDFGenerator";
 import { DentalChart } from "@/components/DentalChart";
+import PromoCodeInput from "@/components/PromoCodeInput";
 
 // Define interface for clinic comparison
 interface ClinicComparison {
@@ -224,6 +225,38 @@ export default function PriceCalculator() {
   const [quote, setQuote] = useState<ReturnType<typeof calculateTotal> | null>(null);
   const quoteResultRef = useRef<HTMLDivElement>(null); // Reference to quote result section
   
+  // Promo code state
+  const [appliedPromo, setAppliedPromo] = useState<any>(null);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+
+  // Promo code handlers
+  const handleValidPromoCode = (promoData: any) => {
+    setAppliedPromo(promoData);
+    
+    if (promoData.type === 'special_offer') {
+      // Calculate discount for special offers
+      if (promoData.discountType === 'PERCENTAGE') {
+        setPromoDiscount(promoData.discountValue);
+      } else {
+        // Fixed amount discount will be applied in final calculation
+        setPromoDiscount(promoData.discountValue);
+      }
+    } else if (promoData.type === 'treatment_package') {
+      // For treatment packages, the savings are already calculated
+      setPromoDiscount(promoData.savings || 0);
+    }
+
+    toast({
+      title: "Promo Code Applied!",
+      description: `You've unlocked special savings with code: ${promoData.promoCode || 'N/A'}`,
+    });
+  };
+
+  const handleInvalidPromoCode = () => {
+    setAppliedPromo(null);
+    setPromoDiscount(0);
+  };
+  
   // Initialize the form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -244,6 +277,16 @@ export default function PriceCalculator() {
     },
   });
   
+  // Check for promo code in URL parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoFromUrl = urlParams.get('promo');
+    if (promoFromUrl) {
+      // Auto-populate promo code from URL parameter
+      // This will be handled by the PromoCodeInput component with initial value
+    }
+  }, []);
+
   // Load treatments from CSV when component mounts
   useEffect(() => {
     const loadTreatments = async () => {
