@@ -498,22 +498,22 @@ const PatientPortalPage: React.FC = () => {
                 onStepAction={(stepId) => {
                   switch(stepId) {
                     case 'dental_quiz':
-                      window.location.href = '/quote-flow';
+                      window.location.href = '/your-quote';
                       break;
                     case 'dental_chart':
-                      window.location.href = '/quote-flow?step=dental-chart';
+                      window.location.href = '/your-quote';
                       break;
                     case 'treatment_selection':
-                      window.location.href = '/quote-flow?step=treatments';
+                      window.location.href = '/your-quote';
                       break;
                     case 'your_quote':
-                      window.location.href = '/quote-flow?step=summary';
+                      setActiveSection('my_quotes');
                       break;
                     case 'consultation':
                       setActiveSection('messages');
                       break;
                     case 'deposit':
-                      setActiveSection('payment');
+                      window.location.href = '/deposit-payment';
                       break;
                     case 'travel':
                       setActiveSection('travel');
