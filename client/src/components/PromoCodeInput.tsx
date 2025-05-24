@@ -42,19 +42,6 @@ export function PromoCodeInput({
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeValidationResult | null>(null);
   const [error, setError] = useState('');
 
-  // Check for promo code in URL parameters on mount for seamless homepage integration
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const promoFromUrl = urlParams.get('promo') || urlParams.get('promoCode');
-    if (promoFromUrl) {
-      setPromoCode(promoFromUrl);
-      // Auto-validate the promo code from URL after a brief delay
-      setTimeout(() => {
-        validatePromoMutation.mutate(promoFromUrl);
-      }, 500);
-    }
-  }, []);
-
   const validatePromoMutation = useMutation({
     mutationFn: async (code: string) => {
       const response = await apiRequest('POST', '/api/promo-codes/validate', {
@@ -64,6 +51,7 @@ export function PromoCodeInput({
       return response.json();
     },
     onSuccess: (result: any) => {
+      console.log('Promo validation result:', result);
       if (result.success && result.valid) {
         const promoData = {
           valid: true,
@@ -74,8 +62,10 @@ export function PromoCodeInput({
         };
         setAppliedPromo(promoData);
         setError('');
+        console.log('Calling onValidPromoCode with:', promoData);
         onValidPromoCode(promoData);
       } else {
+        console.log('Promo code invalid, calling onInvalidPromoCode');
         setError(result.message || result.error || 'Invalid promo code');
         setAppliedPromo(null);
         onInvalidPromoCode();
@@ -88,6 +78,19 @@ export function PromoCodeInput({
       onInvalidPromoCode();
     },
   });
+
+  // Check for promo code in URL parameters on mount for seamless homepage integration
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoFromUrl = urlParams.get('promo') || urlParams.get('promoCode');
+    if (promoFromUrl) {
+      setPromoCode(promoFromUrl);
+      // Auto-validate the promo code from URL after a brief delay
+      setTimeout(() => {
+        validatePromoMutation.mutate(promoFromUrl);
+      }, 500);
+    }
+  }, []);
 
   const handleApplyPromo = () => {
     if (!promoCode.trim()) {
