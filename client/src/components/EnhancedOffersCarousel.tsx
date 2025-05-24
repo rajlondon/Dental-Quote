@@ -447,10 +447,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const getClinicUrl = (clinicId: string | number) => {
     const clinicUrls: Record<string, string> = {
       '1': '/clinic/dentgroup-istanbul',
-      '2': '/clinic/dent-istanbul', 
-      '3': '/clinic/istanbul-aesthetic-center',
-      '4': '/clinic/dentalpark-turkey',
-      '5': '/clinic/esta-istanbul'
+      '2': '/clinic/istanbul-dental-care', 
+      '3': '/clinic/maltepe-dental-clinic',
+      '4': '/clinic/dentakay-istanbul',
+      '5': '/clinic/dentgroup-istanbul' // Fallback to first clinic for clinic ID 5
     };
     return clinicUrls[clinicId.toString()] || '/clinic/dentgroup-istanbul';
   };
