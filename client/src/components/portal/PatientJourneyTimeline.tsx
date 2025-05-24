@@ -73,7 +73,7 @@ export default function PatientJourneyTimeline({
     return 'upcoming';
   };
   
-  // Define all journey steps with dynamic status and interactive buttons
+  // Define all journey steps with ALL buttons visible for testing
   const journeySteps: JourneyStep[] = [
     {
       id: 'dental_quiz',
@@ -95,11 +95,11 @@ export default function PatientJourneyTimeline({
       icon: <Heart className="h-5 w-5" />,
       status: getStepStatus('dental_chart'),
       estimatedTime: '3 minutes',
-      actionButton: getStepStatus('dental_chart') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('dental_chart') === 'completed' ? 'View Chart' : 'Mark Teeth',
         action: () => onStepAction?.('dental_chart'),
         variant: getStepStatus('dental_chart') === 'completed' ? 'outline' : 'default'
-      } : undefined
+      }
     },
     {
       id: 'treatment_selection',
@@ -108,11 +108,11 @@ export default function PatientJourneyTimeline({
       icon: <Stethoscope className="h-5 w-5" />,
       status: getStepStatus('treatment_selection'),
       estimatedTime: '10 minutes',
-      actionButton: getStepStatus('treatment_selection') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('treatment_selection') === 'completed' ? 'View Treatments' : 'Select Treatments',
         action: () => onStepAction?.('treatment_selection'),
         variant: getStepStatus('treatment_selection') === 'completed' ? 'outline' : 'default'
-      } : undefined
+      }
     },
     {
       id: 'your_quote',
@@ -121,11 +121,11 @@ export default function PatientJourneyTimeline({
       icon: <Calculator className="h-5 w-5" />,
       status: getStepStatus('your_quote'),
       estimatedTime: '15 minutes',
-      actionButton: getStepStatus('your_quote') !== 'upcoming' ? {
-        text: getStepStatus('your_quote') === 'completed' ? 'View Quote' : 'Get Quote',
+      actionButton: {
+        text: getStepStatus('your_quote') === 'completed' ? 'View My Quotes' : 'Get Quote',
         action: () => onStepAction?.('your_quote'),
         variant: getStepStatus('your_quote') === 'completed' ? 'outline' : 'default'
-      } : undefined
+      }
     },
     {
       id: 'consultation',
@@ -134,11 +134,11 @@ export default function PatientJourneyTimeline({
       icon: <MessageSquare className="h-5 w-5" />,
       status: getStepStatus('consultation'),
       estimatedTime: '1-2 days',
-      actionButton: getStepStatus('consultation') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('consultation') === 'completed' ? 'View Messages' : 'Contact Clinic',
         action: () => onStepAction?.('consultation'),
         variant: 'outline'
-      } : undefined
+      }
     },
     {
       id: 'deposit',
@@ -147,10 +147,10 @@ export default function PatientJourneyTimeline({
       icon: <CreditCard className="h-5 w-5" />,
       status: getStepStatus('deposit'),
       estimatedTime: '2 minutes',
-      actionButton: getStepStatus('deposit') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('deposit') === 'completed' ? 'View Payment' : 'Pay Deposit',
         action: () => onStepAction?.('deposit')
-      } : undefined
+      }
     },
     {
       id: 'travel',
@@ -159,10 +159,10 @@ export default function PatientJourneyTimeline({
       icon: <Plane className="h-5 w-5" />,
       status: getStepStatus('travel'),
       estimatedTime: '30 minutes',
-      actionButton: getStepStatus('travel') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('travel') === 'completed' ? 'Manage Travel' : 'Book Travel',
         action: () => onStepAction?.('travel')
-      } : undefined
+      }
     },
     {
       id: 'arrival',
@@ -171,11 +171,11 @@ export default function PatientJourneyTimeline({
       icon: <Car className="h-5 w-5" />,
       status: getStepStatus('arrival'),
       estimatedTime: '1 hour',
-      actionButton: getStepStatus('arrival') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('arrival') === 'completed' ? 'View Details' : 'Track Pickup',
         action: () => onStepAction?.('arrival'),
         variant: 'outline'
-      } : undefined
+      }
     },
     {
       id: 'treatment',
@@ -184,11 +184,11 @@ export default function PatientJourneyTimeline({
       icon: <MapPin className="h-5 w-5" />,
       status: getStepStatus('treatment'),
       estimatedTime: '2-3 hours',
-      actionButton: getStepStatus('treatment') !== 'upcoming' ? {
+      actionButton: {
         text: getStepStatus('treatment') === 'completed' ? 'View History' : 'View Schedule',
         action: () => onStepAction?.('treatment'),
         variant: 'outline'
-      } : undefined
+      }
     }
   ];
 

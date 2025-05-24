@@ -494,7 +494,6 @@ const PatientPortalPage: React.FC = () => {
             {/* Patient Journey Timeline */}
             <div className="mt-6">
               <PatientJourneyTimeline 
-                currentStep="dental_quiz"
                 onStepAction={(stepId) => {
                   switch(stepId) {
                     case 'dental_quiz':
