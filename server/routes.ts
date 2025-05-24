@@ -310,6 +310,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register clinic-initiated promotions routes
   app.use('/api', clinicPromotionRouter);
+  
+  // Register quote responses routes for patient quote tracking
+  app.use('/api/quote-responses', quoteResponsesRoutes);
 
   // Register clinic routes for package results page
   app.use('/api/clinics', clinicRoutes);

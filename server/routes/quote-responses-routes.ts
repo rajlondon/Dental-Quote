@@ -1,280 +1,172 @@
-import express from 'express';
+import { Router } from 'express';
 import { db } from '../db';
-import { quoteResponses, insertQuoteResponseSchema } from '@shared/schema';
-import { eq, and } from 'drizzle-orm';
-import { z } from 'zod';
+import { quoteResponses } from '@shared/schema';
+import { eq, and, desc } from 'drizzle-orm';
 
-const router = express.Router();
+const router = Router();
 
-// Save quote response data (for both anonymous and logged-in users)
-router.post('/api/quote-responses', async (req, res) => {
+// Get quotes for logged-in patient
+router.get('/my-quotes', async (req, res) => {
   try {
-    // Validate the incoming data
-    const validatedData = insertQuoteResponseSchema.parse(req.body);
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const userId = req.user!.id;
     
-    // Generate session ID if not provided and user not logged in
-    const sessionId = validatedData.sessionId || 
-                     (req.user?.id ? null : `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
-    
-    // Create the quote response
-    const [quoteResponse] = await db
+    const quotes = await db
+      .select()
+      .from(quoteResponses)
+      .where(eq(quoteResponses.userId, userId))
+      .orderBy(desc(quoteResponses.createdAt));
+
+    res.json({
+      success: true,
+      data: quotes
+    });
+  } catch (error) {
+    console.error('Error fetching user quotes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch quotes'
+    });
+  }
+});
+
+// Get quotes for clinic staff
+router.get('/clinic', async (req, res) => {
+  try {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
+
+    const user = req.user!;
+    if (user.role !== 'clinic_staff') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const clinicId = user.clinicId;
+    if (!clinicId) {
+      return res.status(400).json({ success: false, message: 'No clinic associated with user' });
+    }
+
+    const quotes = await db
+      .select()
+      .from(quoteResponses)
+      .where(eq(quoteResponses.clinicId, clinicId))
+      .orderBy(desc(quoteResponses.createdAt));
+
+    res.json({
+      success: true,
+      data: quotes
+    });
+  } catch (error) {
+    console.error('Error fetching clinic quotes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch clinic quotes'
+    });
+  }
+});
+
+// Create new quote response
+router.post('/', async (req, res) => {
+  try {
+    const {
+      sessionId,
+      patientInfo,
+      treatments,
+      dentalChart,
+      promoCode,
+      selectedClinic,
+      totalEstimate,
+      status = 'submitted',
+      clinicId
+    } = req.body;
+
+    // Add user ID if authenticated
+    const insertData: any = {
+      sessionId,
+      patientInfo,
+      treatments,
+      dentalChart: dentalChart || { selectedConditions: [] },
+      promoCode,
+      selectedClinic,
+      totalEstimate,
+      status,
+      submittedAt: new Date(),
+      clinicId
+    };
+
+    if (req.isAuthenticated()) {
+      insertData.userId = req.user!.id;
+    }
+
+    const [newQuote] = await db
       .insert(quoteResponses)
-      .values({
-        ...validatedData,
-        userId: req.user?.id || null,
-        sessionId,
-        updatedAt: new Date(),
-      })
+      .values(insertData)
       .returning();
 
-    res.status(201).json({
+    res.json({
       success: true,
-      data: quoteResponse,
-      message: 'Quote response saved successfully'
+      data: newQuote
     });
-
-  } catch (error: any) {
-    console.error('Error saving quote response:', error);
-    res.status(400).json({
+  } catch (error) {
+    console.error('Error creating quote response:', error);
+    res.status(500).json({
       success: false,
-      message: 'Failed to save quote response',
-      error: error.message
+      message: 'Failed to create quote response'
     });
   }
 });
 
-// Update existing quote response
-router.put('/api/quote-responses/:id', async (req, res) => {
+// Update quote status (for clinics)
+router.patch('/:id/status', async (req, res) => {
   try {
-    const quoteResponseId = parseInt(req.params.id);
-    const validatedData = insertQuoteResponseSchema.partial().parse(req.body);
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ success: false, message: 'Not authenticated' });
+    }
 
-    // Update the quote response
-    const [updatedQuoteResponse] = await db
+    const user = req.user!;
+    if (user.role !== 'clinic_staff') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    const quoteId = parseInt(req.params.id);
+    const { status, clinicNotes } = req.body;
+
+    const updateData: any = {
+      status,
+      updatedAt: new Date()
+    };
+
+    if (clinicNotes) {
+      updateData.clinicNotes = clinicNotes;
+      updateData.clinicReviewedAt = new Date();
+    }
+
+    const [updatedQuote] = await db
       .update(quoteResponses)
-      .set({
-        ...validatedData,
-        updatedAt: new Date(),
-      })
-      .where(eq(quoteResponses.id, quoteResponseId))
+      .set(updateData)
+      .where(and(
+        eq(quoteResponses.id, quoteId),
+        eq(quoteResponses.clinicId, user.clinicId!)
+      ))
       .returning();
 
-    if (!updatedQuoteResponse) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote response not found'
-      });
+    if (!updatedQuote) {
+      return res.status(404).json({ success: false, message: 'Quote not found' });
     }
 
     res.json({
       success: true,
-      data: updatedQuoteResponse,
-      message: 'Quote response updated successfully'
+      data: updatedQuote
     });
-
-  } catch (error: any) {
-    console.error('Error updating quote response:', error);
-    res.status(400).json({
-      success: false,
-      message: 'Failed to update quote response',
-      error: error.message
-    });
-  }
-});
-
-// Get quote responses for current user (patient portal)
-router.get('/api/quote-responses/my-quotes', async (req, res) => {
-  if (!req.user?.id) {
-    return res.status(401).json({
-      success: false,
-      message: 'Authentication required'
-    });
-  }
-
-  try {
-    const userQuoteResponses = await db
-      .select()
-      .from(quoteResponses)
-      .where(eq(quoteResponses.userId, req.user.id));
-
-    res.json({
-      success: true,
-      data: userQuoteResponses
-    });
-
-  } catch (error: any) {
-    console.error('Error fetching user quote responses:', error);
+  } catch (error) {
+    console.error('Error updating quote status:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to fetch quote responses',
-      error: error.message
-    });
-  }
-});
-
-// Get quote responses for a specific clinic (clinic portal)
-router.get('/api/quote-responses/clinic/:clinicId', async (req, res) => {
-  if (!req.user?.id || req.user.role !== 'clinic_staff') {
-    return res.status(403).json({
-      success: false,
-      message: 'Clinic staff access required'
-    });
-  }
-
-  try {
-    const clinicId = parseInt(req.params.clinicId);
-    
-    const clinicQuoteResponses = await db
-      .select()
-      .from(quoteResponses)
-      .where(eq(quoteResponses.clinicId, clinicId));
-
-    res.json({
-      success: true,
-      data: clinicQuoteResponses
-    });
-
-  } catch (error: any) {
-    console.error('Error fetching clinic quote responses:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch clinic quote responses',
-      error: error.message
-    });
-  }
-});
-
-// Get a specific quote response by ID
-router.get('/api/quote-responses/:id', async (req, res) => {
-  try {
-    const quoteResponseId = parseInt(req.params.id);
-    
-    const [quoteResponse] = await db
-      .select()
-      .from(quoteResponses)
-      .where(eq(quoteResponses.id, quoteResponseId));
-
-    if (!quoteResponse) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote response not found'
-      });
-    }
-
-    // Check permissions
-    if (!req.user?.id || 
-        (quoteResponse.userId !== req.user.id && 
-         req.user.role !== 'clinic_staff' && 
-         req.user.role !== 'admin')) {
-      return res.status(403).json({
-        success: false,
-        message: 'Access denied'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: quoteResponse
-    });
-
-  } catch (error: any) {
-    console.error('Error fetching quote response:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch quote response',
-      error: error.message
-    });
-  }
-});
-
-// Submit quote response to clinic
-router.post('/api/quote-responses/:id/submit', async (req, res) => {
-  try {
-    const quoteResponseId = parseInt(req.params.id);
-    
-    const [quoteResponse] = await db
-      .select()
-      .from(quoteResponses)
-      .where(eq(quoteResponses.id, quoteResponseId));
-
-    if (!quoteResponse) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote response not found'
-      });
-    }
-
-    // Update status to submitted
-    const [updatedQuoteResponse] = await db
-      .update(quoteResponses)
-      .set({
-        status: 'submitted',
-        submittedToClinic: true,
-        submittedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(quoteResponses.id, quoteResponseId))
-      .returning();
-
-    res.json({
-      success: true,
-      data: updatedQuoteResponse,
-      message: 'Quote response submitted to clinic successfully'
-    });
-
-  } catch (error: any) {
-    console.error('Error submitting quote response:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to submit quote response',
-      error: error.message
-    });
-  }
-});
-
-// Clinic reviews quote response
-router.post('/api/quote-responses/:id/review', async (req, res) => {
-  if (!req.user?.id || req.user.role !== 'clinic_staff') {
-    return res.status(403).json({
-      success: false,
-      message: 'Clinic staff access required'
-    });
-  }
-
-  try {
-    const quoteResponseId = parseInt(req.params.id);
-    const { clinicNotes, status } = req.body;
-    
-    const [updatedQuoteResponse] = await db
-      .update(quoteResponses)
-      .set({
-        status: status || 'under_review',
-        clinicNotes,
-        clinicReviewedAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(quoteResponses.id, quoteResponseId))
-      .returning();
-
-    if (!updatedQuoteResponse) {
-      return res.status(404).json({
-        success: false,
-        message: 'Quote response not found'
-      });
-    }
-
-    res.json({
-      success: true,
-      data: updatedQuoteResponse,
-      message: 'Quote response reviewed successfully'
-    });
-
-  } catch (error: any) {
-    console.error('Error reviewing quote response:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to review quote response',
-      error: error.message
+      message: 'Failed to update quote status'
     });
   }
 });
