@@ -1,204 +1,217 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format, differenceInDays } from 'date-fns';
-import { apiRequest } from '@/lib/queryClient';
-import { ChevronRight, Calendar, Tag, Package, Timer } from 'lucide-react';
-import { Link } from 'wouter';
-
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Sparkles, Tag, Calendar, MapPin } from 'lucide-react';
+import { useLocation } from 'wouter';
+
+interface SpecialOffer {
+  id: string;
+  promoCode: string;
+  title: string;
+  description: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  expiryDate?: string;
+  clinicName?: string;
+  isActive: boolean;
+}
+
+interface TreatmentPackage {
+  id: string;
+  promoCode: string;
+  title: string;
+  description: string;
+  totalPrice: number;
+  originalPrice: number;
+  savings: number;
+  expiryDate?: string;
+  clinicName?: string;
+  isActive: boolean;
+}
 
 export function FeaturedPromotions() {
-  
-  // Fetch featured promotions
-  const { data, isLoading, isError } = useQuery({
-    queryKey: ['/api/promotions/featured'],
+  const [, setLocation] = useLocation();
+
+  const { data: specialOffers = [], isLoading: loadingOffers } = useQuery({
+    queryKey: ['/api/special-offers/homepage'],
     queryFn: async () => {
-      const response = await apiRequest('GET', '/api/promotions/featured');
+      const response = await fetch('/api/special-offers/homepage');
+      if (!response.ok) throw new Error('Failed to fetch special offers');
       return response.json();
     },
-    staleTime: 300000, // 5 minutes
   });
-  
-  // Calculate days remaining for a promotion
-  const getDaysRemaining = (endDate: string) => {
-    const end = new Date(endDate);
-    const today = new Date();
-    return Math.max(0, differenceInDays(end, today));
+
+  const { data: treatmentPackages = [], isLoading: loadingPackages } = useQuery({
+    queryKey: ['/api/treatment-packages/featured'],
+    queryFn: async () => {
+      const response = await fetch('/api/treatment-packages/featured');
+      if (!response.ok) throw new Error('Failed to fetch treatment packages');
+      return response.json();
+    },
+  });
+
+  const handlePromoClick = (promoCode: string) => {
+    // Navigate to quote flow with promo code pre-populated
+    setLocation(`/quote?promo=${encodeURIComponent(promoCode)}`);
   };
-  
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    return format(new Date(dateString), 'MMMM d, yyyy');
+
+  const formatDiscount = (offer: SpecialOffer) => {
+    if (offer.discountType === 'PERCENTAGE') {
+      return `${offer.discountValue}% OFF`;
+    } else {
+      return `£${offer.discountValue} OFF`;
+    }
   };
-  
-  // We'll use Button with Link from wouter instead of direct navigation
-  
-  // Render loading state
-  if (isLoading) {
+
+  const formatExpiryDate = (dateString?: string) => {
+    if (!dateString) return null;
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  if (loadingOffers && loadingPackages) {
     return (
-      <section className="py-12 bg-gray-50">
-        <div className="container">
+      <section className="py-12 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <Skeleton className="h-8 w-64 mx-auto" />
-            <Skeleton className="h-4 w-96 mx-auto mt-2" />
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">Special Offers</h2>
+            <p className="text-gray-600">Loading exclusive deals...</p>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(3)].map((_, i) => (
-              <Card key={i} className="overflow-hidden">
-                <Skeleton className="h-48 w-full" />
-                <CardContent className="pt-6">
-                  <Skeleton className="h-5 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardContent>
-                <CardFooter>
-                  <Skeleton className="h-10 w-full" />
-                </CardFooter>
-              </Card>
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-64 bg-white rounded-lg animate-pulse" />
             ))}
           </div>
         </div>
       </section>
     );
   }
-  
-  // If no promotions or error, don't render anything
-  if (isError || !data?.promotions || data.promotions.length === 0) {
+
+  const allPromotions = [
+    ...specialOffers.map((offer: SpecialOffer) => ({ ...offer, type: 'offer' })),
+    ...treatmentPackages.map((pkg: TreatmentPackage) => ({ ...pkg, type: 'package' }))
+  ].filter((promo: any) => promo.isActive);
+
+  if (allPromotions.length === 0) {
     return null;
   }
-  
-  // Sort by priority (highest first)
-  const sortedPromotions = [...data.promotions].sort((a, b) => 
-    b.homepage_priority - a.homepage_priority
-  );
-  
+
   return (
-    <section className="py-12 bg-gray-50">
-      <div className="container">
+    <section className="py-12 bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold">Featured Promotions</h2>
-          <p className="text-muted-foreground mt-2">
-            Exclusive dental treatment packages and special offers from our partner clinics
+          <div className="flex items-center justify-center mb-4">
+            <Sparkles className="h-8 w-8 text-yellow-500 mr-2" />
+            <h2 className="text-3xl font-bold text-gray-900">Special Offers</h2>
+          </div>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            Click any offer below to start your quote with the promo code automatically applied!
           </p>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sortedPromotions.map((promotion) => {
-            const daysRemaining = getDaysRemaining(promotion.end_date);
-            const isEnding = daysRemaining <= 7 && daysRemaining > 0;
-            
-            return (
-              <Card 
-                key={promotion.id} 
-                className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-md"
-              >
-                {promotion.homepage_image_url && (
-                  <div className="aspect-video relative overflow-hidden">
-                    <img 
-                      src={promotion.homepage_image_url} 
-                      alt={promotion.title}
-                      className="object-cover w-full h-full"
-                    />
-                    {isEnding && (
-                      <Badge 
-                        className="absolute top-2 right-2 bg-red-500 text-white font-medium border-none"
-                      >
-                        <Timer className="h-3 w-3 mr-1" />
-                        {daysRemaining === 1 
-                          ? 'Ends tomorrow!' 
-                          : `Ends in ${daysRemaining} days`}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-                
-                <CardContent className="pt-6 flex-grow">
-                  <div className="flex items-center mb-3">
-                    <img 
-                      src={`/api/clinics/${promotion.clinic_id}/logo`} 
-                      alt="Clinic logo"
-                      className="w-8 h-8 rounded-full mr-2"
-                      onError={(e) => {
-                        e.currentTarget.src = '/placeholder-clinic-logo.png';
-                      }}
-                    />
-                    <span className="text-sm font-medium text-muted-foreground">
-                      {promotion.clinic_name || 'Partner Clinic'}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-start gap-2 mb-2">
-                    {promotion.type === 'discount' ? (
-                      <Tag className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    ) : (
-                      <Package className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                    )}
-                    <h3 className="text-xl font-bold">{promotion.title}</h3>
-                  </div>
-                  
-                  <p className="text-muted-foreground mb-4 line-clamp-3">
-                    {promotion.homepage_short_description || promotion.description}
-                  </p>
-                  
-                  <div className="flex justify-between items-end">
-                    <div>
-                      {promotion.type === 'discount' ? (
-                        <Badge className="bg-primary/10 text-primary border-none font-medium">
-                          {promotion.discountType === 'percentage' 
-                            ? `${promotion.discountValue}% OFF` 
-                            : `£${promotion.discountValue} OFF`}
-                        </Badge>
-                      ) : promotion.packageData && (
-                        <div>
-                          <div className="text-sm line-through text-muted-foreground">
-                            £{promotion.packageData.originalPrice}
-                          </div>
-                          <div className="text-lg font-bold text-primary">
-                            £{promotion.packageData.packagePrice}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="text-xs text-muted-foreground flex items-center">
+          {allPromotions.slice(0, 6).map((promo: any) => (
+            <Card 
+              key={promo.id} 
+              className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/50"
+              onClick={() => handlePromoClick(promo.promoCode)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <Badge 
+                    variant={promo.type === 'offer' ? 'default' : 'secondary'}
+                    className="mb-2"
+                  >
+                    {promo.type === 'offer' ? 'Special Offer' : 'Treatment Package'}
+                  </Badge>
+                  {promo.expiryDate && (
+                    <div className="flex items-center text-xs text-gray-500">
                       <Calendar className="h-3 w-3 mr-1" />
-                      <span>
-                        Until {formatDate(promotion.end_date)}
-                      </span>
+                      Until {formatExpiryDate(promo.expiryDate)}
+                    </div>
+                  )}
+                </div>
+                <CardTitle className="text-lg font-bold text-gray-900 line-clamp-2">
+                  {promo.title}
+                </CardTitle>
+                <CardDescription className="text-sm text-gray-600 line-clamp-2">
+                  {promo.description}
+                </CardDescription>
+              </CardHeader>
+              
+              <CardContent className="pt-0">
+                <div className="space-y-3">
+                  {/* Discount/Savings Display */}
+                  <div className="flex items-center justify-between">
+                    <div className="text-2xl font-bold text-green-600">
+                      {promo.type === 'offer' 
+                        ? formatDiscount(promo)
+                        : `Save £${promo.savings}`
+                      }
+                    </div>
+                    {promo.type === 'package' && (
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900">£{promo.totalPrice}</div>
+                        <div className="text-sm text-gray-500 line-through">£{promo.originalPrice}</div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Promo Code */}
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center">
+                      <Tag className="h-4 w-4 text-primary mr-2" />
+                      <span className="font-mono font-bold text-primary">{promo.promoCode}</span>
                     </div>
                   </div>
-                </CardContent>
-                
-                <CardFooter className="pt-0">
-                  <Button asChild className="w-full group">
-                    <Link href={
-                      promotion.type === 'package' && promotion.packageData 
-                        ? `/package/${promotion.id}`
-                        : `/clinic/${promotion.clinic_id}?promo=${promotion.code}`
-                    }>
-                      <span className="mr-1">
-                        {promotion.type === 'package' ? 'View Package' : 'Get Discount'}
-                      </span>
-                      <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-                    </Link>
+                  
+                  {/* Clinic Name */}
+                  {promo.clinicName && (
+                    <div className="flex items-center text-sm text-gray-600">
+                      <MapPin className="h-4 w-4 mr-1" />
+                      {promo.clinicName}
+                    </div>
+                  )}
+                  
+                  {/* CTA Button */}
+                  <Button 
+                    className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePromoClick(promo.promoCode);
+                    }}
+                  >
+                    Get Quote with {promo.promoCode}
                   </Button>
-                </CardFooter>
-              </Card>
-            );
-          })}
+                </div>
+              </CardContent>
+              
+              {/* Decorative corner */}
+              <div className="absolute top-0 right-0 w-0 h-0 border-l-[40px] border-l-transparent border-t-[40px] border-t-yellow-400 opacity-20" />
+            </Card>
+          ))}
         </div>
+        
+        {allPromotions.length > 6 && (
+          <div className="text-center mt-8">
+            <Button 
+              variant="outline" 
+              onClick={() => setLocation('/quote')}
+              className="bg-white hover:bg-gray-50"
+            >
+              View All Offers & Get Quote
+            </Button>
+          </div>
+        )}
       </div>
     </section>
   );
 }
+
+export default FeaturedPromotions;

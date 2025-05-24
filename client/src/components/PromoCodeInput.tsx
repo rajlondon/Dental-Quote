@@ -42,6 +42,19 @@ export function PromoCodeInput({
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeValidationResult | null>(null);
   const [error, setError] = useState('');
 
+  // Check for promo code in URL parameters on mount for seamless homepage integration
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoFromUrl = urlParams.get('promo');
+    if (promoFromUrl) {
+      setPromoCode(promoFromUrl);
+      // Auto-validate the promo code from URL after a brief delay
+      setTimeout(() => {
+        handleApplyPromo(promoFromUrl);
+      }, 500);
+    }
+  }, []);
+
   const validatePromoMutation = useMutation({
     mutationFn: async (code: string) => {
       const response = await apiRequest('POST', '/api/admin/validate-promo-code', {
