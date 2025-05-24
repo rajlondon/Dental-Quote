@@ -391,44 +391,6 @@ const PatientPortalPage: React.FC = () => {
               </CardContent>
             </Card>
             
-            {/* Patient Journey Timeline */}
-            <div className="mt-6">
-              <PatientJourneyTimeline 
-                currentStep="dental_quiz"
-                onStepAction={(stepId) => {
-                  switch(stepId) {
-                    case 'dental_quiz':
-                      navigate('/quote-flow');
-                      break;
-                    case 'dental_chart':
-                      navigate('/quote-flow?step=dental-chart');
-                      break;
-                    case 'treatment_selection':
-                      navigate('/quote-flow?step=treatments');
-                      break;
-                    case 'your_quote':
-                      navigate('/quote-flow?step=summary');
-                      break;
-                    case 'consultation':
-                      setActiveSection('messages');
-                      break;
-                    case 'deposit':
-                      setActiveSection('payment');
-                      break;
-                    case 'travel':
-                      setActiveSection('travel');
-                      break;
-                    case 'arrival':
-                      setActiveSection('travel');
-                      break;
-                    case 'treatment':
-                      setActiveSection('appointments');
-                      break;
-                  }
-                }}
-              />
-            </div>
-
             {/* Main Dashboard */}
             <h2 className="text-xl font-bold mt-6">Dashboard</h2>
             
@@ -527,6 +489,44 @@ const PatientPortalPage: React.FC = () => {
                   </Button>
                 </CardFooter>
               </Card>
+            </div>
+            
+            {/* Patient Journey Timeline */}
+            <div className="mt-6">
+              <PatientJourneyTimeline 
+                currentStep="dental_quiz"
+                onStepAction={(stepId) => {
+                  switch(stepId) {
+                    case 'dental_quiz':
+                      window.location.href = '/quote-flow';
+                      break;
+                    case 'dental_chart':
+                      window.location.href = '/quote-flow?step=dental-chart';
+                      break;
+                    case 'treatment_selection':
+                      window.location.href = '/quote-flow?step=treatments';
+                      break;
+                    case 'your_quote':
+                      window.location.href = '/quote-flow?step=summary';
+                      break;
+                    case 'consultation':
+                      setActiveSection('messages');
+                      break;
+                    case 'deposit':
+                      setActiveSection('payment');
+                      break;
+                    case 'travel':
+                      setActiveSection('travel');
+                      break;
+                    case 'arrival':
+                      setActiveSection('travel');
+                      break;
+                    case 'treatment':
+                      setActiveSection('appointments');
+                      break;
+                  }
+                }}
+              />
             </div>
             
             {/* Travel Cards */}
