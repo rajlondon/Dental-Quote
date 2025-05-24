@@ -459,6 +459,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
     
+    // Store promo code data in session storage for clinic filtering
+    sessionStorage.setItem('pendingPromoCode', offer.promo_code || '');
+    sessionStorage.setItem('pendingPromoCodeClinicId', offer.clinic_id || '');
+    console.log('Stored promo code in session storage:', offer.promo_code);
+    
     // Pre-populate the promo code in the quote flow, similar to package booking
     const params = new URLSearchParams({
       promoCode: offer.promo_code || '',

@@ -648,6 +648,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         return;
       }
     }
+    else if (pendingPromoCode === 'LUXTRAVEL') {
+      // For LUXTRAVEL, always show ONLY clinic 4 (DentSpa - the clinic offering luxury airport transfer)
+      console.log('LUXTRAVEL detected: Filtering to show only clinic 4 (DentSpa)');
+      const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
+      if (luxuryClinic) {
+        // Force array with just this one clinic
+        setFilteredClinics([luxuryClinic]);
+        console.log('✅ Successfully filtered to only show DentSpa clinic for LUXTRAVEL promo');
+        // Early return to avoid showing multiple clinics
+        return;
+      }
+    }
     // If promoCodeClinicId is set from other sources, use that
     else if (promoCodeClinicId) {
       console.log('PromoCodeClinicId detected:', promoCodeClinicId);
