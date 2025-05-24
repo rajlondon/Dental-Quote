@@ -77,7 +77,7 @@ export default function PatientJourneyTimeline({
   const journeySteps: JourneyStep[] = [
     {
       id: 'dental_quiz',
-      title: 'Dental Health Quiz',
+      title: 'Dental Health Questionnaire',
       description: 'Complete a comprehensive dental health assessment',
       icon: <FileText className="h-5 w-5" />,
       status: getStepStatus('dental_quiz'),

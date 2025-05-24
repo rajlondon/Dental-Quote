@@ -512,7 +512,9 @@ const PatientPortalPage: React.FC = () => {
                       setActiveSection('messages');
                       break;
                     case 'deposit':
-                      window.location.href = '/deposit-payment';
+                      // Get user email from auth context and pass it to deposit payment
+                      const userEmail = user?.email || 'patient@mydentalfly.com';
+                      window.location.href = `/deposit-payment?email=${encodeURIComponent(userEmail)}`;
                       break;
                     case 'travel':
                       setActiveSection('travel');
