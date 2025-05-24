@@ -19,6 +19,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useQuery } from '@tanstack/react-query';
 
 interface JourneyStep {
   id: string;
@@ -35,40 +36,69 @@ interface JourneyStep {
 }
 
 interface PatientJourneyTimelineProps {
-  currentStep?: string;
   onStepAction?: (stepId: string) => void;
 }
 
 export default function PatientJourneyTimeline({ 
-  currentStep = 'dental_quiz',
   onStepAction 
 }: PatientJourneyTimelineProps) {
+  // Fetch user's quote data to determine real progress
+  const { data: quoteData = [] } = useQuery({
+    queryKey: ['/api/quote-responses/my-quotes'],
+    enabled: true
+  });
+
+  // Simple progress tracking based on real user data
+  const hasQuoteData = Array.isArray(quoteData) && quoteData.length > 0;
+  const hasLocalQuizData = localStorage.getItem('selected_treatments') !== null || 
+                          localStorage.getItem('dental_chart_data') !== null;
   
+  // Determine current step based on actual user progress
+  const getCurrentStep = () => {
+    if (hasQuoteData) return 'consultation';
+    if (hasLocalQuizData) return 'your_quote';
+    return 'dental_quiz';
+  };
+
+  const currentStep = getCurrentStep();
+
+  // Simple step status determination
+  const getStepStatus = (stepId: string): 'completed' | 'current' | 'upcoming' => {
+    const steps = ['dental_quiz', 'dental_chart', 'treatment_selection', 'your_quote', 'consultation', 'deposit', 'travel', 'arrival', 'treatment'];
+    const currentIndex = steps.indexOf(currentStep);
+    const stepIndex = steps.indexOf(stepId);
+    
+    if (stepIndex < currentIndex) return 'completed';
+    if (stepIndex === currentIndex) return 'current';
+    return 'upcoming';
+  };
+  
+  // Define all journey steps with dynamic status and interactive buttons
   const journeySteps: JourneyStep[] = [
     {
       id: 'dental_quiz',
       title: 'Dental Health Quiz',
       description: 'Complete a comprehensive dental health assessment',
       icon: <FileText className="h-5 w-5" />,
-      status: currentStep === 'dental_quiz' ? 'current' : 
-              ['dental_chart', 'treatment_selection', 'your_quote', 'consultation', 'deposit', 'travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('dental_quiz'),
       estimatedTime: '5 minutes',
-      actionButton: currentStep === 'dental_quiz' ? {
-        text: 'Start Quiz',
-        action: () => onStepAction?.('dental_quiz')
-      } : undefined
+      actionButton: {
+        text: getStepStatus('dental_quiz') === 'completed' ? 'View Quiz' : 'Start Quiz',
+        action: () => onStepAction?.('dental_quiz'),
+        variant: getStepStatus('dental_quiz') === 'completed' ? 'outline' : 'default'
+      }
     },
     {
       id: 'dental_chart',
       title: 'Interactive Dental Chart',
       description: 'Mark specific teeth conditions and concerns',
       icon: <Heart className="h-5 w-5" />,
-      status: currentStep === 'dental_chart' ? 'current' : 
-              ['treatment_selection', 'your_quote', 'consultation', 'deposit', 'travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('dental_chart'),
       estimatedTime: '3 minutes',
-      actionButton: currentStep === 'dental_chart' ? {
-        text: 'Mark Teeth',
-        action: () => onStepAction?.('dental_chart')
+      actionButton: getStepStatus('dental_chart') !== 'upcoming' ? {
+        text: getStepStatus('dental_chart') === 'completed' ? 'View Chart' : 'Mark Teeth',
+        action: () => onStepAction?.('dental_chart'),
+        variant: getStepStatus('dental_chart') === 'completed' ? 'outline' : 'default'
       } : undefined
     },
     {
@@ -76,12 +106,12 @@ export default function PatientJourneyTimeline({
       title: 'Treatment Selection',
       description: 'Choose from recommended dental treatments',
       icon: <Stethoscope className="h-5 w-5" />,
-      status: currentStep === 'treatment_selection' ? 'current' : 
-              ['your_quote', 'consultation', 'deposit', 'travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('treatment_selection'),
       estimatedTime: '10 minutes',
-      actionButton: currentStep === 'treatment_selection' ? {
-        text: 'Select Treatments',
-        action: () => onStepAction?.('treatment_selection')
+      actionButton: getStepStatus('treatment_selection') !== 'upcoming' ? {
+        text: getStepStatus('treatment_selection') === 'completed' ? 'View Treatments' : 'Select Treatments',
+        action: () => onStepAction?.('treatment_selection'),
+        variant: getStepStatus('treatment_selection') === 'completed' ? 'outline' : 'default'
       } : undefined
     },
     {
@@ -89,12 +119,12 @@ export default function PatientJourneyTimeline({
       title: 'Your Quote',
       description: 'Review pricing and select your preferred clinic',
       icon: <Calculator className="h-5 w-5" />,
-      status: currentStep === 'your_quote' ? 'current' : 
-              ['consultation', 'deposit', 'travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('your_quote'),
       estimatedTime: '15 minutes',
-      actionButton: currentStep === 'your_quote' ? {
-        text: 'Get Quote',
-        action: () => onStepAction?.('your_quote')
+      actionButton: getStepStatus('your_quote') !== 'upcoming' ? {
+        text: getStepStatus('your_quote') === 'completed' ? 'View Quote' : 'Get Quote',
+        action: () => onStepAction?.('your_quote'),
+        variant: getStepStatus('your_quote') === 'completed' ? 'outline' : 'default'
       } : undefined
     },
     {
@@ -102,11 +132,10 @@ export default function PatientJourneyTimeline({
       title: 'Clinic Consultation',
       description: 'Receive personalized treatment plan from your chosen clinic',
       icon: <MessageSquare className="h-5 w-5" />,
-      status: currentStep === 'consultation' ? 'current' : 
-              ['deposit', 'travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('consultation'),
       estimatedTime: '1-2 days',
-      actionButton: currentStep === 'consultation' ? {
-        text: 'Contact Clinic',
+      actionButton: getStepStatus('consultation') !== 'upcoming' ? {
+        text: getStepStatus('consultation') === 'completed' ? 'View Messages' : 'Contact Clinic',
         action: () => onStepAction?.('consultation'),
         variant: 'outline'
       } : undefined
@@ -116,11 +145,10 @@ export default function PatientJourneyTimeline({
       title: 'Pay £200 Deposit',
       description: 'Secure your booking with a refundable deposit',
       icon: <CreditCard className="h-5 w-5" />,
-      status: currentStep === 'deposit' ? 'current' : 
-              ['travel', 'arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('deposit'),
       estimatedTime: '2 minutes',
-      actionButton: currentStep === 'deposit' ? {
-        text: 'Pay Deposit',
+      actionButton: getStepStatus('deposit') !== 'upcoming' ? {
+        text: getStepStatus('deposit') === 'completed' ? 'View Payment' : 'Pay Deposit',
         action: () => onStepAction?.('deposit')
       } : undefined
     },
@@ -129,11 +157,10 @@ export default function PatientJourneyTimeline({
       title: 'Book Flights & Hotel',
       description: 'Arrange your travel and accommodation in Istanbul',
       icon: <Plane className="h-5 w-5" />,
-      status: currentStep === 'travel' ? 'current' : 
-              ['arrival', 'treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('travel'),
       estimatedTime: '30 minutes',
-      actionButton: currentStep === 'travel' ? {
-        text: 'Book Travel',
+      actionButton: getStepStatus('travel') !== 'upcoming' ? {
+        text: getStepStatus('travel') === 'completed' ? 'Manage Travel' : 'Book Travel',
         action: () => onStepAction?.('travel')
       } : undefined
     },
@@ -142,11 +169,10 @@ export default function PatientJourneyTimeline({
       title: 'Airport Pickup & Hotel',
       description: 'Get picked up at Istanbul airport and check into your hotel',
       icon: <Car className="h-5 w-5" />,
-      status: currentStep === 'arrival' ? 'current' : 
-              ['treatment'].includes(currentStep) ? 'completed' : 'upcoming',
+      status: getStepStatus('arrival'),
       estimatedTime: '1 hour',
-      actionButton: currentStep === 'arrival' ? {
-        text: 'Track Pickup',
+      actionButton: getStepStatus('arrival') !== 'upcoming' ? {
+        text: getStepStatus('arrival') === 'completed' ? 'View Details' : 'Track Pickup',
         action: () => onStepAction?.('arrival'),
         variant: 'outline'
       } : undefined
@@ -156,10 +182,10 @@ export default function PatientJourneyTimeline({
       title: 'First Consultation & Treatment',
       description: 'Begin your dental treatment journey at the clinic',
       icon: <MapPin className="h-5 w-5" />,
-      status: currentStep === 'treatment' ? 'current' : 'upcoming',
+      status: getStepStatus('treatment'),
       estimatedTime: '2-3 hours',
-      actionButton: currentStep === 'treatment' ? {
-        text: 'View Schedule',
+      actionButton: getStepStatus('treatment') !== 'upcoming' ? {
+        text: getStepStatus('treatment') === 'completed' ? 'View History' : 'View Schedule',
         action: () => onStepAction?.('treatment'),
         variant: 'outline'
       } : undefined
