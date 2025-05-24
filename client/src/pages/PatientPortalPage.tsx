@@ -30,6 +30,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
+import MyQuotesSection from '@/components/portal/MyQuotesSection';
 
 // Mock data for the dashboard view
 const mockBookingData = {
@@ -299,6 +300,7 @@ const PatientPortalPage: React.FC = () => {
   // Nav items with icons
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { id: 'my_quotes', label: 'My Quotes', icon: <FileText className="h-5 w-5" /> },
     { 
       id: 'messages', 
       label: 'Messages', 
@@ -546,6 +548,8 @@ const PatientPortalPage: React.FC = () => {
             </div>
           </div>
         );
+      case 'my_quotes':
+        return <MyQuotesSection />;
       case 'messages':
         return <MessagesSection />;
       case 'treatment_journey':
