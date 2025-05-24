@@ -46,6 +46,36 @@ export default function DepositPaymentPage() {
     if (clinicIdParam) {
       setClinicId(parseInt(clinicIdParam));
     }
+
+    // Create payment intent for £200 deposit
+    fetch('/api/create-deposit-payment-intent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: emailParam || 'patient@example.com',
+        currency: 'gbp',
+        metadata: {
+          type: 'deposit',
+          amount: '200'
+        }
+      }),
+    })
+    .then((res) => res.json())
+    .then((data) => {
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret);
+      }
+    })
+    .catch((error) => {
+      console.error('Error creating payment intent:', error);
+      toast({
+        title: "Payment Setup Error",
+        description: "Unable to initialize payment. Please try again.",
+        variant: "destructive",
+      });
+    });
   }, [toast]);
 
   const handlePaymentSuccess = () => {
