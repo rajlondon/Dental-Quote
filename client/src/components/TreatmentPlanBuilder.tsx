@@ -1869,12 +1869,29 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </h3>
                 
                 <div className="mt-2">
-                  <PromoCodeInput />
+                  <PromoCodeInput 
+                    onValidPromoCode={(promoData) => {
+                      console.log('Valid promo code applied:', promoData);
+                      // Handle valid promo code
+                      setPromoCode(promoData.offer?.promo_code || promoData.package?.promoCode || '');
+                      setIsPromoValid(true);
+                      setDiscountType(promoData.discountType || '');
+                      setDiscountValue(promoData.discountValue || 0);
+                    }}
+                    onInvalidPromoCode={() => {
+                      console.log('Invalid promo code');
+                      // Handle invalid promo code
+                      setPromoCode('');
+                      setIsPromoValid(false);
+                      setDiscountType('');
+                      setDiscountValue(0);
+                    }}
+                  />
                 </div>
                 
                 <div className="mt-3 text-sm text-blue-700 flex items-start">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 012 0v-1a5 5 0 00-5-5H8.414l1.293-1.293z" clipRule="evenodd" />
                   </svg>
                   <p>Apply a promo code to access special discounts and packages. Some packages include tourist attractions and additional services!</p>
                 </div>
