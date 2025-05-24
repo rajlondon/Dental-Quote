@@ -50,7 +50,7 @@ export function PromoCodeInput({
       setPromoCode(promoFromUrl);
       // Auto-validate the promo code from URL after a brief delay
       setTimeout(() => {
-        handleApplyPromo(promoFromUrl);
+        validatePromoMutation.mutate(promoFromUrl);
       }, 500);
     }
   }, []);
