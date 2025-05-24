@@ -442,6 +442,18 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     };
     return clinicNames[clinicId.toString()] || `Partner Clinic #${clinicId}`;
   };
+
+  // Clinic URL mapping for navigation
+  const getClinicUrl = (clinicId: string | number) => {
+    const clinicUrls: Record<string, string> = {
+      '1': '/clinic-detail/dentgroup-istanbul',
+      '2': '/clinic-detail/dent-istanbul', 
+      '3': '/clinic-detail/istanbul-aesthetic-center',
+      '4': '/clinic-detail/dentalpark-turkey',
+      '5': '/clinic-detail/esta-istanbul'
+    };
+    return clinicUrls[clinicId.toString()] || `/clinic-detail/dentgroup-istanbul`;
+  };
   
   // Handle quote request - go directly to quote flow like other buttons
   const handleRequestQuote = (offer: SpecialOffer) => {
@@ -671,10 +683,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     >
                       Request Quote
                     </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/clinics/${offer.clinic_id || 1}`}>
-                        View Clinic
-                      </Link>
+                    <Button 
+                      variant="outline"
+                      onClick={() => setLocation(getClinicUrl(offer.clinic_id || '1'))}
+                    >
+                      View Clinic
                     </Button>
                   </div>
                 </div>
