@@ -63,13 +63,20 @@ export function PromoCodeInput({
       });
       return response.json();
     },
-    onSuccess: (result: PromoCodeValidationResult) => {
-      if (result.valid) {
-        setAppliedPromo(result);
+    onSuccess: (result: any) => {
+      if (result.success && result.valid) {
+        const promoData = {
+          valid: true,
+          code: result.code,
+          type: result.type || 'special_offer',
+          discountType: result.discountType,
+          discountValue: result.discountValue
+        };
+        setAppliedPromo(promoData);
         setError('');
-        onValidPromoCode(result);
+        onValidPromoCode(promoData);
       } else {
-        setError(result.error || 'Invalid promo code');
+        setError(result.message || result.error || 'Invalid promo code');
         setAppliedPromo(null);
         onInvalidPromoCode();
       }

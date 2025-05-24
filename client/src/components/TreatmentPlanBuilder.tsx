@@ -1874,18 +1874,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     onValidPromoCode={(promoData) => {
                       console.log('Valid promo code applied:', promoData);
                       // Handle valid promo code
-                      setPromoCode(promoData.offer?.promo_code || promoData.package?.promoCode || '');
+                      setPromoCode(promoData.code || '');
                       setIsPromoValid(true);
-                      setDiscountType(promoData.discountType || '');
-                      setDiscountValue(promoData.discountValue || 0);
                     }}
                     onInvalidPromoCode={() => {
                       console.log('Invalid promo code');
                       // Handle invalid promo code
                       setPromoCode('');
                       setIsPromoValid(false);
-                      setDiscountType('');
-                      setDiscountValue(0);
                     }}
                   />
                 </div>
