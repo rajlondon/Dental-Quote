@@ -37,8 +37,10 @@ const PackageDetailPage = () => {
   // Handler functions for buttons
   const handleBookPackage = () => {
     if (packageData) {
-      // Navigate to quote flow with package information pre-populated
-      setLocation(`/?package=${encodeURIComponent(packageData.id)}&treatment=${encodeURIComponent('Package Deal')}`);
+      // Navigate to quote flow with package promo code pre-populated
+      // Find the promo code from the trending packages data
+      const promoCode = `PACKAGE_${packageData.id.toUpperCase()}`;
+      setLocation(`/?promo=${encodeURIComponent(promoCode)}&treatment=${encodeURIComponent(packageData.title)}`);
     }
   };
 
@@ -91,7 +93,7 @@ const PackageDetailPage = () => {
         <div className="flex items-center text-sm text-gray-500 mb-6">
           <button onClick={() => setLocation("/")} className="hover:text-primary">Home</button>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <button onClick={() => setLocation("/#packages")} className="hover:text-primary">Packages</button>
+          <button onClick={() => window.location.href = "/#packages"} className="hover:text-primary">Packages</button>
           <ChevronRight className="h-4 w-4 mx-1" />
           <span className="text-gray-700">{packageData.title}</span>
         </div>

@@ -134,7 +134,7 @@ export default function PatientQuotesPage() {
                 Get detailed quotes from top dental clinics in Turkey. Compare prices, read reviews, and make informed decisions about your dental treatment.
               </p>
               <Button size="lg" asChild>
-                <a href="/quote-request" className="flex items-center gap-2">
+                <a href="/" className="flex items-center gap-2">
                   <Plus className="h-4 w-4" /> Request a Quote
                 </a>
               </Button>
