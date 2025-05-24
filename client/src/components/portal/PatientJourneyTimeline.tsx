@@ -180,7 +180,7 @@ export default function PatientJourneyTimeline({
     {
       id: 'treatment',
       title: 'First Consultation & Treatment',
-      description: 'Begin your dental treatment journey at the clinic',
+      description: 'X-rays, consultation with dentist, and initial treatment',
       icon: <MapPin className="h-5 w-5" />,
       status: getStepStatus('treatment'),
       estimatedTime: '2-3 hours',
@@ -188,6 +188,19 @@ export default function PatientJourneyTimeline({
         text: getStepStatus('treatment') === 'completed' ? 'View History' : 'View Schedule',
         action: () => onStepAction?.('treatment'),
         variant: 'outline'
+      }
+    },
+    {
+      id: 'final_payment',
+      title: 'Pay Treatment Balance',
+      description: 'Pay remaining balance after consultation and updated treatment plan',
+      icon: <CreditCard className="h-5 w-5" />,
+      status: getStepStatus('final_payment'),
+      estimatedTime: '5 minutes',
+      actionButton: {
+        text: getStepStatus('final_payment') === 'completed' ? 'View Receipt' : 'Pay Balance',
+        action: () => onStepAction?.('final_payment'),
+        variant: getStepStatus('final_payment') === 'completed' ? 'outline' : 'default'
       }
     }
   ];

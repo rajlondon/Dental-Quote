@@ -71,6 +71,7 @@ import PortalLoginPage from "@/pages/PortalLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
+import FinalPaymentPage from "@/pages/FinalPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
 import TreatmentPaymentPage from "@/pages/TreatmentPaymentPage";
 import DentalChartPage from "@/pages/DentalChartPage";
@@ -147,6 +148,9 @@ function Router() {
       </Route>
       <Route path="/deposit-payment">
         {() => <DepositPaymentPage />}
+      </Route>
+      <Route path="/final-payment">
+        {() => <FinalPaymentPage />}
       </Route>
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}

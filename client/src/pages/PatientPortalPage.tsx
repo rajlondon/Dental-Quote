@@ -525,6 +525,11 @@ const PatientPortalPage: React.FC = () => {
                     case 'treatment':
                       setActiveSection('appointments');
                       break;
+                    case 'final_payment':
+                      // Get user email and redirect to final payment page
+                      const finalPaymentEmail = user?.email || 'patient@mydentalfly.com';
+                      window.location.href = `/final-payment?email=${encodeURIComponent(finalPaymentEmail)}&total=2500&deposit=200`;
+                      break;
                   }
                 }}
               />

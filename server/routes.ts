@@ -711,6 +711,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
+
+  // Create a treatment payment intent (for final balance payments)
+  app.post('/api/create-treatment-payment-intent', async (req, res) => {
+    try {
+      const { email, amount, currency = 'gbp', description = 'Final treatment balance payment', metadata = {} } = req.body;
+      
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+      
+      if (!amount || amount <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Valid amount is required'
+        });
+      }
+      
+      if (!isStripeConfigured()) {
+        return res.status(503).json({
+          success: false,
+          message: 'Payment processing is not available'
+        });
+      }
+      
+      console.log('Creating treatment payment intent with email:', email, 'amount:', amount);
+      console.log('Metadata received:', metadata);
+      
+      // Create the payment intent for the treatment balance
+      const paymentIntentData = await createTreatmentPaymentIntent(email, amount, currency, description, metadata);
+      
+      if (!paymentIntentData) {
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to create payment intent'
+        });
+      }
+      
+      // Return the client secret to the frontend
+      res.json({
+        success: true,
+        clientSecret: paymentIntentData.clientSecret,
+        paymentIntentId: paymentIntentData.id
+      });
+    } catch (error) {
+      console.error('Error creating treatment payment intent:', error);
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while processing the payment intent',
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
   
   // Stripe webhook handler for processing payment events
   app.post('/api/webhooks/stripe', express.raw({type: 'application/json'}), async (req, res) => {
