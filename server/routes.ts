@@ -16,7 +16,7 @@ import Handlebars from "handlebars";
 import { generateQuotePdf, generateQuotePdfV2 } from "./pdf-generator";
 import { sendQuoteEmail, isMailjetConfigured } from "./mailjet-service";
 import { upload, handleUploadError, type UploadedFile } from "./file-upload";
-import { createPaymentIntent, createDepositPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
+import { createPaymentIntent, createDepositPaymentIntent, createTreatmentPaymentIntent, isStripeConfigured, getPaymentIntent, createOrRetrieveCustomer } from "./stripe-service";
 import { setupSupportRoutes } from "./routes/support-routes";
 import { setupDentalChartRoutes } from "./routes/dental-chart-routes";
 import Stripe from "stripe";

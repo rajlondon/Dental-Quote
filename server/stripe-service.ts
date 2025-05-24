@@ -132,6 +132,61 @@ export async function createDepositPaymentIntent(
 }
 
 /**
+ * Create a treatment payment intent (for final balance payments)
+ * @param email Customer email for the payment
+ * @param amount Payment amount in pennies
+ * @param currency Currency code (e.g., 'gbp', 'usd') 
+ * @param description Payment description
+ * @param metadata Additional metadata to include with the payment
+ * @returns The client secret for the payment intent
+ */
+export async function createTreatmentPaymentIntent(
+  email: string,
+  amount: number,
+  currency: string = 'gbp',
+  description: string = 'Final treatment balance payment',
+  metadata: Record<string, string> = {}
+): Promise<{ clientSecret: string; id: string }> {
+  try {
+    console.log('Creating treatment payment intent for email:', email, 'amount:', amount);
+    
+    // Create or retrieve a customer
+    const customer = await createOrRetrieveCustomer(email);
+    
+    // Merge default metadata with provided metadata
+    const paymentMetadata = {
+      type: 'treatment_payment',
+      customerEmail: email,
+      ...metadata
+    };
+    
+    console.log('Using payment metadata:', paymentMetadata);
+    
+    // Create a PaymentIntent with the specified amount
+    const paymentIntent = await ensureStripeConfigured().paymentIntents.create({
+      amount: Math.round(amount), // Ensure amount is an integer
+      currency: currency.toLowerCase(),
+      customer: customer.id,
+      metadata: paymentMetadata,
+      payment_method_types: ['card'],
+      receipt_email: email,
+      description: description,
+    });
+    
+    console.log('Created treatment payment intent:', paymentIntent.id);
+    
+    // Return the client secret, which is used to complete the payment on the client
+    return {
+      clientSecret: paymentIntent.client_secret as string,
+      id: paymentIntent.id,
+    };
+  } catch (error) {
+    console.error('Error creating treatment payment intent:', error);
+    throw error;
+  }
+}
+
+/**
  * Create or retrieve a Stripe customer by email
  * @param email Customer email
  * @returns The Stripe customer object
@@ -215,34 +270,7 @@ export function isStripeConfigured(): boolean {
   return !!stripeSecretKey;
 }
 
-/**
- * Create a treatment payment intent for a specific amount
- * @param email Customer email for the payment
- * @param amount Amount in standard currency units (e.g., dollars/pounds)
- * @param currency Currency code (e.g., 'gbp', 'usd') 
- * @param metadata Additional metadata to include with the payment
- * @returns The client secret for the payment intent
- */
-export async function createTreatmentPaymentIntent(
-  email: string,
-  amount: number,
-  currency: string = 'gbp',
-  metadata: Record<string, string> = {}
-): Promise<{ clientSecret: string; id: string }> {
-  try {
-    console.log('Creating treatment payment intent for email:', email, 'amount:', amount);
-    
-    // Convert from standard currency to smallest unit (e.g., dollars to cents)
-    const amountInSmallestUnit = Math.round(amount * 100);
-    
-    // Create or retrieve a customer
-    const customer = await createOrRetrieveCustomer(email);
-    
-    // Merge default metadata with provided metadata
-    const paymentMetadata = {
-      type: 'treatment',
-      customerEmail: email,
-      ...metadata
+
     };
     
     console.log('Using payment metadata:', paymentMetadata);
