@@ -611,74 +611,50 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     
     console.log('Filtering clinics based on promo code:', pendingPromoCode);
     
-    // Special case filtering for specific promo codes - this is the most critical part
+    // LUXTRAVEL promo code gets highest priority - must show only DentSpa
+    if (pendingPromoCode === 'LUXTRAVEL') {
+      console.log('LUXTRAVEL detected: Filtering to show ONLY DentSpa clinic');
+      const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
+      if (luxuryClinic) {
+        setFilteredClinics([luxuryClinic]);
+        console.log('✅ Successfully filtered to only show DentSpa clinic for LUXTRAVEL promo');
+        return; // Exit immediately
+      }
+    }
+    
+    // Other specific promo codes
     if (pendingPromoCode === 'IMPLANT2023') {
-      // For IMPLANT2023, always show ONLY DentSpa clinic
       console.log('IMPLANT2023 detected: Filtering to show only DentSpa clinic');
       const dentSpaClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
       if (dentSpaClinic) {
-        // Force array with just this one clinic
         setFilteredClinics([dentSpaClinic]);
         console.log('✅ Successfully filtered to only show DentSpa clinic');
-        // Early return to avoid showing multiple clinics
         return;
       }
     } 
     else if (pendingPromoCode === 'SMILE2023') {
-      // For SMILE2023, always show ONLY Beyaz Ada clinic
       console.log('SMILE2023 detected: Filtering to show only Beyaz Ada clinic');
       const beyazAdaClinic = allClinicsDataList.find(clinic => clinic.id === 'beyazada');
       if (beyazAdaClinic) {
-        // Force array with just this one clinic
         setFilteredClinics([beyazAdaClinic]);
         console.log('✅ Successfully filtered to only show Beyaz Ada clinic');
-        // Early return to avoid showing multiple clinics
         return;
       }
     }
     else if (pendingPromoCode === 'FULLMOUTH2023') {
-      // For FULLMOUTH2023, always show ONLY Dental Harmony clinic
       console.log('FULLMOUTH2023 detected: Filtering to show only Dental Harmony clinic');
       const dentalHarmonyClinic = allClinicsDataList.find(clinic => clinic.id === 'dentalharmony');
       if (dentalHarmonyClinic) {
-        // Force array with just this one clinic
         setFilteredClinics([dentalHarmonyClinic]);
         console.log('✅ Successfully filtered to only show Dental Harmony clinic');
-        // Early return to avoid showing multiple clinics
-        return;
-      }
-    }
-    else if (pendingPromoCode === 'LUXTRAVEL') {
-      // For LUXTRAVEL, always show ONLY DentSpa clinic (the clinic offering luxury airport transfer)
-      console.log('LUXTRAVEL detected: Filtering to show only DentSpa clinic');
-      const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
-      if (luxuryClinic) {
-        // Force array with just this one clinic
-        setFilteredClinics([luxuryClinic]);
-        console.log('✅ Successfully filtered to only show DentSpa clinic for LUXTRAVEL promo');
-        // Early return to avoid showing multiple clinics
-        return;
-      }
-    }
-    // If promoCodeClinicId is set from other sources, use that
-    else if (promoCodeClinicId) {
-      console.log('PromoCodeClinicId detected:', promoCodeClinicId);
-      const targetClinic = allClinicsDataList.find(clinic => clinic.id === promoCodeClinicId);
-      if (targetClinic) {
-        // Force array with just this one clinic
-        setFilteredClinics([targetClinic]);
-        console.log('✅ Successfully filtered to specific clinic ID:', promoCodeClinicId);
-        // Early return to avoid showing multiple clinics
         return;
       }
     }
     
-    // Only show all clinics if no promo code is active
-    if (!pendingPromoCode && !promoCodeClinicId) {
-      console.log('No promo code active, showing all clinics');
-      setFilteredClinics(allClinicsDataList);
-    }
-  }, [/* No dependencies except component mount - this ensures it's only evaluated once */]);
+    // Default: show all clinics only if no promo code is active
+    console.log('No valid promo code active, showing all clinics');
+    setFilteredClinics(allClinicsDataList);
+  }, []);
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
