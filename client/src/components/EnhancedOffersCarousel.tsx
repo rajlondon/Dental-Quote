@@ -443,7 +443,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     return clinicNames[clinicId.toString()] || `Partner Clinic #${clinicId}`;
   };
 
-  // Clinic URL mapping for navigation
+  // Clinic URL mapping for navigation - maps numeric clinic IDs to actual clinic detail page IDs
   const getClinicUrl = (clinicId: string | number) => {
     const clinicUrls: Record<string, string> = {
       '1': '/clinic/dentgroup-istanbul',
@@ -452,7 +452,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       '4': '/clinic/dentalpark-turkey',
       '5': '/clinic/esta-istanbul'
     };
-    return clinicUrls[clinicId.toString()] || `/clinic/dentgroup-istanbul`;
+    return clinicUrls[clinicId.toString()] || '/clinic/dentgroup-istanbul';
   };
   
   // Handle quote request - go directly to quote flow like other buttons
