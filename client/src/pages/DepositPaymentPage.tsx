@@ -7,6 +7,11 @@ import { ArrowLeft, FileCheck, HelpCircle, HomeIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import StripePaymentWrapper from '@/components/payment/StripePaymentWrapper';
 import Breadcrumbs from '@/components/navigation/Breadcrumbs';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Initialize Stripe
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_TEST_PUBLIC_KEY || import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 export default function DepositPaymentPage() {
   const [location, navigate] = useLocation();
@@ -14,6 +19,7 @@ export default function DepositPaymentPage() {
   const [quoteId, setQuoteId] = useState<number | undefined>(undefined);
   const [clinicId, setClinicId] = useState<number | undefined>(undefined);
   const [isPaymentComplete, setIsPaymentComplete] = useState<boolean>(false);
+  const [clientSecret, setClientSecret] = useState<string>('');
   const { toast } = useToast();
 
   // Parse query parameters
@@ -121,15 +127,18 @@ export default function DepositPaymentPage() {
             <CardContent>
               {renderPaymentInfo()}
               
-              {email ? (
-                <StripePaymentWrapper 
-                  email={email}
-                  amount={200}
-                  quoteId={quoteId}
-                  clinicId={clinicId}
-                  paymentType="deposit"
-                  onSuccessfulPayment={handlePaymentSuccess}
-                />
+              {email && clientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <StripePaymentWrapper 
+                    returnUrl={`${window.location.origin}/client-portal?payment=success`}
+                  />
+                </Elements>
+              ) : clientSecret ? (
+                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                  <StripePaymentWrapper 
+                    returnUrl={`${window.location.origin}/client-portal?payment=success`}
+                  />
+                </Elements>
               ) : (
                 <div className="border rounded-lg p-6 text-center bg-muted/20">
                   <p className="mb-4 text-muted-foreground">

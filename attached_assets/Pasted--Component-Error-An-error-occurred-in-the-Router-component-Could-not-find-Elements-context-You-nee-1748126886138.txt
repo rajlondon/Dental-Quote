@@ -1,0 +1,34 @@
+
+Component Error
+An error occurred in the Router component
+
+Could not find Elements context; You need to wrap the part of your app that calls useStripe() in an <Elements> provider.
+Component Stack:
+
+
+    at StripePaymentWrapper (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/payment/StripePaymentWrapper.tsx:25:48)
+    at div
+    at _c9 (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at DepositPaymentPage (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/pages/DepositPaymentPage.tsx:29:32)
+    at Route (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:323:16)
+    at Switch (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=62d0e4bd:379:17)
+    at Router
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+    at ErrorBoundary (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/App.tsx?t=1748126819139&v=X7VxfCyETkYGqnVOENv09:727:3)
+    at RTLProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/src/components/ui/rtl-provider.tsx:21:31)
+    at Suspense
+    at QueryClientProvider (https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=62d0e4bd:2805:3)
+Try Again
+
