@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { trendingPackages, type TrendingPackage, type Excursion } from "@/data/packages";
@@ -8,10 +8,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, MapPin, Plane, Shield, Star, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
 
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
+  const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
   
   useEffect(() => {
@@ -30,6 +33,26 @@ const PackageDetailPage = () => {
       document.title = "Package Not Found - MyDentalFly";
     }
   }, [id]);
+
+  // Handler functions for buttons
+  const handleBookPackage = () => {
+    if (packageData) {
+      // Navigate to quote flow with package information pre-populated
+      setLocation(`/?package=${encodeURIComponent(packageData.id)}&treatment=${encodeURIComponent('Package Deal')}`);
+    }
+  };
+
+  const handleRequestInfo = () => {
+    if (packageData) {
+      toast({
+        title: "Information Request Sent",
+        description: `We'll send detailed information about ${packageData.title} to your email shortly.`,
+      });
+      
+      // Here you could also trigger an API call to actually send the information
+      // For now, we'll just show the success message
+    }
+  };
   
   if (!packageData) {
     return (
@@ -66,9 +89,9 @@ const PackageDetailPage = () => {
       <div className="container mx-auto py-8 px-4 bg-white min-h-screen">
         {/* Breadcrumb navigation */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
-          <a href="/" className="hover:text-primary">Home</a>
+          <button onClick={() => setLocation("/")} className="hover:text-primary">Home</button>
           <ChevronRight className="h-4 w-4 mx-1" />
-          <a href="/#packages" className="hover:text-primary">Packages</a>
+          <button onClick={() => setLocation("/#packages")} className="hover:text-primary">Packages</button>
           <ChevronRight className="h-4 w-4 mx-1" />
           <span className="text-gray-700">{packageData.title}</span>
         </div>
@@ -216,8 +239,19 @@ const PackageDetailPage = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button className="w-full">Book This Package</Button>
-                  <Button variant="outline" className="w-full">Request More Information</Button>
+                  <Button 
+                    className="w-full" 
+                    onClick={handleBookPackage}
+                  >
+                    Book This Package
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={handleRequestInfo}
+                  >
+                    Request More Information
+                  </Button>
                 </div>
               </CardContent>
             </Card>
