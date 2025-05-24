@@ -54,7 +54,7 @@ export function FeaturedPromotions() {
 
   const handlePromoClick = (promoCode: string) => {
     // Navigate to quote flow with promo code pre-populated
-    setLocation(`/quote?promo=${encodeURIComponent(promoCode)}`);
+    setLocation(`/?promo=${encodeURIComponent(promoCode)}`);
   };
 
   const formatDiscount = (offer: SpecialOffer) => {
