@@ -57,8 +57,8 @@ export function PromoCodeInput({
 
   const validatePromoMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await apiRequest('POST', '/api/admin/validate-promo-code', {
-        promoCode: code.trim().toUpperCase(),
+      const response = await apiRequest('POST', '/api/promo-codes/validate', {
+        code: code.trim().toUpperCase(),
         userId
       });
       return response.json();
