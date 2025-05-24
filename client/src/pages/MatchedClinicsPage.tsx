@@ -1020,6 +1020,28 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                           
+                          {/* Promo Code Details Display */}
+                          {(() => {
+                            const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+                            if (pendingPromoCode === 'LUXTRAVEL') {
+                              return (
+                                <div className="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-md p-3 mb-3">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <div className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                      LUXTRAVEL
+                                    </div>
+                                    <span className="text-sm font-medium text-purple-700">Special Offer Applied</span>
+                                  </div>
+                                  <div className="text-sm text-purple-600">
+                                    <p className="font-medium">✈️ FREE Luxury Airport Transfer (£80 value)</p>
+                                    <p className="text-xs mt-1">Private vehicle with professional driver included</p>
+                                  </div>
+                                </div>
+                              );
+                            }
+                            return null;
+                          })()}
+                          
                           <div className="text-xs text-gray-500 mb-2">
                             <p>* Final quote will be confirmed after clinic review of your dental records</p>
                             <p>* Hotel stays often included in treatment packages depending on the cost of your treatment</p>

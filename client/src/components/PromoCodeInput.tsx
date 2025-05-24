@@ -60,6 +60,24 @@ export function PromoCodeInput({
           discountType: result.discountType,
           discountValue: result.discountValue
         };
+        
+        // Store promo code data in session storage for clinic filtering
+        sessionStorage.setItem('pendingPromoCode', result.code || '');
+        
+        // Map promo codes to their associated clinic IDs
+        const promoCodeToClinicMap: Record<string, string> = {
+          'LUXTRAVEL': '4',     // LUXTRAVEL promo -> DentSpa clinic
+          'IMPLANT2023': 'dentspa',
+          'SMILE2023': 'beyazada',
+          'FULLMOUTH2023': 'dentalharmony'
+        };
+        
+        const clinicId = promoCodeToClinicMap[result.code] || '';
+        if (clinicId) {
+          sessionStorage.setItem('pendingPromoCodeClinicId', clinicId);
+          console.log('Stored promo code clinic mapping:', result.code, '->', clinicId);
+        }
+        
         setAppliedPromo(promoData);
         setError('');
         console.log('Calling onValidPromoCode with:', promoData);
