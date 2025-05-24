@@ -803,6 +803,146 @@ export const promoCodeUsageRelations = relations(promoCodeUsage, ({ one }) => ({
   }),
 }));
 
+// === QUOTE RESPONSES ===
+export const quoteResponses = pgTable("quote_responses", {
+  id: serial("id").primaryKey(),
+  // Patient identification (can be linked to user or anonymous)
+  userId: integer("user_id").references(() => users.id),
+  sessionId: varchar("session_id", { length: 100 }), // For anonymous users
+  
+  // Patient Information
+  patientInfo: json("patient_info").$type<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    dateOfBirth?: string;
+    country: string;
+    city: string;
+    medicalHistory?: string;
+    currentMedications?: string;
+    allergies?: string;
+    previousDentalWork?: string;
+    concerns?: string;
+    expectations?: string;
+  }>().notNull(),
+  
+  // Dental Chart Data
+  dentalChart: json("dental_chart").$type<{
+    selectedConditions: Array<{
+      toothNumber: string;
+      condition: string;
+      severity?: 'mild' | 'moderate' | 'severe';
+      notes?: string;
+    }>;
+    overallOralHealth?: string;
+    painLevel?: number;
+    lastDentalVisit?: string;
+    xrayAvailable?: boolean;
+    ctScanAvailable?: boolean;
+  }>(),
+  
+  // Selected Treatments
+  treatments: json("treatments").$type<Array<{
+    id: string;
+    category: string;
+    name: string;
+    quantity: number;
+    priceGBP: number;
+    priceUSD: number;
+    subtotalGBP: number;
+    subtotalUSD: number;
+    guarantee?: string;
+    ukPriceGBP?: number;
+    ukPriceUSD?: number;
+    fromPackage?: boolean;
+  }>>().notNull(),
+  
+  // Applied Promo Code
+  promoCode: json("promo_code").$type<{
+    code: string;
+    type: 'discount' | 'package' | 'service';
+    discountType?: 'percentage' | 'fixed_amount';
+    discountValue?: number;
+    title?: string;
+    description?: string;
+    clinicId?: string;
+    benefits?: Array<{
+      type: string;
+      description: string;
+      value: string;
+      details: string;
+    }>;
+  }>(),
+  
+  // Selected Clinic
+  selectedClinic: json("selected_clinic").$type<{
+    clinicId: string;
+    clinicName: string;
+    estimatedTotal: number;
+    currency: 'GBP' | 'USD';
+    priceBreakdown: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      price: number;
+      subtotal: number;
+    }>;
+    includedServices?: string[];
+    accommodationIncluded?: boolean;
+    transferIncluded?: boolean;
+  }>(),
+  
+  // Quote Summary
+  totalEstimate: json("total_estimate").$type<{
+    gbp: number;
+    usd: number;
+    originalGbp?: number;
+    originalUsd?: number;
+    savings?: number;
+  }>().notNull(),
+  
+  // Status and workflow
+  status: varchar("status", { length: 20 }).default("draft").notNull(), // draft, submitted, under_review, quoted, booked
+  submittedToClinic: boolean("submitted_to_clinic").default(false),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  
+  // Additional info
+  notes: text("notes"),
+  clinicNotes: text("clinic_notes"),
+  urgency: varchar("urgency", { length: 10 }).default("medium"), // low, medium, high
+  preferredContactMethod: varchar("preferred_contact_method", { length: 20 }).default("email"),
+  
+  // Timestamps
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  submittedAt: timestamp("submitted_at"),
+  clinicReviewedAt: timestamp("clinic_reviewed_at"),
+});
+
+export const quoteResponsesRelations = relations(quoteResponses, ({ one, many }) => ({
+  user: one(users, {
+    fields: [quoteResponses.userId],
+    references: [users.id],
+  }),
+  clinic: one(clinics, {
+    fields: [quoteResponses.clinicId],
+    references: [clinics.id],
+  }),
+}));
+
+export const insertQuoteResponseSchema = createInsertSchema(quoteResponses)
+  .omit({
+    id: true,
+    createdAt: true,
+    updatedAt: true,
+    submittedAt: true,
+    clinicReviewedAt: true,
+  });
+
+export type InsertQuoteResponse = z.infer<typeof insertQuoteResponseSchema>;
+export type QuoteResponse = typeof quoteResponses.$inferSelect;
+
 // === EXPORT TYPES ===
 
 // User types

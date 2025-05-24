@@ -48,6 +48,7 @@ import promoCodeRoutes from "./routes/promo-code-routes";
 import treatmentPackageRoutes from "./routes/treatment-package-routes";
 import clinicRoutes from "./routes/clinic-routes";
 import clinicPromotionRouter from "./routes/clinic-promotion-routes";
+import quoteResponsesRoutes from "./routes/quote-responses-routes";
 import patientTreatmentPlanRouter from "./routes/treatment-plan-routes";
 // Import document routes
 import documentRoutes from "./routes/document-routes";
