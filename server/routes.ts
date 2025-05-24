@@ -28,6 +28,7 @@ import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentRoutes from "./routes/treatment-routes";
+import specialOffersRoutes from "./routes/special-offers-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 // Document routes imported above

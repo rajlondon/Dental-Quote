@@ -1,312 +1,278 @@
-import React, { useState, useContext } from 'react';
-import { useOptionalQuote, QuoteContext } from '../contexts/QuoteContext';
+import React, { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Check, Tag, Loader2, AlertCircle, Gift } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { CheckCircle, XCircle, Package } from 'lucide-react';
-import axios from 'axios';
 
-export function PromoCodeInput() {
-  const [inputCode, setInputCode] = useState('');
+import { apiRequest } from '@/lib/queryClient';
+
+interface PromoCodeValidationResult {
+  valid: boolean;
+  type: 'special_offer' | 'treatment_package';
+  offer?: any;
+  package?: any;
+  discountType?: string;
+  discountValue?: number;
+  packagePrice?: number;
+  originalPrice?: number;
+  savings?: number;
+  error?: string;
+}
+
+interface PromoCodeInputProps {
+  onValidPromoCode: (promoData: PromoCodeValidationResult) => void;
+  onInvalidPromoCode: () => void;
+  userId?: number;
+  disabled?: boolean;
+  className?: string;
+}
+
+export default function PromoCodeInput({ 
+  onValidPromoCode, 
+  onInvalidPromoCode, 
+  userId, 
+  disabled = false,
+  className = "" 
+}: PromoCodeInputProps) {
+  const [promoCode, setPromoCode] = useState('');
+  const [appliedPromo, setAppliedPromo] = useState<PromoCodeValidationResult | null>(null);
   const [error, setError] = useState('');
-  
-  // Check if QuoteContext is available before using useQuote
-  const quoteContextAvailable = useContext(QuoteContext) !== null;
-  
-  // Only use the context directly if it's available
-  const quoteContext = useOptionalQuote();
-  
-  // Extract values from context
-  const promoCode = quoteContext?.promoCode || null;
-  const discountAmount = quoteContext?.discountAmount || 0;
-  const isApplyingPromo = quoteContext?.isApplyingPromo || false;
-  const isPackage = quoteContext?.isPackage || false;
-  const packageName = quoteContext?.packageName || null;
-  const applyPromoCode = quoteContext?.applyPromoCode;
-  const clearPromoCode = quoteContext?.clearPromoCode;
-  
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!inputCode.trim()) {
+
+  const validatePromoMutation = useMutation({
+    mutationFn: async (code: string) => {
+      const response = await apiRequest('POST', '/api/admin/validate-promo-code', {
+        promoCode: code.trim().toUpperCase(),
+        userId
+      });
+      return response.json();
+    },
+    onSuccess: (result: PromoCodeValidationResult) => {
+      if (result.valid) {
+        setAppliedPromo(result);
+        setError('');
+        onValidPromoCode(result);
+      } else {
+        setError(result.error || 'Invalid promo code');
+        setAppliedPromo(null);
+        onInvalidPromoCode();
+      }
+    },
+    onError: (error: any) => {
+      const errorMessage = error.message || 'Failed to validate promo code';
+      setError(errorMessage);
+      setAppliedPromo(null);
+      onInvalidPromoCode();
+    },
+  });
+
+  const handleApplyPromo = () => {
+    if (!promoCode.trim()) {
       setError('Please enter a promo code');
       return;
     }
     
-    // Check if context and applyPromoCode are available
-    if (quoteContextAvailable && applyPromoCode) {
-      try {
-        setError('');
-        applyPromoCode(inputCode.trim());
-        setInputCode(''); // Clear input after applying
-      } catch (err: unknown) {
-        setError(err instanceof Error ? err.message : 'Failed to apply promo code');
-      }
-    } else {
-      setError('Cannot apply promo code at this time');
+    setError('');
+    validatePromoMutation.mutate(promoCode);
+  };
+
+  const handleRemovePromo = () => {
+    setPromoCode('');
+    setAppliedPromo(null);
+    setError('');
+    onInvalidPromoCode();
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !disabled && !validatePromoMutation.isPending) {
+      handleApplyPromo();
     }
   };
-  
-  // State for standalone mode
-  const [success, setSuccess] = useState<string | null>(null);
-  const [packageInfo, setPackageInfo] = useState<any>(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationData, setValidationData] = useState<any>(null);
-  
-  // If context is not available, show enhanced standalone input
-  if (!quoteContextAvailable) {
-    return (
-      <div className="space-y-4">
-        <form onSubmit={async (e) => {
-          e.preventDefault();
-          setError('');
-          setSuccess(null);
-          setPackageInfo(null);
-          
-          if (!inputCode.trim()) {
-            setError('Please enter a promo code');
-            return;
-          }
-          
-          // Try to validate the promo code
-          try {
-            setIsValidating(true);
-            const response = await axios.get(`/api/promo-codes/validate/${inputCode.trim()}`);
+
+  return (
+    <div className={`space-y-4 ${className}`}>
+      {/* Promo Code Input */}
+      <Card className="border-dashed border-2 border-primary/20">
+        <CardContent className="p-4">
+          <div className="space-y-3">
+            <div className="flex items-center space-x-2">
+              <Tag className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold text-lg">Have a Promo Code?</h3>
+            </div>
             
-            if (response.data.valid) {
-              // Use the sampleDiscountAmount from the response if available
-              if (response.data.sampleDiscountAmount) {
-                // For percentage discounts, show a concrete example amount
-                if (response.data.discountType === 'percentage') {
-                  setSuccess(`Promo code "${inputCode}" is valid! You'll save ${response.data.sampleDiscountAmount} with this code`);
-                } else {
-                  setSuccess(`Promo code "${inputCode}" is valid! You'll save ${response.data.sampleDiscountAmount} with this code`);
-                }
-              } else if (response.data.discountValue !== undefined) {
-                const discountMsg = response.data.discountType === 'percentage'
-                  ? `${response.data.discountValue}% off`
-                  : `£${response.data.discountValue} off`;
-                setSuccess(`Promo code "${inputCode}" is valid! You'll save ${discountMsg}`);
-              } else {
-                setSuccess(`Promo code "${inputCode}" is valid!`);
-              }
-              setValidationData(response.data);
+            <p className="text-sm text-muted-foreground">
+              Enter your promo code to unlock special offers and treatment packages
+            </p>
+            
+            <div className="flex space-x-2">
+              <Input
+                type="text"
+                placeholder="Enter promo code (e.g., SUMMER25)"
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                onKeyPress={handleKeyPress}
+                disabled={disabled || validatePromoMutation.isPending || !!appliedPromo}
+                className="flex-1"
+              />
               
-              // If it's a package, show package info
-              if (response.data.isPackage && response.data.packageData) {
-                setPackageInfo(response.data.packageData);
-                
-                // Store package data in session storage for later use
-                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
-                sessionStorage.setItem('pendingPackageData', JSON.stringify(response.data.packageData));
-                
-                // Store clinic ID if provided
-                if (response.data.clinicId) {
-                  sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
-                } else {
-                  // Clear any previous clinic ID if not specified for this package
-                  sessionStorage.removeItem('pendingPromoCodeClinicId');
-                }
-                
-                // Emit a custom event to notify TreatmentPlanBuilder about the package
-                try {
-                  const packageEvent = new CustomEvent('packagePromoApplied', {
-                    detail: {
-                      code: inputCode.trim(),
-                      packageData: response.data.packageData,
-                      clinicId: response.data.clinicId || null
-                    }
-                  });
-                  window.dispatchEvent(packageEvent);
-                } catch (eventError) {
-                  console.error('Error dispatching package event:', eventError);
-                }
-              } else {
-                // Store discount code in session storage
-                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
-                
-                // Emit a custom event to notify about discount code
-                try {
-                  const discountEvent = new CustomEvent('discountPromoApplied', {
-                    detail: {
-                      code: inputCode.trim(),
-                      discountType: response.data.discountType || 'fixed_amount',
-                      discountValue: response.data.discountValue || 0
-                    }
-                  });
-                  window.dispatchEvent(discountEvent);
-                } catch (eventError) {
-                  console.error('Error dispatching discount event:', eventError);
-                }
-              }
-            } else {
-              setError('Invalid promo code. Please try again.');
-            }
-          } catch (err: any) {
-            setError(err?.response?.data?.message || err?.message || 'Failed to validate promo code');
-          } finally {
-            setIsValidating(false);
-          }
-        }} className="flex space-x-2">
-          <Input
-            type="text"
-            value={inputCode}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputCode(e.target.value)}
-            placeholder="Enter promo or package code"
-            className="flex-1"
-            disabled={isValidating}
-          />
-          <Button 
-            type="submit"
-            className="whitespace-nowrap"
-            disabled={isValidating}
-          >
-            {isValidating ? 'Checking...' : 'Apply Code'}
-          </Button>
-        </form>
-        
-        {error && (
-          <Alert variant="destructive">
-            <XCircle className="h-4 w-4 mr-2" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
-        
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md flex items-start">
-            <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
-            <div>
-              {success}
-              {validationData?.discountValue && (
-                <div className="mt-1 text-sm font-medium">
-                  You save: {validationData.discountType === 'percentage' 
-                    ? `${validationData.discountValue}% off your total` 
-                    : `£${validationData.discountValue}`}
-                </div>
+              {!appliedPromo ? (
+                <Button
+                  onClick={handleApplyPromo}
+                  disabled={disabled || !promoCode.trim() || validatePromoMutation.isPending}
+                  variant="outline"
+                >
+                  {validatePromoMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Apply'
+                  )}
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleRemovePromo}
+                  variant="destructive"
+                  size="sm"
+                >
+                  Remove
+                </Button>
               )}
             </div>
           </div>
-        )}
-        
-        {packageInfo && (
-          <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-md">
-            <h4 className="font-medium text-blue-800 flex items-center">
-              <Package className="h-4 w-4 mr-2" />
-              {packageInfo.name || 'Treatment Package'}
-            </h4>
-            <p className="text-sm text-blue-700 mt-1">{packageInfo.description || 'Special package with multiple treatments'}</p>
-            
-            {packageInfo.treatments && packageInfo.treatments.length > 0 && (
-              <div className="mt-2">
-                <p className="text-xs font-medium text-blue-800">Included treatments:</p>
-                <ul className="mt-1 text-xs text-blue-700 list-disc pl-5">
-                  {packageInfo.treatments.map((treatment: any, i: number) => (
-                    <li key={i}>{treatment.quantity} x {treatment.name}</li>
-                  ))}
-                  <li className="font-medium text-blue-800 mt-1">Free excursion on a cruise in Istanbul</li>
-                  
-                  {packageInfo.savings && (
-                    <div className="mt-2 text-green-700 text-xs font-medium">
-                      You save: £{packageInfo.savings} ({Math.round((packageInfo.savings / packageInfo.originalPrice) * 100)}% off UK prices)
-                    </div>
-                  )}
-                </ul>
-              </div>
-            )}
-            
-            <p className="text-xs text-blue-800 mt-2 font-medium">Continue to the quote page to apply this package</p>
-          </div>
-        )}
-        
-        <div className="text-xs text-gray-500">
-          <p>Try these sample codes:</p>
-          <ul className="list-disc pl-4 mt-1 space-y-1">
-            <li><strong>TEST50</strong> - 50% off any treatment</li>
-            <li><strong>SAVE100</strong> - £100 off your total</li>
-            <li><strong>IMPLANT2023</strong> - Dental implant package</li>
-            <li><strong>SMILE2023</strong> - Smile makeover package</li>
-          </ul>
-        </div>
-      </div>
-    );
-  }
-  
-  // If promo code is already applied, show active state
-  if (promoCode) {
-    return (
-      <div className={`rounded-md p-4 mb-4 border ${isPackage ? 'bg-blue-50 border-blue-200' : 'bg-green-50 border-green-200'}`}>
-        <div className="flex items-center">
-          {isPackage ? (
-            <Package className="h-5 w-5 text-blue-600 mr-2" />
-          ) : (
-            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-          )}
-          
-          <div className="flex-1">
-            <p className={`text-sm font-medium ${isPackage ? 'text-blue-800' : 'text-green-800'}`}>
-              {isPackage ? (
-                <>Package Applied: <strong>{packageName}</strong></>
-              ) : (
-                <>Promo code <strong>{promoCode}</strong> applied!</>
-              )}
-            </p>
-            <p className={`text-sm mt-1 ${isPackage ? 'text-blue-700' : 'text-green-700'}`}>
-              You saved {new Intl.NumberFormat('en-GB', { 
-                style: 'currency', 
-                currency: 'GBP' 
-              }).format(discountAmount)}
-            </p>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => clearPromoCode && clearPromoCode()}
-            className="ml-4"
-          >
-            Remove
-          </Button>
-        </div>
-      </div>
-    );
-  }
-  
-  return (
-    <div className="space-y-4">
-      <form onSubmit={handleSubmit} className="flex space-x-2">
-        <Input
-          type="text"
-          value={inputCode}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputCode(e.target.value)}
-          placeholder="Enter promo or package code"
-          className="flex-1"
-          disabled={isApplyingPromo}
-        />
-        <Button 
-          type="submit" 
-          disabled={isApplyingPromo || !inputCode.trim()}
-          className="whitespace-nowrap"
-        >
-          {isApplyingPromo ? 'Applying...' : 'Apply Code'}
-        </Button>
-      </form>
-      
+        </CardContent>
+      </Card>
+
+      {/* Error Display */}
       {error && (
         <Alert variant="destructive">
-          <XCircle className="h-4 w-4 mr-2" />
+          <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
-      <div className="text-xs text-gray-500">
-        <p>Try our sample codes:</p>
-        <ul className="list-disc pl-4 mt-1 space-y-1">
-          <li><strong>TEST50</strong> - 50% off any treatment</li>
-          <li><strong>SAVE100</strong> - £100 off your total</li>
-          <li><strong>IMPLANT2023</strong> - Dental implant package with savings</li>
-          <li><strong>SMILE2023</strong> - Smile makeover package</li>
-        </ul>
-      </div>
+
+      {/* Applied Promo Code Display */}
+      {appliedPromo && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Gift className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold text-green-800">Promo Code Applied!</span>
+                  <Check className="h-4 w-4 text-green-600" />
+                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  {promoCode}
+                </Badge>
+              </div>
+
+              {/* Special Offer Details */}
+              {appliedPromo.type === 'special_offer' && appliedPromo.offer && (
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-green-800">{appliedPromo.offer.title}</h4>
+                  <p className="text-sm text-green-700">{appliedPromo.offer.description}</p>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <span className="font-medium">
+                      Discount: {appliedPromo.discountType === 'PERCENTAGE' 
+                        ? `${appliedPromo.discountValue}%` 
+                        : `£${appliedPromo.discountValue}`}
+                    </span>
+                    <span className="text-muted-foreground">
+                      Valid until: {new Date(appliedPromo.offer.expiryDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Treatment Package Details */}
+              {appliedPromo.type === 'treatment_package' && appliedPromo.package && (
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-green-800">{appliedPromo.package.title}</h4>
+                  <p className="text-sm text-green-700">{appliedPromo.package.description}</p>
+                  
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Package Price:</span>
+                      <div className="text-lg font-bold text-green-600">
+                        £{appliedPromo.packagePrice?.toFixed(2)}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="font-medium">You Save:</span>
+                      <div className="text-lg font-bold text-green-600">
+                        £{appliedPromo.savings?.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {appliedPromo.package.includedTreatments && appliedPromo.package.includedTreatments.length > 0 && (
+                    <div>
+                      <h5 className="font-medium text-green-800 mb-2">Included Treatments:</h5>
+                      <div className="space-y-1">
+                        {appliedPromo.package.includedTreatments.map((treatment: any, index: number) => (
+                          <div key={index} className="text-xs text-green-700 flex justify-between">
+                            <span>{treatment.quantity}x {treatment.treatmentName}</span>
+                            <span>£{(treatment.treatmentPrice * treatment.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {appliedPromo.package.includedServices && appliedPromo.package.includedServices.length > 0 && (
+                    <div>
+                      <h5 className="font-medium text-green-800 mb-2">Included Services:</h5>
+                      <div className="space-y-1">
+                        {appliedPromo.package.includedServices.map((service: any, index: number) => (
+                          <div key={index} className="text-xs text-green-700">
+                            <span>{service.quantity}x {service.name}</span>
+                            {service.description && (
+                              <span className="text-muted-foreground ml-2">- {service.description}</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-xs text-muted-foreground">
+                    Valid until: {new Date(appliedPromo.package.expiryDate).toLocaleDateString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Popular Promo Codes Section */}
+      {!appliedPromo && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">Popular Offers:</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPromoCode('WELCOME20')}
+              disabled={disabled}
+              className="text-xs"
+            >
+              WELCOME20
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPromoCode('SUMMER25')}
+              disabled={disabled}
+              className="text-xs"
+            >
+              SUMMER25
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
