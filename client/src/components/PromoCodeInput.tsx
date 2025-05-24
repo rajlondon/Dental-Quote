@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Check, Tag, Loader2, AlertCircle, Gift } from 'lucide-react';
+import { Check, Tag, Loader2, AlertCircle, Gift, CheckCircle, X } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -117,6 +117,43 @@ export function PromoCodeInput({
 
   return (
     <div className={`space-y-4 ${className}`}>
+      {/* Applied Promo Code Summary */}
+      {appliedPromo && (
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="bg-green-100 rounded-full p-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-semibold text-green-800">
+                    {appliedPromo.type === 'special_offer' ? 'Special Offer Applied' : 'Promo Code Applied'}
+                  </h4>
+                  <p className="text-sm text-green-700">
+                    {appliedPromo.discountType === 'fixed_amount' ? 'FREE' : `${appliedPromo.discountValue}% OFF`}
+                    {appliedPromo.type === 'special_offer' && (
+                      <span className="ml-1">- Luxury Airport Transfer</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">
+                    Code: {appliedPromo.code}
+                  </p>
+                </div>
+              </div>
+              <Button
+                onClick={handleRemovePromo}
+                variant="ghost"
+                size="sm"
+                className="text-green-700 hover:text-green-800"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Promo Code Input */}
       <Card className="border-dashed border-2 border-primary/20">
         <CardContent className="p-4">

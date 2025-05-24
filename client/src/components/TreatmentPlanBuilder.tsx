@@ -452,7 +452,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           // If there's discount type and value information, save it
           if (parsedPackage.discountType && parsedPackage.discountValue) {
             setDiscountType(parsedPackage.discountType);
-            setDiscountValue(parsedPackage.discountValue);
+            setDiscountAmount(parsedPackage.discountValue);
           }
           
         } catch (e) {
