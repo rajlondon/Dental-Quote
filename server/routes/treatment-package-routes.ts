@@ -132,4 +132,16 @@ treatmentPackageRouter.get('/clinic/:clinicId', catchAsync(async (req: Request, 
   });
 }));
 
+// Get featured treatment packages for homepage
+treatmentPackageRouter.get('/featured', catchAsync(async (req: Request, res: Response) => {
+  const featuredPackages = treatmentPackages
+    .filter(pkg => pkg.isActive)
+    .slice(0, 3); // Return top 3 featured packages
+  
+  res.json({
+    success: true,
+    data: featuredPackages
+  });
+}));
+
 export default treatmentPackageRouter;
