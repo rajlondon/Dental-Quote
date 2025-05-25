@@ -264,6 +264,62 @@ export const promoCodeService = {
         };
       }
       
+      // Treatment package promo codes
+      if (normalizedCode === 'SAVE2025') {
+        return {
+          valid: true,
+          code: 'SAVE2025',
+          type: 'package',
+          discountType: 'percentage',
+          discountValue: 10,
+          title: 'Budget Implant Package - 10% Off'
+        };
+      }
+      
+      if (normalizedCode === 'SMILE2025') {
+        return {
+          valid: true,
+          code: 'SMILE2025',
+          type: 'package',
+          discountType: 'percentage',
+          discountValue: 15,
+          title: 'Complete Smile Makeover - 15% Off'
+        };
+      }
+      
+      if (normalizedCode === 'VIPSTAY') {
+        return {
+          valid: true,
+          code: 'VIPSTAY',
+          type: 'package',
+          discountType: 'fixed_amount',
+          discountValue: 200,
+          title: 'VIP Dental Holiday - £200 Off'
+        };
+      }
+      
+      if (normalizedCode === 'SUMMER25') {
+        return {
+          valid: true,
+          code: 'SUMMER25',
+          type: 'package',
+          discountType: 'percentage',
+          discountValue: 25,
+          title: 'Summer Dental Special - 25% Off'
+        };
+      }
+      
+      if (normalizedCode === 'FAMILY300') {
+        return {
+          valid: true,
+          code: 'FAMILY300',
+          type: 'package',
+          discountType: 'fixed_amount',
+          discountValue: 300,
+          title: 'Family Dental Package - £300 Off'
+        };
+      }
+      
       // No matching promo code found
       return {
         valid: false,
