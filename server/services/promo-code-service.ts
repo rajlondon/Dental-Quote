@@ -358,7 +358,8 @@ export const promoCodeService = {
       }
       
       // Treatment Package specific promo codes
-      if (normalizedCode === 'HOLLYWOOD' || normalizedCode === 'HOLLYWOODSMILE') {
+      if (normalizedCode === 'HOLLYWOOD' || normalizedCode === 'HOLLYWOODSMILE' || 
+          normalizedCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
         return {
           valid: true,
           code: 'HOLLYWOOD',
@@ -369,7 +370,8 @@ export const promoCodeService = {
         };
       }
       
-      if (normalizedCode === 'IMPLANTCITY' || normalizedCode === 'DENTALIMPLANTCITY') {
+      if (normalizedCode === 'IMPLANTCITY' || normalizedCode === 'DENTALIMPLANTCITY' ||
+          normalizedCode === 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE') {
         return {
           valid: true,
           code: 'IMPLANTCITY',
@@ -380,7 +382,8 @@ export const promoCodeService = {
         };
       }
       
-      if (normalizedCode === 'VALUEVENEER' || normalizedCode === 'ISTANBULDISCOVERY') {
+      if (normalizedCode === 'VALUEVENEER' || normalizedCode === 'ISTANBULDISCOVERY' ||
+          normalizedCode === 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY') {
         return {
           valid: true,
           code: 'VALUEVENEER',
