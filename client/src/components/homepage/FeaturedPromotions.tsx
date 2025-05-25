@@ -191,7 +191,14 @@ export function FeaturedPromotions() {
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center">
                       <Tag className="h-4 w-4 text-primary mr-2" />
-                      <span className="font-mono font-bold text-primary">{promo.promoCode}</span>
+                      <span className="font-mono font-bold text-primary">
+                        {promo.type === 'package' && promo.id ? 
+                          (promo.id === 'hollywood-smile-vacation' ? 'HOLLYWOOD' :
+                           promo.id === 'dental-implant-city-experience' ? 'IMPLANTCITY' : 
+                           promo.id === 'value-veneer-istanbul-discovery' ? 'VALUEVENEER' : 
+                           promo.promo_code || promo.promoCode)
+                          : promo.promo_code || promo.promoCode}
+                      </span>
                     </div>
                   </div>
                   
