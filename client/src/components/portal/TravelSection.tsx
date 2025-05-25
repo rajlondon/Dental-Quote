@@ -158,19 +158,16 @@ const TravelSection: React.FC = () => {
     bookingReference: '',
   });
   
-  // Fetch travel data
+  // Load sample travel data immediately
   useEffect(() => {
-    const fetchTravelData = async () => {
-      if (!user?.id) return;
-      
-      setIsLoading(true);
-      try {
-        // In a real application, these would be API calls to fetch the data
-        // For now, using sample data
-        
-        // Sample flight data
-        const sampleFlights: FlightBooking[] = [
-          {
+    if (!user?.id) {
+      setIsLoading(false);
+      return;
+    }
+    
+    // Sample flight data
+    const sampleFlights: FlightBooking[] = [
+      {
             id: '1',
             bookingReference: 'FLYTK123456',
             airline: 'Turkish Airlines',
@@ -240,20 +237,8 @@ const TravelSection: React.FC = () => {
         
         setFlightBookings(sampleFlights);
         setHotelBookings(sampleHotels);
-      } catch (error) {
-        console.error('Error fetching travel data:', error);
-        toast({
-          title: t('common.error', 'Error'),
-          description: t('patient.travel.fetch_error', 'Failed to load travel information'),
-          variant: 'destructive'
-        });
-      } finally {
         setIsLoading(false);
-      }
-    };
-    
-    fetchTravelData();
-  }, [user?.id, t, toast]);
+  }, [user?.id]);
   
   // Handle flight search submission
   const handleFlightSearch = () => {
