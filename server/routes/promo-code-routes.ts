@@ -95,11 +95,15 @@ promoCodeRouter.post('/validate', async (req: Request, res: Response) => {
       valid: validationResult.valid,
       code: validationResult.code,
       type: validationResult.type || 'discount',
+      title: validationResult.title,
       discountType: validationResult.discountType,
       discountValue: validationResult.discountValue,
+      packageId: validationResult.packageId,
+      clinicId: validationResult.clinicId,
+      packageDetails: validationResult.packageDetails,
       message: validationResult.valid 
         ? `Successfully validated promo code: ${validationResult.code}` 
-        : validationResult.error
+        : validationResult.error || 'Invalid promo code'
     });
   } catch (error) {
     console.error('Error validating promo code:', error);
