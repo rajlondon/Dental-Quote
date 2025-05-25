@@ -42,6 +42,45 @@ export function PromoCodeInput({
   const [appliedPromo, setAppliedPromo] = useState<PromoCodeValidationResult | null>(null);
   const [error, setError] = useState('');
 
+  // Auto-detect and apply promo codes from special offer clicks
+  useEffect(() => {
+    const autoApply = sessionStorage.getItem('autoApplyPromo');
+    const pendingPromo = sessionStorage.getItem('pendingPromoCode');
+    
+    if (autoApply === 'true' && pendingPromo && !appliedPromo) {
+      console.log('Auto-applying promo code from special offer:', pendingPromo);
+      setPromoCode(pendingPromo);
+      
+      // Automatically trigger validation and application
+      setTimeout(() => {
+        validatePromoMutation.mutate(pendingPromo);
+        // Clear the auto-apply flag
+        sessionStorage.removeItem('autoApplyPromo');
+      }, 500);
+    }
+  }, []);
+
+  // Also check URL parameters for promo codes
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promoFromUrl = urlParams.get('promo');
+    const autoFromUrl = urlParams.get('auto');
+    
+    if (promoFromUrl && autoFromUrl === 'true' && !appliedPromo) {
+      console.log('Auto-applying promo code from URL:', promoFromUrl);
+      setPromoCode(promoFromUrl);
+      
+      // Store in session for consistency
+      sessionStorage.setItem('pendingPromoCode', promoFromUrl);
+      sessionStorage.setItem('autoApplyPromo', 'true');
+      
+      // Automatically trigger validation and application
+      setTimeout(() => {
+        validatePromoMutation.mutate(promoFromUrl);
+      }, 500);
+    }
+  }, []);
+
   const validatePromoMutation = useMutation({
     mutationFn: async (code: string) => {
       const response = await apiRequest('POST', '/api/promo-codes/validate', {

@@ -53,8 +53,16 @@ export function FeaturedPromotions() {
   });
 
   const handlePromoClick = (promoCode: string) => {
-    // Navigate to quote flow with promo code pre-populated
-    setLocation(`/?promo=${encodeURIComponent(promoCode)}`);
+    // Store all necessary promo data for seamless flow
+    sessionStorage.setItem('selectedPromoCode', promoCode);
+    sessionStorage.setItem('pendingPromoCode', promoCode);
+    sessionStorage.setItem('autoApplyPromo', 'true');
+    sessionStorage.setItem('promoClickSource', 'special-offer');
+    
+    console.log('Special Offer clicked, stored promo code:', promoCode);
+    
+    // Navigate directly to quote flow with promo pre-filled
+    setLocation('/get-quote?promo=' + encodeURIComponent(promoCode) + '&auto=true');
   };
 
   const formatDiscount = (offer: SpecialOffer) => {
@@ -120,7 +128,7 @@ export function FeaturedPromotions() {
             <Card 
               key={promo.id} 
               className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/50"
-              onClick={() => handlePromoClick(promo.promoCode)}
+              onClick={() => handlePromoClick(promo.promo_code || promo.promoCode)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
