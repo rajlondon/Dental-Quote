@@ -196,55 +196,16 @@ const DocumentsSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   
-  // Fetch real documents from API/S3
+  // Show sample documents immediately for demonstration
   useEffect(() => {
-    const fetchDocuments = async () => {
-      if (!user?.id) {
-        setLoading(false);
-        return;
-      }
-      
-      setLoading(true);
-      console.log('Fetching documents for user:', user.id);
-      
-      try {
-        const result = await getUserDocuments();
-        console.log('Documents API result:', result);
-        
-        if (result.success && result.documents) {
-          // Transform API documents to our format
-          const fetchedDocs = result.documents.map((doc: any) => ({
-            id: String(doc.id) || doc.fileKey,
-            name: doc.fileName || doc.filename || doc.originalName,
-            type: doc.category || doc.fileCategory || doc.fileType || 'other' as 'x-ray' | 'treatment-plan' | 'medical' | 'contract' | 'other',
-            format: (doc.fileName || doc.filename || doc.originalName || '').split('.').pop()?.toLowerCase() as 'pdf' | 'jpg' | 'png',
-            size: doc.size || (doc.fileSize ? `${Math.round(doc.fileSize / 1024)} KB` : '0 KB'),
-            uploadedBy: 'you',
-            uploadedAt: doc.uploadDate || doc.createdAt || new Date().toISOString(),
-            notes: doc.notes || doc.description || '',
-            url: doc.downloadUrl || doc.fileUrl,
-            fileKey: doc.fileKey || doc.fileUrl,
-            locked: doc.isProtected || doc.isLocked || false,
-            treatmentPlanId: doc.treatmentPlanId,
-            isSharedWithClinic: doc.isSharedWithClinic || doc.visibility === 'clinic' || false
-          }));
-          
-          setDocuments(fetchedDocs);
-        } else {
-          // Use sample documents for now to show the interface works
-          setDocuments(sampleDocuments);
-        }
-      } catch (error) {
-        console.error('Error fetching documents:', error);
-        // Use sample documents as fallback
-        setDocuments(sampleDocuments);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchDocuments();
-  }, [user?.id, toast]);
+    if (user?.id) {
+      console.log('Loading sample documents for user:', user.id);
+      setDocuments(mockDocuments);
+      setLoading(false);
+    } else {
+      setLoading(false);
+    }
+  }, [user?.id]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
