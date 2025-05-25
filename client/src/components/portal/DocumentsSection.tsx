@@ -196,19 +196,18 @@ const DocumentsSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
   
-  // Show sample documents immediately for demonstration
+  // Show sample documents when user is loaded
   useEffect(() => {
-    console.log('Documents useEffect triggered, user:', user);
     if (user?.id) {
       console.log('Loading sample documents for user:', user.id);
-      console.log('Mock documents:', mockDocuments);
       setDocuments(mockDocuments);
       setLoading(false);
-    } else {
-      console.log('No user ID, setting loading to false');
+    } else if (user === null) {
+      // User authentication completed but not logged in
       setLoading(false);
     }
-  }, [user?.id]);
+    // Don't set loading to false if user is undefined (still loading auth)
+  }, [user]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
