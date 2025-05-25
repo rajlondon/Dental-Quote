@@ -320,6 +320,40 @@ export const promoCodeService = {
         };
       }
       
+      // Treatment Package specific promo codes
+      if (normalizedCode === 'HOLLYWOOD' || normalizedCode === 'HOLLYWOODSMILE') {
+        return {
+          valid: true,
+          code: 'HOLLYWOOD',
+          type: 'package',
+          discountType: 'percentage',
+          discountValue: 20,
+          title: 'Hollywood Smile Package - 20% Off'
+        };
+      }
+      
+      if (normalizedCode === 'IMPLANTCITY' || normalizedCode === 'DENTALIMPLANTCITY') {
+        return {
+          valid: true,
+          code: 'IMPLANTCITY',
+          type: 'package',
+          discountType: 'fixed_amount',
+          discountValue: 500,
+          title: 'Dental Implant City Experience - £500 Off'
+        };
+      }
+      
+      if (normalizedCode === 'VALUEVENEER' || normalizedCode === 'ISTANBULDISCOVERY') {
+        return {
+          valid: true,
+          code: 'VALUEVENEER',
+          type: 'package',
+          discountType: 'percentage',
+          discountValue: 15,
+          title: 'Value Veneer Istanbul Discovery - 15% Off'
+        };
+      }
+      
       // No matching promo code found
       return {
         valid: false,

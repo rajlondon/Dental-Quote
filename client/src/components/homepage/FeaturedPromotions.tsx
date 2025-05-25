@@ -52,17 +52,33 @@ export function FeaturedPromotions() {
     },
   });
 
-  const handlePromoClick = (promoCode: string) => {
-    // Store all necessary promo data for seamless flow
-    sessionStorage.setItem('selectedPromoCode', promoCode);
-    sessionStorage.setItem('pendingPromoCode', promoCode);
-    sessionStorage.setItem('autoApplyPromo', 'true');
-    sessionStorage.setItem('promoClickSource', 'special-offer');
+  const handlePromoClick = (promoCode: string, packageId?: string) => {
+    let finalPromoCode = promoCode;
     
-    console.log('Special Offer clicked, stored promo code:', promoCode);
+    // Map treatment package IDs to their specific promo codes
+    if (packageId) {
+      const packagePromoMap: Record<string, string> = {
+        'hollywood-smile-vacation': 'HOLLYWOOD',
+        'dental-implant-city-experience': 'IMPLANTCITY', 
+        'value-veneer-istanbul-discovery': 'VALUEVENEER'
+      };
+      
+      if (packagePromoMap[packageId]) {
+        finalPromoCode = packagePromoMap[packageId];
+        console.log(`Mapped package ${packageId} to promo code: ${finalPromoCode}`);
+      }
+    }
+    
+    // Store all necessary promo data for seamless flow
+    sessionStorage.setItem('selectedPromoCode', finalPromoCode);
+    sessionStorage.setItem('pendingPromoCode', finalPromoCode);
+    sessionStorage.setItem('autoApplyPromo', 'true');
+    sessionStorage.setItem('promoClickSource', packageId ? 'treatment-package' : 'special-offer');
+    
+    console.log('Promotion clicked, stored promo code:', finalPromoCode);
     
     // Navigate directly to quote flow with promo pre-filled
-    setLocation('/get-quote?promo=' + encodeURIComponent(promoCode) + '&auto=true');
+    setLocation('/get-quote?promo=' + encodeURIComponent(finalPromoCode) + '&auto=true');
   };
 
   const formatDiscount = (offer: SpecialOffer) => {
@@ -128,7 +144,7 @@ export function FeaturedPromotions() {
             <Card 
               key={promo.id} 
               className="relative overflow-hidden hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-primary/50"
-              onClick={() => handlePromoClick(promo.promo_code || promo.promoCode)}
+              onClick={() => handlePromoClick(promo.promo_code || promo.promoCode, promo.type === 'package' ? promo.id : undefined)}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -192,10 +208,15 @@ export function FeaturedPromotions() {
                     className="w-full mt-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handlePromoClick(promo.promoCode);
+                      handlePromoClick(promo.promo_code || promo.promoCode, promo.type === 'package' ? promo.id : undefined);
                     }}
                   >
-                    Get Quote with {promo.promoCode}
+                    Get Quote with {promo.type === 'package' && promo.id ? 
+                      (['hollywood-smile-vacation', 'dental-implant-city-experience', 'value-veneer-istanbul-discovery'].includes(promo.id) ?
+                        (promo.id === 'hollywood-smile-vacation' ? 'HOLLYWOOD' :
+                         promo.id === 'dental-implant-city-experience' ? 'IMPLANTCITY' : 'VALUEVENEER')
+                        : promo.promo_code || promo.promoCode)
+                      : promo.promo_code || promo.promoCode}
                   </Button>
                 </div>
               </CardContent>
