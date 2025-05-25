@@ -192,22 +192,9 @@ VAT No: GB123456789
 const DocumentsSection: React.FC = () => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+  const [loading, setLoading] = useState(false);
   const { user } = useAuth();
-  
-  // Show sample documents when user is loaded
-  useEffect(() => {
-    if (user?.id) {
-      console.log('Loading sample documents for user:', user.id);
-      setDocuments(mockDocuments);
-      setLoading(false);
-    } else if (user === null) {
-      // User authentication completed but not logged in
-      setLoading(false);
-    }
-    // Don't set loading to false if user is undefined (still loading auth)
-  }, [user]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
   const [showUploadDialog, setShowUploadDialog] = useState(false);
