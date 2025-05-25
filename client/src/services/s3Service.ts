@@ -75,7 +75,7 @@ export async function getUserDocuments(): Promise<{
   error?: string;
 }> {
   try {
-    const response = await apiRequest('GET', '/api/patient/documents');
+    const response = await apiRequest('GET', '/api/patient/documents/');
     const data = await response.json();
     
     return {
