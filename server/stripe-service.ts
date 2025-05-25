@@ -269,30 +269,3 @@ export async function updatePaymentIntent(
 export function isStripeConfigured(): boolean {
   return !!stripeSecretKey;
 }
-
-
-    };
-    
-    console.log('Using payment metadata:', paymentMetadata);
-    
-    // Create a PaymentIntent with the specified amount
-    const paymentIntent = await ensureStripeConfigured().paymentIntents.create({
-      amount: amountInSmallestUnit,
-      currency: currency.toLowerCase(),
-      customer: customer.id,
-      metadata: paymentMetadata,
-      payment_method_types: ['card'],
-      receipt_email: email,
-      description: metadata.description || 'MyDentalFly - Treatment Payment',
-    });
-
-    // Return the client secret, which is used to complete the payment on the client
-    return {
-      clientSecret: paymentIntent.client_secret as string,
-      id: paymentIntent.id,
-    };
-  } catch (error) {
-    console.error('Error creating treatment payment intent:', error);
-    throw error;
-  }
-}
