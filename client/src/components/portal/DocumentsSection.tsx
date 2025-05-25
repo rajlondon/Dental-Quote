@@ -198,11 +198,14 @@ const DocumentsSection: React.FC = () => {
   
   // Show sample documents immediately for demonstration
   useEffect(() => {
+    console.log('Documents useEffect triggered, user:', user);
     if (user?.id) {
       console.log('Loading sample documents for user:', user.id);
+      console.log('Mock documents:', mockDocuments);
       setDocuments(mockDocuments);
       setLoading(false);
     } else {
+      console.log('No user ID, setting loading to false');
       setLoading(false);
     }
   }, [user?.id]);
