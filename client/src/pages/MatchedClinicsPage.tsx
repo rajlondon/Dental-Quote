@@ -82,6 +82,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [selectedView, setSelectedView] = useState<'list' | 'grid'>('list');
   const [currentTreatments, setCurrentTreatments] = useState<TreatmentItem[]>(treatmentItems);
   const [currentTotalGBP, setCurrentTotalGBP] = useState<number>(totalGBP);
+  const [treatmentDataKey, setTreatmentDataKey] = useState<number>(Date.now());
   const { toast } = useToast();
   
   // New function to handle direct PDF download
@@ -187,7 +188,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Calculate value for UK for comparison (MOCK DATA)
     const ukTotal = Math.ceil(currentTotalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
-    
+  }, [currentTotalGBP]);
+
+  useEffect(() => {
     // Check if this is a promo code with a specific clinic ID
     console.log('Promo code clinic ID:', promoCodeClinicId);
     
@@ -672,10 +675,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Default: show all clinics only if no promo code is active
     console.log('No valid promo code active, showing all clinics');
     setFilteredClinics(allClinicsDataList);
-  }, [currentTotalGBP]);
 
-  // Load treatment package data if available
-  useEffect(() => {
+    // Load treatment package data if available (combined with clinic filtering)
     const appliedTreatmentPackage = sessionStorage.getItem('appliedTreatmentPackage');
     if (appliedTreatmentPackage) {
       try {
@@ -696,8 +697,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           // Replace existing treatments with package treatments
           setCurrentTreatments(packageTreatments);
           setCurrentTotalGBP(packageData.totalPrice);
+          setTreatmentDataKey(Date.now()); // Force re-render
           console.log('Updated treatment plan with package treatments:', packageTreatments);
           console.log('Updated total price to package price:', packageData.totalPrice);
+          console.log('Forced re-render with new key:', Date.now());
         }
       } catch (error) {
         console.error('Error loading treatment package data:', error);
@@ -706,7 +709,34 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   }, []);
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
-    // Get the price factor from the filtered clinics, with a fallback to default
+    // Check if this is a treatment package (fixed pricing)
+    const appliedTreatmentPackage = sessionStorage.getItem('appliedTreatmentPackage');
+    if (appliedTreatmentPackage) {
+      try {
+        const packageData = JSON.parse(appliedTreatmentPackage);
+        console.log('Using fixed package pricing for clinic:', clinicId);
+        
+        // For treatment packages, use fixed pricing from the package data
+        const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
+          const pricePerUnit = treatment.subtotalGBP / treatment.quantity;
+          
+          return {
+            treatmentName: treatment.name,
+            originalName: treatment.name,
+            quantity: treatment.quantity,
+            pricePerUnit: Math.round(pricePerUnit),
+            subtotal: treatment.subtotalGBP,
+            category: treatment.category
+          };
+        });
+        
+        return { clinicTreatments, totalPrice: packageData.totalPrice };
+      } catch (error) {
+        console.error('Error parsing package data:', error);
+      }
+    }
+    
+    // Regular clinic pricing (non-package)
     const clinic = filteredClinics && filteredClinics.length > 0 
       ? filteredClinics.find((c: any) => c.id === clinicId) 
       : null;
@@ -851,7 +881,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           const tierInfo = getTierLabel(clinic.tier);
           
           return (
-            <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
+            <Card key={`${clinic.id}-${treatmentDataKey}`} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
               <div className="border-b">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
