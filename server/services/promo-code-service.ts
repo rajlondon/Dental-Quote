@@ -175,42 +175,77 @@ export const promoCodeService = {
   async validateCode(code: string): Promise<ValidationResult> {
     // Normalize code to uppercase for case-insensitive comparison
     const normalizedCode = code.toUpperCase();
+    console.log('🔍 Validating promo code:', code, '-> normalized:', normalizedCode);
     
     try {
       // Check treatment package specific promo codes first
-      if (normalizedCode === 'HOLLYWOOD' || normalizedCode === 'HOLLYWOODSMILE' || 
-          normalizedCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
+      if (normalizedCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
         return {
           valid: true,
-          code: 'HOLLYWOOD',
+          code: 'PACKAGE_HOLLYWOOD-SMILE-VACATION',
           type: 'package',
-          discountType: 'percentage',
-          discountValue: 20,
-          title: 'Hollywood Smile Package - 20% Off'
+          title: 'Hollywood Smile Vacation Package',
+          packageId: 'hollywood-smile-vacation',
+          clinicId: 'maltepe-dental-clinic',
+          packageDetails: {
+            treatments: [
+              { name: 'Premium Porcelain Veneer', count: 10 },
+              { name: 'Teeth Whitening', count: 1 },
+              { name: 'Smile Design Consultation', count: 1 }
+            ],
+            totalPrice: 4250,
+            savings: 2800,
+            duration: '7 days',
+            hotel: 'Hilton Istanbul Bomonti',
+            includedServices: ['hotel', 'transfers', 'consultation', 'cityTour', 'excursions']
+          }
         };
       }
       
-      if (normalizedCode === 'IMPLANTCITY' || normalizedCode === 'DENTALIMPLANTCITY' ||
-          normalizedCode === 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE') {
+      if (normalizedCode === 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE') {
         return {
           valid: true,
-          code: 'IMPLANTCITY',
+          code: 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE',
           type: 'package',
-          discountType: 'fixed_amount',
-          discountValue: 500,
-          title: 'Dental Implant City Experience - £500 Off'
+          title: 'Dental Implant City Experience',
+          packageId: 'dental-implant-city-experience',
+          clinicId: 'istanbul-dental-center',
+          packageDetails: {
+            treatments: [
+              { name: 'Dental Implant', count: 6 },
+              { name: 'Dental Crown', count: 6 },
+              { name: 'Sinus Lift', count: 1 },
+              { name: 'Professional Cleaning', count: 1 }
+            ],
+            totalPrice: 3500,
+            savings: 2200,
+            duration: '10 days',
+            hotel: 'Swissotel The Bosphorus',
+            includedServices: ['hotel', 'transfers', 'consultation', 'aquarium', 'bosphorusCruise']
+          }
         };
       }
       
-      if (normalizedCode === 'VALUEVENEER' || normalizedCode === 'ISTANBULDISCOVERY' ||
-          normalizedCode === 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY') {
+      if (normalizedCode === 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY') {
         return {
           valid: true,
-          code: 'VALUEVENEER',
+          code: 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY',
           type: 'package',
-          discountType: 'percentage',
-          discountValue: 15,
-          title: 'Value Veneer Istanbul Discovery - 15% Off'
+          title: 'Value Veneer Istanbul Discovery',
+          packageId: 'value-veneer-istanbul-discovery',
+          clinicId: 'premium-dental-istanbul',
+          packageDetails: {
+            treatments: [
+              { name: 'Composite Veneer', count: 8 },
+              { name: 'Teeth Whitening', count: 1 },
+              { name: 'Dental Consultation', count: 1 }
+            ],
+            totalPrice: 2100,
+            savings: 900,
+            duration: '5 days',
+            hotel: 'Istanbul Marriott Hotel Sisli',
+            includedServices: ['hotel', 'transfers', 'consultation', 'cityTour']
+          }
         };
       }
       

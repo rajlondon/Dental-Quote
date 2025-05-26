@@ -88,7 +88,9 @@ promoCodeRouter.post('/validate', async (req: Request, res: Response) => {
       });
     }
 
+    console.log('🔍 API Route validating code:', code);
     const validationResult = await promoCodeService.validateCode(code);
+    console.log('✅ Validation result:', validationResult);
     
     return res.status(200).json({
       success: true,
