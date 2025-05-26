@@ -413,10 +413,50 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Load promo code from session storage on mount and auto-populate treatments
   useEffect(() => {
     const storedPromoCode = sessionStorage.getItem('pendingPromoCode');
+    const appliedTreatmentPackage = sessionStorage.getItem('appliedTreatmentPackage');
+    
     if (storedPromoCode) {
       setPromoCode(storedPromoCode);
-      
-      // Try to get discount info from session storage
+      setIsPromoValid(true);
+    }
+    
+    // Prioritize the new appliedTreatmentPackage format
+    if (appliedTreatmentPackage) {
+      try {
+        const packageData = JSON.parse(appliedTreatmentPackage);
+        console.log('Loading package treatments from appliedTreatmentPackage:', packageData);
+        
+        // Auto-populate treatments from package data immediately
+        if (packageData.treatments && Array.isArray(packageData.treatments) && packageData.treatments.length > 0) {
+          
+          const packageTreatments = packageData.treatments.map((treatment: any, index: number) => ({
+            id: `package-${index}-${Date.now()}`,
+            category: 'Package',
+            name: treatment.name,
+            quantity: treatment.count || treatment.quantity || 1,
+            priceGBP: Math.round(packageData.totalPrice / packageData.treatments.length), // Distribute price evenly
+            priceUSD: Math.round((packageData.totalPrice / packageData.treatments.length) * 1.28),
+            subtotalGBP: Math.round(packageData.totalPrice / packageData.treatments.length),
+            subtotalUSD: Math.round((packageData.totalPrice / packageData.treatments.length) * 1.28),
+            guarantee: "5-year Hollywood Smile warranty",
+            fromPackage: true
+          }));
+          
+          console.log('Setting package treatments:', packageTreatments);
+          setTreatments(packageTreatments);
+          
+          // Set discount information
+          if (packageData.savings) {
+            setDiscountAmount(packageData.savings);
+            setDiscountType('fixed_amount');
+            setAppliedPromoTitle(packageData.title || 'Treatment Package');
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing appliedTreatmentPackage:', error);
+      }
+    } else {
+      // Fallback to old format
       const packageData = sessionStorage.getItem('pendingPackageData');
       if (packageData) {
         try {
@@ -595,36 +635,49 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         </div>
       )}
       
-      {/* Promo Code Summary - shows when a promo code is active */}
-      {promoCode && (
+      {/* Treatment Package Status - shows when a package is auto-populated */}
+      {treatments.length > 0 && treatments.some(t => t.fromPackage) && (
+        <div className="mb-6 p-4 border rounded-md bg-blue-50 border-blue-200">
+          <div className="flex items-start">
+            <Sparkles className="h-5 w-5 text-blue-500 mt-0.5 mr-2" />
+            <div className="flex-1">
+              <h3 className="font-medium text-blue-800">
+                Treatment Package Applied: {appliedPromoTitle || 'Special Package'}
+              </h3>
+              <p className="text-sm text-blue-700 mt-1">
+                Promo Code: {promoCode} • £{totalGBP.toLocaleString()} Total Package Value
+              </p>
+              <div className="mt-2 text-sm text-blue-700">
+                ✓ Package treatments have been automatically added to your plan below.
+                <br />
+                ✓ You can add additional treatments if needed, or proceed to get matched with your clinic.
+              </div>
+              {discountAmount > 0 && (
+                <div className="mt-2 bg-blue-100 p-2 rounded text-xs text-blue-800">
+                  <strong>Savings:</strong> £{discountAmount.toLocaleString()} compared to individual treatment pricing
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Regular Promo Code Summary - shows for non-package promo codes */}
+      {promoCode && !treatments.some(t => t.fromPackage) && (
         <div className="mb-6 p-4 border rounded-md bg-green-50 border-green-200">
           <div className="flex items-start">
             <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 mr-2" />
             <div>
               <h3 className="font-medium text-green-800">
-                {appliedPromoTitle || 'Special Offer'} - FREE
+                {appliedPromoTitle || 'Special Offer'} Applied
               </h3>
               <p className="text-sm text-green-700 mt-1">
                 Promo Code: {promoCode}
               </p>
               {discountAmount > 0 && (
                 <p className="text-sm text-green-700 mt-1">
-                  Discount Value: £{discountAmount} {discountType === 'percentage' && `(${discountAmount}% off)`}
+                  Discount: £{discountAmount} {discountType === 'percentage' && `(${discountAmount}% off)`}
                 </p>
-              )}
-              
-              {/* If it's a package code from storage, show that info */}
-              {sessionStorage.getItem('pendingPackageData') && (
-                <div className="mt-2">
-                  <div className="text-sm text-green-700">
-                    This is a special treatment package that includes multiple treatments.
-                  </div>
-                  {treatments.length > 0 && treatments.some(t => t.fromPackage) && (
-                    <div className="mt-1 text-xs text-green-800">
-                      Package treatments have been auto-populated above.
-                    </div>
-                  )}
-                </div>
               )}
             </div>
           </div>
