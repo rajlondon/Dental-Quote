@@ -19,7 +19,7 @@ const SimpleNavbar: React.FC = () => {
             <img 
               src="/images/mydentalfly-logo.png" 
               alt="MyDentalFly Logo" 
-              className="h-14 w-auto shadow-sm border border-gray-100 rounded-md p-1"
+              className="h-20 md:h-24 w-auto shadow-lg border border-gray-200 rounded-lg p-2 hover:shadow-xl transition-shadow duration-300"
             />
           </a>
         </div>
