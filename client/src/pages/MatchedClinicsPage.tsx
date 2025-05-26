@@ -632,9 +632,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         return;
       }
     }
-    
-    // Other specific promo codes
-    if (pendingPromoCode === 'IMPLANT2023') {
+    else if (pendingPromoCode === 'IMPLANT2023') {
       console.log('IMPLANT2023 detected: Filtering to show only DentSpa clinic');
       const dentSpaClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
       if (dentSpaClinic) {
@@ -642,7 +640,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         console.log('✅ Successfully filtered to only show DentSpa clinic');
         return;
       }
-    } 
+    }
     else if (pendingPromoCode === 'SMILE2023') {
       console.log('SMILE2023 detected: Filtering to show only Beyaz Ada clinic');
       const beyazAdaClinic = allClinicsDataList.find(clinic => clinic.id === 'beyazada');
