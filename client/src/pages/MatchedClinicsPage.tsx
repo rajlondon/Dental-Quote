@@ -80,6 +80,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const [selectedTab, setSelectedTab] = useState<string>('default');
   const [selectedView, setSelectedView] = useState<'list' | 'grid'>('list');
+  const [currentTreatments, setCurrentTreatments] = useState<TreatmentItem[]>(treatmentItems);
+  const [currentTotalGBP, setCurrentTotalGBP] = useState<number>(totalGBP);
   const { toast } = useToast();
   
   // New function to handle direct PDF download
@@ -116,8 +118,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           subtotalUSD: Math.round(item.subtotalGBP * 1.25), // Rough GBP to USD conversion
           guarantee: "2-5 years"
         })),
-        totalGBP: totalGBP,
-        totalUSD: Math.round(totalGBP * 1.25), // Rough GBP to USD conversion
+        totalGBP: currentTotalGBP,
+        totalUSD: Math.round(currentTotalGBP * 1.25), // Rough GBP to USD conversion
         patientName: patientInfo?.fullName || "",
         patientEmail: patientInfo?.email || "",
         patientPhone: patientInfo?.phone || "",
@@ -173,8 +175,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   };
   
-  // Mock data for clinics
-  const treatmentPlan = treatmentItems;
+  // Use current treatments (either from props or treatment package)
+  const treatmentPlan = currentTreatments;
   
   // Get promo code information from session storage if available
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
@@ -183,7 +185,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   
   useEffect(() => {
     // Calculate value for UK for comparison (MOCK DATA)
-    const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
+    const ukTotal = Math.ceil(currentTotalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
     
     // Check if this is a promo code with a specific clinic ID
@@ -670,7 +672,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Default: show all clinics only if no promo code is active
     console.log('No valid promo code active, showing all clinics');
     setFilteredClinics(allClinicsDataList);
-  }, []);
+  }, [currentTotalGBP]);
 
   // Load treatment package data if available
   useEffect(() => {
@@ -692,8 +694,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         // Update the treatment plan with package treatments
         if (packageTreatments.length > 0) {
           // Replace existing treatments with package treatments
-          treatmentItems.splice(0, treatmentItems.length, ...packageTreatments);
+          setCurrentTreatments(packageTreatments);
+          setCurrentTotalGBP(packageData.totalPrice);
           console.log('Updated treatment plan with package treatments:', packageTreatments);
+          console.log('Updated total price to package price:', packageData.totalPrice);
         }
       } catch (error) {
         console.error('Error loading treatment package data:', error);
