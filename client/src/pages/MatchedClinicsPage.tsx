@@ -625,8 +625,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Treatment Package promo codes - these should filter to specific clinics
     if (pendingPromoCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
       console.log('PACKAGE_HOLLYWOOD-SMILE-VACATION detected: Filtering to show only Maltepe Dental Clinic');
-      console.log('Available clinic IDs:', allClinicsDataList.map(c => c.id));
-      const maltepeClinic = allClinicsDataList.find(clinic => clinic.id === 'maltepe');
+      console.log('Available clinic IDs:', allClinics.map(c => c.id));
+      const maltepeClinic = allClinics.find(clinic => clinic.id === 'maltepe');
       console.log('Found Maltepe clinic:', maltepeClinic);
       if (maltepeClinic) {
         setFilteredClinics([maltepeClinic]);
