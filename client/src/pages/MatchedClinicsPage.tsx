@@ -638,8 +638,30 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         console.log('✅ Successfully filtered to only show Maltepe Dental Clinic for Hollywood Smile package');
         return;
       } else {
-        console.log('❌ Maltepe clinic not found in clinic list');
-        // Still filter to prevent showing all clinics
+        console.log('❌ Maltepe clinic not found in allClinics, checking allClinicsDataList');
+        // Fallback to check in allClinicsDataList
+        const maltepeInDataList = allClinicsDataList.find(clinic => clinic.id === 'maltepe');
+        if (maltepeInDataList) {
+          setFilteredClinics([maltepeInDataList]);
+          console.log('✅ Found and filtered to Maltepe from allClinicsDataList');
+          return;
+        }
+        // If still not found, try partial matching
+        const maltepePartialMatch = allClinics.find(clinic => 
+          clinic.name.toLowerCase().includes('maltepe') || 
+          clinic.id.includes('maltepe')
+        ) || allClinicsDataList.find(clinic => 
+          clinic.name.toLowerCase().includes('maltepe') || 
+          clinic.id.includes('maltepe')
+        );
+        
+        if (maltepePartialMatch) {
+          setFilteredClinics([maltepePartialMatch]);
+          console.log('✅ Found Maltepe clinic via partial matching');
+          return;
+        }
+        
+        console.log('❌ No Maltepe clinic found anywhere');
         setFilteredClinics([]);
         return;
       }
