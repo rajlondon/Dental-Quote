@@ -625,10 +625,17 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Treatment Package promo codes - these should filter to specific clinics
     if (pendingPromoCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
       console.log('PACKAGE_HOLLYWOOD-SMILE-VACATION detected: Filtering to show only Maltepe Dental Clinic');
+      console.log('Available clinic IDs:', allClinicsDataList.map(c => c.id));
       const maltepeClinic = allClinicsDataList.find(clinic => clinic.id === 'maltepe');
+      console.log('Found Maltepe clinic:', maltepeClinic);
       if (maltepeClinic) {
         setFilteredClinics([maltepeClinic]);
         console.log('✅ Successfully filtered to only show Maltepe Dental Clinic for Hollywood Smile package');
+        return;
+      } else {
+        console.log('❌ Maltepe clinic not found in clinic list');
+        // Still filter to prevent showing all clinics
+        setFilteredClinics([]);
         return;
       }
     }
