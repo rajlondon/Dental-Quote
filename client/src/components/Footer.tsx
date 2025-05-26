@@ -14,7 +14,7 @@ const Footer: React.FC = () => {
                   <img 
                     src="/images/my-dental-fly-logo.png" 
                     alt="MyDentalFly Logo" 
-                    className="h-10 w-auto"
+                    className="h-16 md:h-20 w-auto shadow-lg border border-blue-700 rounded-lg p-3 bg-white/10 backdrop-blur-sm hover:shadow-xl hover:bg-white/20 transition-all duration-300"
                   />
                 </div>
               </Link>
