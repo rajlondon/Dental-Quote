@@ -120,16 +120,30 @@ export function PromoCodeInput({
         
         // For treatment packages, store the complete package details
         if (result.type === 'package' && result.packageDetails) {
+          // Map clinic IDs to match the filtering system
+          const clinicIdMapping = {
+            'maltepe-dental-clinic': 'maltepe',
+            'istanbul-dental-center': 'dentspa', 
+            'dental-harmony-clinic': 'dentalharmony'
+          };
+          
+          const mappedClinicId = clinicIdMapping[result.clinicId] || result.clinicId;
+          
           sessionStorage.setItem('appliedTreatmentPackage', JSON.stringify({
             packageId: result.packageId,
             clinicId: result.clinicId,
+            mappedClinicId: mappedClinicId, // Add mapped ID for filtering
             treatments: result.packageDetails.treatments,
             totalPrice: result.packageDetails.totalPrice,
             savings: result.packageDetails.savings,
             hotel: result.packageDetails.hotel,
-            includedServices: result.packageDetails.includedServices
+            includedServices: result.packageDetails.includedServices,
+            title: result.title
           }));
-          console.log('Stored treatment package details for quote population');
+          
+          // Store the mapped clinic ID separately for easy filtering access
+          sessionStorage.setItem('pendingPromoCodeClinicId', mappedClinicId);
+          console.log('Stored treatment package details with mapped clinic ID:', mappedClinicId);
         }
         
         setAppliedPromo(promoData);
