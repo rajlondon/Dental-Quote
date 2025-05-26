@@ -672,6 +672,35 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     setFilteredClinics(allClinicsDataList);
   }, []);
 
+  // Load treatment package data if available
+  useEffect(() => {
+    const appliedTreatmentPackage = sessionStorage.getItem('appliedTreatmentPackage');
+    if (appliedTreatmentPackage) {
+      try {
+        const packageData = JSON.parse(appliedTreatmentPackage);
+        console.log('Loading treatment package data:', packageData);
+        
+        // Create treatment items from package data
+        const packageTreatments = packageData.treatments.map((treatment: any, index: number) => ({
+          id: `package-${index}`,
+          name: treatment.name,
+          quantity: treatment.count,
+          subtotalGBP: Math.round(packageData.totalPrice / packageData.treatments.length), // Distribute price evenly
+          category: 'cosmetic'
+        }));
+        
+        // Update the treatment plan with package treatments
+        if (packageTreatments.length > 0) {
+          // Replace existing treatments with package treatments
+          treatmentItems.splice(0, treatmentItems.length, ...packageTreatments);
+          console.log('Updated treatment plan with package treatments:', packageTreatments);
+        }
+      } catch (error) {
+        console.error('Error loading treatment package data:', error);
+      }
+    }
+  }, []);
+
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
     const clinic = filteredClinics && filteredClinics.length > 0 
