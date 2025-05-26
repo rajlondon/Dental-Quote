@@ -683,14 +683,24 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         const packageData = JSON.parse(appliedTreatmentPackage);
         console.log('Loading treatment package data:', packageData);
         
-        // Create treatment items from package data
-        const packageTreatments = packageData.treatments.map((treatment: any, index: number) => ({
-          id: `package-${index}`,
-          name: treatment.name,
-          quantity: treatment.count,
-          subtotalGBP: Math.round(packageData.totalPrice / packageData.treatments.length), // Distribute price evenly
-          category: 'cosmetic'
-        }));
+        // Create treatment items from package data with authentic pricing
+        const treatmentPricing = {
+          'Premium Porcelain Veneer': 3400, // £340 per veneer x 10 = £3400
+          'Teeth Whitening': 450,
+          'Smile Design Consultation': 400
+        };
+        
+        const packageTreatments = packageData.treatments.map((treatment: any, index: number) => {
+          const individualPrice = treatmentPricing[treatment.name] || Math.round(packageData.totalPrice / packageData.treatments.length);
+          
+          return {
+            id: `package-${index}`,
+            name: treatment.name,
+            quantity: treatment.count,
+            subtotalGBP: individualPrice,
+            category: 'cosmetic'
+          };
+        });
         
         // Update the treatment plan with package treatments
         if (packageTreatments.length > 0) {
@@ -826,19 +836,79 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </div>
           </div>
           
-          <Button 
-            variant="outline"
-            className="flex items-center" 
-            onClick={() => {
-              toast({
-                title: "Quote Details Available in Portal",
-                description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
-              });
-            }}
-          >
-            <FileCheck className="mr-2 h-4 w-4" />
-            View Quote in Portal
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              className="flex items-center" 
+              onClick={() => {
+                toast({
+                  title: "Quote Details Available in Portal",
+                  description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
+                });
+              }}
+            >
+              <FileCheck className="mr-2 h-4 w-4" />
+              View Quote in Portal
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="flex items-center bg-red-50 border-red-200" 
+              onClick={() => {
+                const packageData = sessionStorage.getItem('appliedTreatmentPackage');
+                console.log('DEBUG: Current treatments state:', currentTreatments);
+                console.log('DEBUG: Applied package data:', packageData);
+                console.log('DEBUG: Filtered clinics:', filteredClinics);
+                console.log('DEBUG: Treatment data key:', treatmentDataKey);
+                
+                // Force refresh the treatment data
+                if (packageData) {
+                  try {
+                    const parsed = JSON.parse(packageData);
+                    const treatmentPricing = {
+                      'Premium Porcelain Veneer': 3400,
+                      'Teeth Whitening': 450,
+                      'Smile Design Consultation': 400
+                    };
+                    
+                    const newTreatments = parsed.treatments.map((treatment: any, index: number) => {
+                      const individualPrice = treatmentPricing[treatment.name] || 1417;
+                      return {
+                        id: `package-${index}`,
+                        name: treatment.name,
+                        quantity: treatment.count,
+                        subtotalGBP: individualPrice,
+                        category: 'cosmetic'
+                      };
+                    });
+                    
+                    setCurrentTreatments(newTreatments);
+                    setCurrentTotalGBP(parsed.totalPrice);
+                    setTreatmentDataKey(Date.now());
+                    
+                    toast({
+                      title: "Treatment Data Refreshed",
+                      description: `Updated with ${newTreatments.length} package treatments`,
+                    });
+                  } catch (error) {
+                    toast({
+                      title: "Debug Error",
+                      description: "Failed to refresh treatment data",
+                      variant: "destructive"
+                    });
+                  }
+                } else {
+                  toast({
+                    title: "No Package Data",
+                    description: "No treatment package found in session storage",
+                    variant: "destructive"
+                  });
+                }
+              }}
+            >
+              🔄 Debug Refresh
+            </Button>
+          </div>
         </div>
       </div>
     
@@ -877,7 +947,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       {/* Clinic Comparison */}
       <div className="space-y-8">
         {filteredClinics.map((clinic: any) => {
+          console.log('Rendering clinic card for:', clinic.id);
+          console.log('Current treatments being used:', currentTreatments);
           const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, currentTreatments);
+          console.log('Clinic treatments calculated:', clinicTreatments);
+          console.log('Total price calculated:', totalPrice);
           const tierInfo = getTierLabel(clinic.tier);
           
           return (
