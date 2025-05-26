@@ -108,13 +108,28 @@ export function PromoCodeInput({
           'LUXTRAVEL': '4',     // LUXTRAVEL promo -> DentSpa clinic
           'IMPLANT2023': 'dentspa',
           'SMILE2023': 'beyazada',
-          'FULLMOUTH2023': 'dentalharmony'
+          'FULLMOUTH2023': 'dentalharmony',
+          'PACKAGE_HOLLYWOOD-SMILE-VACATION': 'maltepe'  // Hollywood Smile package -> Maltepe clinic
         };
         
         const clinicId = promoCodeToClinicMap[result.code] || '';
         if (clinicId) {
           sessionStorage.setItem('pendingPromoCodeClinicId', clinicId);
           console.log('Stored promo code clinic mapping:', result.code, '->', clinicId);
+        }
+        
+        // For treatment packages, store the complete package details
+        if (result.type === 'package' && result.packageDetails) {
+          sessionStorage.setItem('appliedTreatmentPackage', JSON.stringify({
+            packageId: result.packageId,
+            clinicId: result.clinicId,
+            treatments: result.packageDetails.treatments,
+            totalPrice: result.packageDetails.totalPrice,
+            savings: result.packageDetails.savings,
+            hotel: result.packageDetails.hotel,
+            includedServices: result.packageDetails.includedServices
+          }));
+          console.log('Stored treatment package details for quote population');
         }
         
         setAppliedPromo(promoData);
