@@ -609,93 +609,62 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   ];
   
-  // Completely overhauled clinic filtering logic to guarantee only one clinic is shown for promo codes
+  // Universal clinic filtering logic for ALL promo code types
   useEffect(() => {
-    // Get the promo code from session storage
+    // Get the promo code and clinic mapping from session storage
     const pendingPromoCode = window.sessionStorage.getItem('pendingPromoCode');
+    const promoCodeClinicId = window.sessionStorage.getItem('pendingPromoCodeClinicId');
     
     console.log('Filtering clinics based on promo code:', pendingPromoCode);
+    console.log('Target clinic ID:', promoCodeClinicId);
     
-    // LUXTRAVEL promo code gets highest priority - must show only DentSpa
+    // If we have a specific clinic ID from the promo code, filter to that clinic only
+    if (promoCodeClinicId) {
+      console.log('🎯 Promo code specifies clinic ID:', promoCodeClinicId);
+      
+      // Try to find the clinic in allClinics first
+      let targetClinic = allClinics.find(clinic => clinic.id === promoCodeClinicId);
+      
+      // If not found, try allClinicsDataList
+      if (!targetClinic) {
+        targetClinic = allClinicsDataList.find(clinic => clinic.id === promoCodeClinicId);
+      }
+      
+      // If still not found, try partial matching
+      if (!targetClinic) {
+        targetClinic = allClinics.find(clinic => 
+          clinic.name.toLowerCase().includes(promoCodeClinicId.toLowerCase()) || 
+          clinic.id.includes(promoCodeClinicId)
+        ) || allClinicsDataList.find(clinic => 
+          clinic.name.toLowerCase().includes(promoCodeClinicId.toLowerCase()) || 
+          clinic.id.includes(promoCodeClinicId)
+        );
+      }
+      
+      if (targetClinic) {
+        setFilteredClinics([targetClinic]);
+        console.log('✅ Successfully filtered to clinic:', targetClinic.name, '(ID:', targetClinic.id, ')');
+        return;
+      } else {
+        console.log('❌ Target clinic not found for ID:', promoCodeClinicId);
+        setFilteredClinics([]); // Show no clinics if target clinic not found
+        return;
+      }
+    }
+    
+    // Legacy specific promo code handling (for codes without clinic mapping)
     if (pendingPromoCode === 'LUXTRAVEL') {
       console.log('LUXTRAVEL detected: Filtering to show ONLY DentSpa clinic');
       const luxuryClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
       if (luxuryClinic) {
         setFilteredClinics([luxuryClinic]);
         console.log('✅ Successfully filtered to only show DentSpa clinic for LUXTRAVEL promo');
-        return; // Exit immediately
-      }
-    }
-    
-    // Treatment Package promo codes - these should filter to specific clinics
-    if (pendingPromoCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
-      console.log('PACKAGE_HOLLYWOOD-SMILE-VACATION detected: Filtering to show only Maltepe Dental Clinic');
-      console.log('Available clinic IDs:', allClinics.map(c => c.id));
-      const maltepeClinic = allClinics.find(clinic => clinic.id === 'maltepe');
-      console.log('Found Maltepe clinic:', maltepeClinic);
-      if (maltepeClinic) {
-        setFilteredClinics([maltepeClinic]);
-        console.log('✅ Successfully filtered to only show Maltepe Dental Clinic for Hollywood Smile package');
-        return;
-      } else {
-        console.log('❌ Maltepe clinic not found in allClinics, checking allClinicsDataList');
-        // Fallback to check in allClinicsDataList
-        const maltepeInDataList = allClinicsDataList.find(clinic => clinic.id === 'maltepe');
-        if (maltepeInDataList) {
-          setFilteredClinics([maltepeInDataList]);
-          console.log('✅ Found and filtered to Maltepe from allClinicsDataList');
-          return;
-        }
-        // If still not found, try partial matching
-        const maltepePartialMatch = allClinics.find(clinic => 
-          clinic.name.toLowerCase().includes('maltepe') || 
-          clinic.id.includes('maltepe')
-        ) || allClinicsDataList.find(clinic => 
-          clinic.name.toLowerCase().includes('maltepe') || 
-          clinic.id.includes('maltepe')
-        );
-        
-        if (maltepePartialMatch) {
-          setFilteredClinics([maltepePartialMatch]);
-          console.log('✅ Found Maltepe clinic via partial matching');
-          return;
-        }
-        
-        console.log('❌ No Maltepe clinic found anywhere');
-        setFilteredClinics([]);
-        return;
-      }
-    }
-    else if (pendingPromoCode === 'IMPLANT2023') {
-      console.log('IMPLANT2023 detected: Filtering to show only DentSpa clinic');
-      const dentSpaClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
-      if (dentSpaClinic) {
-        setFilteredClinics([dentSpaClinic]);
-        console.log('✅ Successfully filtered to only show DentSpa clinic');
-        return;
-      }
-    }
-    else if (pendingPromoCode === 'SMILE2023') {
-      console.log('SMILE2023 detected: Filtering to show only Beyaz Ada clinic');
-      const beyazAdaClinic = allClinicsDataList.find(clinic => clinic.id === 'beyazada');
-      if (beyazAdaClinic) {
-        setFilteredClinics([beyazAdaClinic]);
-        console.log('✅ Successfully filtered to only show Beyaz Ada clinic');
-        return;
-      }
-    }
-    else if (pendingPromoCode === 'FULLMOUTH2023') {
-      console.log('FULLMOUTH2023 detected: Filtering to show only Dental Harmony clinic');
-      const dentalHarmonyClinic = allClinicsDataList.find(clinic => clinic.id === 'dentalharmony');
-      if (dentalHarmonyClinic) {
-        setFilteredClinics([dentalHarmonyClinic]);
-        console.log('✅ Successfully filtered to only show Dental Harmony clinic');
         return;
       }
     }
     
     // Default: show all clinics only if no promo code is active
-    console.log('No valid promo code active, showing all clinics');
+    console.log('No specific clinic filtering needed, showing all clinics');
     setFilteredClinics(allClinicsDataList);
 
     // Load treatment package data if available (combined with clinic filtering)

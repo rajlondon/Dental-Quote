@@ -118,21 +118,32 @@ export function PromoCodeInput({
           console.log('Stored promo code clinic mapping:', result.code, '->', clinicId);
         }
         
+        // Universal clinic ID mapping for all promo types
+        const clinicIdMapping = {
+          'maltepe-dental-clinic': 'maltepe',
+          'istanbul-dental-center': 'dentspa', 
+          'dental-harmony-clinic': 'dentalharmony',
+          'beyaz-ada-clinic': 'beyazada',
+          'smile-designers-clinic': 'smiledesigners',
+          'premium-dental-center': 'dentspa', // Map premium offers to DentSpa
+          'luxury-dental-clinic': 'dentspa'    // Map luxury offers to DentSpa
+        };
+
+        // For ALL promo code types, store clinic mapping for consistent filtering
+        if (result.clinicId) {
+          const mappedClinicId = clinicIdMapping[result.clinicId] || result.clinicId;
+          sessionStorage.setItem('pendingPromoCodeClinicId', mappedClinicId);
+          console.log('Stored promo code clinic mapping:', result.code, '->', mappedClinicId);
+        }
+
         // For treatment packages, store the complete package details
         if (result.type === 'package' && result.packageDetails) {
-          // Map clinic IDs to match the filtering system
-          const clinicIdMapping = {
-            'maltepe-dental-clinic': 'maltepe',
-            'istanbul-dental-center': 'dentspa', 
-            'dental-harmony-clinic': 'dentalharmony'
-          };
-          
           const mappedClinicId = clinicIdMapping[result.clinicId] || result.clinicId;
           
           sessionStorage.setItem('appliedTreatmentPackage', JSON.stringify({
             packageId: result.packageId,
             clinicId: result.clinicId,
-            mappedClinicId: mappedClinicId, // Add mapped ID for filtering
+            mappedClinicId: mappedClinicId,
             treatments: result.packageDetails.treatments,
             totalPrice: result.packageDetails.totalPrice,
             savings: result.packageDetails.savings,
@@ -141,9 +152,42 @@ export function PromoCodeInput({
             title: result.title
           }));
           
-          // Store the mapped clinic ID separately for easy filtering access
-          sessionStorage.setItem('pendingPromoCodeClinicId', mappedClinicId);
           console.log('Stored treatment package details with mapped clinic ID:', mappedClinicId);
+        }
+
+        // For special offers, store offer details for clinic display
+        if (result.type === 'special_offer' && result.offerDetails) {
+          const mappedClinicId = clinicIdMapping[result.clinicId] || result.clinicId;
+          
+          sessionStorage.setItem('appliedSpecialOffer', JSON.stringify({
+            offerId: result.offerId,
+            clinicId: result.clinicId,
+            mappedClinicId: mappedClinicId,
+            title: result.title,
+            discountType: result.discountType,
+            discountValue: result.discountValue,
+            description: result.offerDetails.description,
+            validUntil: result.offerDetails.validUntil
+          }));
+          
+          console.log('Stored special offer details with mapped clinic ID:', mappedClinicId);
+        }
+
+        // For email/campaign offers, store campaign details  
+        if (result.type === 'email_offer' || result.type === 'campaign') {
+          const mappedClinicId = clinicIdMapping[result.clinicId] || result.clinicId;
+          
+          sessionStorage.setItem('appliedCampaignOffer', JSON.stringify({
+            campaignId: result.campaignId || result.offerId,
+            clinicId: result.clinicId,
+            mappedClinicId: mappedClinicId,
+            title: result.title,
+            discountType: result.discountType,
+            discountValue: result.discountValue,
+            source: result.type
+          }));
+          
+          console.log('Stored campaign offer details with mapped clinic ID:', mappedClinicId);
         }
         
         setAppliedPromo(promoData);
