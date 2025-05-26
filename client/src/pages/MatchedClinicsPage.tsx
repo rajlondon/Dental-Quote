@@ -744,8 +744,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   };
   
-  // Calculate UK total
-  const ukTotal = treatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
+  // Calculate UK total using current treatments
+  const ukTotal = currentTreatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   
   // Extract promo code information from session storage
   const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
@@ -847,7 +847,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       {/* Clinic Comparison */}
       <div className="space-y-8">
         {filteredClinics.map((clinic: any) => {
-          const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
+          const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, currentTreatments);
           const tierInfo = getTierLabel(clinic.tier);
           
           return (
