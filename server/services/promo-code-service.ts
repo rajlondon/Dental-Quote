@@ -277,6 +277,77 @@ export const promoCodeService = {
         }
       }
       
+      // Treatment Package specific promo codes - Full vacation packages with treatments
+      if (normalizedCode === 'PACKAGE_HOLLYWOOD-SMILE-VACATION') {
+        return {
+          valid: true,
+          code: 'PACKAGE_HOLLYWOOD-SMILE-VACATION',
+          type: 'package',
+          title: 'Hollywood Smile Vacation Package',
+          packageId: 'hollywood-smile-vacation',
+          clinicId: 'maltepe-dental-clinic',
+          packageDetails: {
+            treatments: [
+              { name: 'Premium Porcelain Veneer', count: 10 },
+              { name: 'Teeth Whitening', count: 1 },
+              { name: 'Smile Design Consultation', count: 1 }
+            ],
+            totalPrice: 4250,
+            savings: 2800,
+            duration: '7 days',
+            hotel: 'Hilton Istanbul Bomonti',
+            includedServices: ['hotel', 'transfers', 'consultation', 'cityTour', 'excursions']
+          }
+        };
+      }
+      
+      if (normalizedCode === 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE') {
+        return {
+          valid: true,
+          code: 'PACKAGE_DENTAL-IMPLANT-CITY-EXPERIENCE',
+          type: 'package',
+          title: 'Dental Implant City Experience',
+          packageId: 'dental-implant-city-experience',
+          clinicId: 'istanbul-dental-center',
+          packageDetails: {
+            treatments: [
+              { name: 'Dental Implant', count: 6 },
+              { name: 'Dental Crown', count: 6 },
+              { name: 'Sinus Lift', count: 1 },
+              { name: 'Professional Cleaning', count: 1 }
+            ],
+            totalPrice: 3500,
+            savings: 2200,
+            duration: '10 days',
+            hotel: 'Swissotel The Bosphorus',
+            includedServices: ['hotel', 'transfers', 'consultation', 'aquarium', 'bosphorusCruise']
+          }
+        };
+      }
+      
+      if (normalizedCode === 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY') {
+        return {
+          valid: true,
+          code: 'PACKAGE_VALUE-VENEER-ISTANBUL-DISCOVERY',
+          type: 'package',
+          title: 'Value Veneer Istanbul Discovery',
+          packageId: 'value-veneer-istanbul-discovery',
+          clinicId: 'premium-dental-istanbul',
+          packageDetails: {
+            treatments: [
+              { name: 'Composite Veneer', count: 8 },
+              { name: 'Teeth Whitening', count: 1 },
+              { name: 'Dental Consultation', count: 1 }
+            ],
+            totalPrice: 2100,
+            savings: 900,
+            duration: '5 days',
+            hotel: 'Istanbul Marriott Hotel Sisli',
+            includedServices: ['hotel', 'transfers', 'consultation', 'cityTour']
+          }
+        };
+      }
+
       // Hard-coded test promo codes
       if (normalizedCode === 'TEST50') {
         return {
