@@ -1,0 +1,1127 @@
+Core Concept Overview
+Your approach combines several effective strategies:
+
+Review-first approach - Ensures quality control and collects valuable testimonials
+Reward system - Incentivizes patients to refer others
+Multi-channel distribution - Leverages social media for wider reach
+System Architecture
+Data Models
+First, let's define the necessary data models:
+
+
+Copy
+// Prisma schema models
+
+model Referral {
+  id             String    @id @default(cuid())
+  referralCode   String    @unique // Unique code per referral
+  referrerId     String    // Patient who made the referral
+  referrer       Patient   @relation("ReferrerRelation", fields: [referrerId], references: [id])
+  referredEmail  String    // Email of person being referred
+  referredName   String?   // Name of person being referred
+  status         String    @default("PENDING") // PENDING, REGISTERED, CONVERTED
+  message        String?   // Personal message
+  rewardAmount   Float     // Amount to reward
+  rewardClaimed  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Review {
+  id           String    @id @default(cuid())
+  patientId    String
+  patient      Patient   @relation(fields: [patientId], references: [id])
+  rating       Int       // 1-5 stars
+  title        String?
+  content      String
+  isPublic     Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+// Add to existing Patient model
+model Patient {
+  // existing fields
+  reviews         Review[]
+  referralsGiven  Referral[]  @relation("ReferrerRelation")
+  referralCode    String?     @unique // Their personal referral code
+  referralBalance Float       @default(0) // Total reward balance
+}
+Patient Flow Components
+1. Review Component
+Create a review form that patients must complete before accessing the referral system:
+
+
+Copy
+// components/patient/ReviewForm.jsx
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import StarRating from '../ui/StarRating';
+
+export default function ReviewForm({ onReviewSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    defaultValues: {
+      title: '',
+      content: '',
+      isPublic: true
+    }
+  });
+  
+  const onSubmit = async (data) => {
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    
+    try {
+      setIsSubmitting(true);
+      
+      await axios.post('/api/patient/reviews', {
+        ...data,
+        rating
+      });
+      
+      toast.success('Thank you for your review!');
+      
+      if (onReviewSubmitted) {
+        onReviewSubmitted();
+      }
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error('Failed to submit your review. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Share Your Experience</h2>
+      <p className="text-gray-600 mb-6">
+        Before referring others, please share your experience with us. Your feedback helps us improve and helps others make informed decisions.
+      </p>
+      
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Your Rating</label>
+          <StarRating 
+            rating={rating} 
+            onChange={setRating} 
+            size="large"
+          />
+          {rating === 0 && <p className="text-red-500 text-sm mt-1">Please select a rating</p>}
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Review Title</label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded"
+            placeholder="Summarize your experience"
+            {...register('title')}
+          />
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Your Review</label>
+          <textarea
+            className="w-full p-2 border rounded"
+            rows="4"
+            placeholder="Tell us about your experience with our dental services..."
+            {...register('content', { required: 'Please share your experience' })}
+          ></textarea>
+          {errors.content && <p className="text-red-500 text-sm mt-1">{errors.content.message}</p>}
+        </div>
+        
+        <div className="mb-4">
+          <label className="flex items-center">
+            <input 
+              type="checkbox" 
+              className="mr-2"
+              {...register('isPublic')}
+            />
+            <span className="text-sm text-gray-600">
+              I allow my review to be shared publicly (your name will not be displayed)
+            </span>
+          </label>
+        </div>
+        
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Submitting...' : 'Submit Review'}
+        </button>
+      </form>
+    </div>
+  );
+}
+2. Referral Form Component
+Create a form for patients to refer others:
+
+
+Copy
+// components/patient/ReferralForm.jsx
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+
+export default function ReferralForm() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
+    defaultValues: {
+      name: '',
+      email: '',
+      message: ''
+    }
+  });
+  
+  const onSubmit = async (data) => {
+    try {
+      setIsSubmitting(true);
+      
+      await axios.post('/api/patient/referrals', data);
+      
+      toast.success('Referral sent successfully!');
+      setShowSuccess(true);
+      reset();
+    } catch (error) {
+      console.error('Error sending referral:', error);
+      toast.error('Failed to send referral. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  if (showSuccess) {
+    return (
+      <div className="bg-green-50 border border-green-200 p-6 rounded-lg text-center">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          </svg>
+        </div>
+        <h3 className="text-lg font-bold text-green-800 mb-2">Referral Sent!</h3>
+        <p className="text-green-700 mb-4">
+          Your friend will receive an email with information about our dental services.
+        </p>
+        <button
+          onClick={() => setShowSuccess(false)}
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+        >
+          Refer Another Friend
+        </button>
+      </div>
+    );
+  }
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Refer a Friend</h2>
+      <p className="text-gray-600 mb-6">
+        Know someone who might benefit from our dental services? Refer them and earn rewards when they book a treatment!
+      </p>
+      
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Friend's Name</label>
+          <input
+            type="text"
+            className="w-full p-2 border rounded"
+            placeholder="Enter your friend's name"
+            {...register('name', { required: 'Name is required' })}
+          />
+          {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>}
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Friend's Email</label>
+          <input
+            type="email"
+            className="w-full p-2 border rounded"
+            placeholder="Enter your friend's email"
+            {...register('email', { 
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address'
+              }
+            })}
+          />
+          {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
+        </div>
+        
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Personal Message (Optional)</label>
+          <textarea
+            className="w-full p-2 border rounded"
+            rows="3"
+            placeholder="Add a personal message to your friend"
+            {...register('message')}
+          ></textarea>
+        </div>
+        
+        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6">
+          <h3 className="font-medium text-blue-800 mb-2">How It Works</h3>
+          <ul className="text-sm text-blue-700 space-y-1">
+            <li>• Your friend will receive an invitation email with your personal message</li>
+            <li>• When they register and book a treatment, you'll receive a £50 reward</li>
+            <li>• Your reward can be used toward your next treatment or follow-up care</li>
+          </ul>
+        </div>
+        
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-blue-300"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Sending...' : 'Send Referral'}
+        </button>
+      </form>
+    </div>
+  );
+}
+3. Social Sharing Component
+Create a component for sharing on social media:
+
+
+Copy
+// components/patient/SocialShare.jsx
+import React from 'react';
+import { FaTwitter, FaFacebook, FaWhatsapp, FaEnvelope, FaLink } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+
+export default function SocialShare({ referralCode, patientName }) {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+  const referralUrl = `${baseUrl}/register?ref=${referralCode}`;
+  
+  const shareText = `I had a great dental treatment experience in Turkey. Check it out and save on your dental care: ${referralUrl}`;
+  
+  const shareOnTwitter = () => {
+    const url = `[https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;](https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;)
+    window.open(url, '_blank');
+  };
+  
+  const shareOnFacebook = () => {
+    const url = `[https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralUrl)}`;](https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(referralUrl)}`;)
+    window.open(url, '_blank');
+  };
+  
+  const shareOnWhatsapp = () => {
+    const url = `[https://wa.me/?text=${encodeURIComponent(shareText)}`;](https://wa.me/?text=${encodeURIComponent(shareText)}`;)
+    window.open(url, '_blank');
+  };
+  
+  const shareByEmail = () => {
+    const subject = 'Quality Dental Treatment in Turkey';
+    const body = `Hi,\n\nI wanted to share my experience with dental treatment in Turkey. They offer great quality at affordable prices.\n\nCheck it out here: ${referralUrl}\n\nBest,\n${patientName}`;
+    
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+  
+  const copyLink = () => {
+    navigator.clipboard.writeText(referralUrl);
+    toast.success('Referral link copied to clipboard!');
+  };
+  
+  return (
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h2 className="text-xl font-bold mb-4">Share Your Referral Link</h2>
+      <p className="text-gray-600 mb-6">
+        Share your unique referral link on social media or directly with friends and earn rewards when they book a treatment!
+      </p>
+      
+      <div className="mb-6">
+        <label className="block text-sm font-medium mb-2">Your Referral Link</label>
+        <div className="flex">
+          <input
+            type="text"
+            value={referralUrl}
+            readOnly
+            className="flex-1 p-2 border rounded-l bg-gray-50"
+          />
+          <button
+            onClick={copyLink}
+            className="bg-blue-600 text-white px-4 py-2 rounded-r hover:bg-blue-700"
+          >
+            Copy
+          </button>
+        </div>
+      </div>
+      
+      <div>
+        <h3 className="font-medium mb-3">Share via</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button
+            onClick={shareOnTwitter}
+            className="flex items-center justify-center gap-2 bg-[#1DA1F2] text-white p-3 rounded hover:bg-opacity-90"
+          >
+            <FaTwitter />
+            <span>Twitter</span>
+          </button>
+          
+          <button
+            onClick={shareOnFacebook}
+            className="flex items-center justify-center gap-2 bg-[#4267B2] text-white p-3 rounded hover:bg-opacity-90"
+          >
+            <FaFacebook />
+            <span>Facebook</span>
+          </button>
+          
+          <button
+            onClick={shareOnWhatsapp}
+            className="flex items-center justify-center gap-2 bg-[#25D366] text-white p-3 rounded hover:bg-opacity-90"
+          >
+            <FaWhatsapp />
+            <span>WhatsApp</span>
+          </button>
+          
+          <button
+            onClick={shareByEmail}
+            className="flex items-center justify-center gap-2 bg-gray-600 text-white p-3 rounded hover:bg-opacity-90"
+          >
+            <FaEnvelope />
+            <span>Email</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+4. Referral Dashboard Component
+Create a central dashboard for the referral system:
+
+
+Copy
+// components/patient/ReferralDashboard.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import ReviewForm from './ReviewForm';
+import ReferralForm from './ReferralForm';
+import SocialShare from './SocialShare';
+import ReferralHistory from './ReferralHistory';
+import { Tabs, TabList, Tab, TabPanel } from '../ui/Tabs';
+
+export default function ReferralDashboard() {
+  const [patient, setPatient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [hasReviewed, setHasReviewed] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  useEffect(() => {
+    fetchPatientData();
+  }, []);
+  
+  const fetchPatientData = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get('/api/patient');
+      setPatient(response.data);
+      setHasReviewed(response.data.reviews && response.data.reviews.length > 0);
+    } catch (error) {
+      console.error('Error fetching patient data:', error);
+      toast.error('Failed to load your information');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleReviewSubmitted = () => {
+    setHasReviewed(true);
+    fetchPatientData();
+  };
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+  
+  if (!hasReviewed) {
+    return (
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+          <h2 className="text-xl font-bold mb-4">Refer & Earn Rewards</h2>
+          <p className="text-gray-600 mb-4">
+            Share your dental treatment experience with friends and family, and earn rewards when they book treatments!
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <p className="text-yellow-800">
+              To start referring friends and earning rewards, please share your experience with us first.
+            </p>
+          </div>
+        </div>
+        
+        <ReviewForm onReviewSubmitted={handleReviewSubmitted} />
+      </div>
+    );
+  }
+  
+  return (
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white p-6 rounded-lg shadow-md mb-6">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold">Refer & Earn Rewards</h2>
+            <p className="text-gray-600">Earn £50 for each friend who books a treatment</p>
+          </div>
+          
+          <div className="mt-4 md:mt-0 bg-blue-50 px-6 py-2 rounded-lg">
+            <p className="text-sm text-blue-800">Your Reward Balance</p>
+            <p className="text-2xl font-bold text-blue-800">£{patient.referralBalance.toFixed(2)}</p>
+          </div>
+        </div>
+        
+        <Tabs value={activeTab} onChange={setActiveTab}>
+          <TabList className="border-b mb-6">
+            <Tab value="overview" className="px-4 py-2 font-medium">Overview</Tab>
+            <Tab value="refer" className="px-4 py-2 font-medium">Refer a Friend</Tab>
+            <Tab value="share" className="px-4 py-2 font-medium">Share on Social</Tab>
+            <Tab value="history" className="px-4 py-2 font-medium">Referral History</Tab>
+          </TabList>
+          
+          <TabPanel value="overview">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-3xl font-bold text-gray-700 mb-2">
+                  {patient.referralsGiven?.length || 0}
+                </div>
+                <p className="text-gray-600">Total Referrals</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-3xl font-bold text-gray-700 mb-2">
+                  {patient.referralsGiven?.filter(r => r.status === 'CONVERTED').length || 0}
+                </div>
+                <p className="text-gray-600">Successful Referrals</p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <div className="text-3xl font-bold text-green-600 mb-2">
+                  £{patient.referralBalance.toFixed(2)}
+                </div>
+                <p className="text-gray-600">Reward Balance</p>
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 border border-blue-200 p-6 rounded-lg">
+              <h3 className="font-bold text-blue-800 mb-4">How It Works</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold mb-3">
+                    1
+                  </div>
+                  <h4 className="font-medium mb-1">Refer Friends</h4>
+                  <p className="text-sm text-blue-700">Send referrals via email or share on social media</p>
+                </div>
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold mb-3">
+                    2
+                  </div>
+                  <h4 className="font-medium mb-1">Friends Book Treatment</h4>
+                  <p className="text-sm text-blue-700">They register using your referral link and book a treatment</p>
+                </div>
+                
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 font-bold mb-3">
+                    3
+                  </div>
+                  <h4 className="font-medium mb-1">Earn Rewards</h4>
+                  <p className="text-sm text-blue-700">Receive £50 for each successful referral</p>
+                </div>
+              </div>
+            </div>
+          </TabPanel>
+          
+          <TabPanel value="refer">
+            <ReferralForm />
+          </TabPanel>
+          
+          <TabPanel value="share">
+            <SocialShare 
+              referralCode={patient.referralCode} 
+              patientName={`${patient.firstName} ${patient.lastName}`} 
+            />
+          </TabPanel>
+          
+          <TabPanel value="history">
+            <ReferralHistory referrals={patient.referralsGiven || []} />
+          </TabPanel>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+5. Referral History Component
+Create a component to display referral history:
+
+
+Copy
+// components/patient/ReferralHistory.jsx
+import React from 'react';
+import { format } from 'date-fns';
+
+export default function ReferralHistory({ referrals }) {
+  if (referrals.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+          </svg>
+        </div>
+        <h3 className="text-lg font-medium text-gray-700 mb-1">No Referrals Yet</h3>
+        <p className="text-gray-500">
+          You haven't referred anyone yet. Start sharing to earn rewards!
+        </p>
+      </div>
+    );
+  }
+  
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded">Pending</span>;
+      case 'REGISTERED':
+        return <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">Registered</span>;
+      case 'CONVERTED':
+        return <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded">Converted</span>;
+      default:
+        return <span className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded">Unknown</span>;
+    }
+  };
+  
+  return (
+    <div className="overflow-x-auto">
+      <table className="min-w-full divide-y divide-gray-200">
+        <thead className="bg-gray-50">
+          <tr>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Referred Person
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Date
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Reward
+            </th>
+          </tr>
+        </thead>
+        <tbody className="bg-white divide-y divide-gray-200">
+          {referrals.map((referral) => (
+            <tr key={referral.id}>
+              <td className="px-6 py-4 whitespace-nowrap">
+                <div className="text-sm font-medium text-gray-900">{referral.referredName}</div>
+                <div className="text-sm text-gray-500">{referral.referredEmail}</div>
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                {format(new Date(referral.createdAt), 'MMM d, yyyy')}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {getStatusBadge(referral.status)}
+              </td>
+              <td className="px-6 py-4 whitespace-nowrap">
+                {referral.status === 'CONVERTED' ? (
+                  <div className="text-sm text-green-600 font-medium">
+                    £{referral.rewardAmount.toFixed(2)} {referral.rewardClaimed && '(Claimed)'}
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-500">Pending</div>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+Backend API Implementation
+1. Review API Endpoint
+
+Copy
+// pages/api/patient/reviews.js
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import { prisma } from "../../../lib/prisma";
+
+export default async function handler(req, res) {
+  const session = await getServerSession(req, res, authOptions);
+  
+  if (!session) {
+    return res.status(401).json({ message: "You must be logged in." });
+  }
+  
+  // POST: Create a new review
+  if (req.method === 'POST') {
+    try {
+      const { rating, title, content, isPublic } = req.body;
+      const patientId = session.user.id;
+      
+      // Validate input
+      if (!rating || rating < 1 || rating > 5 || !content) {
+        return res.status(400).json({ message: "Invalid review data" });
+      }
+      
+      // Create the review
+      const review = await prisma.review.create({
+        data: {
+          patientId,
+          rating,
+          title: title || "",
+          content,
+          isPublic: isPublic || false
+        }
+      });
+      
+      // Generate a referral code for this patient if they don't have one
+      const patient = await prisma.patient.findUnique({
+        where: { id: patientId }
+      });
+      
+      if (!patient.referralCode) {
+        const referralCode = generateReferralCode(patient.firstName, patient.lastName);
+        
+        await prisma.patient.update({
+          where: { id: patientId },
+          data: { referralCode }
+        });
+      }
+      
+      return res.status(201).json(review);
+    } catch (error) {
+      console.error("Error creating review:", error);
+      return res.status(500).json({ message: "Failed to create review" });
+    }
+  }
+  
+  return res.status(405).json({ message: "Method not allowed" });
+}
+
+// Helper function to generate a referral code
+function generateReferralCode(firstName, lastName) {
+  const prefix = firstName.substring(0, 1) + (lastName ? lastName.substring(0, 1) : "");
+  const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `${prefix}${random}`;
+}
+2. Referral API Endpoint
+
+Copy
+// pages/api/patient/referrals.js
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]";
+import { prisma } from "../../../lib/prisma";
+import { sendReferralEmail } from "../../../lib/email";
+
+export default async function handler(req, res) {
+  const session = await getServerSession(req, res, authOptions);
+  
+  if (!session) {
+    return res.status(401).json({ message: "You must be logged in." });
+  }
+  
+  const patientId = session.user.id;
+  
+  // GET: Fetch patient's referrals
+  if (req.method === 'GET') {
+    try {
+      const referrals = await prisma.referral.findMany({
+        where: { referrerId: patientId },
+        orderBy: { createdAt: 'desc' }
+      });
+      
+      return res.status(200).json(referrals);
+    } catch (error) {
+      console.error("Error fetching referrals:", error);
+      return res.status(500).json({ message: "Failed to fetch referrals" });
+    }
+  }
+  
+  // POST: Create a new referral
+  if (req.method === 'POST') {
+    try {
+      const { name, email, message } = req.body;
+      
+      // Validate required fields
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      
+      // Check if patient has left a review (required before referring)
+      const reviews = await prisma.review.findMany({
+        where: { patientId }
+      });
+      
+      if (reviews.length === 0) {
+        return res.status(403).json({ 
+          message: "You must leave a review before referring others" 
+        });
+      }
+      
+      // Get patient info including referral code
+      const patient = await prisma.patient.findUnique({
+        where: { id: patientId }
+      });
+      
+      if (!patient.referralCode) {
+        return res.status(500).json({ 
+          message: "Referral system error. Please contact support." 
+        });
+      }
+      
+      // Check if this email has already been referred by this patient
+      const existingReferral = await prisma.referral.findFirst({
+        where: {
+          referrerId: patientId,
+          referredEmail: email
+        }
+      });
+      
+      if (existingReferral) {
+        return res.status(400).json({ 
+          message: "You have already referred this person" 
+        });
+      }
+      
+      // Create the referral
+      const referral = await prisma.referral.create({
+        data: {
+          referralCode: `${patient.referralCode}-${Math.random().toString(36).substring(2, 7)}`,
+          referrerId: patientId,
+          referredName: name || "Friend",
+          referredEmail: email,
+          status: "PENDING",
+          message: message || "",
+          rewardAmount: 50 // £50 reward
+        }
+      });
+      
+      // Send email to the referred person
+      await sendReferralEmail({
+        to: email,
+        name: name || "Friend",
+        referrerName: `${patient.firstName} ${patient.lastName}`,
+        referralCode: referral.referralCode,
+        message: message || "",
+        referralLink: `${process.env.NEXT_PUBLIC_APP_URL}/register?ref=${referral.referralCode}`
+      });
+      
+      return res.status(201).json(referral);
+    } catch (error) {
+      console.error("Error creating referral:", error);
+      return res.status(500).json({ message: "Failed to create referral" });
+    }
+  }
+  
+  return res.status(405).json({ message: "Method not allowed" });
+}
+3. Email Service for Referrals
+
+Copy
+// lib/email.js
+import nodemailer from 'nodemailer';
+
+// Configure email transport (use your actual email provider)
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_SERVER_HOST,
+  port: process.env.EMAIL_SERVER_PORT,
+  secure: process.env.EMAIL_SERVER_SECURE === 'true',
+  auth: {
+    user: process.env.EMAIL_SERVER_USER,
+    pass: process.env.EMAIL_SERVER_PASSWORD
+  }
+});
+
+export async function sendReferralEmail({ to, name, referrerName, referralCode, message, referralLink }) {
+  const personalMessage = message ? `<p style="font-style: italic; color: #4b5563; margin-bottom: 20px;">"${message}"</p>` : '';
+  
+  const mailOptions = {
+    from: `"Dental Tourism" <${process.env.EMAIL_FROM}>`,
+    to,
+    subject: `${referrerName} recommended our dental services`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="background-color: #f0f9ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h2 style="color: #0369a1; margin-top: 0;">You've Been Referred!</h2>
+          <p>Hello ${name},</p>
+          <p>${referrerName} thought you might be interested in our dental services in Turkey.</p>
+          ${personalMessage}
+        </div>
+        
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #0369a1;">Why Choose Our Dental Services?</h3>
+          <ul style="padding-left: 20px; color: #4b5563;">
+            <li>Save up to 70% compared to UK prices</li>
+            <li>World-class clinics with international accreditation</li>
+            <li>Experienced dentists trained in Europe and the US</li>
+            <li>All-inclusive packages with accommodation and transfers</li>
+          </ul>
+        </div>
+        
+        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+          <h3 style="color: #2563eb; margin-top: 0;">Your Special Referral Code</h3>
+          <p>Use this code during registration to receive a special discount:</p>
+          <div style="background-color: #ffffff; border: 2px dashed #93c5fd; border-radius: 5px; padding: 15px; text-align: center; font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #2563eb; margin: 10px 0;">
+            ${referralCode}
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+          <a href="${referralLink}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Get Your Free Quote Now</a>
+        </div>
+        
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280; text-align: center;">
+          <p>If you have any questions, simply reply to this email or contact our support team.</p>
+        </div>
+      </div>
+    `
+  };
+  
+  return transporter.sendMail(mailOptions);
+}
+4. Registration with Referral Handling
+
+Copy
+// pages/api/auth/register.js
+import { hash } from 'bcryptjs';
+import { prisma } from '../../../lib/prisma';
+
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+  
+  try {
+    const { firstName, lastName, email, password, referralCode } = req.body;
+    
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+    
+    // Check if email already exists
+    const existingUser = await prisma.patient.findUnique({
+      where: { email: email.toLowerCase() }
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+    
+    // Hash password
+    const hashedPassword = await hash(password, 10);
+    
+    // Create patient
+    const patient = await prisma.patient.create({
+      data: {
+        firstName,
+        lastName,
+        email: email.toLowerCase(),
+        password: hashedPassword
+      }
+    });
+    
+    // Handle referral if code was provided
+    if (referralCode) {
+      const referral = await prisma.referral.findUnique({
+        where: { referralCode }
+      });
+      
+      if (referral) {
+        // Update referral status
+        await prisma.referral.update({
+          where: { id: referral.id },
+          data: { status: 'REGISTERED' }
+        });
+      }
+    }
+    
+    return res.status(201).json({ 
+      message: 'Registration successful',
+      patient: {
+        id: patient.id,
+        firstName: patient.firstName,
+        lastName: patient.lastName,
+        email: patient.email
+      }
+    });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    return res.status(500).json({ message: 'Failed to register' });
+  }
+}
+5. Booking Completion with Referral Reward
+
+Copy
+// pages/api/admin/bookings/create.js
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../auth/[...nextauth]";
+import { prisma } from "../../../../lib/prisma";
+
+export default async function handler(req, res) {
+  const session = await getServerSession(req, res, authOptions);
+  
+  if (!session || !session.user.isAdmin) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  if (req.method !== 'POST') {
+    return res.status(405).json({ message: 'Method not allowed' });
+  }
+  
+  try {
+    const { patientId, treatmentIds, clinicId, totalAmount, dateScheduled } = req.body;
+    
+    // Create booking
+    const booking = await prisma.booking.create({
+      data: {
+        patientId,
+        clinicId,
+        totalAmount,
+        dateScheduled: new Date(dateScheduled),
+        treatments: {
+          connect: treatmentIds.map(id => ({ id }))
+        },
+        status: "CONFIRMED"
+      }
+    });
+    
+    // Check if this patient came from a referral
+    const patient = await prisma.patient.findUnique({
+      where: { id: patientId }
+    });
+    
+    if (patient) {
+      // Find referral by referral code
+      const referral = await prisma.referral.findFirst({
+        where: {
+          referredEmail: patient.email,
+          status: 'REGISTERED'
+        }
+      });
+      
+      if (referral) {
+        // Update referral to CONVERTED and add reward to referrer
+        await prisma.$transaction([
+          // Update referral status
+          prisma.referral.update({
+            where: { id: referral.id },
+            data: { status: 'CONVERTED' }
+          }),
+          
+          // Add reward to referrer's balance
+          prisma.patient.update({
+            where: { id: referral.referrerId },
+            data: {
+              referralBalance: {
+                increment: referral.rewardAmount
+              }
+            }
+          })
+        ]);
+      }
+    }
+    
+    return res.status(201).json(booking);
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    return res.status(500).json({ message: 'Failed to create booking' });
+  }
+}
+Integration with Patient Portal
+Add the referral dashboard to your existing patient portal:
+
+
+Copy
+// pages/patient/referrals.js
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../api/auth/[...nextauth]";
+import PatientLayout from "../../components/layouts/PatientLayout";
+import ReferralDashboard from "../../components/patient/ReferralDashboard";
+
+export default function ReferralsPage() {
+  return (
+    <PatientLayout>
+      <ReferralDashboard />
+    </PatientLayout>
+  );
+}
+
+export async function getServerSideProps({ req, res }) {
+  const session = await getServerSession(req, res, authOptions);
+  
+  if (!session) {
+    return {
+      redirect: {
+        destination: '/auth/signin?callbackUrl=/patient/referrals',
+        permanent: false,
+      },
+    };
+  }
+  
+  return {
+    props: {}
+  };
+}
+Implementation Timeline
+Here's a suggested implementation timeline:
+
+Week 1: Database Setup and Backend API
+
+Update database schema
+Implement review API endpoints
+Implement referral API endpoints
+Set up email service
+Week 2: Frontend Components
+
+Create review form
+Create referral form
+Create social sharing component
+Implement referral dashboard
+Week 3: Integration and Testing
+
+Integrate components with patient portal
+Test referral flow end-to-end
+Test email delivery
+Test reward calculation
+Week 4: Launch and Monitoring
+
+Deploy to production
+Announce to existing patients
+Monitor referral metrics
+Gather feedback for improvements
+Distribution Strategy
+To maximize the effectiveness of your referral program:
+
+Email Announcement: Send an email to all existing patients announcing the referral program
+Patient Portal Banner: Add a prominent banner in the patient portal
+Social Media Campaign: Create posts about the referral program on your social channels
+Staff Training: Ensure clinic staff mention the referral program to patients
+Referral Cards: Create physical cards patients can give to friends and family
+Referral Leaderboard: Consider adding a leaderboard to gamify the process
+Conclusion
+This implementation creates a comprehensive referral system that:
+
+Ensures quality control through the review-first approach
+Provides multiple sharing options (direct referral, social media)
+Creates clear incentives for patients to refer others
+Tracks the entire referral lifecycle
+Automatically rewards successful referrals
+The system leverages your existing patient base for organic growth while providing valuable reviews that can be used in your marketing materials. The social sharing component expands your reach through patients' social networks, creating a powerful distribution channel for your dental tourism business.

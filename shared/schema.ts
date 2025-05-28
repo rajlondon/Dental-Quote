@@ -35,6 +35,9 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).default("patient").notNull(), // patient, admin, clinic_staff
   clinicId: integer("clinic_id").references(() => clinics.id), // For clinic_staff only
   jobTitle: varchar("job_title", { length: 100 }), // For clinic_staff only
+  // Referral system fields
+  referralCode: varchar("referral_code", { length: 20 }).unique(),
+  referralBalance: decimal("referral_balance", { precision: 10, scale: 2 }).default("0.00"),
   // Tracking fields
   lastLogin: timestamp("last_login"),
   emailVerified: boolean("email_verified").default(false),
@@ -1049,3 +1052,116 @@ export type PackageService = typeof packageServices.$inferSelect;
 // Promo code usage types
 export type InsertPromoCodeUsage = Omit<typeof promoCodeUsage.$inferInsert, "id" | "usedAt">;
 export type PromoCodeUsage = typeof promoCodeUsage.$inferSelect;
+
+// === REVIEWS ===
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5 stars
+  title: varchar("title", { length: 255 }),
+  content: text("content").notNull(),
+  isPublic: boolean("is_public").default(false),
+  status: varchar("status", { length: 20 }).default("pending"), // pending, approved, rejected
+  treatmentType: varchar("treatment_type", { length: 100 }),
+  clinicId: integer("clinic_id").references(() => clinics.id),
+  bookingId: integer("booking_id").references(() => bookings.id),
+  helpfulCount: integer("helpful_count").default(0),
+  adminResponse: text("admin_response"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  user: one(users, {
+    fields: [reviews.userId],
+    references: [users.id],
+  }),
+  clinic: one(clinics, {
+    fields: [reviews.clinicId],
+    references: [clinics.id],
+  }),
+  booking: one(bookings, {
+    fields: [reviews.bookingId],
+    references: [bookings.id],
+  }),
+}));
+
+export const insertReviewSchema = createInsertSchema(reviews)
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true, 
+    userId: true, 
+    status: true,
+    helpfulCount: true,
+    adminResponse: true
+  })
+  .extend({
+    rating: z.number().min(1).max(5),
+    content: z.string().min(20, "Review must be at least 20 characters"),
+  });
+
+// === REFERRALS ===
+export const referrals = pgTable("referrals", {
+  id: serial("id").primaryKey(),
+  referralCode: varchar("referral_code", { length: 50 }).notNull().unique(),
+  referrerId: integer("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  referredEmail: varchar("referred_email", { length: 255 }).notNull(),
+  referredName: varchar("referred_name", { length: 255 }),
+  referredUserId: integer("referred_user_id").references(() => users.id),
+  status: varchar("status", { length: 20 }).default("PENDING").notNull(), // PENDING, REGISTERED, CONVERTED
+  message: text("message"),
+  rewardAmount: decimal("reward_amount", { precision: 10, scale: 2 }).default("50.00"),
+  rewardClaimed: boolean("reward_claimed").default(false),
+  rewardClaimedAt: timestamp("reward_claimed_at"),
+  bookingId: integer("booking_id").references(() => bookings.id), // Set when referral converts
+  conversionDate: timestamp("conversion_date"),
+  emailSentAt: timestamp("email_sent_at"),
+  registeredAt: timestamp("registered_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, {
+    fields: [referrals.referrerId],
+    references: [users.id],
+    relationName: "referrer",
+  }),
+  referredUser: one(users, {
+    fields: [referrals.referredUserId],
+    references: [users.id],
+    relationName: "referred_user",
+  }),
+  booking: one(bookings, {
+    fields: [referrals.bookingId],
+    references: [bookings.id],
+  }),
+}));
+
+export const insertReferralSchema = createInsertSchema(referrals)
+  .omit({ 
+    id: true, 
+    createdAt: true, 
+    updatedAt: true, 
+    referrerId: true, 
+    referralCode: true,
+    status: true,
+    rewardClaimed: true,
+    rewardClaimedAt: true,
+    bookingId: true,
+    conversionDate: true,
+    emailSentAt: true,
+    registeredAt: true,
+    referredUserId: true
+  })
+  .extend({
+    referredEmail: z.string().email("Please enter a valid email address"),
+    referredName: z.string().min(1, "Name is required"),
+  });
+
+// Export types for referral system
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = z.infer<typeof insertReferralSchema>;
