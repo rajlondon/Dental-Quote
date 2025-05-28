@@ -1157,10 +1157,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async findExistingReferral(userId: number, email: string): Promise<any> {
-    const [referral] = await db.execute(sql`
-      SELECT * FROM referrals WHERE referrer_id = ${userId} AND referred_email = ${email}
-    `);
-    return referral?.rows[0];
+    try {
+      const result = await db.execute(sql`
+        SELECT * FROM referrals WHERE referrer_id = ${userId} AND referred_email = ${email}
+      `);
+      return result.rows?.[0] || null;
+    } catch (error) {
+      console.log('No existing referral found, creating new one');
+      return null;
+    }
   }
 
   async markReferralEmailSent(referralId: number): Promise<void> {
