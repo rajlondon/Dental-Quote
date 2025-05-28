@@ -139,6 +139,17 @@ export interface IStorage {
   // Additional booking methods
   getAllBookings(filters?: { status?: string, stage?: string }): Promise<Booking[]>;
   getAppointment(id: number): Promise<Appointment | undefined>;
+  
+  // Referral system methods
+  createReview(data: any): Promise<any>;
+  getUserReviews(userId: number): Promise<any[]>;
+  updateUserReferralCode(userId: number, code: string): Promise<void>;
+  getUserWithReferralData(userId: number): Promise<any>;
+  createReferral(data: any): Promise<any>;
+  findExistingReferral(userId: number, email: string): Promise<any>;
+  markReferralEmailSent(referralId: number): Promise<void>;
+  findReferralByCode(code: string): Promise<any>;
+  updateReferralStatus(referralId: number, status: string, userId?: number): Promise<void>;
 }
 
 // Database implementation of IStorage
@@ -1085,6 +1096,113 @@ export class DatabaseStorage implements IStorage {
   async getAppointment(id: number): Promise<Appointment | undefined> {
     const [appointment] = await db.select().from(appointments).where(eq(appointments.id, id));
     return appointment;
+  }
+
+  // === REFERRAL SYSTEM METHODS ===
+  
+  async createReview(data: any): Promise<any> {
+    const [review] = await db.execute(sql`
+      INSERT INTO reviews (user_id, rating, title, content, is_public, treatment_type)
+      VALUES (${data.userId}, ${data.rating}, ${data.title}, ${data.content}, ${data.isPublic}, ${data.treatmentType})
+      RETURNING *
+    `);
+    return review;
+  }
+
+  async getUserReviews(userId: number): Promise<any[]> {
+    const reviews = await db.execute(sql`
+      SELECT * FROM reviews WHERE user_id = ${userId} ORDER BY created_at DESC
+    `);
+    return reviews.rows;
+  }
+
+  async updateUserReferralCode(userId: number, code: string): Promise<void> {
+    await db.execute(sql`
+      UPDATE users SET referral_code = ${code} WHERE id = ${userId}
+    `);
+  }
+
+  async getUserWithReferralData(userId: number): Promise<any> {
+    const [user] = await db.execute(sql`
+      SELECT 
+        u.*,
+        COALESCE(r.review_count, 0) as review_count,
+        COALESCE(ref.referral_count, 0) as referral_count,
+        COALESCE(ref.successful_referrals, 0) as successful_referrals
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, COUNT(*) as review_count
+        FROM reviews
+        WHERE user_id = ${userId}
+        GROUP BY user_id
+      ) r ON u.id = r.user_id
+      LEFT JOIN (
+        SELECT 
+          referrer_id,
+          COUNT(*) as referral_count,
+          SUM(CASE WHEN status = 'CONVERTED' THEN 1 ELSE 0 END) as successful_referrals
+        FROM referrals
+        WHERE referrer_id = ${userId}
+        GROUP BY referrer_id
+      ) ref ON u.id = ref.referrer_id
+      WHERE u.id = ${userId}
+    `);
+
+    const reviews = await this.getUserReviews(userId);
+    const referrals = await db.execute(sql`
+      SELECT * FROM referrals WHERE referrer_id = ${userId} ORDER BY created_at DESC
+    `);
+
+    return {
+      ...user.rows[0],
+      reviews,
+      referralsGiven: referrals.rows
+    };
+  }
+
+  async createReferral(data: any): Promise<any> {
+    const [referral] = await db.execute(sql`
+      INSERT INTO referrals (referral_code, referrer_id, referred_name, referred_email, message, reward_amount)
+      VALUES (${data.referralCode}, ${data.referrerId}, ${data.referredName}, ${data.referredEmail}, ${data.message}, ${data.rewardAmount})
+      RETURNING *
+    `);
+    return referral;
+  }
+
+  async findExistingReferral(userId: number, email: string): Promise<any> {
+    const [referral] = await db.execute(sql`
+      SELECT * FROM referrals WHERE referrer_id = ${userId} AND referred_email = ${email}
+    `);
+    return referral?.rows[0];
+  }
+
+  async markReferralEmailSent(referralId: number): Promise<void> {
+    await db.execute(sql`
+      UPDATE referrals SET email_sent = true WHERE id = ${referralId}
+    `);
+  }
+
+  async findReferralByCode(code: string): Promise<any> {
+    const [referral] = await db.execute(sql`
+      SELECT * FROM referrals WHERE referral_code = ${code}
+    `);
+    return referral?.rows[0];
+  }
+
+  async updateReferralStatus(referralId: number, status: string, userId?: number): Promise<void> {
+    if (userId) {
+      await db.execute(sql`
+        UPDATE referrals 
+        SET status = ${status}, referred_user_id = ${userId}, updated_at = NOW()
+        WHERE id = ${referralId}
+      `);
+    } else {
+      await db.execute(sql`
+        UPDATE referrals 
+        SET status = ${status}, updated_at = NOW()
+        WHERE id = ${referralId}
+      `);
+    }
   }
   
   // === Messages ===
