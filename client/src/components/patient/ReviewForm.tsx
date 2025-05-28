@@ -26,8 +26,7 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
       title: '',
       content: '',
       isPublic: true,
-      treatmentType: '',
-      rating: 0
+      treatmentType: ''
     }
   });
   
@@ -57,6 +56,8 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
   });
   
   const onSubmit = (data: InsertReview) => {
+    console.log('Form submitted with data:', data, 'rating:', rating);
+    
     if (rating === 0) {
       toast({
         title: "Rating Required",
@@ -100,6 +101,7 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
                   <Input
                     placeholder="Summarize your experience"
                     {...field}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -117,6 +119,7 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
                   <Input
                     placeholder="e.g., Dental Implants, Veneers, Teeth Whitening"
                     {...field}
+                    value={field.value || ''}
                   />
                 </FormControl>
                 <FormMessage />
@@ -149,7 +152,7 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
               <FormItem className="flex flex-row items-start space-x-3 space-y-0">
                 <FormControl>
                   <Checkbox
-                    checked={field.value}
+                    checked={field.value || false}
                     onCheckedChange={field.onChange}
                   />
                 </FormControl>
@@ -176,6 +179,11 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
             type="submit"
             className="w-full"
             disabled={reviewMutation.isPending}
+            onClick={(e) => {
+              console.log('Button clicked!');
+              console.log('Form errors:', form.formState.errors);
+              console.log('Form values:', form.getValues());
+            }}
           >
             {reviewMutation.isPending ? 'Submitting...' : 'Submit Review & Unlock Referrals'}
           </Button>
