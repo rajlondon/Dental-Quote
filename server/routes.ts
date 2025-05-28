@@ -477,8 +477,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       
-      // Get user with reviews and referrals
-      const user = await storage.getUserWithReferralData(userId);
+      // Simple fallback if referral system has issues
+      let user;
+      try {
+        user = await storage.getUserWithReferralData(userId);
+      } catch (referralError) {
+        console.log("Referral data fetch failed, using basic user data:", referralError.message);
+        // Get basic user data
+        const basicUser = await storage.getUser(userId);
+        user = {
+          ...basicUser,
+          review_count: 0,
+          referral_count: 0,
+          successful_referrals: 0,
+          reviews: [],
+          referralsGiven: []
+        };
+      }
       
       res.json({
         success: true,
