@@ -180,14 +180,58 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
             type="button"
             className="w-full"
             disabled={reviewMutation.isPending}
-            onClick={() => {
+            onClick={async () => {
               console.log('Button clicked!');
-              console.log('Form errors:', form.formState.errors);
-              console.log('Form values:', form.getValues());
               
-              // Force form submission
+              if (rating === 0) {
+                toast({
+                  title: "Rating Required",
+                  description: "Please select a star rating",
+                  variant: "destructive",
+                });
+                return;
+              }
+              
               const formData = form.getValues();
-              onSubmit(formData);
+              console.log('Direct API call with:', { ...formData, rating });
+              
+              try {
+                const response = await fetch('/api/patient/reviews', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  credentials: 'include',
+                  body: JSON.stringify({ ...formData, rating }),
+                });
+                
+                const result = await response.json();
+                console.log('API Response:', result);
+                
+                if (response.ok) {
+                  toast({
+                    title: "Review Submitted Successfully!",
+                    description: "You can now refer friends and earn £50 rewards.",
+                  });
+                  
+                  // Reset form
+                  form.reset();
+                  setRating(0);
+                  
+                  if (onReviewSubmitted) {
+                    onReviewSubmitted();
+                  }
+                } else {
+                  throw new Error(result.message || 'Failed to submit review');
+                }
+              } catch (error) {
+                console.error('Submission error:', error);
+                toast({
+                  title: "Failed to Submit Review",
+                  description: error.message,
+                  variant: "destructive",
+                });
+              }
             }}
           >
             {reviewMutation.isPending ? 'Submitting...' : 'Submit Review & Unlock Referrals'}
