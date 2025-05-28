@@ -18,7 +18,8 @@ import {
   Bell,
   Plane,
   Home,
-  ArrowRight
+  ArrowRight,
+  Gift
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -65,6 +66,7 @@ import TreatmentJourneyPage from '@/pages/patient/TreatmentJourneyPage';
 import DocumentsSection from '@/components/portal/DocumentsSection';
 import SupportSection from '@/components/portal/SupportSection';
 import DentalChartSection from '@/components/portal/DentalChartSection';
+import ReferralDashboard from '@/components/patient/ReferralDashboard';
 
 // Placeholder components until implemented
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
@@ -320,6 +322,7 @@ const PatientPortalPage: React.FC = () => {
       icon: <Calendar className="h-5 w-5" />, 
       notificationCount: notifications.filter(n => n.type === 'appointment' && !n.read).length 
     },
+    { id: 'referrals', label: 'Refer & Earn £50', icon: <Gift className="h-5 w-5" /> },
     { id: 'travel', label: 'Travel & Hotel', icon: <Plane className="h-5 w-5" /> },
     { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
     { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
@@ -619,6 +622,8 @@ const PatientPortalPage: React.FC = () => {
         return <TreatmentPlanSection />;
       case 'dental_chart':
         return <DentalChartSection />;
+      case 'referrals':
+        return <ReferralDashboard />;
       case 'treatment_comparison':
         return <TreatmentComparisonSection />;
       case 'testing':
