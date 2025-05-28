@@ -18,7 +18,7 @@ export default function ReferralDashboard() {
   });
 
   useEffect(() => {
-    if (patientData?.reviews && patientData.reviews.length > 0) {
+    if (patientData?.data?.reviews && patientData.data.reviews.length > 0) {
       setHasReviewed(true);
     }
   }, [patientData]);
@@ -83,7 +83,7 @@ export default function ReferralDashboard() {
           <div className="mt-4 md:mt-0 bg-gradient-to-r from-green-50 to-blue-50 px-6 py-3 rounded-lg border border-green-200">
             <p className="text-sm text-green-800 font-medium">Your Reward Balance</p>
             <p className="text-2xl font-bold text-green-800">
-              £{Number(patientData?.referralBalance || 0).toFixed(2)}
+              £{Number(patientData?.data?.referralBalance || 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -100,21 +100,21 @@ export default function ReferralDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
               <div className="bg-gray-50 p-4 rounded-lg text-center border">
                 <div className="text-3xl font-bold text-gray-700 mb-2">
-                  {patientData?.referralsGiven?.length || 0}
+                  {patientData?.data?.referralsGiven?.length || 0}
                 </div>
                 <p className="text-gray-600">Total Referrals</p>
               </div>
               
               <div className="bg-blue-50 p-4 rounded-lg text-center border">
                 <div className="text-3xl font-bold text-blue-700 mb-2">
-                  {patientData?.referralsGiven?.filter((r: any) => r.status === 'CONVERTED').length || 0}
+                  {patientData?.data?.referralsGiven?.filter((r: any) => r.status === 'CONVERTED').length || 0}
                 </div>
                 <p className="text-blue-600">Successful Referrals</p>
               </div>
               
               <div className="bg-green-50 p-4 rounded-lg text-center border">
                 <div className="text-3xl font-bold text-green-700 mb-2">
-                  £{Number(patientData?.referralBalance || 0).toFixed(2)}
+                  £{Number(patientData?.data?.referralBalance || 0).toFixed(2)}
                 </div>
                 <p className="text-green-600">Reward Balance</p>
               </div>
@@ -156,10 +156,10 @@ export default function ReferralDashboard() {
           </TabsContent>
           
           <TabsContent value="share" className="mt-6">
-            {patientData?.referralCode ? (
+            {patientData?.data?.referralCode ? (
               <SocialShare 
-                referralCode={patientData.referralCode} 
-                patientName={`${patientData.firstName || ''} ${patientData.lastName || ''}`.trim() || 'Friend'} 
+                referralCode={patientData.data.referralCode} 
+                patientName={`${patientData.data.firstName || ''} ${patientData.data.lastName || ''}`.trim() || 'Friend'} 
               />
             ) : (
               <div className="text-center py-8">
@@ -169,7 +169,7 @@ export default function ReferralDashboard() {
           </TabsContent>
           
           <TabsContent value="history" className="mt-6">
-            <ReferralHistory referrals={patientData?.referralsGiven || []} />
+            <ReferralHistory referrals={patientData?.data?.referralsGiven || []} />
           </TabsContent>
         </Tabs>
       </div>
