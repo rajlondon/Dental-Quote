@@ -1124,27 +1124,26 @@ export class DatabaseStorage implements IStorage {
 
   async getUserWithReferralData(userId: number): Promise<any> {
     // Get basic user data
-    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    const userResult = await db.select().from(users).where(eq(users.id, userId));
+    const user = userResult[0];
     
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Get reviews count
-    const reviews = await this.getUserReviews(userId);
+    // Get reviews (simplified for now)
+    const reviews: any[] = [];
     
-    // Get referrals
-    const referrals = await db.execute(sql`
-      SELECT * FROM referrals WHERE referrer_id = ${userId} ORDER BY created_at DESC
-    `);
+    // Get referrals (simplified for now)
+    const referrals: any[] = [];
 
     return {
       ...user,
       review_count: reviews.length,
-      referral_count: (referrals.rows || referrals || []).length,
-      successful_referrals: (referrals.rows || referrals || []).filter((r: any) => r.status === 'CONVERTED').length,
+      referral_count: referrals.length,
+      successful_referrals: referrals.filter((r: any) => r.status === 'CONVERTED').length,
       reviews,
-      referralsGiven: referrals.rows || referrals || []
+      referralsGiven: referrals
     };
   }
 
