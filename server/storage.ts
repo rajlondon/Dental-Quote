@@ -1101,19 +1101,19 @@ export class DatabaseStorage implements IStorage {
   // === REFERRAL SYSTEM METHODS ===
   
   async createReview(data: any): Promise<any> {
-    const [review] = await db.execute(sql`
+    const result = await db.execute(sql`
       INSERT INTO reviews (user_id, rating, title, content, is_public, treatment_type)
       VALUES (${data.userId}, ${data.rating}, ${data.title}, ${data.content}, ${data.isPublic}, ${data.treatmentType})
       RETURNING *
     `);
-    return review;
+    return result.rows?.[0] || result[0];
   }
 
   async getUserReviews(userId: number): Promise<any[]> {
-    const reviews = await db.execute(sql`
+    const result = await db.execute(sql`
       SELECT * FROM reviews WHERE user_id = ${userId} ORDER BY created_at DESC
     `);
-    return reviews.rows;
+    return result.rows || result || [];
   }
 
   async updateUserReferralCode(userId: number, code: string): Promise<void> {
@@ -1123,40 +1123,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserWithReferralData(userId: number): Promise<any> {
-    const [user] = await db.execute(sql`
-      SELECT 
-        u.*,
-        COALESCE(r.review_count, 0) as review_count,
-        COALESCE(ref.referral_count, 0) as referral_count,
-        COALESCE(ref.successful_referrals, 0) as successful_referrals
-      FROM users u
-      LEFT JOIN (
-        SELECT user_id, COUNT(*) as review_count
-        FROM reviews
-        WHERE user_id = ${userId}
-        GROUP BY user_id
-      ) r ON u.id = r.user_id
-      LEFT JOIN (
-        SELECT 
-          referrer_id,
-          COUNT(*) as referral_count,
-          SUM(CASE WHEN status = 'CONVERTED' THEN 1 ELSE 0 END) as successful_referrals
-        FROM referrals
-        WHERE referrer_id = ${userId}
-        GROUP BY referrer_id
-      ) ref ON u.id = ref.referrer_id
-      WHERE u.id = ${userId}
-    `);
+    // Get basic user data
+    const [user] = await db.select().from(users).where(eq(users.id, userId));
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
 
+    // Get reviews count
     const reviews = await this.getUserReviews(userId);
+    
+    // Get referrals
     const referrals = await db.execute(sql`
       SELECT * FROM referrals WHERE referrer_id = ${userId} ORDER BY created_at DESC
     `);
 
     return {
-      ...user.rows[0],
+      ...user,
+      review_count: reviews.length,
+      referral_count: (referrals.rows || referrals || []).length,
+      successful_referrals: (referrals.rows || referrals || []).filter((r: any) => r.status === 'CONVERTED').length,
       reviews,
-      referralsGiven: referrals.rows
+      referralsGiven: referrals.rows || referrals || []
     };
   }
 
