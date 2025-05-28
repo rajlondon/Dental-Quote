@@ -67,6 +67,7 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
       return;
     }
     
+    console.log('Submitting review with data:', { ...data, rating });
     reviewMutation.mutate({ ...data, rating });
   };
   
@@ -176,13 +177,17 @@ export default function ReviewForm({ onReviewSubmitted }: ReviewFormProps) {
           </div>
           
           <Button
-            type="submit"
+            type="button"
             className="w-full"
             disabled={reviewMutation.isPending}
-            onClick={(e) => {
+            onClick={() => {
               console.log('Button clicked!');
               console.log('Form errors:', form.formState.errors);
               console.log('Form values:', form.getValues());
+              
+              // Force form submission
+              const formData = form.getValues();
+              onSubmit(formData);
             }}
           >
             {reviewMutation.isPending ? 'Submitting...' : 'Submit Review & Unlock Referrals'}
