@@ -346,6 +346,278 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register document management routes for medical files
   app.use('/api', documentRoutes);
   
+  // === PATIENT REFERRAL & REVIEW SYSTEM ===
+  
+  // Patient review submission endpoint
+  app.post('/api/patient/reviews', isAuthenticated, async (req, res, next) => {
+    try {
+      const { rating, title, content, isPublic, treatmentType } = req.body;
+      const userId = req.user.id;
+      
+      // Validate required fields
+      if (!rating || rating < 1 || rating > 5 || !content) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Invalid review data. Rating and content are required." 
+        });
+      }
+      
+      // Create the review
+      const review = await storage.createReview({
+        userId,
+        rating,
+        title: title || "",
+        content,
+        isPublic: isPublic || false,
+        treatmentType: treatmentType || "",
+      });
+      
+      // Generate a referral code for this patient if they don't have one
+      const user = await storage.getUser(userId);
+      if (!user.referralCode) {
+        const referralCode = generateReferralCode(user.firstName, user.lastName);
+        await storage.updateUserReferralCode(userId, referralCode);
+      }
+      
+      res.status(201).json({
+        success: true,
+        data: review,
+        message: "Review submitted successfully! You can now refer friends and earn rewards."
+      });
+    } catch (error) {
+      console.error("Error creating review:", error);
+      next(error);
+    }
+  });
+
+  // Patient referral submission endpoint
+  app.post('/api/patient/referrals', isAuthenticated, async (req, res, next) => {
+    try {
+      const { referredName, referredEmail, message } = req.body;
+      const userId = req.user.id;
+      
+      // Validate required fields
+      if (!referredEmail || !referredName) {
+        return res.status(400).json({ 
+          success: false, 
+          message: "Friend's name and email are required" 
+        });
+      }
+      
+      // Check if patient has left a review (required before referring)
+      const reviews = await storage.getUserReviews(userId);
+      if (reviews.length === 0) {
+        return res.status(403).json({ 
+          success: false,
+          message: "You must leave a review before referring others" 
+        });
+      }
+      
+      // Get patient info including referral code
+      const user = await storage.getUser(userId);
+      if (!user.referralCode) {
+        return res.status(500).json({ 
+          success: false,
+          message: "Referral system error. Please contact support." 
+        });
+      }
+      
+      // Check if this email has already been referred by this patient
+      const existingReferral = await storage.findExistingReferral(userId, referredEmail);
+      if (existingReferral) {
+        return res.status(400).json({ 
+          success: false,
+          message: "You have already referred this person" 
+        });
+      }
+      
+      // Create unique referral code for this specific referral
+      const uniqueReferralCode = `${user.referralCode}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
+      
+      // Create the referral
+      const referral = await storage.createReferral({
+        referralCode: uniqueReferralCode,
+        referrerId: userId,
+        referredName,
+        referredEmail,
+        message: message || "",
+        rewardAmount: 50 // £50 reward
+      });
+      
+      // Send referral email using our enhanced email service
+      try {
+        await sendReferralEmail({
+          to: referredEmail,
+          name: referredName,
+          referrerName: `${user.firstName} ${user.lastName}`,
+          referralCode: uniqueReferralCode,
+          message: message || "",
+          referralLink: `${req.protocol}://${req.get('host')}/register?ref=${uniqueReferralCode}`
+        });
+        
+        await storage.markReferralEmailSent(referral.id);
+      } catch (emailError) {
+        console.error("Failed to send referral email:", emailError);
+        // Don't fail the whole request, just log the error
+      }
+      
+      res.status(201).json({
+        success: true,
+        data: referral,
+        message: "Referral sent successfully!"
+      });
+    } catch (error) {
+      console.error("Error creating referral:", error);
+      next(error);
+    }
+  });
+
+  // Get patient profile with referral data
+  app.get('/api/patient/profile', isAuthenticated, async (req, res, next) => {
+    try {
+      const userId = req.user.id;
+      
+      // Get user with reviews and referrals
+      const user = await storage.getUserWithReferralData(userId);
+      
+      res.json({
+        success: true,
+        data: user
+      });
+    } catch (error) {
+      console.error("Error fetching patient profile:", error);
+      next(error);
+    }
+  });
+
+  // Register referral during registration
+  app.post('/api/register-with-referral', async (req, res, next) => {
+    try {
+      const { firstName, lastName, email, password, referralCode } = req.body;
+      
+      // Validate required fields
+      if (!firstName || !lastName || !email || !password) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'All fields are required' 
+        });
+      }
+      
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email.toLowerCase());
+      if (existingUser) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Email already in use' 
+        });
+      }
+      
+      // Create patient
+      const userData = {
+        firstName,
+        lastName,
+        email: email.toLowerCase(),
+        password, // Will be hashed in storage layer
+        role: 'patient'
+      };
+      
+      const user = await storage.createUser(userData);
+      
+      // Handle referral if code was provided
+      if (referralCode) {
+        const referral = await storage.findReferralByCode(referralCode);
+        if (referral && referral.status === 'PENDING') {
+          await storage.updateReferralStatus(referral.id, 'REGISTERED', user.id);
+        }
+      }
+      
+      res.status(201).json({ 
+        success: true,
+        message: 'Registration successful',
+        data: {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email
+        }
+      });
+    } catch (error) {
+      console.error('Error registering user with referral:', error);
+      next(error);
+    }
+  });
+
+  // Helper function to generate referral codes
+  function generateReferralCode(firstName, lastName) {
+    const prefix = (firstName?.substring(0, 1) || "") + (lastName?.substring(0, 1) || "");
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}${random}`;
+  }
+
+  // Enhanced referral email function
+  async function sendReferralEmail({ to, name, referrerName, referralCode, message, referralLink }) {
+    if (!isMailjetConfigured()) {
+      console.warn('Mailjet not configured - skipping referral email');
+      return;
+    }
+
+    const personalMessage = message ? `<div style="background-color: #f0f9ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; font-style: italic; color: #1e40af;">"${message}"</div>` : '';
+    
+    const emailContent = {
+      to,
+      subject: `${referrerName} recommended MyDentalFly dental services`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff;">
+          <div style="background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); padding: 30px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">You've Been Referred!</h1>
+            <p style="color: #e0f2fe; margin: 10px 0 0 0; font-size: 16px;">Quality dental care in Turkey awaits you</p>
+          </div>
+          
+          <div style="padding: 30px;">
+            <p style="font-size: 16px; line-height: 1.6; color: #374151;">Hello ${name},</p>
+            <p style="font-size: 16px; line-height: 1.6; color: #374151;">${referrerName} thought you might be interested in our premium dental services in Turkey.</p>
+            ${personalMessage}
+            
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin: 25px 0;">
+              <h3 style="color: #1e40af; margin-top: 0; font-size: 20px;">Why Choose MyDentalFly?</h3>
+              <ul style="padding-left: 20px; color: #4b5563; line-height: 1.8;">
+                <li>Save up to 70% compared to UK prices</li>
+                <li>World-class clinics with international accreditation</li>
+                <li>Experienced dentists trained in Europe and the US</li>
+                <li>All-inclusive packages with luxury accommodation</li>
+                <li>Comprehensive aftercare and lifetime guarantees</li>
+              </ul>
+            </div>
+            
+            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-radius: 8px; padding: 25px; margin: 25px 0; text-align: center;">
+              <h3 style="color: white; margin-top: 0; font-size: 18px;">Your Special Referral Code</h3>
+              <p style="color: #d1fae5; margin-bottom: 15px;">Use this code during registration to receive a special discount:</p>
+              <div style="background-color: white; border-radius: 5px; padding: 15px; font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #059669; margin: 15px 0;">
+                ${referralCode}
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${referralLink}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Get Your Free Quote Now</a>
+            </div>
+            
+            <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 8px; padding: 20px; margin: 25px 0;">
+              <h4 style="color: #92400e; margin-top: 0;">🎁 Special Referral Benefits</h4>
+              <p style="color: #92400e; margin-bottom: 0; line-height: 1.6;">As a referred patient, you'll receive priority consultation scheduling and exclusive access to our premium treatment packages.</p>
+            </div>
+          </div>
+          
+          <div style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 12px; color: #6b7280; margin: 0;">If you have any questions, simply reply to this email or contact our support team.</p>
+            <p style="font-size: 12px; color: #6b7280; margin: 5px 0 0 0;">MyDentalFly - Your trusted partner for dental tourism</p>
+          </div>
+        </div>
+      `
+    };
+
+    return await sendQuoteEmail(emailContent);
+  }
+
   // Register test routes (only available in development mode)
   if (process.env.NODE_ENV !== 'production') {
     app.use('/api/test', testRoutes);
