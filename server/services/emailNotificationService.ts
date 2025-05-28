@@ -6,9 +6,16 @@ import { eq } from 'drizzle-orm';
 import { isMailjetConfigured } from '../mailjet-service';
 import mailjet from 'node-mailjet';
 
-// Configuration with verified domain
-const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.com';
+// Configuration with verified domain - using .co.uk for primary business
+const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.co.uk';
 const SENDER_NAME = process.env.MAILJET_SENDER_NAME || 'MyDentalFly';
+
+// Business team email addresses
+const BUSINESS_EMAILS = {
+  SUPPORT: 'raj@mydentalfly.co.uk',
+  COORDINATOR: 'destina@mydentalfly.co.uk',
+  GENERAL: 'info@mydentalfly.co.uk'
+};
 
 /**
  * Email Notification Service
@@ -126,12 +133,23 @@ export class EmailNotificationService {
       // Create email content based on notification type
       const { subject, htmlContent } = this.createEmailContent(userName, notification);
 
-      // Prepare email message
+      // Determine appropriate sender based on notification type
+      const getSenderForNotification = (notification: Notification) => {
+        switch (notification.category) {
+          case 'appointment':
+          case 'treatment':
+            return { Email: BUSINESS_EMAILS.COORDINATOR, Name: 'Destina - Patient Coordinator' };
+          case 'message':
+          case 'document':
+            return { Email: BUSINESS_EMAILS.SUPPORT, Name: 'Raj - MyDentalFly Support' };
+          default:
+            return { Email: SENDER_EMAIL, Name: SENDER_NAME };
+        }
+      };
+
+      // Prepare email message with appropriate sender
       const message = {
-        From: {
-          Email: SENDER_EMAIL,
-          Name: SENDER_NAME
-        },
+        From: getSenderForNotification(notification),
         To: [
           {
             Email: user.email,
@@ -140,6 +158,11 @@ export class EmailNotificationService {
         ],
         Subject: subject,
         HTMLPart: htmlContent,
+        // Add reply-to address for better customer service
+        ReplyTo: {
+          Email: BUSINESS_EMAILS.SUPPORT,
+          Name: 'MyDentalFly Support Team'
+        }
       };
 
       // Send email
