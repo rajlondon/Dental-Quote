@@ -15,19 +15,41 @@ export default function FAQPage() {
   
   // Set page title when component mounts
   useEffect(() => {
-    document.title = `${t('faq.title')} | Istanbul Dental Smile`;
+    document.title = `Frequently Asked Questions | MyDentalFly`;
   }, [t]);
   
   return (
     <>
       <Navbar />
-      <div className="container mx-auto py-16 px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">{t('faq.title')}</h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Get answers to the most commonly asked questions about dental treatment in Istanbul.
-          </p>
+      {/* Hero Section with Image */}
+      <div className="relative bg-gradient-to-br from-blue-50 to-blue-100 py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold mb-6 text-blue-900">
+                Frequently Asked Questions
+              </h1>
+              <p className="text-lg text-blue-700 mb-8 leading-relaxed">
+                Get answers to the most commonly asked questions about dental tourism, 
+                treatment procedures, and booking with MyDentalFly.
+              </p>
+            </div>
+            <div className="relative">
+              <img 
+                src="/images/faq-hero.jpg" 
+                alt="Dental consultation and FAQ support"
+                className="w-full h-80 object-cover rounded-2xl shadow-2xl"
+                onError={(e) => {
+                  e.currentTarget.src = "/images/dental-consultation.jpg";
+                }}
+              />
+              <div className="absolute inset-0 bg-blue-900/10 rounded-2xl"></div>
+            </div>
+          </div>
         </div>
+      </div>
+      
+      <div className="container mx-auto py-16 px-4">
         
         <Separator className="my-8" />
         

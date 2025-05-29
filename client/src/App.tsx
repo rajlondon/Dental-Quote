@@ -51,7 +51,7 @@ import VeneersBlogPost from "./pages/VeneersBlogPost";
 import HollywoodSmileBlogPost from "./pages/HollywoodSmileBlogPost";
 import FullMouthBlogPost from "./pages/FullMouthBlogPost";
 import PricingPage from "./pages/PricingPage";
-import TeamPage from "@/pages/TeamPage";
+
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
@@ -127,7 +127,7 @@ function Router() {
       <Route path="/hollywood-smile" component={HollywoodSmilePage} />
       <Route path="/full-mouth" component={FullMouthPage} />
       <Route path="/pricing" component={PricingPage} />
-      <Route path="/team" component={TeamPage} />
+
       <Route path="/how-it-works">
         {() => <Redirect to="/blog/how-it-works" />}
       </Route>

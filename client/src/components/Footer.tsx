@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
                 </div>
               </Link>
               <p className="text-blue-200 text-sm md:text-base leading-relaxed">
-                MyDentalFly connects patients with top-rated dental clinics in Turkey, offering up to 70% savings compared to UK costs with the peace of mind of verified, quality care.
+                MyDentalFly connects patients with top-rated dental clinics around the world, offering up to 70% savings compared to UK costs with the peace of mind of verified, quality care.
               </p>
             </div>
             
@@ -59,7 +59,7 @@ const Footer: React.FC = () => {
             <ul className="space-y-3">
               <li><Link href="/how-it-works"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">How It Works</span></Link></li>
               <li><Link href="/your-quote"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Get a Quote</span></Link></li>
-              <li><Link href="/team"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Our Team</span></Link></li>
+
               <li><Link href="/faq"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">FAQs</span></Link></li>
               <li><a href="/blog"><span className="text-blue-200 hover:text-white transition-colors cursor-pointer text-sm">Blog</span></a></li>
             </ul>
@@ -83,10 +83,7 @@ const Footer: React.FC = () => {
                 <Mail className="w-5 h-5 text-blue-300 mt-0.5" />
                 <a href="mailto:info@mydentalfly.com" className="text-blue-200 hover:text-white transition-colors text-sm">info@mydentalfly.com</a>
               </li>
-              <li className="flex items-start gap-3">
-                <Phone className="w-5 h-5 text-blue-300 mt-0.5" />
-                <a href="tel:+447572445856" className="text-blue-200 hover:text-white transition-colors text-sm">+44 7572 445856</a>
-              </li>
+
               <li className="flex items-start gap-3">
                 <Send className="w-5 h-5 text-blue-300 mt-0.5" />
                 <a href="https://wa.me/447572445856" className="text-blue-200 hover:text-white transition-colors text-sm">WhatsApp Chat</a>
