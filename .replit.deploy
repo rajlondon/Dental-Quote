@@ -1,2 +1,2 @@
-run = "node dist/index.mjs"
-entrypoint = "dist/index.mjs"
+run = "node server.js"
+entrypoint = "server.js"
