@@ -141,6 +141,7 @@ const PortalLoginPage: React.FC = () => {
   
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
+    console.log("Registration form submit called with values:", values);
     setIsLoading(true);
     
     try {
