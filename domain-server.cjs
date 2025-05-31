@@ -41,6 +41,15 @@ if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
   );
 }
 
+// Test endpoint to verify deployment
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Server updated successfully', 
+    timestamp: new Date().toISOString(),
+    version: '2.0'
+  });
+});
+
 // Registration endpoint
 app.post('/api/auth/register', async (req, res) => {
   try {
