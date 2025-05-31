@@ -850,31 +850,7 @@ const PortalLoginPage: React.FC = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="mb-4">
-                    <button 
-                      onClick={() => {
-                        console.log("🧪 Simple test button clicked");
-                        fetch('/api/auth/register', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            firstName: 'kelly',
-                            lastName: '',
-                            email: 'triansdolgen@gmail.com',
-                            phone: '905349556418',
-                            password: 'Test123!@#',
-                            consent: true
-                          })
-                        })
-                        .then(r => r.text())
-                        .then(data => console.log("✅ Registration response:", data))
-                        .catch(err => console.error("❌ Registration error:", err));
-                      }}
-                      className="w-full bg-blue-500 text-white p-2 rounded"
-                    >
-                      DIRECT API TEST
-                    </button>
-                  </div>
+
                   <Form {...registerForm}>
                     <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                       <FormField
@@ -1046,18 +1022,8 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      <Button 
-                        type="button" 
-                        onClick={() => {
-                          alert("Button clicked! Check console.");
-                          console.log("🚀 REGISTRATION DEBUG START");
-                          console.log("Form values:", registerForm.getValues());
-                          console.log("🚀 REGISTRATION DEBUG END");
-                        }}
-                        className="w-full mt-2" 
-                        disabled={isLoading}
-                      >
-                        {isLoading ? "Creating Account..." : "TEST REGISTRATION"}
+                      <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                        {isLoading ? "Creating Account..." : t("portal.login.register", "Create Account")}
                       </Button>
                     </form>
                   </Form>
