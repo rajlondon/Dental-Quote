@@ -1,2 +1,2 @@
-run = "node simple-registration-server.cjs"
-entrypoint = "simple-registration-server.cjs"
+run = "node domain-server.cjs"
+entrypoint = "domain-server.cjs"
