@@ -44,15 +44,17 @@ if (MAILJET_API_KEY && MAILJET_SECRET_KEY) {
 // Test endpoint to verify deployment
 app.get('/api/test', (req, res) => {
   res.json({ 
-    message: 'Server updated successfully', 
+    message: 'Registration server updated with improved error handling', 
     timestamp: new Date().toISOString(),
-    version: '2.0'
+    version: '3.1'
   });
 });
 
 // Registration endpoint
 app.post('/api/auth/register', async (req, res) => {
   try {
+    console.log('Registration request received for:', req.body.email);
+    
     const { fullName, firstName, lastName, email, phone, password, consent, consentcontacts } = req.body;
     
     // Handle both fullName and firstName/lastName formats
@@ -60,29 +62,40 @@ app.post('/api/auth/register', async (req, res) => {
     const userConsent = consent || consentcontacts;
     
     if (!name || !email || !password || !userConsent) {
+      let missingFields = [];
+      if (!name) missingFields.push('full name');
+      if (!email) missingFields.push('email address');
+      if (!password) missingFields.push('password');
+      if (!userConsent) missingFields.push('privacy consent');
+      
       return res.status(400).json({ 
         success: false, 
-        message: 'All fields are required' 
+        message: `Please provide: ${missingFields.join(', ')}`,
+        field: missingFields[0]
       });
     }
 
     if (!db) {
+      console.error('Database not available for registration');
       return res.status(500).json({
         success: false,
-        message: 'Database connection not available'
+        message: 'Our service is temporarily unavailable. Please try again in a few moments.',
+        retry: true
       });
     }
 
     // Check if user already exists
     const existingUser = await db.query(
-      'SELECT email FROM users WHERE email = $1',
+      'SELECT id FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
 
     if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'An account with this email already exists'
+        message: 'An account with this email address already exists. Please use a different email or try logging in.',
+        field: 'email',
+        action: 'login'
       });
     }
 
@@ -107,55 +120,80 @@ app.post('/api/auth/register', async (req, res) => {
     );
 
     const newUser = result.rows[0];
-    console.log('User created successfully:', newUser.email);
+    console.log(`User created successfully: ${newUser.email}`);
 
     // Send verification email
     if (mailjet) {
       try {
-        const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email?token=${verificationToken}`;
+        const verificationUrl = `https://mydentalfly.co.uk/verify-email?token=${verificationToken}`;
         
         await mailjet.post('send', { version: 'v3.1' }).request({
           Messages: [{
             From: {
-              Email: 'noreply@mydentalfly.com',
+              Email: 'noreply@mydentalfly.co.uk',
               Name: 'MyDentalFly'
             },
             To: [{
-              Email: email,
-              Name: name
+              Email: email.toLowerCase(),
+              Name: `${userFirstName} ${userLastName}`
             }],
-            Subject: 'Verify Your MyDentalFly Account',
+            Subject: 'Welcome to MyDentalFly - Please Verify Your Email',
             HTMLPart: `
-              <h2>Welcome to MyDentalFly!</h2>
-              <p>Thank you for registering with MyDentalFly. Please click the link below to verify your email address:</p>
-              <p><a href="${verificationUrl}" style="background-color: #0284c7; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email</a></p>
-              <p>If you didn't create this account, please ignore this email.</p>
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #2563eb;">Welcome to MyDentalFly!</h2>
+                <p>Thank you for registering with MyDentalFly. Please click the link below to verify your email address:</p>
+                <a href="${verificationUrl}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; margin: 20px 0;">Verify Email Address</a>
+                <p>If you didn't create this account, please ignore this email.</p>
+                <p>Best regards,<br>The MyDentalFly Team</p>
+              </div>
             `
           }]
         });
         
-        console.log('Verification email sent to', email);
+        console.log(`Verification email sent to ${email}`);
       } catch (emailError) {
-        console.error('Email sending failed:', emailError);
+        console.error(`Failed to send verification email: ${emailError}`);
+        return res.status(201).json({
+          success: true,
+          message: 'Account created successfully! We had trouble sending the verification email. Please contact support if you need assistance.',
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.first_name,
+            lastName: newUser.last_name
+          },
+          emailSent: false
+        });
       }
     }
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email for verification.',
+      message: 'Registration successful! Please check your email for verification instructions.',
       user: {
         id: newUser.id,
         email: newUser.email,
         firstName: newUser.first_name,
         lastName: newUser.last_name
-      }
+      },
+      emailSent: true
     });
-
   } catch (error) {
-    console.error('Registration error:', error.message);
-    res.status(500).json({
-      success: false,
-      message: 'Registration failed. Please try again.'
+    console.error(`Registration error: ${error}`);
+    
+    if (error.message && error.message.includes('duplicate key')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'An account with this email address already exists. Please use a different email or try logging in.',
+        field: 'email',
+        action: 'login'
+      });
+    }
+    
+    res.status(500).json({ 
+      success: false, 
+      message: 'We encountered an unexpected error. Please try again, and contact support if the problem continues.',
+      retry: true
     });
   }
 });
