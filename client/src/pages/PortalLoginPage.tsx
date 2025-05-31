@@ -1021,7 +1021,17 @@ const PortalLoginPage: React.FC = () => {
                           </FormItem>
                         )}
                       />
-                      <Button type="submit" className="w-full mt-2" disabled={isLoading}>
+                      <Button 
+                        type="button" 
+                        onClick={() => {
+                          console.log("Debug: Form values:", registerForm.getValues());
+                          console.log("Debug: Form errors:", registerForm.formState.errors);
+                          console.log("Debug: Form is valid:", registerForm.formState.isValid);
+                          registerForm.handleSubmit(onRegisterSubmit)();
+                        }}
+                        className="w-full mt-2" 
+                        disabled={isLoading}
+                      >
                         {isLoading ? "Creating Account..." : t("portal.login.register", "Create Account")}
                       </Button>
                     </form>
