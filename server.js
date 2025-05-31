@@ -1,12 +1,12 @@
 // Production server for MyDentalFly domains
-// This server loads environment variables and serves the static content
-
-// Required modules
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const { Pool } = require('@neondatabase/serverless');
+const nodeMailjet = require('node-mailjet');
 
-// Create Express app
 const app = express();
 
 // Debug mode for Replit environment
@@ -152,12 +152,6 @@ app.use((req, res, next) => {
 // Configure Express
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Database and email setup for registration
-const bcrypt = require('bcrypt');
-const crypto = require('crypto');
-const { Pool } = require('@neondatabase/serverless');
-const nodeMailjet = require('node-mailjet');
 
 // Initialize database connection
 let db = null;
@@ -320,48 +314,19 @@ app.get('/api/auth/verify-email', async (req, res) => {
   }
 });
 
-// Import and register all API routes
-async function startServer() {
-  try {
-    // Try to load full routes but don't fail if they're not available
-    const { registerRoutes } = require('./server/routes.js');
-    const httpServer = await registerRoutes(app);
-    
-    // Serve static files from the public directory
-    app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
-    // For single page application routing - send index.html for all routes
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
+// For single page application routing - send index.html for all routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
-    // Start server with full API support
-    const PORT = process.env.PORT || 3000;
-    httpServer.listen(PORT, '0.0.0.0', () => {
-      console.log(`MyDentalFly full application server running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-      console.log(`Server ready at http://0.0.0.0:${PORT}`);
-      console.log(`API endpoints available at /api/*`);
-      console.log(`Registration endpoint: /api/auth/register`);
-    });
-  } catch (error) {
-    console.error('Failed to start server with full API routes:', error);
-    console.log('Starting with basic registration support...');
-    
-    // Serve static files from the public directory
-    app.use(express.static(path.join(__dirname, 'public')));
-    
-    // For single page application routing - send index.html for all routes
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-    
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`MyDentalFly server running on port ${PORT} with basic registration`);
-      console.log(`Registration endpoint available: /api/auth/register`);
-    });
-  }
-}
-
-startServer();
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`MyDentalFly production server running on port ${PORT}`);
+  console.log(`Database: ${db ? 'Connected' : 'Not available'}`);
+  console.log(`Mailjet: ${mailjet ? 'Connected' : 'Not available'}`);
+  console.log(`Registration endpoint: /api/auth/register`);
+});
