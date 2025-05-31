@@ -5,6 +5,10 @@ import path from "path";
 import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import { Pool } from "@neondatabase/serverless";
+import nodeMailjet from "node-mailjet";
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -67,6 +71,169 @@ app.use((req, res, next) => {
   });
 
   next();
+});
+
+// Initialize database connection for registration
+let db: any = null;
+if (process.env.DATABASE_URL) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  db = pool;
+  log('Database connection initialized for registration');
+}
+
+// Initialize Mailjet for registration emails
+let mailjet: any = null;
+if (process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
+  mailjet = nodeMailjet.apiConnect(
+    process.env.MAILJET_API_KEY,
+    process.env.MAILJET_SECRET_KEY
+  );
+  log('Mailjet connection initialized for registration');
+}
+
+// Registration endpoint - must be before other routes
+app.post('/api/auth/register', async (req: Request, res: Response) => {
+  try {
+    log('Registration request received');
+    
+    const { fullName, email, phone, password, consent } = req.body;
+    
+    if (!fullName || !email || !password || !consent) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required' 
+      });
+    }
+
+    if (!db) {
+      log('Database not available for registration');
+      return res.status(500).json({
+        success: false,
+        message: 'Database not available'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists'
+      });
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Split fullName into firstName and lastName
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Insert user into database
+    const result = await db.query(
+      `INSERT INTO users (first_name, last_name, email, phone, password, email_verification_token, email_verified, status, role, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, false, 'pending', 'patient', NOW())
+       RETURNING id, email, first_name, last_name`,
+      [firstName, lastName, email.toLowerCase(), phone, hashedPassword, verificationToken]
+    );
+
+    const newUser = result.rows[0];
+    log(`User created successfully: ${newUser.email}`);
+
+    // Send verification email
+    if (mailjet) {
+      try {
+        const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email?token=${verificationToken}`;
+        
+        await mailjet.post('send', { version: 'v3.1' }).request({
+          Messages: [{
+            From: {
+              Email: 'noreply@mydentalfly.com',
+              Name: 'MyDentalFly'
+            },
+            To: [{
+              Email: email,
+              Name: fullName
+            }],
+            Subject: 'Please verify your email address',
+            HTMLPart: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Welcome to MyDentalFly!</h2>
+                <p>Hello ${firstName},</p>
+                <p>Thank you for registering with MyDentalFly. Please click the link below to verify your email address:</p>
+                <p><a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email Address</a></p>
+                <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                <p>${verificationUrl}</p>
+                <p>Best regards,<br>The MyDentalFly Team</p>
+              </div>
+            `
+          }]
+        });
+        
+        log(`Verification email sent to ${email}`);
+      } catch (emailError) {
+        log(`Failed to send verification email: ${emailError}`);
+      }
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Registration successful! Please check your email for verification.',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.first_name,
+        lastName: newUser.last_name
+      }
+    });
+  } catch (error) {
+    log(`Registration error: ${error}`);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Registration failed. Please try again.' 
+    });
+  }
+});
+
+// Email verification endpoint
+app.get('/api/auth/verify-email', async (req: Request, res: Response) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || !db) {
+      return res.status(400).send('Invalid verification link');
+    }
+
+    const result = await db.query(
+      'UPDATE users SET email_verified = true, email_verification_token = NULL, status = \'active\' WHERE email_verification_token = $1 RETURNING email, first_name',
+      [token as string]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).send('Invalid or expired verification link');
+    }
+
+    const user = result.rows[0];
+    res.send(`
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; text-align: center;">
+        <h2>Email Verified Successfully!</h2>
+        <p>Hello ${user.first_name}, your email has been verified.</p>
+        <p>You can now <a href="/portal">login to your account</a>.</p>
+      </div>
+    `);
+  } catch (error) {
+    log(`Email verification error: ${error}`);
+    res.status(500).send('Verification failed. Please try again.');
+  }
 });
 
 (async () => {
