@@ -46,7 +46,7 @@ const mailjet = MailJet.apiConnect(
 );
 
 // Configuration with verified domain
-const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.com';
+const SENDER_EMAIL = process.env.MAILJET_SENDER_EMAIL || 'noreply@mydentalfly.co.uk';
 const SENDER_NAME = process.env.MAILJET_SENDER_NAME || 'MyDentalFly';
 const ADMIN_EMAIL = process.env.MAILJET_RECIPIENT_EMAIL || 'admin@mydentalfly.com';
 
@@ -91,6 +91,10 @@ export async function sendVerificationEmail(data: VerificationEmailData): Promis
 
     const { userEmail, userName, verificationLink } = data;
     
+    console.log('=== MAILJET EMAIL DEBUGGING ===');
+    console.log('Mailjet API Key:', process.env.MAILJET_API_KEY ? 'SET' : 'NOT SET');
+    console.log('Mailjet Secret Key:', process.env.MAILJET_SECRET_KEY ? 'SET' : 'NOT SET');
+    console.log('Sender Email:', SENDER_EMAIL);
     console.log(`Sending verification email to: ${userEmail}`);
     
     const message = {
@@ -136,23 +140,27 @@ export async function sendVerificationEmail(data: VerificationEmailData): Promis
       `
     };
 
-    await mailjet.post('send', { version: 'v3.1' }).request({
+    const result = await mailjet.post('send', { version: 'v3.1' }).request({
       Messages: [message]
     });
 
+    console.log('Mailjet response:', result.body);
     console.log(`Verification email sent successfully to ${userEmail}`);
+    console.log('=== END MAILJET EMAIL DEBUGGING ===');
     return true;
   } catch (error: any) {
-    console.error('Error sending verification email with Mailjet:', error);
+    console.error('ERROR: Failed to send verification email with Mailjet:', error);
 
     if (error.response) {
       console.error('Mailjet API error details:', {
         status: error.response.status,
         statusText: error.response.statusText,
-        data: error.response.data
+        data: error.response.data,
+        errorMessage: error.response.data?.ErrorMessage || 'No specific error message'
       });
     }
 
+    console.log('=== END MAILJET EMAIL DEBUGGING ===');
     return false;
   }
 }
