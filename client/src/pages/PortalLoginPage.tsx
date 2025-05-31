@@ -1023,28 +1023,16 @@ const PortalLoginPage: React.FC = () => {
                       />
                       <Button 
                         type="button" 
-                        onClick={async () => {
-                          console.log("Button clicked - starting debug");
-                          const values = registerForm.getValues();
-                          const errors = registerForm.formState.errors;
-                          console.log("Form values:", values);
-                          console.log("Form errors:", errors);
-                          
-                          // Trigger validation
-                          const isValid = await registerForm.trigger();
-                          console.log("Form is valid after trigger:", isValid);
-                          
-                          if (isValid) {
-                            console.log("Form is valid, calling submit function");
-                            await onRegisterSubmit(values);
-                          } else {
-                            console.log("Form validation failed, errors:", registerForm.formState.errors);
-                          }
+                        onClick={() => {
+                          alert("Button clicked! Check console.");
+                          console.log("🚀 REGISTRATION DEBUG START");
+                          console.log("Form values:", registerForm.getValues());
+                          console.log("🚀 REGISTRATION DEBUG END");
                         }}
                         className="w-full mt-2" 
                         disabled={isLoading}
                       >
-                        {isLoading ? "Creating Account..." : t("portal.login.register", "Create Account")}
+                        {isLoading ? "Creating Account..." : "TEST REGISTRATION"}
                       </Button>
                     </form>
                   </Form>
