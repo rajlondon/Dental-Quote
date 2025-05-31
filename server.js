@@ -171,6 +171,15 @@ if (process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
   console.log('Mailjet connection initialized');
 }
 
+// Test endpoint to verify deployment
+app.get('/api/test', (req, res) => {
+  res.json({ 
+    message: 'Server updated successfully', 
+    timestamp: new Date().toISOString(),
+    version: '2.0'
+  });
+});
+
 // Registration endpoint with database and email support
 app.post('/api/auth/register', async (req, res) => {
   try {
