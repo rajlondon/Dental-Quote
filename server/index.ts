@@ -112,9 +112,16 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     const userConsent = consent || consentcontacts;
     
     if (!name || !email || !password || !userConsent) {
+      let missingFields = [];
+      if (!name) missingFields.push('full name');
+      if (!email) missingFields.push('email address');
+      if (!password) missingFields.push('password');
+      if (!userConsent) missingFields.push('privacy consent');
+      
       return res.status(400).json({ 
         success: false, 
-        message: 'All fields are required' 
+        message: `Please provide: ${missingFields.join(', ')}`,
+        field: missingFields[0] // For frontend to focus on first missing field
       });
     }
 
@@ -122,7 +129,8 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
       log('Database not available for registration');
       return res.status(500).json({
         success: false,
-        message: 'Database not available'
+        message: 'Our service is temporarily unavailable. Please try again in a few moments.',
+        retry: true
       });
     }
 
@@ -135,7 +143,9 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     if (existingUser.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'An account with this email already exists'
+        message: 'An account with this email address already exists. Please use a different email or try logging in.',
+        field: 'email',
+        action: 'login' // Suggests user should try logging in instead
       });
     }
 
@@ -195,24 +205,49 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
         log(`Verification email sent to ${email}`);
       } catch (emailError) {
         log(`Failed to send verification email: ${emailError}`);
+        // Still return success since user was created, but note email issue
+        return res.status(201).json({
+          success: true,
+          message: 'Account created successfully! We had trouble sending the verification email. Please contact support if you need assistance.',
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.first_name,
+            lastName: newUser.last_name
+          },
+          emailSent: false
+        });
       }
     }
 
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email for verification.',
+      message: 'Registration successful! Please check your email for verification instructions.',
       user: {
         id: newUser.id,
         email: newUser.email,
         firstName: newUser.first_name,
         lastName: newUser.last_name
-      }
+      },
+      emailSent: true
     });
   } catch (error) {
     log(`Registration error: ${error}`);
+    
+    // Handle specific database constraint errors
+    if (error.message && error.message.includes('duplicate key')) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'An account with this email address already exists. Please use a different email or try logging in.',
+        field: 'email',
+        action: 'login'
+      });
+    }
+    
     res.status(500).json({ 
       success: false, 
-      message: 'Registration failed. Please try again.' 
+      message: 'We encountered an unexpected error. Please try again, and contact support if the problem continues.',
+      retry: true
     });
   }
 });
