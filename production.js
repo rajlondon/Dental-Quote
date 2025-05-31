@@ -117,6 +117,146 @@ app.get('/api/domain-info', (req, res) => {
   });
 });
 
+// Email verification endpoint
+app.get('/api/auth/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+    }
+
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        message: 'Service temporarily unavailable'
+      });
+    }
+
+    // Find user by verification token
+    const result = await db.query(
+      'SELECT id, email, first_name, last_name FROM users WHERE email_verification_token = $1 AND email_verified = false',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    const user = result.rows[0];
+
+    // Update user as verified
+    await db.query(
+      'UPDATE users SET email_verified = true, status = $1, email_verification_token = null WHERE id = $2',
+      ['active', user.id]
+    );
+
+    console.log(`Email verified for user: ${user.email}`);
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! You can now log in to your account.',
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name
+      }
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Verification failed. Please try again.'
+    });
+  }
+});
+
+// Verification page handler
+app.get('/verify-email', async (req, res) => {
+  const { token } = req.query;
+  
+  if (!token) {
+    return res.send(`
+      <html>
+        <head><title>MyDentalFly - Verification Error</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h2 style="color: #dc2626;">Verification Error</h2>
+          <p>No verification token provided.</p>
+          <a href="https://mydentalfly.co.uk" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Return to MyDentalFly</a>
+        </body>
+      </html>
+    `);
+  }
+
+  try {
+    if (!db) {
+      throw new Error('Database unavailable');
+    }
+
+    // Check token and verify
+    const result = await db.query(
+      'SELECT id, email, first_name FROM users WHERE email_verification_token = $1 AND email_verified = false',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.send(`
+        <html>
+          <head><title>MyDentalFly - Verification Error</title></head>
+          <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+            <h2 style="color: #dc2626;">Verification Error</h2>
+            <p>Invalid or expired verification token. Your email may already be verified.</p>
+            <a href="https://mydentalfly.co.uk" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Return to MyDentalFly</a>
+          </body>
+        </html>
+      `);
+    }
+
+    const user = result.rows[0];
+
+    // Verify the user
+    await db.query(
+      'UPDATE users SET email_verified = true, status = $1, email_verification_token = null WHERE id = $2',
+      ['active', user.id]
+    );
+
+    console.log(`Email verified successfully for: ${user.email}`);
+
+    res.send(`
+      <html>
+        <head><title>MyDentalFly - Email Verified</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h2 style="color: #16a34a;">Email Verified Successfully!</h2>
+          <p>Welcome to MyDentalFly, ${user.first_name}!</p>
+          <p>Your email has been verified and your account is now active.</p>
+          <a href="https://mydentalfly.co.uk" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Continue to MyDentalFly</a>
+        </body>
+      </html>
+    `);
+
+  } catch (error) {
+    console.error('Verification page error:', error);
+    res.send(`
+      <html>
+        <head><title>MyDentalFly - Verification Error</title></head>
+        <body style="font-family: Arial, sans-serif; padding: 40px; text-align: center;">
+          <h2 style="color: #dc2626;">Verification Error</h2>
+          <p>Something went wrong during verification. Please try again later.</p>
+          <a href="https://mydentalfly.co.uk" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Return to MyDentalFly</a>
+        </body>
+      </html>
+    `);
+  }
+});
+
 // Registration endpoint
 app.post('/api/auth/register', async (req, res) => {
   try {
