@@ -850,11 +850,7 @@ const PortalLoginPage: React.FC = () => {
                 </CardHeader>
                 <CardContent>
                   <Form {...registerForm}>
-                    <form onSubmit={(e) => {
-                      e.preventDefault();
-                      console.log("Form submitted with values:", registerForm.getValues());
-                      registerForm.handleSubmit(onRegisterSubmit)(e);
-                    }} className="space-y-4">
+                    <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
                       <FormField
                         control={registerForm.control}
                         name="fullName"
