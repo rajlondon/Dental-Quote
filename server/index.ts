@@ -100,6 +100,44 @@ app.get('/api/test', (req: Request, res: Response) => {
   });
 });
 
+// Admin endpoint to delete user by email
+app.delete('/api/admin/user/:email', async (req: Request, res: Response) => {
+  try {
+    const { email } = req.params;
+    
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        message: 'Database not available'
+      });
+    }
+
+    const result = await db.query(
+      'DELETE FROM users WHERE email = $1 RETURNING email',
+      [email.toLowerCase()]
+    );
+
+    if (result.rows.length > 0) {
+      log(`User deleted: ${email}`);
+      res.json({
+        success: true,
+        message: `User ${email} deleted successfully`
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        message: `User ${email} not found`
+      });
+    }
+  } catch (error) {
+    log(`Delete user error: ${error}`);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete user'
+    });
+  }
+});
+
 // Registration endpoint - must be before other routes
 app.post('/api/auth/register', async (req: Request, res: Response) => {
   try {
