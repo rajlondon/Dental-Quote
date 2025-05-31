@@ -153,28 +153,45 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    host: req.headers.host,
-    environment: process.env.NODE_ENV || 'production'
-  });
-});
+// Import and register all API routes
+async function startServer() {
+  try {
+    const { registerRoutes } = require('./server/routes');
+    
+    // Register all API routes (authentication, quotes, payments, etc.)
+    const httpServer = await registerRoutes(app);
+    
+    // Serve static files from the public directory
+    app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, 'public')));
+    // For single page application routing - send index.html for all routes
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
 
-// For single page application routing - send index.html for all routes
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+    // Start server with full API support
+    const PORT = process.env.PORT || 3000;
+    httpServer.listen(PORT, '0.0.0.0', () => {
+      console.log(`MyDentalFly full application server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
+      console.log(`Server ready at http://0.0.0.0:${PORT}`);
+      console.log(`API endpoints available at /api/*`);
+      console.log(`Registration endpoint: /api/auth/register`);
+    });
+  } catch (error) {
+    console.error('Failed to start server with API routes:', error);
+    
+    // Fallback to basic static server
+    app.use(express.static(path.join(__dirname, 'public')));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+    
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`MyDentalFly fallback server running on port ${PORT} (API disabled)`);
+    });
+  }
+}
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`MyDentalFly server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'production'}`);
-  console.log(`Server ready at http://0.0.0.0:${PORT}`);
-});
+startServer();
