@@ -1,2 +1,2 @@
-run = "node start.mjs"
-entrypoint = "start.mjs"
+run = "node dist/index.mjs"
+entrypoint = "dist/index.mjs"
