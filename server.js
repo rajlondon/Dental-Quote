@@ -153,7 +153,31 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Simple registration endpoint for production
+// Database and email setup for registration
+const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const { Pool } = require('@neondatabase/serverless');
+const nodeMailjet = require('node-mailjet');
+
+// Initialize database connection
+let db = null;
+if (process.env.DATABASE_URL) {
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  db = pool;
+  console.log('Database connection initialized');
+}
+
+// Initialize Mailjet
+let mailjet = null;
+if (process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
+  mailjet = nodeMailjet.apiConnect(
+    process.env.MAILJET_API_KEY,
+    process.env.MAILJET_SECRET_KEY
+  );
+  console.log('Mailjet connection initialized');
+}
+
+// Registration endpoint with database and email support
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { fullName, email, phone, password, consent } = req.body;
@@ -165,10 +189,94 @@ app.post('/api/auth/register', async (req, res) => {
       });
     }
 
-    // For now, just return success - we'll connect database later
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        message: 'Database not available'
+      });
+    }
+
+    // Check if user already exists
+    const existingUser = await db.query(
+      'SELECT id FROM users WHERE email = $1',
+      [email.toLowerCase()]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'An account with this email already exists'
+      });
+    }
+
+    // Hash password
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Split fullName into firstName and lastName
+    const nameParts = fullName.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Insert user into database
+    const result = await db.query(
+      `INSERT INTO users (first_name, last_name, email, phone, password, email_verification_token, email_verified, status, role, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6, false, 'pending', 'patient', NOW())
+       RETURNING id, email, first_name, last_name`,
+      [firstName, lastName, email.toLowerCase(), phone, hashedPassword, verificationToken]
+    );
+
+    const newUser = result.rows[0];
+
+    // Send verification email
+    if (mailjet) {
+      try {
+        const verificationUrl = `${req.protocol}://${req.get('host')}/api/auth/verify-email?token=${verificationToken}`;
+        
+        await mailjet.post('send', { version: 'v3.1' }).request({
+          Messages: [{
+            From: {
+              Email: 'noreply@mydentalfly.com',
+              Name: 'MyDentalFly'
+            },
+            To: [{
+              Email: email,
+              Name: fullName
+            }],
+            Subject: 'Please verify your email address',
+            HTMLPart: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2>Welcome to MyDentalFly!</h2>
+                <p>Hello ${firstName},</p>
+                <p>Thank you for registering with MyDentalFly. Please click the link below to verify your email address:</p>
+                <p><a href="${verificationUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Verify Email Address</a></p>
+                <p>If the button doesn't work, copy and paste this link into your browser:</p>
+                <p>${verificationUrl}</p>
+                <p>Best regards,<br>The MyDentalFly Team</p>
+              </div>
+            `
+          }]
+        });
+        
+        console.log(`Verification email sent to ${email}`);
+      } catch (emailError) {
+        console.error('Failed to send verification email:', emailError);
+        // Don't fail registration if email fails
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Registration successful! Please check your email for verification.'
+      message: 'Registration successful! Please check your email for verification.',
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.first_name,
+        lastName: newUser.last_name
+      }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -176,6 +284,39 @@ app.post('/api/auth/register', async (req, res) => {
       success: false, 
       message: 'Registration failed. Please try again.' 
     });
+  }
+});
+
+// Email verification endpoint
+app.get('/api/auth/verify-email', async (req, res) => {
+  try {
+    const { token } = req.query;
+    
+    if (!token || !db) {
+      return res.status(400).send('Invalid verification link');
+    }
+
+    // Find user with this verification token
+    const result = await db.query(
+      'UPDATE users SET email_verified = true, email_verification_token = NULL, status = \'active\' WHERE email_verification_token = $1 RETURNING email, first_name',
+      [token]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(400).send('Invalid or expired verification link');
+    }
+
+    const user = result.rows[0];
+    res.send(`
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; text-align: center;">
+        <h2>Email Verified Successfully!</h2>
+        <p>Hello ${user.first_name}, your email has been verified.</p>
+        <p>You can now <a href="/portal">login to your account</a>.</p>
+      </div>
+    `);
+  } catch (error) {
+    console.error('Email verification error:', error);
+    res.status(500).send('Verification failed. Please try again.');
   }
 });
 
