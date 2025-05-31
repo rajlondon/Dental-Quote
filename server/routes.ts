@@ -28,7 +28,6 @@ import fileRoutes from "./routes/fileRoutes";
 import authRoutesRouter from "./routes/auth-routes";
 import treatmentPlanRoutes from "./routes/treatmentPlanRoutes";
 import treatmentRoutes from "./routes/treatment-routes";
-import specialOffersRoutes from "./routes/special-offers-routes";
 import geminiRoutes from "./routes/gemini-routes";
 import paymentRoutes from "./routes/paymentRoutes";
 // Document routes imported above
@@ -37,7 +36,7 @@ import messagingRoutes from "./routes/messaging-routes";
 import bookingRoutes from "./routes/booking-routes";
 import appointmentRoutes from "./routes/appointment-routes";
 import { createNotificationRoutes } from "./routes/notification-routes";
-import specialOffersRoutes from "./routes/special-offers-routes-fixed";
+import specialOffersRoutesFixed from "./routes/special-offers-routes-fixed";
 import specialOffersUpdateHelper from "./routes/special-offers-update-helper";
 import trendingPackagesRoutes from "./routes/trending-packages-routes-fixed";
 import quoteRoutes from "./routes/quote-routes";
@@ -294,7 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // We'll register notification routes later after we create the HTTP server
   
   // Register special offers routes with commission-based promotion system
-  app.use(specialOffersRoutes);
+  app.use(specialOffersRoutesFixed);
   
   // Register special offers update helper routes for image generation
   app.use(specialOffersUpdateHelper);
