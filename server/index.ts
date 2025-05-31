@@ -290,6 +290,16 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
   }
 });
 
+// Frontend verification route handler - redirects to API endpoint
+app.get('/verify-email', async (req: Request, res: Response) => {
+  const { token } = req.query;
+  if (token) {
+    // Redirect to the actual API endpoint
+    return res.redirect(`/api/auth/verify-email?token=${token}`);
+  }
+  res.status(400).send('Invalid verification link');
+});
+
 // Email verification endpoint
 app.get('/api/auth/verify-email', async (req: Request, res: Response) => {
   try {
