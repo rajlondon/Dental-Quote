@@ -91,14 +91,27 @@ if (process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
   log('Mailjet connection initialized for registration');
 }
 
+// Test endpoint to verify deployment
+app.get('/api/test', (req: Request, res: Response) => {
+  res.json({ 
+    message: 'Server updated successfully', 
+    timestamp: new Date().toISOString(),
+    version: '2.0'
+  });
+});
+
 // Registration endpoint - must be before other routes
 app.post('/api/auth/register', async (req: Request, res: Response) => {
   try {
     log('Registration request received');
     
-    const { fullName, email, phone, password, consent } = req.body;
+    const { fullName, firstName, lastName, email, phone, password, consent, consentcontacts } = req.body;
     
-    if (!fullName || !email || !password || !consent) {
+    // Handle both fullName and firstName/lastName formats
+    const name = fullName || (firstName && lastName ? `${firstName} ${lastName}` : '');
+    const userConsent = consent || consentcontacts;
+    
+    if (!name || !email || !password || !userConsent) {
       return res.status(400).json({ 
         success: false, 
         message: 'All fields are required' 
@@ -133,17 +146,17 @@ app.post('/api/auth/register', async (req: Request, res: Response) => {
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
 
-    // Split fullName into firstName and lastName
-    const nameParts = fullName.trim().split(' ');
-    const firstName = nameParts[0];
-    const lastName = nameParts.slice(1).join(' ') || '';
+    // Split name into firstName and lastName
+    const nameParts = name.trim().split(' ');
+    const userFirstName = nameParts[0];
+    const userLastName = nameParts.slice(1).join(' ') || '';
 
     // Insert user into database
     const result = await db.query(
       `INSERT INTO users (first_name, last_name, email, phone, password, email_verification_token, email_verified, status, role, created_at)
        VALUES ($1, $2, $3, $4, $5, $6, false, 'pending', 'patient', NOW())
        RETURNING id, email, first_name, last_name`,
-      [firstName, lastName, email.toLowerCase(), phone, hashedPassword, verificationToken]
+      [userFirstName, userLastName, email.toLowerCase(), phone, hashedPassword, verificationToken]
     );
 
     const newUser = result.rows[0];
