@@ -1508,6 +1508,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   console.log('WebSocket and notification services initialized for cross-portal data synchronization');
   
+  // Test Mailjet configuration endpoint
+  app.post('/api/test/mailjet', async (req: Request, res: Response) => {
+    try {
+      const { sendVerificationEmail } = await import('./mailjet-service');
+      
+      const testData = {
+        userEmail: req.body.email || 'test@example.com',
+        userName: 'Test User',
+        verificationLink: 'https://mydentalfly.co.uk/verify-test'
+      };
+      
+      console.log('Testing Mailjet with data:', testData);
+      const result = await sendVerificationEmail(testData);
+      
+      res.json({
+        success: result,
+        message: result ? 'Test email sent successfully' : 'Test email failed',
+        testData
+      });
+    } catch (error: any) {
+      console.error('Mailjet test error:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message,
+        details: error.response?.body || error
+      });
+    }
+  });
+
   // Initialize special offers image cache
   initializeSpecialOfferImageCache()
     .then(() => console.log('Special offer image cache initialized successfully'))
