@@ -135,7 +135,8 @@ export async function setupAuth(app: Express) {
     passport.use(new GoogleStrategy({
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "/api/auth/google/callback"
+      callbackURL: "https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/api/auth/google/callback",
+      proxy: true
     },
     async (accessToken: any, refreshToken: any, profile: any, done: any) => {
       try {
@@ -601,10 +602,10 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
 
     // Google OAuth callback
     app.get("/api/auth/google/callback",
-      passport.authenticate("google", { failureRedirect: "/?auth=failed" }),
+      passport.authenticate("google", { failureRedirect: "/portal-login?auth=failed" }),
       (req, res) => {
-        // Successful authentication, redirect to home
-        res.redirect("/?auth=success");
+        // Successful authentication, redirect to portal
+        res.redirect("/portal-login?auth=success");
       }
     );
   }
