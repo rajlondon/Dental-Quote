@@ -10,10 +10,13 @@ export function setupGoogleAuth() {
     return;
   }
 
+  const callbackURL = "https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev/api/auth/google/callback";
+  console.log('Setting up Google OAuth with callback URL:', callbackURL);
+
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/api/auth/google/callback"
+    callbackURL: callbackURL
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
