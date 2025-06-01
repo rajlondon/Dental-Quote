@@ -10,6 +10,39 @@ import crypto from "crypto";
 import { Pool } from "@neondatabase/serverless";
 import nodeMailjet from "node-mailjet";
 import { setupGoogleAuth } from "./auth/google-auth";
+import fs from "fs";
+
+// Load environment variables from .env file
+function loadEnvironmentVariables() {
+  try {
+    const envPath = path.join(process.cwd(), '.env');
+    if (fs.existsSync(envPath)) {
+      const envContents = fs.readFileSync(envPath, 'utf8');
+      envContents.split('\n').forEach(line => {
+        if (line.trim() && !line.startsWith('#')) {
+          const [key, ...valueParts] = line.split('=');
+          if (key && valueParts.length > 0) {
+            const value = valueParts.join('=').trim().replace(/^['"](.*)['"]$/, '$1');
+            if (key.trim() && value) {
+              process.env[key.trim()] = value;
+            }
+          }
+        }
+      });
+      log('Environment variables loaded from .env file');
+    }
+  } catch (error) {
+    log('Warning: Could not load .env file:', error);
+  }
+}
+
+// Load environment variables before anything else
+loadEnvironmentVariables();
+
+// Log Google OAuth configuration status
+log('Google OAuth Configuration:');
+log('GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? 'Present' : 'Missing');
+log('GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? 'Present' : 'Missing');
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {
