@@ -177,11 +177,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/dental-implants');
   });
   
-  // Setup authentication
+  // Setup authentication BEFORE any middleware that might interfere
   setupAuth(app);
   
-  // Apply global rate limiting to all API routes
-  app.use('/api', apiRateLimit);
+  // Apply global rate limiting to all API routes (except auth routes)
+  app.use('/api', (req, res, next) => {
+    // Skip rate limiting for Google OAuth routes
+    if (req.path.startsWith('/auth/google')) {
+      return next();
+    }
+    return apiRateLimit(req, res, next);
+  });
   
   // Add CSRF error handler (must be before CSRF middleware)
   app.use(handleCsrfError);
