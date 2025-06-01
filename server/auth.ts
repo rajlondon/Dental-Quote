@@ -604,8 +604,17 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
     app.get("/api/auth/google/callback",
       passport.authenticate("google", { failureRedirect: "/portal-login?auth=failed" }),
       (req, res) => {
-        // Successful authentication, redirect to portal
-        res.redirect("/portal-login?auth=success");
+        // Successful authentication, redirect based on user role
+        const user = req.user as Express.User;
+        
+        if (user.role === 'admin') {
+          res.redirect("/portal/admin");
+        } else if (user.role === 'clinic_staff') {
+          res.redirect("/portal/clinic");
+        } else {
+          // Default to patient portal
+          res.redirect("/portal");
+        }
       }
     );
   }
