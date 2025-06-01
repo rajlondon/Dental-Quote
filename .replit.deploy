@@ -1,2 +1,3 @@
-run = "node server.cjs"
-entrypoint = "server.cjs"
+run = "node deploy-production.cjs"
+entrypoint = "deploy-production.cjs"
+build = "npm run build"
