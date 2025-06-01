@@ -67,8 +67,8 @@ app.set('trust proxy', 1);
 // Configure CORS to explicitly support credentials
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://mydentalfly.com', 'https://www.mydentalfly.com'] 
-    : ['http://localhost:5000', 'http://0.0.0.0:5000', 'http://127.0.0.1:5000'],
+    ? ['https://mydentalfly.com', 'https://www.mydentalfly.com', 'https://mydentalfly.co.uk', 'https://www.mydentalfly.co.uk'] 
+    : ['http://localhost:5000', 'http://0.0.0.0:5000', 'http://127.0.0.1:5000', 'https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev'],
   credentials: true, // CRITICAL: This allows cookies to be sent with requests
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
