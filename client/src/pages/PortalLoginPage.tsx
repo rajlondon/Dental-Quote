@@ -214,10 +214,11 @@ const PortalLoginPage: React.FC = () => {
         try {
           const errorData = JSON.parse(respText);
           console.error("Registration error data:", errorData);
-          throw new Error(errorData.message || "Registration failed");
+          throw new Error(errorData.message || `Registration failed with status: ${response.status}`);
         } catch (parseError) {
           console.error("Error parsing response:", parseError);
-          throw new Error("Registration failed with status: " + response.status);
+          // If we can't parse JSON, try to use the raw response text
+          throw new Error(respText || `Registration failed with status: ${response.status}`);
         }
       }
       
