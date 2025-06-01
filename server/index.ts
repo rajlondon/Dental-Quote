@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { Pool } from "@neondatabase/serverless";
 import nodeMailjet from "node-mailjet";
+import { setupGoogleAuth } from "./auth/google-auth";
 
 // Make sure Stripe env variables are set
 if (!process.env.STRIPE_SECRET_KEY) {

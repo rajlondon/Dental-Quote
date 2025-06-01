@@ -2,6 +2,7 @@ import { Express } from "express";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
+import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import bcrypt from "bcrypt";
 import { db } from "./db";
 import { users } from "@shared/schema";
@@ -128,6 +129,107 @@ export async function setupAuth(app: Express) {
       }
     }
   ));
+
+  // Configure Google OAuth Strategy
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/api/auth/google/callback"
+    },
+    async (accessToken: any, refreshToken: any, profile: any, done: any) => {
+      try {
+        // Check if user already exists with this Google ID
+        const [existingUser] = await db
+          .select()
+          .from(users)
+          .where(eq(users.googleId, profile.id));
+
+        if (existingUser) {
+          const userForAuth = {
+            id: existingUser.id,
+            email: existingUser.email,
+            role: existingUser.role,
+            firstName: existingUser.firstName || undefined,
+            lastName: existingUser.lastName || undefined,
+            profileImage: existingUser.profileImage || undefined,
+            clinicId: existingUser.clinicId || undefined,
+            emailVerified: existingUser.emailVerified || false,
+            status: existingUser.status || 'active'
+          };
+          return done(null, userForAuth);
+        }
+
+        // Check if user exists with same email
+        const email = profile.emails?.[0]?.value;
+        if (email) {
+          const [emailUser] = await db
+            .select()
+            .from(users)
+            .where(eq(users.email, email));
+
+          if (emailUser) {
+            // Link Google account to existing user
+            await db
+              .update(users)
+              .set({ 
+                googleId: profile.id,
+                emailVerified: true,
+                status: 'active'
+              })
+              .where(eq(users.id, emailUser.id));
+
+            const userForAuth = {
+              id: emailUser.id,
+              email: emailUser.email,
+              role: emailUser.role,
+              firstName: emailUser.firstName || undefined,
+              lastName: emailUser.lastName || undefined,
+              profileImage: emailUser.profileImage || undefined,
+              clinicId: emailUser.clinicId || undefined,
+              emailVerified: true,
+              status: 'active'
+            };
+            return done(null, userForAuth);
+          }
+        }
+
+        // Create new user
+        const newUserData = {
+          email: email || '',
+          firstName: profile.name?.givenName || '',
+          lastName: profile.name?.familyName || '',
+          googleId: profile.id,
+          emailVerified: true,
+          status: 'active' as const,
+          role: 'patient' as const,
+          password: 'google_oauth_user' // Placeholder for Google users
+        };
+
+        const [newUser] = await db
+          .insert(users)
+          .values(newUserData)
+          .returning();
+
+        const userForAuth = {
+          id: newUser.id,
+          email: newUser.email,
+          role: newUser.role,
+          firstName: newUser.firstName || undefined,
+          lastName: newUser.lastName || undefined,
+          profileImage: newUser.profileImage || undefined,
+          clinicId: newUser.clinicId || undefined,
+          emailVerified: true,
+          status: 'active'
+        };
+
+        return done(null, userForAuth);
+      } catch (error) {
+        console.error('Google OAuth error:', error);
+        return done(error, null);
+      }
+    }));
+  }
 
   // User session cache to reduce database load
   const userSessionCache = new Map<number, Express.User>();
@@ -490,6 +592,23 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
     next();
   });
   
+  // Google OAuth routes
+  if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+    // Start Google authentication
+    app.get("/api/auth/google", 
+      passport.authenticate("google", { scope: ["profile", "email"] })
+    );
+
+    // Google OAuth callback
+    app.get("/api/auth/google/callback",
+      passport.authenticate("google", { failureRedirect: "/?auth=failed" }),
+      (req, res) => {
+        // Successful authentication, redirect to home
+        res.redirect("/?auth=success");
+      }
+    );
+  }
+
   // Current user endpoint
   app.get("/api/auth/user", (req, res) => {
     if (!req.isAuthenticated()) {
