@@ -2,7 +2,7 @@
 const { spawn } = require('child_process');
 const path = require('path');
 
-console.log('Starting MyDentalFly production server with full authentication...');
+console.log('Starting MyDentalFly production server with full authentication support v2.0...');
 
 // Set production environment
 process.env.NODE_ENV = 'production';
