@@ -146,7 +146,7 @@ export async function setupAuth(app: Express) {
           .where(eq(users.googleId, profile.id));
 
         if (existingUser) {
-          const userForAuth = {
+          const userForAuth: Express.User = {
             id: existingUser.id,
             email: existingUser.email,
             role: existingUser.role,
@@ -179,7 +179,7 @@ export async function setupAuth(app: Express) {
               })
               .where(eq(users.id, emailUser.id));
 
-            const userForAuth = {
+            const userForAuth: Express.User = {
               id: emailUser.id,
               email: emailUser.email,
               role: emailUser.role,
@@ -211,7 +211,7 @@ export async function setupAuth(app: Express) {
           .values(newUserData)
           .returning();
 
-        const userForAuth = {
+        const userForAuth: Express.User = {
           id: newUser.id,
           email: newUser.email,
           role: newUser.role,
