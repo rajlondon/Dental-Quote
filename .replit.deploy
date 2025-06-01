@@ -1,2 +1,2 @@
-run = "npm run build && npm start"
-entrypoint = "server/index.ts"
+run = "node server.cjs"
+entrypoint = "server.cjs"
