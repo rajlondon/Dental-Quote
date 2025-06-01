@@ -38,6 +38,9 @@ export const users = pgTable("users", {
   // Referral system fields
   referralCode: varchar("referral_code", { length: 20 }).unique(),
   referralBalance: decimal("referral_balance", { precision: 10, scale: 2 }).default("0.00"),
+  // OAuth fields
+  googleId: varchar("google_id", { length: 100 }).unique(),
+  facebookId: varchar("facebook_id", { length: 100 }).unique(),
   // Tracking fields
   lastLogin: timestamp("last_login"),
   emailVerified: boolean("email_verified").default(false),
