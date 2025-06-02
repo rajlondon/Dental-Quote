@@ -195,16 +195,11 @@ if (googleClientId && googleClientSecret) {
   );
 
   app.get('/api/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/portal-login?auth=failed' }),
+    passport.authenticate('google', { failureRedirect: '/?auth=failed' }),
     (req, res) => {
       const user = req.user;
-      if (user.role === 'admin') {
-        res.redirect('/portal/admin');
-      } else if (user.role === 'clinic_staff') {
-        res.redirect('/portal/clinic');
-      } else {
-        res.redirect('/portal');
-      }
+      // Redirect to homepage with success indicator since user is now authenticated
+      res.redirect('/?auth=success&method=google');
     }
   );
 } else {
