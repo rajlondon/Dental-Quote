@@ -1,2 +1,2 @@
-run = "node minimal-production-server.mjs"
-entrypoint = "minimal-production-server.mjs"
+run = "node standalone-server.js"
+entrypoint = "standalone-server.js"
