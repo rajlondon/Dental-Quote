@@ -1,3 +1,2 @@
-run = "npm start"
-entrypoint = "dist/index.mjs"
-build = "npm run build"
+run = "npm run dev"
+entrypoint = "server/index.ts"
