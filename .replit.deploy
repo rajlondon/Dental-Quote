@@ -1,2 +1,3 @@
-run = "node standalone-server.js"
-entrypoint = "standalone-server.js"
+run = "npm start"
+entrypoint = "dist/index.mjs"
+build = "npm run build"
