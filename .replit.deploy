@@ -1,2 +1,3 @@
-run = "npm run dev"
+run = "npm start"
 entrypoint = "server/index.ts"
+build = "npm run build"
