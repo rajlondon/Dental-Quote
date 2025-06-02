@@ -1,3 +1,2 @@
 run = "node minimal-production-server.mjs"
 entrypoint = "minimal-production-server.mjs"
-build = "echo 'Minimal server deployment - no build required'"
