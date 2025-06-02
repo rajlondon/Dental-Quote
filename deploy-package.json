@@ -1,14 +1,19 @@
 {
-  "name": "mydentalfly-domain-server",
+  "name": "mydentalfly-standalone",
   "version": "1.0.0",
-  "description": "Simple landing page server for MyDentalFly domains",
-  "main": "domain-server.cjs",
-  "type": "commonjs",
+  "description": "MyDentalFly Standalone Production Server",
+  "main": "standalone-server.js",
   "scripts": {
-    "start": "node domain-server.cjs"
+    "start": "node standalone-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "cors": "^2.8.5"
   },
   "engines": {
-    "node": ">=14.0.0"
-  },
-  "private": true
+    "node": ">=18.0.0"
+  }
 }
