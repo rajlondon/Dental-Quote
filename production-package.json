@@ -5,6 +5,7 @@
   "type": "module",
   "main": "production-server.mjs",
   "scripts": {
+    "build": "echo 'Production server ready - no build required'",
     "start": "node production-server.mjs"
   },
   "dependencies": {

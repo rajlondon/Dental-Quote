@@ -1,4 +1,7 @@
-{
+import fs from 'fs';
+
+// Restore the original package.json for the build system
+const originalPackage = {
   "name": "rest-express",
   "version": "1.0.0",
   "type": "module",
@@ -98,4 +101,7 @@
   "devDependencies": {
     "esbuild": "^0.24.0"
   }
-}
+};
+
+fs.writeFileSync('package.json', JSON.stringify(originalPackage, null, 2));
+console.log('Original package.json restored for build process');
