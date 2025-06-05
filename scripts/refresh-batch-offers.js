@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:3000';
 
 // Using the clinic credentials for authentication
 const EMAIL = 'clinic@mydentalfly.com';

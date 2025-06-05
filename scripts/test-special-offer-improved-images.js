@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import FormData from 'form-data';
 
 // Set global variables
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:3000';
 let authToken = null;
 
 // Special offer test cases with different types

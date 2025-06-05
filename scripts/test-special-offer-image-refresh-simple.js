@@ -15,7 +15,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Constants
-const BASE_URL = 'http://localhost:5000';
+const BASE_URL = 'http://localhost:3000';
 const CACHE_DIR = path.join(__dirname, '../public/cached-images');
 const TEST_IMAGE_PATH = path.join(__dirname, '../public/test-placeholder.jpg');
 

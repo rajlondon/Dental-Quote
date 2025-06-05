@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // Configuration
 const API_KEY = 'mydentalfly-api-token-12345';
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:3000';
 
 // Test prompt using photography techniques similar to real special offer generation
 const TEST_PROMPT = "Create a high-quality Shutterstock-style photograph of a modern dental implant next to a crown on a clean white surface with professional studio lighting, shallow depth of field, and soft shadows";

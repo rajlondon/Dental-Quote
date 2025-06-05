@@ -14,7 +14,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Base URL for API
-const API_URL = 'http://localhost:5000';
+const API_URL = 'http://localhost:3000';
 
 // Development API key for authentication
 const API_KEY = 'mydentalfly-api-token-12345';

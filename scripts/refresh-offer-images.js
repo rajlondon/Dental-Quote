@@ -10,7 +10,7 @@ async function refreshOfferImages() {
   try {
     // Call the API endpoint to trigger image regeneration
     // Route is defined as '/refresh-images' in special-offers router
-    const response = await axios.post("http://localhost:5000/api/special-offers/refresh-images", {
+    const response = await axios.post("http://localhost:3000/api/special-offers/refresh-images", {
       forceRegenerate: true,
       naturalStyle: true
     });
