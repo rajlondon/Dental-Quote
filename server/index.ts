@@ -462,9 +462,9 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
     });
   }
 
-  // Use PORT environment variable or default to 3000 for development
+  // Use PORT environment variable or default to 5000 for development
   // In production, Replit will set the PORT environment variable
-  const port = process.env.PORT || 3000;
+  const port = process.env.PORT || 5000;
   server.listen(
     {
       port,
