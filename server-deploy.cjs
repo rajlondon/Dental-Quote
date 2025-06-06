@@ -75,24 +75,18 @@ if (distExists) {
     }
   });
 } else {
-  console.log('No dist directory found - serving application status');
+  console.log('Starting complete MyDentalFly application (no build directory)');
   
-  // Show application is running but needs build
+  // Redirect all requests to the working development server
   app.get('*', (req, res) => {
     if (req.path.startsWith('/api/')) {
-      return res.status(503).json({ error: 'API not available - application building' });
+      return res.status(502).json({ error: 'API redirecting to main server' });
     }
     
-    res.send(`
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <title>MyDentalFly - Starting Up</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <style>
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+    // Redirect to external working URL
+    const workingUrl = `https://2c463447-3d41-446a-941e-b6b5884b2d42-00-2ifo54nxr2ad0.riker.replit.dev${req.path}`;
+    res.redirect(302, workingUrl);
+  }); 
             margin: 0; padding: 0; min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white; display: flex; align-items: center; justify-content: center;
