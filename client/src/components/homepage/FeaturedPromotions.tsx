@@ -48,7 +48,8 @@ export function FeaturedPromotions() {
     queryFn: async () => {
       const response = await fetch('/api/treatment-packages/featured');
       if (!response.ok) throw new Error('Failed to fetch treatment packages');
-      return response.json();
+      const result = await response.json();
+      return result.data || [];
     },
   });
 
