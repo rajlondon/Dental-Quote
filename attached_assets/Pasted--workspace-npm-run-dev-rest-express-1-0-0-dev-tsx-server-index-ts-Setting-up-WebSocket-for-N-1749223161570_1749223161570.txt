@@ -1,0 +1,50 @@
+~/workspace$ npm run dev
+
+> rest-express@1.0.0 dev
+> tsx server/index.ts
+
+Setting up WebSocket for Neon Serverless in Node.js environment
+Stripe client initialized successfully (using test keys)
+🔧 Running in DEVELOPMENT mode - using local storage by default
+Storage mode: local (DEVELOPMENT environment)
+Attempting to initialize S3 client...
+S3 configuration check:
+  - Access Key exists: true
+  - Secret Key exists: true
+  - Region: eu-north-1
+  - Bucket: mydentalfly-documents-prod
+  
+[INFO] 2025-06-06T15:18:26.839Z
+Error: AWS S3 client initialized successfully
+---
+S3 client created successfully
+Storage provider from config: local
+CloudStorage configured: true
+Environment S3 keys exist: true
+Environment has S3 bucket: true
+Environment: DEVELOPMENT
+FORCED: Using AWS S3 storage (keys are configured)
+File storage configured to use: aws-s3
+Gemini API initialized with API key: Key is set
+Using model: gemini-pro with controlled temperature
+Initialized special offers map with 5 entries
+✅ Image cache directory exists: /home/runner/workspace/public/cached-images
+3:18:27 PM [express] Environment variables loaded from .env file
+3:18:27 PM [express] Google OAuth Configuration:
+3:18:27 PM [Present] GOOGLE_CLIENT_ID:
+3:18:27 PM [Present] GOOGLE_CLIENT_SECRET:
+3:18:27 PM [express] Database connection initialized for registration
+3:18:27 PM [express] Mailjet connection initialized for registration
+✅ Test routes registered (only available in development mode)
+WebSocket service initialized
+WebSocket and notification services initialized for cross-portal data synchronization
+3:18:27 PM [express] serving on port 5000
+3:18:27 PM [express] Server is accessible at http://0.0.0.0:5000
+3:18:27 PM [express] For Replit environments, use the "Open in new tab" button
+3:18:27 PM [express] Special offer image cache initialization skipped for now
+✅ Database connection successful
+ℹ️ Admin user already exists
+ℹ️ Clinic user already exists
+Refresh token table is ready
+ℹ️ Patient user already exists
+3:18:53 PM [express] GET /api/notifications 401 in 238ms :: {"error":"Unauthorized"}

@@ -1,0 +1,31 @@
+~/workspace$ git log --oneline -30
+aac66120 (HEAD -> main, origin/main, origin/HEAD) Deployed your application
+82f1e4d2 Switch to development architecture and adjust deployment settings
+f4b8cb7d Deployed your application
+13b4bacb Improve security and add new data visualization features to platform
+40f6978c Set up complete production build and restructure the backend application
+ba9c411d Configure application to run as a single production server instance
+232ddac1 Switch to a standalone server setup for better reliability and functionality
+e447a610 Adjust the deployment process to ensure a reliable server startup
+c01e629c Enable basic login system and essential features for initial setup
+df06840c Install missing internationalization and UI enhancement packages
+570e027b Add internationalization support to translate the user interface
+63b36b62 Add text styling functionality to improve content appearance on the site
+3afb4fb8 Add styling library to fix website appearance and user interface
+ada44689 Ensure the application builds successfully with the necessary dependencies
+4fe9ff03 Update payment processing components to ensure successful deployment
+2e0249cb Add build command to allow application to compile during deployment
+60f9be24 Enable application building and deployment with updated dependencies
+7d86244b Trigger new build and deployment process for the platform
+f91341cb Establish robust and reliable production environment for main platform
+68053e1c Enable user login through Google and streamline the server startup process
+d8c8ad94 Adjust the method used to start the application after code deployment
+531aed25 Make Google login send users back to the homepage after authentication
+7ce4afdf Deployed your application
+4c6cdc1a Deployed your application
+c733ae42 Improve handling of Google login to ensure users are properly authenticated
+1e57d4f8 Deployed your application
+284c2c45 Address problem where users get stuck after logging in successfully
+66c174e0 Deployed your application
+0460472d Attempt to resolve ongoing errors but no changes were implemented
+cebd35a9 Deployed your application
