@@ -19,9 +19,36 @@
       // Iframe detection and compatibility for Replit preview
       if (window.self !== window.top) {
         console.log('Running in iframe - Replit preview mode');
-        // Force enable iframe mode
+        // Show iframe notification and redirect option
         window.addEventListener('load', function() {
           document.body.classList.add('iframe-mode');
+          
+          // Add iframe notification overlay
+          const overlay = document.createElement('div');
+          overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8); color: white; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            font-family: Arial, sans-serif; text-align: center;
+          `;
+          overlay.innerHTML = `
+            <div style="background: #1a1a1a; padding: 30px; border-radius: 10px; max-width: 400px;">
+              <h2 style="margin: 0 0 15px 0;">MyDentalFly Preview</h2>
+              <p style="margin: 0 0 20px 0;">For the best experience, please open in a new tab:</p>
+              <button onclick="window.open(window.location.href, '_blank')" 
+                      style="background: #007bff; color: white; border: none; padding: 12px 24px; 
+                             border-radius: 5px; cursor: pointer; font-size: 16px;">
+                Open in New Tab
+              </button>
+              <br><br>
+              <button onclick="this.parentElement.parentElement.remove()" 
+                      style="background: transparent; color: #ccc; border: 1px solid #ccc; 
+                             padding: 8px 16px; border-radius: 5px; cursor: pointer;">
+                Continue in Preview
+              </button>
+            </div>
+          `;
+          document.body.appendChild(overlay);
         });
       }
     </script>
