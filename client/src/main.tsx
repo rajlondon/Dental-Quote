@@ -50,7 +50,7 @@ if (!rootElement) {
   
   if (isInIframe) {
     // In iframe, set a flag to show we attempted to load
-    window.myDentalFlyAttempted = true;
+    (window as any).myDentalFlyAttempted = true;
   }
   
   try {
@@ -74,7 +74,7 @@ if (!rootElement) {
     console.log('MyDentalFly: Application rendered successfully');
     
     // Mark as successfully loaded
-    window.myDentalFlyLoaded = true;
+    (window as any).myDentalFlyLoaded = true;
     
   } catch (error) {
     console.error('MyDentalFly: Error rendering application:', error);

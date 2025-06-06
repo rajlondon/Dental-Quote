@@ -52,9 +52,10 @@
         }
       });
       
-      // Enhanced iframe mode styling
-      if (isInIframe) {
-        document.addEventListener('DOMContentLoaded', function() {
+      // Add iframe compatibility styles
+      document.addEventListener('DOMContentLoaded', function() {
+        const isInIframe = window.self !== window.top;
+        if (isInIframe) {
           document.body.classList.add('iframe-mode');
           
           // Add enhanced CSS for iframe compatibility
