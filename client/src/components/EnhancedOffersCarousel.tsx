@@ -514,8 +514,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     );
   }
 
-  // Error or empty state
-  if (error || !offers || offers.length === 0) {
+  // Error or empty state - ensure offers is an array
+  const validOffers = Array.isArray(offers) ? offers : [];
+  
+  if (error || !validOffers || validOffers.length === 0) {
     return (
       <div className={cn("my-12 py-8", className)}>
         <div className="container mx-auto">
@@ -590,7 +592,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         </div>
         
         <div className="relative overflow-hidden rounded-xl bg-white shadow-lg">
-          {offers.map((offer, index) => (
+          {validOffers.map((offer, index) => (
             <motion.div
               key={offer.id}
               className={`flex flex-col md:flex-row ${
