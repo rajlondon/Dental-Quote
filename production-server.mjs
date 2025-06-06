@@ -1,23 +1,15 @@
-// MyDentalFly Production Server - Deployment Configuration
+// MyDentalFly Production Server - Complete Application Override
 import { spawn } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+console.log('=== MyDentalFly Deployment Override ===');
+console.log('Starting complete application for deployment domain');
 
-console.log('Starting MyDentalFly for Deployment...');
-
-// Configure for deployment with development server capabilities
 const port = process.env.PORT || 8080;
-
 console.log(`Deployment port: ${port}`);
-console.log('Starting complete application server...');
 
-// Use tsx to start the TypeScript server directly
-const serverProcess = spawn('tsx', ['server/index.ts'], {
+// Force the exact same server command as your working development environment
+const serverProcess = spawn('npm', ['run', 'dev'], {
   stdio: 'inherit',
-  cwd: __dirname,
   env: { 
     ...process.env, 
     PORT: port.toString()
@@ -35,3 +27,5 @@ serverProcess.on('exit', (code) => {
     process.exit(code);
   }
 });
+
+console.log('Production server configured to use development environment for full functionality');
