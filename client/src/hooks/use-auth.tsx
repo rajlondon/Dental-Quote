@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/auth/user"],
     queryFn: async () => {
       // If we're in admin mode and already have cached data, return it directly to prevent loops
       if (window.location.pathname === '/admin-portal' && userDataRef.current) {
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch fresh data
       try {
         console.log("Fetching fresh user data");
-        const apiRes = await api.get("/api/auth/user");
+        const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache

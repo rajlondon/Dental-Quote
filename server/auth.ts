@@ -575,7 +575,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Add diagnostic middleware to log session and cookie information
-  app.use("/api/auth/user", (req, res, next) => {
+  app.use("/auth/user", (req, res, next) => {
     console.log(`
 ====== AUTH REQUEST DIAGNOSTICS ======
 Path: ${req.path}
@@ -619,13 +619,7 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
     );
   }
 
-  // Current user endpoint
-  app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ success: false, message: "Not authenticated" });
-    }
-    res.json({ success: true, user: req.user });
-  });
+  // Current user endpoint - removed to avoid conflicts with auth-routes.ts
 
   // Create admin and clinic users if they don't exist
   await seedUsers();

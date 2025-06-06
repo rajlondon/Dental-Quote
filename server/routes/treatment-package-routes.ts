@@ -95,29 +95,15 @@ export const treatmentPackages = [
   }
 ];
 
-// Get all treatment packages
-treatmentPackageRouter.get('/', catchAsync(async (req: Request, res: Response) => {
-  res.json({
-    success: true,
-    data: treatmentPackages
-  });
-}));
-
-// Get treatment package by ID
-treatmentPackageRouter.get('/:id', catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const packageData = treatmentPackages.find(pkg => pkg.id === id);
-  
-  if (!packageData) {
-    return res.status(404).json({
-      success: false,
-      message: 'Treatment package not found'
-    });
-  }
+// Get featured treatment packages for homepage (MUST be before /:id route)
+treatmentPackageRouter.get('/featured', catchAsync(async (req: Request, res: Response) => {
+  const featuredPackages = treatmentPackages
+    .filter(pkg => pkg.isActive)
+    .slice(0, 3); // Return top 3 featured packages
   
   res.json({
     success: true,
-    data: packageData
+    data: featuredPackages
   });
 }));
 
@@ -132,15 +118,29 @@ treatmentPackageRouter.get('/clinic/:clinicId', catchAsync(async (req: Request, 
   });
 }));
 
-// Get featured treatment packages for homepage
-treatmentPackageRouter.get('/featured', catchAsync(async (req: Request, res: Response) => {
-  const featuredPackages = treatmentPackages
-    .filter(pkg => pkg.isActive)
-    .slice(0, 3); // Return top 3 featured packages
+// Get all treatment packages
+treatmentPackageRouter.get('/', catchAsync(async (req: Request, res: Response) => {
+  res.json({
+    success: true,
+    data: treatmentPackages
+  });
+}));
+
+// Get treatment package by ID (MUST be last to avoid conflicts)
+treatmentPackageRouter.get('/:id', catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const packageData = treatmentPackages.find(pkg => pkg.id === id);
+  
+  if (!packageData) {
+    return res.status(404).json({
+      success: false,
+      message: 'Treatment package not found'
+    });
+  }
   
   res.json({
     success: true,
-    data: featuredPackages
+    data: packageData
   });
 }));
 

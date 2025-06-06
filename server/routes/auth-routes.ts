@@ -315,6 +315,20 @@ router.post("/reset-password", async (req: Request, res: Response) => {
   }
 });
 
+// Current user endpoint - returns authenticated user info
+router.get("/user", (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ 
+      success: false, 
+      message: "Not authenticated" 
+    });
+  }
+  res.json({ 
+    success: true, 
+    user: req.user 
+  });
+});
+
 // Special clinic authentication check endpoint
 router.get("/clinic/me", isAuthenticated, async (req: Request, res: Response) => {
   try {
