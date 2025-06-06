@@ -16,39 +16,85 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-      // Iframe detection and compatibility for Replit preview
-      if (window.self !== window.top) {
-        console.log('Running in iframe - Replit preview mode');
-        // Show iframe notification and redirect option
-        window.addEventListener('load', function() {
+      // Enhanced iframe detection and Replit preview handling
+      const isInIframe = window.self !== window.top;
+      const isReplit = window.location.hostname.includes('replit');
+      
+      if (isInIframe && isReplit) {
+        console.log('Detected Replit iframe environment');
+        
+        // Immediate redirect for better compatibility
+        const shouldRedirect = !sessionStorage.getItem('replit-iframe-bypass');
+        
+        if (shouldRedirect) {
+          // Set flag to prevent redirect loop
+          sessionStorage.setItem('replit-iframe-bypass', 'true');
+          
+          // Open in new tab and show message
+          const newWindow = window.open(window.location.href, '_blank');
+          
+          // Show overlay message
+          document.addEventListener('DOMContentLoaded', function() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+              position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white; z-index: 9999; display: flex; align-items: center; 
+              justify-content: center; font-family: 'Segoe UI', Arial, sans-serif;
+            `;
+            overlay.innerHTML = `
+              <div style="text-align: center; max-width: 500px; padding: 40px;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🦷</div>
+                <h1 style="margin: 0 0 10px 0; font-size: 32px;">MyDentalFly</h1>
+                <p style="margin: 0 0 30px 0; font-size: 18px; opacity: 0.9;">
+                  Opening in new tab for the best experience...
+                </p>
+                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                  <p style="margin: 0; font-size: 14px;">
+                    Replit's preview has display limitations for complex applications.<br>
+                    The new tab provides full functionality.
+                  </p>
+                </div>
+                <button onclick="window.open('${window.location.href}', '_blank')" 
+                        style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); 
+                               padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-right: 10px;
+                               backdrop-filter: blur(10px);">
+                  Open New Tab
+                </button>
+                <button onclick="this.parentElement.parentElement.remove(); sessionStorage.setItem('replit-force-iframe', 'true');" 
+                        style="background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.3); 
+                               padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px;">
+                  Force Preview Mode
+                </button>
+              </div>
+            `;
+            document.body.appendChild(overlay);
+          });
+        }
+      }
+      
+      // Enhanced iframe mode styling
+      if (isInIframe) {
+        document.addEventListener('DOMContentLoaded', function() {
           document.body.classList.add('iframe-mode');
           
-          // Add iframe notification overlay
-          const overlay = document.createElement('div');
-          overlay.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.8); color: white; z-index: 9999;
-            display: flex; align-items: center; justify-content: center;
-            font-family: Arial, sans-serif; text-align: center;
+          // Add enhanced CSS for iframe compatibility
+          const style = document.createElement('style');
+          style.textContent = `
+            .iframe-mode {
+              overflow-x: hidden !important;
+              max-width: 100vw !important;
+            }
+            .iframe-mode * {
+              box-sizing: border-box !important;
+            }
+            .iframe-mode #root {
+              width: 100% !important;
+              min-height: 100vh !important;
+              overflow-x: hidden !important;
+            }
           `;
-          overlay.innerHTML = `
-            <div style="background: #1a1a1a; padding: 30px; border-radius: 10px; max-width: 400px;">
-              <h2 style="margin: 0 0 15px 0;">MyDentalFly Preview</h2>
-              <p style="margin: 0 0 20px 0;">For the best experience, please open in a new tab:</p>
-              <button onclick="window.open(window.location.href, '_blank')" 
-                      style="background: #007bff; color: white; border: none; padding: 12px 24px; 
-                             border-radius: 5px; cursor: pointer; font-size: 16px;">
-                Open in New Tab
-              </button>
-              <br><br>
-              <button onclick="this.parentElement.parentElement.remove()" 
-                      style="background: transparent; color: #ccc; border: 1px solid #ccc; 
-                             padding: 8px 16px; border-radius: 5px; cursor: pointer;">
-                Continue in Preview
-              </button>
-            </div>
-          `;
-          document.body.appendChild(overlay);
+          document.head.appendChild(style);
         });
       }
     </script>
