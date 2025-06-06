@@ -14,8 +14,8 @@ const __dirname = path.dirname(__filename);
 // Create Express app
 const app = express();
 
-// Port configuration - use Replit's PORT or fallback to 3000
-const PORT = process.env.PORT || 3000;
+// Port configuration - use Replit's PORT or fallback to 5000 for deployment
+const PORT = process.env.PORT || 5000;
 
 console.log('🚀 MyDentalFly Starting...');
 console.log('📂 Directory:', __dirname);
