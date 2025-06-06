@@ -324,22 +324,25 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const handleMouseEnter = () => setIsAutoPlaying(false);
   const handleMouseLeave = () => setIsAutoPlaying(true);
   const goToPrevious = () => {
-    if (!offers?.length) return;
-    setCurrentIndex(prev => (prev - 1 + offers.length) % offers.length);
+    const safeOffers = Array.isArray(offers) ? offers : [];
+    if (!safeOffers.length) return;
+    setCurrentIndex(prev => (prev - 1 + safeOffers.length) % safeOffers.length);
   };
   const goToNext = () => {
-    if (!offers?.length) return;
-    setCurrentIndex(prev => (prev + 1) % offers.length);
+    const safeOffers = Array.isArray(offers) ? offers : [];
+    if (!safeOffers.length) return;
+    setCurrentIndex(prev => (prev + 1) % safeOffers.length);
   };
 
   // Memoize the image URLs to prevent rendering loops
   const getImageUrlsMemo = useMemo(() => {
     const urls: Record<string, string> = {};
+    const safeOffers = Array.isArray(offers) ? offers : [];
   
-    if (!offers) return urls;
+    if (!safeOffers.length) return urls;
     
     // Process all offers at once in a single batch
-    offers.forEach(offer => {
+    safeOffers.forEach(offer => {
       // Ultra-aggressive cache busting parameters with high entropy
       const timestamp = Date.now();
       const randomString = Math.random().toString(36).substring(2, 15);
