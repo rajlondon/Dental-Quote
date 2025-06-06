@@ -82,9 +82,9 @@ app.use(
             "https://www.mydentalfly.co.uk",
           ]
         : [
-            "http://localhost:5000",
-            "http://0.0.0.0:5000",
-            "http://127.0.0.1:5000",
+            "http://localhost:3000",
+            "http://0.0.0.0:3000",
+            "http://127.0.0.1:3000",
             "https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev",
           ],
     credentials: true, // CRITICAL: This allows cookies to be sent with requests
@@ -150,7 +150,7 @@ app.get("/api/test", (req: Request, res: Response) => {
     message: "MyDentalFly API is running",
     timestamp: new Date().toISOString(),
     version: "2.0",
-    port: process.env.PORT || 3000,
+    port: parseInt(process.env.PORT || "3000"),
     nodeEnv: process.env.NODE_ENV || "development",
   });
 });
@@ -462,10 +462,9 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
     });
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = process.env.PORT || 5000;
+  // Use PORT environment variable or default to 3000 for development
+  // In production, Replit will set the PORT environment variable
+  const port = process.env.PORT || 3000;
   server.listen(
     {
       port,
