@@ -128,9 +128,25 @@ if (process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY) {
 // Test endpoint to verify deployment
 app.get('/api/test', (req: Request, res: Response) => {
   res.json({ 
-    message: 'Server updated successfully', 
+    message: 'MyDentalFly API is running', 
     timestamp: new Date().toISOString(),
-    version: '2.0'
+    version: '2.0',
+    port: process.env.PORT || 3000,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
+});
+
+// Simple connectivity test
+app.get('/api/health', (req: Request, res: Response) => {
+  res.json({ 
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: !!db,
+      stripe: !!process.env.STRIPE_SECRET_KEY,
+      mailjet: !!(process.env.MAILJET_API_KEY && process.env.MAILJET_SECRET_KEY),
+      gemini: !!process.env.GEMINI_API_KEY
+    }
   });
 });
 
