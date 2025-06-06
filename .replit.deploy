@@ -1,3 +1,2 @@
-run = "npm start"
-entrypoint = "production-server.mjs"
-build = "npm run build"
+run = "node simple-production-server.mjs"
+entrypoint = "simple-production-server.mjs"
