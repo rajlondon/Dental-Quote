@@ -5,8 +5,8 @@
  * Forces deployment to use the same server configuration as working development environment
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
 
 console.log('Applying deployment domain fix...');
 
