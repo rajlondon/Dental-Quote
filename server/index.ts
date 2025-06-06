@@ -35,7 +35,7 @@ function loadEnvironmentVariables() {
       log("Environment variables loaded from .env file");
     }
   } catch (error) {
-    log("Warning: Could not load .env file:", error);
+    log("Warning: Could not load .env file:", String(error));
   }
 }
 
@@ -483,7 +483,7 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
         await initializeSpecialOfferImageCache();
         log("Special offer image cache initialized successfully");
       } catch (err) {
-        log("Error initializing special offer image cache:", err);
+        log("Error initializing special offer image cache:", String(err));
       }
     },
   );
