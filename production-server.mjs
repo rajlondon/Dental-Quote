@@ -1,33 +1,37 @@
 // MyDentalFly Production Server - Force Complete Application
-import { spawn } from 'child_process';
+import { exec } from 'child_process';
 
-console.log('=== MyDentalFly Deployment Server Override ===');
-console.log('Forcing complete application instead of health page');
-
+process.env.NODE_ENV = 'development';
 const port = process.env.PORT || 8080;
-console.log(`Deployment port: ${port}`);
-console.log('Starting same server as working external URL');
 
-// Start the exact same server command as working external URL
-const serverProcess = spawn('tsx', ['server/index.ts'], {
-  stdio: 'inherit',
-  env: { 
-    ...process.env, 
-    PORT: port.toString(),
-    NODE_ENV: 'development'  // Force complete application features
+console.log('=== MyDentalFly Deployment Override ===');
+console.log('Starting complete application on deployment domain');
+console.log(`Port: ${port}`);
+
+const command = `PORT=${port} npx tsx server/index.ts`;
+console.log(`Command: ${command}`);
+
+const serverProcess = exec(command, {
+  env: {
+    ...process.env,
+    PORT: port,
+    NODE_ENV: 'development'
   }
 });
 
-serverProcess.on('error', (error) => {
-  console.error('Deployment server startup failed:', error);
-  process.exit(1);
+serverProcess.stdout.on('data', (data) => {
+  process.stdout.write(data);
+});
+
+serverProcess.stderr.on('data', (data) => {
+  process.stderr.write(data);
 });
 
 serverProcess.on('exit', (code) => {
   if (code !== 0) {
-    console.error(`Deployment server exited with code ${code}`);
+    console.error(`Process exited with code ${code}`);
     process.exit(code);
   }
 });
 
-console.log('Deployment will serve complete MyDentalFly application');
+console.log('Complete MyDentalFly application starting for deployment...');
