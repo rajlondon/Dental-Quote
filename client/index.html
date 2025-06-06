@@ -16,38 +16,34 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-      // Enhanced iframe detection and Replit preview handling
-      const isInIframe = window.self !== window.top;
-      const isReplit = window.location.hostname.includes('replit');
+      // Replit iframe compatibility fix
+      console.log('Loading MyDentalFly application...');
       
+      const isInIframe = window.self !== window.top;
+      const isReplit = window.location.hostname.includes('replit') || window.location.hostname.includes('repl.it');
+      
+      console.log('Environment check:', { isInIframe, isReplit, hostname: window.location.hostname });
+      
+      // For Replit iframe, show immediate message but still load the app
       if (isInIframe && isReplit) {
-        console.log('Detected Replit iframe environment');
+        console.log('Replit iframe detected - setting up compatibility mode');
         
-        // Immediate redirect for better compatibility
-        const shouldRedirect = !sessionStorage.getItem('replit-iframe-bypass');
-        
-        if (shouldRedirect) {
-          // Set flag to prevent redirect loop
-          sessionStorage.setItem('replit-iframe-bypass', 'true');
-          
-          // Open in new tab and show message
-          const newWindow = window.open(window.location.href, '_blank');
-          
-          // Show overlay message
-          document.addEventListener('DOMContentLoaded', function() {
-            const overlay = document.createElement('div');
-            overlay.style.cssText = `
-              position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white; z-index: 9999; display: flex; align-items: center; 
-              justify-content: center; font-family: 'Segoe UI', Arial, sans-serif;
-            `;
-            overlay.innerHTML = `
-              <div style="text-align: center; max-width: 500px; padding: 40px;">
-                <div style="font-size: 48px; margin-bottom: 20px;">🦷</div>
-                <h1 style="margin: 0 0 10px 0; font-size: 32px;">MyDentalFly</h1>
-                <p style="margin: 0 0 30px 0; font-size: 18px; opacity: 0.9;">
-                  Opening in new tab for the best experience...
+        // Show loading message immediately
+        document.addEventListener('DOMContentLoaded', function() {
+          const loadingOverlay = document.createElement('div');
+          loadingOverlay.id = 'replit-loading';
+          loadingOverlay.style.cssText = `
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; z-index: 9999; display: flex; align-items: center; 
+            justify-content: center; font-family: 'Segoe UI', Arial, sans-serif;
+          `;
+          loadingOverlay.innerHTML = `
+            <div style="text-align: center; max-width: 500px; padding: 40px;">
+              <div style="font-size: 48px; margin-bottom: 20px;">🦷</div>
+              <h1 style="margin: 0 0 10px 0; font-size: 32px;">MyDentalFly</h1>
+              <p style="margin: 0 0 20px 0; font-size: 18px; opacity: 0.9;">
+                Loading application...
                 </p>
                 <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                   <p style="margin: 0; font-size: 14px;">

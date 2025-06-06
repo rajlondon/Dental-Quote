@@ -37,18 +37,51 @@ const Loading = () => (
   </div>
 );
 
+// Enhanced iframe compatibility and error handling
+console.log('MyDentalFly: Initializing React application...');
+
 const rootElement = document.getElementById("root");
-if (rootElement) {
-  createRoot(rootElement).render(
-    <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <GlobalStyle />
-        <Suspense fallback={<Loading />}>
-          <RTLProvider>
-            <App />
-          </RTLProvider>
-        </Suspense>
-      </QueryClientProvider>
-    </React.StrictMode>
-  );
+if (!rootElement) {
+  console.error('MyDentalFly: Root element not found');
+  document.body.innerHTML = '<div style="padding: 20px; text-align: center;">Application root element not found</div>';
+} else {
+  try {
+    console.log('MyDentalFly: Creating React root...');
+    const root = createRoot(rootElement);
+    
+    console.log('MyDentalFly: Rendering application...');
+    root.render(
+      <React.StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <GlobalStyle />
+          <Suspense fallback={<Loading />}>
+            <RTLProvider>
+              <App />
+            </RTLProvider>
+          </Suspense>
+        </QueryClientProvider>
+      </React.StrictMode>
+    );
+    
+    console.log('MyDentalFly: Application rendered successfully');
+    
+    // Remove Replit loading overlay after app loads
+    setTimeout(() => {
+      const replitLoading = document.getElementById('replit-loading');
+      if (replitLoading && !sessionStorage.getItem('replit-force-iframe')) {
+        replitLoading.remove();
+      }
+    }, 2000);
+    
+  } catch (error) {
+    console.error('MyDentalFly: Error rendering application:', error);
+    rootElement.innerHTML = `
+      <div style="padding: 20px; text-align: center; color: #e74c3c;">
+        <h2>Application Loading Error</h2>
+        <p>Please refresh the page or open in a new tab.</p>
+        <button onclick="window.location.reload()" style="padding: 10px 20px; margin: 10px;">Refresh</button>
+        <button onclick="window.open(window.location.href, '_blank')" style="padding: 10px 20px; margin: 10px;">Open New Tab</button>
+      </div>
+    `;
+  }
 }
