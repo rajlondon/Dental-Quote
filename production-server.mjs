@@ -1,31 +1,33 @@
-// MyDentalFly Production Server - Complete Application Override
+// MyDentalFly Production Server - Force Complete Application for Deployment
 import { spawn } from 'child_process';
 
-console.log('=== MyDentalFly Deployment Override ===');
-console.log('Starting complete application for deployment domain');
+console.log('=== MyDentalFly Deployment Domain Fix ===');
+console.log('Forcing complete application instead of health page');
 
 const port = process.env.PORT || 8080;
 console.log(`Deployment port: ${port}`);
+console.log('Using same configuration as working external URL');
 
-// Force the exact same server command as your working development environment
-const serverProcess = spawn('npm', ['run', 'dev'], {
+// Use tsx directly to match working external URL configuration
+const serverProcess = spawn('tsx', ['server/index.ts'], {
   stdio: 'inherit',
   env: { 
     ...process.env, 
-    PORT: port.toString()
+    PORT: port.toString(),
+    NODE_ENV: 'development'  // Force development mode for complete application
   }
 });
 
 serverProcess.on('error', (error) => {
-  console.error('Server startup failed:', error);
+  console.error('Deployment server failed:', error);
   process.exit(1);
 });
 
 serverProcess.on('exit', (code) => {
   if (code !== 0) {
-    console.error(`Server exited with code ${code}`);
+    console.error(`Deployment server exited with code ${code}`);
     process.exit(code);
   }
 });
 
-console.log('Production server configured to use development environment for full functionality');
+console.log('Deployment configured to serve complete MyDentalFly application');
