@@ -186,6 +186,6 @@ window.__vite_plugin_react_preamble_installed__ = true
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx?v=4Lk0d6cXpU8-fT673ozvl"></script>
+    <script type="module" src="/src/main.tsx?v=ypm5aO981ox23_6q0TJUa"></script>
   </body>
 </html>
