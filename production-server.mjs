@@ -1,4 +1,4 @@
-// MyDentalFly Production Server - Direct Development Server in Production Mode
+// MyDentalFly Production Server - Force Development Mode for Full Functionality
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -6,19 +6,19 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-console.log('Starting MyDentalFly Production Application...');
+console.log('Starting MyDentalFly Full Application...');
 
-// Set production environment
-process.env.NODE_ENV = 'production';
+// Force development mode to ensure Vite serves the complete application
+process.env.NODE_ENV = 'development';
 const port = process.env.PORT || 8080;
 
-// Start the development server in production mode
+// Start the complete application with Vite development server
 const serverProcess = spawn('tsx', ['server/index.ts'], {
   stdio: 'inherit',
   cwd: __dirname,
   env: { 
     ...process.env, 
-    NODE_ENV: 'production', 
+    NODE_ENV: 'development', 
     PORT: port.toString()
   }
 });

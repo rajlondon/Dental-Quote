@@ -455,16 +455,9 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
   app.use("/api", notFoundHandler);
   app.use("/api", errorHandler);
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV !== "production" && !process.env.SERVE_BUILD) {
-    await setupVite(app, server);
-  } else {
-    // In production, force use of Vite development server for full functionality
-    // This ensures the deployment has all features working
-    await setupVite(app, server);
-  }
+  // Always setup Vite for complete application functionality
+  // This ensures both development and deployment serve the full application
+  await setupVite(app, server);
 
   // Use PORT environment variable or default to 5000 for development
   // In production, Replit will set the PORT environment variable
