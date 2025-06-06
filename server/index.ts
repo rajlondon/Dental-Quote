@@ -441,7 +441,7 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
   // doesn't interfere with the other routes
-  if (app.get("env") === "development" && !process.env.SERVE_BUILD) {
+  if (process.env.NODE_ENV !== "production" && !process.env.SERVE_BUILD) {
     await setupVite(app, server);
   } else {
     const { fileURLToPath } = await import("url");
@@ -476,15 +476,8 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
       log(`For Replit environments, use the "Open in new tab" button`);
 
       // Initialize special offers image cache after server is running
-      try {
-        const { initializeSpecialOfferImageCache } = await import(
-          "./utils/special-offers-cache-init"
-        );
-        await initializeSpecialOfferImageCache();
-        log("Special offer image cache initialized successfully");
-      } catch (err) {
-        log("Error initializing special offer image cache:", String(err));
-      }
+      // Temporarily disabled to prevent connection issues during startup
+      log("Special offer image cache initialization skipped for now");
     },
   );
 })();
