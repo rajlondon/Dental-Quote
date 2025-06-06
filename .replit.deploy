@@ -1,2 +1,3 @@
-run = "node simple-production-server.mjs"
+build = ["npm", "install"]
+run = ["node", "simple-production-server.mjs"]
 entrypoint = "simple-production-server.mjs"
