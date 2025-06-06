@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors *" />
+    <meta http-equiv="X-Frame-Options" content="ALLOWALL" />
     <title>MyDentalFly - Your Trusted Dental Treatment Concierge</title>
     <meta name="description" content="Find affordable dental treatments abroad with MyDentalFly. Compare prices, read reviews, and book appointments with top-rated dental clinics worldwide.">
     <link rel="icon" href="/images/mydentalfly-logo.png" type="image/png" />
@@ -13,6 +15,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+      // Iframe detection and compatibility for Replit preview
+      if (window.self !== window.top) {
+        console.log('Running in iframe - Replit preview mode');
+        // Force enable iframe mode
+        window.addEventListener('load', function() {
+          document.body.classList.add('iframe-mode');
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

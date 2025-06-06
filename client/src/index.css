@@ -2,6 +2,24 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Iframe compatibility for Replit preview */
+body.iframe-mode {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Prevent viewport issues in iframe */
+.iframe-mode * {
+  box-sizing: border-box;
+}
+
+/* Ensure content fits in iframe */
+.iframe-mode #root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
 /* Custom utility classes */
 .border-l-12 {
   border-left-width: 12px;
