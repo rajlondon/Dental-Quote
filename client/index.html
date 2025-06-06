@@ -47,24 +47,24 @@
                 </p>
                 <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                   <p style="margin: 0; font-size: 14px;">
-                    Replit's preview has display limitations for complex applications.<br>
-                    The new tab provides full functionality.
+                    For the best experience, open in a new tab.<br>
+                    Or try preview mode below.
                   </p>
                 </div>
-                <button onclick="window.open('${window.location.href}', '_blank')" 
+                <button onclick="window.open(window.location.href, '_blank')" 
                         style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); 
                                padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-right: 10px;
                                backdrop-filter: blur(10px);">
                   Open New Tab
                 </button>
-                <button onclick="this.parentElement.parentElement.remove(); sessionStorage.setItem('replit-force-iframe', 'true');" 
+                <button onclick="document.getElementById('replit-loading').remove(); sessionStorage.setItem('replit-force-iframe', 'true');" 
                         style="background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.3); 
                                padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px;">
-                  Force Preview Mode
+                  Try Preview Mode
                 </button>
               </div>
             `;
-            document.body.appendChild(overlay);
+            document.body.appendChild(loadingOverlay);
           });
         }
       }
