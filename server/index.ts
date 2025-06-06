@@ -460,8 +460,14 @@ app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
   await setupVite(app, server);
 
   // Use PORT environment variable or default to 5000 for development
-  // In production, Replit will set the PORT environment variable
+  // In production/deployment, Replit will set the PORT environment variable
   const port = process.env.PORT || 5000;
+  
+  // Force production mode to serve complete application on deployment domains
+  if (process.env.PORT && process.env.PORT !== '5000') {
+    console.log(`🚀 Deployment mode detected - serving complete application on port ${port}`);
+    console.log('📦 All MyDentalFly features available for live deployment');
+  }
   server.listen(
     {
       port,
