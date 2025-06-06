@@ -1,0 +1,112 @@
+1. Python vs Node.js Configuration Conflict
+The error shows that Python package manager is being used instead of Node.js, which is causing conflicts. Let's fix your
+
+Copy
+.replit
+file:
+
+
+Copy
+# First, let's see what's in your current .replit file
+cat .replit
+Then, replace the content with a proper Node.js configuration:
+
+
+Copy
+language = "nodejs"
+run = "npm start"
+entrypoint = "server/index.ts"
+
+[nix]
+channel = "stable-22_11"
+
+[deployment]
+run = ["sh", "-c", "npm start"]
+deploymentTarget = "cloudrun"
+
+[env]
+PORT = "5000"
+
+[languages]
+
+[languages.javascript]
+pattern = "**/{*.js,*.jsx,*.ts,*.tsx}"
+
+[languages.javascript.languageServer]
+start = "typescript-language-server --stdio"
+2. Multiple Port Configurations
+You have 4 different port mappings which is causing conflicts. Let's standardize on port 5000:
+
+Check your server configuration:
+
+Copy
+# Look for port configuration in your server code
+grep -r "port" --include="*.ts" --include="*.js" server/
+Make sure your server is using the PORT environment variable:
+
+Copy
+// In your server/index.ts or production-server.mjs
+const port = process.env.PORT || 5000;
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server is accessible at http://0.0.0.0:${port}`);
+});
+3. Remove Python Modules
+Let's remove any Python-related configuration:
+
+
+Copy
+# Remove Python files that might be causing conflicts
+rm -f requirements.txt
+rm -rf venv
+rm -rf __pycache__
+rm -rf .uv
+4. Update package.json
+Make sure your package.json has the correct scripts:
+
+
+Copy
+cat package.json
+Ensure it has:
+
+
+Copy
+"scripts": {
+  "start": "NODE_ENV=production node production-server.mjs",
+  "dev": "NODE_ENV=development nodemon server/index.ts",
+  "build": "vite build"
+}
+5. Clean Build and Deploy
+After making these changes:
+
+
+Copy
+# Stop all processes
+pkill -f node
+
+# Clean install
+rm -rf node_modules
+npm install
+
+# Build
+npm run build
+
+# Start
+npm start
+6. Additional Checks
+If you're still having issues:
+
+Check for hidden files: Sometimes hidden files can cause conflicts:
+
+
+Copy
+ls -la
+Verify no Python dependencies in package.json:
+
+
+Copy
+grep -i python package.json
+Check for Python-related scripts:
+
+
+Copy
+find . -name "*.py" -type f

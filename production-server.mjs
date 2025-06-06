@@ -12,9 +12,9 @@ console.log('🌍 Environment:', process.env.NODE_ENV);
 
 // Set production environment and ensure proper port configuration
 process.env.NODE_ENV = 'production';
-// Let Replit set the PORT, don't override it
+// Use port 5000 for consistent Cloud Run deployment
 if (!process.env.PORT) {
-  process.env.PORT = '3000';
+  process.env.PORT = '5000';
 }
 
 console.log('🚪 Starting server on port:', process.env.PORT);

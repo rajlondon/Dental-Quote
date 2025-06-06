@@ -1,0 +1,9 @@
+{
+  "runtime": "nodejs",
+  "version": "20",
+  "port": 5000,
+  "buildCommand": "npm ci && npm run build",
+  "startCommand": "npm start",
+  "environment": "production",
+  "deploymentTarget": "cloudrun"
+}
