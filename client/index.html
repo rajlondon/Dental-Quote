@@ -16,58 +16,41 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
-      // Replit iframe compatibility fix
-      console.log('Loading MyDentalFly application...');
+      // Simple application loader
+      console.log('MyDentalFly: Starting application');
       
-      const isInIframe = window.self !== window.top;
-      const isReplit = window.location.hostname.includes('replit') || window.location.hostname.includes('repl.it');
-      
-      console.log('Environment check:', { isInIframe, isReplit, hostname: window.location.hostname });
-      
-      // For Replit iframe, show immediate message but still load the app
-      if (isInIframe && isReplit) {
-        console.log('Replit iframe detected - setting up compatibility mode');
+      // Force the app to load after a short delay if needed
+      document.addEventListener('DOMContentLoaded', function() {
+        console.log('MyDentalFly: DOM loaded');
         
-        // Show loading message immediately
-        document.addEventListener('DOMContentLoaded', function() {
-          const loadingOverlay = document.createElement('div');
-          loadingOverlay.id = 'replit-loading';
-          loadingOverlay.style.cssText = `
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; z-index: 9999; display: flex; align-items: center; 
-            justify-content: center; font-family: 'Segoe UI', Arial, sans-serif;
-          `;
-          loadingOverlay.innerHTML = `
-            <div style="text-align: center; max-width: 500px; padding: 40px;">
-              <div style="font-size: 48px; margin-bottom: 20px;">🦷</div>
-              <h1 style="margin: 0 0 10px 0; font-size: 32px;">MyDentalFly</h1>
-              <p style="margin: 0 0 20px 0; font-size: 18px; opacity: 0.9;">
-                Loading application...
-                </p>
-                <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                  <p style="margin: 0; font-size: 14px;">
-                    For the best experience, open in a new tab.<br>
-                    Or try preview mode below.
-                  </p>
+        // For iframe environments, show a simple loading message
+        const isInIframe = window.self !== window.top;
+        if (isInIframe) {
+          setTimeout(function() {
+            const root = document.getElementById('root');
+            if (root && root.innerHTML.trim() === '') {
+              console.log('MyDentalFly: App not loaded in iframe, showing fallback');
+              root.innerHTML = `
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-family: system-ui, -apple-system, sans-serif;">
+                  <div style="background: rgba(255,255,255,0.1); padding: 40px; border-radius: 20px; backdrop-filter: blur(10px); max-width: 500px;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🦷</div>
+                    <h1 style="margin: 0 0 15px 0; font-size: 28px;">MyDentalFly</h1>
+                    <p style="margin: 0 0 25px 0; font-size: 16px; opacity: 0.9;">
+                      For the complete dental treatment platform experience
+                    </p>
+                    <button onclick="window.open(window.location.href, '_blank')" 
+                            style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); 
+                                   padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; font-weight: 500;
+                                   backdrop-filter: blur(10px); transition: all 0.3s ease;">
+                      Open Full Application
+                    </button>
+                  </div>
                 </div>
-                <button onclick="window.open(window.location.href, '_blank')" 
-                        style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); 
-                               padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px; margin-right: 10px;
-                               backdrop-filter: blur(10px);">
-                  Open New Tab
-                </button>
-                <button onclick="document.getElementById('replit-loading').remove(); sessionStorage.setItem('replit-force-iframe', 'true');" 
-                        style="background: transparent; color: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.3); 
-                               padding: 15px 30px; border-radius: 25px; cursor: pointer; font-size: 16px;">
-                  Try Preview Mode
-                </button>
-              </div>
-            `;
-            document.body.appendChild(loadingOverlay);
-          });
+              `;
+            }
+          }, 3000);
         }
-      }
+      });
       
       // Enhanced iframe mode styling
       if (isInIframe) {
