@@ -1542,10 +1542,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Initialize special offers image cache
-  initializeSpecialOfferImageCache()
-    .then(() => console.log('Special offer image cache initialized successfully'))
-    .catch(err => console.error('Error initializing special offer image cache:', err));
-  
   return httpServer;
 }
