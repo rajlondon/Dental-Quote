@@ -95,10 +95,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
   // Remove X-Frame-Options to allow iframe embedding
   res.removeHeader('X-Frame-Options');
-  // Set Content Security Policy to allow iframe embedding
-  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *.replit.dev *.replit.com");
-  // Allow embedding in iframes
-  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  
+  // Allow all iframe embedding for development
+  if (process.env.NODE_ENV !== 'production') {
+    res.setHeader('X-Frame-Options', 'ALLOWALL');
+    res.setHeader('Content-Security-Policy', "frame-ancestors *");
+  } else {
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *.replit.dev *.replit.com");
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  }
+  
+  // Additional headers for iframe compatibility
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer-when-downgrade');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  
   next();
 });
 
