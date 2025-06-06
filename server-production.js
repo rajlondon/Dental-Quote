@@ -1,8 +1,12 @@
-// MyDentalFly Production Server - JavaScript Implementation
-const express = require('express');
-const path = require('path');
-const cors = require('cors');
-const fs = require('fs');
+// MyDentalFly Production Server - ES Module Implementation
+import express from 'express';
+import path from 'path';
+import cors from 'cors';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🚀 MyDentalFly Production Server Starting...');
 console.log('📂 Directory:', __dirname);
