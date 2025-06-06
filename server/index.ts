@@ -81,12 +81,7 @@ app.use(
             "https://mydentalfly.co.uk",
             "https://www.mydentalfly.co.uk",
           ]
-        : [
-            "http://localhost:3000",
-            "http://0.0.0.0:3000",
-            "http://127.0.0.1:3000",
-            "https://4a8d63a8-0c27-4d42-977b-381f0b8a3327-00-2nulpa5o3ztvp.worf.replit.dev",
-          ],
+        : true, // Allow all origins in development for Replit preview
     credentials: true, // CRITICAL: This allows cookies to be sent with requests
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
@@ -95,6 +90,17 @@ app.use(
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Add headers to allow iframe embedding in Replit preview
+app.use((req, res, next) => {
+  // Remove X-Frame-Options to allow iframe embedding
+  res.removeHeader('X-Frame-Options');
+  // Set Content Security Policy to allow iframe embedding
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' *.replit.dev *.replit.com");
+  // Allow embedding in iframes
+  res.setHeader('X-Frame-Options', 'ALLOWALL');
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
