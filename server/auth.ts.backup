@@ -2,7 +2,6 @@ import { Express } from "express";
 import session from "express-session";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import bcrypt from "bcrypt";
 import { db } from "./db";
 import { users } from "@shared/schema";
@@ -217,8 +216,8 @@ export async function setupAuth(app: Express) {
           status: user.status || 'pending'
         };
         
-        // Special handling for clinic users
-        if (user.role === 'clinic') {
+        // Special handling for clinic_staff users
+        if (user.role === 'clinic_staff') {
           console.log(`Clinic staff session restored for user ${user.id}`);
         }
         
@@ -257,9 +256,9 @@ export async function setupAuth(app: Express) {
   // Login endpoint with enhanced email verification handling and clinic session optimization
   app.post("/api/auth/login", (req, res, next) => {
     // Special session optimization for clinic staff to prevent double login
-    // Check if already authenticated as clinic with same email
+    // Check if already authenticated as clinic_staff with same email
     if (req.isAuthenticated() && 
-        req.user.role === 'clinic' && 
+        req.user.role === 'clinic_staff' && 
         req.user.email === req.body.email) {
       
       console.log("Already authenticated as clinic staff with same email, reusing session");
@@ -306,7 +305,7 @@ export async function setupAuth(app: Express) {
         }
         
         // Add special logging for clinic staff
-        if (user.role === 'clinic') {
+        if (user.role === 'clinic_staff') {
           console.log(`Authenticated clinic staff: ${user.id} (${user.email})`);
         }
         
@@ -316,33 +315,12 @@ export async function setupAuth(app: Express) {
   });
 
   // Logout endpoint
-    app.post("/api/auth/logout", (req, res) => {
+  app.post("/api/auth/logout", (req, res) => {
     // Get user ID before logout to clear from cache
     const userId = req.user?.id;
     
     req.logout((err) => {
       if (err) return res.status(500).json({ success: false, message: "Logout failed" });
-
-  // Google OAuth routes
-  app.get('/auth/google',
-    passport.authenticate('google', { scope: ['profile', 'email'] })
-  );
-  
-  app.get('/auth/google/callback',
-    passport.authenticate('google', { failureRedirect: '/portal-login?error=google_auth_failed' }),
-    (req, res) => {
-      // Successful authentication, redirect based on user role
-      const user = req.user as any;
-      
-      if (user.role === 'admin') {
-        res.redirect('/admin-dashboard');
-      } else if (user.role === 'clinic_staff') {
-        res.redirect('/clinic-dashboard');
-      } else {
-        res.redirect('/patient-dashboard');
-      }
-    }
-  );
       
       // Clear user from session cache if we have the ID
       if (userId && userSessionCache.has(userId)) {
@@ -350,22 +328,7 @@ export async function setupAuth(app: Express) {
         console.log(`Cleared user ${userId} from session cache on logout`);
       }
       
-      // Destroy the session completely
-      req.session.destroy((sessionErr) => {
-        if (sessionErr) {
-          console.error("Session destroy error:", sessionErr);
-        }
-        
-        // Clear the session cookie
-        res.clearCookie('connect.sid', {
-          path: '/',
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax'
-        });
-        
-        res.json({ success: true, message: "Logged out successfully" });
-      });
+      res.json({ success: true, message: "Logged out successfully" });
     });
   });
 
@@ -445,7 +408,7 @@ async function seedUsers() {
         password: clinicPassword,
         firstName: "Clinic",
         lastName: "Manager",
-        role: "clinic",
+        role: "clinic_staff",
         emailVerified: true,
         profileComplete: true,
         status: "active"

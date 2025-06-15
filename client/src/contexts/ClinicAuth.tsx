@@ -39,7 +39,7 @@ export function ClinicAuthProvider({ children }: { children: React.ReactNode }) 
   });
 
   // Determine authentication status based on user data
-  const ok = !!user && user.role === "clinic_staff";
+  const ok = !!user && user.role === "clinic";
 
   // Log diagnostic information
   useEffect(() => {

@@ -51,11 +51,11 @@ export function ProtectedRoute({ path, component: Component, requiredRole }: Pro
       key={stableRouteKey}
       component={props => {
         // Show loading while auth is loading or waiting for portal session to be fully established
-        if (isLoading || ((requiredRole === 'clinic_staff' || requiredRole === 'admin') && !readyForPortal)) {
+        if (isLoading || ((requiredRole === 'clinic' || requiredRole === 'admin') && !readyForPortal)) {
           return (
             <div className="flex flex-col items-center justify-center min-h-screen gap-2">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              {requiredRole === 'clinic_staff' && user && !readyForPortal && (
+              {requiredRole === 'clinic' && user && !readyForPortal && (
                 <p className="text-sm text-muted-foreground">Preparing clinic portal...</p>
               )}
               {requiredRole === 'admin' && user && !readyForPortal && (

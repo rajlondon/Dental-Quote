@@ -23,7 +23,7 @@ export default function ClinicMediaSection({}: ClinicMediaSectionProps) {
         // For admin users, we'll need to get the selected clinic from somewhere
         // For now, we'll use a hardcoded value for demonstration
         setClinicId(1);
-      } else if (user.role === 'clinic_staff' && user.clinicId) {
+      } else if (user.role === 'clinic' && user.clinicId) {
         setClinicId(user.clinicId);
       }
       setLoading(false);

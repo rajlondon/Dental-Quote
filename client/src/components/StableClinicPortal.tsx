@@ -56,7 +56,7 @@ const StableClinicPortal: React.FC = () => {
     }
     
     // Notify if WebSocket is enabled
-    if (user?.role === 'clinic_staff') {
+    if (user?.role === 'clinic') {
       toast({
         title: "Clinic Portal Active",
         description: "Connected to real-time updates for your clinic",

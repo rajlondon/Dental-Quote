@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     error,
     isLoading,
   } = useQuery<User | null, Error>({
-    queryKey: ["/api/auth/user"],
+    queryKey: ["/auth/user"],
     queryFn: async () => {
       // If we're in admin mode and already have cached data, return it directly to prevent loops
       if (window.location.pathname === '/admin-portal' && userDataRef.current) {
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Fetch fresh data
       try {
         console.log("Fetching fresh user data");
-        const apiRes = await api.get("/api/auth/user");
+        const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
         
         // Update cache
@@ -187,7 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: (user: User) => {
       // Update query cache with the new user data
-      queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.setQueryData(["/auth/user"], user);
       
       // Set session flag for WebSocket initialization
       sessionStorage.setItem('just_logged_in', 'true');
@@ -200,7 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // FIXED: Don't force reload for clinic staff by removing timestamp
       // Commenting out this part as it's causing the refresh cycles
       /*
-      if (user.role === 'clinic_staff') {
+      if (user.role === 'clinic') {
         sessionStorage.removeItem('clinic_portal_timestamp');
       }
       */
@@ -277,7 +277,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data.user || data;
     },
     onSuccess: (user: User) => {
-      queryClient.setQueryData(["/api/auth/user"], user);
+      queryClient.setQueryData(["/auth/user"], user);
       toast({
         title: "Registration successful",
         description: "Please check your email to verify your account",
@@ -302,7 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       // Clear user data from query cache
-      queryClient.setQueryData(["/api/auth/user"], null);
+      queryClient.setQueryData(["/auth/user"], null);
       
       // Clear all session-related caches for a clean logout
       sessionStorage.removeItem('cached_user_data');

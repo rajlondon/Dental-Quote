@@ -244,13 +244,13 @@ function Router() {
           </ClinicGuard>
         )}
       </Route>
-      <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic_staff" />
-      <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic" />
+      <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic" />
       
       {/* Clinic Booking Routes */}
-      <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic_staff" />
-      <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic_staff" />
-      <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic_staff" />
+      <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic" />
+      <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic" />
+      <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic" />
       
       {/* Clinic Quote Routes */}
       <ProtectedRoute path="/clinic/quotes/:id" component={() => {
@@ -260,7 +260,7 @@ function Router() {
             <ClinicPortalPage disableAutoRefresh={true} initialSection="quotes" />
           </ClinicGuard>
         );
-      }} requiredRole="clinic_staff" />
+      }} requiredRole="clinic" />
       
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}

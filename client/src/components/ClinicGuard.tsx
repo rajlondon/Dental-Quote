@@ -140,7 +140,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
     return <Redirect to="/portal-login" />;
   }
 
-  if (user.role !== 'clinic_staff' && user.role !== 'admin') {
+  if (user.role !== 'clinic' && user.role !== 'admin') {
     toast({
       title: 'Access Denied',
       description: 'You do not have permission to access the clinic portal.',

@@ -264,7 +264,7 @@ export function useQuotes() {
           title: "Quote Status Changed",
           message: getStatusUpdateMessage(newStatus),
           type: "quote",
-          actionUrl: `/${updaterRole === 'admin' ? 'admin' : (updaterRole === 'clinic_staff' ? 'clinic' : 'patient')}/quotes/${quoteId}`,
+          actionUrl: `/${updaterRole === 'admin' ? 'admin' : (updaterRole === 'clinic' ? 'clinic' : 'patient')}/quotes/${quoteId}`,
           priority: "medium"
         });
         
