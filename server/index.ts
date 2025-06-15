@@ -137,14 +137,14 @@ app.use(passport.session());
               log(`New user created via Google: ${email} (patient)`);
 
               return done(null, {
-                id: newUser[0].id,
-                email: newUser[0].email,
-                name: `${newUser[0].firstName} ${newUser[0].lastName}`,
-                role: newUser[0].role,
+                id: newUser.id,
+                email: newUser.email,
+                name: `${newUser.firstName} ${newUser.lastName}`,
+                role: newUser.role,
                 picture: profile.photos?.[0]?.value,
                 provider: "google",
-                firstName: newUser[0].firstName,
-                lastName: newUser[0].lastName,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
                 clinicId: null,
                 emailVerified: true
               });

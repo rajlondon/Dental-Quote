@@ -201,6 +201,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register main portal routes AFTER role middleware
   app.use(portalRoutes);
+
+  // Register authentication routes
+  app.use("/auth", authRoutesRouter);
   
   // Register file upload/management routes with upload rate limiting
   app.use('/api/files', uploadRateLimit, fileRoutes);
