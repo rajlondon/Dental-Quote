@@ -1944,3 +1944,236 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 };
 
 export default TreatmentPlanBuilder;
+import React, { useState, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Minus, Trash2 } from 'lucide-react';
+
+interface PlanTreatmentItem {
+  treatment: string;
+  priceGBP: number;
+  priceUSD: number;
+  quantity: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee: string;
+}
+
+interface TreatmentPlanBuilderProps {
+  initialTreatments: PlanTreatmentItem[];
+  onTreatmentsChange: (treatments: PlanTreatmentItem[]) => void;
+}
+
+const AVAILABLE_TREATMENTS = [
+  {
+    name: 'Dental Implant',
+    priceGBP: 550,
+    priceUSD: 707,
+    guarantee: '10-year',
+    description: 'Titanium implant with abutment'
+  },
+  {
+    name: 'Dental Crown',
+    priceGBP: 175,
+    priceUSD: 225,
+    guarantee: '5-year',
+    description: 'Porcelain crown'
+  },
+  {
+    name: 'Porcelain Veneer',
+    priceGBP: 250,
+    priceUSD: 321,
+    guarantee: '10-year',
+    description: 'Ultra-thin porcelain veneer'
+  },
+  {
+    name: 'Teeth Whitening',
+    priceGBP: 150,
+    priceUSD: 193,
+    guarantee: '2-year',
+    description: 'Professional laser whitening'
+  },
+  {
+    name: 'Root Canal Treatment',
+    priceGBP: 200,
+    priceUSD: 257,
+    guarantee: '5-year',
+    description: 'Complete root canal therapy'
+  },
+  {
+    name: 'Dental Bridge (3 units)',
+    priceGBP: 450,
+    priceUSD: 578,
+    guarantee: '7-year',
+    description: '3-unit porcelain bridge'
+  }
+];
+
+const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
+  initialTreatments,
+  onTreatmentsChange
+}) => {
+  const [selectedTreatments, setSelectedTreatments] = useState<PlanTreatmentItem[]>(initialTreatments);
+
+  useEffect(() => {
+    onTreatmentsChange(selectedTreatments);
+  }, [selectedTreatments, onTreatmentsChange]);
+
+  const addTreatment = (treatment: typeof AVAILABLE_TREATMENTS[0]) => {
+    const existing = selectedTreatments.find(t => t.treatment === treatment.name);
+    
+    if (existing) {
+      updateQuantity(treatment.name, existing.quantity + 1);
+    } else {
+      const newTreatment: PlanTreatmentItem = {
+        treatment: treatment.name,
+        priceGBP: treatment.priceGBP,
+        priceUSD: treatment.priceUSD,
+        quantity: 1,
+        subtotalGBP: treatment.priceGBP,
+        subtotalUSD: treatment.priceUSD,
+        guarantee: treatment.guarantee
+      };
+      setSelectedTreatments([...selectedTreatments, newTreatment]);
+    }
+  };
+
+  const updateQuantity = (treatmentName: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      setSelectedTreatments(selectedTreatments.filter(t => t.treatment !== treatmentName));
+    } else {
+      setSelectedTreatments(selectedTreatments.map(t => 
+        t.treatment === treatmentName 
+          ? {
+              ...t,
+              quantity: newQuantity,
+              subtotalGBP: t.priceGBP * newQuantity,
+              subtotalUSD: t.priceUSD * newQuantity
+            }
+          : t
+      ));
+    }
+  };
+
+  const removeTreatment = (treatmentName: string) => {
+    setSelectedTreatments(selectedTreatments.filter(t => t.treatment !== treatmentName));
+  };
+
+  const totalGBP = selectedTreatments.reduce((sum, t) => sum + t.subtotalGBP, 0);
+  const totalUSD = selectedTreatments.reduce((sum, t) => sum + t.subtotalUSD, 0);
+
+  return (
+    <div className="space-y-6">
+      {/* Available Treatments */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Available Treatments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {AVAILABLE_TREATMENTS.map((treatment) => (
+            <Card key={treatment.name} className="hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base">{treatment.name}</CardTitle>
+                <CardDescription className="text-sm">{treatment.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <div className="text-lg font-bold text-primary">£{treatment.priceGBP}</div>
+                    <div className="text-sm text-gray-500">${treatment.priceUSD}</div>
+                  </div>
+                  <Badge variant="outline">{treatment.guarantee}</Badge>
+                </div>
+                <Button 
+                  onClick={() => addTreatment(treatment)}
+                  className="w-full"
+                  size="sm"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add to Plan
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected Treatments */}
+      {selectedTreatments.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Your Treatment Plan</h3>
+          <div className="space-y-3">
+            {selectedTreatments.map((treatment) => (
+              <Card key={treatment.treatment}>
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <h4 className="font-medium">{treatment.treatment}</h4>
+                      <div className="text-sm text-gray-500">
+                        £{treatment.priceGBP} each • {treatment.guarantee} guarantee
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateQuantity(treatment.treatment, treatment.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{treatment.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => updateQuantity(treatment.treatment, treatment.quantity + 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      <div className="text-right min-w-[80px]">
+                        <div className="font-bold">£{treatment.subtotalGBP}</div>
+                        <div className="text-sm text-gray-500">${treatment.subtotalUSD}</div>
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTreatment(treatment.treatment)}
+                        className="text-red-500 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            
+            {/* Total */}
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <div className="font-semibold">Total Treatment Cost:</div>
+                  <div className="text-right">
+                    <div className="text-xl font-bold text-primary">£{totalGBP}</div>
+                    <div className="text-sm text-gray-600">${totalUSD}</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {selectedTreatments.length === 0 && (
+        <div className="text-center py-8 text-gray-500">
+          <p>Select treatments above to build your plan</p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default TreatmentPlanBuilder;

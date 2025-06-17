@@ -19,6 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail, CheckCircle, Pencil } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
+import TreatmentPlanBuilder from '@/components/TreatmentPlanBuilder';
 
 // Types
 interface ClinicInfo {
