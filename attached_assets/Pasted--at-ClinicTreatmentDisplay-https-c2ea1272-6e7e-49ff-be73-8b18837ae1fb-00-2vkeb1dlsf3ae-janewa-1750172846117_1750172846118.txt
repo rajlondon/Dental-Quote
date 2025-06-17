@@ -1,0 +1,26 @@
+
+    at ClinicTreatmentDisplay (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ClinicTreatmentDisplay.tsx:22:3)
+    at div
+    at _c9 (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at QuoteResultsPage (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/pages/QuoteResultsPage.tsx:37:21)
+    at Route (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=40a8063b:323:16)
+    at Switch (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=40a8063b:379:17)
+    at Router
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=40a8063b:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?v=-Xx8tm1V5ELfE7adVGK0C:641:3)
+    at RTLProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/rtl-provider.tsx:21:31)
+    at Suspense
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=40a8063b:2805:3)
+Try Again
