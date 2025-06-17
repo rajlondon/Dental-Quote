@@ -8,78 +8,144 @@ import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
 import { TreatmentItem } from './TreatmentPlanBuilder';
 
 interface ClinicTreatmentDisplayProps {
-  standardName: string;
-  clinicVariant: ClinicTreatmentVariant;
-  quantity: number;
+  treatments: TreatmentItem[];
+  onClinicSelect: (clinic: any) => void;
+  selectedClinic: any;
 }
 
 /**
- * Component to display clinic-specific treatment variant
- * This is used in the quote results page to show how each clinic
- * names and packages the treatments selected by the user
+ * Component to display clinic selection grid
+ * This is used in the quote results page to show clinic options
  */
 const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
-  standardName,
-  clinicVariant,
-  quantity
+  treatments,
+  onClinicSelect,
+  selectedClinic
 }) => {
+  // Mock clinic data - replace with real data from your service
+  const mockClinics = [
+    {
+      id: 'clinic_001',
+      name: 'Istanbul Smile Center',
+      rating: 4.8,
+      location: 'Taksim, Istanbul',
+      price: '£695',
+      image: '/images/clinics/istanbul-dental.jpg',
+      features: ['Premium Materials', 'English Speaking', '5-Year Warranty']
+    },
+    {
+      id: 'clinic_002', 
+      name: 'Premium Dental Istanbul',
+      rating: 4.9,
+      location: 'Sisli, Istanbul',
+      price: '£895',
+      image: '/images/clinics/premium-clinic.jpg',
+      features: ['Swiss Implants', 'Luxury Service', 'Lifetime Guarantee']
+    },
+    {
+      id: 'clinic_003',
+      name: 'Dental Excellence Turkey',
+      rating: 4.7,
+      location: 'Maltepe, Istanbul',
+      price: '£750',
+      image: '/images/clinics/excellence.jpg',
+      features: ['Korean Implants', 'Airport Transfer', 'Hotel Package']
+    }
+  ];
+
+  const totalEstimate = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
+
   return (
-    <Card className="mb-4">
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-base font-medium">{clinicVariant.label}</CardTitle>
-            <CardDescription className="text-sm mt-1">
-              Standard treatment: {standardName}
-            </CardDescription>
-          </div>
-          <Badge variant="outline" className="font-medium">
-            {clinicVariant.price}
-          </Badge>
+    <div className="space-y-6">
+      {/* Treatment Summary */}
+      <div className="bg-blue-50 rounded-lg p-4">
+        <h3 className="font-semibold mb-2">Your Selected Treatments</h3>
+        <div className="space-y-1">
+          {treatments.map((treatment, index) => (
+            <div key={index} className="flex justify-between text-sm">
+              <span>{treatment.name} x{treatment.quantity}</span>
+              <span className="font-medium">£{treatment.subtotalGBP.toFixed(2)}</span>
+            </div>
+          ))}
         </div>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="space-y-2">
-          <div className="text-sm">
-            <span className="font-medium">Includes:</span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {clinicVariant.includes.map((item, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3" />
-                  {item}
+        <div className="border-t pt-2 mt-2">
+          <div className="flex justify-between font-semibold">
+            <span>Estimated Total:</span>
+            <span>£{totalEstimate.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Clinic Selection Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {mockClinics.map((clinic) => (
+          <Card 
+            key={clinic.id} 
+            className={`cursor-pointer transition-all hover:shadow-lg ${
+              selectedClinic?.id === clinic.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
+            }`}
+            onClick={() => onClinicSelect(clinic)}
+          >
+            <CardHeader className="pb-2">
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-lg">{clinic.name}</CardTitle>
+                  <CardDescription className="flex items-center gap-1 mt-1">
+                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    {clinic.rating} • {clinic.location}
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary" className="text-lg font-bold">
+                  {clinic.price}
                 </Badge>
-              ))}
-            </div>
-          </div>
-
-          {clinicVariant.optional_addons && clinicVariant.optional_addons.length > 0 && (
-            <div className="text-sm">
-              <span className="font-medium">Optional add-ons:</span>
-              <div className="mt-1 flex flex-wrap gap-1">
-                {clinicVariant.optional_addons.map((addon, index) => (
-                  <Badge key={index} variant="outline" className="flex items-center gap-1">
-                    <PlusCircle className="h-3 w-3" />
-                    {addon}
-                  </Badge>
-                ))}
               </div>
-            </div>
-          )}
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <img 
+                  src={clinic.image} 
+                  alt={clinic.name}
+                  className="w-full h-32 object-cover rounded-md"
+                  onError={(e) => {
+                    e.currentTarget.src = '/images/clinics/istanbul-dental.jpg';
+                  }}
+                />
+                <div className="space-y-1">
+                  {clinic.features.map((feature, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className="w-full" 
+                variant={selectedClinic?.id === clinic.id ? "default" : "outline"}
+              >
+                {selectedClinic?.id === clinic.id ? "Selected" : "Select Clinic"}
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
 
-          {clinicVariant.note && (
-            <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
-              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
-              <p>{clinicVariant.note}</p>
-            </div>
-          )}
+      {selectedClinic && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <span className="font-medium text-green-800">
+              You've selected {selectedClinic.name}
+            </span>
+          </div>
+          <p className="text-green-700 text-sm mt-1">
+            Proceed to the next step to complete your booking.
+          </p>
         </div>
-      </CardContent>
-      <CardFooter>
-        <div className="text-sm text-muted-foreground">
-          Quantity: {quantity}
-        </div>
-      </CardFooter>
-    </Card>
+      )}
+    </div>
   );
 };
 
@@ -387,4 +453,5 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
   );
 };
 
+export { ClinicTreatmentsList, TreatmentVariantsComparison };
 export default ClinicTreatmentDisplay;
