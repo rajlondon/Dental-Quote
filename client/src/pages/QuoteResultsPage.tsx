@@ -17,7 +17,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail } from 'lucide-react';
+import { Check, ChevronRight, MapPin, Star, Clock, Calendar, Download, Mail, CheckCircle, Pencil } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 
 // Types
@@ -648,19 +648,52 @@ const QuoteResultsPage: React.FC = () => {
   const { toast } = useToast();
   const [selectedClinicIndex, setSelectedClinicIndex] = useState<number | null>(null);
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null);
+  
+  // Add these state variables for promo code support
+  const [hasPromoCode, setHasPromoCode] = useState(false);
+  const [promoCodeInfo, setPromoCodeInfo] = useState<{
+    code: string;
+    discount: number;
+    originalTotal: number;
+    clinicId?: number;
+  } | null>(null);
+  
+  // Simplified step management
+  const [showClinics, setShowClinics] = useState(false);
+  const [treatmentItems, setTreatmentItems] = useState<any[]>([]);
+  const [totalGBP, setTotalGBP] = useState(0);
 
-  // Simulated quote data (in real implementation, this would come from the form submission)
+  // Load quote data from localStorage in useEffect
   useEffect(() => {
-    // Try to get data from localStorage (for development purposes)
-    const savedQuoteData = localStorage.getItem('quoteData');
-
+    // Load quote data from localStorage (from PriceCalculator)
+    const savedQuoteData = localStorage.getItem("quoteData");
     if (savedQuoteData) {
       try {
         const parsedData = JSON.parse(savedQuoteData);
         setQuoteData(parsedData);
         setSelectedClinicIndex(parsedData.selectedClinicIndex || 0);
+        
+        // Set treatment items and show clinics
+        if (parsedData.items) {
+          setTreatmentItems(parsedData.items);
+          setTotalGBP(parsedData.totalGBP || 0);
+          setShowClinics(true);
+        }
+        
+        // Check for promo code information
+        if (parsedData.promoCode) {
+          setHasPromoCode(true);
+          setPromoCodeInfo({
+            code: parsedData.promoCode,
+            discount: parsedData.promoDiscount || 0,
+            originalTotal: parsedData.originalTotal || parsedData.totalGBP,
+            clinicId: parsedData.clinicId
+          });
+          
+          console.log("Loaded promo code from quote data:", parsedData.promoCode);
+        }
       } catch (error) {
-        console.error('Error parsing saved quote data:', error);
+        console.error("Error loading quote data:", error);
         // Fallback to dummy data
         setDummyData();
       }
@@ -669,6 +702,11 @@ const QuoteResultsPage: React.FC = () => {
       setDummyData();
     }
   }, []);
+
+  // Helper function to format currency
+  const formatCurrency = (amount: number) => {
+    return amount.toLocaleString();
+  };
 
   const setDummyData = () => {
     // This is just for development - in production, this data would come from the form
@@ -721,6 +759,34 @@ const QuoteResultsPage: React.FC = () => {
     setSelectedClinicIndex(0);
   };
 
+  // Function to handle treatment plan changes
+  const handleTreatmentPlanChange = (items: any[]) => {
+    setTreatmentItems(items);
+    
+    // Automatically show clinics when treatments are added
+    if (items.length > 0) {
+      setShowClinics(true);
+      toast({
+        title: "Treatments Added!",
+        description: "Scroll down to see available clinics for your treatments.",
+      });
+      
+      // Smooth scroll to clinics section after a brief delay
+      setTimeout(() => {
+        const clinicsSection = document.getElementById('clinics-section');
+        if (clinicsSection) {
+          clinicsSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 500);
+    } else {
+      setShowClinics(false);
+    }
+  };
+
+  // Simplified clinic selection
   const handleSelectClinic = (index: number) => {
     setSelectedClinicIndex(index);
 
@@ -736,8 +802,19 @@ const QuoteResultsPage: React.FC = () => {
 
       toast({
         title: "Clinic Selected",
-        description: `You've selected ${CLINIC_DATA[index].name} as your preferred clinic.`,
+        description: `You've selected ${CLINIC_DATA[index].name}. Scroll down to complete your booking.`,
       });
+      
+      // Scroll to final booking section
+      setTimeout(() => {
+        const bookingSection = document.getElementById('booking-section');
+        if (bookingSection) {
+          bookingSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+          });
+        }
+      }, 500);
     }
   };
 
@@ -782,81 +859,156 @@ const QuoteResultsPage: React.FC = () => {
 
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
-          <header className="mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">{t('quote_results.title', 'Your Dental Treatment Quote')}</h1>
-                <p className="text-gray-600">
-                  {t('quote_results.subtitle', 'Compare clinics and select your preferred option')}
-                </p>
-              </div>
-
-              <div className="mt-4 md:mt-0">
-                {selectedClinicIndex !== null && (
-                  <Button 
-                    size="lg" 
-                    className="flex items-center bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                    onClick={handleProceedBooking}
-                  >
-                    {t('quote_results.proceed_booking', 'Proceed to Booking')}
-                    <ChevronRight className="ml-2 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                  </svg>
+          {/* Simplified Progress tracker */}
+          <div className="mb-8">
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              {/* Promo Code Success Banner */}
+              {hasPromoCode && promoCodeInfo && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="bg-green-100 rounded-full p-2 mr-4">
+                        <Check className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-800">
+                          🎉 Promo Code Applied Successfully!
+                        </h3>
+                        <p className="text-green-700">
+                          Code "{promoCodeInfo.code}" - You saved £{promoCodeInfo.discount?.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm text-green-600">Original Price</div>
+                      <div className="text-lg line-through text-gray-500">
+                        £{promoCodeInfo.originalTotal?.toLocaleString()}
+                      </div>
+                      <div className="text-sm text-green-600">Your Price</div>
+                      <div className="text-2xl font-bold text-green-700">
+                        £{quoteData?.totalGBP?.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-700">
-                    {t('quote_results.disclaimer', 'This quote is based on the information you provided. After an X-ray (which we can arrange), your final treatment plan and price will be confirmed — usually within ±10% of this quote.')}
+              )}
+
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold">
+                    {hasPromoCode ? "Your Special Offer Quote" : "Your Dental Treatment Quote"}
+                  </h2>
+                  <p className="text-gray-600 text-sm">
+                    {hasPromoCode 
+                      ? "Review your discounted quote and select your preferred clinic" 
+                      : "Compare clinics and select your preferred option"
+                    }
                   </p>
                 </div>
-              </div>
-            </div>
-          </header>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <section className="mb-8">
-                <h2 className="text-2xl font-bold mb-4">{t('quote_results.clinic_comparison', 'Clinic Comparison')}</h2>
-
-                {CLINIC_DATA.map((clinic, index) => (
-                  <ClinicCard 
-                    key={clinic.id}
-                    clinic={clinic}
-                    quoteData={quoteData}
-                    isSelected={selectedClinicIndex === index}
-                    onSelect={() => handleSelectClinic(index)}
-                  />
-                ))}
-              </section>
-            </div>
-
-            <div className="lg:col-span-1">
-              <div className="sticky top-20">
-                <QuoteSummary quoteData={quoteData} />
-
-                {selectedClinicIndex !== null && (
-                  <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 className="font-bold text-green-800 mb-2">Ready to proceed?</h3>
-                    <p className="text-green-700 text-sm mb-4">You've selected {CLINIC_DATA[selectedClinicIndex].name}. Click below to start the booking process.</p>
-                    <Button 
-                      className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium"
-                      onClick={handleProceedBooking}
-                    >
-                      {t('quote_results.proceed_booking', 'Proceed to Booking')}
-                    </Button>
+                
+                {treatmentItems.length > 0 && (
+                  <div className="mt-4 sm:mt-0">
+                    <div className="bg-blue-50 py-2 px-4 rounded-md">
+                      <div className="flex justify-between gap-4 text-sm">
+                        <span className="text-gray-700">Current Total:</span>
+                        <span className="font-bold">£{formatCurrency(Math.round(totalGBP))}</span>
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        Final quote includes clinic selection
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
+              
+              {/* Simple progress indicator */}
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: treatmentItems.length > 0 ? '100%' : '20%' }}
+                ></div>
+              </div>
+              <div className="flex justify-between text-xs text-gray-500 mt-1">
+                <span>Start</span>
+                <span>{treatmentItems.length > 0 ? 'Ready for booking!' : 'Loading treatments...'}</span>
+              </div>
             </div>
           </div>
+
+          {/* Show clinic selection when treatments are available */}
+          {showClinics && treatmentItems.length > 0 && (
+            <div id="clinics-section" className="mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-xl font-bold">
+                    <MapPin className="mr-2 h-5 w-5 text-blue-500" />
+                    {hasPromoCode && promoCodeInfo?.clinicId 
+                      ? "Your Selected Clinic (Promo Code Applied)" 
+                      : "Choose Your Clinic"
+                    }
+                  </CardTitle>
+                  <CardDescription>
+                    {hasPromoCode && promoCodeInfo?.clinicId
+                      ? "This promo code locks you to this specific clinic for the discount."
+                      : `Select a clinic for your ${treatmentItems.length} treatment${treatmentItems.length > 1 ? 's' : ''}`
+                    }
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {CLINIC_DATA.map((clinic, index) => (
+                      <ClinicCard 
+                        key={clinic.id}
+                        clinic={clinic}
+                        quoteData={quoteData}
+                        isSelected={selectedClinicIndex === index}
+                        onSelect={() => handleSelectClinic(index)}
+                      />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Show final booking section when clinic is selected */}
+          {selectedClinicIndex !== null && treatmentItems.length > 0 && (
+            <div id="booking-section" className="mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center text-xl font-bold">
+                    <Check className="mr-2 h-5 w-5 text-green-500" />
+                    Complete Your Booking
+                  </CardTitle>
+                  <CardDescription>
+                    Review your selections and proceed with your booking
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2">
+                      <QuoteSummary quoteData={quoteData} />
+                    </div>
+                    <div className="lg:col-span-1">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 className="font-bold text-green-800 mb-2">Ready to proceed?</h3>
+                        <p className="text-green-700 text-sm mb-4">
+                          You've selected {CLINIC_DATA[selectedClinicIndex].name}. Click below to start the booking process.
+                        </p>
+                        <Button 
+                          className="w-full bg-blue-600 text-white hover:bg-blue-700 font-medium"
+                          onClick={handleProceedBooking}
+                        >
+                          <ChevronRight className="ml-2 h-4 w-4" />
+                          {t('quote_results.proceed_booking', 'Proceed to Booking')}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
 
           <section className="my-12">
             <h2 className="text-2xl font-bold mb-4">{t('quote_results.why_choose_us', 'Why Choose Istanbul Dental Smile?')}</h2>
