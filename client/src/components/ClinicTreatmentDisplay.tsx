@@ -453,5 +453,4 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
   );
 };
 
-export { ClinicTreatmentsList, TreatmentVariantsComparison };
 export default ClinicTreatmentDisplay;
