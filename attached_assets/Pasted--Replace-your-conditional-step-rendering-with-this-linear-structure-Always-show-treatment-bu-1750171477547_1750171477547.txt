@@ -1,0 +1,185 @@
+// Replace your conditional step rendering with this linear structure:
+
+{/* Always show treatment builder */}
+<div className="mb-8">
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center text-xl font-bold">
+        <Pencil className="mr-2 h-5 w-5 text-blue-500" />
+        Build Your Treatment Plan
+      </CardTitle>
+      <CardDescription>
+        Add all the treatments you're interested in to get a comprehensive quote
+      </CardDescription>
+    </CardHeader>
+    <CardContent>
+      <TreatmentPlanBuilder 
+        initialTreatments={treatmentItems}
+        onTreatmentsChange={handleTreatmentPlanChange}
+      />
+    </CardContent>
+  </Card>
+</div>
+
+{/* Show clinic selection when treatments are added */}
+{showClinics && treatmentItems.length > 0 && (
+  <div id="clinics-section" className="mb-8">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center text-xl font-bold">
+          <MapPin className="mr-2 h-5 w-5 text-blue-500" />
+          {hasPromoCode && promoCodeInfo?.clinicId 
+            ? "Your Selected Clinic (Promo Code Applied)" 
+            : "Choose Your Clinic"
+          }
+        </CardTitle>
+        <CardDescription>
+          {hasPromoCode && promoCodeInfo?.clinicId
+            ? "This promo code locks you to this specific clinic for the discount."
+            : `Select a clinic for your ${treatmentItems.length} treatment${treatmentItems.length > 1 ? 's' : ''}`
+          }
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Your existing clinic selection logic here */}
+        <div className="space-y-6">
+          {clinics.map((clinic) => (
+            <ClinicCard
+              key={clinic.id}
+              clinic={clinic}
+              isSelected={selectedClinic?.id === clinic.id}
+              onSelect={() => handleClinicSelect(clinic)}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)}
+
+{/* Show final booking section when clinic is selected */}
+{selectedClinic && treatmentItems.length > 0 && (
+  <div id="booking-section" className="mb-8">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center text-xl font-bold">
+          <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+          Complete Your Booking
+        </CardTitle>
+        <CardDescription>
+          Review your selections and provide contact details to proceed
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {/* Compact contact form */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left: Contact Form */}
+          <div>
+            <h3 className="font-semibold mb-4">Your Contact Information</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Full Name *</label>
+                <input 
+                  type="text" 
+                  className="w-full p-2 border rounded-md"
+                  placeholder="Enter your full name"
+                  defaultValue={searchParams.get('name') || ''}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Email *</label>
+                <input 
+                  type="email" 
+                  className="w-full p-2 border rounded-md"
+                  placeholder="Enter your email"
+                  defaultValue={searchParams.get('email') || ''}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Phone *</label>
+                <input 
+                  type="tel" 
+                  className="w-full p-2 border rounded-md"
+                  placeholder="Enter your phone number"
+                  defaultValue={searchParams.get('phone') || ''}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Preferred Travel Month</label>
+                <select className="w-full p-2 border rounded-md">
+                  <option>Flexible</option>
+                  <option>January 2025</option>
+                  <option>February 2025</option>
+                  <option>March 2025</option>
+                  <option>April 2025</option>
+                  <option>May 2025</option>
+                  <option>June 2025</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          
+          {/* Right: Quote Summary */}
+          <div>
+            <h3 className="font-semibold mb-4">Quote Summary</h3>
+            <div className="bg-gray-50 p-4 rounded-md">
+              {/* Treatment list */}
+              <div className="space-y-2 mb-4">
+                {treatmentItems.map((item) => (
+                  <div key={item.id} className="flex justify-between">
+                    <span className="text-sm">{item.name} (×{item.quantity})</span>
+                    <span className="text-sm font-medium">£{item.subtotalGBP}</span>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Promo discount if applicable */}
+              {hasPromoCode && promoCodeInfo && (
+                <div className="border-t pt-2 mb-2">
+                  <div className="flex justify-between text-green-600">
+                    <span className="text-sm">Promo Code ({promoCodeInfo.code})</span>
+                    <span className="text-sm font-medium">-£{promoCodeInfo.discount}</span>
+                  </div>
+                </div>
+              )}
+              
+              {/* Total */}
+              <div className="border-t pt-2">
+                <div className="flex justify-between">
+                  <span className="font-semibold">Total</span>
+                  <span className="font-bold text-lg">£{formatCurrency(totalGBP)}</span>
+                </div>
+              </div>
+              
+              {/* Selected clinic */}
+              <div className="mt-4 p-3 bg-blue-50 rounded border">
+                <div className="text-sm font-medium text-blue-800">{selectedClinic.name}</div>
+                <div className="text-xs text-blue-600">{selectedClinic.location}</div>
+                <div className="text-xs text-blue-600">{selectedClinic.guarantee} guarantee</div>
+              </div>
+            </div>
+            
+            {/* Action buttons */}
+            <div className="mt-6 space-y-3">
+              <Button className="w-full" size="lg">
+                <CreditCard className="mr-2 h-5 w-5" />
+                Pay £200 Deposit & Book
+              </Button>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1" size="sm">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email Quote
+                </Button>
+                <Button variant="outline" className="flex-1" size="sm">
+                  <Download className="mr-2 h-4 w-4" />
+                  Download PDF
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+)}
