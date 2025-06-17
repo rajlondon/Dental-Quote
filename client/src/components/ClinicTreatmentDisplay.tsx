@@ -3,22 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Info, CheckCircle, PlusCircle } from 'lucide-react';
-import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
-import { TreatmentItem } from './TreatmentPlanBuilder';
 import { 
+  Info, 
+  CheckCircle, 
+  PlusCircle,
   MapPin, 
   Clock, 
   Shield, 
   Award, 
-  Users, 
-  CheckCircle,
+  Users,
   Phone,
   Mail,
   Calendar,
   ArrowRight,
   Star
 } from 'lucide-react';
+import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
+import { TreatmentItem } from './TreatmentPlanBuilder';
 
 interface ClinicTreatmentDisplayProps {
   treatments: TreatmentItem[];
