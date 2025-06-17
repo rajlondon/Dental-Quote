@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,7 +37,7 @@ interface PromoCodeInfo {
 const QuoteResultsPage: React.FC = () => {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
-  
+
   // Simplified state management
   const [showClinics, setShowClinics] = useState(false);
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
@@ -84,7 +83,7 @@ const QuoteResultsPage: React.FC = () => {
   // Simplified treatment plan change handler
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
-    
+
     // Automatically show clinics when treatments are added
     if (items.length > 0) {
       setShowClinics(true);
@@ -92,7 +91,7 @@ const QuoteResultsPage: React.FC = () => {
         title: "Treatments Added!",
         description: "Scroll down to see available clinics for your treatments.",
       });
-      
+
       // Smooth scroll to clinics section after a brief delay
       setTimeout(() => {
         const clinicsSection = document.getElementById('clinics-section');
@@ -111,12 +110,12 @@ const QuoteResultsPage: React.FC = () => {
   // Simplified clinic selection
   const handleClinicSelect = (clinic: ClinicInfo) => {
     setSelectedClinic(clinic);
-    
+
     toast({
       title: "Clinic Selected",
       description: `You've selected ${clinic.name}. Scroll down to complete your booking.`,
     });
-    
+
     // Scroll to final booking section
     setTimeout(() => {
       const bookingSection = document.getElementById('booking-section');

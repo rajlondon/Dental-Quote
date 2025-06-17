@@ -18,7 +18,7 @@ interface ClinicTreatmentDisplayProps {
  * This is used in the quote results page to show how each clinic
  * names and packages the treatments selected by the user
  */
-export const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
+const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
   standardName,
   clinicVariant,
   quantity
@@ -51,7 +51,7 @@ export const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
               ))}
             </div>
           </div>
-          
+
           {clinicVariant.optional_addons && clinicVariant.optional_addons.length > 0 && (
             <div className="text-sm">
               <span className="font-medium">Optional add-ons:</span>
@@ -65,7 +65,7 @@ export const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
               </div>
             </div>
           )}
-          
+
           {clinicVariant.note && (
             <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
               <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
@@ -99,7 +99,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
 }) => {
   // This would use the treatmentMapperService in a real implementation
   // For now, we'll use a placeholder implementation
-  
+
   const getMockClinicVariant = (standardName: string): ClinicTreatmentVariant => {
     // Create different clinic-specific naming and pricing based on clinic ID and treatment name
     const clinicData: Record<string, Record<string, any>> = {
@@ -164,7 +164,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
         }
       }
     };
-    
+
     // Default fallback variant if specific data not found
     const defaultVariant = {
       clinic_id: clinicId,
@@ -173,7 +173,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
       includes: ['Standard procedure', 'Basic materials', 'Regular warranty'],
       note: 'Contact clinic for specific details about this treatment.'
     };
-    
+
     // Return the clinic-specific variant if available, otherwise return default
     if (clinicData[clinicId] && clinicData[clinicId][standardName]) {
       const data = clinicData[clinicId][standardName];
@@ -186,10 +186,10 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
         optional_addons: data.optional_addons || []
       };
     }
-    
+
     return defaultVariant;
   };
-  
+
   return (
     <div className="space-y-4">
       {treatments.map((treatment, index) => (
@@ -199,7 +199,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
             clinicVariant={getMockClinicVariant(treatment.name)}
             quantity={treatment.quantity}
           />
-          
+
           {onShowAllVariants && (
             <button 
               onClick={() => onShowAllVariants(treatment.name)}
@@ -230,7 +230,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
 }) => {
   // For demonstration, we'll create a comparison of the three clinics
   // In a real implementation, this would use the actual variants passed in
-  
+
   // Generate or use mock variants for demonstration
   const mockVariants = [
     {
@@ -258,13 +258,13 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
       clinic_name: 'Dental Excellence Turkey'
     }
   ];
-  
+
   // Use mockVariants for dental implants, otherwise use passed variants
   const displayVariants = standardName.includes('Implant') ? mockVariants : variants;
-  
+
   // Create a comparison table of features across clinics
   const allFeatures = displayVariants.flatMap(v => v.includes).filter((f, i, a) => a.indexOf(f) === i);
-  
+
   return (
     <div className="p-4">
       <h3 className="text-xl font-bold mb-2">
@@ -273,7 +273,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
       <p className="text-muted-foreground mb-6">
         Compare how different clinics offer this treatment, with their specific pricing and inclusions.
       </p>
-      
+
       {/* Side-by-side comparison */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {displayVariants.map((variant, index) => (
@@ -300,7 +300,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
                     ))}
                   </ul>
                 </div>
-                
+
                 {variant.note && (
                   <div className="flex items-start gap-2 text-sm mt-3 p-2 bg-blue-50 rounded">
                     <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -315,7 +315,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
           </Card>
         ))}
       </div>
-      
+
       {/* Feature comparison table */}
       <div className="overflow-x-auto rounded-md border mb-6">
         <table className="min-w-full divide-y divide-gray-200">
@@ -371,7 +371,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
           </tbody>
         </table>
       </div>
-      
+
       <div className="mt-6 flex justify-between">
         <p className="text-sm text-muted-foreground">
           Note: Actual treatments, inclusions, and pricing may vary. Always consult with clinics for the most up-to-date information.
@@ -386,3 +386,5 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
     </div>
   );
 };
+
+export default ClinicTreatmentDisplay;
