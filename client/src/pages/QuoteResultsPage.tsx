@@ -132,13 +132,13 @@ const TierBadge: React.FC<{ tier: 'affordable' | 'mid' | 'premium' }> = ({ tier 
     mid: 'bg-purple-100 text-purple-800',
     premium: 'bg-gold-100 text-gold-800'
   };
-  
+
   const labels = {
     affordable: 'Affordable',
     mid: 'Mid-Tier',
     premium: 'Premium'
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[tier]}`}>
       {labels[tier]}
@@ -153,12 +153,12 @@ const ClinicCard: React.FC<{
   onSelect: () => void 
 }> = ({ clinic, quoteData, isSelected, onSelect }) => {
   const { t } = useTranslation();
-  
+
   // We show ONLY the treatment price in the clinic card
   // Both flights and consultation costs are shown separately in the quote summary
   const finalPriceGBP = clinic.priceGBP;
   const finalPriceUSD = clinic.priceUSD;
-  
+
   return (
     <Card className={`relative overflow-hidden mb-6 border-2 ${isSelected ? 'border-primary' : 'border-gray-200'}`}>
       {isSelected && (
@@ -174,21 +174,21 @@ const ClinicCard: React.FC<{
             <TierBadge tier={clinic.tier} />
           </div>
         </div>
-        
+
         {/* Middle column - Clinic details */}
         <div className="md:w-2/4 p-4">
           <div className="flex items-center mb-2">
             <h3 className="text-xl font-bold mr-2">{clinic.name}</h3>
             <RatingStars rating={clinic.rating} />
           </div>
-          
+
           <div className="flex items-center text-gray-600 mb-2">
             <MapPin className="h-4 w-4 mr-1" />
             <span className="text-sm">{clinic.location}</span>
           </div>
-          
+
           <p className="text-gray-700 mb-3">{clinic.description}</p>
-          
+
           <div className="mb-3">
             <h4 className="font-medium text-sm text-gray-700 mb-1">Materials Used:</h4>
             <div className="flex flex-wrap gap-1">
@@ -197,7 +197,7 @@ const ClinicCard: React.FC<{
               ))}
             </div>
           </div>
-          
+
           <div className="mb-3">
             <h4 className="font-medium text-sm text-gray-700 mb-1">Clinic Features:</h4>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
@@ -209,13 +209,13 @@ const ClinicCard: React.FC<{
               ))}
             </ul>
           </div>
-          
+
           <div className="flex items-center text-sm font-medium text-gray-600">
             <Clock className="h-4 w-4 mr-1" />
             <span>Guarantee: {clinic.guarantee}</span>
           </div>
         </div>
-        
+
         {/* Right column - Price and action */}
         <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between">
           <div>
@@ -224,7 +224,7 @@ const ClinicCard: React.FC<{
               <p className="text-sm text-gray-500">${finalPriceUSD}</p>
               <p className="text-xs text-gray-500 mt-1">Treatment price only</p>
             </div>
-            
+
             <div className="mb-4">
               <div className="flex items-start mb-1">
                 <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
@@ -242,7 +242,7 @@ const ClinicCard: React.FC<{
               </div>
             </div>
           </div>
-          
+
           <div>
             <Button 
               className="w-full mb-2" 
@@ -271,7 +271,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
-  
+
   // Handle downloading the quote
   const handleDownloadQuote = async () => {
     if (!quoteData) {
@@ -282,9 +282,9 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       });
       return;
     }
-    
+
     setIsDownloading(true);
-    
+
     try {
       // Use the server-side API endpoint to generate the PDF
       const response = await fetch('/api/jspdf-quote-v2', {
@@ -294,32 +294,32 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
         },
         body: JSON.stringify(quoteData),
       });
-      
+
       if (!response.ok) {
         throw new Error(`Error generating PDF: ${response.statusText}`);
       }
-      
+
       // Get the PDF blob
       const pdfBlob = await response.blob();
-      
+
       // Generate a download link for the PDF
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      
+
       // Generate formatted filename with date
       const now = new Date();
       const formattedDate = now.toISOString().slice(0, 10).replace(/-/g, '');
       const filename = `MyDentalFly_Quote_${formattedDate}.pdf`;
-      
+
       link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
-      
+
       // Clean up
       window.URL.revokeObjectURL(url);
       document.body.removeChild(link);
-      
+
       toast({
         title: t('quote_results.download_success', 'Download Complete'),
         description: t('quote_results.download_success_message', 'Your quote has been downloaded successfully.'),
@@ -335,7 +335,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       setIsDownloading(false);
     }
   };
-  
+
   // Handle emailing the quote
   const handleEmailQuote = async () => {
     if (!quoteData || !quoteData.patientEmail) {
@@ -346,9 +346,9 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       });
       return;
     }
-    
+
     setIsEmailing(true);
-    
+
     try {
       // Use the server-side API endpoint to email the quote
       const response = await fetch('/api/email-quote', {
@@ -358,14 +358,14 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
         },
         body: JSON.stringify(quoteData),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to send email');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: t('quote_results.email_success', 'Email Sent'),
@@ -385,14 +385,14 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
       setIsEmailing(false);
     }
   };
-  
+
   // Calculate the actual total including treatments, flights, and london consult
   // First check if flights are already included in the items array to avoid double-counting
   const hasFlightItem = quoteData.items.some(item => 
     item.treatment.toLowerCase().includes('flight') || 
     item.treatment.toLowerCase().includes('return')
   );
-  
+
   const treatmentOnlyTotalGBP = quoteData.totalGBP;
   const treatmentOnlyTotalUSD = quoteData.totalUSD;
   // Only add flight costs if they're not already in the items
@@ -402,12 +402,12 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   const consultCostUSD = quoteData.hasLondonConsult ? (quoteData.londonConsultCostUSD || 193) : 0;
   const actualTotalGBP = treatmentOnlyTotalGBP + flightCostGBP + consultCostGBP;
   const actualTotalUSD = treatmentOnlyTotalUSD + flightCostUSD + consultCostUSD;
-  
+
   // Calculate UK price comparison using data from our research on UK private dental prices
   // Calculate UK price based on actual UK dental price data for the same treatments
   const calculateUKPrice = () => {
     let ukTotal = 0;
-    
+
     // Only count actual dental treatments (not flights or consultation)
     for (const item of quoteData.items) {
       // Skip if the item is about flights or consultation
@@ -424,18 +424,18 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
         }
       }
     }
-    
+
     return Math.round(ukTotal);
   };
-  
+
   const ukTreatmentPrice = calculateUKPrice();
   const savingsAmount = ukTreatmentPrice - treatmentOnlyTotalGBP;
   const savingsPercentage = Math.round((savingsAmount / ukTreatmentPrice) * 100);
-  
+
   return (
     <div className="bg-white p-4 rounded-lg shadow">
       <h3 className="text-lg font-bold mb-4">Your Quote Summary</h3>
-      
+
       <div className="mb-4">
         <h4 className="font-medium text-sm text-gray-700 mb-2">Patient Information</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -453,7 +453,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           </div>
         </div>
       </div>
-      
+
       <div className="mb-4">
         <h4 className="font-medium text-sm text-gray-700 mb-2">Treatment Details</h4>
         <table className="w-full text-sm">
@@ -511,7 +511,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           </tfoot>
         </table>
       </div>
-      
+
       {/* UK Price Comparison */}
       <div className="mb-4 p-4 bg-green-50 border border-green-100 rounded-lg">
         <h4 className="font-medium text-sm text-gray-700 mb-3">UK Price Comparison</h4>
@@ -534,7 +534,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           *UK costs based on average private clinic rates in London and Manchester
         </p>
       </div>
-      
+
       <div className="mb-4">
         <h4 className="font-medium text-sm text-gray-700 mb-2">Travel Information</h4>
         <div className="flex flex-wrap">
@@ -572,7 +572,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
           </p>
         </div>
       </div>
-      
+
       <div className="flex flex-wrap gap-4">
         <Button 
           className="flex items-center bg-blue-600 text-white hover:bg-blue-700 px-6 py-5 h-auto text-base font-medium rounded-md"
@@ -613,18 +613,47 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
   );
 };
 
+// Add this helper function for clinic mapping
+const getClinicByPromoCode = (clinicId: number) => {
+  const clinics = {
+    1: {
+      name: "Istanbul Dental Care",
+      location: "Maltepe District, Istanbul", 
+      rating: "⭐⭐⭐⭐",
+      guarantee: "3 Years",
+      type: "Affordable"
+    },
+    2: {
+      name: "DentGroup Istanbul", 
+      location: "Şişli District, Istanbul",
+      rating: "⭐⭐⭐⭐½", 
+      guarantee: "5 Years",
+      type: "Mid-Tier"
+    },
+    3: {
+      name: "Vera Smile",
+      location: "Levent District, Istanbul",
+      rating: "⭐⭐⭐⭐⭐",
+      guarantee: "10 Years", 
+      type: "Premium"
+    }
+  };
+
+  return clinics[clinicId as keyof typeof clinics];
+};
+
 const QuoteResultsPage: React.FC = () => {
   const { t } = useTranslation();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedClinicIndex, setSelectedClinicIndex] = useState<number | null>(null);
   const [quoteData, setQuoteData] = useState<QuoteData | null>(null);
-  
+
   // Simulated quote data (in real implementation, this would come from the form submission)
   useEffect(() => {
     // Try to get data from localStorage (for development purposes)
     const savedQuoteData = localStorage.getItem('quoteData');
-    
+
     if (savedQuoteData) {
       try {
         const parsedData = JSON.parse(savedQuoteData);
@@ -640,7 +669,7 @@ const QuoteResultsPage: React.FC = () => {
       setDummyData();
     }
   }, []);
-  
+
   const setDummyData = () => {
     // This is just for development - in production, this data would come from the form
     const dummyData: QuoteData = {
@@ -687,40 +716,40 @@ const QuoteResultsPage: React.FC = () => {
       londonConsultCostGBP: 150,
       londonConsultCostUSD: 193,
     };
-    
+
     setQuoteData(dummyData);
     setSelectedClinicIndex(0);
   };
-  
+
   const handleSelectClinic = (index: number) => {
     setSelectedClinicIndex(index);
-    
+
     // In a real implementation, we would update the quote data with the selected clinic
     if (quoteData) {
       const updatedQuoteData = {
         ...quoteData,
         selectedClinicIndex: index
       };
-      
+
       // Save to localStorage for development purposes
       localStorage.setItem('quoteData', JSON.stringify(updatedQuoteData));
-      
+
       toast({
         title: "Clinic Selected",
         description: `You've selected ${CLINIC_DATA[index].name} as your preferred clinic.`,
       });
     }
   };
-  
+
   const handleProceedBooking = () => {
     // Save the current quote data to global state
     if (quoteData) {
       import('@/services/quoteState').then(({ setQuoteData }) => {
         setQuoteData(quoteData);
-        
+
         // Redirect to the booking page - for now without specific quote ID
         setLocation(`/booking`);
-        
+
         toast({
           title: t('quote_results.proceeding_to_booking', 'Proceeding to booking'),
           description: t('quote_results.deposit_info', 'You will be required to pay a £200 deposit to secure your booking.'),
@@ -734,7 +763,7 @@ const QuoteResultsPage: React.FC = () => {
       });
     }
   };
-  
+
   if (!quoteData) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -745,12 +774,12 @@ const QuoteResultsPage: React.FC = () => {
       </div>
     );
   }
-  
+
   return (
     <>
       <Navbar />
       <ScrollToTop />
-      
+
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto">
           <header className="mb-8">
@@ -761,7 +790,7 @@ const QuoteResultsPage: React.FC = () => {
                   {t('quote_results.subtitle', 'Compare clinics and select your preferred option')}
                 </p>
               </div>
-              
+
               <div className="mt-4 md:mt-0">
                 {selectedClinicIndex !== null && (
                   <Button 
@@ -775,7 +804,7 @@ const QuoteResultsPage: React.FC = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -791,12 +820,12 @@ const QuoteResultsPage: React.FC = () => {
               </div>
             </div>
           </header>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2">
               <section className="mb-8">
                 <h2 className="text-2xl font-bold mb-4">{t('quote_results.clinic_comparison', 'Clinic Comparison')}</h2>
-                
+
                 {CLINIC_DATA.map((clinic, index) => (
                   <ClinicCard 
                     key={clinic.id}
@@ -808,11 +837,11 @@ const QuoteResultsPage: React.FC = () => {
                 ))}
               </section>
             </div>
-            
+
             <div className="lg:col-span-1">
               <div className="sticky top-20">
                 <QuoteSummary quoteData={quoteData} />
-                
+
                 {selectedClinicIndex !== null && (
                   <div className="mt-6 bg-green-50 border border-green-200 rounded-lg p-4">
                     <h3 className="font-bold text-green-800 mb-2">Ready to proceed?</h3>
@@ -828,10 +857,10 @@ const QuoteResultsPage: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           <section className="my-12">
             <h2 className="text-2xl font-bold mb-4">{t('quote_results.why_choose_us', 'Why Choose Istanbul Dental Smile?')}</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -842,7 +871,7 @@ const QuoteResultsPage: React.FC = () => {
                 <h3 className="text-xl font-semibold mb-2">{t('quote_results.benefits.quality', 'Quality Assurance')}</h3>
                 <p className="text-gray-600">{t('quote_results.benefits.quality_desc', 'All our partner clinics are vetted for excellence, modern equipment, and strict hygiene protocols.')}</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -852,7 +881,7 @@ const QuoteResultsPage: React.FC = () => {
                 <h3 className="text-xl font-semibold mb-2">{t('quote_results.benefits.savings', 'Significant Savings')}</h3>
                 <p className="text-gray-600">{t('quote_results.benefits.savings_desc', 'Save up to 70% compared to UK costs without compromising on quality or safety.')}</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mb-4">
                   <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -864,26 +893,26 @@ const QuoteResultsPage: React.FC = () => {
               </div>
             </div>
           </section>
-          
+
           <section className="mb-12">
             <h2 className="text-2xl font-bold mb-4">{t('quote_results.frequently_asked', 'Frequently Asked Questions')}</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold mb-2">{t('quote_results.faq.payment', 'How do I pay for my treatment?')}</h3>
                 <p className="text-gray-600">{t('quote_results.faq.payment_answer', 'We require a £200 deposit to secure your appointment, which is deducted from your final treatment cost. The remaining balance is paid directly to the clinic on the day of your treatment, after your consultation confirms the treatment plan.')}</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold mb-2">{t('quote_results.faq.travel', 'What about travel arrangements?')}</h3>
                 <p className="text-gray-600">{t('quote_results.faq.travel_answer', 'We can help arrange your entire trip, including flights, accommodation, and transfers. Our concierge service ensures you have a seamless experience from start to finish.')}</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold mb-2">{t('quote_results.faq.guarantee', 'Are treatments guaranteed?')}</h3>
                 <p className="text-gray-600">{t('quote_results.faq.guarantee_answer', 'Yes, all treatments come with guarantees as indicated in your quote. These guarantees are honored internationally, and we work only with clinics that stand behind their work.')}</p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                 <h3 className="text-lg font-semibold mb-2">{t('quote_results.faq.xrays', 'What if my treatment needs change after X-rays?')}</h3>
                 <p className="text-gray-600">{t('quote_results.faq.xrays_answer', 'After reviewing your X-rays, the dentist might recommend adjustments to your treatment plan. Any changes will be discussed with you before proceeding, and you will receive an updated quote reflecting these adjustments.')}</p>
@@ -892,7 +921,7 @@ const QuoteResultsPage: React.FC = () => {
           </section>
         </div>
       </main>
-      
+
       <Footer />
     </>
   );
