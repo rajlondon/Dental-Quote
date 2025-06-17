@@ -1,0 +1,134 @@
+Issue 1: Results Page Not Showing Promo Code Discount
+The problem is in your PriceCalculator.tsx around line 470-490. You're storing the quote data in localStorage but not including the promo code information.
+Fix this section:
+typescript// Store quote data in localStorage for the results page
+try {
+  const quoteResultsData = {
+    items: quoteResult.items,
+    totalGBP: quoteResult.totalGBP,
+    totalUSD: quoteResult.totalUSD,
+    patientName: data.name,
+    patientEmail: data.email,
+    patientPhone: data.phone,
+    travelMonth: data.travelMonth,
+    departureCity: data.departureCity,
+    flightCostGBP: quoteResult.flightCostGBP,
+    flightCostUSD: quoteResult.flightCostUSD,
+    hasLondonConsult: data.londonConsult === "yes",
+    londonConsultCostGBP: 150,
+    londonConsultCostUSD: 195,
+    selectedClinicIndex: 1, // Default to mid-tier
+    
+    // ADD THESE PROMO CODE FIELDS:
+    promoCode: quoteResult.promoCode,
+    promoDiscount: quoteResult.promoDiscount,
+    originalTotal: quoteResult.originalTotal,
+    clinicId: quoteResult.clinicId, // This locks to specific clinic
+    warnings: quoteResult.warnings,
+  };
+
+  // Save to localStorage for the results page to use
+  localStorage.setItem("quoteData", JSON.stringify(quoteResultsData));
+Issue 2: Promo Code Should Lock to Specific Clinic
+You need to modify your clinic selection logic in PriceCalculator.tsx. When a promo code is applied, it should:
+
+Lock to the specific clinic the promo code belongs to
+Hide the clinic comparison section (since they can only use one clinic)
+Persist the selection when going back/forth
+
+Add this logic after line 290 where you set the quote results:
+typescript// After setting quote and quoteResult states
+setQuote(compatibleResult);
+setQuoteResult(quoteResult);
+
+// NEW: Handle promo code clinic locking
+if (quoteResult.clinicId) {
+  // Map clinic IDs to your clinic indices
+  const clinicMapping = {
+    1: 0, // Istanbul Dental Care (Affordable)
+    2: 1, // DentGroup Istanbul (Mid-Tier) 
+    3: 2, // Vera Smile (Premium)
+  };
+  
+  const lockedClinicIndex = clinicMapping[quoteResult.clinicId];
+  if (lockedClinicIndex !== undefined) {
+    setSelectedClinic(lockedClinicIndex);
+  }
+}
+Issue 3: Update Clinic Comparison Display
+Modify the clinic comparison section (around line 600) to handle promo code locking:
+typescript{/* Istanbul Clinic Comparison Section - Modified for promo codes */}
+<div className="p-4 bg-primary/5 rounded-lg mb-6">
+  {quoteResult?.promoCode ? (
+    // PROMO CODE APPLIED - Show locked clinic only
+    <>
+      <h4 className="font-semibold text-primary mb-2">
+        🎉 Promo Code Applied - Clinic Selected
+      </h4>
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-lg font-bold text-primary">
+              {[
+                "Istanbul Dental Care",
+                "DentGroup Istanbul", 
+                "Vera Smile"
+              ][selectedClinic]}
+            </div>
+            <div className="text-sm text-green-700">
+              Promo code "{quoteResult.promoCode}" applied
+            </div>
+            <div className="text-sm text-green-700">
+              You saved £{quoteResult.promoDiscount?.toFixed(2)}
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-primary">
+            £{(() => {
+              const clinicPriceFactors = [0.8, 0.9, 1.0];
+              const selectedFactor = clinicPriceFactors[selectedClinic];
+              return Math.round(quote.totalGBP * selectedFactor).toLocaleString();
+            })()}
+          </div>
+        </div>
+      </div>
+    </>
+  ) : (
+    // NO PROMO CODE - Show normal clinic comparison
+    <>
+      <h4 className="font-semibold text-primary mb-2">
+        Compare Clinics Across Tiers
+      </h4>
+      <p className="text-sm mb-3">
+        Each quote includes vetted options from affordable, mid-tier, and premium clinics...
+      </p>
+      {/* Your existing clinic comparison grid */}
+    </>
+  )}
+</div>
+Issue 4: State Persistence
+Add this useEffect to restore promo code state when component mounts:
+typescript// Add this useEffect after your existing useEffect for loading treatments
+useEffect(() => {
+  // Restore promo code state from localStorage if user navigates back
+  const savedQuoteData = localStorage.getItem("quoteData");
+  if (savedQuoteData) {
+    try {
+      const parsedData = JSON.parse(savedQuoteData);
+      if (parsedData.promoCode) {
+        // Restore promo code in form
+        form.setValue("promoCode", parsedData.promoCode);
+        
+        // Restore clinic selection
+        if (parsedData.clinicId) {
+          const clinicMapping = { 1: 0, 2: 1, 3: 2 };
+          const lockedClinicIndex = clinicMapping[parsedData.clinicId];
+          if (lockedClinicIndex !== undefined) {
+            setSelectedClinic(lockedClinicIndex);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error restoring quote state:", error);
+    }
+  }
+}, [form]);
