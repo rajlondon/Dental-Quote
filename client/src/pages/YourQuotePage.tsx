@@ -212,7 +212,7 @@ const CLINIC_DATA: ClinicInfo[] = [
 const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating - fullStars >= 0.3;
-  
+
   return (
     <div className="flex items-center">
       {[...Array(5)].map((_, i) => (
@@ -238,13 +238,13 @@ const TierBadge: React.FC<{ tier: 'affordable' | 'mid' | 'premium' }> = ({ tier 
     mid: 'bg-purple-100 text-purple-800',
     premium: 'bg-amber-100 text-amber-800'
   };
-  
+
   const labels = {
     affordable: 'Budget-Friendly',
     mid: 'Mid-Range',
     premium: 'Premium'
   };
-  
+
   return (
     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colors[tier]}`}>
       {labels[tier]}
@@ -280,7 +280,7 @@ const ClinicCard: React.FC<{
   isSelected: boolean,
   onSelect: () => void 
 }> = ({ clinic, isSelected, onSelect }) => {
-  
+
   return (
     <Card className={`relative mb-6 border-2 hover:shadow-md transition-all ${
       isSelected 
@@ -294,14 +294,14 @@ const ClinicCard: React.FC<{
           Selected
         </div>
       )}
-      
+
       {clinic.hasSpecialOffer && (
         <div className="absolute top-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-3 py-1 text-sm font-semibold z-10 rounded-br-md flex items-center">
           <Sparkles className="h-4 w-4 mr-1 text-yellow-300" />
           Special Offer
         </div>
       )}
-      
+
       <div className="flex flex-col md:flex-row overflow-hidden">
         {/* Left column - Clinic Image */}
         <div className="md:w-1/4 h-52 md:h-auto relative overflow-hidden">
@@ -314,7 +314,7 @@ const ClinicCard: React.FC<{
             <TierBadge tier={clinic.tier} />
           </div>
         </div>
-        
+
         {/* Middle column - Clinic details */}
         <div className="md:w-2/4 p-4">
           <div className="flex items-start justify-between mb-2">
@@ -326,14 +326,14 @@ const ClinicCard: React.FC<{
               </div>
             </div>
           </div>
-          
+
           <div className="flex items-center text-gray-700 mb-3">
             <MapPin className="h-4 w-4 mr-1 text-gray-500" />
             <span className="text-sm">{clinic.location}</span>
           </div>
-          
+
           <p className="text-gray-700 mb-4 text-sm">{clinic.description}</p>
-          
+
           <div className="mb-4">
             <div className="flex gap-6 flex-wrap">
               <PackageIcon type="hotel" included={clinic.packages.hotel || false} />
@@ -342,7 +342,7 @@ const ClinicCard: React.FC<{
               <PackageIcon type="cityTour" included={clinic.packages.cityTour || false} />
             </div>
           </div>
-          
+
           <div className="mb-3">
             <h4 className="font-medium text-sm text-gray-700 mb-2">Highlights:</h4>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
@@ -354,13 +354,13 @@ const ClinicCard: React.FC<{
               ))}
             </ul>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-700 font-medium">
             <Shield className="h-4 w-4 mr-1 text-blue-500" />
             <span>{clinic.guarantee} guarantee</span>
           </div>
         </div>
-        
+
         {/* Right column - Price and action */}
         <div className="md:w-1/4 p-4 bg-gray-50 flex flex-col justify-between border-t md:border-t-0 md:border-l border-gray-200">
           <div>
@@ -368,7 +368,7 @@ const ClinicCard: React.FC<{
               <p className="text-3xl font-bold text-blue-600">£{clinic.priceGBP}</p>
               <p className="text-sm text-gray-500">${clinic.priceUSD}</p>
               <p className="text-xs text-gray-500 mt-1">Treatment price</p>
-              
+
               {/* Display special offer details if available */}
               {clinic.hasSpecialOffer && clinic.specialOfferDetails && (
                 <div className="mt-2 p-2 bg-blue-50 border border-blue-100 rounded-md">
@@ -385,7 +385,7 @@ const ClinicCard: React.FC<{
                 </div>
               )}
             </div>
-            
+
             <div className="mb-4">
               <div className="flex items-start mb-1">
                 <Check className="h-4 w-4 text-green-500 mr-1 flex-shrink-0 mt-0.5" />
@@ -403,7 +403,7 @@ const ClinicCard: React.FC<{
               </div>
             </div>
           </div>
-          
+
           <div>
             <Button 
               className="w-full mb-2" 
@@ -413,7 +413,7 @@ const ClinicCard: React.FC<{
             >
               {isSelected ? 'Selected' : 'Choose This Clinic'}
             </Button>
-            
+
             <Button 
               variant="outline" 
               className="w-full text-xs flex items-center justify-center"
@@ -437,19 +437,19 @@ const QuoteSummary: React.FC<{
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
-  
+
   // Promo code states
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [isValidPromo, setIsValidPromo] = useState(false);
   const [promoDiscount, setPromoDiscount] = useState(0);
   const [promoCodeLoading, setPromoCodeLoading] = useState(false);
-  
+
   // Extract user info from URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const userName = searchParams.get('name');
   const userEmail = searchParams.get('email');
   const userPhone = searchParams.get('phone');
-  
+
   // Extract special offer info if any
   const [specialOffer, setSpecialOffer] = useState<{
     id: string;
@@ -458,7 +458,7 @@ const QuoteSummary: React.FC<{
     discountValue: number;
     applicableTreatment: string;
   } | null>(null);
-  
+
   // Handle promo code application
   const handleApplyPromoCode = async (code: string) => {
     if (!selectedClinic) {
@@ -469,9 +469,9 @@ const QuoteSummary: React.FC<{
       });
       return;
     }
-    
+
     setPromoCodeLoading(true);
-    
+
     try {
       // Call the API to validate the promo code
       const response = await fetch('/api/promo-codes/validate', {
@@ -481,24 +481,24 @@ const QuoteSummary: React.FC<{
         },
         body: JSON.stringify({ code }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.valid) {
         // Calculate the discount amount based on the original price
         const originalPrice = selectedClinic.priceGBP;
         let discountAmount = 0;
-        
+
         if (data.discountType === 'percentage') {
           discountAmount = Math.round((originalPrice * data.discountValue) / 100);
         } else if (data.discountType === 'fixed_amount') {
           discountAmount = Math.min(originalPrice, data.discountValue);
         }
-        
+
         setPromoCode(code);
         setIsValidPromo(true);
         setPromoDiscount(discountAmount);
-        
+
         toast({
           title: "Promo Code Applied",
           description: `${data.message}. You saved £${discountAmount}.`,
@@ -507,7 +507,7 @@ const QuoteSummary: React.FC<{
         setPromoCode(code);
         setIsValidPromo(false);
         setPromoDiscount(0);
-        
+
         toast({
           title: "Invalid Promo Code",
           description: data.message || "This promo code is not valid.",
@@ -525,13 +525,13 @@ const QuoteSummary: React.FC<{
       setPromoCodeLoading(false);
     }
   };
-  
+
   // Handle removing promo code
   const handleRemovePromoCode = () => {
     setPromoCode(null);
     setIsValidPromo(false);
     setPromoDiscount(0);
-    
+
     toast({
       title: "Promo Code Removed",
       description: "The promo code has been removed from your quote.",
@@ -541,7 +541,7 @@ const QuoteSummary: React.FC<{
   // Placeholder for download and email functions
   const handleDownloadQuote = () => {
     setIsDownloading(true);
-    
+
     // Simulate PDF generation delay
     setTimeout(() => {
       setIsDownloading(false);
@@ -551,10 +551,10 @@ const QuoteSummary: React.FC<{
       });
     }, 1500);
   };
-  
+
   const handleEmailQuote = () => {
     setIsEmailing(true);
-    
+
     // Simulate email sending delay
     setTimeout(() => {
       setIsEmailing(false);
@@ -564,16 +564,16 @@ const QuoteSummary: React.FC<{
       });
     }, 1500);
   };
-  
+
   // Calculate final price with any promo code discount applied
   const originalPrice = selectedClinic ? selectedClinic.priceGBP : 0;
   const finalPrice = isValidPromo ? Math.max(0, originalPrice - promoDiscount) : originalPrice;
-  
+
   // Calculate UK price comparison (simplified for this example)
   const ukTreatmentPrice = selectedClinic ? selectedClinic.priceGBP * 2.5 : 0;
   const savingsAmount = selectedClinic ? ukTreatmentPrice - finalPrice : 0;
   const savingsPercentage = selectedClinic ? Math.round((savingsAmount / ukTreatmentPrice) * 100) : 0;
-  
+
   return (
     <Card className="bg-white shadow-md mb-8">
       <CardHeader className="bg-blue-50 pb-4">
@@ -590,7 +590,7 @@ const QuoteSummary: React.FC<{
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="pt-4">
         {/* Special Offer Section - Show if there's a special offer */}
         {specialOffer && (
@@ -616,7 +616,7 @@ const QuoteSummary: React.FC<{
             </div>
           </div>
         )}
-        
+
         {/* If promo code applied but not a special offer */}
         {!specialOffer && isValidPromo && promoDiscount > 0 && (
           <div className="mb-6 p-4 bg-green-50 border border-green-100 rounded-md relative overflow-hidden">
@@ -638,7 +638,7 @@ const QuoteSummary: React.FC<{
             </div>
           </div>
         )}
-        
+
         {/* User Information Section - only show if we have user info from form */}
         {userName && (
           <div className="mb-6 p-4 bg-blue-50 rounded-md">
@@ -663,24 +663,24 @@ const QuoteSummary: React.FC<{
             </div>
           </div>
         )}
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-gray-50 p-3 rounded-md">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Treatment</h3>
             <p className="text-base">{params.treatment || 'Not specified'}</p>
           </div>
-          
+
           <div className="bg-gray-50 p-3 rounded-md">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Travel Month</h3>
             <p className="text-base">{params.travelMonth || 'Not specified'}</p>
           </div>
-          
+
           <div className="bg-gray-50 p-3 rounded-md">
             <h3 className="text-sm font-semibold text-gray-700 mb-1">Budget Range</h3>
             <p className="text-base">{params.budget || 'Not specified'}</p>
           </div>
         </div>
-        
+
         {selectedClinic && (
           <>
             <div className="mb-6">
@@ -717,7 +717,7 @@ const QuoteSummary: React.FC<{
                 </div>
               </div>
             </div>
-            
+
             {/* Promo Code Section */}
             <div className="mb-6">
               <PromoCodeInput
@@ -729,7 +729,7 @@ const QuoteSummary: React.FC<{
                 disabled={promoCodeLoading}
               />
             </div>
-            
+
             <div className="border rounded-md p-4 mb-6 bg-emerald-50">
               <h3 className="text-lg font-semibold mb-3">UK Price Comparison</h3>
               <div className="flex flex-col md:flex-row justify-between items-center">
@@ -742,14 +742,14 @@ const QuoteSummary: React.FC<{
                     <p className="text-xl font-bold">£{ukTreatmentPrice}</p>
                   </div>
                 </div>
-                
+
                 <div className="bg-emerald-100 p-3 rounded-md text-center">
                   <p className="text-sm text-gray-700">Your savings</p>
                   <p className="text-xl font-bold text-emerald-700">£{savingsAmount} ({savingsPercentage}%)</p>
                 </div>
               </div>
             </div>
-            
+
             <div className="flex flex-col md:flex-row gap-3">
               <Button 
                 onClick={() => {}}
@@ -758,7 +758,7 @@ const QuoteSummary: React.FC<{
                 <CreditCard className="mr-2 h-5 w-5" />
                 Pay £200 Deposit & Book
               </Button>
-              
+
               <div className="flex gap-3">
                 <Button 
                   variant="outline" 
@@ -769,7 +769,7 @@ const QuoteSummary: React.FC<{
                   <Download className="mr-2 h-4 w-4" />
                   PDF Quote
                 </Button>
-                
+
                 <Button 
                   variant="outline" 
                   className="flex items-center"
@@ -783,7 +783,7 @@ const QuoteSummary: React.FC<{
             </div>
           </>
         )}
-        
+
         {!selectedClinic && (
           <div className="text-center py-6">
             <p className="text-gray-500 mb-3">Please select a clinic from the options below</p>
@@ -799,7 +799,7 @@ const EducationalSection: React.FC = () => {
   return (
     <div className="mb-10">
       <h2 className="text-2xl font-bold mb-4">Understanding Your Quote</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
@@ -809,16 +809,16 @@ const EducationalSection: React.FC = () => {
             <p className="text-sm text-gray-700">Clinics use different dental implant brands and materials which affect price and longevity. Premium clinics use globally recognized brands like Nobel Biocare and Straumann.</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Price Adjustments</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
-          </CardContent>
+                    </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">Guarantees & Aftercare</CardTitle>
@@ -828,7 +828,7 @@ const EducationalSection: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="mt-4 text-center">
         <Button variant="link" className="text-blue-600">
           Read Our Full Pricing Guide
@@ -843,7 +843,7 @@ const FAQSection: React.FC = () => {
   return (
     <div className="mb-10">
       <h2 className="text-2xl font-bold mb-4">Frequently Asked Questions</h2>
-      
+
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="item-1" className="border rounded-md mb-3 border-gray-200">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
@@ -855,7 +855,7 @@ const FAQSection: React.FC = () => {
             </p>
           </AccordionContent>
         </AccordionItem>
-        
+
         <AccordionItem value="item-2" className="border rounded-md mb-3 border-gray-200">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <span className="text-base font-medium">Is my £200 deposit refundable?</span>
@@ -866,7 +866,7 @@ const FAQSection: React.FC = () => {
             </p>
           </AccordionContent>
         </AccordionItem>
-        
+
         <AccordionItem value="item-3" className="border rounded-md mb-3 border-gray-200">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <span className="text-base font-medium">Will my quote change after my dental review?</span>
@@ -877,7 +877,7 @@ const FAQSection: React.FC = () => {
             </p>
           </AccordionContent>
         </AccordionItem>
-        
+
         <AccordionItem value="item-4" className="border rounded-md mb-3 border-gray-200">
           <AccordionTrigger className="px-4 py-3 hover:no-underline">
             <span className="text-base font-medium">How do I contact MyDentalFly for help?</span>
@@ -906,23 +906,23 @@ const CTASection: React.FC<{
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
   const userName = searchParams.get('name')?.split(' ')[0];
   const treatment = searchParams.get('treatment');
-  
+
   // Calculate total from treatment items if available
   const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const hasCustomPlan = treatmentItems.length > 0;
-  
+
   // Format the deposit amount with commas for thousands
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-  
+
   return (
     <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
       <div className="max-w-3xl mx-auto text-center">
         <h2 className="text-2xl md:text-3xl font-bold mb-4">
           {userName ? `${userName}, Ready to Transform Your Smile?` : 'Ready to Transform Your Smile?'}
         </h2>
-        
+
         <p className="text-blue-100 mb-4">
           {selectedClinic ? (
             <>
@@ -936,7 +936,7 @@ const CTASection: React.FC<{
             </>
           )}
         </p>
-        
+
         {hasCustomPlan && (
           <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
             <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
@@ -945,7 +945,7 @@ const CTASection: React.FC<{
             <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
           </div>
         )}
-        
+
         <div className="flex flex-col sm:flex-row justify-center gap-4 mt-4">
           <Button 
             className="bg-white text-blue-700 hover:bg-blue-50"
@@ -955,7 +955,7 @@ const CTASection: React.FC<{
             <CreditCard className="mr-2 h-5 w-5" />
             Pay £200 Deposit & Book Now
           </Button>
-          
+
           <Button 
             variant="outline"
             className="border-white text-white hover:bg-blue-700"
@@ -965,7 +965,7 @@ const CTASection: React.FC<{
             Contact a Dental Advisor
           </Button>
         </div>
-        
+
         <div className="mt-6 flex justify-center">
           <div className="inline-block text-left bg-blue-500/30 rounded-lg p-4 max-w-md">
             <h4 className="font-medium mb-2 flex items-center">
@@ -1025,13 +1025,14 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
-import { useTranslation } from 'react-i18next';
-import { useLocation, Link } from 'wouter';
-import { useToast } from '@/hooks/use-toast';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
-import ScrollToTop from '@/components/ScrollToTop';
-import { Badge } from '@/components/ui/badge';
+// This line was causing the error, so it's removed
+// import { useTranslation } from 'react-i18next';
+// import { useLocation, Link } from 'wouter';
+// import { useToast } from '@/hooks/use-toast';
+// import Navbar from '@/components/Navbar';
+// import Footer from '@/components/Footer';
+// import ScrollToTop from '@/components/ScrollToTop';
+// import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -1103,21 +1104,21 @@ const YourQuotePage: React.FC = () => {
   const { toast } = useToast();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  
+
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
     travelMonth: searchParams.get('travelMonth') || 'Flexible',
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
-  
+
   // Special offer data (if passed from homepage or stored in sessionStorage)
   const [specialOffer, setSpecialOffer] = useState<SpecialOfferParams | null>(() => {
     console.log("Initializing YourQuotePage with URL params:", window.location.search);
-    
+
     // First check URL parameters
     const offerId = searchParams.get('specialOffer');
     console.log("Special offer ID from URL:", offerId);
-    
+
     // If there's a special offer ID in the URL parameters, create a special offer object
     if (offerId) {
       console.log("Special offer parameters found in URL:");
@@ -1126,7 +1127,7 @@ const YourQuotePage: React.FC = () => {
       console.log("- Discount Value:", searchParams.get('offerDiscount'));
       console.log("- Discount Type:", searchParams.get('offerDiscountType'));
       console.log("- Treatment:", searchParams.get('treatment'));
-      
+
       const offerData = {
         id: offerId,
         title: searchParams.get('offerTitle') || 'Special Offer',
@@ -1135,15 +1136,15 @@ const YourQuotePage: React.FC = () => {
         discountType: (searchParams.get('offerDiscountType') || 'percentage') as 'percentage' | 'fixed_amount',
         applicableTreatment: searchParams.get('treatment') || 'Dental Implants'
       };
-      
+
       console.log("Created special offer data from URL params:", offerData);
-      
+
       // Always save to sessionStorage for persistence in future navigation
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(offerData));
-      
+
       return offerData;
     }
-    
+
     // If not in URL, check sessionStorage
     const storedOffer = sessionStorage.getItem('activeSpecialOffer');
     if (storedOffer) {
@@ -1162,14 +1163,14 @@ const YourQuotePage: React.FC = () => {
         console.error("Error parsing special offer from sessionStorage:", error);
       }
     }
-    
+
     // Also check for pendingSpecialOffer which may happen when redirected after login
     const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
     if (pendingOfferData) {
       try {
         const offerData = JSON.parse(pendingOfferData);
         console.log("Found pendingSpecialOffer in sessionStorage:", offerData);
-        
+
         // Convert to the right format
         const formattedOffer = {
           id: offerData.id,
@@ -1179,41 +1180,41 @@ const YourQuotePage: React.FC = () => {
           discountType: (offerData.discountType || offerData.discount_type || 'percentage') as 'percentage' | 'fixed_amount',
           applicableTreatment: offerData.applicableTreatment || offerData.applicable_treatments?.[0] || 'Dental Implants'
         };
-        
+
         // Save to activeSpecialOffer key for future use and clear pending
         sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOffer));
         sessionStorage.removeItem('pendingSpecialOffer');
-        
+
         return formattedOffer;
       } catch (error) {
         console.error("Error parsing pending special offer:", error);
       }
     }
-    
+
     console.log("No special offer found in URL or sessionStorage");
     return null;
   });
-  
+
   // Clinics state
   const [clinics, setClinics] = useState<ClinicInfo[]>(() => {
     // Start with our clinic data
     let clinicsList = [...CLINIC_DATA];
-    
+
     // If there's a special offer, sort clinics to prioritize the one with the offer
     if (specialOffer && specialOffer.clinicId) {
       clinicsList = clinicsList.sort((a, b) => {
         // Put the clinic with the special offer first
         if (a.id === specialOffer.clinicId) return -1;
         if (b.id === specialOffer.clinicId) return 1;
-        
+
         // Then sort by tier (premium first)
         if (a.tier === 'premium' && b.tier !== 'premium') return -1;
         if (a.tier !== 'premium' && b.tier === 'premium') return 1;
-        
+
         // Then by price (ascending)
         return a.priceGBP - b.priceGBP;
       });
-      
+
       // Add special offer indicator to the relevant clinic
       clinicsList = clinicsList.map(clinic => {
         if (clinic.id === specialOffer.clinicId) {
@@ -1230,7 +1231,7 @@ const YourQuotePage: React.FC = () => {
         }
         return clinic;
       });
-      
+
       console.log(`Prioritized clinic ${specialOffer.clinicId} for special offer: ${specialOffer.title}`);
     } else {
       // Regular sorting by tier and then price
@@ -1240,30 +1241,30 @@ const YourQuotePage: React.FC = () => {
         return a.priceGBP - b.priceGBP;
       });
     }
-    
+
     return clinicsList;
   });
-  
+
   const [selectedClinic, setSelectedClinic] = useState<ClinicInfo | null>(null);
-  
+
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
-  
+
   // Patient Info State
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
-  
+
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Quote steps tracking
   const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'select-clinic' | 'review'>('build-plan');
   const [isQuoteReady, setIsQuoteReady] = useState(false);
-  
+
   // Function to open edit quote modal
   const handleEditQuote = () => {
     setIsEditModalOpen(true);
   };
-  
+
   // Function to save updated quote parameters
   const handleSaveQuoteParams = (params: QuoteParams) => {
     setQuoteParams(params);
@@ -1272,11 +1273,11 @@ const YourQuotePage: React.FC = () => {
       description: "Your quote preferences have been updated.",
     });
   };
-  
+
   // Function to handle treatment plan changes
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
-    
+
     if (items.length > 0) {
       toast({
         title: "Treatment Plan Updated",
@@ -1284,42 +1285,42 @@ const YourQuotePage: React.FC = () => {
       });
     }
   };
-  
+
   // Function to handle patient info form submission
   const handlePatientInfoSubmit = (data: PatientInfo) => {
     setPatientInfo(data);
     setCurrentStep('select-clinic');
-    
+
     toast({
       title: "Information Saved",
       description: "Your personal information has been saved successfully. Now select a clinic for your treatment.",
     });
-    
+
     // Scroll to the top of the section
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
+
   // Function to handle clinic selection
   const handleClinicSelect = (clinic: ClinicInfo) => {
     setSelectedClinic(clinic);
-    
+
     toast({
       title: "Clinic Selected",
       description: `You have selected ${clinic.name} for your treatment.`,
     });
   };
-  
+
   // Function to confirm clinic selection and move to review
   const handleConfirmClinic = () => {
     if (selectedClinic) {
       setCurrentStep('review');
       setIsQuoteReady(true);
-      
+
       toast({
         title: "Clinic Confirmed",
         description: "Your clinic selection has been confirmed. Please review your quote details.",
       });
-      
+
       // Scroll to the top of the review section
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
@@ -1330,28 +1331,28 @@ const YourQuotePage: React.FC = () => {
       });
     }
   };
-  
+
   // Calculate totals
   const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatmentItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
-  
+
   // Format currency with commas
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-  
+
   useEffect(() => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
-    
+
     // If we have a special offer from URL params, store it in sessionStorage for persistence across page reloads
     if (specialOffer && searchParams.get('specialOffer')) {
       // Save to sessionStorage for persistence across authentication redirects
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(specialOffer));
       console.log("Saved special offer to sessionStorage:", specialOffer);
     }
-    
+
     // Show welcome toast - adjusting based on whether this came from special offer
     if (specialOffer) {
       toast({
@@ -1364,7 +1365,7 @@ const YourQuotePage: React.FC = () => {
         description: "Start by creating your custom treatment plan below.",
       });
     }
-    
+
     // Initialize treatments based on whether we have a special offer
     if (specialOffer) {
       // Create a treatment item from the special offer
@@ -1386,7 +1387,7 @@ const YourQuotePage: React.FC = () => {
           clinicId: specialOffer.clinicId
         }
       };
-      
+
       // Apply the discount based on type
       if (specialOffer.discountType === 'percentage') {
         const discountMultiplier = (100 - specialOffer.discountValue) / 100;
@@ -1400,7 +1401,7 @@ const YourQuotePage: React.FC = () => {
         specialOfferTreatment.subtotalGBP = specialOfferTreatment.priceGBP * specialOfferTreatment.quantity;
         specialOfferTreatment.subtotalUSD = specialOfferTreatment.priceUSD * specialOfferTreatment.quantity;
       }
-      
+
       setTreatmentItems([specialOfferTreatment]);
     }
     // Initialize with a default treatment if the user came from selecting a specific treatment
@@ -1416,10 +1417,10 @@ const YourQuotePage: React.FC = () => {
         subtotalUSD: 580,
         guarantee: '5-year'
       };
-      
+
       setTreatmentItems([initialTreatment]);
     }
-    
+
     // Initialize patient info from URL parameters if available
     if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) {
       setPatientInfo({
@@ -1435,13 +1436,13 @@ const YourQuotePage: React.FC = () => {
       });
     }
   }, []);
-  
+
   return (
     <>
       <Navbar />
       <ScrollToTop />
       <WhatsAppButton />
-      
+
       <main className="min-h-screen bg-gray-50 pt-24 pb-12">
         <div className="container mx-auto px-4">
           {/* Back button */}
@@ -1456,7 +1457,7 @@ const YourQuotePage: React.FC = () => {
               Back to Home
             </Button>
           </div>
-          
+
           {/* Page header */}
           {searchParams.get('name') ? (
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
@@ -1465,11 +1466,11 @@ const YourQuotePage: React.FC = () => {
           ) : (
             <h1 className="text-3xl md:text-4xl font-bold mb-6">Build Your Treatment Plan</h1>
           )}
-          
+
           {searchParams.get('name') && (
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
-          
+
           {/* Progress tracker */}
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm p-4">
@@ -1478,20 +1479,19 @@ const YourQuotePage: React.FC = () => {
                   <h2 className="text-xl font-bold">Your Quote Progress</h2>
                   <p className="text-gray-600 text-sm">Follow these steps to get your personalized quote</p>
                 </div>
-                
+
                 {isQuoteReady && (
                   <div className="mt-4 sm:mt-0">
                     <Button 
                       size="sm"
-                      className="flex items-center gap-2"
-                    >
+                      className="flex items-center gap-2">
                       <Download className="h-4 w-4" />
                       Download Quote PDF
                     </Button>
                   </div>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
@@ -1510,7 +1510,7 @@ const YourQuotePage: React.FC = () => {
                     <p className="text-xs text-gray-600">{treatmentItems.length} treatments added</p>
                   </div>
                 </div>
-                
+
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'patient-info' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -1531,7 +1531,7 @@ const YourQuotePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'select-clinic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -1552,7 +1552,7 @@ const YourQuotePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'review' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -1576,7 +1576,7 @@ const YourQuotePage: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Quote Parameters Summary (always visible) */}
           <div className="mb-8">
             <Card>
@@ -1609,7 +1609,7 @@ const YourQuotePage: React.FC = () => {
                     <p className="font-medium">{quoteParams.budget}</p>
                   </div>
                 </div>
-                
+
                 {treatmentItems.length > 0 && (
                   <div className="flex justify-end mt-4">
                     <div className="bg-blue-50 py-2 px-4 rounded-md">
@@ -1630,7 +1630,7 @@ const YourQuotePage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Edit Quote Modal */}
           <EditQuoteModal
             isOpen={isEditModalOpen}
@@ -1638,13 +1638,13 @@ const YourQuotePage: React.FC = () => {
             initialParams={quoteParams}
             onSave={handleSaveQuoteParams}
           />
-          
+
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
               {/* Treatment Guide - Educational Component */}
               <TreatmentGuide />
-              
+
               {/* Treatment Plan Builder */}
               <div className="mb-8">
                 <Card>
@@ -1662,7 +1662,7 @@ const YourQuotePage: React.FC = () => {
                       initialTreatments={treatmentItems}
                       onTreatmentsChange={handleTreatmentPlanChange}
                     />
-                    
+
                     {treatmentItems.length > 0 && (
                       <div className="mt-6 flex justify-end">
                         <Button 
@@ -1679,7 +1679,7 @@ const YourQuotePage: React.FC = () => {
               </div>
             </>
           )}
-          
+
           {/* Step 2: Patient Information (conditionally displayed) */}
           {currentStep === 'patient-info' && (
             <>
@@ -1692,7 +1692,7 @@ const YourQuotePage: React.FC = () => {
                 }}
                 onSubmit={handlePatientInfoSubmit}
               />
-              
+
               <div className="flex justify-between">
                 <Button 
                   variant="outline"
@@ -1705,7 +1705,7 @@ const YourQuotePage: React.FC = () => {
               </div>
             </>
           )}
-          
+
           {/* Step 3: Clinic Selection (conditionally displayed) */}
           {currentStep === 'select-clinic' && (
             <>
@@ -1736,7 +1736,7 @@ const YourQuotePage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Clinic sorting options */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                       <p className="text-sm text-gray-700">Showing {clinics.length} available clinics for your treatment</p>
@@ -1748,7 +1748,7 @@ const YourQuotePage: React.FC = () => {
                             // Here we'd implement sorting logic
                             const sortOption = e.target.value;
                             let sortedClinics = [...clinics];
-                            
+
                             if (sortOption === 'price-asc') {
                               sortedClinics.sort((a, b) => a.priceGBP - b.priceGBP);
                             } else if (sortOption === 'price-desc') {
@@ -1762,7 +1762,7 @@ const YourQuotePage: React.FC = () => {
                                 return 0;
                               });
                             }
-                            
+
                             setClinics(sortedClinics);
                           }}
                         >
@@ -1773,7 +1773,7 @@ const YourQuotePage: React.FC = () => {
                         </select>
                       </div>
                     </div>
-                    
+
                     {/* Clinic list */}
                     <div className="space-y-6">
                       {clinics.map((clinic) => (
@@ -1785,7 +1785,7 @@ const YourQuotePage: React.FC = () => {
                         />
                       ))}
                     </div>
-                    
+
                     {/* Navigation buttons */}
                     <div className="flex justify-between mt-8">
                       <Button
@@ -1796,7 +1796,7 @@ const YourQuotePage: React.FC = () => {
                         <ArrowLeft className="h-4 w-4" />
                         Back to Patient Info
                       </Button>
-                      
+
                       <Button
                         onClick={handleConfirmClinic}
                         className="flex items-center gap-2"
@@ -1811,7 +1811,7 @@ const YourQuotePage: React.FC = () => {
               </Card>
             </>
           )}
-          
+
           {/* Step 4: Review and Submit (conditionally displayed) */}
           {currentStep === 'review' && (
             <>
@@ -1863,7 +1863,7 @@ const YourQuotePage: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    
+
                     {/* Selected Clinic Information */}
                     {selectedClinic && (
                       <div>
@@ -1884,7 +1884,7 @@ const YourQuotePage: React.FC = () => {
                                 </Badge>
                               )}
                             </div>
-                            
+
                             <div className="flex items-center text-gray-700 mb-2">
                               <MapPin className="h-4 w-4 mr-1 text-gray-500" />
                               <span className="text-sm">{selectedClinic.location}</span>
@@ -1892,7 +1892,7 @@ const YourQuotePage: React.FC = () => {
                               <RatingStars rating={selectedClinic.rating} />
                               <span className="ml-1 text-xs text-gray-500">({selectedClinic.reviewCount})</span>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-3">
                               <div>
                                 <p className="text-sm font-medium text-gray-500">Price</p>
@@ -1903,7 +1903,7 @@ const YourQuotePage: React.FC = () => {
                                 <p>{selectedClinic.guarantee}</p>
                               </div>
                             </div>
-                            
+
                             {selectedClinic.hasSpecialOffer && selectedClinic.specialOfferDetails && (
                               <div className="mt-3 p-2 bg-blue-50 rounded border border-blue-100">
                                 <p className="text-sm font-medium text-blue-700">
@@ -1918,7 +1918,7 @@ const YourQuotePage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Patient Information */}
                     {patientInfo && (
                       <div>
@@ -1950,7 +1950,7 @@ const YourQuotePage: React.FC = () => {
                               <p className="capitalize">{patientInfo.preferredContactMethod}</p>
                             </div>
                           </div>
-                          
+
                           <div className="mt-4">
                             <p className="text-sm font-medium text-gray-500">Dental Records</p>
                             <div className="flex flex-wrap gap-3 mt-1">
@@ -1962,7 +1962,7 @@ const YourQuotePage: React.FC = () => {
                               </Badge>
                             </div>
                           </div>
-                          
+
                           {patientInfo.additionalNotes && (
                             <div className="mt-4">
                               <p className="text-sm font-medium text-gray-500">Additional Notes</p>
@@ -1972,7 +1972,7 @@ const YourQuotePage: React.FC = () => {
                         </div>
                       </div>
                     )}
-                    
+
                     {/* Next Steps */}
                     <div className="bg-blue-50 p-4 rounded-md">
                       <h3 className="font-semibold text-blue-800 mb-2">Next Steps</h3>
@@ -1997,7 +1997,7 @@ const YourQuotePage: React.FC = () => {
                         </li>
                       </ol>
                     </div>
-                    
+
                     {/* Action Buttons */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-between">
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -2009,7 +2009,7 @@ const YourQuotePage: React.FC = () => {
                           <Pencil className="h-4 w-4" />
                           Edit Treatment Plan
                         </Button>
-                        
+
                         <Button 
                           variant="outline"
                           onClick={() => setCurrentStep('patient-info')}
@@ -2019,7 +2019,7 @@ const YourQuotePage: React.FC = () => {
                           Edit Information
                         </Button>
                       </div>
-                      
+
                       <div className="flex flex-col sm:flex-row gap-4">
                         <Button 
                           variant="default"
@@ -2028,7 +2028,7 @@ const YourQuotePage: React.FC = () => {
                           <Mail className="h-4 w-4" />
                           Email Quote
                         </Button>
-                        
+
                         <Button 
                           variant="default"
                           className="flex items-center gap-2"
@@ -2041,18 +2041,18 @@ const YourQuotePage: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Call to Action */}
               <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
                 <div className="max-w-3xl mx-auto text-center">
                   <h2 className="text-2xl md:text-3xl font-bold mb-4">
                     Ready to Get Started?
                   </h2>
-                  
+
                   <p className="text-blue-100 mb-6">
                     Pay a £200 refundable deposit to secure your consultation and have our concierge team handle all your travel arrangements.
                   </p>
-                  
+
                   {totalGBP > 0 && (
                     <div className="bg-white/10 rounded-lg p-4 mb-6 inline-block">
                       <h3 className="text-lg font-semibold mb-1">Estimated Istanbul Price</h3>
@@ -2061,7 +2061,7 @@ const YourQuotePage: React.FC = () => {
                       <p className="text-xs text-blue-200">Hotel stays often included in treatment packages depending on the cost of your treatment.</p>
                     </div>
                   )}
-                  
+
                   <div className="flex flex-col sm:flex-row justify-center gap-4">
                     <Button 
                       className="bg-white text-blue-700 hover:bg-blue-50"
@@ -2070,7 +2070,7 @@ const YourQuotePage: React.FC = () => {
                       <CreditCard className="mr-2 h-5 w-5" />
                       Pay £200 Deposit & Book Now
                     </Button>
-                    
+
                     <Button 
                       variant="outline"
                       className="border-white text-white hover:bg-blue-700"
@@ -2084,12 +2084,12 @@ const YourQuotePage: React.FC = () => {
               </div>
             </>
           )}
-          
+
           {/* FAQ Section */}
           <FAQSection />
         </div>
       </main>
-      
+
       <Footer />
     </>
   );
