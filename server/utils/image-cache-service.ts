@@ -16,7 +16,7 @@ class ImageCacheServiceClass {
     this.cachePath = path.join(process.cwd(), 'public', 'cached-images');
     this.urlToPathMap = new Map();
     this.pathToUrlMap = new Map();
-    
+
     // Initialize the cache directory
     this.init();
   }
@@ -31,7 +31,7 @@ class ImageCacheServiceClass {
       } else {
         console.log(`✅ Image cache directory exists: ${this.cachePath}`);
       }
-      
+
       this.initialized = true;
     } catch (error) {
       console.error('Failed to initialize image cache:', error);
@@ -49,7 +49,7 @@ class ImageCacheServiceClass {
       const parsedUrl = new URL(url);
       const pathname = parsedUrl.pathname;
       const ext = path.extname(pathname).toLowerCase();
-      
+
       // If we have a valid image extension, use it
       if (ext && ['.jpg', '.jpeg', '.png', '.gif', '.webp'].includes(ext)) {
         return ext;
@@ -57,7 +57,7 @@ class ImageCacheServiceClass {
     } catch (error) {
       console.warn(`Error parsing URL for extension: ${url}`, error);
     }
-    
+
     // Default to .jpg if we can't determine the extension
     return '.jpg';
   }
@@ -67,12 +67,12 @@ class ImageCacheServiceClass {
     if (!this.initialized) {
       this.init();
     }
-    
+
     // If the URL is already a cached URL, return it
     if (url.includes('/cached-images/')) {
       return url;
     }
-    
+
     try {
       // Check if the URL is already cached
       if (this.urlToPathMap.has(url) && !force) {
@@ -82,32 +82,32 @@ class ImageCacheServiceClass {
           return relativePath;
         }
       }
-      
+
       // Generate a unique filename for the cached image
       const hash = this.hashUrl(url);
       const extension = this.getExtensionFromUrl(url);
       const filename = `${hash}${extension}`;
       const fullPath = path.join(this.cachePath, filename);
-      
+
       console.log(`Downloading image from ${url} to ${fullPath}`);
-      
+
       // Download the image
       const response = await axios({
         method: 'GET',
         url: url,
         responseType: 'arraybuffer'
       });
-      
+
       // Write the image to the cache
       fs.writeFileSync(fullPath, response.data);
-      
+
       // Add to the maps
       const relativePath = `/cached-images/${filename}`;
       this.urlToPathMap.set(url, fullPath);
       this.pathToUrlMap.set(fullPath, url);
-      
+
       console.log(`Successfully cached image: ${url} → ${relativePath}`);
-      
+
       return relativePath;
     } catch (error) {
       console.error(`Failed to cache image from ${url}:`, error);
@@ -139,7 +139,7 @@ class ImageCacheServiceClass {
     }
     return null;
   }
-  
+
   // Get a versioned URL that forces cache bypassing
   public getVersionedUrl(url: string): string | null {
     // First make sure the URL is cached
@@ -147,11 +147,11 @@ class ImageCacheServiceClass {
     if (!cachedUrl) {
       return null;
     }
-    
+
     // Add a timestamp to the URL to force cache busting
     const timestamp = Date.now();
     this.cacheTimestamps.set(url, timestamp);
-    
+
     // Add cache-busting parameters
     return `${cachedUrl}?t=${timestamp}&nocache=true`;
   }
