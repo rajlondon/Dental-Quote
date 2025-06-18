@@ -275,7 +275,7 @@ app.use(passport.session());
         }
 
         // Update user role in database
-        
+
         // Update user role in database
         await db.update(users)
           .set({ role: newRole })
@@ -376,16 +376,16 @@ app.use((req, res, next) => {
   } else {
     const { fileURLToPath } = await import('url');
     const { dirname, join } = await import('path');
-    
+
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-    
+
     // Serve static files from the dist/public directory
     app.use(express.static(join(__dirname, '../dist/public')));
-    
+
     // Handle API routes before the catch-all
     app.use('/api', (req, res, next) => next());
-    
+
     // Serve index.html for client-side routing
     app.get('*', (req, res) => {
       res.sendFile(join(__dirname, '../dist/public/index.html'));
