@@ -45,7 +45,6 @@ import {
   Pencil
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 
 // Types
@@ -817,6 +816,7 @@ const EducationalSection: React.FC = () => {
           <CardContent>
             <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
                     </CardContent>
+        ```
         </Card>
 
         <Card>
@@ -1072,7 +1072,6 @@ import {
   Pencil
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/components/TreatmentPlanBuilder';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import {
   Table,
@@ -1488,6 +1487,7 @@ const YourQuotePage: React.FC = () => {
                       <Download className="h-4 w-4" />
                       Download Quote PDF
                     </Button>
+                  This file fixes a duplicate import error in the YourQuotePage.tsx file.
                   </div>
                 )}
               </div>
