@@ -1944,3 +1944,197 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 };
 
 export default TreatmentPlanBuilder;
+import React, { useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Plus, Minus, X } from 'lucide-react';
+
+interface TreatmentItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  priceGBP: number;
+  subtotalGBP: number;
+}
+
+interface PlanTreatmentItem {
+  id: string;
+  category: string;
+  name: string;
+  quantity: number;
+  priceGBP: number;
+  priceUSD: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
+}
+
+interface TreatmentPlanBuilderProps {
+  items: TreatmentItem[];
+  onItemsChange: (items: TreatmentItem[]) => void;
+  onNext: () => void;
+  className?: string;
+}
+
+const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
+  items,
+  onItemsChange,
+  onNext,
+  className = ""
+}) => {
+  const [availableTreatments] = useState([
+    { id: 'implant', name: 'Dental Implant', category: 'Implants', priceGBP: 800 },
+    { id: 'crown', name: 'Dental Crown', category: 'Crowns', priceGBP: 300 },
+    { id: 'veneer', name: 'Porcelain Veneer', category: 'Veneers', priceGBP: 250 },
+    { id: 'extraction', name: 'Tooth Extraction', category: 'Oral Surgery', priceGBP: 100 },
+    { id: 'cleaning', name: 'Deep Cleaning', category: 'Hygiene', priceGBP: 150 },
+  ]);
+
+  const addTreatment = (treatment: typeof availableTreatments[0]) => {
+    const existingItem = items.find(item => item.id === treatment.id);
+    
+    if (existingItem) {
+      updateQuantity(treatment.id, existingItem.quantity + 1);
+    } else {
+      const newItem: TreatmentItem = {
+        id: treatment.id,
+        name: treatment.name,
+        category: treatment.category,
+        quantity: 1,
+        priceGBP: treatment.priceGBP,
+        subtotalGBP: treatment.priceGBP
+      };
+      onItemsChange([...items, newItem]);
+    }
+  };
+
+  const updateQuantity = (id: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeTreatment(id);
+      return;
+    }
+    
+    const updatedItems = items.map(item => {
+      if (item.id === id) {
+        return {
+          ...item,
+          quantity: newQuantity,
+          subtotalGBP: item.priceGBP * newQuantity
+        };
+      }
+      return item;
+    });
+    onItemsChange(updatedItems);
+  };
+
+  const removeTreatment = (id: string) => {
+    const updatedItems = items.filter(item => item.id !== id);
+    onItemsChange(updatedItems);
+  };
+
+  const totalCost = items.reduce((sum, item) => sum + item.subtotalGBP, 0);
+
+  return (
+    <div className={className}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Build Your Treatment Plan</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Available Treatments */}
+          <div>
+            <h3 className="font-medium mb-3">Available Treatments</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {availableTreatments.map((treatment) => (
+                <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <div className="font-medium">{treatment.name}</div>
+                    <div className="text-sm text-gray-600">£{treatment.priceGBP}</div>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => addTreatment(treatment)}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Selected Treatments */}
+          {items.length > 0 && (
+            <div>
+              <h3 className="font-medium mb-3">Your Treatment Plan</h3>
+              <div className="space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+                    <div className="flex-1">
+                      <div className="font-medium">{item.name}</div>
+                      <Badge variant="outline" className="mt-1">{item.category}</Badge>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                        >
+                          <Minus className="h-4 w-4" />
+                        </Button>
+                        <span className="w-8 text-center">{item.quantity}</span>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="text-right min-w-20">
+                        <div className="font-medium">£{item.subtotalGBP}</div>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => removeTreatment(item.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex justify-between items-center pt-4 border-t mt-4">
+                <span className="font-semibold">Total Cost:</span>
+                <span className="font-semibold text-lg">£{totalCost}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation */}
+          <div className="flex justify-end pt-4">
+            <Button
+              onClick={onNext}
+              disabled={items.length === 0}
+            >
+              Continue to Patient Info
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+export default TreatmentPlanBuilder;

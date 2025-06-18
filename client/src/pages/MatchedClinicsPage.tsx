@@ -1000,7 +1000,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       </div>
                       
                       <div className="mt-auto">
-                        <div className="flex flex-wrap justify-end">
+                        <div className="flex flex-wrap gap-3 justify-end">
+                          <Button 
+                            variant="outline"
+                            onClick={() => downloadPdf(clinic.id)}
+                          >
+                            Download Quote
+                          </Button>
                           <Button 
                             className="md:w-auto" 
                             onClick={() => {
@@ -1022,8 +1028,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 treatments: clinicTreatments,
                                 totalPrice: totalPrice,
                                 discountApplied: hasDiscount ? pendingPromoCode : null,
-                                selectedCity: selectedCity,
                                 treatmentPlan: treatmentPlan,
+                                patientInfo: patientInfo,
                                 timestamp: new Date().toISOString()
                               };
                               
@@ -1035,17 +1041,17 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 onSelectClinic(clinic.id);
                               }
                               
-                              // Redirect directly to patient portal
+                              // Redirect to patient portal
                               setLocation('/patient-portal');
                               
                               toast({
                                 title: "Clinic Selected",
-                                description: "Continue to your patient portal to complete your booking.",
+                                description: "Sign in to your patient portal to complete your booking.",
                               });
                             }}
                           >
                             <Heart className="mr-2 h-4 w-4" />
-                            Select This Clinic
+                            Select & Continue to Portal
                           </Button>
                         </div>
                       </div>
