@@ -318,22 +318,27 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
   
-  // Update parent component when treatments change
+  // Update parent component when treatments change - with debouncing to prevent spam
   useEffect(() => {
-    if (onTreatmentsChange) {
-      onTreatmentsChange(treatments);
-    }
+    const timeoutId = setTimeout(() => {
+      if (onTreatmentsChange) {
+        onTreatmentsChange(treatments);
+      }
+    }, 100); // Small debounce to prevent excessive calls
+    
+    return () => clearTimeout(timeoutId);
   }, [treatments, onTreatmentsChange]);
   
-  // Listen for promo code package events
+  // Listen for promo code package events - simplified to reduce state updates
   useEffect(() => {
     const handlePackagePromo = (e: CustomEvent) => {
       const { packageData } = e.detail;
       
       if (!packageData || !packageData.treatments) return;
       
-      // Clear existing treatments if we're applying a package
-      setTreatments([]);
+      // Only process if we don't already have treatments from this package
+      const hasPackageTreatments = treatments.some(t => t.fromPackage);
+      if (hasPackageTreatments) return;
       
       // Map package treatments to our treatment format
       const packageTreatments = packageData.treatments.map((treatment: any) => {
@@ -385,7 +390,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         };
       });
       
-      // Update state with new treatments
+      // Clear existing treatments and set new ones
       setTreatments(packageTreatments);
     };
     
@@ -396,7 +401,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     return () => {
       window.removeEventListener('packagePromoApplied', handlePackagePromo as EventListener);
     };
-  }, []);
+  }, [treatments]);
   
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
@@ -407,10 +412,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | null>(null);
   const [discountValue, setDiscountValue] = useState<number>(0);
   
-  // Load promo code from session storage on mount and auto-populate treatments
+  // Load promo code from session storage on mount - run only once
   useEffect(() => {
     const storedPromoCode = sessionStorage.getItem('pendingPromoCode');
-    if (storedPromoCode) {
+    if (storedPromoCode && !promoCode) {
       setPromoCode(storedPromoCode);
       
       // Try to get discount info from session storage
@@ -420,30 +425,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           const parsedPackage = JSON.parse(packageData);
           if (parsedPackage.originalPrice && parsedPackage.packagePrice) {
             setDiscountAmount(parsedPackage.originalPrice - parsedPackage.packagePrice);
-          }
-          
-          // Auto-populate treatments from package data
-          if (parsedPackage.treatments && Array.isArray(parsedPackage.treatments) && 
-              parsedPackage.treatments.length > 0 && treatments.length === 0) {
-            
-            // Map package treatments to our treatment format and add them
-            const packageTreatments = parsedPackage.treatments.map((treatment: any) => ({
-              id: `package-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-              category: treatment.category || 'Package',
-              name: treatment.name,
-              quantity: treatment.quantity || 1,
-              priceGBP: treatment.priceGBP || treatment.price || 0, 
-              priceUSD: treatment.priceUSD || Math.round((treatment.priceGBP || treatment.price || 0) * 1.25),
-              subtotalGBP: (treatment.priceGBP || treatment.price || 0) * (treatment.quantity || 1),
-              subtotalUSD: Math.round(((treatment.priceGBP || treatment.price || 0) * (treatment.quantity || 1)) * 1.25),
-              guarantee: treatment.guarantee || "2-5 years",
-              fromPackage: true // Mark as coming from a package
-            }));
-            
-            // Update treatments
-            if (packageTreatments.length > 0 && onTreatmentsChange) {
-              onTreatmentsChange(packageTreatments);
-            }
           }
           
           // If there's discount type and value information, save it
@@ -457,7 +438,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         }
       }
     }
-  }, [treatments.length, onTreatmentsChange]);
+  }, []); // Empty dependency array - run only once on mount
   
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
@@ -1885,19 +1866,45 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" 
                   size="lg" 
                   onClick={() => {
+                    if (treatments.length === 0) {
+                      alert('Please select at least one treatment to continue.');
+                      return;
+                    }
+                    
                     // Save treatments first
                     if (onTreatmentsChange) {
                       onTreatmentsChange(treatments);
                     }
                     
-                    // Find the patientInfo section and click it to advance to the next step
+                    // Try multiple methods to navigate to next step
                     const patientInfoStep = document.querySelector('[data-step="patient-info"]');
+                    const patientInfoButton = document.querySelector('button[data-step="patient-info"]');
+                    const nextStepButton = document.querySelector('.step-navigation button[aria-label*="patient"], .step-navigation button[aria-label*="info"]');
+                    
                     if (patientInfoStep) {
                       (patientInfoStep as HTMLElement).click();
-                      // Scroll to the top of the page
-                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    } else if (patientInfoButton) {
+                      (patientInfoButton as HTMLElement).click();
+                    } else if (nextStepButton) {
+                      (nextStepButton as HTMLElement).click();
+                    } else {
+                      // Fallback: try to find any element with patient-info in its class or data attributes
+                      const fallbackElement = document.querySelector('[class*="patient-info"], [data-testid*="patient-info"], .patient-info-section');
+                      if (fallbackElement) {
+                        (fallbackElement as HTMLElement).click();
+                      } else {
+                        // Last resort: scroll to top and show a message
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => {
+                          alert('Please click on the "Patient Information" step to continue with your quote.');
+                        }, 500);
+                      }
                     }
+                    
+                    // Scroll to the top of the page
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
+                  disabled={treatments.length === 0}
                 >
                   Get My Personalised Quote <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
