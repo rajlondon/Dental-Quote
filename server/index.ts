@@ -275,7 +275,7 @@ app.use(passport.session());
         }
 
         // Update user role in database
-
+        
         // Update user role in database
         await db.update(users)
           .set({ role: newRole })
@@ -314,9 +314,9 @@ app.use(
       process.env.NODE_ENV === "production"
         ? ["https://mydentalfly.com", "https://www.mydentalfly.com"]
         : [
-            "http://localhost:3001",
-            "http://0.0.0.0:3001",
-            "http://127.0.0.1:3001",
+            "http://localhost:5000",
+            "http://0.0.0.0:5000",
+            "http://127.0.0.1:5000",
             "https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev",
           ],
     credentials: true,
@@ -376,16 +376,16 @@ app.use((req, res, next) => {
   } else {
     const { fileURLToPath } = await import('url');
     const { dirname, join } = await import('path');
-
+    
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = dirname(__filename);
-
+    
     // Serve static files from the dist/public directory
     app.use(express.static(join(__dirname, '../dist/public')));
-
+    
     // Handle API routes before the catch-all
     app.use('/api', (req, res, next) => next());
-
+    
     // Serve index.html for client-side routing
     app.get('*', (req, res) => {
       res.sendFile(join(__dirname, '../dist/public/index.html'));
@@ -395,15 +395,18 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 3001
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 3001;
-  server.listen(port, "0.0.0.0", () => {
-    log(`🚀 Server running on port ${port}`);
-    log(`🌐 Server accessible at http://0.0.0.0:${port}`);
-    log(`📱 For Replit: Use the webview or "Open in new tab" button`);
+  const port = process.env.PORT || 5000;
+  server.listen({
+    port,
+    host: "0.0.0.0",
+  }, () => {
+    log(`serving on port ${port}`);
+    log(`Server is accessible at http://0.0.0.0:${port}`);
+    log(`For Replit environments, use the "Open in new tab" button`);
     if (googleAuthConfigured) {
-      log("✅ Google OAuth is ready - /auth/google endpoint available");
+      log("Google OAuth is ready - /auth/google endpoint available");
     } else {
-      log("⚠️ Google OAuth NOT configured - add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET");
+      log("Google OAuth NOT configured - add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET");
     }
   });
 })();

@@ -95,9 +95,8 @@ export async function initializeSpecialOfferImageCache(): Promise<void> {
             } else {
               console.warn(`Local image file not found: ${imagePath}`);
               // If file doesn't exist locally, we'll try a remote request as fallback
-              // Skip localhost requests during initialization - the server isn't ready yet
-              console.log('⏭️ Skipping localhost image request during startup:', imageUrl);
-              return;
+              const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+              imageUrl = `${baseUrl}${imageUrl}`;
             }
           }
           

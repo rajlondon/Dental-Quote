@@ -361,7 +361,7 @@ router.post('/special-offer-image', catchAsync(async (req: Request, res: Respons
                 }
               }));
               console.log('Sent additional WebSocket notification with versioned URL');
-            }, 10000);
+            }, 5000);
           }
           
         } catch (innerCacheError) {

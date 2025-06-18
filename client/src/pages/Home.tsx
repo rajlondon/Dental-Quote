@@ -12,8 +12,6 @@ import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
 
-import SpecialOffers from "@/components/SpecialOffers";
-
 // Clinic Card Component
 const ClinicCard = ({ 
   id,
@@ -295,26 +293,8 @@ const HomePage: React.FC = () => {
       <Navbar />
       <HeroSimple />
       
-      {/* Homepage Search Section */}
-      <section className="py-8 bg-blue-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Find Your Perfect Treatment
-            </h2>
-            <p className="text-gray-600">
-              Start by selecting your departure city and preferred travel date
-            </p>
-          </div>
-          <HomepageSearch />
-        </div>
-      </section>
-      
       {/* Premium Offers Carousel */}
       <EnhancedOffersCarousel className="px-4" />
-      
-      {/* Special Offers Section */}
-      <SpecialOffers />
       
       {/* Popular Clinics Section */}
       <section className="py-16">

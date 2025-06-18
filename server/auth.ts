@@ -166,7 +166,7 @@ export async function setupAuth(app: Express) {
         const timeoutPromise = new Promise<null>((_, reject) => {
           dbQueryTimeout = setTimeout(() => {
             reject(new Error("Database query timed out during session restore"));
-          }, 10000); // 10 second timeout
+          }, 5000); // 5 second timeout
         });
         
         // Race the database query against the timeout

@@ -293,8 +293,6 @@ export default function PriceCalculator() {
     },
   });
 
-  
-
   // Load treatments from CSV when component mounts
   useEffect(() => {
     const loadTreatments = async () => {
@@ -315,8 +313,6 @@ export default function PriceCalculator() {
 
     loadTreatments();
   }, [toast]);
-
-  
 
   // Function to add a new treatment field
   const addTreatment = () => {
@@ -1108,10 +1104,8 @@ export default function PriceCalculator() {
                             </div>
                           </div>
 
-                          
-
                           {/* Interactive Dental Chart */}
-                          <div id="treatment-selection" className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <h3 className="text-lg font-semibold text-blue-800 mb-2">
                               Interactive Dental Chart
                             </h3>
