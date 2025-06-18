@@ -314,9 +314,9 @@ app.use(
       process.env.NODE_ENV === "production"
         ? ["https://mydentalfly.com", "https://www.mydentalfly.com"]
         : [
-            "http://localhost:5000",
-            "http://0.0.0.0:5000",
-            "http://127.0.0.1:5000",
+            "http://localhost:3001",
+            "http://0.0.0.0:3001",
+            "http://127.0.0.1:3001",
             "https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev",
           ],
     credentials: true,
