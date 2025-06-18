@@ -395,18 +395,15 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 3001
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = process.env.PORT || 3001;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-  }, () => {
-    log(`serving on port ${port}`);
-    log(`Server is accessible at http://0.0.0.0:${port}`);
-    log(`For Replit environments, use the "Open in new tab" button`);
+  const port = 3001;
+  server.listen(port, "0.0.0.0", () => {
+    log(`🚀 Server running on port ${port}`);
+    log(`🌐 Server accessible at http://0.0.0.0:${port}`);
+    log(`📱 For Replit: Use the webview or "Open in new tab" button`);
     if (googleAuthConfigured) {
-      log("Google OAuth is ready - /auth/google endpoint available");
+      log("✅ Google OAuth is ready - /auth/google endpoint available");
     } else {
-      log("Google OAuth NOT configured - add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET");
+      log("⚠️ Google OAuth NOT configured - add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET");
     }
   });
 })();
