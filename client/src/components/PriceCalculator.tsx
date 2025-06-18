@@ -4,7 +4,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
-import { useUrlParams } from "@/hooks/useUrlParams";
 import axios from "axios";
 import {
   Form,
@@ -294,29 +293,7 @@ export default function PriceCalculator() {
     },
   });
 
-  // Add URL parameter handling
-  const { hasUrlParams, getPromoCode, getDepartureCity, getTravelMonth } = useUrlParams({
-    form,
-    onParamsLoaded: (params) => {
-      // Handle special cases when URL params are loaded
-      const promoCode = params.get('promo');
-      const departureCity = params.get('departureCity');
-      
-      if (promoCode) {
-        toast({
-          title: "Promo Code Applied",
-          description: `Promo code "${promoCode}" has been applied to your quote!`,
-        });
-      }
-      
-      if (departureCity) {
-        toast({
-          title: "Travel Details Set",
-          description: `Showing prices for travel from ${departureCity}`,
-        });
-      }
-    }
-  });
+  
 
   // Load treatments from CSV when component mounts
   useEffect(() => {
@@ -339,23 +316,7 @@ export default function PriceCalculator() {
     loadTreatments();
   }, [toast]);
 
-  // Add effect to show welcome message for URL visitors
-  useEffect(() => {
-    if (hasUrlParams()) {
-      // Add a subtle indicator that parameters were pre-filled
-      const indicator = document.createElement('div');
-      indicator.className = 'fixed top-4 right-4 bg-green-100 border border-green-400 text-green-700 px-4 py-2 rounded-lg shadow-lg z-50';
-      indicator.innerHTML = '✅ Travel details pre-filled from search';
-      document.body.appendChild(indicator);
-      
-      // Remove after 5 seconds
-      setTimeout(() => {
-        if (document.body.contains(indicator)) {
-          document.body.removeChild(indicator);
-        }
-      }, 5000);
-    }
-  }, [hasUrlParams]);
+  
 
   // Function to add a new treatment field
   const addTreatment = () => {
@@ -1147,17 +1108,7 @@ export default function PriceCalculator() {
                             </div>
                           </div>
 
-                          {/* Show URL parameter status */}
-                          {hasUrlParams() && (
-                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                              <p className="text-blue-800 text-sm">
-                                🚀 <strong>Quick Start:</strong> We've pre-filled your travel details. 
-                                {getDepartureCity() && ` Flying from ${getDepartureCity()}`}
-                                {getTravelMonth() && ` in ${getTravelMonth()}`}
-                                {getPromoCode() && ` with promo code ${getPromoCode()}`}
-                              </p>
-                            </div>
-                          )}
+                          
 
                           {/* Interactive Dental Chart */}
                           <div id="treatment-selection" className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
