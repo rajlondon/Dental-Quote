@@ -536,7 +536,7 @@ const YourQuotePage: React.FC = () => {
           </div>
 
           {/* Clinic Selection Section */}
-          <Card className="mb-8">
+          <Card className="mb-8" data-clinic-selection>
             <CardHeader>
               <CardTitle className="flex items-center text-xl font-bold">
                 <MapPin className="mr-2 h-5 w-5 text-blue-500" />

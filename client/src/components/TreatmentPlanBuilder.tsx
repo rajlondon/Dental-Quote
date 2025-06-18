@@ -1564,43 +1564,38 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   className="w-full bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white" 
                   size="lg" 
                   onClick={() => {
-                    if (treatments.length === 0) {
-                      alert('Please select at least one treatment to continue.');
-                      return;
-                    }
+                    // Save the current state to localStorage for persistence
+                    if (treatments.length > 0) {
+                      localStorage.setItem('treatmentPlanData', JSON.stringify({
+                        treatments,
+                        totalGBP,
+                        totalUSD,
+                        timestamp: new Date().toISOString()
+                      }));
 
-                    // Save treatments first
-                    if (onTreatmentsChange) {
-                      onTreatmentsChange(treatments);
-                    }
+                      toast({
+                        title: "Treatment Plan Saved",
+                        description: `Your ${treatments.length} treatment${treatments.length > 1 ? 's' : ''} have been saved. You can now select a clinic below.`,
+                      });
 
-                    // Try multiple methods to navigate to next step
-                    const patientInfoStep = document.querySelector('[data-step="patient-info"]');
-                    const patientInfoButton = document.querySelector('button[data-step="patient-info"]');
-                    const nextStepButton = document.querySelector('.step-navigation button[aria-label*="patient"], .step-navigation button[aria-label*="info"]');
-
-                    if (patientInfoStep) {
-                      (patientInfoStep as HTMLElement).click();
-                    } else if (patientInfoButton) {
-                      (patientInfoButton as HTMLElement).click();
-                    } else if (nextStepButton) {
-                      (nextStepButton as HTMLElement).click();
-                    } else {
-                      // Fallback: try to find any element with patient-info in its class or data attributes
-                      const fallbackElement = document.querySelector('[class*="patient-info"], [data-testid*="patient-info"], .patient-info-section');
-                      if (fallbackElement) {
-                        (fallbackElement as HTMLElement).click();
+                      // Scroll to the clinic selection section
+                      const clinicSection = document.querySelector('[data-clinic-selection]');
+                      if (clinicSection) {
+                        clinicSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
                       } else {
-                        // Last resort: scroll to top and show a message
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        setTimeout(() => {
-                          alert('Please click on the "Patient Information" step to continue with your quote.');
-                        }, 500);
+                        // Fallback: scroll to bottom of page where clinics should be
+                        window.scrollTo({ 
+                          top: document.body.scrollHeight - window.innerHeight, 
+                          behavior: 'smooth' 
+                        });
                       }
+                    } else {
+                      toast({
+                        title: "No Treatments Selected",
+                        description: "Please add at least one treatment to your plan before continuing.",
+                        variant: "destructive"
+                      });
                     }
-
-                    // Scroll to the top of the page
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
                   disabled={treatments.length === 0}
                 >
