@@ -1072,7 +1072,6 @@ import {
   Pencil
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
-import EditQuoteModal from '@/components/EditQuoteModal';
 import {
   Table,
   TableBody,
