@@ -286,6 +286,21 @@ const YourQuotePage: React.FC = () => {
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
     
+    // Check if user came from search bar with autoStart parameter
+    const autoStart = searchParams.get('autoStart');
+    if (autoStart === 'true') {
+      // Skip directly to treatment selection with pre-filled treatment
+      setCurrentStep('build-plan');
+      
+      // Auto-scroll to treatment builder section
+      setTimeout(() => {
+        const treatmentSection = document.querySelector('[data-section="treatment-builder"]');
+        if (treatmentSection) {
+          treatmentSection.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    }
+    
     // Initialize with a default treatment if the user came from selecting a specific treatment
     if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
       const initialTreatment: PlanTreatmentItem = {
@@ -563,7 +578,7 @@ const YourQuotePage: React.FC = () => {
           
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
-            <>
+            <div data-section="treatment-builder">
               {/* Treatment Guide - Educational Component */}
               <TreatmentGuide />
               
@@ -768,7 +783,7 @@ const YourQuotePage: React.FC = () => {
                   Back to Quote
                 </Button>
               </div>
-            </>
+            </div>
           )}
           
           {/* Step 3: Matched Clinics (conditionally displayed) */}
