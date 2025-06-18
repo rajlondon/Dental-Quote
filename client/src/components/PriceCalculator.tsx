@@ -370,15 +370,10 @@ const formSchema = z.object({
     ])
     .default("no_preference"),
   budgetRange: z.string().optional(),
+  promoCode: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-interface FormValues {
-  treatments: Array<{ treatment: string; quantity: number }>;
-  londonConsult: "yes" | "no";
-  promoCode?: string; // Add this line
-}
 
 export default function PriceCalculator() {
   const { t } = useTranslation();
