@@ -34,120 +34,16 @@ import JourneyPdf from "./JourneyPdf";
 import JSPDFGenerator from "./JSPDFGenerator";
 import { DentalChart } from "@/components/DentalChart";
 
-// Key changes to make to your PriceCalculator.tsx
-
-// 1. UPDATE IMPORTS (Replace lines 38-44)
 import {
   TreatmentPrice,
   getAllTreatments,
   getTreatmentByName,
   initializePrices,
+  calculateTotal,
+  getQuoteData
 } from "@/services/pricingService";
 import { unifiedPricingEngine } from "@/services/unifiedPricingEngine";
 import { quoteStateManager } from "@/services/enhancedQuoteState";
-
-// 2. UPDATE STATE TYPE (Around line 159)
-const [quote, setQuote] = useState<any | null>(null);
-
-// 3. MAKE FUNCTIONS ASYNC (Update function signatures)
-const onSubmit = async (data: FormValues) => {
-  try {
-    setIsLoading(true);
-
-    // Calculate the total prices using unified pricing engine
-    const quoteResult = await unifiedPricingEngine.calculateQuote(
-      data.treatments.map((t) => ({
-        treatment: t.treatment,
-        quantity: t.quantity,
-      })),
-      undefined, // No promo code for now
-      {
-        flightInfo: { city: departureCity, month: travelMonth },
-        londonConsult: data.londonConsult === "yes",
-      },
-    );
-
-    // Convert to expected format for backwards compatibility
-    const compatibleResult = {
-      items: quoteResult.treatments.map((t, index) => ({
-        treatment: t.name,
-        priceGBP: t.unitPrice,
-        priceUSD: Math.round(t.unitPrice * 1.29), // Approximate conversion
-        quantity: t.quantity,
-        subtotalGBP: t.unitPrice * t.quantity,
-        subtotalUSD: Math.round(t.unitPrice * t.quantity * 1.29),
-        guarantee: "N/A", // Will be filled from treatment data
-      })),
-      totalGBP: quoteResult.total,
-      totalUSD: Math.round(quoteResult.total * 1.29),
-      hasFlightCost: false, // Will be updated if flight info provided
-      flightCostGBP: 0,
-      flightCostUSD: 0,
-      hasLondonConsult: data.londonConsult === "yes",
-      londonConsultCostGBP: data.londonConsult === "yes" ? 150 : 0,
-      londonConsultCostUSD: data.londonConsult === "yes" ? 195 : 0,
-    };
-
-    setQuote(compatibleResult);
-
-    // Show warnings if any
-    if (quoteResult.warnings.length > 0) {
-      console.warn("Quote calculation warnings:", quoteResult.warnings);
-    }
-  } catch (error) {
-    console.error("Error calculating quote:", error);
-    // Handle error appropriately
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// 4. UPDATE openHtmlQuote FUNCTION
-const openHtmlQuote = async () => {
-  try {
-    const quoteData = getQuoteData();
-    if (!quoteData) {
-      console.error("No quote data available");
-      return;
-    }
-
-    // Calculate total using unified pricing engine
-    const calculatedQuote = await unifiedPricingEngine.calculateQuote(
-      quoteData.treatments.map((t) => ({
-        treatment: t.treatment,
-        quantity: t.quantity,
-      })),
-      undefined, // No promo code for now
-      {
-        flightInfo: { city: departureCity, month: travelMonth },
-        londonConsult: quoteData.londonConsult === "yes",
-      },
-    );
-
-    // Convert to expected format
-    const compatibleResult = {
-      items: calculatedQuote.treatments.map((t, index) => ({
-        treatment: t.name,
-        priceGBP: t.unitPrice,
-        priceUSD: Math.round(t.unitPrice * 1.29),
-        quantity: t.quantity,
-        subtotalGBP: t.unitPrice * t.quantity,
-        subtotalUSD: Math.round(t.unitPrice * t.quantity * 1.29),
-        guarantee: "N/A",
-      })),
-      totalGBP: calculatedQuote.total,
-      totalUSD: Math.round(calculatedQuote.total * 1.29),
-      hasFlightCost: false,
-      flightCostGBP: 0,
-      flightCostUSD: 0,
-    };
-
-    // Continue with existing HTML quote generation logic...
-    // (rest of your openHtmlQuote function remains the same)
-  } catch (error) {
-    console.error("Error generating HTML quote:", error);
-  }
-};
 import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
 import PythonPdfGenerator from "./PythonPdfGenerator";
