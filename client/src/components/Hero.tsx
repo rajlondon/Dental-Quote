@@ -61,7 +61,7 @@ const Hero: React.FC = () => {
     { value: "general", label: "General Dentistry" }
   ];
   
-  // Handle search action - go directly to treatment selection
+  // Handle search action
   const handleSearch = () => {
     const selectedTreatmentObj = treatmentOptions.find(t => t.label === selectedTreatment);
     const treatmentValue = selectedTreatmentObj ? selectedTreatmentObj.value : "dental-implants";
@@ -72,10 +72,10 @@ const Hero: React.FC = () => {
     const outDateFormatted = format(selectedDate, "yyyy-MM-dd");
     const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
     
-    // Go directly to your-quote page and auto-start at treatment selection
-    setLocation(`/your-quote?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}&autoStart=true`);
+    // Use the your-quote page (which exists in our routes) with search parameters
+    setLocation(`/your-quote?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
     
-    console.log(`Navigating directly to treatment selection with parameters:
+    console.log(`Navigating to quote builder with parameters:
       City: ${selectedCity}
       Treatment: ${treatmentValue}
       Origin: ${originValue}

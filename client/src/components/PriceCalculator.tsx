@@ -46,12 +46,121 @@ import {
 import { unifiedPricingEngine } from "@/services/unifiedPricingEngine";
 import { quoteStateManager } from "@/services/enhancedQuoteState";
 
+// 2. UPDATE STATE TYPE (Around line 159)
+const [quote, setQuote] = useState<any | null>(null);
 
+// 3. MAKE FUNCTIONS ASYNC (Update function signatures)
+const onSubmit = async (data: FormValues) => {
+  try {
+    setIsLoading(true);
+
+    // Calculate the total prices using unified pricing engine
+    const quoteResult = await unifiedPricingEngine.calculateQuote(
+      data.treatments.map((t) => ({
+        treatment: t.treatment,
+        quantity: t.quantity,
+      })),
+      undefined, // No promo code for now
+      {
+        flightInfo: { city: departureCity, month: travelMonth },
+        londonConsult: data.londonConsult === "yes",
+      },
+    );
+
+    // Convert to expected format for backwards compatibility
+    const compatibleResult = {
+      items: quoteResult.treatments.map((t, index) => ({
+        treatment: t.name,
+        priceGBP: t.unitPrice,
+        priceUSD: Math.round(t.unitPrice * 1.29), // Approximate conversion
+        quantity: t.quantity,
+        subtotalGBP: t.unitPrice * t.quantity,
+        subtotalUSD: Math.round(t.unitPrice * t.quantity * 1.29),
+        guarantee: "N/A", // Will be filled from treatment data
+      })),
+      totalGBP: quoteResult.total,
+      totalUSD: Math.round(quoteResult.total * 1.29),
+      hasFlightCost: false, // Will be updated if flight info provided
+      flightCostGBP: 0,
+      flightCostUSD: 0,
+      hasLondonConsult: data.londonConsult === "yes",
+      londonConsultCostGBP: data.londonConsult === "yes" ? 150 : 0,
+      londonConsultCostUSD: data.londonConsult === "yes" ? 195 : 0,
+    };
+
+    setQuote(compatibleResult);
+
+    // Show warnings if any
+    if (quoteResult.warnings.length > 0) {
+      console.warn("Quote calculation warnings:", quoteResult.warnings);
+    }
+  } catch (error) {
+    console.error("Error calculating quote:", error);
+    // Handle error appropriately
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// 4. UPDATE openHtmlQuote FUNCTION
+const openHtmlQuote = async () => {
+  try {
+    const quoteData = getQuoteData();
+    if (!quoteData) {
+      console.error("No quote data available");
+      return;
+    }
+
+    // Calculate total using unified pricing engine
+    const calculatedQuote = await unifiedPricingEngine.calculateQuote(
+      quoteData.treatments.map((t) => ({
+        treatment: t.treatment,
+        quantity: t.quantity,
+      })),
+      undefined, // No promo code for now
+      {
+        flightInfo: { city: departureCity, month: travelMonth },
+        londonConsult: quoteData.londonConsult === "yes",
+      },
+    );
+
+    // Convert to expected format
+    const compatibleResult = {
+      items: calculatedQuote.treatments.map((t, index) => ({
+        treatment: t.name,
+        priceGBP: t.unitPrice,
+        priceUSD: Math.round(t.unitPrice * 1.29),
+        quantity: t.quantity,
+        subtotalGBP: t.unitPrice * t.quantity,
+        subtotalUSD: Math.round(t.unitPrice * t.quantity * 1.29),
+        guarantee: "N/A",
+      })),
+      totalGBP: calculatedQuote.total,
+      totalUSD: Math.round(calculatedQuote.total * 1.29),
+      hasFlightCost: false,
+      flightCostGBP: 0,
+      flightCostUSD: 0,
+    };
+
+    // Continue with existing HTML quote generation logic...
+    // (rest of your openHtmlQuote function remains the same)
+  } catch (error) {
+    console.error("Error generating HTML quote:", error);
+  }
+};
+import { unifiedPricingEngine } from "@/services/unifiedPricingEngine";
+import { quoteStateManager } from "@/services/enhancedQuoteState";
 import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
 import PythonPdfGenerator from "./PythonPdfGenerator";
 import jsPDF from "jspdf";
 import { sendCustomerQuoteEmail } from "@/utils/emailjs";
+import {
+  TreatmentPrice,
+  getAllTreatments,
+  getTreatmentByName,
+  initializePrices,
+} from "@/services/pricingService";
 import {
   Tooltip,
   TooltipContent,
@@ -261,10 +370,15 @@ const formSchema = z.object({
     ])
     .default("no_preference"),
   budgetRange: z.string().optional(),
-  promoCode: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+interface FormValues {
+  treatments: Array<{ treatment: string; quantity: number }>;
+  londonConsult: "yes" | "no";
+  promoCode?: string; // Add this line
+}
 
 export default function PriceCalculator() {
   const { t } = useTranslation();
@@ -274,7 +388,6 @@ export default function PriceCalculator() {
   const [loading, setLoading] = useState(true);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [quote, setQuote] = useState<any | null>(null);
-  const [quoteResult, setQuoteResult] = useState<any | null>(null);
   const quoteResultRef = useRef<HTMLDivElement>(null); // Reference to quote result section
 
   // Initialize the form with default values
@@ -407,7 +520,6 @@ export default function PriceCalculator() {
 
     // Store the quote data with user information in state
     setQuote(compatibleResult);
-    setQuoteResult(quoteResult);
 
     // Add dental chart data to the quote result if available
     if (dentalChartData) {
@@ -2321,30 +2433,6 @@ export default function PriceCalculator() {
                               </FormItem>
                             )}
                           />
-
-                          {/* Promo Code Field */}
-                          <FormField
-                            control={form.control}
-                            name="promoCode"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel className="text-primary font-semibold">
-                                  Promo Code (Optional)
-                                </FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder="Enter promo code"
-                                    className="bg-white"
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormDescription className="text-xs text-neutral-500">
-                                  Enter a valid promo code to receive additional discounts
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
                         </div>
 
                         {/* X-ray upload section */}
@@ -2506,33 +2594,6 @@ export default function PriceCalculator() {
                 <div>
                   {quote ? (
                     <div ref={quoteResultRef} className="space-y-4">
-                      {/* Promo Code Results Display */}
-                      {quoteResult?.promoCode && (
-                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-center">
-                            <span className="text-green-800 font-medium">
-                              ✅ Promo code "{quoteResult.promoCode}" applied!
-                            </span>
-                          </div>
-                          <p className="text-green-700 text-sm mt-1">
-                            You saved £{quoteResult.promoDiscount.toFixed(2)}
-                          </p>
-                        </div>
-                      )}
-
-                      {quoteResult?.warnings?.length > 0 && (
-                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                          <div className="flex items-center">
-                            <span className="text-yellow-800 font-medium">⚠️ Notices:</span>
-                          </div>
-                          <ul className="text-yellow-700 text-sm mt-1">
-                            {quoteResult.warnings.map((warning, index) => (
-                              <li key={index}>• {warning}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
                       <div className="border rounded-lg overflow-hidden bg-white">
                         <table className="w-full">
                           <thead className="bg-primary/10">

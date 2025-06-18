@@ -3,163 +3,83 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { 
-  Info, 
-  CheckCircle, 
-  PlusCircle,
-  MapPin, 
-  Clock, 
-  Shield, 
-  Award, 
-  Users,
-  Phone,
-  Mail,
-  Calendar,
-  ArrowRight,
-  Star
-} from 'lucide-react';
+import { Info, CheckCircle, PlusCircle } from 'lucide-react';
 import { ClinicTreatmentVariant } from '@shared/treatmentMapper';
 import { TreatmentItem } from './TreatmentPlanBuilder';
 
 interface ClinicTreatmentDisplayProps {
-  treatments: TreatmentItem[];
-  onClinicSelect: (clinic: any) => void;
-  selectedClinic: any;
+  standardName: string;
+  clinicVariant: ClinicTreatmentVariant;
+  quantity: number;
 }
 
 /**
- * Component to display clinic selection grid
- * This is used in the quote results page to show clinic options
+ * Component to display clinic-specific treatment variant
+ * This is used in the quote results page to show how each clinic
+ * names and packages the treatments selected by the user
  */
-const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
-  treatments,
-  onClinicSelect,
-  selectedClinic
+export const ClinicTreatmentDisplay: React.FC<ClinicTreatmentDisplayProps> = ({
+  standardName,
+  clinicVariant,
+  quantity
 }) => {
-  // Mock clinic data - replace with real data from your service
-  const mockClinics = [
-    {
-      id: 'clinic_001',
-      name: 'Istanbul Smile Center',
-      rating: 4.8,
-      location: 'Taksim, Istanbul',
-      price: '£695',
-      image: '/images/clinics/istanbul-dental.jpg',
-      features: ['Premium Materials', 'English Speaking', '5-Year Warranty']
-    },
-    {
-      id: 'clinic_002', 
-      name: 'Premium Dental Istanbul',
-      rating: 4.9,
-      location: 'Sisli, Istanbul',
-      price: '£895',
-      image: '/images/clinics/premium-clinic.jpg',
-      features: ['Swiss Implants', 'Luxury Service', 'Lifetime Guarantee']
-    },
-    {
-      id: 'clinic_003',
-      name: 'Dental Excellence Turkey',
-      rating: 4.7,
-      location: 'Maltepe, Istanbul',
-      price: '£750',
-      image: '/images/clinics/excellence.jpg',
-      features: ['Korean Implants', 'Airport Transfer', 'Hotel Package']
-    }
-  ];
-
-  const totalEstimate = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
-
   return (
-    <div className="space-y-6">
-      {/* Treatment Summary */}
-      <div className="bg-blue-50 rounded-lg p-4">
-        <h3 className="font-semibold mb-2">Your Selected Treatments</h3>
-        <div className="space-y-1">
-          {treatments.map((treatment, index) => (
-            <div key={index} className="flex justify-between text-sm">
-              <span>{treatment.name} x{treatment.quantity}</span>
-              <span className="font-medium">£{treatment.subtotalGBP.toFixed(2)}</span>
-            </div>
-          ))}
-        </div>
-        <div className="border-t pt-2 mt-2">
-          <div className="flex justify-between font-semibold">
-            <span>Estimated Total:</span>
-            <span>£{totalEstimate.toFixed(2)}</span>
+    <Card className="mb-4">
+      <CardHeader className="pb-2">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-base font-medium">{clinicVariant.label}</CardTitle>
+            <CardDescription className="text-sm mt-1">
+              Standard treatment: {standardName}
+            </CardDescription>
           </div>
+          <Badge variant="outline" className="font-medium">
+            {clinicVariant.price}
+          </Badge>
         </div>
-      </div>
-
-      {/* Clinic Selection Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {mockClinics.map((clinic) => (
-          <Card 
-            key={clinic.id} 
-            className={`cursor-pointer transition-all hover:shadow-lg ${
-              selectedClinic?.id === clinic.id ? 'ring-2 ring-blue-500 bg-blue-50' : ''
-            }`}
-            onClick={() => onClinicSelect(clinic)}
-          >
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-lg">{clinic.name}</CardTitle>
-                  <CardDescription className="flex items-center gap-1 mt-1">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    {clinic.rating} • {clinic.location}
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary" className="text-lg font-bold">
-                  {clinic.price}
+      </CardHeader>
+      <CardContent className="pb-2">
+        <div className="space-y-2">
+          <div className="text-sm">
+            <span className="font-medium">Includes:</span>
+            <div className="mt-1 flex flex-wrap gap-1">
+              {clinicVariant.includes.map((item, index) => (
+                <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3" />
+                  {item}
                 </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <img 
-                  src={clinic.image} 
-                  alt={clinic.name}
-                  className="w-full h-32 object-cover rounded-md"
-                  onError={(e) => {
-                    e.currentTarget.src = '/images/clinics/istanbul-dental.jpg';
-                  }}
-                />
-                <div className="space-y-1">
-                  {clinic.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span>{feature}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button 
-                className="w-full" 
-                variant={selectedClinic?.id === clinic.id ? "default" : "outline"}
-              >
-                {selectedClinic?.id === clinic.id ? "Selected" : "Select Clinic"}
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-
-      {selectedClinic && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center gap-2">
-            <CheckCircle className="h-5 w-5 text-green-600" />
-            <span className="font-medium text-green-800">
-              You've selected {selectedClinic.name}
-            </span>
+              ))}
+            </div>
           </div>
-          <p className="text-green-700 text-sm mt-1">
-            Proceed to the next step to complete your booking.
-          </p>
+          
+          {clinicVariant.optional_addons && clinicVariant.optional_addons.length > 0 && (
+            <div className="text-sm">
+              <span className="font-medium">Optional add-ons:</span>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {clinicVariant.optional_addons.map((addon, index) => (
+                  <Badge key={index} variant="outline" className="flex items-center gap-1">
+                    <PlusCircle className="h-3 w-3" />
+                    {addon}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {clinicVariant.note && (
+            <div className="flex items-start gap-2 text-sm text-muted-foreground mt-2">
+              <Info className="h-4 w-4 flex-shrink-0 mt-0.5" />
+              <p>{clinicVariant.note}</p>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </CardContent>
+      <CardFooter>
+        <div className="text-sm text-muted-foreground">
+          Quantity: {quantity}
+        </div>
+      </CardFooter>
+    </Card>
   );
 };
 
@@ -179,7 +99,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
 }) => {
   // This would use the treatmentMapperService in a real implementation
   // For now, we'll use a placeholder implementation
-
+  
   const getMockClinicVariant = (standardName: string): ClinicTreatmentVariant => {
     // Create different clinic-specific naming and pricing based on clinic ID and treatment name
     const clinicData: Record<string, Record<string, any>> = {
@@ -244,7 +164,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
         }
       }
     };
-
+    
     // Default fallback variant if specific data not found
     const defaultVariant = {
       clinic_id: clinicId,
@@ -253,7 +173,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
       includes: ['Standard procedure', 'Basic materials', 'Regular warranty'],
       note: 'Contact clinic for specific details about this treatment.'
     };
-
+    
     // Return the clinic-specific variant if available, otherwise return default
     if (clinicData[clinicId] && clinicData[clinicId][standardName]) {
       const data = clinicData[clinicId][standardName];
@@ -266,10 +186,10 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
         optional_addons: data.optional_addons || []
       };
     }
-
+    
     return defaultVariant;
   };
-
+  
   return (
     <div className="space-y-4">
       {treatments.map((treatment, index) => (
@@ -279,7 +199,7 @@ export const ClinicTreatmentsList: React.FC<ClinicTreatmentsListProps> = ({
             clinicVariant={getMockClinicVariant(treatment.name)}
             quantity={treatment.quantity}
           />
-
+          
           {onShowAllVariants && (
             <button 
               onClick={() => onShowAllVariants(treatment.name)}
@@ -310,7 +230,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
 }) => {
   // For demonstration, we'll create a comparison of the three clinics
   // In a real implementation, this would use the actual variants passed in
-
+  
   // Generate or use mock variants for demonstration
   const mockVariants = [
     {
@@ -338,13 +258,13 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
       clinic_name: 'Dental Excellence Turkey'
     }
   ];
-
+  
   // Use mockVariants for dental implants, otherwise use passed variants
   const displayVariants = standardName.includes('Implant') ? mockVariants : variants;
-
+  
   // Create a comparison table of features across clinics
   const allFeatures = displayVariants.flatMap(v => v.includes).filter((f, i, a) => a.indexOf(f) === i);
-
+  
   return (
     <div className="p-4">
       <h3 className="text-xl font-bold mb-2">
@@ -353,7 +273,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
       <p className="text-muted-foreground mb-6">
         Compare how different clinics offer this treatment, with their specific pricing and inclusions.
       </p>
-
+      
       {/* Side-by-side comparison */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         {displayVariants.map((variant, index) => (
@@ -380,7 +300,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
                     ))}
                   </ul>
                 </div>
-
+                
                 {variant.note && (
                   <div className="flex items-start gap-2 text-sm mt-3 p-2 bg-blue-50 rounded">
                     <Info className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
@@ -395,7 +315,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
           </Card>
         ))}
       </div>
-
+      
       {/* Feature comparison table */}
       <div className="overflow-x-auto rounded-md border mb-6">
         <table className="min-w-full divide-y divide-gray-200">
@@ -451,7 +371,7 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
           </tbody>
         </table>
       </div>
-
+      
       <div className="mt-6 flex justify-between">
         <p className="text-sm text-muted-foreground">
           Note: Actual treatments, inclusions, and pricing may vary. Always consult with clinics for the most up-to-date information.
@@ -466,5 +386,3 @@ export const TreatmentVariantsComparison: React.FC<TreatmentVariantsComparisonPr
     </div>
   );
 };
-
-export default ClinicTreatmentDisplay;
