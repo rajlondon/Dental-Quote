@@ -815,8 +815,7 @@ const EducationalSection: React.FC = () => {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
-                    </CardContent>
-        </Card```
+          </CardContent>
         </Card>
 
         <Card>
