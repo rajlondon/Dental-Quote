@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
@@ -48,21 +49,6 @@ import TreatmentPlanBuilder, { TreatmentItem as PlanTreatmentItem } from '@/comp
 import EditQuoteModal from '@/components/EditQuoteModal';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
-import MatchedClinicsPage from '@/pages/MatchedClinicsPage';
-import PaymentConfirmationPage from '@/pages/PaymentConfirmationPage';
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
-} from "@/components/ui/table";
-
-// Import the new components
-import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
 import TreatmentGuide from '@/components/TreatmentGuide';
 
 // Types
@@ -96,9 +82,6 @@ const YourQuotePage: React.FC = () => {
 
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
-
-  // Patient Info State
-  const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
 
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
