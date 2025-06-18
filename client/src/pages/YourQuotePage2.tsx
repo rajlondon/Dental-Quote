@@ -63,6 +63,7 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
