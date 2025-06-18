@@ -42,7 +42,7 @@ const TierBadge: React.FC<{ tier: 'bronze' | 'silver' | 'gold' }> = ({ tier }) =
     silver: "bg-slate-100 text-slate-800 border-slate-200",
     gold: "bg-yellow-100 text-yellow-800 border-yellow-200"
   };
-  
+
   const labels = {
     bronze: "Bronze Package",
     silver: "Silver Package",
@@ -63,10 +63,10 @@ interface TrendingPackageCardProps {
 
 const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg }) => {
   const { includedServices, tier } = pkg;
-  
+
   // Calculate free excursions count
   const freeExcursionsCount = pkg.excursions.filter(exc => exc.included).length;
-  
+
   return (
     <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg bg-white">
       <div className="relative">
@@ -88,12 +88,12 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
           </div>
         </div>
       </div>
-      
+
       <CardContent className="p-4">
         <p className="text-sm text-gray-600 line-clamp-2 mb-3">
           {pkg.description}
         </p>
-        
+
         {/* Package details */}
         <div className="mb-4">
           <div className="flex items-center gap-1 text-sm text-gray-700 mb-1">
@@ -114,7 +114,7 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
             </span>
           </div>
         </div>
-        
+
         {/* Treatments included */}
         <div className="mb-3">
           <h4 className="text-sm font-medium text-gray-700 mb-1">Treatments Included:</h4>
@@ -127,7 +127,7 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
             ))}
           </ul>
         </div>
-        
+
         {/* Included services */}
         <div className="flex justify-between mb-4 mt-6">
           <PackageIcon type="hotel" included={includedServices.hotel} />
@@ -136,7 +136,7 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
           <PackageIcon type="cityTour" included={includedServices.cityTour} />
           <PackageIcon type="excursions" included={includedServices.excursions} />
         </div>
-        
+
         {/* Price and call to action */}
         <div className="flex flex-col gap-3">
           <div className="bg-gray-50 p-3 rounded-md text-center">
@@ -151,10 +151,21 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
               </div>
             )}
           </div>
-          
-          <Link href={`/package/${pkg.id}`}>
-            <Button className="w-full">View Package Details</Button>
-          </Link>
+
+          <Button 
+              onClick={() => {
+                // Store package data and redirect to treatment selection
+                sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
+                sessionStorage.setItem('pendingPackageData', JSON.stringify(pkg));
+                sessionStorage.setItem('sourceFlow', 'package_selection');
+
+                // Go directly to pricing page with package context
+                window.location.href = `/pricing?package=${encodeURIComponent(pkg.name)}&promo=${encodeURIComponent(pkg.promoCode)}&city=istanbul&from=package`;
+              }}
+              className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium"
+            >
+              Select Package
+            </Button>
         </div>
       </CardContent>
     </Card>

@@ -61,26 +61,18 @@ const Hero: React.FC = () => {
     { value: "general", label: "General Dentistry" }
   ];
   
-  // Handle search action
+  // Handle search action - go directly to treatment selection
   const handleSearch = () => {
     const selectedTreatmentObj = treatmentOptions.find(t => t.label === selectedTreatment);
     const treatmentValue = selectedTreatmentObj ? selectedTreatmentObj.value : "dental-implants";
-    const originObj = originOptions.find(o => o.label === selectedOrigin);
-    const originValue = originObj ? originObj.value : "uk";
     
-    // Format dates for URL parameters
-    const outDateFormatted = format(selectedDate, "yyyy-MM-dd");
-    const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
+    // Go directly to price calculator with city and treatment context
+    setLocation(`/pricing?city=${selectedCity}&treatment=${treatmentValue}&from=search`);
     
-    // Use the your-quote page (which exists in our routes) with search parameters
-    setLocation(`/your-quote?city=${selectedCity}&treatment=${treatmentValue}&origin=${originValue}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}`);
-    
-    console.log(`Navigating to quote builder with parameters:
+    console.log(`Navigating directly to treatment selection with:
       City: ${selectedCity}
       Treatment: ${treatmentValue}
-      Origin: ${originValue}
-      Departure: ${outDateFormatted}
-      Return: ${returnDateFormatted}
+      Source: homepage_search
     `);
   };
   

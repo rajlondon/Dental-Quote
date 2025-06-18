@@ -21,9 +21,9 @@ import PromoTestPage from "@/pages/PromoTestPage";
 // Environment indicator component for production
 const EnvironmentBadge = () => {
   const isProd = import.meta.env.PROD || import.meta.env.NODE_ENV === 'production';
-  
+
   if (!isProd) return null;
-  
+
   return (
     <div style={{
       position: 'fixed',
@@ -50,12 +50,13 @@ import DentalImplantsBlogPost from "./pages/DentalImplantsBlogPost";
 import VeneersBlogPost from "./pages/VeneersBlogPost";
 import HollywoodSmileBlogPost from "./pages/HollywoodSmileBlogPost";
 import FullMouthBlogPost from "./pages/FullMouthBlogPost";
-import PricingPage from "./pages/PricingPage";
+import PricingPage from "@/pages/PricingPage";
 import TeamPage from "@/pages/TeamPage";
 import HowItWorks from "@/pages/HowItWorks";
 import FAQPage from "@/pages/FAQPage";
 import QuoteResultsPage from "@/pages/QuoteResultsPage";
-import YourQuotePage from "@/pages/YourQuotePage2";
+import YourQuotePage from "@/pages/YourQuotePage";
+import YourQuotePage2 from "@/pages/YourQuotePage2";
 import DentalImplantsPage from "@/pages/DentalImplantsPage";
 import VeneersPage from "@/pages/VeneersPage";
 import HollywoodSmilePage from "@/pages/HollywoodSmilePage";
@@ -155,7 +156,7 @@ function Router() {
       <Route path="/portal-testing">
         {() => <PortalTestingHub />}
       </Route>
-      
+
       {/* Patient Portal Routes - Publicly accessible */}
       <Route path="/client-portal" component={PatientPortalPage} />
       <Route path="/patient-portal" component={PatientPortalPage} />
@@ -171,15 +172,15 @@ function Router() {
       <Route path="/verification-sent" component={VerificationSentPage} />
       <Route path="/email-verified" component={EmailVerifiedPage} />
       <Route path="/verification-failed" component={VerificationFailedPage} />
-      
+
       {/* Booking Routes */}
       <ProtectedRoute path="/bookings" component={BookingsPage} />
       <ProtectedRoute path="/bookings/:id" component={BookingDetailPage} />
       <ProtectedRoute path="/create-booking" component={CreateBookingPage} />
       <ProtectedRoute path="/create-booking/:clinicId" component={CreateBookingPage} />
-      
+
       {/* Admin login is now handled through the main portal login page */}
-      
+
       {/* Special route for handling admin logout properly */}
       <Route path="/admin-logout">
         {() => {
@@ -192,18 +193,18 @@ function Router() {
             sessionStorage.removeItem('admin_protected_navigation');
             sessionStorage.removeItem('admin_role_verified');
             sessionStorage.setItem('admin_logout_redirect', 'true');
-            
+
             // Make a direct server logout call
             fetch('/api/auth/logout', { method: 'POST' })
               .catch(() => console.log('Logout request sent'));
-            
+
             // Immediate redirect to home page
             window.location.href = '/';
           }
           return null; // This component won't render as we redirect immediately
         }}
       </Route>
-      
+
       {/* Admin-only Protected Routes using the same pattern that works for Clinic Portal */}
       <Route path="/admin-portal">
         {() => (
@@ -212,15 +213,15 @@ function Router() {
           </AdminPortalGuard>
         )}
       </Route>
-      
+
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
-      
+
       {/* Admin Booking Routes */}
       <ProtectedRoute path="/admin/bookings" component={AdminBookingsPage} requiredRole="admin" />
       <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
       <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
-      
+
       {/* Admin Quote Routes */}
       <Route path="/admin/new-quote">
         {() => (
@@ -229,13 +230,13 @@ function Router() {
           </AdminPortalGuard>
         )}
       </Route>
-      
+
       {/* Clinic Staff Protected Routes */}
       {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
       <Route path="/simple-clinic">
         {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
       </Route>
-      
+
       {/* Original clinic portal route with special guard to prevent refresh issues */}
       <Route path="/clinic-portal">
         {() => (
@@ -246,12 +247,12 @@ function Router() {
       </Route>
       <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic" />
       <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic" />
-      
+
       {/* Clinic Booking Routes */}
       <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic" />
       <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic" />
       <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic" />
-      
+
       {/* Clinic Quote Routes */}
       <ProtectedRoute path="/clinic/quotes/:id" component={() => {
         // This is a wrapper to ensure the quotes section is displayed properly
@@ -261,7 +262,7 @@ function Router() {
           </ClinicGuard>
         );
       }} requiredRole="clinic" />
-      
+
       <Route path="/clinic">
         {() => <Redirect to="/clinic-portal" />}
       </Route>
@@ -296,10 +297,10 @@ function Router() {
           return null;
         }}
       </Route>
-      
+
       {/* Testing and development routes - Portal Communication Tester available in all environments */}
       <Route path="/portal-communication-test" component={PortalCommunicationTester} />
-      
+
       {/* Development-only routes */}
       {process.env.NODE_ENV !== 'production' && (
         <>
@@ -316,7 +317,7 @@ function Router() {
           </Route>
         </>
       )}
-      
+
       <Route component={NotFoundPage} />
     </Switch>
   );
@@ -326,7 +327,7 @@ function App() {
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
-  
+
   // Initialize reload prevention system
   useEffect(() => {
     // Check if we're in the browser and not in server-side rendering
@@ -344,7 +345,7 @@ function App() {
       }
     }
   }, []);
-  
+
   // Add event listener for testing cross-portal notifications
   useEffect(() => {
     // Listen for a special test message that can be triggered from any portal
@@ -354,13 +355,13 @@ function App() {
         // We can handle this in each portal's notification system
       }
     };
-    
+
     window.addEventListener('message', handleMessage);
     return () => {
       window.removeEventListener('message', handleMessage);
     };
   }, []);
-  
+
   return (
     <ErrorBoundary componentName="RootApplication">
       <QueryClientProvider client={queryClient}>

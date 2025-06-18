@@ -1,133 +1,226 @@
-import { useEffect } from 'react';
+
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 import { useTranslation } from 'react-i18next';
 import PriceCalculator from '@/components/PriceCalculator';
-import { DentalChart } from '@/components/DentalChart';
-import { Separator } from '@/components/ui/separator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { ArrowLeft, MapPin, Clock } from 'lucide-react';
 
-export default function PricingPage() {
+interface URLParams {
+  city?: string;
+  treatment?: string;
+  promo?: string;
+  package?: string;
+  from?: string;
+}
+
+const PricingPage: React.FC = () => {
   const { t } = useTranslation();
-  
-  // Set page title when component mounts
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [urlParams, setUrlParams] = useState<URLParams>({});
+  const [selectedCity, setSelectedCity] = useState('istanbul');
+
   useEffect(() => {
-    document.title = `${t('pricing.pricing_title')} | MyDentalFly.com`;
-  }, [t]);
-  
+    // Parse URL parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const params: URLParams = {
+      city: searchParams.get('city') || 'istanbul',
+      treatment: searchParams.get('treatment') || '',
+      promo: searchParams.get('promo') || '',
+      package: searchParams.get('package') || '',
+      from: searchParams.get('from') || ''
+    };
+    
+    setUrlParams(params);
+    setSelectedCity(params.city || 'istanbul');
+
+    // Handle promo code from URL or session
+    const promoCode = params.promo || sessionStorage.getItem('pendingPromoCode');
+    if (promoCode) {
+      toast({
+        title: "Promo Code Applied",
+        description: `Promo code "${promoCode}" is ready to be applied to your quote.`,
+      });
+    }
+
+    // Handle package data from session
+    const packageData = sessionStorage.getItem('pendingPackageData');
+    if (packageData) {
+      try {
+        const pkg = JSON.parse(packageData);
+        toast({
+          title: "Package Selected",
+          description: `${pkg.name} package has been pre-selected for you.`,
+        });
+      } catch (error) {
+        console.error('Error parsing package data:', error);
+      }
+    }
+
+    // Set page title based on source
+    const sourceDescriptions = {
+      'search': 'Treatment Search Results',
+      'offer': 'Special Offer Treatment Selection',
+      'package': 'Package Treatment Selection',
+      'email': 'Email Promotion Treatment Selection',
+      'social': 'Social Media Promotion Treatment Selection'
+    };
+    
+    const pageTitle = sourceDescriptions[params.from as keyof typeof sourceDescriptions] || 'Treatment Selection';
+    document.title = `${pageTitle} | MyDentalFly`;
+  }, [toast]);
+
+  const getCityDisplayName = (cityCode: string) => {
+    const cityMap: { [key: string]: string } = {
+      'istanbul': 'Istanbul, Turkey',
+      'ankara': 'Ankara, Turkey',
+      'izmir': 'Izmir, Turkey',
+      'antalya': 'Antalya, Turkey'
+    };
+    return cityMap[cityCode] || 'Istanbul, Turkey';
+  };
+
+  const getSourceDescription = () => {
+    switch (urlParams.from) {
+      case 'search':
+        return 'Based on your search criteria';
+      case 'offer':
+        return 'Special offer applied';
+      case 'package':
+        return 'Package pre-selected';
+      case 'email':
+        return 'From your email promotion';
+      case 'social':
+        return 'From social media promotion';
+      default:
+        return 'Get your personalized quote';
+    }
+  };
+
   return (
     <>
       <Navbar />
-      <div className="container mx-auto py-8 px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">{t('pricing.pricing_title')}</h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            {t('pricing.pricing_description')}
-          </p>
-        </div>
-        
-        <Separator className="my-8" />
-        
-        <div className="mb-10 p-6 bg-white border border-blue-200 rounded-lg shadow-md relative">
-          <div className="absolute -top-4 right-4 bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
-            New Feature
-          </div>
-          
-          <h2 className="text-2xl font-bold text-center mb-4 text-blue-800">Interactive Dental Chart</h2>
-          <p className="text-center mb-4 text-gray-700 max-w-2xl mx-auto">
-            Click on any tooth to indicate conditions (pain, chipped, missing) or 
-            desired treatments (implants, crowns, veneers). This information will be included in your quote.
-          </p>
-          
-          <div className="flex items-center justify-center mb-6">
-            <div className="inline-flex items-center px-3 py-1.5 rounded-md bg-blue-50 text-blue-800 text-sm border border-blue-200">
-              <svg className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Your dental chart data is automatically saved and included with your quote
+      
+      <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
+        {/* Header Section */}
+        <div className="bg-white border-b border-neutral-200 py-6">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-4">
+              <Button
+                variant="ghost"
+                onClick={() => setLocation('/')}
+                className="flex items-center text-neutral-600 hover:text-primary"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+              
+              <div className="flex items-center text-sm text-neutral-600">
+                <MapPin className="w-4 h-4 mr-1" />
+                {getCityDisplayName(selectedCity)}
+              </div>
+            </div>
+            
+            <div className="text-center">
+              <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
+                Select Your Dental Treatments
+              </h1>
+              <p className="text-lg text-neutral-600 mb-2">
+                {getSourceDescription()}
+              </p>
+              <p className="text-sm text-neutral-500">
+                Prices shown are for {getCityDisplayName(selectedCity)} • Instant quotes • No hidden fees
+              </p>
             </div>
           </div>
-          
-          <DentalChart 
-            onTeethUpdate={(teethData) => {
-              console.log('Teeth data updated:', teethData);
-              localStorage.setItem('dentalChartData', JSON.stringify(teethData));
+        </div>
+
+        {/* City Selection Bar */}
+        <div className="bg-blue-50 border-b border-blue-200 py-4">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-6">
+              <span className="text-sm font-medium text-blue-800">Choose your destination:</span>
+              {['istanbul', 'ankara', 'izmir', 'antalya'].map((city) => (
+                <button
+                  key={city}
+                  onClick={() => {
+                    setSelectedCity(city);
+                    // Update URL without page reload
+                    const newUrl = new URL(window.location.href);
+                    newUrl.searchParams.set('city', city);
+                    window.history.replaceState({}, '', newUrl.toString());
+                  }}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                    selectedCity === city
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white text-blue-600 hover:bg-blue-100'
+                  }`}
+                >
+                  {getCityDisplayName(city).split(',')[0]}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Progress Indicator */}
+        <div className="bg-white py-4 border-b border-neutral-200">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-center gap-8">
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold">1</div>
+                <span className="ml-3 text-sm font-medium text-blue-600">Select Treatments</span>
+              </div>
+              <div className="w-12 h-0.5 bg-neutral-200"></div>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full border-2 border-neutral-300 text-neutral-400 flex items-center justify-center text-sm font-bold">2</div>
+                <span className="ml-3 text-sm text-neutral-400">View Clinics</span>
+              </div>
+              <div className="w-12 h-0.5 bg-neutral-200"></div>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-full border-2 border-neutral-300 text-neutral-400 flex items-center justify-center text-sm font-bold">3</div>
+                <span className="ml-3 text-sm text-neutral-400">Patient Portal</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content - Price Calculator */}
+        <div className="container mx-auto px-4 py-8">
+          <PriceCalculator 
+            selectedCity={selectedCity}
+            preselectedTreatment={urlParams.treatment}
+            promoCode={urlParams.promo}
+            packageData={urlParams.package}
+            onQuoteComplete={(quoteData) => {
+              // Store quote data and redirect to clinic results
+              localStorage.setItem('quoteData', JSON.stringify({
+                ...quoteData,
+                selectedCity,
+                sourceFlow: urlParams.from
+              }));
+              
+              // Check if promo code restricts to specific clinic
+              const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+              if (pendingPromoCode) {
+                // Go to filtered clinic results
+                setLocation(`/matched-clinics?promo=${encodeURIComponent(pendingPromoCode)}&city=${selectedCity}`);
+              } else {
+                // Go to all clinic results
+                setLocation(`/matched-clinics?city=${selectedCity}`);
+              }
             }}
           />
-          
-          <div className="mt-6 text-center">
-            <a href="/dental-chart" className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium transition-colors">
-              Open Full Dental Chart Editor
-            </a>
-          </div>
-        </div>
-        
-        <PriceCalculator />
-
-        <div className="mt-16">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold">{t('pricing.why_choose_istanbul')}</h2>
-            <p className="text-lg text-muted-foreground max-w-3xl mx-auto mt-3">
-              {t('pricing.all_treatments_include')}
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-100">
-              <div className="text-center">
-                <div className="mb-4 text-primary text-3xl font-bold">70%</div>
-                <p className="text-neutral-700">{t('pricing.benefit_savings')}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-100">
-              <div className="text-center">
-                <div className="mb-4 text-primary text-3xl">⭐⭐⭐⭐⭐</div>
-                <p className="text-neutral-700">{t('pricing.benefit_quality')}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-100">
-              <div className="text-center">
-                <div className="mb-4 text-primary text-3xl">🌍</div>
-                <p className="text-neutral-700">{t('pricing.benefit_support')}</p>
-              </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-sm border border-neutral-100">
-              <div className="text-center">
-                <div className="mb-4 text-primary text-3xl">✓</div>
-                <p className="text-neutral-700">{t('pricing.benefit_guarantee')}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-16 bg-muted/30 rounded-lg p-8">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold mb-4">{t('faq.title')}</h2>
-            
-            <div className="space-y-6 mt-8">
-              <div>
-                <h3 className="text-lg font-medium mb-2">{t('pricing.pricing_faq_1_question')}</h3>
-                <p className="text-muted-foreground">{t('pricing.pricing_faq_1_answer')}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">{t('pricing.pricing_faq_2_question')}</h3>
-                <p className="text-muted-foreground">{t('pricing.pricing_faq_2_answer')}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">{t('pricing.pricing_faq_3_question')}</h3>
-                <p className="text-muted-foreground">{t('pricing.pricing_faq_3_answer')}</p>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-medium mb-2">{t('pricing.pricing_faq_4_question')}</h3>
-                <p className="text-muted-foreground">{t('pricing.pricing_faq_4_answer')}</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
+      
       <Footer />
     </>
   );
-}
+};
+
+export default PricingPage;

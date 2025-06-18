@@ -1015,24 +1015,32 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
                               const hasDiscount = pendingPromoCode && pendingPromoCode.length > 0;
                               
-                              localStorage.setItem('selectedClinicData', JSON.stringify({
-                                name: clinic.name,
+                              // Store comprehensive booking data
+                              const bookingData = {
+                                clinicId: clinic.id,
+                                clinicName: clinic.name,
                                 treatments: clinicTreatments,
                                 totalPrice: totalPrice,
-                                discountApplied: hasDiscount ? pendingPromoCode : null
-                              }));
+                                discountApplied: hasDiscount ? pendingPromoCode : null,
+                                selectedCity: selectedCity,
+                                treatmentPlan: treatmentPlan,
+                                timestamp: new Date().toISOString()
+                              };
+                              
+                              localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
+                              localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
                               
                               // Call the onSelectClinic callback if provided
                               if (onSelectClinic) {
                                 onSelectClinic(clinic.id);
                               }
                               
-                              // Redirect to the patient portal login page
-                              setLocation('/portal');
+                              // Redirect directly to patient portal
+                              setLocation('/patient-portal');
                               
                               toast({
                                 title: "Clinic Selected",
-                                description: "Please log in to your patient portal to continue with your booking.",
+                                description: "Continue to your patient portal to complete your booking.",
                               });
                             }}
                           >

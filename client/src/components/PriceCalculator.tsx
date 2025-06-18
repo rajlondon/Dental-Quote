@@ -263,7 +263,21 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function PriceCalculator() {
+interface PriceCalculatorProps {
+  selectedCity?: string;
+  preselectedTreatment?: string;
+  promoCode?: string;
+  packageData?: string;
+  onQuoteComplete?: (quoteData: any) => void;
+}
+
+export default function PriceCalculator({ 
+  selectedCity = 'istanbul',
+  preselectedTreatment,
+  promoCode,
+  packageData,
+  onQuoteComplete 
+}: PriceCalculatorProps) {
   const { t } = useTranslation();
   const [selectedClinic, setSelectedClinic] = useState<number>(1); // Default to middle clinic (best value)
   const { toast } = useToast();
@@ -574,12 +588,12 @@ export default function PriceCalculator() {
       console.error("Failed to save quote data for follow-up:", error);
     }
 
-    // Store quote data in localStorage for the results page
+    // Prepare quote data
     try {
       const quoteResultsData = {
-        items: quoteResult.items,
-        totalGBP: quoteResult.totalGBP,
-        totalUSD: quoteResult.totalUSD,
+        items: quoteResult.treatments,
+        totalGBP: quoteResult.total,
+        totalUSD: Math.round(quoteResult.total * 1.29),
         patientName: data.name,
         patientEmail: data.email,
         patientPhone: data.phone,
@@ -590,40 +604,34 @@ export default function PriceCalculator() {
         hasLondonConsult: data.londonConsult === "yes",
         londonConsultCostGBP: 150,
         londonConsultCostUSD: 195,
-        selectedClinicIndex: 1, // Default to mid-tier
+        selectedClinicIndex: 1,
+        selectedCity: selectedCity,
+        promoCode: data.promoCode,
+        treatments: data.treatments
       };
 
-      // Save to localStorage for the results page to use
-      localStorage.setItem("quoteData", JSON.stringify(quoteResultsData));
-
-      // Show toast and redirect to results page
+      // Show toast
       toast({
         title: "Quote Generated",
-        description: "Redirecting you to your detailed quote results.",
+        description: "Finding your matched clinics...",
       });
 
-      // Redirect to the results page after a short delay
-      setTimeout(() => {
-        window.location.href = "/your-quote";
-      }, 1000);
+      // Call the completion handler or fallback to localStorage
+      if (onQuoteComplete) {
+        onQuoteComplete(quoteResultsData);
+      } else {
+        // Fallback to original behavior
+        localStorage.setItem("quoteData", JSON.stringify(quoteResultsData));
+        setTimeout(() => {
+          window.location.href = "/matched-clinics";
+        }, 1000);
+      }
     } catch (error) {
       console.error("Error preparing quote results:", error);
-
-      // Fallback to original behavior if there's an error
       toast({
         title: "Quote Generated",
         description: "Your quote has been calculated successfully.",
       });
-
-      // Scroll to the quote section as fallback
-      setTimeout(() => {
-        if (quoteResultRef.current) {
-          quoteResultRef.current.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          });
-        }
-      }, 100);
     }
   };
 

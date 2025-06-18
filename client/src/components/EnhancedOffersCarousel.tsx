@@ -53,12 +53,12 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [imageRefreshKey, setImageRefreshKey] = useState<number>(Date.now());
   const [imageCache, setImageCache] = useState<Record<string, string>>({});
-  
+
   // Hooks
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { registerMessageHandler } = useWebSocket();
-  
+
   // Fetch special offers data
   const { 
     data: offers, 
@@ -75,32 +75,32 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     const handleOfferUpdate = (message: any) => {
       if (message.type === 'special_offer_updated') {
         console.log('🔄 Received special offer update via WebSocket:', message);
-        
+
         // Extract important info if available
         const offerId = message.offerId || '';
         const imageUrl = message.imageUrl || '';
         const timestamp = message.timestamp || Date.now();
         const command = message.command || '';
         const forceReload = message.forceReload === true;
-        
+
         // Check if server is requesting a complete page reload
         if (command === 'force_reload' || forceReload) {
           console.log('🔄🔄 Force reload command received from server');
-          
+
           // Show toast notification
           toast({
             title: 'New Image Generated',
             description: 'Page will reload to display updated offers',
             variant: 'default',
           });
-          
+
           // Reload the entire page for a fresh start
           setTimeout(() => {
             window.location.reload();
           }, 1000);
           return;
         }
-        
+
         // Force reload the entire window if we're on the special offers management page
         // This is the most reliable way to get a clean slate with the new image
         if (window.location.pathname.includes('/clinic/special-offers')) {
@@ -111,11 +111,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
           }, 2000);
           return;
         }
-        
+
         // Handle cache invalidation command
         if (command === 'invalidate_cache') {
           console.log('🧹 Received explicit cache invalidation command from server');
-          
+
           // Clear HTML5 Cache API if available
           if ('caches' in window) {
             try {
@@ -130,7 +130,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
               console.error('Error clearing caches:', err);
             }
           }
-          
+
           // Try to remove items from browser's internal image cache using trick
           // This creates a dummy image element with each offending URL and explicitly
           // forces cache removal
@@ -144,15 +144,15 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             }
           }
         }
-        
+
         // Clear image cache immediately and force refresh
         console.log('🧹 Clearing image cache completely');
         setImageCache({}); // Clear all cached image URLs
-        
+
         // Use server timestamp for better synchronization
         console.log(`⏰ Setting new refresh key: ${timestamp}`);
         setImageRefreshKey(timestamp); 
-        
+
         // If we received a specific image URL, manually update our cache 
         // to force immediate display of the new image
         if (imageUrl && offerId) {
@@ -165,25 +165,25 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             [offerId]: `${imageUrl}?t=${Date.now()}&r1=${randomVal1}&r2=${randomVal2}&nocache=true`
           }));
         }
-        
+
         // Refetch data from server with cache busting
         console.log('🔄 Invalidating special offers query cache');
         queryClient.invalidateQueries({ 
           queryKey: ['/api/special-offers/homepage'],
           refetchType: 'all'
         });
-        
+
         // Add a toast notification that also helps user know something happened
         toast({
           title: 'Special Offer Updating',
           description: 'Loading new promotional images...',
           variant: 'default',
         });
-        
+
         // Schedule multiple refreshes with staggered timing
         // This helps overcome browser cache issues by trying multiple times
         const refreshTimes = [500, 1500, 3000, 5000]; // Milliseconds
-        
+
         refreshTimes.forEach(delay => {
           setTimeout(() => {
             // Generate a unique refresh key each time
@@ -191,13 +191,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             console.log(`⏱️ Scheduled refresh #${delay/500}: new key ${newRefreshKey}`);
             setImageRefreshKey(newRefreshKey);
             setImageCache({}); // Clear cache again to be extra sure
-            
+
             // Force re-query on each refresh attempt
             queryClient.invalidateQueries({ 
               queryKey: ['/api/special-offers/homepage'],
               refetchType: 'all'
             });
-            
+
             // Only show toast on final refresh
             if (delay === refreshTimes[refreshTimes.length - 1]) {
               toast({
@@ -210,31 +210,31 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         });
       }
     };
-    
+
     // Dedicated handler for image refresh commands from our new endpoint
     const handleImageRefresh = (message: any) => {
       if (message.type === 'special_offer_image_refreshed') {
         console.log('🖼️ Received specialized image refresh command via WebSocket:', message);
-        
+
         // Extract important info
         const offerId = message.offerId || '';
         const imageUrl = message.imageUrl || '';
         const timestamp = message.timestamp || Date.now();
-        
+
         if (!offerId || !imageUrl) {
           console.error('❌ Missing required offerId or imageUrl in refresh message');
           return;
         }
-        
+
         console.log(`🖼️ Refreshing image for offer ID: ${offerId}`);
         console.log(`🔗 New image URL with cache busting: ${imageUrl}`);
-        
+
         // First approach: Update the React Query cache directly
         queryClient.setQueryData(
           ['/api/special-offers/homepage'],
           (oldData: SpecialOffer[] | undefined) => {
             if (!oldData) return oldData;
-            
+
             // Find and update the specific offer's image URL
             return oldData.map(offer => 
               offer.id === offerId 
@@ -247,19 +247,19 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             );
           }
         );
-        
+
         // Second approach: Update our image cache directly
         setImageCache(prev => ({
           ...prev,
           [offerId]: `${imageUrl}&timestamp=${timestamp}&forced=true`
         }));
-        
+
         // Third approach: Create a new image element to force preloading
         const preloadImg = new Image();
         preloadImg.onload = () => console.log('✅ Successfully preloaded refreshed image');
         preloadImg.onerror = (err) => console.error('❌ Failed to preload refreshed image:', err);
         preloadImg.src = `${imageUrl}&preload=true&t=${timestamp}`;
-        
+
         // Fourth approach: Try direct DOM manipulation as a last resort
         setTimeout(() => {
           try {
@@ -267,7 +267,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             const offerImages = document.querySelectorAll(`img[data-offer-id="${offerId}"], img[alt="${offerId}"]`);
             if (offerImages.length > 0) {
               console.log(`🔍 Found ${offerImages.length} images in DOM to update directly`);
-              
+
               offerImages.forEach((element) => {
                 // Cast the element to HTMLImageElement
                 const img = element as HTMLImageElement;
@@ -280,10 +280,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             console.error('❌ Error during direct DOM update:', err);
           }
         }, 500);
-        
+
         // Finally: Force a refresh key update to trigger component re-render
         setImageRefreshKey(timestamp);
-        
+
         // Add a subtle notification to inform the user
         toast({
           title: 'Image Updated',
@@ -292,23 +292,23 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         });
       }
     };
-    
+
     // Register both handlers
     console.log('🔌 Registering enhanced WebSocket handlers for special offers');
     registerMessageHandler('special_offer_updated', handleOfferUpdate);
     registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
-    
+
     // No cleanup needed as useWebSocket handles it
   }, [queryClient, registerMessageHandler, toast]);
 
   // Auto-advance carousel
   useEffect(() => {
     if (!isAutoPlaying || !offers || offers.length <= 1) return;
-    
+
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % offers.length);
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [offers, isAutoPlaying]);
 
@@ -335,9 +335,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   // Memoize the image URLs to prevent rendering loops
   const getImageUrlsMemo = useMemo(() => {
     const urls: Record<string, string> = {};
-  
+
     if (!offers) return urls;
-    
+
     // Process all offers at once in a single batch
     offers.forEach(offer => {
       // Ultra-aggressive cache busting parameters with high entropy
@@ -345,25 +345,25 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       const randomString = Math.random().toString(36).substring(2, 15);
       const uuid = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2);
       const cacheKey = `t=${timestamp}&r=${randomString}&v=${imageRefreshKey}&u=${uuid}&nocache=true`;
-      
+
       let finalUrl = '';
-      
+
       // Process the banner image URL
       if (offer.banner_image) {
         // We need to properly handle Azure Blob Storage URLs from OpenAI
         const isAzureBlobUrl = offer.banner_image.includes('oaidalleapiprodscus.blob.core.windows.net');
         const isOpenAIUrl = offer.banner_image.includes('openai.com');
-        
+
         // Debug information about the blob URL - only log once when detected
         if (isAzureBlobUrl && typeof window !== 'undefined' && !window.blobUrlsLogged) {
           // Initialize the tracking object if it doesn't exist
           if (!window.blobUrlsLogged) {
             window.blobUrlsLogged = {};
           }
-          
+
           if (!window.blobUrlsLogged[offer.id]) {
             window.blobUrlsLogged[offer.id] = true;
-            
+
             // Log debugging info but only once per offer
             console.error(`🔵 DEBUGGING AZURE BLOB URL: ${offer.banner_image}`);
             console.error(`🔵 Azure Blob URL characteristics:`);
@@ -372,13 +372,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             console.error(`   - URL length:`, offer.banner_image.length);
           }
         }
-        
+
         // Check if this is an OpenAI URL (they don't need aggressive cache busting)
         if (isOpenAIUrl || isAzureBlobUrl) {
           // Add minimal cache busting for OpenAI URLs
           // We need to ensure we're using the raw URL without cutting it off or modifying it
           finalUrl = offer.banner_image;
-          
+
           // Only add timestamp if there isn't already a query parameter
           if (!finalUrl.includes('?')) {
             finalUrl = `${finalUrl}?t=${timestamp}`;
@@ -391,7 +391,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       } else {
         // Fallback images based on title with cache busting
         let basePath = '/images/offers/premium-hotel-deal.jpg';
-        
+
         if (offer.title.toLowerCase().includes('consultation')) {
           basePath = '/images/offers/free-consultation.jpg';
         } else if (offer.title.toLowerCase().includes('implant')) {
@@ -399,16 +399,16 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         } else if (offer.title.toLowerCase().includes('airport') || offer.title.toLowerCase().includes('transfer')) {
           basePath = '/images/offers/luxury-airport-transfer.jpg';
         }
-        
+
         finalUrl = `${basePath}?${cacheKey}`;
       }
-      
+
       urls[offer.id] = finalUrl;
     });
-    
+
     return urls;
   }, [offers, imageRefreshKey]);
-  
+
   // Get image URL for a specific offer (using the memoized map)
   const getImageUrl = useCallback((offer: SpecialOffer) => {
     const url = getImageUrlsMemo[offer.id];
@@ -430,11 +430,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
   const [, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
-  
+
   // Handle quote request with authentication check
   const handleRequestQuote = (offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
-    
+
     // Standardize the offer data format to ensure consistency across the application
     const standardizedOfferData = {
       id: offer.id,
@@ -446,7 +446,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                            ? offer.applicable_treatments[0] 
                            : 'Dental Implants'
     };
-    
+
     // Build query parameters for the offer
     const params = new URLSearchParams({
       specialOffer: standardizedOfferData.id,
@@ -456,43 +456,43 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       offerDiscountType: standardizedOfferData.discountType,
       treatment: standardizedOfferData.applicableTreatment
     });
-    
+
     console.log("Generated URL params:", params.toString());
     console.log("Auth state - loading:", authLoading, "user:", user ? "logged in" : "not logged in");
-    
+
     // Check if user is authenticated
     if (!authLoading && user) {
       console.log("User authenticated, proceeding to quote form with special offer context");
-      
+
       // Store the special offer in sessionStorage for use by the quote form
       sessionStorage.setItem('activeSpecialOffer', JSON.stringify(standardizedOfferData));
       console.log("Saved activeSpecialOffer to sessionStorage:", standardizedOfferData);
-      
+
       // User is logged in, proceed with quote and notify
       toast({
         title: "Special Offer Selected",
         description: `${offer.title} will be applied to your quote results.`,
         variant: "default",
       });
-      
+
       // Redirect to the quote page where user can select treatments and clinics
       // with the special offer clinic highlighted - use setLocation for SPA navigation
       console.log("Redirecting to quote page with special offer context");
       setLocation('/your-quote');
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
-      
+
       // Save the standardized offer data to sessionStorage for retrieval after login
       console.log("Saving pendingSpecialOffer:", standardizedOfferData);
       sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(standardizedOfferData));
-      
+
       // Notify user they need to login
       toast({
         title: "Login Required",
         description: "Please create an account or login to request this special offer",
         variant: "default",
       });
-      
+
       // Redirect to login page - use setLocation for SPA navigation
       console.log("Redirecting to portal login page");
       setLocation('/portal-login');
@@ -502,7 +502,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   // Generate navigation dots
   const renderDots = () => {
     if (!offers?.length) return null;
-    
+
     return (
       <div className="flex justify-center mt-4 space-x-2">
         {offers.map((_, index) => (
@@ -575,7 +575,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                 setImageRefreshKey(Date.now());
                 setImageCache({});
                 queryClient.refetchQueries({ queryKey: ['/api/special-offers/homepage'] });
-                
+
                 toast({
                   title: 'Refreshing Offers',
                   description: 'Loading the latest special offers...',
@@ -606,7 +606,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             </Button>
           </div>
         </div>
-        
+
         <div className="relative overflow-hidden rounded-xl bg-white shadow-lg">
           {offers.map((offer, index) => (
             <motion.div
@@ -641,7 +641,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     onError={(e) => {
                       console.error(`❌ Error loading image for offer ${offer.id}:`, e);
                       console.log('🔍 Image URL that failed:', e.currentTarget.src);
-                      
+
                       // Fallback to a default image if loading fails
                       e.currentTarget.src = '/images/offers/premium-hotel-deal.jpg';
                     }}
@@ -654,7 +654,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     {(offer.promotion_level || 'standard').charAt(0).toUpperCase() + (offer.promotion_level || 'standard').slice(1)}
                   </Badge>
                 </div>
-                
+
                 {offer.end_date && (
                   <div className="absolute bottom-4 left-4 bg-black/60 text-white text-sm px-3 py-1.5 rounded-full flex items-center">
                     <Clock className="w-3.5 h-3.5 mr-1.5" />
@@ -666,7 +666,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                   </div>
                 )}
               </div>
-              
+
               <div className="md:w-1/2 p-6 md:p-8 flex flex-col">
                 <div className="mb-2">
                   {offer.discount_value && (
@@ -678,10 +678,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     </div>
                   )}
                 </div>
-                
+
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">{offer.title}</h3>
                 <p className="text-gray-600 mb-4">{offer.description}</p>
-                
+
                 <div className="mt-auto space-y-4">
                   {offer.clinic_id && (
                     <div className="flex items-center">
@@ -699,11 +699,19 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="flex space-x-3">
                     <Button 
                       className="px-6" 
-                      onClick={() => handleRequestQuote(offer)}
+                      onClick={() => {
+                        // Store the offer data and redirect to treatment selection
+                        sessionStorage.setItem('pendingPromoCode', offer.promo_code || '');
+                        sessionStorage.setItem('pendingOfferData', JSON.stringify(offer));
+                        sessionStorage.setItem('sourceFlow', 'special_offer');
+
+                        // Go directly to pricing page with offer context
+                        window.location.href = `/pricing?promo=${encodeURIComponent(offer.promo_code || '')}&city=istanbul&from=offer`;
+                      }}
                     >
                       Request Quote
                     </Button>
@@ -718,9 +726,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
             </motion.div>
           ))}
         </div>
-        
+
         {renderDots()}
       </div>
     </section>
   );
 }
+`
