@@ -816,7 +816,7 @@ const EducationalSection: React.FC = () => {
           <CardContent>
             <p className="text-sm text-gray-700">Final prices may adjust slightly (±10%) after your X-rays and consultation, as your exact needs become clear. We'll always confirm before proceeding.</p>
                     </CardContent>
-        ```
+        </Card```
         </Card>
 
         <Card>
@@ -1025,12 +1025,6 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Check, 
