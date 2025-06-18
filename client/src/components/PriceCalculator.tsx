@@ -148,8 +148,6 @@ const openHtmlQuote = async () => {
     console.error("Error generating HTML quote:", error);
   }
 };
-import { unifiedPricingEngine } from "@/services/unifiedPricingEngine";
-import { quoteStateManager } from "@/services/enhancedQuoteState";
 import TemplatePdfGenerator from "./TemplatePdfGenerator";
 import ServerPdfGenerator from "./ServerPdfGenerator";
 import PythonPdfGenerator from "./PythonPdfGenerator";
