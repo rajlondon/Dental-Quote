@@ -1025,15 +1025,6 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
-// This line was causing the error, so it's removed
-// import { useTranslation } from 'react-i18next';
-// import { useLocation, Link } from 'wouter';
-// import { useToast } from '@/hooks/use-toast';
-// import Navbar from '@/components/Navbar';
-// import Footer from '@/components/Footer';
-// import ScrollToTop from '@/components/ScrollToTop';
-// import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
