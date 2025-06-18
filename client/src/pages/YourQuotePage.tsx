@@ -818,7 +818,8 @@ const EducationalSection: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card          <CardHeader>
+        <Card>
+          <CardHeader>
             <CardTitle className="text-lg">Guarantees & Aftercare</CardTitle>
           </CardHeader>
           <CardContent>
