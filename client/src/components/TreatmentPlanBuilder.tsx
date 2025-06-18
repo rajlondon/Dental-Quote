@@ -313,11 +313,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
-  
+
   // Calculate totals
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatments.reduce((sum, item) => sum + item.subtotalUSD, 0);
-  
+
   // Update parent component when treatments change - with debouncing to prevent spam
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -325,39 +325,39 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         onTreatmentsChange(treatments);
       }
     }, 100); // Small debounce to prevent excessive calls
-    
+
     return () => clearTimeout(timeoutId);
   }, [treatments, onTreatmentsChange]);
-  
+
   // Listen for promo code package events - simplified to reduce state updates
   useEffect(() => {
     const handlePackagePromo = (e: CustomEvent) => {
       const { packageData } = e.detail;
-      
+
       if (!packageData || !packageData.treatments) return;
-      
+
       // Only process if we don't already have treatments from this package
       const hasPackageTreatments = treatments.some(t => t.fromPackage);
       if (hasPackageTreatments) return;
-      
+
       // Map package treatments to our treatment format
       const packageTreatments = packageData.treatments.map((treatment: any) => {
         // Find matching treatment in our catalog
         let treatmentDetails = null;
-        
+
         // Search in all categories
         for (const category of TREATMENT_CATEGORIES) {
           const found = category.treatments.find(t => 
             t.id.includes(treatment.id) || 
             t.name.toLowerCase().includes(treatment.id.toLowerCase())
           );
-          
+
           if (found) {
             treatmentDetails = { ...found, category: category.id };
             break;
           }
         }
-        
+
         // If no match found, create a generic treatment
         if (!treatmentDetails) {
           treatmentDetails = {
@@ -368,12 +368,12 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
             category: 'other'
           };
         }
-        
+
         // Calculate Istanbul prices (35% of UK costs)
         const istanbulPriceGBP = Math.round(treatmentDetails.priceGBP * 0.35);
         const istanbulPriceUSD = Math.round(treatmentDetails.priceUSD * 0.35);
         const quantity = treatment.quantity || 1;
-        
+
         return {
           id: `${treatmentDetails.id}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
           category: treatmentDetails.category,
@@ -389,35 +389,35 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           fromPackage: true
         };
       });
-      
+
       // Clear existing treatments and set new ones
       setTreatments(packageTreatments);
     };
-    
+
     // Add event listener
     window.addEventListener('packagePromoApplied', handlePackagePromo as EventListener);
-    
+
     // Clean up
     return () => {
       window.removeEventListener('packagePromoApplied', handlePackagePromo as EventListener);
     };
   }, [treatments]);
-  
+
   // Get available treatments for the selected category
   const availableTreatments = TREATMENT_CATEGORIES.find(cat => cat.id === selectedCategory)?.treatments || [];
-  
+
   // Get promo code from session storage
   const [promoCode, setPromoCode] = useState<string | null>(null);
   const [discountAmount, setDiscountAmount] = useState<number>(0);
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | null>(null);
   const [discountValue, setDiscountValue] = useState<number>(0);
-  
+
   // Load promo code from session storage on mount - run only once
   useEffect(() => {
     const storedPromoCode = sessionStorage.getItem('pendingPromoCode');
     if (storedPromoCode && !promoCode) {
       setPromoCode(storedPromoCode);
-      
+
       // Try to get discount info from session storage
       const packageData = sessionStorage.getItem('pendingPackageData');
       if (packageData) {
@@ -426,32 +426,32 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           if (parsedPackage.originalPrice && parsedPackage.packagePrice) {
             setDiscountAmount(parsedPackage.originalPrice - parsedPackage.packagePrice);
           }
-          
+
           // If there's discount type and value information, save it
           if (parsedPackage.discountType && parsedPackage.discountValue) {
             setDiscountType(parsedPackage.discountType);
             setDiscountValue(parsedPackage.discountValue);
           }
-          
+
         } catch (e) {
           console.error('Failed to parse package data from session storage', e);
         }
       }
     }
   }, []); // Empty dependency array - run only once on mount
-  
+
   // Get the selected treatment details
   const treatmentDetails = availableTreatments.find(t => t.id === selectedTreatment);
-  
+
   const handleAddTreatment = () => {
     if (!selectedTreatment || !treatmentDetails) return;
-    
+
     // Calculate Istanbul prices (35% of UK costs)
     const istanbulPriceGBP = Math.round(treatmentDetails.priceGBP * 0.35);
     const istanbulPriceUSD = Math.round(treatmentDetails.priceUSD * 0.35);
     const subtotalGBP = istanbulPriceGBP * quantity;
     const subtotalUSD = istanbulPriceUSD * quantity;
-    
+
     const newTreatment: TreatmentItem = {
       id: `${selectedTreatment}_${Date.now()}`, // Unique ID
       category: selectedCategory,
@@ -465,18 +465,18 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       ukPriceGBP: treatmentDetails.priceGBP, // Store original UK price for comparison
       ukPriceUSD: treatmentDetails.priceUSD,
     };
-    
+
     setTreatments([...treatments, newTreatment]);
     resetForm();
   };
-  
+
   const handleRemoveTreatment = (id: string) => {
     setTreatments(treatments.filter(t => t.id !== id));
   };
-  
+
   const handleQuantityChange = (id: string, newQuantity: number) => {
     if (newQuantity < 1) return;
-    
+
     setTreatments(treatments.map(t => {
       if (t.id === id) {
         const subtotalGBP = t.priceGBP * newQuantity;
@@ -486,7 +486,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       return t;
     }));
   };
-  
+
   const resetForm = () => {
     setSelectedCategory('');
     setSelectedTreatment('');
@@ -498,28 +498,28 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const getTreatmentNote = (categoryId: string, treatmentId: string) => {
     const category = TREATMENT_CATEGORIES.find(cat => cat.id === categoryId);
     if (!category) return null;
-    
+
     const treatment = category.treatments.find(t => t.id === treatmentId);
     return treatment?.notes;
   };
-  
+
   // New direct add treatment without modal
   const handleDirectAddTreatment = (treatment: any, categoryId: string) => {
     // Check if treatment is already in the list
     const existingTreatment = treatments.find(
       t => t.name === treatment.name
     );
-    
+
     if (existingTreatment) {
       // Increment quantity if already in list
       handleQuantityChange(existingTreatment.id, existingTreatment.quantity + 1);
       return;
     }
-    
+
     // Calculate Istanbul prices (35% of UK costs)
     const istanbulPriceGBP = Math.round(treatment.priceGBP * 0.35);
     const istanbulPriceUSD = Math.round(treatment.priceUSD * 0.35);
-    
+
     // Add new treatment with Istanbul prices
     const newTreatment: TreatmentItem = {
       id: `${treatment.id}_${Date.now()}`, // Unique ID
@@ -534,10 +534,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       ukPriceGBP: treatment.priceGBP, // Store original UK price for comparison
       ukPriceUSD: treatment.priceUSD,
     };
-    
+
     setTreatments([...treatments, newTreatment]);
   };
-  
+
   // Check if a treatment is already in the list
   const isTreatmentSelected = (treatmentName: string): boolean => {
     return treatments.some(t => t.name === treatmentName);
@@ -551,14 +551,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
             <h2 className="text-2xl font-bold">Build Your Treatment Plan</h2>
             <p className="text-gray-600 text-sm">Select treatments from the categories below</p>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {treatments.length > 0 && (
               <div className="bg-blue-50 px-3 py-2 rounded text-sm font-medium text-blue-700">
                 {treatments.length} treatment{treatments.length !== 1 ? 's' : ''} added
               </div>
             )}
-            
+
             {showAddForm ? (
               <Button variant="outline" onClick={resetForm} size="sm">
                 Cancel
@@ -572,7 +572,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Promo Code Summary - shows when a promo code is active */}
       {promoCode && (
         <div className="mb-6 p-4 border rounded-md bg-green-50 border-green-200">
@@ -585,7 +585,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   Discount: £{discountAmount} {discountType === 'percentage' && `(${discountValue}% off)`}
                 </p>
               )}
-              
+
               {/* If it's a package code from storage, show that info */}
               {sessionStorage.getItem('pendingPackageData') && (
                 <div className="mt-2">
@@ -603,7 +603,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           </div>
         </div>
       )}
-      
+
       {/* Treatment Categories Tabs */}
       <div className="grid grid-cols-1 gap-6">
         <div>
@@ -619,7 +619,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 <TabsTrigger value="other" className="py-2 px-4 text-sm whitespace-nowrap flex-shrink-0">Other</TabsTrigger>
               </TabsList>
             </div>
-            
+
             {/* Implants Tab */}
             <TabsContent value="implants" className="border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
@@ -692,7 +692,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 ))}
               </div>
             </TabsContent>
-            
+
             {/* Veneers & Crowns Tab */}
             <TabsContent value="crowns_veneers" className="border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
@@ -746,7 +746,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3" />
-                                  
+
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -766,7 +766,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 ))}
               </div>
             </TabsContent>
-            
+
             {/* Teeth Whitening Tab */}
             <TabsContent value="whitening" className="border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
@@ -820,7 +820,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3" />
-                                  
+
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -840,7 +840,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 ))}
               </div>
             </TabsContent>
-            
+
             {/* Full Mouth Rehab Tab */}
             <TabsContent value="full_mouth" className="border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
@@ -894,7 +894,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3" />
-                                  
+
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -914,7 +914,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 ))}
               </div>
             </TabsContent>
-            
+
             {/* General Dentistry Tab */}
             <TabsContent value="general" className="border rounded-md p-4">
               <div className="flex items-center justify-between mb-3">
@@ -968,309 +968,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               <Tooltip>
                                 <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                                   <Info className="h-3 w-3" />
-                                  
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{treatment.notes}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            {/* Other Treatments Tab */}
-            <TabsContent value="other" className="border rounded-md p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold">Other Treatments</h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div className="flex items-center text-blue-600 text-sm cursor-help">
-                        <Info className="h-4 w-4 mr-1" />
-                        <span>Estimated Istanbul Prices</span>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent className="max-w-xs">
-                      <p>These are average prices in Istanbul. Your final treatment quote will be confirmed by your chosen clinic after reviewing your dental information. Payment is only made in-person after consultation.</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'other')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <div className="pt-0.5">
-                        <Checkbox 
-                          id={treatment.id}
-                          checked={isTreatmentSelected(treatment.name)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              handleDirectAddTreatment(treatment, 'other');
-                            } else {
-                              const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                              if (matchingTreatment) {
-                                handleRemoveTreatment(matchingTreatment.id);
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                      <div>
-                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
-                          {treatment.name}
-                        </label>
-                        <div className="flex items-center mt-1">
-                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
-                              {treatment.guarantee} guarantee
-                            </span>
-                          )}
-                          {treatment.notes && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
-                                  <Info className="h-3 w-3" />
-                                  
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{treatment.notes}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="font-medium text-sm">
-                        Estimated Istanbul Price: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            {/* Veneers & Crowns Tab */}
-            <TabsContent value="crowns_veneers" className="border rounded-md p-4">
-              <h3 className="font-semibold mb-3">Veneers & Crowns</h3>
-              <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'crowns_veneers')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id={treatment.id}
-                        checked={isTreatmentSelected(treatment.name)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            handleDirectAddTreatment(treatment, 'crowns_veneers');
-                          } else {
-                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                            if (matchingTreatment) {
-                              handleRemoveTreatment(matchingTreatment.id);
-                            }
-                          }
-                        }}
-                      />
-                      <div>
-                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
-                          {treatment.name}
-                        </label>
-                        <div className="flex items-center mt-1">
-                          {treatment.guarantee && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
-                              {treatment.guarantee} guarantee
-                            </span>
-                          )}
-                          {treatment.notes && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
-                                  <Info className="h-3 w-3" />
-                                  
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{treatment.notes}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="font-normal">
-                        Price varies by clinic
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            {/* Teeth Whitening Tab */}
-            <TabsContent value="whitening" className="border rounded-md p-4">
-              <h3 className="font-semibold mb-3">Teeth Whitening</h3>
-              <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'whitening')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id={treatment.id}
-                        checked={isTreatmentSelected(treatment.name)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            handleDirectAddTreatment(treatment, 'whitening');
-                          } else {
-                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                            if (matchingTreatment) {
-                              handleRemoveTreatment(matchingTreatment.id);
-                            }
-                          }
-                        }}
-                      />
-                      <div>
-                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
-                          {treatment.name}
-                        </label>
-                        <div className="flex items-center mt-1">
-                          {treatment.guarantee && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
-                              {treatment.guarantee} guarantee
-                            </span>
-                          )}
-                          {treatment.notes && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
-                                  <Info className="h-3 w-3" />
-                                  
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{treatment.notes}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="font-normal">
-                        Price varies by clinic
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            {/* Full Mouth Reconstruction Tab */}
-            <TabsContent value="full_mouth" className="border rounded-md p-4">
-              <h3 className="font-semibold mb-3">Full Mouth Reconstruction</h3>
-              <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'full_mouth')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id={treatment.id}
-                        checked={isTreatmentSelected(treatment.name)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            handleDirectAddTreatment(treatment, 'full_mouth');
-                          } else {
-                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                            if (matchingTreatment) {
-                              handleRemoveTreatment(matchingTreatment.id);
-                            }
-                          }
-                        }}
-                      />
-                      <div>
-                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
-                          {treatment.name}
-                        </label>
-                        <div className="flex items-center mt-1">
-                          {treatment.guarantee && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
-                              {treatment.guarantee} guarantee
-                            </span>
-                          )}
-                          {treatment.notes && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
-                                  <Info className="h-3 w-3" />
-                                  
-                                </TooltipTrigger>
-                                <TooltipContent className="max-w-xs">
-                                  <p>{treatment.notes}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="outline" className="font-normal">
-                        Price varies by clinic
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-            
-            {/* General Dentistry Tab */}
-            <TabsContent value="general" className="border rounded-md p-4">
-              <h3 className="font-semibold mb-3">General Dentistry</h3>
-              <div className="space-y-3">
-                {TREATMENT_CATEGORIES.find(cat => cat.id === 'general')?.treatments.map((treatment) => (
-                  <div key={treatment.id} className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
-                    <div className="flex items-start gap-3">
-                      <Checkbox 
-                        id={treatment.id}
-                        checked={isTreatmentSelected(treatment.name)}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            handleDirectAddTreatment(treatment, 'general');
-                          } else {
-                            const matchingTreatment = treatments.find(t => t.name === treatment.name);
-                            if (matchingTreatment) {
-                              handleRemoveTreatment(matchingTreatment.id);
-                            }
-                          }
-                        }}
-                      />
-                      <div>
-                        <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
-                          {treatment.name}
-                        </label>
-                        <div className="flex items-center mt-1">
-                          {treatment.guarantee && treatment.guarantee !== 'N/A' && (
-                            <span className="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded mr-2">
-                              {treatment.guarantee} guarantee
-                            </span>
-                          )}
-                          {treatment.notes && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
-                                  <Info className="h-3 w-3" />
-                                  
+
                                 </TooltipTrigger>
                                 <TooltipContent className="max-w-xs">
                                   <p>{treatment.notes}</p>
@@ -1294,7 +992,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 ))}
               </div>
             </TabsContent>
-            
+
             {/* Root Canal Tab */}
             <TabsContent value="root_canal" className="border rounded-md p-4">
               <h3 className="font-semibold mb-3">Root Canal Treatments</h3>
@@ -1334,7 +1032,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3" />
-                              
+
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Standard root canal treatment for single-rooted teeth</p>
@@ -1350,7 +1048,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
                     <Checkbox 
@@ -1386,7 +1084,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3" />
-                              
+
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Complex root canal treatment for multi-rooted teeth</p>
@@ -1404,7 +1102,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Bone Graft Tab */}
             <TabsContent value="bone_graft" className="border rounded-md p-4">
               <h3 className="font-semibold mb-3">Bone Grafts</h3>
@@ -1444,7 +1142,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3" />
-                              
+
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Small-volume bone graft procedure for single tooth area</p>
@@ -1460,7 +1158,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
                     <Checkbox 
@@ -1496,7 +1194,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3" />
-                              
+
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Large-volume or multiple area bone graft procedure</p>
@@ -1512,7 +1210,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between p-3 border rounded-md hover:bg-gray-50 transition-colors">
                   <div className="flex items-start gap-3">
                     <Checkbox 
@@ -1548,7 +1246,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           <Tooltip>
                             <TooltipTrigger className="inline-flex items-center text-xs text-blue-600">
                               <Info className="h-3 w-3" />
-                              
+
                             </TooltipTrigger>
                             <TooltipContent className="max-w-xs">
                               <p>Sinus lift procedure to increase bone volume in upper jaw</p>
@@ -1566,7 +1264,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Other Treatments Tab */}
             <TabsContent value="other" className="border rounded-md p-4">
               <h3 className="font-semibold mb-3">Other Treatments</h3>
@@ -1581,12 +1279,12 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         </div>
 
       </div>
-      
+
       {/* Add Special Treatment Form (Modal style) */}
       {showAddForm && (
         <div className="bg-gray-50 p-4 rounded-md mt-6 border border-gray-200">
           <h3 className="text-lg font-medium mb-4">Add a Special Treatment</h3>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1611,7 +1309,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Treatment
@@ -1633,7 +1331,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Quantity
@@ -1645,7 +1343,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                 onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
               />
             </div>
-            
+
             <div className="flex items-end">
               <Button 
                 onClick={handleAddTreatment}
@@ -1656,7 +1354,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </Button>
             </div>
           </div>
-          
+
           {treatmentDetails?.notes && (
             <Alert className="mt-2 bg-blue-50 text-blue-800 border-blue-200">
               <AlertCircle className="h-4 w-4" />
@@ -1667,7 +1365,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           )}
         </div>
       )}
-      
+
       {/* Treatment List */}
       {treatments.length > 0 && (
         <>
@@ -1684,7 +1382,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
             <TableBody>
               {treatments.map((treatment) => {
                 const note = getTreatmentNote(treatment.category, treatment.id.split('_')[0] + '_' + treatment.id.split('_')[1]);
-                
+
                 return (
                   <TableRow key={treatment.id} className={treatment.specialOffer ? 'bg-primary/5 border-primary/20' : ''}>
                     <TableCell>
@@ -1816,7 +1514,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               })}
             </TableBody>
           </Table>
-          
+
           {/* Totals */}
           <div className="flex justify-end">
             <div className="w-full md:w-96 bg-blue-50 rounded-md p-4">
@@ -1848,14 +1546,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   </svg>
                   Have a Promo Code or Package?
                 </h3>
-                
+
                 <div className="mt-2">
                   <PromoCodeInput />
                 </div>
-                
+
                 <div className="mt-3 text-sm text-blue-700 flex items-start">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
                   <p>Apply a promo code to access special discounts and packages. Some packages include tourist attractions and additional services!</p>
                 </div>
@@ -1870,17 +1568,17 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       alert('Please select at least one treatment to continue.');
                       return;
                     }
-                    
+
                     // Save treatments first
                     if (onTreatmentsChange) {
                       onTreatmentsChange(treatments);
                     }
-                    
+
                     // Try multiple methods to navigate to next step
                     const patientInfoStep = document.querySelector('[data-step="patient-info"]');
                     const patientInfoButton = document.querySelector('button[data-step="patient-info"]');
                     const nextStepButton = document.querySelector('.step-navigation button[aria-label*="patient"], .step-navigation button[aria-label*="info"]');
-                    
+
                     if (patientInfoStep) {
                       (patientInfoStep as HTMLElement).click();
                     } else if (patientInfoButton) {
@@ -1900,7 +1598,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         }, 500);
                       }
                     }
-                    
+
                     // Scroll to the top of the page
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }}
@@ -1912,7 +1610,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   Compare prices from verified Istanbul dental clinics
                 </p>
               </div>
-                
+
               {/* Treatment Package Info */}
               <div className="mt-4 border-t border-gray-200 pt-4">
                 <div className="flex items-center justify-between mb-2">

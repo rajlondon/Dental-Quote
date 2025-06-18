@@ -1247,12 +1247,14 @@ const YourQuotePage: React.FC = () => {
 
   // Function to handle treatment plan changes
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
+    const previousLength = treatmentItems.length;
     setTreatmentItems(items);
 
-    if (items.length > 0) {
+    // Only show toast if items were actually added (not just on initialization or removal)
+    if (items.length > previousLength) {
       toast({
-        title: "Treatment Plan Updated",
-        description: "Your treatment plan has been updated.",
+        title: "Treatment Added",
+        description: "Treatment has been added to your plan.",
       });
     }
   };
@@ -1324,21 +1326,25 @@ const YourQuotePage: React.FC = () => {
       console.log("Saved special offer to sessionStorage:", specialOffer);
     }
 
-    // Show welcome toast - adjusting based on whether this came from special offer
-    if (specialOffer) {
-      toast({
-        title: "Special Offer Selected",
-        description: `Your quote includes: ${specialOffer.title}`,
-      });
-    } else {
-      toast({
-        title: "Let's Build Your Quote",
-        description: "Start by creating your custom treatment plan below.",
-      });
+    // Show welcome toast only once - check if already shown
+    const hasShownWelcome = sessionStorage.getItem('welcomeToastShown');
+    if (!hasShownWelcome) {
+      if (specialOffer) {
+        toast({
+          title: "Special Offer Selected",
+          description: `Your quote includes: ${specialOffer.title}`,
+        });
+      } else {
+        toast({
+          title: "Let's Build Your Quote",
+          description: "Start by creating your custom treatment plan below.",
+        });
+      }
+      sessionStorage.setItem('welcomeToastShown', 'true');
     }
 
     // Initialize treatments based on whether we have a special offer
-    if (specialOffer) {
+    if (specialOffer && treatmentItems.length === 0) {
       // Create a treatment item from the special offer
       const specialOfferTreatment: PlanTreatmentItem = {
         id: `special_offer_${Date.now()}`,
@@ -1376,7 +1382,7 @@ const YourQuotePage: React.FC = () => {
       setTreatmentItems([specialOfferTreatment]);
     }
     // Initialize with a default treatment if the user came from selecting a specific treatment
-    else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
+    else if (quoteParams.treatment && quoteParams.treatment !== 'Flexible' && treatmentItems.length === 0) {
       const initialTreatment: PlanTreatmentItem = {
         id: `default_${Date.now()}`,
         category: 'implants', // Default category, would be determined by mapping in real app
@@ -1393,7 +1399,7 @@ const YourQuotePage: React.FC = () => {
     }
 
     // Initialize patient info from URL parameters if available
-    if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) {
+    if ((searchParams.get('name') || searchParams.get('email') || searchParams.get('phone')) && !patientInfo) {
       setPatientInfo({
         fullName: searchParams.get('name') || '',
         email: searchParams.get('email') || '',
@@ -1406,7 +1412,21 @@ const YourQuotePage: React.FC = () => {
         preferredContactMethod: 'email'
       });
     }
-  }, []);
+
+    // Add event listener for continue button
+    const handleContinueToPatientInfo = () => {
+      if (treatmentItems.length > 0) {
+        setCurrentStep('patient-info');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    };
+
+    window.addEventListener('continueToPatientInfo', handleContinueToPatientInfo);
+
+    return () => {
+      window.removeEventListener('continueToPatientInfo', handleContinueToPatientInfo);
+    };
+  }, [specialOffer, treatmentItems.length, patientInfo]);
 
   return (
     <>
@@ -1488,7 +1508,17 @@ const YourQuotePage: React.FC = () => {
                     ${currentStep === 'patient-info' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
                     ${treatmentItems.length === 0 ? 'opacity-50' : ''}
                   `}
-                  onClick={() => treatmentItems.length > 0 && setCurrentStep('patient-info')}
+                  onClick={() => {
+                    if (treatmentItems.length > 0) {
+                      setCurrentStep('patient-info');
+                    } else {
+                      toast({
+                        title: "Add Treatments First",
+                        description: "Please add at least one treatment before proceeding.",
+                        variant: "destructive"
+                      });
+                    }
+                  }}
                 >
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${
                     currentStep === 'patient-info' ? 'bg-blue-500' : 
@@ -1709,6 +1739,23 @@ const YourQuotePage: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Treatment Summary */}
+                    <div className="mb-6 p-4 bg-gray-50 rounded-md">
+                      <h3 className="font-medium mb-2">Your Treatment Plan</h3>
+                      <div className="space-y-2">
+                        {treatmentItems.map((item, index) => (
+                          <div key={item.id} className="flex justify-between items-center text-sm">
+                            <span>{item.name} (x{item.quantity})</span>
+                            <span className="font-medium">£{item.subtotalGBP}</span>
+                          </div>
+                        ))}
+                        <div className="border-t pt-2 flex justify-between items-center font-medium">
+                          <span>Total Estimated Istanbul Price:</span>
+                          <span className="text-blue-600">£{totalGBP}</span>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Clinic sorting options */}
                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-2">
                       <p className="text-sm text-gray-700">Showing {clinics.length} available clinics for your treatment</p>
@@ -1746,7 +1793,7 @@ const YourQuotePage: React.FC = () => {
                       </div>
                     </div>
 
-                    {/* Clinic list */}
+                    {/* Clinic list with cards */}
                     <div className="space-y-6">
                       {clinics.map((clinic) => (
                         <ClinicCard
