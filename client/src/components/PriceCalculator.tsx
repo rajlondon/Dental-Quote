@@ -154,7 +154,6 @@ import PythonPdfGenerator from "./PythonPdfGenerator";
 import jsPDF from "jspdf";
 import { sendCustomerQuoteEmail } from "@/utils/emailjs";
 import {
-  TreatmentPrice,
   getAllTreatments,
   getTreatmentByName,
   initializePrices,
