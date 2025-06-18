@@ -818,8 +818,7 @@ const EducationalSection: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card          <CardHeader>
             <CardTitle className="text-lg">Guarantees & Aftercare</CardTitle>
           </CardHeader>
           <CardContent>
@@ -1024,31 +1023,6 @@ const WhatsAppButton: React.FC = () => {
   );
 };
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Check, 
-  ChevronRight, 
-  MapPin, 
-  Star, 
-  Clock, 
-  Calendar, 
-  Download, 
-  Mail, 
-  CreditCard,
-  Hotel,
-  Car,
-  Shield,
-  Plane,
-  Sparkles,
-  Info,
-  ArrowLeft,
-  Edit3,
-  RefreshCcw,
-  MessageCircle,
-  CheckCircle,
-  Pencil
-} from 'lucide-react';
-import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import {
   Table,
   TableBody,
