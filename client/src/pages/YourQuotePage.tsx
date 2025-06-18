@@ -96,6 +96,25 @@ interface TreatmentItem {
   guarantee: string;
 }
 
+interface PlanTreatmentItem {
+  id: string;
+  category: string;
+  name: string;
+  quantity: number;
+  priceGBP: number;
+  priceUSD: number;
+  subtotalGBP: number;
+  subtotalUSD: number;
+  guarantee: string;
+  specialOffer?: {
+    id: string;
+    title: string;
+    discountType: 'percentage' | 'fixed_amount';
+    discountValue: number;
+    clinicId: string;
+  };
+}
+
 // Mock data for clinics
 const CLINIC_DATA: ClinicInfo[] = [
   {
@@ -1039,6 +1058,7 @@ import {
 // Import the new components
 import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
 import TreatmentGuide from '@/components/TreatmentGuide';
+import TreatmentPlanBuilder from '@/components/TreatmentPlanBuilder';
 
 // Interface for special offer from URL parameters
 interface SpecialOfferParams {
