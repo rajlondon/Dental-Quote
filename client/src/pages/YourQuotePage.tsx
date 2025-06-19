@@ -240,7 +240,7 @@ const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
           key={i}
           className={`h-4 w-4 ${
             i < fullStars 
-              ? 'fill-yellow-400 text-yellow-400' 
+              ? ''fill-yellow-400 text-yellow-400' 
               : (i === fullStars && hasHalfStar)
                 ? 'text-yellow-400 fill-yellow-400' 
                 : 'text-gray-300'
@@ -533,30 +533,6 @@ const YourQuotePage: React.FC = () => {
               initialTreatments={treatmentItems}
               onTreatmentsChange={handleTreatmentPlanChange}
             />
-          </div>
-
-          
-
-          {/* Call to Action */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white rounded-lg p-8 mb-10">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">
-                Ready to Transform Your Smile?
-              </h2>
-              <p className="text-blue-100 mb-6">
-                Select a clinic above to start your journey. Our concierge team will handle all arrangements for a stress-free experience.
-              </p>
-              <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <Button 
-                  variant="outline"
-                  className="border-white text-white hover:bg-blue-700"
-                  size="lg"
-                >
-                  <MessageCircle className="mr-2 h-5 w-5" />
-                  Speak to a Dental Advisor
-                </Button>
-              </div>
-            </div>
           </div>
         </div>
       </main>
