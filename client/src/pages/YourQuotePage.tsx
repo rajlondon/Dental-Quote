@@ -240,7 +240,7 @@ const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
           key={i}
           className={`h-4 w-4 ${
             i < fullStars 
-              ? ''fill-yellow-400 text-yellow-400' 
+              ? 'fill-yellow-400 text-yellow-400' 
               : (i === fullStars && hasHalfStar)
                 ? 'text-yellow-400 fill-yellow-400' 
                 : 'text-gray-300'
