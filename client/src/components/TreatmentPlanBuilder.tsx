@@ -1573,17 +1573,8 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         timestamp: new Date().toISOString()
                       }));
 
-                      // Scroll to the clinic selection section
-                      const clinicSection = document.querySelector('[data-clinic-selection]');
-                      if (clinicSection) {
-                        clinicSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      } else {
-                        // Fallback: scroll to bottom of page where clinics should be
-                        window.scrollTo({ 
-                          top: document.body.scrollHeight - window.innerHeight, 
-                          behavior: 'smooth' 
-                        });
-                      }
+                      // Navigate to the results page
+                      window.location.href = '/matched-clinics';
                     }
                   }}
                   disabled={treatments.length === 0}

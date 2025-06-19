@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, Suspense } from "react";
 import { Switch, Route, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -100,7 +100,7 @@ import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
-import { Suspense } from "react";
+import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
 
 function Router() {
   return (
