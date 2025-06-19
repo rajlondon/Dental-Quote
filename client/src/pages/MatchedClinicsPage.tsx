@@ -82,16 +82,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [selectedTab, setSelectedTab] = useState<string>('default');
   const [selectedView, setSelectedView] = useState<'list' | 'grid'>('list');
   const { toast } = useToast();
-  
+
   // New function to handle direct PDF download
   const downloadPdf = (clinicId: string) => {
     try {
       // Get the clinic data from filtered clinics state
       const clinic = filteredClinics.find((c: any) => c.id === clinicId);
       if (!clinic) return;
-      
+
       const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, treatmentPlan);
-      
+
       // Store in localStorage for compatibility with existing code
       localStorage.setItem('selectedClinicId', clinicId);
       localStorage.setItem('selectedClinicData', JSON.stringify({
@@ -99,7 +99,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         treatments: clinicTreatments,
         totalPrice: totalPrice
       }));
-      
+
       // If onQuoteDownload is provided, use that first
       if (onQuoteDownload) {
         onQuoteDownload();
@@ -136,7 +136,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         ],
         selectedClinicIndex: 0 // First (and only) clinic in the array
       };
-      
+
       toast({
         title: "Generating PDF",
         description: "Preparing your quote PDF...",
@@ -147,19 +147,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       form.method = 'POST';
       form.action = '/api/jspdf-quote-v2';
       form.target = '_blank'; // Open in new tab or trigger download
-      
+
       // Add the quote data as hidden fields
       const dataInput = document.createElement('input');
       dataInput.type = 'hidden';
       dataInput.name = 'quoteData';
       dataInput.value = JSON.stringify(quoteData);
       form.appendChild(dataInput);
-      
+
       // Submit the form
       document.body.appendChild(form);
       form.submit();
       document.body.removeChild(form);
-      
+
       toast({
         title: "Download Started",
         description: "Your quote PDF is being generated and will download shortly.",
@@ -173,7 +173,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       });
     }
   };
-  
+
   // Load treatment data from localStorage if not provided via props
   useEffect(() => {
     if (treatmentItems.length === 0) {
@@ -197,22 +197,22 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // State for treatment plan if loaded from localStorage
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>(treatmentItems);
   const [localTotalGBP, setTotalGBP] = useState<number>(totalGBP || 0);
-  
+
   // Use either props or localStorage data
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
   const activeTotalGBP = totalGBP || localTotalGBP;
-  
+
   // Get promo code information from session storage if available
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
   const [filteredClinics, setFilteredClinics] = useState<any[]>([]);
   const [ukTotalPrice, setUkTotalPrice] = useState<number>(0);
-  
+
   useEffect(() => {
     // Calculate value for UK for comparison (MOCK DATA)
     const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
   }, [totalGBP]);
-  
+
   // Separate effect for clinic filtering to avoid infinite loops
   useEffect(() => {
     // Define the clinics data first
@@ -332,15 +332,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         certificates: ['ISO 9001', 'European Quality in Dentistry']
       }
     ];
-    
+
     // Check if this is a promo code with a specific clinic ID (get once, don't track in deps)
     const codeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
     console.log('Promo code clinic ID:', codeClinicId);
-    
+
     if (codeClinicId) {
       const filtered = allClinicsDataList.filter(clinic => clinic.id === codeClinicId);
       setFilteredClinics(filtered.length > 0 ? filtered : allClinicsDataList);
-      
+
       // If we have exactly one clinic, automatically select the tab
       if (filtered.length === 1) {
         setSelectedTab(filtered[0].id);
@@ -352,23 +352,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     } else {
       setFilteredClinics(allClinicsDataList);
     }
-    
-    // Clear promo code session storage after navigation away
-    return () => {
-      const hasVisited = sessionStorage.getItem('visitedMatchedClinics');
-      if (hasVisited) {
-        // Clear the promo code data to prevent it from persisting indefinitely
-        sessionStorage.removeItem('pendingPromoCode');
-        sessionStorage.removeItem('pendingPackageData');
-        sessionStorage.removeItem('pendingPromoCodeClinicId');
-        sessionStorage.removeItem('visitedMatchedClinics');
-      } else {
-        // Mark that we've visited this page
-        sessionStorage.setItem('visitedMatchedClinics', 'true');
-      }
-    };
   }, []); // Empty dependency array - this should only run once on mount
-  
+
   // Define clinic data
   const allClinics = [
     {
@@ -548,7 +533,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
   ];
-  
+
   // Define the full list of clinics
   const allClinicsDataList = [
     {
@@ -631,8 +616,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       ]
     }
   ];
-  
-  
+
+
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
@@ -640,11 +625,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       ? filteredClinics.find((c: any) => c.id === clinicId) 
       : null;
     const priceFactor = clinic?.priceFactor || 0.35; // Default to 35% if clinic not found
-    
+
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
       const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
       const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
-      
+
       return {
         treatmentName: treatment.name,
         originalName: treatment.name,
@@ -654,12 +639,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         category: treatment.category
       };
     });
-    
+
     const totalPrice = clinicTreatments.reduce((sum, item) => sum + item.subtotal, 0);
-    
+
     return { clinicTreatments, totalPrice };
   };
-  
+
   const getTierLabel = (tier: string) => {
     switch (tier) {
       case 'premium':
@@ -672,16 +657,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         return { label: 'Standard', color: 'bg-gray-50 text-gray-700 border-gray-200' };
     }
   };
-  
+
   // Calculate UK total
   const ukTotal = activeTreatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
-  
+
   // Extract promo code information from session storage
   const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
   const pendingPackageData = sessionStorage.getItem('pendingPackageData') 
     ? JSON.parse(sessionStorage.getItem('pendingPackageData') || '{}') 
     : null;
-  
+
   if (!activeTreatmentPlan.length) {
     return (
       <div className="container mx-auto py-10 px-4 text-center">
@@ -706,7 +691,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               </div>
               <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
             </div>
-            
+
             <div className="relative flex items-center ml-0 md:ml-2">
               <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">2</div>
               <div className="ml-3">
@@ -715,7 +700,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               </div>
               <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
             </div>
-            
+
             <div className="relative flex items-center ml-0 md:ml-2">
               <div className="h-10 w-10 rounded-full bg-blue-500 border-4 border-blue-100 flex items-center justify-center text-white font-semibold">3</div>
               <div className="ml-3">
@@ -724,7 +709,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               </div>
             </div>
           </div>
-          
+
           <Button 
             variant="outline"
             className="flex items-center" 
@@ -740,7 +725,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </Button>
         </div>
       </div>
-    
+
       {/* Page Header */}
       <div className="mb-10">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6">
@@ -750,10 +735,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               We've matched your treatment needs with {filteredClinics.length} top-rated Istanbul dental clinics
             </p>
           </div>
-          
+
 
         </div>
-        
+
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
           <div className="flex items-start gap-2">
             <div className="text-blue-500 mt-0.5">
@@ -769,7 +754,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </div>
           </div>
         </div>
-        
+
         {/* Treatment Summary */}
         <div className="bg-gray-50 border rounded-lg p-4">
           <h2 className="font-semibold mb-3">Your Treatment Plan Summary</h2>
@@ -792,13 +777,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
         </div>
       </div>
-      
+
       {/* Clinic Comparison */}
       <div className="space-y-8">
         {filteredClinics.map((clinic: any) => {
           const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
           const tierInfo = getTierLabel(clinic.tier);
-          
+
           return (
             <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
               <div className="border-b">
@@ -820,7 +805,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               : 'https://placehold.co/600x400/f0fdf4/166534?text=Affordable+Clinic';
                         }}
                       />
-                      
+
                       {/* Small badge in the corner to indicate tier */}
                       <div className="absolute top-2 right-2">
                         <Badge 
@@ -838,14 +823,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         </Badge>
                       </div>
                     </div>
-                    
+
                     <h2 className="text-2xl font-bold mb-2">{clinic.name}</h2>
-                    
+
                     <div className="flex items-center gap-3 mb-3">
                       <Badge variant="outline" className={tierInfo.color}>
                         {tierInfo.label}
                       </Badge>
-                      
+
                       <div className="flex items-center">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
@@ -863,16 +848,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         <span className="ml-1 text-xs text-gray-500">({clinic.ratings && clinic.ratings.reviews ? clinic.ratings.reviews : '150'} reviews)</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-start gap-2 text-sm text-gray-700 mb-4">
                       <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
                       <span className="font-medium">{clinic.location ? `${clinic.location.area}, ${clinic.location.city}` : 'Şişli, Istanbul'}</span>
                     </div>
-                    
+
                     <p className="text-sm text-gray-600 mb-6 leading-relaxed">
                       {clinic.description || 'Modern dental clinic offering comprehensive treatments with state-of-the-art technology and experienced international dentists.'}
                     </p>
-                    
+
                     <div className="space-y-4 mb-6">
                       <div className="flex items-start gap-2">
                         <Award className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
@@ -884,7 +869,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2">
                         <User className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
                         <div>
@@ -895,7 +880,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2">
                         <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
                         <div>
@@ -920,7 +905,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-start gap-2">
                         <Shield className="h-5 w-5 text-purple-500 mt-0.5 shrink-0" />
                         <div>
@@ -934,12 +919,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Quote Details */}
                   <div className="lg:col-span-2">
                     <div className="flex flex-col h-full">
                       <h3 className="text-lg font-semibold mb-4">Your Personalized Treatment Quote</h3>
-                      
+
                       <div className="overflow-hidden mb-4">
                         <div className="bg-gray-50 rounded-lg p-4">
                           <div className="mb-3">
@@ -971,14 +956,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               ))}
                             </div>
                           </div>
-                          
+
                           <div className="border-t pt-3 mb-3">
                             <div className="flex justify-between mb-1">
                               <span className="font-medium">Treatment Total:</span>
                               <span className="font-medium">£{totalPrice}</span>
                             </div>
                           </div>
-                          
+
                           <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-3">
                             <div className="flex justify-between mb-2">
                               <span className="text-sm font-medium text-blue-700">UK Cost Comparison:</span>
@@ -989,14 +974,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               <span>£{ukTotal - totalPrice} ({Math.round((ukTotal - totalPrice) / ukTotal * 100)}%)</span>
                             </div>
                           </div>
-                          
+
                           <div className="text-xs text-gray-500 mb-2">
                             <p>* Final quote will be confirmed after clinic review of your dental records</p>
                             <p>* Hotel stays often included in treatment packages depending on the cost of your treatment</p>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="mt-auto">
                         <div className="flex flex-wrap gap-3 justify-end">
                           <Button 
@@ -1011,14 +996,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
                               localStorage.setItem('selectedClinicId', clinic.id);
-                              
+
                               // Save clinic pricing data for use in the portal
                               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, treatmentPlan);
-                              
+
                               // If there's a pending promo code, include the discount info
                               const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
                               const hasDiscount = pendingPromoCode && pendingPromoCode.length > 0;
-                              
+
                               // Store comprehensive booking data
                               const bookingData = {
                                 clinicId: clinic.id,
@@ -1030,18 +1015,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 patientInfo: patientInfo,
                                 timestamp: new Date().toISOString()
                               };
-                              
+
                               localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
                               localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
-                              
+
                               // Call the onSelectClinic callback if provided
                               if (onSelectClinic) {
                                 onSelectClinic(clinic.id);
                               }
-                              
+
                               // Redirect to patient portal
                               setLocation('/patient-portal');
-                              
+
                               toast({
                                 title: "Clinic Selected",
                                 description: "Sign in to your patient portal to complete your booking.",
@@ -1057,7 +1042,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                   </div>
                 </div>
               </div>
-              
+
               {/* Detailed Info Tabs */}
               {(
                 <div className="p-6">
@@ -1070,7 +1055,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       <TabsTrigger value="videos">Videos</TabsTrigger>
                       <TabsTrigger value="reviews">More Reviews</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="ratings">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg p-4 border">
@@ -1096,7 +1081,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.overall : 'N/A'}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Cleanliness</span>
                               <div className="flex items-center">
@@ -1117,7 +1102,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.cleanliness : 'N/A'}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Staff</span>
                               <div className="flex items-center">
@@ -1138,7 +1123,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.staff : 'N/A'}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Value</span>
                               <div className="flex items-center">
@@ -1159,7 +1144,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span className="ml-2 text-sm font-medium">{clinic.ratings ? clinic.ratings.value : 'N/A'}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <span className="text-sm">Location</span>
                               <div className="flex items-center">
@@ -1181,7 +1166,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="mt-4 pt-4 border-t">
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Total Reviews</span>
@@ -1189,7 +1174,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Patient Testimonials</h4>
                           <div className="space-y-4">
@@ -1206,7 +1191,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <span>Rebecca, UK</span>
                               </div>
                             </div>
-                            
+
                             <div className="border-l-4 border-blue-200 pl-3 py-1">
                               <p className="text-sm italic mb-1">
                                 "The quality of dental work at {clinic.name} is exceptional and at a fraction of UK prices. I'm so pleased with the results!"
@@ -1224,7 +1209,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         </div>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="doctors">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg p-4 border">
@@ -1250,7 +1235,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             }
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Clinic Features</h4>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1280,7 +1265,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         </div>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="amenities">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg p-4 border">
@@ -1312,7 +1297,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Treatment Guarantees</h4>
                           <div className="space-y-3">
@@ -1347,7 +1332,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         </div>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="before-after">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg p-4 border">
@@ -1383,7 +1368,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Veneers & Crowns</h4>
                           <div className="space-y-4">
@@ -1418,14 +1403,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 text-center">
                         <Button variant="outline" size="sm">
                           View More Before & After Cases
                         </Button>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="videos">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-lg p-4 border">
@@ -1448,7 +1433,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="bg-white rounded-lg p-4 border">
                           <h4 className="font-medium mb-3">Patient Testimonial Video</h4>
                           <div className="space-y-4">
@@ -1470,14 +1455,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="mt-4 text-center">
                         <Button variant="outline" size="sm">
                           View More Videos
                         </Button>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="reviews">
                       <div className="bg-white rounded-lg p-6 border mb-6">
                         <h4 className="font-medium mb-4">Patient Reviews</h4>
@@ -1504,7 +1489,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="border-b pb-5">
                             <div className="flex items-start gap-4">
                               <div className="rounded-full bg-blue-100 p-2 mt-1">
@@ -1527,7 +1512,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className="border-b pb-5">
                             <div className="flex items-start gap-4">
                               <div className="rounded-full bg-blue-100 p-2 mt-1">
@@ -1550,7 +1535,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               </div>
                             </div>
                           </div>
-                          
+
                           <div>
                             <div className="flex items-start gap-4">
                               <div className="rounded-full bg-blue-100 p-2 mt-1">
@@ -1574,7 +1559,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </div>
-                        
+
                         <div className="mt-6 text-center">
                           <Button variant="outline" size="sm">
                             Load More Reviews
@@ -1589,7 +1574,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           );
         })}
       </div>
-      
+
       {/* Bottom Action Bar */}
       <div className="mt-10 border-t pt-6">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -1598,7 +1583,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               Need help choosing the right clinic? Our dental tourism specialists are here to help.
             </p>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row gap-3">
             <Button variant="outline" onClick={() => setLocation('/your-quote')} className="w-full sm:w-auto">
               Back to Quote
