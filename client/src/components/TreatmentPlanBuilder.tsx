@@ -563,21 +563,22 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       return;
     }
 
-    // Store treatment plan in session storage for the booking page
-    sessionStorage.setItem('treatmentPlan', JSON.stringify(treatments));
+    // Store treatment plan data for the clinic matching page
+    const treatmentData = {
+      treatments: treatments,
+      totalGBP: totalGBP,
+      totalUSD: totalUSD,
+      timestamp: new Date().toISOString()
+    };
 
-    // Navigate to clinic matching/results page
-    const params = new URLSearchParams({
-      treatments: treatments.length.toString(),
-      totalGBP: totalGBP.toString(),
-      source: 'treatment-builder'
-    });
+    localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentData));
 
-    setLocation(`/quote-results?${params.toString()}`);
+    // Navigate to the clinic matching page with full clinic cards
+    setLocation('/matched-clinics');
 
     toast({
-      title: "Proceeding to Booking",
-      description: "Finding matching clinics for your treatment plan..."
+      title: "Finding Clinics",
+      description: "Matching you with top-rated clinics for your treatment plan..."
     });
   };
 

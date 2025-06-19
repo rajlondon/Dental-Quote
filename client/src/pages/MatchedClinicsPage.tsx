@@ -182,10 +182,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         try {
           const parsedData = JSON.parse(savedTreatmentData);
           if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
-            // Update the treatmentItems via props callback if available
-            // For now, we'll use local state
             setTreatmentPlan(parsedData.treatments);
             setTotalGBP(parsedData.totalGBP || 0);
+            
+            console.log('Loaded treatment plan:', parsedData.treatments);
+            console.log('Total GBP:', parsedData.totalGBP);
           }
         } catch (error) {
           console.error('Error parsing treatment data from localStorage:', error);
