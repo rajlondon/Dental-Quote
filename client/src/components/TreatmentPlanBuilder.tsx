@@ -1198,7 +1198,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
           </Card>
         </div>
       </div>
-</div>
 
       {/* "Add Special Treatment" Form (Modal-like) */}
       {showAddForm && (
