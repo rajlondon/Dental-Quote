@@ -604,6 +604,84 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         </div>
       )}
 
+      {/* Treatment List and Summary */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Your Treatment List</h3>
+
+        {treatments.length === 0 ? (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              No treatments added yet. Select treatments from the categories above to build your treatment plan.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Treatment</TableHead>
+                  <TableHead>Quantity</TableHead>
+                  <TableHead>Price (GBP)</TableHead>
+                  <TableHead className="text-right">Subtotal (GBP)</TableHead>
+                  <TableHead className="text-right"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {treatments.map((treatment) => (
+                  <TableRow key={treatment.id}>
+                    <TableCell className="font-medium">{treatment.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleQuantityChange(treatment.id, treatment.quantity - 1)}
+                          disabled={treatment.quantity <= 1}
+                        >
+                          <MinusCircle className="h-4 w-4" />
+                        </Button>
+                        <Input
+                          type="number"
+                          value={treatment.quantity}
+                          onChange={(e) => {
+                            const newQuantity = parseInt(e.target.value);
+                            if (!isNaN(newQuantity)) {
+                              handleQuantityChange(treatment.id, newQuantity);
+                            }
+                          }}
+                          className="w-20 text-center"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleQuantityChange(treatment.id, treatment.quantity + 1)}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                    <TableCell>£{treatment.priceGBP.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">£{treatment.subtotalGBP.toLocaleString()}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="sm" onClick={() => handleRemoveTreatment(treatment.id)}>
+                        <MinusCircle className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={3}>Total:</TableCell>
+                  <TableCell className="text-right font-medium">£{totalGBP.toLocaleString()}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        )}
+      </div>
+
       {/* Treatment Categories Tabs */}
       <div className="grid grid-cols-1 gap-6">
         <div>
