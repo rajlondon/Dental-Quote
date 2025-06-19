@@ -411,6 +411,9 @@ const YourQuotePage: React.FC = () => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  // Estimated total for cost comparison
+  const estimatedTotal = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
+
   useEffect(() => {
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
 
@@ -515,6 +518,28 @@ const YourQuotePage: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </div>
+          {/* Cost Comparison Summary */}
+          <div className="mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Cost Comparison Summary</CardTitle>
+                <CardDescription>See how much you could save compared to UK dental treatments</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Estimated UK Cost</p>
+                    <p className="font-medium">£{Math.round(estimatedTotal * 2.5).toLocaleString()}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-gray-500">Estimated Istanbul Price</p>
+                    <p className="font-medium">£{Math.round(estimatedTotal).toLocaleString()}</p>
+                    <p className="text-sm text-green-500">Save up to {Math.round(((estimatedTotal * 2.5 - estimatedTotal) / (estimatedTotal * 2.5)) * 100)}% compared to UK</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
