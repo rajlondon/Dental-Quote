@@ -682,8 +682,81 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         )}
       </div>
 
-      {/* Treatment Categories Tabs */}
-      <div className="grid grid-cols-1 gap-6">
+      {/* Quote Summary section */}
+          {treatments.length > 0 && (
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5" />
+                    Quote Summary
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {/* Treatment list */}
+                  <div className="space-y-2 mb-6">
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">Selected Treatments</h4>
+                    
+                    {treatments.map((treatment) => (
+                      <div key={treatment.id} className="flex justify-between" data-treatment-id={treatment.id}>
+                        <span>
+                          {treatment.name}
+                          {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
+                        </span>
+                        <span className="font-medium">
+                          £{(treatment.priceGBP * (treatment.quantity || 1)).toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Subtotal */}
+                  <div className="flex justify-between py-2 border-t">
+                    <span>Subtotal</span>
+                    <span className="font-medium">£{totalGBP.toLocaleString()}</span>
+                  </div>
+                  
+                  {/* Discount (if applied) */}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between py-2 text-green-600">
+                      <span>
+                        {promoCode ? `Discount (${promoCode})` : 'Package Discount'}
+                      </span>
+                      <span className="font-medium">-£{discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  {/* Total */}
+                  <div className="flex justify-between py-2 border-t border-b mb-6">
+                    <span className="font-semibold">Total</span>
+                    <span className="font-bold text-lg">
+                      £{(totalGBP - discountAmount).toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  {/* Promo code input */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium mb-2">Promo Code</h4>
+                    <PromoCodeInput />
+                  </div>
+                  
+                  {/* Action buttons */}
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      disabled={treatments.length === 0}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Continue to Booking
+                    </Button>
+                    <Button variant="outline">Save Quote for Later</Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Treatment Categories Tabs */}
+          <div className="grid grid-cols-1 gap-6">
         <div>
           <Tabs defaultValue="implants" className="w-full">
             {/* Improved mobile-friendly with scrollable design */}
