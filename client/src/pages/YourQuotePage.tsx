@@ -378,8 +378,26 @@ const YourQuotePage: React.FC = () => {
     return clinicsList;
   });
 
-  // Treatment Plan Builder State
-  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
+  // Treatment Plan Builder State - Initialize with default treatment if specified in URL
+  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>(() => {
+    const treatmentParam = searchParams.get('treatment');
+    if (treatmentParam) {
+      // Create a default treatment item based on URL parameter
+      const treatmentName = treatmentParam.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+      return [{
+        id: `default-${Date.now()}`,
+        category: 'Restorative',
+        name: treatmentName,
+        quantity: 1,
+        priceGBP: 2000, // Default price
+        priceUSD: 2500,
+        subtotalGBP: 2000,
+        subtotalUSD: 2500,
+        guarantee: '5-year warranty'
+      }];
+    }
+    return [];
+  });
 
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

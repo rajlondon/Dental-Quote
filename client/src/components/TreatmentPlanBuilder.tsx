@@ -310,7 +310,41 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   onTreatmentsChange,
   hideHeader = false
 }) => {
-  const [treatments, setTreatments] = useState<TreatmentItem[]>(initialTreatments);
+  // Initialize treatments from props or empty array
+  const [treatments, setTreatments] = useState<TreatmentItem[]>(
+    initialTreatments && initialTreatments.length > 0 
+      ? initialTreatments.map(item => ({
+          id: item.id,
+          category: item.category,
+          name: item.name,
+          quantity: item.quantity,
+          priceGBP: item.priceGBP,
+          priceUSD: item.priceUSD,
+          subtotalGBP: item.subtotalGBP,
+          subtotalUSD: item.subtotalUSD,
+          guarantee: item.guarantee,
+          specialOffer: item.specialOffer
+        }))
+      : []
+  );
+
+  // Update treatments when initialTreatments prop changes
+  useEffect(() => {
+    if (initialTreatments && initialTreatments.length > 0) {
+      setTreatments(initialTreatments.map(item => ({
+        id: item.id,
+        category: item.category,
+        name: item.name,
+        quantity: item.quantity,
+        priceGBP: item.priceGBP,
+        priceUSD: item.priceUSD,
+        subtotalGBP: item.subtotalGBP,
+        subtotalUSD: item.subtotalUSD,
+        guarantee: item.guarantee,
+        specialOffer: item.specialOffer
+      })));
+    }
+  }, [initialTreatments]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -581,6 +615,18 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       description: "Matching you with top-rated clinics for your treatment plan..."
     });
   };
+
+  // Notify parent component of changes
+  useEffect(() => {
+    onTreatmentsChange?.(treatments);
+  }, [treatments, onTreatmentsChange]);
+
+  // Call onTreatmentsChange on initial load if we have treatments
+  useEffect(() => {
+    if (treatments.length > 0) {
+      onTreatmentsChange?.(treatments);
+    }
+  }, []); // Only run on mount
 
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-8">
