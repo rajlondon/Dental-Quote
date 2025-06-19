@@ -1573,11 +1573,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         timestamp: new Date().toISOString()
                       }));
 
-                      toast({
-                        title: "Treatment Plan Saved",
-                        description: `Your ${treatments.length} treatment${treatments.length > 1 ? 's' : ''} have been saved. You can now select a clinic below.`,
-                      });
-
                       // Scroll to the clinic selection section
                       const clinicSection = document.querySelector('[data-clinic-selection]');
                       if (clinicSection) {
@@ -1589,12 +1584,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           behavior: 'smooth' 
                         });
                       }
-                    } else {
-                      toast({
-                        title: "No Treatments Selected",
-                        description: "Please add at least one treatment to your plan before continuing.",
-                        variant: "destructive"
-                      });
                     }
                   }}
                   disabled={treatments.length === 0}
