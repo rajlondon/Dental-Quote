@@ -192,7 +192,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         }
       }
     }
-  }, [treatmentItems]);
+  }, [treatmentItems.length]);
 
   // State for treatment plan if loaded from localStorage
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>(treatmentItems);
@@ -211,10 +211,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     // Calculate value for UK for comparison (MOCK DATA)
     const ukTotal = Math.ceil(totalGBP * 2.2); // UK is typically 2-3x the cost of Turkey
     setUkTotalPrice(ukTotal);
-    
-    // Check if this is a promo code with a specific clinic ID
-    console.log('Promo code clinic ID:', promoCodeClinicId);
-    
+  }, [totalGBP]);
+  
+  // Separate effect for clinic filtering to avoid infinite loops
+  useEffect(() => {
     // Define the clinics data first
     const allClinicsDataList = [
       {
@@ -333,8 +333,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     ];
     
-    // Filter clinics if there's a promo code with a specific clinic ID
+    // Check if this is a promo code with a specific clinic ID (get once, don't track in deps)
     const codeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+    console.log('Promo code clinic ID:', codeClinicId);
+    
     if (codeClinicId) {
       const filtered = allClinicsDataList.filter(clinic => clinic.id === codeClinicId);
       setFilteredClinics(filtered.length > 0 ? filtered : allClinicsDataList);
@@ -365,7 +367,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         sessionStorage.setItem('visitedMatchedClinics', 'true');
       }
     };
-  }, [totalGBP]);
+  }, []); // Empty dependency array - this should only run once on mount
   
   // Define clinic data
   const allClinics = [
@@ -630,53 +632,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   ];
   
-  // Initialize filtered clinics
-  useEffect(() => {
-    // Set initial clinics for first render
-    setFilteredClinics(allClinicsDataList);
-  }, []);
   
-  // Apply clinic filtering based on promo code - in a separate effect to ensure it runs after initialization and force it to work
-  useEffect(() => {
-    const pendingPromoCode = window.sessionStorage.getItem('pendingPromoCode');
-    
-    console.log('Checking promo code for clinic filtering:', pendingPromoCode);
-    
-    // Directly map promo codes to specific clinics - this is the critical part to make it work
-    if (pendingPromoCode === 'IMPLANT2023') {
-      console.log('Filtering to show only DentSpa clinic for IMPLANT2023');
-      const dentSpaClinic = allClinicsDataList.find(clinic => clinic.id === 'dentspa');
-      if (dentSpaClinic) {
-        setFilteredClinics([dentSpaClinic]);
-        console.log('Filtered to only show DentSpa clinic');
-      }
-    } 
-    else if (pendingPromoCode === 'SMILE2023') {
-      console.log('Filtering to show only Beyaz Ada clinic for SMILE2023');
-      const beyazAdaClinic = allClinicsDataList.find(clinic => clinic.id === 'beyazada');
-      if (beyazAdaClinic) {
-        setFilteredClinics([beyazAdaClinic]);
-        console.log('Filtered to only show Beyaz Ada clinic');
-      }
-    }
-    else if (pendingPromoCode === 'FULLMOUTH2023') {
-      console.log('Filtering to show only Dental Harmony clinic for FULLMOUTH2023');
-      const dentalHarmonyClinic = allClinicsDataList.find(clinic => clinic.id === 'dentalharmony');
-      if (dentalHarmonyClinic) {
-        setFilteredClinics([dentalHarmonyClinic]);
-        console.log('Filtered to only show Dental Harmony clinic');
-      }
-    }
-    // If promoCodeClinicId is set, use that for filtering as a fallback
-    else if (promoCodeClinicId) {
-      console.log('Filtering using promoCodeClinicId:', promoCodeClinicId);
-      const targetClinic = allClinicsDataList.find(clinic => clinic.id === promoCodeClinicId);
-      if (targetClinic) {
-        setFilteredClinics([targetClinic]);
-        console.log('Filtered to show only clinic with ID:', promoCodeClinicId);
-      }
-    }
-  }, [promoCodeClinicId, window.sessionStorage.getItem('pendingPromoCode')]);
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     // Get the price factor from the filtered clinics, with a fallback to default
