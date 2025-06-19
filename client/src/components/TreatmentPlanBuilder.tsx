@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from '@/components/ui/table';
-import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight, CheckCircle, Package } from 'lucide-react';
+import { PlusCircle, MinusCircle, Info, AlertCircle, Plane, Hotel, Sparkles, Check, ChevronDown, ChevronUp, ArrowRight, CheckCircle, Package, Calculator } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -682,79 +682,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         )}
       </div>
 
-      {/* Quote Summary section */}
-          {treatments.length > 0 && (
-            <div className="mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Package className="h-5 w-5" />
-                    Quote Summary
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {/* Treatment list */}
-                  <div className="space-y-2 mb-6">
-                    <h4 className="font-medium text-sm text-gray-700 mb-2">Selected Treatments</h4>
-                    
-                    {treatments.map((treatment) => (
-                      <div key={treatment.id} className="flex justify-between" data-treatment-id={treatment.id}>
-                        <span>
-                          {treatment.name}
-                          {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
-                        </span>
-                        <span className="font-medium">
-                          £{(treatment.priceGBP * (treatment.quantity || 1)).toLocaleString()}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  {/* Subtotal */}
-                  <div className="flex justify-between py-2 border-t">
-                    <span>Subtotal</span>
-                    <span className="font-medium">£{totalGBP.toLocaleString()}</span>
-                  </div>
-                  
-                  {/* Discount (if applied) */}
-                  {discountAmount > 0 && (
-                    <div className="flex justify-between py-2 text-green-600">
-                      <span>
-                        {promoCode ? `Discount (${promoCode})` : 'Package Discount'}
-                      </span>
-                      <span className="font-medium">-£{discountAmount.toLocaleString()}</span>
-                    </div>
-                  )}
-                  
-                  {/* Total */}
-                  <div className="flex justify-between py-2 border-t border-b mb-6">
-                    <span className="font-semibold">Total</span>
-                    <span className="font-bold text-lg">
-                      £{(totalGBP - discountAmount).toLocaleString()}
-                    </span>
-                  </div>
-                  
-                  {/* Promo code input */}
-                  <div className="mb-6">
-                    <h4 className="text-sm font-medium mb-2">Promo Code</h4>
-                    <PromoCodeInput />
-                  </div>
-                  
-                  {/* Action buttons */}
-                  <div className="flex flex-col space-y-2">
-                    <Button 
-                      disabled={treatments.length === 0}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      Continue to Booking
-                    </Button>
-                    <Button variant="outline">Save Quote for Later</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {/* Treatment Categories Tabs */}
           <div className="grid grid-cols-1 gap-6">
         <div>
@@ -959,7 +886,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         <label htmlFor={treatment.id} className="font-medium cursor-pointer text-gray-800">
                           {treatment.name}
                         </label>
-                        
+
                       </div>
                     </div>
                     <div className="text-right">
@@ -1192,85 +1119,86 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
             </TabsContent>
           </Tabs>
         </div>
+</div>
 
-        {/* Treatment List and Summary */}
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Your Treatment List</h3>
+      {/* Right Sidebar - Summary */}
+      <div className="lg:col-span-1">
+        <div className="sticky top-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />
+                Treatment Summary
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Quote Summary section */}
+              {treatments.length > 0 && (
+                <div className="mb-6">
+                  {/* Treatment list */}
+                  <div className="space-y-2 mb-6">
+                    <h4 className="font-medium text-sm text-gray-700 mb-2">Selected Treatments</h4>
 
-          {treatments.length === 0 ? (
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                No treatments added yet. Select treatments from the categories above to build your treatment plan.
-              </AlertDescription>
-            </Alert>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[200px]">Treatment</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead>Price (GBP)</TableHead>
-                    <TableHead className="text-right">Subtotal (GBP)</TableHead>
-                    <TableHead className="text-right"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {treatments.map((treatment) => (
-                    <TableRow key={treatment.id}>
-                      <TableCell className="font-medium">{treatment.name}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleQuantityChange(treatment.id, treatment.quantity - 1)}
-                            disabled={treatment.quantity <= 1}
-                          >
-                            <MinusCircle className="h-4 w-4" />
-                          </Button>
-                          <Input
-                            type="number"
-                            value={treatment.quantity}
-                            onChange={(e) => {
-                              const newQuantity = parseInt(e.target.value);
-                              if (!isNaN(newQuantity)) {
-                                handleQuantityChange(treatment.id, newQuantity);
-                              }
-                            }}
-                            className="w-20 text-center"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleQuantityChange(treatment.id, treatment.quantity + 1)}
-                          >
-                            <PlusCircle className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>£{treatment.priceGBP.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">£{treatment.subtotalGBP.toLocaleString()}</TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" onClick={() => handleRemoveTreatment(treatment.id)}>
-                          <MinusCircle className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-                <TableFooter>
-                  <TableRow>
-                    <TableCell colSpan={3}>Total:</TableCell>
-                    <TableCell className="text-right font-medium">£{totalGBP.toLocaleString()}</TableCell>
-                  </TableRow>
-                </TableFooter>
-              </Table>
-            </div>
-          )}
+                    {treatments.map((treatment) => (
+                      <div key={treatment.id} className="flex justify-between" data-treatment-id={treatment.id}>
+                        <span>
+                          {treatment.name}
+                          {treatment.quantity && treatment.quantity > 1 && ` (x${treatment.quantity})`}
+                        </span>
+                        <span className="font-medium">
+                          £{(treatment.priceGBP * (treatment.quantity || 1)).toLocaleString()}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Subtotal */}
+                  <div className="flex justify-between py-2 border-t">
+                    <span>Subtotal</span>
+                    <span className="font-medium">£{totalGBP.toLocaleString()}</span>
+                  </div>
+
+                  {/* Discount (if applied) */}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between py-2 text-green-600">
+                      <span>
+                        {promoCode ? `Discount (${promoCode})` : 'Package Discount'}
+                      </span>
+                      <span className="font-medium">-£{discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+
+                  {/* Total */}
+                  <div className="flex justify-between py-2 border-t border-b mb-6">
+                    <span className="font-semibold">Total</span>
+                    <span className="font-bold text-lg">
+                      £{(totalGBP - discountAmount).toLocaleString()}
+                    </span>
+                  </div>
+
+                  {/* Promo code input */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium mb-2">Promo Code</h4>
+                    <PromoCodeInput />
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col space-y-2">
+                    <Button 
+                      disabled={treatments.length === 0}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      Continue to Booking
+                    </Button>
+                    <Button variant="outline">Save Quote for Later</Button>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
+</div>
 
       {/* "Add Special Treatment" Form (Modal-like) */}
       {showAddForm && (
