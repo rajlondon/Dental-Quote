@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { PromoCodeInput } from './PromoCodeInput';
+import { useToast } from '@/hooks/use-toast';
 
 // Define TreatmentData structure
 export interface TreatmentItem {
@@ -313,6 +315,8 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
+  const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   // Calculate totals
   const totalGBP = treatments.reduce((sum, item) => sum + item.subtotalGBP, 0);
@@ -541,6 +545,40 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Check if a treatment is already in the list
   const isTreatmentSelected = (treatmentName: string): boolean => {
     return treatments.some(t => t.name === treatmentName);
+  };
+
+  // Format currency with commas
+  const formatCurrency = (amount: number) => {
+    return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  };
+
+  // Handle Continue to Booking
+  const handleContinueToBooking = () => {
+    if (treatments.length === 0) {
+      toast({
+        title: "No Treatments Selected",
+        description: "Please add treatments to your plan before continuing.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Store treatment plan in session storage for the booking page
+    sessionStorage.setItem('treatmentPlan', JSON.stringify(treatments));
+
+    // Navigate to clinic matching/results page
+    const params = new URLSearchParams({
+      treatments: treatments.length.toString(),
+      totalGBP: totalGBP.toString(),
+      source: 'treatment-builder'
+    });
+
+    setLocation(`/quote-results?${params.toString()}`);
+
+    toast({
+      title: "Proceeding to Booking",
+      description: "Finding matching clinics for your treatment plan..."
+    });
   };
 
   return (
@@ -1187,6 +1225,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     <Button 
                       disabled={treatments.length === 0}
                       className="bg-blue-600 hover:bg-blue-700"
+                      onClick={handleContinueToBooking}
                     >
                       Continue to Booking
                     </Button>
