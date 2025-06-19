@@ -13,6 +13,7 @@ import {
   HeartPulse,
   Mail,
   MapPin,
+  Shield,
   ShieldCheck,
   Smile,
   Sparkles,
