@@ -131,6 +131,7 @@ function Router() {
       </Route>
       <Route path="/faq" component={FAQPage} />
       <Route path="/your-quote" component={YourQuotePage} />
+      <Route path="/matched-clinics" component={MatchedClinicsPage} />
       <Route path="/quote-results" component={QuoteResultsPage} />
       <Route path="/results" component={PackageResultsPage} />
       <Route path="/quote">
