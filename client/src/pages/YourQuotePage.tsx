@@ -432,12 +432,19 @@ const YourQuotePage: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const treatment = urlParams.get('treatment');
 
-    // If coming from search, ensure we start with empty treatment list
-    if (treatment && treatmentItems.length === 0) {
-      // Don't auto-add any treatments - let user build their own plan
-      console.log('User came from search for:', treatment, '- starting with empty treatment plan');
+    // If coming from search, clear any existing treatment data and start fresh
+    if (treatment) {
+      console.log('User came from search for:', treatment, '- clearing existing data and starting fresh');
+      
+      // Clear localStorage treatment data
+      localStorage.removeItem('treatmentPlanData');
+      
+      // Reset treatment items to empty if they exist
+      if (treatmentItems.length > 0) {
+        setTreatmentItems([]);
+      }
     }
-  }, [treatmentItems.length]);
+  }, []); // Only run once on mount
 
   useEffect(() => {
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
