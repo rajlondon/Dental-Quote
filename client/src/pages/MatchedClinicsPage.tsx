@@ -713,7 +713,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       </div>
 
       {/* Quote Progress */}
-      <div className="mb-8 bg-gray-50 p-4 rounded-lg border"></div>
+      <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center">
             <div className="relative flex items-center">

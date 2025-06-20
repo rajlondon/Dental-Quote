@@ -427,26 +427,15 @@ const YourQuotePage: React.FC = () => {
   // Estimated total for cost comparison
   const estimatedTotal = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
-  // Check if user came from search with specific treatment
+  // Check if user came from search - ensure treatment list starts empty
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const treatment = urlParams.get('treatment');
 
-    if (treatment === 'dental-implants' && treatmentItems.length === 0) {
-      // Auto-add dental implant treatment
-      const dentalImplantTreatment: PlanTreatmentItem = {
-        id: `dental_implant_${Date.now()}`,
-        category: 'implants',
-        name: 'Dental Implant',
-        quantity: 1,
-        priceGBP: 650,
-        priceUSD: 813,
-        subtotalGBP: 650,
-        subtotalUSD: 813,
-        guarantee: '10 years'
-      };
-
-      setTreatmentItems([dentalImplantTreatment]);
+    // If coming from search, ensure we start with empty treatment list
+    if (treatment && treatmentItems.length === 0) {
+      // Don't auto-add any treatments - let user build their own plan
+      console.log('User came from search for:', treatment, '- starting with empty treatment plan');
     }
   }, [treatmentItems.length]);
 
