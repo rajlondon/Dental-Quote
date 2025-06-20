@@ -378,13 +378,26 @@ const YourQuotePage: React.FC = () => {
     return clinicsList;
   });
 
-  // Treatment Plan Builder State - Load from localStorage if available
+  // Treatment Plan Builder State - Initialize empty if coming from search, otherwise load from localStorage
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>(() => {
+    // Check if coming from search first
+    const urlParams = new URLSearchParams(window.location.search);
+    const treatment = urlParams.get('treatment');
+    
+    if (treatment) {
+      console.log('User came from search for:', treatment, '- starting with empty treatment plan');
+      // Clear localStorage immediately
+      localStorage.removeItem('treatmentPlanData');
+      return [];
+    }
+
+    // Only load from localStorage if NOT coming from search
     const savedData = localStorage.getItem('treatmentPlanData');
     if (savedData) {
       try {
         const parsed = JSON.parse(savedData);
         if (parsed.treatments && Array.isArray(parsed.treatments)) {
+          console.log('Loaded treatment plan:', parsed.treatments);
           return parsed.treatments;
         }
       } catch (error) {
@@ -426,25 +439,6 @@ const YourQuotePage: React.FC = () => {
 
   // Estimated total for cost comparison
   const estimatedTotal = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
-
-  // Check if user came from search - ensure treatment list starts empty
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const treatment = urlParams.get('treatment');
-
-    // If coming from search, clear any existing treatment data and start fresh
-    if (treatment) {
-      console.log('User came from search for:', treatment, '- clearing existing data and starting fresh');
-      
-      // Clear localStorage treatment data
-      localStorage.removeItem('treatmentPlanData');
-      
-      // Reset treatment items to empty if they exist
-      if (treatmentItems.length > 0) {
-        setTreatmentItems([]);
-      }
-    }
-  }, []); // Only run once on mount
 
   useEffect(() => {
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
