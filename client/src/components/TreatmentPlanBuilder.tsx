@@ -1369,6 +1369,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
         </div>
       )}
     </div>
+    </div>
 
       {/* How Others Built Their Treatment Plan Section */}
       <div className="mt-12 mb-8">
