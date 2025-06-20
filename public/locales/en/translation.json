@@ -59,5 +59,44 @@
     "system": "System",
     "treatment": "Treatment",
     "offer": "Special Offer"
+  },
+  "portal": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "messages": "Messages",
+      "quotes": "My Quotes",
+      "appointments": "Appointments",
+      "flights": "Flight Booking",
+      "documents": "Documents",
+      "treatment_plan": "Treatment Plan",
+      "dental_chart": "Dental Chart",
+      "support": "Support",
+      "testing": "Testing"
+    },
+    "flights": {
+      "title": "Flight Booking",
+      "description": "Find the best flight deals for your dental journey to Istanbul. We partner with trusted airlines to offer you competitive prices.",
+      "search_title": "Flight Price Estimator",
+      "departure_country": "Departure Country",
+      "departure_city": "Departure City",
+      "travel_month": "Travel Month",
+      "select_country": "Select country",
+      "select_city": "Select city",
+      "select_month": "Select month",
+      "estimated_price": "Estimated Flight Price",
+      "return_flight": "Return flight",
+      "partners_title": "Our Flight Partners",
+      "partner": "Partner",
+      "book_now": "Book Now",
+      "tips_title": "Flight Booking Tips",
+      "best_time_title": "Best Time to Book",
+      "travel_docs_title": "Travel Documents",
+      "tip_1": "Book 6-8 weeks in advance for best prices",
+      "tip_2": "Tuesday and Wednesday departures are usually cheaper",
+      "tip_3": "Avoid peak summer months (July-August) for lower fares",
+      "tip_4": "Valid passport required (6+ months validity)",
+      "tip_5": "EU citizens can stay 90 days visa-free",
+      "tip_6": "Travel insurance recommended"
+    }
   }
 }

@@ -15,7 +15,8 @@ import {
   Stethoscope,
   BarChart2,
   TestTube,
-  Bell
+  Bell,
+  Plane
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,6 +51,7 @@ import PatientPortalTesting from '@/components/portal/PatientPortalTesting';
 import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
+import FlightBookingSection from '@/components/portal/FlightBookingSection';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -265,6 +267,7 @@ const PatientPortalPage: React.FC = () => {
       icon: <Calendar className="h-5 w-5" />, 
       notificationCount: notifications.filter(n => n.type === 'appointment' && !n.read).length 
     },
+    { id: 'flights', label: 'Flight Booking', icon: <Plane className="h-5 w-5" /> },
     { id: 'documents', label: 'Documents', icon: <FileText className="h-5 w-5" /> },
     { id: 'treatment_plan', label: 'Treatment Plan', icon: <Stethoscope className="h-5 w-5" /> },
     { id: 'dental_chart', label: 'Dental Chart', icon: <BarChart2 className="h-5 w-5" /> },
@@ -324,6 +327,8 @@ const PatientPortalPage: React.FC = () => {
         return <PatientQuoteReviewPage />;
       case 'appointments':
         return <AppointmentsSection />;
+      case 'flights':
+        return <FlightBookingSection />;
       case 'documents':
         return <DocumentsSection />;
       case 'support':
