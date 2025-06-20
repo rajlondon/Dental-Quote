@@ -1586,7 +1586,29 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button variant="outline" onClick={() => setLocation('/your-quote')} className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                // Save current treatment data to localStorage before going back
+                const treatmentDataToSave = {
+                  treatments: activeTreatmentPlan,
+                  totalGBP: activeTotalGBP,
+                  patientInfo: patientInfo,
+                  timestamp: new Date().toISOString()
+                };
+                
+                localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
+                
+                // Navigate back to quote page
+                setLocation('/your-quote');
+                
+                toast({
+                  title: "Returning to Quote",
+                  description: "You can now modify your treatment plan and patient information.",
+                });
+              }} 
+              className="w-full sm:w-auto"
+            >
               Back to Quote
             </Button>
 

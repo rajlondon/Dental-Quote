@@ -378,8 +378,21 @@ const YourQuotePage: React.FC = () => {
     return clinicsList;
   });
 
-  // Treatment Plan Builder State - Start with empty treatment list
-  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
+  // Treatment Plan Builder State - Load from localStorage if available
+  const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>(() => {
+    const savedData = localStorage.getItem('treatmentPlanData');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.treatments && Array.isArray(parsed.treatments)) {
+          return parsed.treatments;
+        }
+      } catch (error) {
+        console.error('Error loading saved treatment data:', error);
+      }
+    }
+    return [];
+  });
 
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -422,8 +435,15 @@ const YourQuotePage: React.FC = () => {
     }
 
     const hasShownWelcome = sessionStorage.getItem('welcomeToastShown');
+    const savedData = localStorage.getItem('treatmentPlanData');
+    
     if (!hasShownWelcome) {
-      if (specialOffer) {
+      if (savedData && treatmentItems.length > 0) {
+        toast({
+          title: "Treatment Plan Restored",
+          description: "Your previous treatment plan has been loaded. You can modify it below.",
+        });
+      } else if (specialOffer) {
         toast({
           title: "Special Offer Selected",
           description: `Your quote includes: ${specialOffer.title}`,
@@ -436,7 +456,7 @@ const YourQuotePage: React.FC = () => {
       }
       sessionStorage.setItem('welcomeToastShown', 'true');
     }
-  }, [specialOffer]);
+  }, [specialOffer, treatmentItems.length]);
 
   return (
     <>
@@ -559,6 +579,46 @@ const YourQuotePage: React.FC = () => {
               onTreatmentsChange={handleTreatmentPlanChange}
             />
           </div>
+
+          {/* Continue to Clinics Button */}
+          {treatmentItems.length > 0 && (
+            <div className="mb-8">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Ready to Find Your Clinic?</h3>
+                      <p className="text-gray-600">
+                        You have {treatmentItems.length} treatment{treatmentItems.length > 1 ? 's' : ''} in your plan. 
+                        Continue to see matched clinics and compare prices.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={() => {
+                        // Save the current treatment data
+                        const treatmentDataToSave = {
+                          treatments: treatmentItems,
+                          totalGBP: totalGBP,
+                          patientInfo: null, // Will be collected in the next step
+                          timestamp: new Date().toISOString()
+                        };
+                        
+                        localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
+                        
+                        // Navigate to matched clinics
+                        setLocation('/matched-clinics');
+                      }}
+                      className="flex items-center gap-2"
+                      size="lg"
+                    >
+                      <Heart className="h-4 w-4" />
+                      Continue to Matched Clinics
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </main>
 
