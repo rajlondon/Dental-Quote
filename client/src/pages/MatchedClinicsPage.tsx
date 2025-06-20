@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  ArrowLeft,
   Award,
   Check,
   Columns,
@@ -680,8 +681,39 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   return (
     <main className="container mx-auto py-8 px-4">
+      {/* Back to Quote Button - Top and Prominent */}
+      <div className="mb-6">
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => {
+            // Save current treatment data to localStorage before going back
+            const treatmentDataToSave = {
+              treatments: activeTreatmentPlan,
+              totalGBP: activeTotalGBP,
+              patientInfo: patientInfo,
+              timestamp: new Date().toISOString()
+            };
+            
+            localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
+            
+            // Navigate back to quote page
+            setLocation('/your-quote');
+            
+            toast({
+              title: "Returning to Quote",
+              description: "You can now modify your treatment plan and patient information.",
+            });
+          }} 
+          className="flex items-center gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Back to Quote Builder
+        </Button>
+      </div>
+
       {/* Quote Progress */}
-      <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
+      <div className="mb-8 bg-gray-50 p-4 rounded-lg border"></div>
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center">
             <div className="relative flex items-center">
@@ -1586,32 +1618,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
 
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                // Save current treatment data to localStorage before going back
-                const treatmentDataToSave = {
-                  treatments: activeTreatmentPlan,
-                  totalGBP: activeTotalGBP,
-                  patientInfo: patientInfo,
-                  timestamp: new Date().toISOString()
-                };
-                
-                localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
-                
-                // Navigate back to quote page
-                setLocation('/your-quote');
-                
-                toast({
-                  title: "Returning to Quote",
-                  description: "You can now modify your treatment plan and patient information.",
-                });
-              }} 
+            <WhatsAppButton 
+              phoneNumber="+905465465050"
+              message="Hi, I need help choosing the right clinic for my dental treatment. Can you assist me?"
               className="w-full sm:w-auto"
-            >
-              Back to Quote
-            </Button>
-
+            />
           </div>
         </div>
       </div>

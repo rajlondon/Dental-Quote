@@ -427,6 +427,29 @@ const YourQuotePage: React.FC = () => {
   // Estimated total for cost comparison
   const estimatedTotal = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
+  // Check if user came from search with specific treatment
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const treatment = urlParams.get('treatment');
+
+    if (treatment === 'dental-implants' && treatmentItems.length === 0) {
+      // Auto-add dental implant treatment
+      const dentalImplantTreatment: PlanTreatmentItem = {
+        id: `dental_implant_${Date.now()}`,
+        category: 'implants',
+        name: 'Dental Implant',
+        quantity: 1,
+        priceGBP: 650,
+        priceUSD: 813,
+        subtotalGBP: 650,
+        subtotalUSD: 813,
+        guarantee: '10 years'
+      };
+
+      setTreatmentItems([dentalImplantTreatment]);
+    }
+  }, [treatmentItems.length]);
+
   useEffect(() => {
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
 
@@ -436,7 +459,7 @@ const YourQuotePage: React.FC = () => {
 
     const hasShownWelcome = sessionStorage.getItem('welcomeToastShown');
     const savedData = localStorage.getItem('treatmentPlanData');
-    
+
     if (!hasShownWelcome) {
       if (savedData && treatmentItems.length > 0) {
         toast({
@@ -602,9 +625,9 @@ const YourQuotePage: React.FC = () => {
                           patientInfo: null, // Will be collected in the next step
                           timestamp: new Date().toISOString()
                         };
-                        
+
                         localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
-                        
+
                         // Navigate to matched clinics
                         setLocation('/matched-clinics');
                       }}
