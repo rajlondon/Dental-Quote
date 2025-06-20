@@ -1509,7 +1509,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       {/* Display added treatments here */}
     </div>
   )}
-    </div>
     </>
   );
 };
