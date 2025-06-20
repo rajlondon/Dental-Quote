@@ -104,7 +104,7 @@ const FAQSection: React.FC = () => {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="item-2" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
                 <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
                   How much can I save compared to UK dental prices?
@@ -115,7 +115,7 @@ const FAQSection: React.FC = () => {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="item-3" className="border border-gray-100 rounded-lg overflow-hidden">
                 <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
                   Is the £200 deposit refundable?
@@ -128,7 +128,7 @@ const FAQSection: React.FC = () => {
               </AccordionItem>
             </Accordion>
           </div>
-          
+
           <div>
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-4" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
@@ -141,7 +141,7 @@ const FAQSection: React.FC = () => {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="item-5" className="border border-gray-100 rounded-lg mb-4 overflow-hidden">
                 <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
                   What about aftercare and guarantees?
@@ -152,7 +152,7 @@ const FAQSection: React.FC = () => {
                   </p>
                 </AccordionContent>
               </AccordionItem>
-              
+
               <AccordionItem value="item-6" className="border border-gray-100 rounded-lg overflow-hidden">
                 <AccordionTrigger className="text-base font-medium px-4 py-4 hover:bg-blue-50 hover:no-underline">
                   What if I need follow-up treatment?
@@ -166,7 +166,7 @@ const FAQSection: React.FC = () => {
             </Accordion>
           </div>
         </div>
-        
+
 
       </CardContent>
     </Card>
@@ -178,7 +178,7 @@ const YourQuotePage: React.FC = () => {
   const { toast } = useToast();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
-  
+
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
     travelMonth: searchParams.get('departureDate') 
@@ -186,32 +186,32 @@ const YourQuotePage: React.FC = () => {
       : searchParams.get('travelMonth') || 'Flexible',
     budget: searchParams.get('budget') || '£1,500 - £2,500'
   });
-  
+
   // Extract additional parameters passed from the Hero search
   const selectedCity = searchParams.get('city') || 'Istanbul';
   const selectedOrigin = searchParams.get('origin') || 'UK';
   const departureDate = searchParams.get('departureDate');
   const returnDate = searchParams.get('returnDate');
-  
+
   // Treatment Plan Builder State
   const [treatmentItems, setTreatmentItems] = useState<PlanTreatmentItem[]>([]);
-  
+
   // Patient Info State
   const [patientInfo, setPatientInfo] = useState<PatientInfo | null>(null);
-  
+
   // Edit Quote Modal State
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  
+
   // Quote steps tracking
   const [currentStep, setCurrentStep] = useState<'build-plan' | 'patient-info' | 'matched-clinics' | 'payment'>('build-plan');
   const [isQuoteReady, setIsQuoteReady] = useState(false);
   const [selectedClinicId, setSelectedClinicId] = useState<string | null>(null);
-  
+
   // Function to open edit quote modal
   const handleEditQuote = () => {
     setIsEditModalOpen(true);
   };
-  
+
   // Function to save updated quote parameters
   const handleSaveQuoteParams = (params: QuoteParams) => {
     setQuoteParams(params);
@@ -220,44 +220,44 @@ const YourQuotePage: React.FC = () => {
       description: "Your quote preferences have been updated.",
     });
   };
-  
+
   // Function to handle treatment plan changes
   const handleTreatmentPlanChange = (items: PlanTreatmentItem[]) => {
     setTreatmentItems(items);
-    
+
     // Only store the treatments, don't auto-advance to the next step
     // The user will click the "Get My Personalised Quote" button to advance manually
   };
-  
+
   // Function to handle patient info form submission
   const handlePatientInfoSubmit = (data: PatientInfo) => {
     setPatientInfo(data);
     setCurrentStep('matched-clinics');
     setIsQuoteReady(true);
-    
+
     toast({
       title: "Information Saved",
       description: "Your personal information has been saved successfully.",
     });
-    
+
     // Scroll to the top of the matched clinics section
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
+
   // Function to handle clinic selection
   const handleSelectClinic = (clinicId: string) => {
     setSelectedClinicId(clinicId);
     setCurrentStep('payment');
-    
+
     toast({
       title: "Clinic Selected",
       description: "You've selected a clinic. Proceed to secure your booking.",
     });
-    
+
     // Scroll to the top of the payment section
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-  
+
   // Function to handle payment completion
   const handlePaymentSuccess = () => {
     toast({
@@ -265,27 +265,27 @@ const YourQuotePage: React.FC = () => {
       description: "Your booking is confirmed! You'll be redirected to your patient portal.",
       duration: 5000,
     });
-    
+
     // Redirect to patient portal after successful payment
     setTimeout(() => {
       setLocation('/patient-portal');
     }, 3000);
   };
-  
+
   // Calculate totals
   const totalGBP = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
   const totalUSD = treatmentItems.reduce((sum, item) => sum + item.subtotalUSD, 0);
-  
+
   // Format currency with commas
   const formatCurrency = (amount: number) => {
     return amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
-  
+
   useEffect(() => {
     // In a real implementation, we would parse query parameters here
     // and fetch real data from an API
     document.title = "Build Your Dental Treatment Quote | MyDentalFly";
-    
+
     // Initialize with a default treatment if the user came from selecting a specific treatment
     if (quoteParams.treatment && quoteParams.treatment !== 'Flexible') {
       const initialTreatment: PlanTreatmentItem = {
@@ -299,10 +299,10 @@ const YourQuotePage: React.FC = () => {
         subtotalUSD: 580,
         guarantee: '5-year'
       };
-      
+
       setTreatmentItems([initialTreatment]);
     }
-    
+
     // Initialize patient info from URL parameters if available
     if (searchParams.get('name') || searchParams.get('email') || searchParams.get('phone') || departureDate) {
       setPatientInfo({
@@ -324,12 +324,12 @@ const YourQuotePage: React.FC = () => {
       });
     }
   }, []);
-  
+
   return (
     <>
       <Navbar />
       <ScrollToTop />
-      
+
       <main className="min-h-screen bg-gray-50 pt-24 pb-28">
         <div className="container mx-auto px-4">
           {/* Back button */}
@@ -344,7 +344,7 @@ const YourQuotePage: React.FC = () => {
               Back to Home
             </Button>
           </div>
-          
+
           {/* Page header */}
           {searchParams.get('name') ? (
             <h1 className="text-3xl md:text-4xl font-bold mb-2">
@@ -356,11 +356,11 @@ const YourQuotePage: React.FC = () => {
               <p className="text-gray-600 mb-6">Choose your treatments below to get a clear quote estimate. Your final treatment plan will be confirmed after your chosen clinic has reviewed your dental information. Payment is only made in-person after consultation at the clinic.</p>
             </div>
           )}
-          
+
           {searchParams.get('name') && (
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
-          
+
           {/* Cost Comparison Summary (Added per new spec) */}
           <div className="mb-8">
             <Card>
@@ -388,7 +388,7 @@ const YourQuotePage: React.FC = () => {
                       <p className="text-sm text-gray-500 mt-1">Estimated UK Cost</p>
                     </CardContent>
                   </Card>
-                  
+
                   <Card className="bg-green-50 border-green-100">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base font-medium text-green-700">Estimated Istanbul Price</CardTitle>
@@ -402,20 +402,20 @@ const YourQuotePage: React.FC = () => {
                     </CardContent>
                   </Card>
                 </div>
-                
+
                 <div className="mt-6 bg-blue-50 p-4 rounded-lg border border-blue-100">
                   <div className="flex items-center gap-2">
                     <Info className="h-5 w-5 text-blue-600 flex-shrink-0" />
                     <p className="text-blue-700 text-sm">
                       Your final treatment quote will be confirmed by your chosen clinic after they've reviewed your dental information — including any X-rays, CT scans, or images you provide.
-                      
+
                       Each clinic has its own pricing based on the materials they use and their treatment approach — these details will be discussed with you directly.
-                      
+
                       Please note: Payment for treatment is only made in-person, after your consultation and examination at the clinic — ensuring the treatment plan is accurate, suitable, and fully agreed by you.
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="mt-4 flex items-center p-3 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg border border-blue-200">
                   <div className="bg-blue-600 text-white rounded-md p-2 mr-3">
                     <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -438,11 +438,35 @@ const YourQuotePage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* Case Studies section removed as requested */}
-          
+
           {/* Ready to See Clinics CTA has been removed to streamline mobile experience */}
-          
+
+          {/* Header Section */}
+          <div className="mb-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
+            <div className="max-w-4xl">
+              <h1 className="text-4xl font-bold mb-3 text-gray-900">Build Your Dental Treatment Quote</h1>
+              <p className="text-lg text-gray-700 mb-4">
+                Create a personalized quote for dental treatments in Istanbul. Compare prices and find the perfect clinic for your needs.
+              </p>
+              <div className="flex items-center space-x-6 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2" />
+                  <span>Instant price comparison</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2" />
+                  <span>Verified clinic partners</span>
+                </div>
+                <div className="flex items-center">
+                  <Check className="h-4 w-4 text-green-500 mr-2" />
+                  <span>Free consultation included</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Progress tracker */}
           <div className="mb-8">
             <div className="bg-white rounded-lg shadow-sm p-4">
@@ -451,7 +475,7 @@ const YourQuotePage: React.FC = () => {
                   <h2 className="text-xl font-bold">Your Quote Progress</h2>
                   <p className="text-gray-600 text-sm">Follow these steps to get your personalized quote</p>
                 </div>
-                
+
                 {isQuoteReady && (
                   <div className="mt-4 sm:mt-0">
                     <Button 
@@ -464,7 +488,7 @@ const YourQuotePage: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
@@ -483,7 +507,7 @@ const YourQuotePage: React.FC = () => {
                     <p className="text-xs text-gray-600">{treatmentItems.length} treatments added</p>
                   </div>
                 </div>
-                
+
                 <div 
                   data-step="patient-info"
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
@@ -505,7 +529,7 @@ const YourQuotePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'matched-clinics' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -526,7 +550,7 @@ const YourQuotePage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div 
                   className={`p-3 rounded-md border flex items-center gap-3 cursor-pointer
                     ${currentStep === 'payment' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}
@@ -550,9 +574,9 @@ const YourQuotePage: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Quote Summary section removed as requested */}
-          
+
           {/* Edit Quote Modal */}
           <EditQuoteModal
             isOpen={isEditModalOpen}
@@ -560,18 +584,18 @@ const YourQuotePage: React.FC = () => {
             initialParams={quoteParams}
             onSave={handleSaveQuoteParams}
           />
-          
+
           {/* Step 1: Build Treatment Plan (conditionally displayed) */}
           {currentStep === 'build-plan' && (
             <>
               {/* Treatment Guide - Educational Component */}
               <TreatmentGuide />
-              
+
               <div className="mb-6 bg-blue-50 border border-blue-100 p-3 rounded-md text-sm flex items-center">
                 <Info className="h-4 w-4 text-blue-500 mr-2 flex-shrink-0" />
                 <p>Don't have X-rays or a CT scan? No problem – these can be taken at your consultation in Turkey at no extra cost.</p>
               </div>
-              
+
               {/* Treatment Plan Builder */}
               <div className="mb-8">
                 <Card>
@@ -595,9 +619,9 @@ const YourQuotePage: React.FC = () => {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                     />
-                    
+
                     {/* Note: Traditional TreatmentPlanBuilder replaced with StepByStepTreatmentBuilder */}
-                    
+
                     {treatmentItems.length > 0 && (
                       <div>
                         {/* Removed redundant "View Matching Clinics" button to simplify UI */}
@@ -609,14 +633,14 @@ const YourQuotePage: React.FC = () => {
                   </CardContent>
                 </Card>
               </div>
-              
+
               {/* How Others Built Their Treatment Plan - moved below button as requested */}
               {treatmentItems.length > 0 && (
                 <div className="mt-12 mb-10">
                   <div className="bg-white rounded-lg shadow-sm p-6">
                     <h2 className="text-xl font-bold mb-4">How Others Built Their Treatment Plan</h2>
                     <p className="text-gray-600 mb-6">Real examples from our patients who found the right dental solutions in Istanbul</p>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       {/* Patient Example 1 */}
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
@@ -654,7 +678,7 @@ const YourQuotePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Patient Example 2 */}
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="bg-blue-50 p-4">
@@ -691,7 +715,7 @@ const YourQuotePage: React.FC = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Patient Example 3 */}
                       <div className="border rounded-lg overflow-hidden hover:shadow-md transition-shadow">
                         <div className="bg-blue-50 p-4">
@@ -729,7 +753,7 @@ const YourQuotePage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    
+
                     {/* X-ray note banner */}
                     <div className="mt-6 bg-gray-50 border border-gray-200 rounded-md p-4 flex items-center">
                       <Info className="h-5 w-5 text-blue-500 mr-3 flex-shrink-0" />
@@ -742,7 +766,7 @@ const YourQuotePage: React.FC = () => {
               )}
             </>
           )}
-          
+
           {/* Step 2: Patient Information (conditionally displayed) */}
           {currentStep === 'patient-info' && (
             <>
@@ -757,7 +781,7 @@ const YourQuotePage: React.FC = () => {
                 }}
                 onSubmit={handlePatientInfoSubmit}
               />
-              
+
               <div className="flex justify-between">
                 <Button 
                   variant="outline"
@@ -770,7 +794,7 @@ const YourQuotePage: React.FC = () => {
               </div>
             </>
           )}
-          
+
           {/* Step 3: Matched Clinics (conditionally displayed) */}
           {currentStep === 'matched-clinics' && patientInfo && (
             <MatchedClinicsPage
@@ -785,7 +809,7 @@ const YourQuotePage: React.FC = () => {
                   const selectedClinicId = localStorage.getItem('selectedClinicId');
                   const selectedClinicData = localStorage.getItem('selectedClinicData');
                   const clinicData = selectedClinicData ? JSON.parse(selectedClinicData) : null;
-                  
+
                   // Call PDF generation API with clinic-specific data
                   fetch('/api/jspdf-quote-v2', {
                     method: 'POST',
@@ -814,17 +838,17 @@ const YourQuotePage: React.FC = () => {
                     const url = window.URL.createObjectURL(blob);
                     const link = document.createElement('a');
                     link.href = url;
-                    
+
                     // Generate a formatted filename with date
                     const dateStr = new Date().toISOString().slice(0, 10);
                     const patientName = patientInfo?.fullName?.replace(/\s+/g, '-') || 'patient';
                     const clinicName = clinicData?.name?.replace(/\s+/g, '-') || 'dental-clinic';
-                    
+
                     link.download = `MyDentalFly-Quote-${clinicName}-${patientName}-${dateStr}.pdf`;
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    
+
                     toast({
                       title: "Download Started",
                       description: "Your quote PDF is being downloaded.",
@@ -853,7 +877,7 @@ const YourQuotePage: React.FC = () => {
                   const selectedClinicId = localStorage.getItem('selectedClinicId');
                   const selectedClinicData = localStorage.getItem('selectedClinicData');
                   const clinicData = selectedClinicData ? JSON.parse(selectedClinicData) : null;
-                  
+
                   // Call email API with clinic-specific data
                   fetch('/api/email-quote', {
                     method: 'POST',
@@ -907,7 +931,7 @@ const YourQuotePage: React.FC = () => {
               }}
             />
           )}
-          
+
           {/* Step 4: Payment (conditionally displayed) */}
           {currentStep === 'payment' && selectedClinicId && (
             <PaymentConfirmationPage
@@ -920,14 +944,14 @@ const YourQuotePage: React.FC = () => {
               onCancel={() => setCurrentStep('matched-clinics')}
             />
           )}
-          
+
           {/* FAQ Section */}
           <FAQSection />
         </div>
-        
+
         {/* Sticky footer removed to eliminate duplicate buttons */}
       </main>
-      
+
       <Footer />
     </>
   );

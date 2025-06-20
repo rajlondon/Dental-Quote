@@ -630,7 +630,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   return (
     <>
-    <div className="bg-white rounded-lg shadow p-6 mb-8">
+    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8 hover:shadow-lg transition-shadow duration-200">
       {!hideHeader && (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>

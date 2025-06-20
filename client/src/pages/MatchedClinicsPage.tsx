@@ -761,15 +761,65 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
       {/* Page Header */}
       <div className="mb-10">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Your Matched Clinics</h1>
-            <p className="text-gray-600">
-              We've matched your treatment needs with {filteredClinics.length} top-rated Istanbul dental clinics
-            </p>
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 mb-8">
+          <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+            <div className="flex-1">
+              <h1 className="text-4xl font-bold mb-3 text-gray-900">Your Matched Clinics</h1>
+              <p className="text-lg text-gray-700 mb-4">
+                We've matched your treatment needs with {filteredClinics.length} top-rated Istanbul dental clinics
+              </p>
+              <div className="flex items-center space-x-6 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <Award className="h-4 w-4 text-blue-500 mr-2" />
+                  <span>All clinics verified & accredited</span>
+                </div>
+                <div className="flex items-center">
+                  <Shield className="h-4 w-4 text-green-500 mr-2" />
+                  <span>Treatment guarantees included</span>
+                </div>
+                <div className="flex items-center">
+                  <Heart className="h-4 w-4 text-red-500 mr-2" />
+                  <span>English-speaking staff</span>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
 
-
+        {/* Filter Bar - Booking.com style */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6 sticky top-20 z-10">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Sort by:</span>
+              <select className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option>Best Value</option>
+                <option>Lowest Price</option>
+                <option>Highest Rating</option>
+                <option>Most Popular</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Price Range:</span>
+              <select className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option>All Prices</option>
+                <option>£0 - £500</option>
+                <option>£500 - £1,000</option>
+                <option>£1,000+</option>
+              </select>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span className="text-sm font-medium text-gray-700">Rating:</span>
+              <select className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option>All Ratings</option>
+                <option>4.5+ Stars</option>
+                <option>4.0+ Stars</option>
+                <option>3.5+ Stars</option>
+              </select>
+            </div>
+            <div className="ml-auto text-sm text-gray-600">
+              {filteredClinics.length} clinics found
+            </div>
+          </div>
         </div>
 
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -818,7 +868,25 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           const tierInfo = getTierLabel(clinic.tier);
 
           return (
-            <Card key={clinic.id} className="overflow-hidden border-2 border-blue-300 hover:border-blue-500 transition-colors shadow-md">
+            <Card key={clinic.id} className="overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white relative">
+              {/* Add badges for popular/best value */}
+              {clinic.tier === 'premium' && (
+                <div className="absolute top-4 left-4 z-10">
+                  <Badge className="bg-amber-500 text-white font-medium px-3 py-1">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    Most Popular
+                  </Badge>
+                </div>
+              )}
+              {Math.round((ukTotal - totalPrice) / ukTotal * 100) > 70 && (
+                <div className="absolute top-4 right-4 z-10">
+                  <Badge className="bg-green-500 text-white font-medium px-3 py-1">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Best Value
+                  </Badge>
+                </div>
+              )}
+              
               <div className="border-b">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
                   {/* Clinic Info */}
@@ -990,21 +1058,28 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
 
-                          <div className="border-t pt-3 mb-3">
-                            <div className="flex justify-between mb-1">
-                              <span className="font-medium">Treatment Total:</span>
-                              <span className="font-medium">£{totalPrice}</span>
-                            </div>
-                          </div>
-
-                          <div className="bg-blue-50 border border-blue-100 rounded-md p-3 mb-3">
-                            <div className="flex justify-between mb-2">
-                              <span className="text-sm font-medium text-blue-700">UK Cost Comparison:</span>
-                              <span className="text-sm font-medium text-blue-700">£{ukTotal}</span>
-                            </div>
-                            <div className="flex justify-between text-green-600 font-medium">
-                              <span>Your Savings:</span>
-                              <span>£{ukTotal - totalPrice} ({Math.round((ukTotal - totalPrice) / ukTotal * 100)}%)</span>
+                          <div className="border-t pt-4 mb-4">
+                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
+                              <div className="flex justify-between items-center mb-3">
+                                <span className="text-lg font-semibold text-gray-900">Total Price:</span>
+                                <div className="text-right">
+                                  <span className="text-2xl font-bold text-blue-600">£{totalPrice}</span>
+                                  <div className="text-sm text-gray-500 line-through">UK: £{ukTotal}</div>
+                                </div>
+                              </div>
+                              
+                              <div className="bg-green-100 border border-green-200 rounded-md p-3">
+                                <div className="flex justify-between items-center">
+                                  <div className="flex items-center">
+                                    <Target className="h-4 w-4 text-green-600 mr-2" />
+                                    <span className="font-medium text-green-800">You Save:</span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-lg font-bold text-green-600">£{ukTotal - totalPrice}</span>
+                                    <div className="text-sm text-green-700">({Math.round((ukTotal - totalPrice) / ukTotal * 100)}% discount)</div>
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </div>
 
@@ -1019,12 +1094,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                         <div className="flex flex-wrap gap-3 justify-end">
                           <Button 
                             variant="outline"
+                            size="lg"
+                            className="border-blue-200 text-blue-600 hover:bg-blue-50"
                             onClick={() => downloadPdf(clinic.id)}
                           >
+                            <FileCheck className="mr-2 h-4 w-4" />
                             Download Quote
                           </Button>
                           <Button 
-                            className="md:w-auto" 
+                            size="lg"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 shadow-md hover:shadow-lg transition-all duration-200" 
                             onClick={() => {
                               // Save the selected clinic in localStorage
                               setSelectedClinic(clinic.id);
@@ -1067,7 +1146,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             }}
                           >
                             <Heart className="mr-2 h-4 w-4" />
-                            Select & Continue to Portal
+                            Reserve Now
                           </Button>
                         </div>
                       </div>
