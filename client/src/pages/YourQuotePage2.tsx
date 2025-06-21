@@ -389,7 +389,7 @@ const YourQuotePage: React.FC = () => {
       <main className="min-h-screen bg-gray-50 pb-28">
         <div className="container mx-auto px-4 pt-6">
 
-          
+
 
           {/* Cost Comparison Summary (Added per new spec) */}
           <div className="mb-8">
