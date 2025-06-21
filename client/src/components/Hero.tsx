@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
+// Translation removed - using English text directly
 import { useLocation, Link } from "wouter";
 import { 
   Plane as PlaneIcon, 
@@ -14,23 +14,23 @@ import PremiumOffersCarousel from "./PremiumOffersCarousel";
 import { format, addDays } from "date-fns";
 
 const Hero: React.FC = () => {
-  const { t } = useTranslation();
+  // const { t } = useTranslation(); // Removed translation usage
   const [, setLocation] = useLocation();
-  
+
   // Search form state
   const [selectedCity, setSelectedCity] = useState("Istanbul");
   const [selectedOrigin, setSelectedOrigin] = useState("United Kingdom");
   const [selectedTreatment, setSelectedTreatment] = useState("Dental Implants");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [returnDate, setReturnDate] = useState(addDays(new Date(), 14));
-  
+
   // Dropdown visibility states
   const [isDestinationOpen, setIsDestinationOpen] = useState(false);
   const [isFromOpen, setIsFromOpen] = useState(false);
   const [isTreatmentsOpen, setIsTreatmentsOpen] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [isReturnDatePickerOpen, setIsReturnDatePickerOpen] = useState(false);
-  
+
   // City dropdown options
   const cityOptions = [
     { name: "Istanbul", available: true },
@@ -38,7 +38,7 @@ const Hero: React.FC = () => {
     { name: "Dalaman", available: false },
     { name: "Izmir", available: false }
   ];
-  
+
   // Origin dropdown options
   const originOptions = [
     { value: "uk", label: "United Kingdom" },
@@ -48,7 +48,7 @@ const Hero: React.FC = () => {
     { value: "au", label: "Australia" },
     { value: "other", label: "Other" }
   ];
-  
+
   // Treatment dropdown options
   const treatmentOptions = [
     { value: "dental-implants", label: "Dental Implants" },
@@ -60,22 +60,22 @@ const Hero: React.FC = () => {
     { value: "dentures", label: "Dentures" },
     { value: "general", label: "General Dentistry" }
   ];
-  
+
   // Handle search action - go directly to treatment selection
   const handleSearch = () => {
     const selectedTreatmentObj = treatmentOptions.find(t => t.label === selectedTreatment);
     const treatmentValue = selectedTreatmentObj ? selectedTreatmentObj.value : "dental-implants";
-    
+
     // Go directly to price calculator with city and treatment context
     setLocation(`/pricing?city=${selectedCity}&treatment=${treatmentValue}&from=search`);
-    
+
     console.log(`Navigating directly to treatment selection with:
       City: ${selectedCity}
       Treatment: ${treatmentValue}
       Source: homepage_search
     `);
   };
-  
+
   return (
     <section className="relative pb-12 overflow-hidden">
       {/* Main content with dark blue background - exactly like Booking.com */}
@@ -115,7 +115,7 @@ const Hero: React.FC = () => {
               Blog
             </Link>
           </div>
-          
+
           {/* Heading Section */}
           <div className="mb-8">
             <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
@@ -125,7 +125,7 @@ const Hero: React.FC = () => {
               Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
-          
+
           {/* Yellow-bordered search box - Booking.com style */}
           <div className="max-w-5xl mx-auto">
             {/* Desktop: Horizontal layout for larger screens */}
@@ -145,7 +145,7 @@ const Hero: React.FC = () => {
                     <div className="text-base truncate">{selectedCity}</div>
                   </div>
                 </div>
-                
+
                 {/* Dropdown for cities */}
                 {isDestinationOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
@@ -170,7 +170,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Treatment field */}
               <div className="relative flex-1 border-r border-gray-200">
                 <div 
@@ -187,7 +187,7 @@ const Hero: React.FC = () => {
                     <div className="text-base truncate">{selectedTreatment}</div>
                   </div>
                 </div>
-                
+
                 {/* Dropdown for treatments */}
                 {isTreatmentsOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
@@ -209,7 +209,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Fly out date field */}
               <div className="relative flex-1 border-r border-gray-200">
                 <div 
@@ -228,7 +228,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{format(selectedDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
-                
+
                 {/* Date picker dropdown */}
                 {isDatePickerOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
@@ -257,7 +257,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Return date field */}
               <div className="relative flex-1 border-r border-gray-200">
                 <div 
@@ -276,7 +276,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{format(returnDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
-                
+
                 {/* Return date picker dropdown */}
                 {isReturnDatePickerOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
@@ -304,7 +304,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Flying from field */}
               <div className="relative flex-1 border-r border-gray-200">
                 <div 
@@ -320,7 +320,7 @@ const Hero: React.FC = () => {
                     <div className="text-base truncate">{selectedOrigin}</div>
                   </div>
                 </div>
-                
+
                 {/* Dropdown for origin */}
                 {isFromOpen && (
                   <div className="absolute top-full left-0 w-full bg-white shadow-lg z-50 border border-gray-200 rounded-b-lg">
@@ -342,7 +342,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Search Button - Booking.com style */}
               <div className="flex items-center px-2">
                 <button 
@@ -353,7 +353,7 @@ const Hero: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Mobile: Stacked layout for small screens */}
             <div className="md:hidden bg-white rounded-lg border-2 border-yellow-400 overflow-hidden">
               {/* Where field */}
@@ -370,7 +370,7 @@ const Hero: React.FC = () => {
                   <div className="text-base">{selectedCity}</div>
                 </div>
               </div>
-              
+
               {/* Dropdown for cities */}
               {isDestinationOpen && (
                 <div className="border-b border-gray-200 bg-gray-50">
@@ -394,7 +394,7 @@ const Hero: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               <div className="grid grid-cols-1 gap-0">
                 {/* Treatment type */}
                 <div 
@@ -411,7 +411,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{selectedTreatment}</div>
                   </div>
                 </div>
-                
+
                 {/* Dropdown for treatments */}
                 {isTreatmentsOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
@@ -432,7 +432,7 @@ const Hero: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Fly out date */}
                 <div 
                   className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
@@ -450,7 +450,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{format(selectedDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
-                
+
                 {/* Date picker for mobile */}
                 {isDatePickerOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
@@ -478,7 +478,7 @@ const Hero: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Fly home date */}
                 <div 
                   className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
@@ -496,7 +496,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{format(returnDate, "EEE dd MMM yyyy")}</div>
                   </div>
                 </div>
-                
+
                 {/* Return date picker for mobile */}
                 {isReturnDatePickerOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
@@ -523,7 +523,7 @@ const Hero: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* Flying from */}
                 <div 
                   className="flex items-center px-3 py-3 border-b border-gray-200 cursor-pointer"
@@ -538,7 +538,7 @@ const Hero: React.FC = () => {
                     <div className="text-base">{selectedOrigin}</div>
                   </div>
                 </div>
-                
+
                 {/* Dropdown for origin */}
                 {isFromOpen && (
                   <div className="border-b border-gray-200 bg-gray-50">
@@ -560,7 +560,7 @@ const Hero: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               {/* Search Button - Booking.com style */}
               <div className="p-3">
                 <button 
@@ -574,7 +574,7 @@ const Hero: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       <div className="container mx-auto px-4">
         {/* Micro reassurance line */}
         <div className="max-w-5xl mx-auto mt-3 text-center text-[11px] text-gray-500 flex flex-wrap items-center justify-center">
@@ -584,10 +584,10 @@ const Hero: React.FC = () => {
           <span className="mx-2">•</span>
           <span>Data fully encrypted</span>
         </div>
-        
+
         {/* Premium Special Offers Carousel */}
         <PremiumOffersCarousel />
-        
+
 
       </div>
     </section>
