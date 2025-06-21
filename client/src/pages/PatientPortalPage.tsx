@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useAuth } from '@/hooks/use-auth';
 import { 
   LayoutDashboard, 
@@ -67,7 +67,7 @@ interface DashboardSectionProps {
 
 // Dashboard section component
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
   return (
@@ -243,7 +243,7 @@ const PatientPortalPage: React.FC = () => {
   const { logoutMutation } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const { t } = useTranslation();
+  // Translation removed
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons

@@ -46,7 +46,7 @@ interface Notification {
 }
 
 const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = true }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { adminUser, adminLogout } = useAdminAuth();

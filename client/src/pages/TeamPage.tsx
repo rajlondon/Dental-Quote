@@ -33,7 +33,7 @@ Destina is fluent in Turkish, English, and German, making her the perfect liaiso
 ];
 
 export default function TeamPage() {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -79,7 +79,7 @@ const timelineEvents = [
 ];
 
 const DashboardSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
 
   return (
     <div className="space-y-6">

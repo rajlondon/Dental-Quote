@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ const blogPosts = [
 ];
 
 export default function Blog() {
-  const { t } = useTranslation();
+  // Translation removed
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [showEbookForm, setShowEbookForm] = useState<boolean>(false);
   

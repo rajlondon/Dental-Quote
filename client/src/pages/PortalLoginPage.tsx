@@ -5,7 +5,7 @@ import { useAdminAuth } from '@/hooks/use-admin-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   AlertCircle, Check, Lock, Mail, Phone, User, ShieldCheck, Loader2
 } from 'lucide-react';
@@ -106,7 +106,7 @@ const registerSchema = z.object({
 });
 
 const PortalLoginPage: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { user, loginMutation } = useAuth();
   const { adminUser, adminLogin, isLoading: adminIsLoading } = useAdminAuth();

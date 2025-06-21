@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   Dialog, 
   DialogContent, 
@@ -30,7 +30,7 @@ const QuotesDialog: React.FC<QuotesDialogProps> = ({
   quotes, 
   onImportQuote 
 }) => {
-  const { t, i18n } = useTranslation();
+  // Translation removed
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

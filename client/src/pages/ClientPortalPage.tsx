@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -79,7 +79,7 @@ const navItems = [
 
 // Client portal page component
 const ClientPortalPage: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>('dashboard');
@@ -334,7 +334,7 @@ interface DashboardSectionProps {
 }
 
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
   return (

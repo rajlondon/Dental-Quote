@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   Send, 
   Paperclip, 
@@ -130,7 +130,7 @@ interface MessagingSectionProps {
 }
 
 const MessagingSection: React.FC<MessagingSectionProps> = ({ bookingId = 123, clinicId }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const location = window.location.hash;
   // Add notifications integration

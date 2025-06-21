@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,7 +18,7 @@ const forgotPasswordSchema = z.object({
 });
 
 export default function ForgotPasswordPage() {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailSent, setEmailSent] = useState(false);

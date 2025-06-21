@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Link, useLocation } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -58,7 +58,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   disableAutoRefresh = true,
   initialSection = 'dashboard'
 }) => {
-  const { t, i18n } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>(initialSection);

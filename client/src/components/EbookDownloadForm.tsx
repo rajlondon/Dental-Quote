@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ interface EbookDownloadFormProps {
 }
 
 export default function EbookDownloadForm({ onSuccess }: EbookDownloadFormProps) {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showDownload, setShowDownload] = useState(false);

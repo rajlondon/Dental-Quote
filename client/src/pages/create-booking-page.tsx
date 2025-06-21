@@ -1,12 +1,12 @@
 import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { BookingsProvider } from "@/hooks/use-bookings";
 import CreateBookingForm from "@/components/forms/CreateBookingForm";
 
 export default function CreateBookingPage() {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <BookingsProvider>

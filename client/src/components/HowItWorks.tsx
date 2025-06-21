@@ -25,7 +25,7 @@ const steps: Step[] = [
 ];
 
 const HowItWorks: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <section id="how-it-works" className="py-16 bg-neutral-100">

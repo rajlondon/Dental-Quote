@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -47,7 +47,7 @@ const flightAffiliates: FlightAffiliate[] = [
 ];
 
 const FlightBookingSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedCity, setSelectedCity] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('');

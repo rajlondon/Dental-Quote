@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { BarChart3, LineChart, ArrowRight, ArrowUp, ArrowDown, DollarSign, Users, Calendar, Clipboard } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import NotificationAnalyticsSection from './NotificationAnalyticsSection';
 
 const AdminAnalyticsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
 
   // Sample analytics data
   const conversionStats = [

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useLocation } from 'wouter';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -63,7 +63,7 @@ const quoteRequests = [
 ];
 
 const QuoteManagementSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
 
   return (

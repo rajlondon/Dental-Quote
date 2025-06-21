@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import emailjs from '@emailjs/browser';
 import { EMAILJS_CONFIG, loadEmailJSConfig } from '../utils/config';
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useLocation } from "wouter";
 
 // Defined specific dental treatment options
@@ -56,7 +56,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 const QuoteForm: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [location, setLocation] = useLocation();
   const [showOtherField, setShowOtherField] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);

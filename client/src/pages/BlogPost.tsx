@@ -1,4 +1,4 @@
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -210,7 +210,7 @@ const blogPostsData: Record<string, BlogPost> = {
 };
 
 export default function BlogPost() {
-  const { t } = useTranslation();
+  // Translation removed
   const [, params] = useRoute('/blog/:id');
   const [location, setLocation] = useLocation();
   const [showEbookForm, setShowEbookForm] = useState<boolean>(false);

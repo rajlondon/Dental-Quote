@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,7 +23,7 @@ const passwordChangeSchema = z.object({
 });
 
 const AccountSettingsPage = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 

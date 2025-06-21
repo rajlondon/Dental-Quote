@@ -1,5 +1,5 @@
 import { jsPDF } from 'jspdf';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { getFlightEstimateForCity } from '@/services/flightEstimatesService';
 
 // PDF generation function that matches exactly the requested format
@@ -220,7 +220,7 @@ export default function JourneyPdf(props: {
   clinics?: Array<{name: string, priceGBP: number, extras: string}>;
   onComplete?: () => void;
 }) {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <button

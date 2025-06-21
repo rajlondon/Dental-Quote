@@ -24,7 +24,7 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useWebSocket } from '@/hooks/use-websocket';
@@ -74,7 +74,7 @@ interface Message {
 }
 
 const MessagesSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
   const { connected, lastMessage } = useWebSocket();

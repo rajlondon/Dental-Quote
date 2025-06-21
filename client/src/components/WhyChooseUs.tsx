@@ -30,7 +30,7 @@ const features: Feature[] = [
 ];
 
 const WhyChooseUs: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <section id="why-us" className="py-16 bg-neutral-100">

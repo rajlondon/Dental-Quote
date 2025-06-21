@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useLocation, Link } from 'wouter';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -14,7 +14,7 @@ import {
 // A simplified clinic page that doesn't have any complex reload detection
 // or setup that might cause refresh issues
 const SimpleClinicPage: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { user, logoutMutation } = useAuth();
   

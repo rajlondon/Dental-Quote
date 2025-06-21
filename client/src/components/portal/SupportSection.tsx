@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   Send, 
   User, 
@@ -212,7 +212,7 @@ const faqItems = [
 ];
 
 const SupportSection: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(mockSupportTickets);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);

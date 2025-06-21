@@ -2,7 +2,7 @@ import { jsPDF } from 'jspdf';
 import { useEffect, useState } from 'react';
 // Import logo from assets folder
 import logoPath from '@/assets/my-dental-fly-logo.png';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import 'jspdf/dist/polyfills.es.js';
 import { getFlightEstimateForCity } from '@/services/flightEstimatesService';
 
@@ -672,7 +672,7 @@ export const generateQuotePdf = ({
 export default function PdfGenerator(props: PdfGeneratorProps) {
   const [generating, setGenerating] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const { t } = useTranslation();
+  // Translation removed
   
   const handleGenerate = () => {
     setGenerating(true);

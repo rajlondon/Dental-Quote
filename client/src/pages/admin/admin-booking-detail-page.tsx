@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useParams, Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useBookings, BookingStatus, BookingStage } from "@/hooks/use-bookings";
@@ -83,7 +83,7 @@ const stageColors: Record<BookingStage, string> = {
 export default function AdminBookingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const bookingId = parseInt(id);
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { user } = useAuth();

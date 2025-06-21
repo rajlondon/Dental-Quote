@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Loader2, Search, Calendar, MoreHorizontal } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useAuth } from '@/hooks/use-auth';
 import { useBookings, type BookingStatus, type BookingStage } from '@/hooks/use-bookings';
 import { format } from 'date-fns';
@@ -44,7 +44,7 @@ const stageColors: Record<BookingStage, string> = {
 };
 
 export default function BookingsSection() {
-  const { t } = useTranslation();
+  // Translation removed
   const { user } = useAuth();
   const { useUserBookings } = useBookings();
   

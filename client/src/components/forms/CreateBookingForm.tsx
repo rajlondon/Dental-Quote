@@ -7,7 +7,7 @@ import { insertBookingSchema } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { useBookings } from "@/hooks/use-bookings";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -30,7 +30,7 @@ const formSchema = insertBookingSchema.extend({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function CreateBookingForm() {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const { user } = useAuth();

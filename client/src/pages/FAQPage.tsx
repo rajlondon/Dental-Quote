@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/accordion";
 
 export default function FAQPage() {
-  const { t } = useTranslation();
+  // Translation removed
   
   // Set page title when component mounts
   useEffect(() => {

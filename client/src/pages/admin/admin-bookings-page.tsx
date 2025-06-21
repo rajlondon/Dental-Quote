@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import AdminBookingsSection from '@/components/admin/AdminBookingsSection';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 
 export default function AdminBookingsPage() {
-  const { t } = useTranslation();
+  // Translation removed
   const { user } = useAuth();
   
   useEffect(() => {

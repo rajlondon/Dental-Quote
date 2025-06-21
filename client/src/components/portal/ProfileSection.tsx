@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   User, 
   Mail, 
@@ -106,7 +106,7 @@ const emptyProfile: UserProfile = {
 };
 
 const ProfileSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const { user } = useAuth();
   

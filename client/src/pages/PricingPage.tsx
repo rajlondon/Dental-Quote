@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import PriceCalculator from '@/components/PriceCalculator';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -18,7 +18,7 @@ interface URLParams {
 }
 
 const PricingPage: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [urlParams, setUrlParams] = useState<URLParams>({});

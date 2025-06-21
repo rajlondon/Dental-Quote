@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { format } from "date-fns";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useAuth } from "@/hooks/use-auth";
 import { useBookings, type BookingStatus, type BookingStage } from "@/hooks/use-bookings";
 import { Loader2, Plus, Search, Filter, Calendar, ArrowRight } from "lucide-react";
@@ -32,7 +32,7 @@ const stageColors: Record<BookingStage, string> = {
 };
 
 export default function BookingsPage() {
-  const { t } = useTranslation();
+  // Translation removed
   const { user } = useAuth();
   const { useUserBookings } = useBookings();
   

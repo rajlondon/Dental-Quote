@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,7 @@ const resetPasswordSchema = z.object({
 });
 
 export default function ResetPasswordPage() {
-  const { t } = useTranslation();
+  // Translation removed
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [token, setToken] = useState<string | null>(null);

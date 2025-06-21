@@ -14,7 +14,7 @@ import PremiumOffersCarousel from "./PremiumOffersCarousel";
 import { format, addDays } from "date-fns";
 
 const Hero: React.FC = () => {
-  // const { t } = useTranslation(); // Removed translation usage
+  // // Translation removed // Removed translation usage
   const [, setLocation] = useLocation();
 
   // Search form state

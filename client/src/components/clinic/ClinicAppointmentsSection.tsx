@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { format, addDays, startOfWeek, addWeeks, subWeeks, parseISO } from 'date-fns';
 import { 
   Card, 
@@ -85,7 +85,7 @@ interface Appointment {
 }
 
 const ClinicAppointmentsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const { user } = useAuth();
   const [activeView, setActiveView] = useState('day');

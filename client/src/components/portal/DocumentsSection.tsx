@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   FileText, 
   Upload, 
@@ -179,7 +179,7 @@ VAT No: GB123456789
 `;
 
 const DocumentsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [documents, setDocuments] = useState<Document[]>(mockDocuments);
   const [searchQuery, setSearchQuery] = useState('');

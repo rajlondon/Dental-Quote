@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DentalChart } from '@/components/DentalChart';
@@ -20,7 +20,7 @@ interface ChartData {
 }
 
 const DentalChartSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [charts, setCharts] = useState<ChartData[]>([]);
   const [loading, setLoading] = useState(true);

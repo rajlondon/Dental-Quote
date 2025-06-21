@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useTreatmentPlans, useDeleteTreatmentPlan } from "@/hooks/use-treatment-plans";
 import { queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +30,7 @@ const formatDate = (dateString?: string, locale?: string): string => {
 
 // Status badge component
 const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
-  const { t } = useTranslation();
+  // Translation removed
   
   const getVariant = () => {
     switch (status) {
@@ -81,7 +81,7 @@ const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
 
 // Payment status badge component
 const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
-  const { t } = useTranslation();
+  // Translation removed
 
   const getVariant = () => {
     switch (status) {
@@ -120,7 +120,7 @@ const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
 
 export const TreatmentPlansSection = () => {
   const { toast } = useToast();
-  const { t, i18n } = useTranslation();
+  // Translation removed
   const [currentTab, setCurrentTab] = useState<string>("all");
   const [page, setPage] = useState<number>(1);
   const [search, setSearch] = useState<string>("");

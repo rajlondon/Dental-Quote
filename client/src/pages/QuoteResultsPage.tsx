@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
@@ -152,7 +152,7 @@ const ClinicCard: React.FC<{
   isSelected: boolean,
   onSelect: () => void 
 }> = ({ clinic, quoteData, isSelected, onSelect }) => {
-  const { t } = useTranslation();
+  // Translation removed
   
   // We show ONLY the treatment price in the clinic card
   // Both flights and consultation costs are shown separately in the quote summary
@@ -267,7 +267,7 @@ const ClinicCard: React.FC<{
 };
 
 const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [isDownloading, setIsDownloading] = useState(false);
   const [isEmailing, setIsEmailing] = useState(false);
@@ -614,7 +614,7 @@ const QuoteSummary: React.FC<{ quoteData: QuoteData }> = ({ quoteData }) => {
 };
 
 const QuoteResultsPage: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedClinicIndex, setSelectedClinicIndex] = useState<number | null>(null);

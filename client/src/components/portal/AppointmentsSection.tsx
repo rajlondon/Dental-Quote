@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   Calendar, 
   Clock, 
@@ -98,7 +98,7 @@ const mockAppointments: Appointment[] = [
 ];
 
 const AppointmentsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [appointments, setAppointments] = useState<Appointment[]>(mockAppointments);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);

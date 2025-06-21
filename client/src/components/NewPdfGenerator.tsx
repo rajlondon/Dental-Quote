@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import { useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { getFlightEstimateForCity } from '@/services/flightEstimatesService';
 
 // Base64 encoded icons for reliable PDF embedding
@@ -318,7 +318,7 @@ export default function NewPdfGenerator(props: {
   clinics?: Array<{name: string, priceGBP: number, extras: string}>;
   onComplete?: () => void;
 }) {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <button

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import {
   Card,
   CardContent,
@@ -21,7 +21,7 @@ interface AdminPortalTestingProps {
 }
 
 const AdminPortalTesting: React.FC<AdminPortalTestingProps> = ({ setActiveSection }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const portalType = 'admin';
   
   const features = getPortalFeatures(portalType);

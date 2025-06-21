@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { UserCircle2, Menu, X, Calculator } from "lucide-react";
 import LanguageSwitcher from "./LanguageSwitcher";
 
 const SimpleNavbar: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {

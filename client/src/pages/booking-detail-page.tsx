@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useAuth } from "@/hooks/use-auth";
 import { useBookings, type BookingStatus, type BookingStage } from "@/hooks/use-bookings";
 import { Loader2, ArrowLeft, Calendar, User, MapPin, ClipboardList, FileText, MessageSquare } from "lucide-react";
@@ -33,7 +33,7 @@ const stageColors: Record<BookingStage, string> = {
 };
 
 export default function BookingDetailPage() {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const { user } = useAuth();
   const [, params] = useRoute("/bookings/:id");

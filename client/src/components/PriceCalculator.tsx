@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -278,7 +278,7 @@ export default function PriceCalculator({
   packageData,
   onQuoteComplete 
 }: PriceCalculatorProps) {
-  const { t } = useTranslation();
+  // Translation removed
   const [selectedClinic, setSelectedClinic] = useState<number>(1); // Default to middle clinic (best value)
   const { toast } = useToast();
   const [treatments, setTreatments] = useState<TreatmentPrice[]>([]);

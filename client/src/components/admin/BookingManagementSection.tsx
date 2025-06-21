@@ -1,11 +1,11 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Calendar, ArrowRight } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 const BookingManagementSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
 
   return (
     <div className="space-y-6">

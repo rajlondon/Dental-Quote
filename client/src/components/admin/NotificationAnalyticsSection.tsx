@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   BarChart, 
   Bar, 
@@ -33,7 +33,7 @@ interface NotificationAnalytics {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A569BD', '#5DADE2', '#48C9B0', '#F4D03F'];
 
 export default function NotificationAnalyticsSection() {
-  const { t } = useTranslation();
+  // Translation removed
 
   // Fetch notification analytics data
   const { data, isLoading, error } = useQuery<NotificationAnalytics>({

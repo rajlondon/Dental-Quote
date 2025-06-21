@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const ClinicReportsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
 
   // Sample reports data - in a real app, this would come from an API
   const patientReports = [

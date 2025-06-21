@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "wouter";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import { useBookings } from "@/hooks/use-bookings";
 import { format } from "date-fns";
 import {
@@ -77,7 +77,7 @@ const stageColors: Record<string, string> = {
 };
 
 export default function AdminBookingsSection() {
-  const { t } = useTranslation();
+  // Translation removed
   const { useAllBookings, useUpdateBookingStatus } = useBookings();
   
   const {

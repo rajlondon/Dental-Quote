@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   Search, Filter, Download, Plus, Eye, Edit, Trash2,
   ChevronLeft, ChevronRight, ArrowUpDown, Mail, Phone, Calendar, FileText
@@ -116,7 +116,7 @@ const patients = [
 ];
 
 const PatientManagementSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [stageFilter, setStageFilter] = useState('all');

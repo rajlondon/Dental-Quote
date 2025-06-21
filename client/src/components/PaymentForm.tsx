@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useToast } from '@/hooks/use-toast';
 import { CardElement, useStripe, useElements, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -32,7 +32,7 @@ const cardElementOptions = {
 
 // The actual payment form component wrapped with Stripe context
 const PaymentFormContent: React.FC<PaymentFormProps> = ({ email, onSuccess }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();

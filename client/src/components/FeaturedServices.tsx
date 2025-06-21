@@ -1,5 +1,5 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
+// Removed react-i18next
 import istanbulImage from "@assets/image_1743447461115.png";
 import veneersSvg from "../assets/dental-veneers.svg";
 import implantsSvg from "../assets/dental-implants.svg";
@@ -51,7 +51,7 @@ const services: Service[] = [
 ];
 
 const FeaturedServices: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   
   return (
     <section id="services" className="py-20 bg-gradient-to-b from-white to-sky-50">

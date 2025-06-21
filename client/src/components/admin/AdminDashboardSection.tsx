@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { useLocation } from 'wouter';
 import { 
   ChevronUp, ChevronDown, Users, Calendar, 
@@ -72,7 +72,7 @@ const pendingQuotes = [
 ];
 
 const AdminDashboardSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [, setLocation] = useLocation();
 
   return (

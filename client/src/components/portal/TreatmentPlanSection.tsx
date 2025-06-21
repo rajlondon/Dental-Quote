@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { 
   CheckCircle2, 
   FileText, 
@@ -145,7 +145,7 @@ interface TreatmentPlanSectionProps {
 }
 
 const TreatmentPlanSection: React.FC<TreatmentPlanSectionProps> = ({ bookingId = 123 }) => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [isApproving, setIsApproving] = useState(false);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -11,7 +11,7 @@ import { Settings, User, Lock, Bell, Globe, Shield, CreditCard, Save } from 'luc
 import { useToast } from "@/hooks/use-toast";
 
 const AdminSettingsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const { toast } = useToast();
 
   const handleSaveSettings = () => {

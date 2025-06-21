@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+// Removed react-i18next
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import AddPatientDialog from './AddPatientDialog';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const ClinicPatientsSection: React.FC = () => {
-  const { t } = useTranslation();
+  // Translation removed
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(10);
   const [search, setSearch] = useState('');
