@@ -70,7 +70,7 @@ interface DashboardSectionProps {
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   // Translation removed
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
-  const { t } = useTranslation();
+  
 
   return (
     <div className="space-y-6">
@@ -245,7 +245,7 @@ const PatientPortalPage: React.FC = () => {
   const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  const { t } = useTranslation();
+  
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons

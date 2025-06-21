@@ -1,4 +1,3 @@
-
 import React from "react";
 import istanbulImage from "@assets/image_1743447461115.png";
 import veneersSvg from "../assets/dental-veneers.svg";
