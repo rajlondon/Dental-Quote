@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-// Removed react-i18next
 import { useAuth } from '@/hooks/use-auth';
+
+// Placeholder translation function
+const t = (key: string, fallback: string) => fallback;
 import { 
   LayoutDashboard, 
   MessageSquare, 
@@ -68,7 +70,6 @@ interface DashboardSectionProps {
 
 // Dashboard section component
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
-  // Translation removed
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
   
 
@@ -76,7 +77,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-          {t('portal.dashboard.title', 'Dashboard')}
+          Dashboard
         </h2>
       </div>
 

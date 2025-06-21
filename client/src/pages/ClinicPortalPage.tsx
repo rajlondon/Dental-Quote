@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// Removed react-i18next
 import { Link, useLocation } from 'wouter';
+
+// Placeholder translation function
+const t = (key: string, fallback: string) => fallback;
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";

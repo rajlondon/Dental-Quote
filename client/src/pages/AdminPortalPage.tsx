@@ -2,6 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useAdminAuth } from "@/hooks/use-admin-auth";
 
+// Placeholder translation function
+const t = (key: string, fallback: string) => fallback;
+
 // Interface for component props
 interface AdminPortalPageProps {
   disableAutoRefresh?: boolean;

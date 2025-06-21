@@ -1,12 +1,11 @@
 import React from 'react';
-// Removed react-i18next
 import { useLocation } from 'wouter';
 import { 
   ChevronUp, ChevronDown, Users, Calendar, 
   ClipboardList, CreditCard, Activity, 
   ArrowRight, MessageSquare, UserPlus
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -114,14 +113,14 @@ const AdminDashboardSection: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle>{t("admin.dashboard.pending_quotes", "Pending Quotes")}</CardTitle>
+              <CardTitle>Pending Quotes</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs gap-1">
-                {t("admin.dashboard.view_all", "View All")}
+                View All
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
             <CardDescription>
-              {t("admin.dashboard.quotes_need_attention", "Quote requests requiring your attention")}
+              Quote requests requiring your attention
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -156,14 +155,14 @@ const AdminDashboardSection: React.FC = () => {
         <Card>
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle>{t("admin.dashboard.upcoming_bookings", "Upcoming Bookings")}</CardTitle>
+              <CardTitle>Upcoming Bookings</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs gap-1">
-                {t("admin.dashboard.view_all", "View All")}
+                View All
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
             <CardDescription>
-              {t("admin.dashboard.upcoming_appointments", "Scheduled treatments and appointments")}
+              Scheduled treatments and appointments
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -195,9 +194,9 @@ const AdminDashboardSection: React.FC = () => {
         {/* Conversion Rate */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>{t("admin.dashboard.conversion", "Conversion Rate")}</CardTitle>
+            <CardTitle>Conversion Rate</CardTitle>
             <CardDescription>
-              {t("admin.dashboard.conversion_description", "Quote to booking conversion")}
+              Quote to booking conversion
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -208,7 +207,7 @@ const AdminDashboardSection: React.FC = () => {
                 7% from last month
               </p>
             </div>
-            
+
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-1 text-sm">
@@ -217,7 +216,7 @@ const AdminDashboardSection: React.FC = () => {
                 </div>
                 <Progress value={78} className="h-2 bg-gray-100" />
               </div>
-              
+
               <div>
                 <div className="flex justify-between items-center mb-1 text-sm">
                   <span>Consultations to Bookings</span>
@@ -225,7 +224,7 @@ const AdminDashboardSection: React.FC = () => {
                 </div>
                 <Progress value={86} className="h-2 bg-gray-100" />
               </div>
-              
+
               <div>
                 <div className="flex justify-between items-center mb-1 text-sm">
                   <span>Bookings to Treatments</span>
@@ -237,7 +236,7 @@ const AdminDashboardSection: React.FC = () => {
           </CardContent>
           <CardFooter className="border-t pt-4 flex justify-center">
             <Button variant="outline" className="text-xs w-full gap-1">
-              {t("admin.dashboard.view_detailed_report", "View Detailed Report")}
+              View Detailed Report
               <ArrowRight className="h-3 w-3" />
             </Button>
           </CardFooter>
@@ -247,14 +246,14 @@ const AdminDashboardSection: React.FC = () => {
         <Card className="lg:col-span-2">
           <CardHeader className="pb-2">
             <div className="flex items-center justify-between">
-              <CardTitle>{t("admin.dashboard.recent_patients", "Recent Patients")}</CardTitle>
+              <CardTitle>Recent Patients</CardTitle>
               <Button variant="ghost" size="sm" className="text-xs gap-1">
-                {t("admin.dashboard.view_all", "View All")}
+                View All
                 <ArrowRight className="h-3 w-3" />
               </Button>
             </div>
             <CardDescription>
-              {t("admin.dashboard.recently_added", "Recently added patients and status updates")}
+              Recently added patients and status updates
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -314,7 +313,7 @@ const AdminDashboardSection: React.FC = () => {
             </div>
             <Button variant="outline" size="sm" className="gap-1">
               <UserPlus className="h-4 w-4 mr-1" />
-              {t("admin.dashboard.add_patient", "Add Patient")}
+              Add Patient
             </Button>
           </CardFooter>
         </Card>
@@ -330,15 +329,15 @@ const AdminDashboardSection: React.FC = () => {
           }}
         >
           <ClipboardList className="h-5 w-5" />
-          {t("admin.dashboard.create_quote", "Create New Quote")}
+          Create New Quote
         </Button>
         <Button variant="outline" className="py-6 flex justify-center gap-2">
           <Calendar className="h-5 w-5" />
-          {t("admin.dashboard.schedule_call", "Schedule Consultation Call")}
+          Schedule Consultation Call
         </Button>
         <Button variant="secondary" className="py-6 flex justify-center gap-2">
           <MessageSquare className="h-5 w-5" />
-          {t("admin.dashboard.message_patient", "Message a Patient")}
+          Message a Patient
         </Button>
       </div>
     </div>
