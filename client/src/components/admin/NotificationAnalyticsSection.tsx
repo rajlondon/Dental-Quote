@@ -57,7 +57,7 @@ export default function NotificationAnalyticsSection() {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-destructive gap-2">
         <AlertTriangle className="h-8 w-8" />
-        <p>{t('admin.notifications.analytics_error', 'Failed to load notification analytics')}</p>
+        <p>Failed to load notification analytics</p>
       </div>
     );
   }
@@ -65,31 +65,31 @@ export default function NotificationAnalyticsSection() {
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
-        <p>{t('admin.notifications.no_data', 'No analytics data available')}</p>
+        <p>No analytics data available</p>
       </div>
     );
   }
 
   // Transform category data for charts
   const categoryData = Object.entries(data.notifications_by_category).map(([name, value]) => ({
-    name: t(`notification.category.${name}`, name),
+    name: name,
     value
   }));
 
   // Transform priority data for charts
   const priorityData = Object.entries(data.notifications_by_priority).map(([name, value]) => ({
-    name: t(`notification.priority.${name}`, name),
+    name: name,
     value
   }));
 
   // Data for read vs unread pie chart
   const readUnreadData = [
     { 
-      name: t('admin.notifications.read', 'Read'), 
+      name: 'Read', 
       value: data.read_count 
     },
     { 
-      name: t('admin.notifications.unread', 'Unread'), 
+      name: 'Unread', 
       value: data.unread_count 
     }
   ];
@@ -97,7 +97,7 @@ export default function NotificationAnalyticsSection() {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-bold tracking-tight">
-        {t('admin.notifications.analytics_title', 'Notification Analytics')}
+        Notification Analytics
       </h2>
       
       {/* Overview Cards */}
@@ -105,7 +105,7 @@ export default function NotificationAnalyticsSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('admin.notifications.total', 'Total Notifications')}
+              Total Notifications
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -116,13 +116,13 @@ export default function NotificationAnalyticsSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('admin.notifications.engagement', 'Engagement Rate')}
+              Engagement Rate
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.engagement_rate}%</div>
             <p className="text-xs text-muted-foreground">
-              {t('admin.notifications.engagement_desc', 'Percentage of notifications that have been read')}
+              Percentage of notifications that have been read
             </p>
           </CardContent>
         </Card>
@@ -130,17 +130,17 @@ export default function NotificationAnalyticsSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('admin.notifications.avg_time', 'Avg. Time to Read')}
+              Avg. Time to Read
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {data.average_time_to_read !== null 
                 ? `${Math.floor(data.average_time_to_read / 60)}m ${Math.floor(data.average_time_to_read % 60)}s`
-                : t('admin.notifications.not_available', 'N/A')}
+                : 'N/A'}
             </div>
             <p className="text-xs text-muted-foreground">
-              {t('admin.notifications.avg_time_desc', 'Average time before users read notifications')}
+              Average time before users read notifications
             </p>
           </CardContent>
         </Card>
@@ -148,13 +148,13 @@ export default function NotificationAnalyticsSection() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              {t('admin.notifications.unread_count', 'Unread Notifications')}
+              Unread Notifications
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{data.unread_count}</div>
             <p className="text-xs text-muted-foreground">
-              {t('admin.notifications.unread_desc', 'Notifications that have not been viewed yet')}
+              Notifications that have not been viewed yet
             </p>
           </CardContent>
         </Card>
@@ -165,9 +165,9 @@ export default function NotificationAnalyticsSection() {
         {/* Notifications by Category */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>{t('admin.notifications.by_category', 'Notifications by Category')}</CardTitle>
+            <CardTitle>Notifications by Category</CardTitle>
             <CardDescription>
-              {t('admin.notifications.by_category_desc', 'Distribution of notifications across different categories')}
+              Distribution of notifications across different categories
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -191,9 +191,9 @@ export default function NotificationAnalyticsSection() {
         {/* Read vs Unread */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>{t('admin.notifications.read_vs_unread', 'Read vs Unread Notifications')}</CardTitle>
+            <CardTitle>Read vs Unread Notifications</CardTitle>
             <CardDescription>
-              {t('admin.notifications.read_vs_unread_desc', 'Proportion of notifications that have been read')}
+              Proportion of notifications that have been read
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -225,9 +225,9 @@ export default function NotificationAnalyticsSection() {
         {/* Notifications by Priority */}
         <Card className="col-span-1">
           <CardHeader>
-            <CardTitle>{t('admin.notifications.by_priority', 'Notifications by Priority')}</CardTitle>
+            <CardTitle>Notifications by Priority</CardTitle>
             <CardDescription>
-              {t('admin.notifications.by_priority_desc', 'Distribution of notifications by priority level')}
+              Distribution of notifications by priority level
             </CardDescription>
           </CardHeader>
           <CardContent>
