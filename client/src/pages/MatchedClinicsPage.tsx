@@ -3,7 +3,6 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 import PageFooterActions from '@/components/PageFooterActions';
 import {
   ArrowLeft,
@@ -683,12 +682,26 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   return (
     <>
-      <ConsistentPageHeader 
-        title="Matched Clinics"
-        subtitle="Compare personalized quotes from verified Turkish dental clinics"
-        showBackButton={true}
-        onBack={() => setLocation('/your-quote')}
-      />
+      {/* Blue Header Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center gap-4 mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation('/your-quote')}
+              className="text-white hover:bg-white/10 p-2"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Matched Clinics</h1>
+          <p className="text-blue-100 text-lg">
+            Compare personalized quotes from verified Turkish dental clinics
+          </p>
+        </div>
+      </div>
       
       <main>
         <div className="container mx-auto py-8 px-4">
