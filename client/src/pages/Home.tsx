@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Hero from '@/components/Hero';
 import FeaturedServices from '@/components/FeaturedServices';
@@ -7,7 +8,7 @@ import Testimonials from '@/components/Testimonials';
 import FAQ from '@/components/FAQ';
 import Footer from '@/components/Footer';
 import TrendingPackageCard from '@/components/TrendingPackageCard';
-import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
+import { Star, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Zap, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import clinicsData from "@/data/clinics.json";
 import { trendingPackages } from "@/data/packages";
