@@ -100,6 +100,15 @@ export async function initializeSpecialOfferImageCache(): Promise<void> {
             }
           }
 
+          // Add a small delay to ensure server is fully ready
+          await new Promise(resolve => setTimeout(resolve, 1000));
+
+          // Skip self-referencing URLs during startup to prevent connection errors
+          if (imageUrl.includes('localhost:5000') || imageUrl.includes('127.0.0.1:5000')) {
+            console.log(`⏭️ Skipping self-referencing URL during startup: ${imageUrl}`);
+            return;
+          }
+
           // Cache the image
           console.log(`Caching image for offer "${offer.title}": ${imageUrl}`);
           const cachedUrl = await ImageCacheService.cacheImage(imageUrl);
