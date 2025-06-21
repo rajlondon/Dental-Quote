@@ -4,7 +4,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import App from "./App";
 import "./index.css";
-import i18n from "./i18n"; // Import i18n configuration
 import { RTLProvider } from '@/components/ui/rtl-provider'; // Import RTL provider for Arabic support
 
 // Extend global CSS with custom styles

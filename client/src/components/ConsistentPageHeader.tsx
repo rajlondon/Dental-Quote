@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useLocation } from 'wouter';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +34,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
   totalSteps = 3,
   stepLabels = ["Treatment Plan", "Patient Info", "Matched Clinics"],
   children
-}) => {
+}: ConsistentPageHeaderProps) => {
   const [, setLocation] = useLocation();
 
   const handleBackClick = () => {
@@ -65,7 +64,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
                 />
                 <span className="text-xl font-bold">MyDentalFly</span>
               </div>
-              
+
               {/* Quick Navigation - same as homepage */}
               <nav className="hidden lg:flex space-x-4">
                 <Button 
@@ -210,7 +209,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
                   const stepNumber = index + 1;
                   const isActive = stepNumber === currentStep;
                   const isCompleted = stepNumber < currentStep;
-                  
+
                   return (
                     <div key={index} className="flex items-center">
                       <div className="relative flex items-center">
@@ -230,7 +229,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Connector line */}
                       {index < stepLabels.length - 1 && (
                         <div className="hidden md:block w-8 h-0.5 bg-blue-300 ml-4"></div>
