@@ -343,6 +343,20 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Calculate UK total for comparison
   const ukTotal = activeTreatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
+  // Load treatment plan from localStorage or start with empty
+  useEffect(() => {
+    const savedPlan = localStorage.getItem('treatmentPlan');
+    if (savedPlan) {
+      try {
+        const parsedPlan = JSON.parse(savedPlan);
+        setTreatmentPlan(parsedPlan);
+      } catch (error) {
+        console.error('Error parsing saved treatment plan:', error);
+        setTreatmentPlan([]);
+      }
+    }
+  }, []); // Remove treatmentPlan dependency to prevent infinite loop
+
   if (!activeTreatmentPlan.length) {
     return (
       <>
@@ -781,7 +795,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   </div>
                                   <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>
                                 </div>
-                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                               <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                                   <div className="flex items-center gap-2">
                                     <ShieldCheck className="h-5 w-5 text-green-500" />
                                     <span className="font-medium">Veneers</span>
