@@ -25,9 +25,9 @@ function setupReloadTracker() {
     // Only set up once
     if ((window as any).__reloadTrackerSetup) return;
     (window as any).__reloadTrackerSetup = true;
-    
+
     console.log("🔍 Setting up reload tracker");
-    
+
     // Track events
     ['visibilitychange', 'message', 'beforeunload'].forEach(e =>
       window.addEventListener(e, () => console.log('EVENT', e, performance.now())));
@@ -38,7 +38,7 @@ function setupReloadTracker() {
       window.addEventListener('beforeunload', () => {
         console.trace('🔄 Page unloading at', performance.now());
       });
-      
+
       // Monitor navigation events with performance observer
       if (typeof PerformanceObserver !== 'undefined') {
         const navigationObserver = new PerformanceObserver((entries) => {
@@ -48,7 +48,7 @@ function setupReloadTracker() {
         });
         navigationObserver.observe({ entryTypes: ['navigation'] });
       }
-      
+
       // Manually add a small helper to console for testing
       (window as any).traceReloads = true;
       console.log('🔍 Reload tracing enabled - view in console');
@@ -116,12 +116,12 @@ const PortalLoginPage: React.FC = () => {
   const [selectedClinicName, setSelectedClinicName] = useState("");
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState<string | null>(null);
-  
+
   // Set up reload tracking for debugging the clinic portal issue
   useEffect(() => {
     setupReloadTracker();
   }, []);
-  
+
   // Check if user is already authenticated
   useEffect(() => {
     if (user && user.role === 'admin') {
@@ -131,18 +131,18 @@ const PortalLoginPage: React.FC = () => {
     } else if (user && user.role === 'patient' && user.emailVerified) {
       setLocation('/client-portal');
     }
-    
+
     // Check if user came from clinic selection
     if (localStorage.getItem('selectedClinicId')) {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
   }, []);
-  
+
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
     setIsLoading(true);
-    
+
     try {
       console.log("Starting registration with values:", {
         fullName: values.fullName,
@@ -152,10 +152,10 @@ const PortalLoginPage: React.FC = () => {
         contactConsent: values.contactConsent,
         promotionalConsent: values.promotionalConsent
       });
-      
+
       const firstName = values.fullName.split(' ')[0] || '';
       const lastName = values.fullName.split(' ').slice(1).join(' ') || '';
-      
+
       const requestBody = {
         firstName,
         lastName,
@@ -167,9 +167,9 @@ const PortalLoginPage: React.FC = () => {
         consentContact: values.contactConsent || false,
         consentMarketing: values.promotionalConsent || false,
       };
-      
+
       console.log("Sending registration request with body:", requestBody);
-      
+
       // Make direct API call to debug
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -179,12 +179,12 @@ const PortalLoginPage: React.FC = () => {
         body: JSON.stringify(requestBody),
         credentials: 'include' // Important to include cookies
       });
-      
+
       console.log("Registration response status:", response.status);
-      
+
       const respText = await response.text();
       console.log("Response text:", respText);
-      
+
       if (!response.ok) {
         try {
           const errorData = JSON.parse(respText);
@@ -195,17 +195,17 @@ const PortalLoginPage: React.FC = () => {
           throw new Error("Registration failed with status: " + response.status);
         }
       }
-      
+
       // Parse the response text as JSON since we already consumed the response body
       const data = respText ? JSON.parse(respText) : {};
-      
+
       // Check if there is a pending special offer to preserve through verification process
       const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
       if (pendingOfferData) {
         try {
           // Parse and format the offer data consistently
           const rawOfferData = JSON.parse(pendingOfferData);
-          
+
           // Create a standardized format to ensure field consistency
           const formattedOfferData = {
             id: rawOfferData.id,
@@ -218,12 +218,12 @@ const PortalLoginPage: React.FC = () => {
                               ? rawOfferData.applicable_treatments[0] 
                               : 'Dental Implants')
           };
-          
+
           // Store with a different key in localStorage that persists through verification process
           // We use localStorage instead of sessionStorage so it survives between sessions
           localStorage.setItem('pendingSpecialOfferAfterVerification', JSON.stringify(formattedOfferData));
           console.log("Saved formatted special offer for after verification:", formattedOfferData);
-          
+
           // Show enhanced message about offer being preserved
           toast({
             title: "Registration Successful",
@@ -244,15 +244,15 @@ const PortalLoginPage: React.FC = () => {
           description: "Please check your email for verification instructions.",
         });
       }
-      
+
       // Redirect to verification notice page
       setLocation('/verification-sent?email=' + encodeURIComponent(values.email));
-      
+
     } catch (error) {
       console.error("Registration error:", error);
       // Extract specific error message if available
       const errorMessage = (error instanceof Error) ? error.message : "There was a problem with your registration. Please try again.";
-      
+
       toast({
         title: "Registration Failed",
         description: errorMessage.includes("User with this email already exists") 
@@ -264,7 +264,7 @@ const PortalLoginPage: React.FC = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Login form
   const loginForm = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -287,48 +287,48 @@ const PortalLoginPage: React.FC = () => {
     // Simple approach - reset isSubmitting for testing
     isSubmitting.current = false;
     loginInProgress.current = false;
-    
+
     // Set loading state for visual feedback
     setIsLoading(true);
-    
+
     try {
       console.log("Login attempt with:", values);
-      
+
       // Store login intent in session storage before login
       // This helps identify the transition is from a fresh login
       sessionStorage.setItem('just_logged_in', 'true');
       sessionStorage.setItem('login_timestamp', Date.now().toString());
-      
+
       // Pre-cache clinic portal data to avoid reload
       sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
-      
+
       // Use the loginMutation from useAuth hook
       const userData = await loginMutation.mutateAsync({
         email: values.email,
         password: values.password
       });
-      
+
       // Success toast is handled by the useAuth hook
-      
+
       // Direct redirect based on user role from response
       console.log("Login successful, redirecting based on role:", userData.role);
-      
+
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
         // Pre-cache user data
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-        
+
         // Special handling for admin to prevent refresh issues
         sessionStorage.setItem('admin_portal_timestamp', Date.now().toString());
         sessionStorage.setItem('admin_role_verified', 'true');
-        
+
         // Set a guard to prevent automatic redirects to login
         localStorage.setItem('auth_guard', Date.now().toString());
-        
+
         // Flag in sessionStorage that we're doing a protected navigation
         sessionStorage.setItem('admin_protected_navigation', 'true');
-        
+
         // Add slight delay to make sure everything is written
         setTimeout(() => {
           console.log("Admin portal redirect with all caches prepared");
@@ -336,15 +336,15 @@ const PortalLoginPage: React.FC = () => {
           (window as any).__directAdminNavigation = true;
           setLocation('/admin-portal');
         }, 100);
-        
+
       } else if (userData.role === 'clinic') {
         console.log("Clinic staff detected, redirecting to clinic portal");
-        
+
         // Pre-cache the user data to avoid double fetching on redirect
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         sessionStorage.setItem('clinic_portal_timestamp', Date.now().toString());
-        
+
         // Add delay to ensure caches are written before redirect
         setTimeout(() => {
           console.log("Redirecting to clinic portal with pre-cached session");
@@ -356,18 +356,18 @@ const PortalLoginPage: React.FC = () => {
         // Pre-cache user data
         sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
         sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-        
+
         // Check if there's a pending special offer to process
         console.log("Checking sessionStorage for pendingSpecialOffer");
         const pendingOfferData = sessionStorage.getItem('pendingSpecialOffer');
         console.log("pendingSpecialOffer data:", pendingOfferData);
-        
+
         if (pendingOfferData) {
           try {
             // Parse the pending offer data
             const offerData = JSON.parse(pendingOfferData);
             console.log("Successfully parsed pending special offer request:", offerData);
-            
+
             // Format the offer data for consistency
             const formattedOfferData = {
               id: offerData.id,
@@ -380,7 +380,7 @@ const PortalLoginPage: React.FC = () => {
                                     ? offerData.applicable_treatments[0] 
                                     : 'Dental Implants')
             };
-            
+
             // Create URL parameters for quote page to ensure they're visible in the URL
             const params = new URLSearchParams({
               specialOffer: formattedOfferData.id,
@@ -390,23 +390,23 @@ const PortalLoginPage: React.FC = () => {
               offerDiscountType: formattedOfferData.discountType,
               treatment: formattedOfferData.applicableTreatment
             });
-            
+
             console.log("Created URL parameters for special offer:", params.toString());
-            
+
             // We won't remove pendingSpecialOffer until YourQuotePage confirms it has received it
             // This provides a fallback in case of navigation issues
-            
+
             // Store the formatted offer in activeSpecialOffer for use by the YourQuotePage
             sessionStorage.setItem('activeSpecialOffer', JSON.stringify(formattedOfferData));
             console.log("Saved activeSpecialOffer to sessionStorage:", formattedOfferData);
-            
+
             // Notify user
             toast({
               title: "Special Offer Selected",
               description: `${formattedOfferData.title} will be applied to your quote results.`,
               variant: "default",
             });
-            
+
             // Redirect to the quote page with the URL parameters 
             // This makes the special offer visible in the URL and provides additional resilience
             setTimeout(() => {
@@ -415,37 +415,37 @@ const PortalLoginPage: React.FC = () => {
               console.log("Redirect URL:", quoteUrl);
               window.location.href = quoteUrl;
             }, 100);
-            
+
             return; // Exit early as we're handling special redirect
           } catch (error) {
             console.error("Error processing pending special offer:", error);
             console.error("Error details:", error instanceof Error ? error.message : String(error));
-            
+
             // Show an error toast to inform the user
             toast({
               title: "Error Processing Offer",
               description: "We couldn't process your special offer request. You'll be redirected to your dashboard.",
               variant: "destructive",
             });
-            
+
             // Continue with normal patient portal redirect if there's an error
           }
         }
-        
+
         // Normal patient portal redirect if no pending actions
         setTimeout(() => {
           console.log("Redirecting to patient portal");
           setLocation('/client-portal');
         }, 100);
       }
-      
+
     } catch (error) {
       console.error("Login error:", error);
       // The loginMutation will handle error toasts automatically
     } finally {
       // Reset loading state
       setIsLoading(false);
-      
+
       // Reset flag after a delay to prevent rapid duplicate submissions
       setTimeout(() => {
         loginInProgress.current = false;
@@ -469,7 +469,7 @@ const PortalLoginPage: React.FC = () => {
       promotionalConsent: false,
     },
   });
-  
+
   // Admin login form
   const adminLoginForm = useForm<z.infer<typeof adminLoginSchema>>({
     resolver: zodResolver(adminLoginSchema),
@@ -482,35 +482,35 @@ const PortalLoginPage: React.FC = () => {
   // Handle admin login form submission
   const onAdminLoginSubmit = async (values: z.infer<typeof adminLoginSchema>) => {
     setAdminLoginError(null);
-    
+
     try {
       // Call the admin-specific login function
       await adminLogin(values.email, values.password);
-      
+
       // Show success toast
       toast({
         title: 'Admin login successful',
         description: 'Welcome to the admin portal',
       });
-      
+
       // Prepare the session for admin portal navigation
       sessionStorage.setItem('admin_portal_timestamp', Date.now().toString());
       sessionStorage.setItem('admin_role_verified', 'true');
       sessionStorage.setItem('admin_protected_navigation', 'true');
-      
+
       // Redirect to admin portal with intentional navigation flag
       setTimeout(() => {
         console.log("Admin portal redirect with specialized auth");
         (window as any).__directAdminNavigation = true;
         setLocation('/admin-portal');
       }, 100);
-      
+
     } catch (error) {
       console.error('Admin login error:', error);
-      
+
       // Handle login error
       setAdminLoginError('Invalid admin credentials. Please try again.');
-      
+
       toast({
         title: 'Admin login failed',
         description: 'Please check your credentials and try again',
@@ -535,10 +535,10 @@ const PortalLoginPage: React.FC = () => {
               </Link>
             </div>
             <h1 className="text-3xl font-bold text-primary mb-2">
-              {t("portal.login.title", "Patient & Admin Portal")}
+              Patient & Admin Portal
             </h1>
             <p className="text-neutral-600">
-              {t("portal.login.subtitle", "Access your dental treatment information and communicate with our team.")}
+              Access your dental treatment information and communicate with our team.
             </p>
           </div>
 
@@ -552,7 +552,7 @@ const PortalLoginPage: React.FC = () => {
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* Display verification reminder for unverified users */}
           {user && user.role === 'patient' && !user.emailVerified && user.status === 'pending' && (
             <Alert className="mb-6 bg-amber-50 border-amber-200">
@@ -572,9 +572,9 @@ const PortalLoginPage: React.FC = () => {
                           'Content-Type': 'application/json'
                         }
                       });
-                      
+
                       const data = await response.json();
-                      
+
                       if (response.ok) {
                         toast({
                           title: "Verification Email Sent",
@@ -604,22 +604,22 @@ const PortalLoginPage: React.FC = () => {
               </AlertDescription>
             </Alert>
           )}
-          
+
           <Tabs defaultValue="login" className="w-full max-w-md">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger id="login-tab" value="login">{t("portal.login.signin", "Sign In")}</TabsTrigger>
+              <TabsTrigger id="login-tab" value="login">Sign In</TabsTrigger>
               <TabsTrigger id="clinic-tab" value="clinic">Clinic Login</TabsTrigger>
               <TabsTrigger id="admin-tab" value="admin">Admin</TabsTrigger>
-              <TabsTrigger id="register-tab" value="register">{t("portal.login.register", "Register")}</TabsTrigger>
+              <TabsTrigger id="register-tab" value="register">Register</TabsTrigger>
             </TabsList>
-            
+
             {/* Regular Login Tab */}
             <TabsContent value="login">
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("portal.login.signin", "Sign In")}</CardTitle>
+                  <CardTitle>Sign In</CardTitle>
                   <CardDescription>
-                    {t("portal.login.signin_desc", "Enter your credentials to access your account")}
+                    Enter your credentials to access your account
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -630,7 +630,7 @@ const PortalLoginPage: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -650,7 +650,7 @@ const PortalLoginPage: React.FC = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -677,7 +677,7 @@ const PortalLoginPage: React.FC = () => {
                   </span>
                 </div>
               </div>
-              
+
               <Button
                 type="button"
                 variant="outline"
@@ -694,7 +694,7 @@ const PortalLoginPage: React.FC = () => {
               </Button>
 
                       <Button type="submit" className="w-full">
-                        {isLoading ? t("portal.login.signing_in", "Signing in...") : t("portal.login.signin", "Sign In")}
+                        {isLoading ? "Signing in..." : "Sign In"}
                       </Button>
                     </form>
                   </Form>
@@ -702,7 +702,7 @@ const PortalLoginPage: React.FC = () => {
                 <CardFooter className="flex justify-between">
                   <Link href="/forgot-password">
                     <Button variant="link" className="px-0">
-                      {t("portal.login.forgot_password", "Forgot password?")}
+                      Forgot password?
                     </Button>
                   </Link>
                 </CardFooter>
@@ -727,7 +727,7 @@ const PortalLoginPage: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -747,7 +747,7 @@ const PortalLoginPage: React.FC = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -776,7 +776,7 @@ const PortalLoginPage: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             {/* Admin Login Tab */}
             <TabsContent value="admin">
               <Card>
@@ -793,7 +793,7 @@ const PortalLoginPage: React.FC = () => {
                       <AlertDescription>{adminLoginError}</AlertDescription>
                     </Alert>
                   )}
-                  
+
                   <Form {...adminLoginForm}>
                     <form onSubmit={adminLoginForm.handleSubmit(onAdminLoginSubmit)} className="space-y-4">
                       <FormField
@@ -865,14 +865,13 @@ const PortalLoginPage: React.FC = () => {
                 </CardContent>
               </Card>
             </TabsContent>
-            
-            {/* Registration Tab */}
-            <TabsContent value="register">
+
+            {/* Registration Tab */}<TabsContent value="register">
               <Card>
                 <CardHeader>
-                  <CardTitle>{t("portal.login.register", "Create an Account")}</CardTitle>
+                  <CardTitle>Create an Account</CardTitle>
                   <CardDescription>
-                    {t("portal.login.register_desc", "Register to access your dental treatment plan")}
+                    Register to access your dental treatment plan
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -887,7 +886,7 @@ const PortalLoginPage: React.FC = () => {
                         name="fullName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("form.name", "Full Name")}</FormLabel>
+                            <FormLabel>Full Name</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <User className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -907,7 +906,7 @@ const PortalLoginPage: React.FC = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("form.email", "Email Address")}</FormLabel>
+                            <FormLabel>Email Address</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Mail className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -927,7 +926,7 @@ const PortalLoginPage: React.FC = () => {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("form.phone", "Phone Number")}</FormLabel>
+                            <FormLabel>Phone Number</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Phone className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -947,7 +946,7 @@ const PortalLoginPage: React.FC = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t("portal.login.password", "Password")}</FormLabel>
+                            <FormLabel>Password</FormLabel>
                             <FormControl>
                               <div className="relative">
                                 <Lock className="absolute left-3 top-3 h-4 w-4 text-neutral-500" />
@@ -1052,7 +1051,7 @@ const PortalLoginPage: React.FC = () => {
                         )}
                       />
                       <Button type="submit" className="w-full mt-2" disabled={isLoading}>
-                        {isLoading ? "Creating Account..." : t("portal.login.register", "Create Account")}
+                        {isLoading ? "Creating Account..." : "Create Account"}
                       </Button>
                     </form>
                   </Form>
@@ -1066,9 +1065,9 @@ const PortalLoginPage: React.FC = () => {
         <div className="hidden md:flex flex-col justify-center">
           <div className="bg-gradient-to-br from-primary to-primary/80 text-white rounded-lg p-8 shadow-lg">
             <h2 className="text-2xl font-bold mb-6">
-              {t("portal.login.benefits.title", "Your Dental Journey in One Place")}
+              Your Dental Journey in One Place
             </h2>
-            
+
             <div className="space-y-6">
               <div className="flex gap-4">
                 <div className="shrink-0 bg-white/20 p-3 rounded-full">
@@ -1076,66 +1075,66 @@ const PortalLoginPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {t("portal.login.benefits.treatment_plans", "View Your Treatment Plans")}
+                    View Your Treatment Plans
                   </h3>
                   <p className="text-white/90">
-                    {t("portal.login.benefits.treatment_plans_desc", "Access detailed treatment plans from your selected clinics")}
+                    Access detailed treatment plans from your selected clinics
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <div className="shrink-0 bg-white/20 p-3 rounded-full">
                   <Check className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {t("portal.login.benefits.compare", "Compare Clinic Treatments")}
+                    Compare Clinic Treatments
                   </h3>
                   <p className="text-white/90">
-                    {t("portal.login.benefits.compare_desc", "Side-by-side comparison of treatment options and prices")}
+                    Side-by-side comparison of treatment options and prices
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <div className="shrink-0 bg-white/20 p-3 rounded-full">
                   <Check className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {t("portal.login.benefits.communicate", "Direct Communication")}
+                    Direct Communication
                   </h3>
                   <p className="text-white/90">
-                    {t("portal.login.benefits.communicate_desc", "Message your dental providers directly within the platform")}
+                    Message your dental providers directly within the platform
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <div className="shrink-0 bg-white/20 p-3 rounded-full">
                   <Check className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {t("portal.login.benefits.book", "Book & Manage Appointments")}
+                    Book & Manage Appointments
                   </h3>
                   <p className="text-white/90">
-                    {t("portal.login.benefits.book_desc", "Schedule consultations and treatments with ease")}
+                    Schedule consultations and treatments with ease
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex gap-4">
                 <div className="shrink-0 bg-white/20 p-3 rounded-full">
                   <Check className="h-6 w-6" />
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">
-                    {t("portal.login.benefits.secure", "Secure & Confidential")}
+                    Secure & Confidential
                   </h3>
                   <p className="text-white/90">
-                    {t("portal.login.benefits.secure_desc", "All your dental records and communications are encrypted and secure")}
+                    All your dental records and communications are encrypted and secure
                   </p>
                 </div>
               </div>
