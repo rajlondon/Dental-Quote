@@ -34,10 +34,10 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
 
     // Session storage key to track if we've shown the notification
     const SESSION_NOTIFICATION_KEY = 'admin_refresh_notification_shown';
-    
+
     // Track navigation actions to distinguish between navigation and reload
     let isNavigating = false;
-    
+
     // Create a function to mark when we're navigating intentionally
     const markNavigating = () => {
       isNavigating = true;
@@ -46,10 +46,10 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
         isNavigating = false;
       }, 100);
     };
-    
+
     // Create a function that other components can call
     window.markAdminPortalNavigation = markNavigating;
-    
+
     // Listen for click events on links and buttons
     const handleClick = (e: MouseEvent) => {
       // Check if the click was on an anchor tag, a button, or any element with role="link" 
@@ -70,33 +70,33 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
         target = target.parentElement as HTMLElement;
       }
     };
-    
+
     // Only prevent actual page reloads, not navigation
     const preventReload = (e: BeforeUnloadEvent) => {
       // If logout is in progress, don't block - check both local and session storage for safety
       const isLoggingOut = 
         sessionStorage.getItem('admin_intentional_logout') === 'true' || 
         localStorage.getItem('admin_logout_in_progress') === 'true';
-        
+
       // Let normal navigation proceed
       if (isNavigating || isLoggingOut) {
         console.log('Detected intentional navigation or logout, allowing it to proceed');
         return undefined;
       }
-      
+
       if (window.location.pathname.includes('admin-portal')) {
         console.log('🛡️ Blocked programmatic page reload on admin portal');
         console.warn('⚠️ Automatic page reload blocked by AdminPortalGuard');
-        
+
         // Only show the toast if we haven't shown it this session
         const notificationShown = sessionStorage.getItem(SESSION_NOTIFICATION_KEY);
-        
+
         if (!notificationShown && !refreshBlockedRef.current) {
           refreshBlockedRef.current = true;
-          
+
           // Mark that we've shown the notification this session
           sessionStorage.setItem(SESSION_NOTIFICATION_KEY, 'true');
-          
+
           // Show a toast notification with a short duration
           toast({
             title: 'Session Protection Active',
@@ -104,7 +104,7 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
             duration: 3000, // 3 seconds
           });
         }
-        
+
         // Cancel the event
         e.preventDefault();
         e.returnValue = '';
@@ -112,11 +112,11 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
       }
       return undefined;
     };
-    
+
     // Add event listeners
     document.addEventListener('click', handleClick, { capture: true });
     window.addEventListener('beforeunload', preventReload);
-    
+
     // Remove all event listeners when the component unmounts
     return () => {
       document.removeEventListener('click', handleClick, { capture: true });
@@ -131,7 +131,7 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
       const timer = setTimeout(() => {
         setInitialized(true);
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isLoading]);

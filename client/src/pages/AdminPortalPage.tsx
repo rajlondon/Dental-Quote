@@ -189,20 +189,20 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
 
   // Sidebar items configuration
   const sidebarItems = [
-    { id: "dashboard", label: t("admin.sidebar.dashboard", "Dashboard"), icon: <BarChart3 className="h-5 w-5" /> },
-    { id: "patients", label: t("admin.sidebar.patients", "Patients"), icon: <Users className="h-5 w-5" /> },
-    { id: "quotes", label: t("admin.sidebar.quotes", "Quote Requests"), icon: <ClipboardList className="h-5 w-5" /> },
-    { id: "bookings", label: t("admin.sidebar.bookings", "Bookings"), icon: <Calendar className="h-5 w-5" /> },
-    { id: "payments", label: t("admin.sidebar.payments", "Payments"), icon: <Banknote className="h-5 w-5" /> },
-    { id: "messages", label: t("admin.sidebar.messages", "Messages"), icon: <MessageSquare className="h-5 w-5" /> },
-    { id: "documents", label: t("admin.sidebar.documents", "Documents"), icon: <FileText className="h-5 w-5" /> },
-    { id: "offers_approval", label: t("admin.sidebar.offers_approval", "Content Approval"), icon: <CheckCircle className="h-5 w-5" /> },
-    { id: "treatment_mapper", label: t("admin.sidebar.treatment_mapper", "Treatment Mapper"), icon: <Grid3X3 className="h-5 w-5" /> },
-    { id: "portal_communication", label: t("admin.sidebar.portal_communication", "Portal Communication Tester"), icon: <TestTube className="h-5 w-5" /> },
-    { id: "data_architecture", label: t("admin.sidebar.data_architecture", "Data Architecture"), icon: <Network className="h-5 w-5" /> },
-    { id: "analytics", label: t("admin.sidebar.analytics", "Analytics"), icon: <BarChart3 className="h-5 w-5" /> },
-    { id: "testing", label: t("admin.sidebar.testing", "Testing"), icon: <TestTube className="h-5 w-5" /> },
-    { id: "settings", label: t("admin.sidebar.settings", "Settings"), icon: <Settings className="h-5 w-5" /> }
+    { id: "dashboard", label: "Dashboard", icon: <BarChart3 className="h-5 w-5" /> },
+    { id: "patients", label: "Patients", icon: <Users className="h-5 w-5" /> },
+    { id: "quotes", label: "Quote Requests", icon: <ClipboardList className="h-5 w-5" /> },
+    { id: "bookings", label: "Bookings", icon: <Calendar className="h-5 w-5" /> },
+    { id: "payments", label: "Payments", icon: <Banknote className="h-5 w-5" /> },
+    { id: "messages", label: "Messages", icon: <MessageSquare className="h-5 w-5" /> },
+    { id: "documents", label: "Documents", icon: <FileText className="h-5 w-5" /> },
+    { id: "offers_approval", label: "Content Approval", icon: <CheckCircle className="h-5 w-5" /> },
+    { id: "treatment_mapper", label: "Treatment Mapper", icon: <Grid3X3 className="h-5 w-5" /> },
+    { id: "portal_communication", label: "Portal Communication Tester", icon: <TestTube className="h-5 w-5" /> },
+    { id: "data_architecture", label: "Data Architecture", icon: <Network className="h-5 w-5" /> },
+    { id: "analytics", label: "Analytics", icon: <BarChart3 className="h-5 w-5" /> },
+    { id: "testing", label: "Testing", icon: <TestTube className="h-5 w-5" /> },
+    { id: "settings", label: "Settings", icon: <Settings className="h-5 w-5" /> }
   ];
 
   // Render the active section content
@@ -239,9 +239,9 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-500 mb-4">{t("admin.section_coming_soon", "Coming Soon")}</h2>
+            <h2 className="text-2xl font-bold text-gray-500 mb-4">Coming Soon</h2>
             <p className="text-gray-400 max-w-md">
-              {t("admin.section_under_development", "This section is currently under development. Please check back later.")}
+              This section is currently under development. Please check back later.
             </p>
           </div>
         );
@@ -275,10 +275,10 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                 </a>
                 <div className="hidden md:block">
                   <h1 className="text-lg font-semibold text-primary">
-                    {t("admin.title", "Admin Portal")}
+                    Admin Portal
                   </h1>
                   <p className="text-xs text-gray-500">
-                    {t("admin.subtitle", "Manage your dental concierge service")}
+                    Manage your dental concierge service
                   </p>
                 </div>
               </div>
@@ -289,7 +289,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
               <div className="hidden md:block relative">
                 <Input
                   type="search"
-                  placeholder={t("admin.search_placeholder", "Search...")}
+                  placeholder="Search..."
                   className="w-64 pl-10"
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
@@ -315,14 +315,14 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                 {notificationsOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-40 border border-gray-100">
                     <div className="p-3 border-b border-gray-100 flex justify-between items-center">
-                      <h3 className="font-medium">{t("admin.notifications", "Notifications")}</h3>
+                      <h3 className="font-medium">Notifications</h3>
                       <Button 
                         variant="ghost" 
                         size="sm" 
                         onClick={markAllNotificationsAsRead}
                         disabled={unreadNotificationsCount === 0}
                       >
-                        {t("admin.mark_all_read", "Mark all as read")}
+                        Mark all as read
                       </Button>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
@@ -365,13 +365,13 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                         </div>
                       ) : (
                         <div className="p-4 text-center text-sm text-gray-500">
-                          {t("admin.no_notifications", "No notifications at this time")}
+                          No notifications at this time
                         </div>
                       )}
                     </div>
                     <div className="p-2 border-t border-gray-100">
                       <Button variant="ghost" size="sm" className="w-full text-xs">
-                        {t("admin.view_all_notifications", "View all notifications")}
+                        View all notifications
                       </Button>
                     </div>
                   </div>
@@ -393,7 +393,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
               </div>
 
               {/* Logout Button */}
-              <Button variant="ghost" size="icon" onClick={handleLogout} title={t("admin.logout", "Logout")}>
+              <Button variant="ghost" size="icon" onClick={handleLogout} title="Logout">
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -444,7 +444,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                       />
                     </a>
                     <span className="text-lg font-semibold text-primary">
-                      {t("admin.title", "Admin Portal")}
+                      Admin Portal
                     </span>
                   </div>
                   <button 
@@ -489,7 +489,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   onClick={handleLogout}
                 >
                   <LogOut className="h-5 w-5 mr-2" />
-                  <span>{t("admin.logout", "Logout")}</span>
+                  <span>Logout</span>
                 </Button>
               </div>
             </div>
@@ -502,17 +502,17 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
           <div className="mb-6">
             <div className="flex items-center justify-between">
               <h1 className="text-2xl font-bold text-gray-900">
-                {sidebarItems.find(item => item.id === activeSection)?.label || t("admin.dashboard", "Dashboard")}
+                {sidebarItems.find(item => item.id === activeSection)?.label || "Dashboard"}
               </h1>
               <div className="space-x-2">
                 {activeSection === "dashboard" && (
                   <Button variant="outline" size="sm">
-                    {t("admin.view_reports", "View Reports")}
+                    View Reports
                   </Button>
                 )}
                 {activeSection === "patients" && (
                   <Button size="sm">
-                    {t("admin.add_patient", "Add Patient")}
+                    Add Patient
                   </Button>
                 )}
                 {activeSection === "quotes" && (
@@ -526,18 +526,18 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                       navigate('/admin/new-quote');
                     }}
                   >
-                    {t("admin.create_quote", "Create Quote")}
+                    Create Quote
                   </Button>
                 )}
                 {activeSection === "bookings" && (
                   <Button size="sm">
-                    {t("admin.new_booking", "New Booking")}
+                    New Booking
                   </Button>
                 )}
               </div>
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              {t("admin.last_updated", "Last updated")} {new Date().toLocaleDateString()}
+              Last updated {new Date().toLocaleDateString()}
             </p>
           </div>
 
