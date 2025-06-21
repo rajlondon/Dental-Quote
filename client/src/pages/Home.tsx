@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Hero from '@/components/Hero';
 import FeaturedServices from '@/components/FeaturedServices';
@@ -12,7 +11,8 @@ import { Star, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Zap
 import { Link } from "wouter";
 import clinicsDataImport from "@/data/clinics.json";
 import { trendingPackages } from "@/data/packages";
-import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
+import EnhancedOffersCarousel from '@/components/EnhancedOffersCarousel';
+import { ArrowRight } from 'lucide-react';
 
 // Comprehensive safe fallbacks for imported data with multiple checks
 const ensureArray = (data: any): any[] => {
@@ -106,9 +106,11 @@ const Home: React.FC = () => {
                     </div>
                     <span className="ml-2 text-sm text-gray-600">(128 reviews)</span>
                   </div>
-                  <div className="flex items-center text-sm text-gray-600 mb-4">
-                    <MapPin className="h-4 w-4 mr-1" />
-                    {clinic?.location || 'Location'}
+                  <div className="text-sm text-gray-600 mb-2">
+                    {typeof clinic?.location === 'string' 
+                      ? clinic.location 
+                      : clinic?.location?.city || clinic?.location?.area || 'Location'
+                    }
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
                     Specializes in: {
@@ -117,11 +119,9 @@ const Home: React.FC = () => {
                         : 'Various treatments'
                     }
                   </div>
-                  <Link href="/your-quote">
-                    <a className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
-                      Get Quote
-                      <Target className="h-4 w-4 ml-1" />
-                    </a>
+                  <Link href="/your-quote" className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                    Get Quote
+                    <ArrowRight className="ml-1 h-4 w-4" />
                   </Link>
                 </div>
               </div>

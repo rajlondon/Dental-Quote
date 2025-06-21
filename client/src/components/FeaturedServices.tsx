@@ -50,9 +50,14 @@ const services: Service[] = [
   }
 ];
 
+import { useTranslation } from "react-i18next";
 const FeaturedServices: React.FC = () => {
-  // Translation removed
-  
+  const { t } = useTranslation();
+
+  const services = [
+    
+  ];
+
   return (
     <section id="services" className="py-20 bg-gradient-to-b from-white to-sky-50">
       <div className="container mx-auto px-4">
@@ -63,7 +68,7 @@ const FeaturedServices: React.FC = () => {
           <div className="h-1 w-20 bg-primary-600 mx-auto mb-6 rounded-full"></div>
           <p className="text-neutral-600">{t('services.subtitle')}</p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map((service) => (
             <div key={service.id} className="group bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">

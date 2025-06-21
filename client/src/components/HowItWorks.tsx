@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 interface Step {
   number: number;
@@ -25,8 +26,12 @@ const steps: Step[] = [
 ];
 
 const HowItWorks: React.FC = () => {
-  // Translation removed
-  
+  const { t } = useTranslation();
+
+  const steps = [
+
+  ];
+
   return (
     <section id="how-it-works" className="py-16 bg-neutral-100">
       <div className="container mx-auto px-4">
@@ -71,7 +76,7 @@ const HowItWorks: React.FC = () => {
             </div>
           ))}
         </div>
-        
+
         <div className="mt-12 text-center">
           <a href="#quote-form" className="inline-block bg-primary text-white font-semibold px-8 py-3 rounded-lg shadow-md hover:bg-primary-dark transition-colors">
             {t('hero.cta')}

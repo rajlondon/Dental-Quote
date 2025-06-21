@@ -1,4 +1,6 @@
 import React from "react";
+import { Shield, Award, Users, HeartHandshake, Clock, Star } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Feature {
   id: string;
@@ -30,8 +32,11 @@ const features: Feature[] = [
 ];
 
 const WhyChooseUs: React.FC = () => {
-  // Translation removed
-  
+  const { t } = useTranslation();
+
+  const features = [
+  ];
+
   return (
     <section id="why-us" className="py-16 bg-neutral-100">
       <div className="container mx-auto px-4">
@@ -41,7 +46,7 @@ const WhyChooseUs: React.FC = () => {
           </h2>
           <p className="text-neutral-600">{t('whyUs.subtitle')}</p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {features.map((feature) => (
             <div key={feature.id} className="bg-white p-6 rounded-lg shadow-md">
@@ -57,7 +62,7 @@ const WhyChooseUs: React.FC = () => {
             </div>
           ))}
         </div>
-        
+
         <div className="mt-12 text-center">
           <a href="#testimonials" className="inline-block bg-transparent border-2 border-primary text-primary font-semibold px-8 py-3 rounded-lg hover:bg-primary hover:text-white transition-colors">
             {t('navbar.testimonials')}
