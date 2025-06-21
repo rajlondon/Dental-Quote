@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2, Send, Download } from "lucide-react";
@@ -25,15 +24,12 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
   onDownload,
   onSendToPatient,
 }) => {
-  const { t } = useTranslation();
   const { data, isLoading, isError } = useTreatmentPlan(treatmentPlanId);
   const { toast } = useToast();
   const treatmentPlan = data?.data?.treatmentPlan;
 
-  // Get language code and corresponding locale from the i18n instance
-  const { i18n } = useTranslation();
-  const currentLanguage = i18n.language || 'en';
-  const locale = currentLanguage === 'tr' ? 'tr-TR' : 'en-GB';
+  // Use default English locale
+  const locale = 'en-GB';
   
   // Function to format currency based on user locale
   const formatCurrency = (amount: number, currency: string = 'GBP') => {
@@ -45,7 +41,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
 
   // Function to format dates based on user locale
   const formatDate = (dateString?: string) => {
-    if (!dateString) return t("common.not_available", "N/A");
+    if (!dateString) return "N/A";
     return new Date(dateString).toLocaleDateString(locale, {
       day: 'numeric',
       month: 'short',
@@ -61,8 +57,8 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     } else {
       // Fallback for when no external handler is provided
       toast({
-        title: t("clinic.treatment_plans.download.title", "Download Started"),
-        description: t("clinic.treatment_plans.download.preparing", "The treatment plan PDF is being generated and downloaded."),
+        title: "Download Started",
+        description: "The treatment plan PDF is being generated and downloaded.",
       });
     }
   };
@@ -75,8 +71,8 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     } else {
       // Fallback for when no external handler is provided
       toast({
-        title: t("clinic.treatment_plans.send.success_title", "Email Sent"),
-        description: t("clinic.treatment_plans.send.success_description", "The treatment plan has been sent to the patient's email."),
+        title: "Email Sent",
+        description: "The treatment plan has been sent to the patient's email.",
       });
     }
   };
@@ -123,9 +119,9 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">{t("clinic.treatment_plans.view.title", "Treatment Plan Details")}</DialogTitle>
+          <DialogTitle className="text-xl">Treatment Plan Details</DialogTitle>
           <DialogDescription>
-            {t("clinic.treatment_plans.view.description", "View all details of this treatment plan.")}
+            View all details of this treatment plan.
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +131,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
           </div>
         ) : isError || !treatmentPlan ? (
           <div className="py-8 text-center">
-            <p className="text-red-500">{t("clinic.treatment_plans.view.error", "Error loading treatment plan. Please try again.")}</p>
+            <p className="text-red-500">Error loading treatment plan. Please try again.</p>
           </div>
         ) : (
           <div className="space-y-6">
@@ -149,10 +145,10 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                   </div>
                   <div className="flex gap-2">
                     <Badge className={getStatusColor(treatmentPlan.status)}>
-                      {t(`clinic.treatment_plans.status.${treatmentPlan.status.toLowerCase()}`, treatmentPlan.status.replace('_', ' '))}
+                      {treatmentPlan.status.replace('_', ' ')}
                     </Badge>
                     <Badge className={getPaymentStatusColor(treatmentPlan.paymentStatus)}>
-                      {t(`clinic.treatment_plans.payment.${treatmentPlan.paymentStatus.toLowerCase()}`, treatmentPlan.paymentStatus)}
+                      {treatmentPlan.paymentStatus}
                     </Badge>
                   </div>
                 </div>
@@ -160,34 +156,34 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.patient", "Patient")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Patient</h3>
                     <p>{treatmentPlan.patientName}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.clinic", "Clinic")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Clinic</h3>
                     <p>{treatmentPlan.clinicName}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.created", "Created")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Created</h3>
                     <p>{formatDate(treatmentPlan.createdAt)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.updated", "Last Updated")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Last Updated</h3>
                     <p>{formatDate(treatmentPlan.updatedAt)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.appointment_date", "Appointment Date")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Appointment Date</h3>
                     <p>{formatDate(treatmentPlan.appointmentDate)}</p>
                   </div>
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground">{t("clinic.treatment_plans.view.duration", "Estimated Duration")}</h3>
-                    <p>{treatmentPlan.estimatedDuration || t("clinic.treatment_plans.view.not_specified", "Not specified")}</p>
+                    <h3 className="text-sm font-semibold text-muted-foreground">Estimated Duration</h3>
+                    <p>{treatmentPlan.estimatedDuration || "Not specified"}</p>
                   </div>
                 </div>
 
                 {treatmentPlan.notes && (
                   <div>
-                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">{t("clinic.treatment_plans.view.notes", "Additional Notes")}</h3>
+                    <h3 className="text-sm font-semibold text-muted-foreground mb-1">Additional Notes</h3>
                     <p className="text-sm">{treatmentPlan.notes}</p>
                   </div>
                 )}
@@ -196,15 +192,15 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
 
             {/* Treatment items */}
             <div>
-              <h3 className="font-semibold mb-2">{t("clinic.treatment_plans.view.treatment_items", "Treatment Items")}</h3>
+              <h3 className="font-semibold mb-2">Treatment Items</h3>
               <div className="border rounded-md overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
                     <tr>
-                      <th className="px-4 py-3 text-left">{t("clinic.treatment_plans.view.item", "Item")}</th>
-                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.price", "Price")}</th>
-                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.qty", "Qty")}</th>
-                      <th className="px-4 py-3 text-right">{t("clinic.treatment_plans.view.total", "Total")}</th>
+                      <th className="px-4 py-3 text-left">Item</th>
+                      <th className="px-4 py-3 text-right">Price</th>
+                      <th className="px-4 py-3 text-right">Qty</th>
+                      <th className="px-4 py-3 text-right">Total</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -231,7 +227,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                   <tfoot className="bg-gray-50 font-medium">
                     <tr>
                       <td colSpan={3} className="px-4 py-3 text-right">
-                        {t("clinic.treatment_plans.view.total", "Total")}
+                        Total
                       </td>
                       <td className="px-4 py-3 text-right">
                         {formatCurrency(treatmentPlan.totalPrice, treatmentPlan.currency)}
@@ -245,7 +241,7 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
             {/* Action buttons */}
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => onOpenChange(false)}>
-                {t("common.close", "Close")}
+                Close
               </Button>
               <Button 
                 variant="outline" 
@@ -253,14 +249,14 @@ export const ViewTreatmentPlanDialog: React.FC<ViewTreatmentPlanDialogProps> = (
                 onClick={handleSendToPatient}
               >
                 <Send className="h-4 w-4" />
-                {t("clinic.treatment_plans.actions.send_to_patient", "Send to Patient")}
+                Send to Patient
               </Button>
               <Button 
                 className="gap-1"
                 onClick={handleDownload}
               >
                 <Download className="h-4 w-4" />
-                {t("clinic.treatment_plans.download.button", "Download PDF")}
+                Download PDF
               </Button>
             </div>
           </div>
