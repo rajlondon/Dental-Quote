@@ -399,6 +399,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             {filteredClinics.map((clinic) => {
               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
               const tierInfo = getTierLabel(clinic.tier);
+              const [isExpanded, setIsExpanded] = useState(false);
 
               return (
                 <Card key={clinic.id} className="overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white relative">
@@ -420,9 +421,10 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                     </div>
                   )}
 
-                  <div className="border-b">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
-                      {/* Clinic Info */}
+                  {/* Main Card Content */}
+                  <div className="p-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      {/* Clinic Info - Left Column */}
                       <div className="lg:col-span-1">
                         <div className="aspect-video rounded-lg overflow-hidden mb-4 relative shadow-md border-2 border-gray-100">
                           <img 
@@ -481,41 +483,31 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <span className="font-medium">{clinic.location.area}, {clinic.location.city}</span>
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                           {clinic.description}
                         </p>
 
-                        <div className="space-y-4">
+                        {/* Key Features Preview */}
+                        <div className="space-y-3">
                           <div className="flex items-start gap-2">
-                            <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                            <div>
-                              <span className="text-sm font-semibold text-gray-800">Features</span>
-                              <div className="text-xs text-gray-600 mt-1 space-y-1">
-                                {clinic.features.map((feature, idx) => (
-                                  <div key={idx} className="flex items-center">
-                                    <Check className="h-3 w-3 text-green-500 mr-1 shrink-0" />
-                                    <span>{feature}</span>
-                                  </div>
-                                ))}
-                              </div>
+                            <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                            <div className="text-sm">
+                              <span className="font-medium text-gray-800">Key Features: </span>
+                              <span className="text-gray-600">{clinic.features.slice(0, 2).join(', ')}</span>
+                              {clinic.features.length > 2 && <span className="text-gray-500"> +{clinic.features.length - 2} more</span>}
                             </div>
                           </div>
-
                           <div className="flex items-start gap-2">
-                            <Shield className="h-5 w-5 text-purple-500 mt-0.5 shrink-0" />
-                            <div>
-                              <span className="text-sm font-semibold text-gray-800">Treatment Guarantees</span>
-                              <div className="text-xs text-gray-600 mt-1">
-                                <div>Implants: {clinic.guarantees.implants} warranty</div>
-                                <div>Veneers: {clinic.guarantees.veneers} warranty</div>
-                                <div>Crowns: {clinic.guarantees.crowns} warranty</div>
-                              </div>
+                            <Shield className="h-4 w-4 text-purple-500 mt-0.5 shrink-0" />
+                            <div className="text-sm">
+                              <span className="font-medium text-gray-800">Warranty: </span>
+                              <span className="text-gray-600">Up to {clinic.guarantees.implants}</span>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* Quote Details */}
+                      {/* Quote Details - Right Columns */}
                       <div className="lg:col-span-2">
                         <div className="flex flex-col h-full">
                           <h3 className="text-lg font-semibold mb-4">Your Personalized Treatment Quote</h3>
@@ -574,7 +566,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                       </div>
                                     </div>
                                   </div>
-                              </div>
+                                </div>
                               </div>
 
                               <div className="text-xs text-gray-500">
@@ -585,57 +577,276 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           </div>
 
                           <div className="mt-auto">
-                            <div className="flex flex-wrap gap-3 justify-end">
+                            <div className="flex flex-wrap gap-3 justify-between items-center">
                               <Button 
                                 variant="outline"
-                                size="lg"
-                                className="border-blue-200 text-blue-600 hover:bg-blue-50"
-                                onClick={() => downloadPdf(clinic.id)}
+                                size="sm"
+                                onClick={() => setIsExpanded(!isExpanded)}
+                                className="text-blue-600 hover:bg-blue-50"
                               >
-                                <FileCheck className="mr-2 h-4 w-4" />
-                                Download Quote
+                                {isExpanded ? 'Show Less' : 'View Details'} 
+                                <svg className={`ml-2 h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
                               </Button>
-                              <Button 
-                                size="lg"
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 shadow-md hover:shadow-lg transition-all duration-200" 
-                                onClick={() => {
-                                  setSelectedClinic(clinic.id);
-                                  localStorage.setItem('selectedClinicId', clinic.id);
+                              
+                              <div className="flex gap-3">
+                                <Button 
+                                  variant="outline"
+                                  size="lg"
+                                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
+                                  onClick={() => downloadPdf(clinic.id)}
+                                >
+                                  <FileCheck className="mr-2 h-4 w-4" />
+                                  Download Quote
+                                </Button>
+                                <Button 
+                                  size="lg"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 shadow-md hover:shadow-lg transition-all duration-200" 
+                                  onClick={() => {
+                                    setSelectedClinic(clinic.id);
+                                    localStorage.setItem('selectedClinicId', clinic.id);
 
-                                  const bookingData = {
-                                    clinicId: clinic.id,
-                                    clinicName: clinic.name,
-                                    treatments: clinicTreatments,
-                                    totalPrice: totalPrice,
-                                    treatmentPlan: activeTreatmentPlan,
-                                    patientInfo: patientInfo,
-                                    timestamp: new Date().toISOString()
-                                  };
+                                    const bookingData = {
+                                      clinicId: clinic.id,
+                                      clinicName: clinic.name,
+                                      treatments: clinicTreatments,
+                                      totalPrice: totalPrice,
+                                      treatmentPlan: activeTreatmentPlan,
+                                      patientInfo: patientInfo,
+                                      timestamp: new Date().toISOString()
+                                    };
 
-                                  localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
-                                  localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+                                    localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
+                                    localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
 
-                                  if (onSelectClinic) {
-                                    onSelectClinic(clinic.id);
-                                  }
+                                    if (onSelectClinic) {
+                                      onSelectClinic(clinic.id);
+                                    }
 
-                                  setLocation('/patient-portal');
+                                    setLocation('/patient-portal');
 
-                                  toast({
-                                    title: "Clinic Selected",
-                                    description: "Sign in to your patient portal to complete your booking.",
-                                  });
-                                }}
-                              >
-                                <Heart className="mr-2 h-4 w-4" />
-                                Reserve Now
-                              </Button>
+                                    toast({
+                                      title: "Clinic Selected",
+                                      description: "Sign in to your patient portal to complete your booking.",
+                                    });
+                                  }}
+                                >
+                                  <Heart className="mr-2 h-4 w-4" />
+                                  Reserve Now
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
+
+                  {/* Expandable Details Section */}
+                  {isExpanded && (
+                    <div className="border-t bg-gray-50 p-6">
+                      <Tabs defaultValue="features" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                          <TabsTrigger value="features">Features & Tech</TabsTrigger>
+                          <TabsTrigger value="ratings">Reviews</TabsTrigger>
+                          <TabsTrigger value="guarantees">Guarantees</TabsTrigger>
+                          <TabsTrigger value="gallery">Gallery</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="features" className="mt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">Clinic Features</h4>
+                              <div className="space-y-2">
+                                {clinic.features.map((feature, idx) => (
+                                  <div key={idx} className="flex items-start gap-2">
+                                    <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                    <span className="text-sm text-gray-700">{feature}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">Technology & Equipment</h4>
+                              <div className="space-y-2">
+                                {[
+                                  "Digital X-ray Systems",
+                                  "3D CBCT Scanner",
+                                  "CAD/CAM Technology",
+                                  "Intraoral Scanners",
+                                  "Laser Dentistry Equipment",
+                                  "Digital Smile Design Software"
+                                ].map((tech, idx) => (
+                                  <div key={idx} className="flex items-start gap-2">
+                                    <Zap className="h-4 w-4 text-blue-500 mt-0.5 shrink-0" />
+                                    <span className="text-sm text-gray-700">{tech}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="ratings" className="mt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">Overall Ratings</h4>
+                              <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">Overall Experience</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(clinic.ratings.overall) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                      ))}
+                                    </div>
+                                    <span className="text-sm font-medium">{clinic.ratings.overall}</span>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">Cleanliness</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(clinic.ratings.cleanliness) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                      ))}
+                                    </div>
+                                    <span className="text-sm font-medium">{clinic.ratings.cleanliness}</span>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">Staff Quality</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(clinic.ratings.staff) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                      ))}
+                                    </div>
+                                    <span className="text-sm font-medium">{clinic.ratings.staff}</span>
+                                  </div>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className="text-sm text-gray-600">Value for Money</span>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star key={i} className={`h-4 w-4 ${i < Math.floor(clinic.ratings.value) ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`} />
+                                      ))}
+                                    </div>
+                                    <span className="text-sm font-medium">{clinic.ratings.value}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">Patient Reviews</h4>
+                              <div className="text-center py-8 text-gray-500">
+                                <User className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                                <p className="text-sm">Patient reviews coming soon</p>
+                                <p className="text-xs">Based on {clinic.ratings.reviews} verified reviews</p>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="guarantees" className="mt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">Treatment Warranties</h4>
+                              <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex items-center gap-2">
+                                    <ShieldCheck className="h-5 w-5 text-green-500" />
+                                    <span className="font-medium">Dental Implants</span>
+                                  </div>
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex items-center gap-2">
+                                    <ShieldCheck className="h-5 w-5 text-green-500" />
+                                    <span className="font-medium">Veneers</span>
+                                  </div>
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.veneers}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex items-center gap-2">
+                                    <ShieldCheck className="h-5 w-5 text-green-500" />
+                                    <span className="font-medium">Crowns</span>
+                                  </div>
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.crowns}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                  <div className="flex items-center gap-2">
+                                    <ShieldCheck className="h-5 w-5 text-green-500" />
+                                    <span className="font-medium">Fillings</span>
+                                  </div>
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.fillings}</span>
+                                </div>
+                              </div>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold mb-3 text-gray-800">What's Covered</h4>
+                              <div className="space-y-2 text-sm text-gray-600">
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span>Free follow-up appointments during warranty period</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span>Replacement of failed implants at no cost</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span>Repair or replacement of damaged restorations</span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                  <Check className="h-4 w-4 text-green-500 mt-0.5 shrink-0" />
+                                  <span>24/7 emergency support hotline</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+                        
+                        <TabsContent value="gallery" className="mt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="aspect-video rounded-lg overflow-hidden">
+                              <img 
+                                src={`/images/clinics/${clinic.id}/exterior.jpg`} 
+                                alt="Clinic Exterior"
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://placehold.co/400x300/e5e7eb/6b7280?text=Clinic+Exterior';
+                                }}
+                              />
+                            </div>
+                            <div className="aspect-video rounded-lg overflow-hidden">
+                              <img 
+                                src={`/images/clinics/${clinic.id}/interior.jpg`} 
+                                alt="Clinic Interior"
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://placehold.co/400x300/e5e7eb/6b7280?text=Clinic+Interior';
+                                }}
+                              />
+                            </div>
+                            <div className="aspect-video rounded-lg overflow-hidden">
+                              <img 
+                                src={`/images/clinics/${clinic.id}/team.jpg`} 
+                                alt="Medical Team"
+                                className="h-full w-full object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://placehold.co/400x300/e5e7eb/6b7280?text=Medical+Team';
+                                }}
+                              />
+                            </div>
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  )}
                 </Card>
               );
             })}
