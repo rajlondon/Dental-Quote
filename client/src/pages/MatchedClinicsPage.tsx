@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,21 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageFooterActions from '@/components/PageFooterActions';
 import {
-  ArrowLeft,
-  Award,
-  Check,
-  FileCheck,
-  Heart,
   MapPin,
-  Shield,
-  ShieldCheck,
   Star,
-  Target,
-  User,
-  Sparkles,
-  Zap,
+  Clock,
+  Check,
   ChevronDown,
   ChevronUp,
+  FileCheck,
+  Sparkles,
+  Zap,
+  Users,
+  Calendar,
+  Award,
+  Shield,
+  Building,
+  Wifi,
+  Car,
+  Coffee,
+  Utensils,
+  Eye
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
@@ -592,19 +595,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <div className="mt-auto">
                             <div className="flex flex-wrap gap-3 justify-between items-center">
                               <Button 
-                                variant="outline"
+                                variant="contained"
                                 size="sm"
                                 onClick={() => toggleClinicExpansion(clinic.id)}
-                                className="text-blue-600 hover:bg-blue-50"
+                                className="bg-blue-600 text-white hover:bg-blue-700"
                               >
-                                {isExpanded ? 'Show Less' : 'View Details'} 
-                                {isExpanded ? (
-                                  <ChevronUp className="ml-2 h-4 w-4" />
-                                ) : (
-                                  <ChevronDown className="ml-2 h-4 w-4" />
-                                )}
+                                {isExpanded ? 'Show Less' : 'View Details'}
+                                <Eye className="ml-2 h-4 w-4" />
                               </Button>
-                              
+
                               <div className="flex gap-3">
                                 <Button 
                                   variant="outline"
@@ -668,7 +667,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                           <TabsTrigger value="guarantees">Guarantees</TabsTrigger>
                           <TabsTrigger value="gallery">Gallery</TabsTrigger>
                         </TabsList>
-                        
+
                         <TabsContent value="features" className="mt-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -682,7 +681,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 ))}
                               </div>
                             </div>
-                            
+
                             <div>
                               <h4 className="font-semibold mb-3 text-gray-800">Technology & Equipment</h4>
                               <div className="space-y-2">
@@ -703,7 +702,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </TabsContent>
-                        
+
                         <TabsContent value="ratings" className="mt-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -765,7 +764,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </TabsContent>
-                        
+
                         <TabsContent value="guarantees" className="mt-4">
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -824,7 +823,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                             </div>
                           </div>
                         </TabsContent>
-                        
+
                         <TabsContent value="gallery" className="mt-4">
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="aspect-video rounded-lg overflow-hidden">
