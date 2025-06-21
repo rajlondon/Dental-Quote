@@ -29,6 +29,7 @@ import WhatsAppButton from '@/components/WhatsAppButton';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
 import ClientPdfGenerator from '@/components/ClientPdfGenerator';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
 interface TreatmentItem {
   id: string;
@@ -682,26 +683,16 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   return (
     <>
-      {/* Blue Header Banner */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setLocation('/your-quote')}
-              className="text-white hover:bg-white/10 p-2"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Matched Clinics</h1>
-          <p className="text-blue-100 text-lg">
-            Compare personalized quotes from verified Turkish dental clinics
-          </p>
-        </div>
-      </div>
+      <ConsistentPageHeader
+        title="Matched Clinics"
+        subtitle="Compare personalized quotes from verified Turkish dental clinics"
+        showBackButton={true}
+        backButtonText="Back"
+        onBack={() => setLocation('/your-quote')}
+        showLocationInfo={true}
+        location="Istanbul, Turkey"
+        travelDate={patientInfo?.travelMonth ? `${patientInfo.travelMonth} 2025` : undefined}
+      />
       
       <main>
         <div className="container mx-auto py-8 px-4">
