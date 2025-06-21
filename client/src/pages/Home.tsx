@@ -10,8 +10,12 @@ import Footer from '@/components/Footer';
 import TrendingPackageCard from '@/components/TrendingPackageCard';
 import { Star, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Zap, MapPin } from "lucide-react";
 import { Link } from "wouter";
-import clinicsData from "@/data/clinics.json";
+import clinicsDataImport from "@/data/clinics.json";
 import { trendingPackages } from "@/data/packages";
+
+// Add safe fallbacks for imported data
+const clinicsData = clinicsDataImport || [];
+const safePackages = trendingPackages || [];
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
 
 const Home: React.FC = () => {
@@ -49,7 +53,7 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {trendingPackages.map((pkg) => (
+            {safePackages.map((pkg) => (
               <TrendingPackageCard key={pkg.id} package={pkg} />
             ))}
           </div>
