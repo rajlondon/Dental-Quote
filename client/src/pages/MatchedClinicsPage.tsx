@@ -108,7 +108,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         }
       }
     }
-  }, [treatmentItems, totalGBP]);
+  }, []); // Remove dependencies that were causing infinite loops
 
   // Use either props or localStorage data
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
@@ -343,19 +343,21 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Calculate UK total for comparison
   const ukTotal = activeTreatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
-  // Load treatment plan from localStorage or start with empty
+  // Load treatment plan from localStorage only once on mount
   useEffect(() => {
-    const savedPlan = localStorage.getItem('treatmentPlan');
-    if (savedPlan) {
-      try {
-        const parsedPlan = JSON.parse(savedPlan);
-        setTreatmentPlan(parsedPlan);
-      } catch (error) {
-        console.error('Error parsing saved treatment plan:', error);
-        setTreatmentPlan([]);
+    if (treatmentItems.length === 0) {
+      const savedPlan = localStorage.getItem('treatmentPlan');
+      if (savedPlan) {
+        try {
+          const parsedPlan = JSON.parse(savedPlan);
+          setTreatmentPlan(parsedPlan);
+        } catch (error) {
+          console.error('Error parsing saved treatment plan:', error);
+          setTreatmentPlan([]);
+        }
       }
     }
-  }, []); // Remove treatmentPlan dependency to prevent infinite loop
+  }, []); // Empty dependency array to run only once
 
   if (!activeTreatmentPlan.length) {
     return (
