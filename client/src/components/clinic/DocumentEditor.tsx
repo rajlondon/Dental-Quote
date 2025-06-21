@@ -49,7 +49,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
   const [patientId, setPatientId] = useState('');
   const [shared, setShared] = useState(false);
   const [description, setDescription] = useState('');
-  
+
   // Get document icon based on file type
   const getDocumentIcon = (type: string) => {
     switch (type) {
@@ -69,7 +69,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
         return <FileQuestion className="h-5 w-5 text-gray-500" />;
     }
   };
-  
+
   // Initialize form when document changes
   useEffect(() => {
     if (document) {
@@ -80,13 +80,13 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
       setDescription(document.description || '');
     }
   }, [document]);
-  
+
   // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!document) return;
-    
+
     const updatedDocument: Document = {
       ...document,
       name,
@@ -95,13 +95,13 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
       shared,
       description: description || undefined
     };
-    
+
     onSave(updatedDocument);
     onOpenChange(false);
   };
-  
+
   if (!document) return null;
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -114,7 +114,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
             Update document details and sharing settings.
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="document-name">Name</Label>
@@ -125,7 +125,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
               required
             />
           </div>
-          
+
           <div className="space-y-2">
             <Label>Category</Label>
             <RadioGroup value={category} onValueChange={(value) => setCategory(value as Document['category'])}>
@@ -169,7 +169,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </div>
             </RadioGroup>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="patient-select">
               Assign to Patient
@@ -190,7 +190,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="document-description">
               Description
@@ -203,7 +203,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
               rows={3}
             />
           </div>
-          
+
           <div className="flex items-center space-x-2">
             <Checkbox 
               id="share_with_patient" 
@@ -214,7 +214,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({
               Share with patient
             </Label>
           </div>
-          
+
           <DialogFooter className="pt-4">
             <Button 
               variant="outline" 

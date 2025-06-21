@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { Helmet } from "react-helmet";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";

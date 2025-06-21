@@ -1,10 +1,8 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const HowItWorks: React.FC = () => {
-  const { t } = useTranslation();
 
   return (
     <div className="min-h-screen flex flex-col">

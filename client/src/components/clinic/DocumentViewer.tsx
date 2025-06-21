@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { 
   Dialog, 
   DialogContent, 
@@ -61,7 +60,6 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
   onEdit,
   onShare
 }) => {
-  const { t, i18n } = useTranslation();
   const [currentPage, setCurrentPage] = useState(1);
   const [zoom, setZoom] = useState(100);
   const [rotation, setRotation] = useState(0);
@@ -71,33 +69,33 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
     switch (category) {
       case 'patient_record':
         return { 
-          label: t("clinic.documents.categories.patient_record", "Patient Record"),
+          label: "Patient Record",
           color: 'bg-blue-100 text-blue-800 border-blue-200'
         };
       case 'x_ray':
         return { 
-          label: t("clinic.documents.categories.x_ray", "X-Ray / Scan"),
+          label: "X-Ray / Scan",
           color: 'bg-purple-100 text-purple-800 border-purple-200'
         };
       case 'treatment_plan':
         return { 
-          label: t("clinic.documents.categories.treatment_plan", "Treatment Plan"),
+          label: "Treatment Plan",
           color: 'bg-green-100 text-green-800 border-green-200'
         };
       case 'consent_form':
         return { 
-          label: t("clinic.documents.categories.consent_form", "Consent Form"),
+          label: "Consent Form",
           color: 'bg-amber-100 text-amber-800 border-amber-200'
         };
       case 'lab_report':
         return { 
-          label: t("clinic.documents.categories.lab_report", "Lab Report"),
+          label: "Lab Report",
           color: 'bg-indigo-100 text-indigo-800 border-indigo-200'
         };
       case 'other':
       default:
         return { 
-          label: t("clinic.documents.categories.other", "Other"),
+          label: "Other",
           color: 'bg-gray-100 text-gray-800 border-gray-200'
         };
     }
@@ -195,7 +193,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 onClick={() => onEdit(document)}
               >
                 <Edit className="h-4 w-4 mr-2" />
-                {t("clinic.documents.edit", "Edit")}
+                Edit
               </Button>
               
               <Button 
@@ -204,7 +202,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 onClick={() => onShare(document)}
               >
                 <Share className="h-4 w-4 mr-2" />
-                {t("clinic.documents.share", "Share")}
+                Share
               </Button>
               
               <Button 
@@ -213,7 +211,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                 onClick={() => onDownload(document)}
               >
                 <Download className="h-4 w-4 mr-2" />
-                {t("clinic.documents.download", "Download")}
+                Download
               </Button>
             </div>
           </div>
@@ -272,10 +270,7 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
                   <span className="text-sm">
-                    {t("clinic.documents.page_number", "Page {{current}} of {{total}}", {
-                      current: currentPage,
-                      total: 3 // In a real app, this would be from document metadata
-                    })}
+                    Page {currentPage} of 3
                   </span>
                   <Button 
                     variant="outline" 
@@ -325,10 +320,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <Image className="h-16 w-16 text-blue-500" />
                   </div>
                   <h3 className="text-lg font-medium mb-2">
-                    {t("clinic.documents.image_preview", "Image Preview")}
+                    Image Preview
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    {t("clinic.documents.image_preview_not_available", "Image preview is not available. The file might be processing or unavailable.")}
+                    Image preview is not available. The file might be processing or unavailable.
                   </p>
                 </div>
               )
@@ -347,12 +342,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                     <FileText className="h-16 w-16 text-red-500" />
                   </div>
                   <h3 className="text-lg font-medium mb-2">
-                    {t("clinic.documents.pdf_preview", "PDF Preview")}
+                    PDF Preview
                   </h3>
                   <p className="text-muted-foreground">
-                    {t("clinic.documents.pdf_preview_page", "Viewing page {{page}}", {
-                      page: currentPage
-                    })}
+                    Viewing page {currentPage}
                   </p>
                 </div>
               </div>
@@ -375,10 +368,10 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   )}
                 </div>
                 <h3 className="text-lg font-medium mb-2">
-                  {t("clinic.documents.preview_not_available", "Preview not available")}
+                  Preview not available
                 </h3>
                 <p className="text-muted-foreground mb-6">
-                  {t("clinic.documents.preview_description", "This document type cannot be previewed directly. Please download the file to view its contents.")}
+                  This document type cannot be previewed directly. Please download the file to view its contents.
                 </p>
               </div>
             )}
@@ -389,38 +382,36 @@ const DocumentViewer: React.FC<DocumentViewerProps> = ({
         <div className="pt-3 mt-auto border-t">
           <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
             <div className="flex items-center">
-              <span className="text-muted-foreground mr-2">{t("clinic.documents.type", "Type")}:</span>
+              <span className="text-muted-foreground mr-2">Type:</span>
               <span className="font-medium uppercase">{document.type}</span>
             </div>
             
             <div className="flex items-center">
-              <span className="text-muted-foreground mr-2">{t("clinic.documents.size", "Size")}:</span>
+              <span className="text-muted-foreground mr-2">Size:</span>
               <span>{formatFileSize(document.size)}</span>
             </div>
             
             <div className="flex items-center">
-              <span className="text-muted-foreground mr-2">{t("clinic.documents.uploaded", "Uploaded")}:</span>
+              <span className="text-muted-foreground mr-2">Uploaded:</span>
               <span>
-                {new Date(document.uploaded).toLocaleDateString(
-                  i18n.language === 'tr' ? 'tr-TR' : 'en-GB'
-                )}
+                {new Date(document.uploaded).toLocaleDateString('en-GB')}
               </span>
             </div>
             
             <div className="flex items-center">
-              <span className="text-muted-foreground mr-2">{t("clinic.documents.uploaded_by", "By")}:</span>
+              <span className="text-muted-foreground mr-2">By:</span>
               <span>{document.uploadedBy}</span>
             </div>
             
             <div className="flex items-center ml-auto">
-              <span className="text-muted-foreground mr-2">{t("clinic.documents.sharing_status", "Sharing")}:</span>
+              <span className="text-muted-foreground mr-2">Sharing:</span>
               {document.shared ? (
                 <Badge variant="outline" className="bg-green-50 text-green-800 border-green-200">
-                  {t("clinic.documents.shared_with_patient", "Shared with Patient")}
+                  Shared with Patient
                 </Badge>
               ) : (
                 <Badge variant="outline" className="bg-gray-50 text-gray-800 border-gray-200">
-                  {t("clinic.documents.private", "Private")}
+                  Private
                 </Badge>
               )}
             </div>

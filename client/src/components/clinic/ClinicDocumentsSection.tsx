@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -92,7 +91,6 @@ interface Document {
 }
 
 const ClinicDocumentsSection: React.FC = () => {
-  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -108,7 +106,7 @@ const ClinicDocumentsSection: React.FC = () => {
   const [dragActive, setDragActive] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedPatientId, setSelectedPatientId] = useState<string>('none');
-  
+
   // Fetch actual files from the server
   const { 
     data: fileData, 
@@ -122,7 +120,7 @@ const ClinicDocumentsSection: React.FC = () => {
       const params = new URLSearchParams();
       if (activeTab !== 'all') params.append('type', activeTab);
       if (filterCategory !== 'all') params.append('category', filterCategory);
-      
+
       try {
         const response = await fetch(`/api/files/list?${params.toString()}`, {
           credentials: "include",
@@ -130,11 +128,11 @@ const ClinicDocumentsSection: React.FC = () => {
             'Accept': 'application/json'
           }
         });
-        
+
         if (!response.ok) {
           throw new Error(`Error ${response.status}: ${response.statusText}`);
         }
-        
+
         const data = await response.json();
         return data;
       } catch (error) {
@@ -147,19 +145,19 @@ const ClinicDocumentsSection: React.FC = () => {
     refetchOnMount: true,
     staleTime: 10 * 1000 // 10 seconds before data becomes stale
   });
-  
+
   // Transform S3 files into Document format
   const transformS3FilesToDocuments = (files: S3File[]): Document[] => {
     console.log("Raw S3 files data:", files);
-    
+
     return files.map((file, index) => {
       // Extract file extension from filename
       const fileExt = file.filename.split('.').pop()?.toLowerCase() || '';
-      
+
       // Determine document type and category
       const type = fileExt;
       const category = (file.category || 'other') as Document['category'];
-      
+
       const transformedDoc = {
         id: file.key || `file-${index}`,
         name: file.originalname || file.filename,
@@ -172,14 +170,14 @@ const ClinicDocumentsSection: React.FC = () => {
         url: file.url,
         key: file.key
       };
-      
+
       // Log each transformed document for debugging
       console.log(`Transformed document ${index}:`, transformedDoc);
-      
+
       return transformedDoc;
     });
   };
-  
+
   // Use only real data from AWS S3 and sort by most recent first
   const allDocuments: Document[] = fileData?.files ? 
     transformS3FilesToDocuments(fileData.files)
@@ -189,7 +187,7 @@ const ClinicDocumentsSection: React.FC = () => {
       }) : 
     // Empty array when no files are found
     [];
-  
+
   // Filter documents based on search
   const filteredDocuments = allDocuments.filter(doc => {
     // Filter by search term (in name or patient name)
@@ -199,17 +197,17 @@ const ClinicDocumentsSection: React.FC = () => {
        ) {
       return false;
     }
-    
+
     return true;
   });
-  
+
   // Format file size for display
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
-  
+
   // Get document icon based on file type
   const getDocumentIcon = (type: string) => {
     switch (type) {
@@ -229,54 +227,54 @@ const ClinicDocumentsSection: React.FC = () => {
         return <FileQuestion className="h-5 w-5 text-gray-500" />;
     }
   };
-  
+
   // Get category label and badge color
   const getCategoryInfo = (category: Document['category']) => {
     switch (category) {
       case 'patient_record':
         return { 
-          label: t("clinic.documents.categories.patient_record", "Patient Record"),
+          label: "Patient Record",
           color: 'bg-blue-100 text-blue-800 border-blue-200'
         };
       case 'x_ray':
         return { 
-          label: t("clinic.documents.categories.x_ray", "X-Ray / Scan"),
+          label: "X-Ray / Scan",
           color: 'bg-purple-100 text-purple-800 border-purple-200'
         };
       case 'treatment_plan':
         return { 
-          label: t("clinic.documents.categories.treatment_plan", "Treatment Plan"),
+          label: "Treatment Plan",
           color: 'bg-green-100 text-green-800 border-green-200'
         };
       case 'consent_form':
         return { 
-          label: t("clinic.documents.categories.consent_form", "Consent Form"),
+          label: "Consent Form",
           color: 'bg-amber-100 text-amber-800 border-amber-200'
         };
       case 'lab_report':
         return { 
-          label: t("clinic.documents.categories.lab_report", "Lab Report"),
+          label: "Lab Report",
           color: 'bg-indigo-100 text-indigo-800 border-indigo-200'
         };
       case 'other':
       default:
         return { 
-          label: t("clinic.documents.categories.other", "Other"),
+          label: "Other",
           color: 'bg-gray-100 text-gray-800 border-gray-200'
         };
     }
   };
-  
+
   // Set up mutation for file uploads
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       // Add category based on file type
       const fileExt = file.name.split('.').pop()?.toLowerCase() || '';
       let category = 'document';
-      
+
       if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExt)) {
         category = 'image';
       } else if (['pdf'].includes(fileExt)) {
@@ -284,15 +282,15 @@ const ClinicDocumentsSection: React.FC = () => {
       } else if (['dcm'].includes(fileExt)) {
         category = 'xray';
       }
-      
+
       formData.append('category', category);
-      
+
       // Include patient ID if selected and not "none"
       if (selectedPatientId && selectedPatientId !== 'none') {
         formData.append('patientId', selectedPatientId);
         console.log(`Assigning file to patient: ${selectedPatientId}`);
       }
-      
+
       // Use the new general upload endpoint
       console.log(`Uploading file ${file.name} with category ${category} in ${process.env.NODE_ENV} mode`);
       const response = await fetch('/api/files/upload', {
@@ -300,13 +298,13 @@ const ClinicDocumentsSection: React.FC = () => {
         body: formData,
         // Don't set Content-Type header since it will be automatically set with boundary for FormData
       });
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('Upload error response:', errorText);
         throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
       }
-      
+
       const result = await response.json();
       console.log('Upload result:', result);
       return result;
@@ -320,103 +318,95 @@ const ClinicDocumentsSection: React.FC = () => {
     onError: (error) => {
       console.error('Upload error:', error);
       toast({
-        title: t("clinic.documents.upload_error", "Upload Failed"),
+        title: "Upload Failed",
         description: String(error),
         variant: "destructive"
       });
     }
   });
-  
+
   // Handle file upload
   const handleFileUpload = async (fileList: FileList | null, selectedFilesArray?: File[]) => {
     // Use either FileList or direct array of Files
     const fileArray = selectedFilesArray || (fileList ? Array.from(fileList) : []);
-    
+
     if (fileArray.length === 0) return;
-    
+
     const fileNames = fileArray.map(file => file.name).join(', ');
-    
+
     // Only add to the UI state if we're uploading from a FileList (direct drop or input)
     if (fileList && !selectedFilesArray) {
       setSelectedFiles(prev => [...prev, ...fileArray]);
     }
-    
+
     toast({
-      title: t("clinic.documents.uploading", "Uploading Files"),
-      description: t("clinic.documents.upload_started", "Starting upload of {{count}} files", {
-        count: fileArray.length
-      }),
+      title: "Uploading Files",
+      description: "Starting upload of {{count}} files",
     });
-    
+
     try {
       // Upload each file, tracking successes and failures
       const results = await Promise.allSettled(
         fileArray.map(file => uploadFileMutation.mutateAsync(file))
       );
-      
+
       const successCount = results.filter(r => r.status === 'fulfilled').length;
-      
+
       if (successCount === fileArray.length) {
         toast({
-          title: t("clinic.documents.upload_successful", "Files Uploaded Successfully"),
-          description: t("clinic.documents.upload_successful_desc", "{{count}} files uploaded: {{files}}", {
-            count: fileArray.length,
-            files: fileNames
-          }),
+          title: "Files Uploaded Successfully",
+          description: "{{count}} files uploaded: {{files}}",
         });
       } else {
         toast({
-          title: t("clinic.documents.upload_partial", "Partial Upload Success"),
-          description: t("clinic.documents.upload_partial_desc", "{{success}} of {{total}} files uploaded successfully", {
-            success: successCount,
-            total: fileArray.length
-          }),
+          title: "Partial Upload Success",
+          description: "{{success}} of {{total}} files uploaded successfully",
           variant: "destructive"
         });
       }
-      
+
       // Refresh the file list after upload - include all query parameters
       queryClient.invalidateQueries({ 
         queryKey: ['/api/files/list', activeTab, filterCategory] 
       });
-      
+
       // Dialog no longer closes automatically - users must click "Done" after setting categories
       // setShowUploadDialog(false);
-      
+
     } catch (error) {
       toast({
-        title: t("clinic.documents.upload_error", "Upload Failed"),
+        title: "Upload Failed",
         description: String(error),
         variant: "destructive"
       });
     }
   };
-  
+
   // Handle drag events
   const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
     } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
-  
+
   // Handle drop event
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       // Add dropped files to selection first, instead of uploading immediately
       const newFiles = Array.from(e.dataTransfer.files);
       setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
-  
+
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -425,13 +415,13 @@ const ClinicDocumentsSection: React.FC = () => {
       setSelectedFiles(prev => [...prev, ...newFiles]);
     }
   };
-  
+
   // Handle document preview
   const handlePreview = (document: Document) => {
     setSelectedDocument(document);
     setShowPreviewDialog(true);
   };
-  
+
   // Handle document download
   const handleDownload = (doc: Document) => {
     if (doc.url) {
@@ -443,92 +433,88 @@ const ClinicDocumentsSection: React.FC = () => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       toast({
-        title: t("clinic.documents.downloading", "Downloading"),
-        description: t("clinic.documents.download_started", "Your download has started: {{name}}", {
-          name: doc.name
-        }),
+        title: "Downloading",
+        description: "Your download has started: {{name}}",
       });
     } else {
       // For documents without URLs, show an error
       toast({
-        title: t("clinic.documents.download_error", "Download Error"),
-        description: t("clinic.documents.download_error_desc", "Could not download file. URL not available."),
+        title: "Download Error",
+        description: "Could not download file. URL not available.",
         variant: "destructive"
       });
     }
   };
-  
+
   // Handle document deletion
   const handleDeleteConfirm = () => {
     if (selectedDocument) {
       // In a real app, this would delete the document from your server
       toast({
-        title: t("clinic.documents.deleted", "Document Deleted"),
-        description: t("clinic.documents.delete_success", "Document has been deleted successfully."),
+        title: "Document Deleted",
+        description: "Document has been deleted successfully.",
       });
-      
+
       setSelectedDocument(null);
       setShowDeleteDialog(false);
     } else if (selectedDocuments.length > 0) {
       // In a real app, this would delete multiple documents
       toast({
-        title: t("clinic.documents.multiple_deleted", "Documents Deleted"),
-        description: t("clinic.documents.multiple_delete_success", "{{count}} documents have been deleted successfully.", {
-          count: selectedDocuments.length
-        }),
+        title: "Documents Deleted",
+        description: "{{count}} documents have been deleted successfully.",
       });
-      
+
       setSelectedDocuments([]);
       setShowDeleteDialog(false);
     }
   };
-  
+
   // Handle document sharing
   const handleShareConfirm = () => {
     if (selectedDocument) {
       // In a real app, this would update sharing settings
       toast({
-        title: t("clinic.documents.shared", "Document Shared"),
-        description: t("clinic.documents.share_success", "Document sharing settings updated successfully."),
+        title: "Document Shared",
+        description: "Document sharing settings updated successfully.",
       });
-      
+
       setSelectedDocument(null);
       setShowShareDialog(false);
     }
   };
-  
+
   // Handle document editing
   const handleEditDocument = (updatedDocument: Document) => {
     // In a real app, this would update the document on the server
     toast({
-      title: t("clinic.documents.updated", "Document Updated"),
-      description: t("clinic.documents.update_success", "Document details have been updated successfully."),
+      title: "Document Updated",
+      description: "Document details have been updated successfully.",
     });
-    
+
     // Update local state if needed
     setSelectedDocument(null);
   };
-  
+
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <CardTitle>{t("clinic.documents.title", "Document Management")}</CardTitle>
+              <CardTitle>Document Management</CardTitle>
               <CardDescription>
-                {t("clinic.documents.description", "Manage clinic documents, patient files, and medical records")}
+                Manage clinic documents, patient files, and medical records
               </CardDescription>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               <Button onClick={() => setShowUploadDialog(true)}>
                 <Upload className="h-4 w-4 mr-2" />
-                {t("clinic.documents.upload", "Upload")}
+                Upload
               </Button>
-              
+
               <Button 
                 variant="outline" 
                 onClick={() => {
@@ -548,32 +534,30 @@ const ClinicDocumentsSection: React.FC = () => {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                {t("clinic.documents.refresh", "Refresh")}
+                Refresh
               </Button>
-              
+
               {selectedDocuments.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
-                      {t("clinic.documents.batch_actions", "Actions ({{count}})", { count: selectedDocuments.length })}
+                      Actions ({{count}})
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onClick={() => {
                       toast({
-                        title: t("clinic.documents.downloading", "Downloading"),
-                        description: t("clinic.documents.batch_download_started", "Your download of {{count}} files has started.", { 
-                          count: selectedDocuments.length 
-                        }),
+                        title: "Downloading",
+                        description: "Your download of {{count}} files has started.",
                       });
                     }}>
                       <Download className="h-4 w-4 mr-2" />
-                      {t("clinic.documents.download_selected", "Download Selected")}
+                      Download Selected
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => setShowDeleteDialog(true)}>
                       <Trash className="h-4 w-4 mr-2 text-red-500" />
                       <span className="text-red-500">
-                        {t("clinic.documents.delete_selected", "Delete Selected")}
+                        Delete Selected
                       </span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -582,7 +566,7 @@ const ClinicDocumentsSection: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {/* Search and Filters */}
           <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -591,38 +575,38 @@ const ClinicDocumentsSection: React.FC = () => {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                   className="pl-10" 
-                  placeholder={t("clinic.documents.search", "Search documents...")}
+                  placeholder="Search documents..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap gap-4">
               <div>
                 <Select value={filterCategory} onValueChange={setFilterCategory}>
                   <SelectTrigger className="w-[180px]">
                     <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder={t("clinic.documents.filter_category", "Filter by Category")} />
+                    <SelectValue placeholder="Filter by Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">{t("clinic.documents.all_categories", "All Categories")}</SelectItem>
-                    <SelectItem value="patient_record">{t("clinic.documents.categories.patient_record", "Patient Records")}</SelectItem>
-                    <SelectItem value="x_ray">{t("clinic.documents.categories.x_ray", "X-Rays & Scans")}</SelectItem>
-                    <SelectItem value="treatment_plan">{t("clinic.documents.categories.treatment_plan", "Treatment Plans")}</SelectItem>
-                    <SelectItem value="consent_form">{t("clinic.documents.categories.consent_form", "Consent Forms")}</SelectItem>
-                    <SelectItem value="lab_report">{t("clinic.documents.categories.lab_report", "Lab Reports")}</SelectItem>
-                    <SelectItem value="other">{t("clinic.documents.categories.other", "Other")}</SelectItem>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="patient_record">Patient Records</SelectItem>
+                    <SelectItem value="x_ray">X-Rays & Scans</SelectItem>
+                    <SelectItem value="treatment_plan">Treatment Plans</SelectItem>
+                    <SelectItem value="consent_form">Consent Forms</SelectItem>
+                    <SelectItem value="lab_report">Lab Reports</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
           </div>
-          
+
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="mb-6">
             <TabsList className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-7">
               <TabsTrigger value="all" className="text-xs">
-                {t("clinic.documents.all_types", "All")}
+                All
               </TabsTrigger>
               <TabsTrigger value="pdf" className="text-xs">
                 <FileText className="h-4 w-4 mr-1 text-red-500" />
@@ -642,15 +626,15 @@ const ClinicDocumentsSection: React.FC = () => {
               </TabsTrigger>
               <TabsTrigger value="shared" className="text-xs hidden lg:flex">
                 <Share className="h-4 w-4 mr-1" />
-                {t("clinic.documents.shared", "Shared")}
+                Shared
               </TabsTrigger>
               <TabsTrigger value="patients" className="text-xs hidden lg:flex">
                 <User className="h-4 w-4 mr-1" />
-                {t("clinic.documents.patient_files", "Patient Files")}
+                Patient Files
               </TabsTrigger>
             </TabsList>
           </Tabs>
-          
+
           {/* Document List */}
           <div className="rounded-md border overflow-hidden">
             <Table>
@@ -668,11 +652,11 @@ const ClinicDocumentsSection: React.FC = () => {
                       }}
                     />
                   </TableHead>
-                  <TableHead className="min-w-[300px]">{t("clinic.documents.name", "Name")}</TableHead>
-                  <TableHead>{t("clinic.documents.category", "Category")}</TableHead>
-                  <TableHead>{t("clinic.documents.patient", "Patient")}</TableHead>
-                  <TableHead className="hidden md:table-cell">{t("clinic.documents.uploaded", "Uploaded")}</TableHead>
-                  <TableHead className="hidden lg:table-cell">{t("clinic.documents.size", "Size")}</TableHead>
+                  <TableHead className="min-w-[300px]">Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead className="hidden md:table-cell">Uploaded</TableHead>
+                  <TableHead className="hidden lg:table-cell">Size</TableHead>
                   <TableHead className="w-[70px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -683,7 +667,7 @@ const ClinicDocumentsSection: React.FC = () => {
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                         <p className="text-lg font-medium">
-                          {t("clinic.documents.loading", "Loading documents...")}
+                          Loading documents...
                         </p>
                       </div>
                     </TableCell>
@@ -694,7 +678,7 @@ const ClinicDocumentsSection: React.FC = () => {
                       <div className="flex flex-col items-center justify-center space-y-2">
                         <FileX className="h-10 w-10 text-red-500" />
                         <p className="text-lg font-medium text-red-500">
-                          {t("clinic.documents.error_loading", "Error loading documents")}
+                          Error loading documents
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {String(filesError)}
@@ -704,7 +688,7 @@ const ClinicDocumentsSection: React.FC = () => {
                           onClick={() => queryClient.invalidateQueries({ queryKey: ['/api/files/list'] })}
                           className="mt-2"
                         >
-                          {t("clinic.documents.retry", "Retry")}
+                          Retry
                         </Button>
                       </div>
                     </TableCell>
@@ -712,7 +696,7 @@ const ClinicDocumentsSection: React.FC = () => {
                 ) : filteredDocuments.length > 0 ? (
                   filteredDocuments.map((document) => {
                     const categoryInfo = getCategoryInfo(document.category);
-                    
+
                     return (
                       <TableRow 
                         key={document.id}
@@ -779,7 +763,7 @@ const ClinicDocumentsSection: React.FC = () => {
                           <div className="flex flex-col">
                             <span className="text-sm">
                               {new Date(document.uploaded).toLocaleDateString(
-                                i18n.language === 'tr' ? 'tr-TR' : 'en-GB'
+                                'en-GB'
                               )}
                             </span>
                             <span className="text-xs text-muted-foreground">
@@ -798,7 +782,7 @@ const ClinicDocumentsSection: React.FC = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>{t("clinic.documents.actions", "Actions")}</DropdownMenuLabel>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem 
                                 onClick={() => {
                                   setSelectedDocument(document);
@@ -806,11 +790,11 @@ const ClinicDocumentsSection: React.FC = () => {
                                 }}
                               >
                                 <Eye className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.view", "View")}
+                                View
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownload(document)}>
                                 <Download className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.download", "Download")}
+                                Download
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => {
@@ -819,7 +803,7 @@ const ClinicDocumentsSection: React.FC = () => {
                                 }}
                               >
                                 <Edit className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.edit", "Edit")}
+                                Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem 
                                 onClick={() => {
@@ -828,7 +812,7 @@ const ClinicDocumentsSection: React.FC = () => {
                                 }}
                               >
                                 <Share className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.share", "Share")}
+                                Share
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 
@@ -839,7 +823,7 @@ const ClinicDocumentsSection: React.FC = () => {
                                 className="text-red-600"
                               >
                                 <Trash className="h-4 w-4 mr-2" />
-                                {t("clinic.documents.delete", "Delete")}
+                                Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -854,9 +838,9 @@ const ClinicDocumentsSection: React.FC = () => {
                         <FileX className="h-10 w-10 text-muted-foreground mb-2" />
                         <p className="text-muted-foreground text-base">
                           {searchTerm || filterCategory !== 'all' || activeTab !== 'all' ? (
-                            t("clinic.documents.no_results", "No documents match your search criteria")
+                            "No documents match your search criteria"
                           ) : (
-                            t("clinic.documents.no_documents", "No documents have been uploaded yet")
+                            "No documents have been uploaded yet"
                           )}
                         </p>
                         {(searchTerm || filterCategory !== 'all' || activeTab !== 'all') && (
@@ -868,7 +852,7 @@ const ClinicDocumentsSection: React.FC = () => {
                               setActiveTab('all');
                             }}
                           >
-                            {t("clinic.documents.clear_filters", "Clear filters")}
+                            Clear filters
                           </Button>
                         )}
                       </div>
@@ -878,40 +862,35 @@ const ClinicDocumentsSection: React.FC = () => {
               </TableBody>
             </Table>
           </div>
-          
+
           {/* Pagination */}
           {filteredDocuments.length > 0 && (
             <div className="flex items-center justify-between mt-4">
               <div className="text-sm text-muted-foreground">
                 {selectedDocuments.length > 0 ? (
                   <span>
-                    {t("clinic.documents.selected_count", "{{selected}} of {{total}} selected", {
-                      selected: selectedDocuments.length,
-                      total: filteredDocuments.length
-                    })}
+                    {{selected}} of {{total}} selected
                   </span>
                 ) : (
                   <span>
-                    {t("clinic.documents.showing_count", "Showing {{count}} documents", {
-                      count: filteredDocuments.length
-                    })}
+                    Showing {{count}} documents
                   </span>
                 )}
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" disabled>
-                  {t("common.previous", "Previous")}
+                  Previous
                 </Button>
                 <Button variant="outline" size="sm" disabled>
-                  {t("common.next", "Next")}
+                  Next
                 </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
-      
+
       {/* Upload Dialog */}
       <Dialog 
         open={showUploadDialog} 
@@ -925,68 +904,68 @@ const ClinicDocumentsSection: React.FC = () => {
         }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{t("clinic.documents.upload_files", "Upload Files")}</DialogTitle>
+            <DialogTitle>Upload Files</DialogTitle>
             <DialogDescription>
-              {t("clinic.documents.upload_description", "Upload documents, images, and other files to the document management system.")}
+              Upload documents, images, and other files to the document management system.
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
-              <Label className="text-base font-medium">{t("clinic.documents.document_category", "Document Category")}</Label>
+              <Label className="text-base font-medium">Document Category</Label>
               <RadioGroup defaultValue="patient_record" className="mt-2">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="patient_record" id="patient_record" />
                     <Label htmlFor="patient_record">
-                      {t("clinic.documents.categories.patient_record", "Patient Records")}
+                      Patient Records
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="x_ray" id="x_ray" />
                     <Label htmlFor="x_ray">
-                      {t("clinic.documents.categories.x_ray", "X-Rays & Scans")}
+                      X-Rays & Scans
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="treatment_plan" id="treatment_plan" />
                     <Label htmlFor="treatment_plan">
-                      {t("clinic.documents.categories.treatment_plan", "Treatment Plan")}
+                      Treatment Plan
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="consent_form" id="consent_form" />
                     <Label htmlFor="consent_form">
-                      {t("clinic.documents.categories.consent_form", "Consent Form")}
+                      Consent Form
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="lab_report" id="lab_report" />
                     <Label htmlFor="lab_report">
-                      {t("clinic.documents.categories.lab_report", "Lab Report")}
+                      Lab Report
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="other" id="other" />
                     <Label htmlFor="other">
-                      {t("clinic.documents.categories.other", "Other")}
+                      Other
                     </Label>
                   </div>
                 </div>
               </RadioGroup>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="patient_select">
-                {t("clinic.documents.assign_patient", "Assign to Patient (Optional)")}
+                Assign to Patient (Optional)
               </Label>
               <Select value={selectedPatientId} onValueChange={setSelectedPatientId}>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("clinic.documents.select_patient", "Select a patient")} />
+                  <SelectValue placeholder="Select a patient" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">
-                    {t("clinic.documents.no_patient", "No patient (general document)")}
+                    No patient (general document)
                   </SelectItem>
                   <SelectItem value="pt001">John Smith</SelectItem>
                   <SelectItem value="pt002">Sarah Johnson</SelectItem>
@@ -996,15 +975,15 @@ const ClinicDocumentsSection: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-center space-x-2 mb-4">
               <Checkbox id="share_with_patient" />
               <Label htmlFor="share_with_patient">
-                {t("clinic.documents.share_with_patient", "Share with patient")}
+                Share with patient
               </Label>
             </div>
           </div>
-          
+
           <div 
             className={`
               border-2 border-dashed rounded-lg p-10 text-center transition-colors
@@ -1022,12 +1001,12 @@ const ClinicDocumentsSection: React.FC = () => {
               className="hidden"
               onChange={handleFileInputChange}
             />
-            
+
             {selectedFiles.length > 0 ? (
               <div className="space-y-4">
                 <div className="flex flex-col items-center justify-center">
                   <p className="text-base font-medium mb-1">
-                    {t("clinic.documents.files_selected", "{{count}} files selected", { count: selectedFiles.length })}
+                    {{count}} files selected
                   </p>
                   <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto w-full">
                     {selectedFiles.map((file, index) => (
@@ -1088,7 +1067,7 @@ const ClinicDocumentsSection: React.FC = () => {
                   className="mt-4"
                 >
                   <Upload className="h-4 w-4 mr-2" />
-                  {t("clinic.documents.add_more_files", "Add More Files")}
+                  Add More Files
                 </Button>
               </div>
             ) : (
@@ -1098,21 +1077,21 @@ const ClinicDocumentsSection: React.FC = () => {
               >
                 <Upload className="h-10 w-10 text-muted-foreground mb-3" />
                 <p className="text-base font-medium mb-1">
-                  {t("clinic.documents.drop_files", "Drop files here or click to upload")}
+                  Drop files here or click to upload
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {t("clinic.documents.upload_instructions", "PDF, Word, images, and other files up to 10MB each")}
+                  PDF, Word, images, and other files up to 10MB each
                 </p>
               </label>
             )}
           </div>
-          
+
           <DialogFooter className="sm:justify-end">
             <Button 
               variant="outline" 
               onClick={() => setShowUploadDialog(false)}
             >
-              {t("common.cancel", "Cancel")}
+              Cancel
             </Button>
             <Button 
               type="submit"
@@ -1121,7 +1100,7 @@ const ClinicDocumentsSection: React.FC = () => {
                 document.getElementById('fileUpload')?.click();
               }}
             >
-              {t("clinic.documents.select_files", "Select Files")}
+              Select Files
             </Button>
             <Button
               variant="default"
@@ -1142,12 +1121,12 @@ const ClinicDocumentsSection: React.FC = () => {
                 setSelectedPatientId('none');
               }}
             >
-              {t("common.done", "Done")}
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Document Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
@@ -1165,7 +1144,7 @@ const ClinicDocumentsSection: React.FC = () => {
               )}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="flex-1 min-h-[400px] overflow-hidden flex flex-col border rounded-md bg-gray-50 p-4">
             {selectedDocument ? (
               selectedDocument.type === 'jpg' || selectedDocument.type === 'png' || selectedDocument.type === 'jpeg' ? (
@@ -1185,17 +1164,17 @@ const ClinicDocumentsSection: React.FC = () => {
                         <Image className="h-16 w-16 text-blue-500" />
                       </div>
                       <h3 className="text-lg font-medium mb-2">
-                        {t("clinic.documents.image_preview", "Image Preview")}
+                        Image Preview
                       </h3>
                       <p className="text-muted-foreground mb-6">
-                        {t("clinic.documents.image_preview_not_available", "Image preview is not available. The file might be processing or unavailable.")}
+                        Image preview is not available. The file might be processing or unavailable.
                       </p>
                       <Button 
                         onClick={() => selectedDocument && handleDownload(selectedDocument)}
                         className="gap-2"
                       >
                         <Download className="h-4 w-4" />
-                        {t("clinic.documents.download_image", "Download Image")}
+                        Download Image
                       </Button>
                     </div>
                   )}
@@ -1214,37 +1193,37 @@ const ClinicDocumentsSection: React.FC = () => {
                       onClick={() => selectedDocument && handleDownload(selectedDocument)}
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      {t("clinic.documents.download", "Download")}
+                      Download
                     </Button>
                   </div>
-                  
+
                   <div className="flex-1 bg-white flex items-center justify-center border">
                     <div className="text-center p-6">
                       <div className="p-4 bg-red-50 rounded-full inline-block mb-4">
                         <FileText className="h-16 w-16 text-red-500" />
                       </div>
                       <h3 className="text-lg font-medium mb-2">
-                        {t("clinic.documents.pdf_preview", "PDF Preview")}
+                        PDF Preview
                       </h3>
                       <p className="text-muted-foreground mb-2">
-                        {t("clinic.documents.pdf_pages", "This document has multiple pages.")}
+                        This document has multiple pages.
                       </p>
                       <p className="text-sm text-muted-foreground mb-6">
-                        {t("clinic.documents.pdf_preview_note", "For better viewing experience, download the document.")}
+                        For better viewing experience, download the document.
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="flex justify-between items-center bg-gray-100 p-2 rounded-b-md mt-3">
                     <div className="text-sm text-gray-500">
-                      {t("clinic.documents.page_indicator", "Page 1 of 3")}
+                      Page 1 of 3
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" disabled>
-                        {t("clinic.documents.previous_page", "Previous")}
+                        Previous
                       </Button>
                       <Button size="sm" variant="outline">
-                        {t("clinic.documents.next_page", "Next")}
+                        Next
                       </Button>
                     </div>
                   </div>
@@ -1269,17 +1248,17 @@ const ClinicDocumentsSection: React.FC = () => {
                       )}
                     </div>
                     <h3 className="text-lg font-medium mb-2">
-                      {t("clinic.documents.preview_not_available", "Preview not available")}
+                      Preview not available
                     </h3>
                     <p className="text-muted-foreground mb-6">
-                      {t("clinic.documents.preview_description", "This document type cannot be previewed directly. Please download the file to view its contents.")}
+                      This document type cannot be previewed directly. Please download the file to view its contents.
                     </p>
                     <Button 
                       onClick={() => selectedDocument && handleDownload(selectedDocument)}
                       className="gap-2"
                     >
                       <Download className="h-4 w-4" />
-                      {t("clinic.documents.download_to_view", "Download to View")}
+                      Download to View
                     </Button>
                   </div>
                 </div>
@@ -1292,140 +1271,136 @@ const ClinicDocumentsSection: React.FC = () => {
                     <FileQuestion className="h-16 w-16 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium mb-2">
-                    {t("clinic.documents.no_document_selected", "No Document Selected")}
+                    No Document Selected
                   </h3>
                   <p className="text-muted-foreground mb-6">
-                    {t("clinic.documents.select_document", "Please select a document to preview.")}
+                    Please select a document to preview.
                   </p>
                 </div>
               </div>
             )}
           </div>
-          
+
           <div className="mt-4 pt-4 border-t">
             <div className="flex flex-wrap gap-4 justify-between">
               <div>
                 <h4 className="text-sm font-medium mb-1">
-                  {t("clinic.documents.document_details", "Document Details")}
+                  Document Details
                 </h4>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                  <dt className="text-muted-foreground">{t("clinic.documents.type", "Type")}:</dt>
+                  <dt className="text-muted-foreground">Type:</dt>
                   <dd className="font-medium uppercase">{selectedDocument?.type}</dd>
-                  
-                  <dt className="text-muted-foreground">{t("clinic.documents.size", "Size")}:</dt>
+
+                  <dt className="text-muted-foreground">Size:</dt>
                   <dd>{selectedDocument?.size ? formatFileSize(selectedDocument.size) : ""}</dd>
-                  
-                  <dt className="text-muted-foreground">{t("clinic.documents.uploaded", "Uploaded")}:</dt>
+
+                  <dt className="text-muted-foreground">Uploaded:</dt>
                   <dd>{selectedDocument?.uploaded ? new Date(selectedDocument.uploaded).toLocaleDateString() : ""}</dd>
-                  
-                  <dt className="text-muted-foreground">{t("clinic.documents.uploaded_by", "Uploaded By")}:</dt>
+
+                  <dt className="text-muted-foreground">Uploaded By:</dt>
                   <dd>{selectedDocument?.uploadedBy}</dd>
                 </dl>
               </div>
-              
+
               <div className="flex gap-2">
                 <Button 
                   variant="outline"
                   onClick={() => setShowPreviewDialog(false)}
                 >
-                  {t("common.close", "Close")}
+                  Close
                 </Button>
                 <Button 
                   onClick={() => selectedDocument && handleDownload(selectedDocument)}
                 >
                   <Download className="h-4 w-4 mr-2" />
-                  {t("clinic.documents.download", "Download")}
+                  Download
                 </Button>
               </div>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {t("clinic.documents.confirm_delete", "Confirm Deletion")}
+              Confirm Deletion
             </DialogTitle>
             <DialogDescription>
               {selectedDocument ? (
-                t("clinic.documents.confirm_delete_single", "Are you sure you want to delete this document? This action cannot be undone.")
+                "Are you sure you want to delete this document? This action cannot be undone."
               ) : (
-                t("clinic.documents.confirm_delete_multiple", "Are you sure you want to delete {{count}} documents? This action cannot be undone.", {
-                  count: selectedDocuments.length
-                })
+                "Are you sure you want to delete {{count}} documents? This action cannot be undone."
               )}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDocument && (
             <div className="border rounded p-3 bg-gray-50 flex items-center gap-3">
               {getDocumentIcon(selectedDocument.type)}
               <span className="font-medium">{selectedDocument.name}</span>
             </div>
           )}
-          
+
           {!selectedDocument && selectedDocuments.length > 0 && (
             <div className="border rounded p-3 bg-red-50 text-center">
               <p className="font-medium text-red-800">
-                {t("clinic.documents.delete_multiple_warning", "You are about to delete {{count}} documents", {
-                  count: selectedDocuments.length
-                })}
+                You are about to delete {{count}} documents
               </p>
             </div>
           )}
-          
+
           <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setShowDeleteDialog(false)}
             >
-              {t("common.cancel", "Cancel")}
+              Cancel
             </Button>
             <Button 
               variant="destructive"
               onClick={handleDeleteConfirm}
             >
-              {t("clinic.documents.delete", "Delete")}
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Share Dialog */}
       <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {t("clinic.documents.share_document", "Share Document")}
+              Share Document
             </DialogTitle>
             <DialogDescription>
-              {t("clinic.documents.share_description", "Control who can view and access this document.")}
+              Control who can view and access this document.
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedDocument && (
             <div className="space-y-4">
               <div className="border rounded p-3 bg-gray-50 flex items-center gap-3">
                 {getDocumentIcon(selectedDocument.type)}
                 <span className="font-medium truncate">{selectedDocument.name}</span>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t("clinic.documents.sharing_options", "Sharing Options")}</Label>
+                  <Label>Sharing Options</Label>
                   <RadioGroup defaultValue={selectedDocument.shared ? "shared" : "private"}>
                     <div className="space-y-2">
                       <div className="flex items-start space-x-2">
                         <RadioGroupItem value="private" id="private" className="mt-1" />
                         <div>
                           <Label htmlFor="private" className="font-medium">
-                            {t("clinic.documents.private", "Private - Clinic Staff Only")}
+                            Private - Clinic Staff Only
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            {t("clinic.documents.private_desc", "Only clinic staff can view and access this document")}
+                            Only clinic staff can view and access this document
                           </p>
                         </div>
                       </div>
@@ -1433,38 +1408,38 @@ const ClinicDocumentsSection: React.FC = () => {
                         <RadioGroupItem value="shared" id="shared" className="mt-1" />
                         <div>
                           <Label htmlFor="shared" className="font-medium">
-                            {t("clinic.documents.shared_with_patient", "Shared with Patient")}
+                            Shared with Patient
                           </Label>
                           <p className="text-sm text-muted-foreground">
-                            {t("clinic.documents.shared_desc", "The patient can view and download this document")}
+                            The patient can view and download this document
                           </p>
                         </div>
                       </div>
                     </div>
                   </RadioGroup>
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex items-center space-x-2">
                   <Checkbox id="notify_patient" />
                   <Label htmlFor="notify_patient">
-                    {t("clinic.documents.notify_patient", "Send notification to the patient")}
+                    Send notification to the patient
                   </Label>
                 </div>
               </div>
             </div>
           )}
-          
+
           <DialogFooter className="gap-2 sm:gap-0">
             <Button 
               variant="outline" 
               onClick={() => setShowShareDialog(false)}
             >
-              {t("common.cancel", "Cancel")}
+              Cancel
             </Button>
             <Button onClick={handleShareConfirm}>
-              {t("clinic.documents.save_sharing", "Save")}
+              Save
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1476,7 +1451,7 @@ const ClinicDocumentsSection: React.FC = () => {
         document={selectedDocument}
         onSave={handleEditDocument}
       />
-      
+
       {/* Document Viewer */}
       <DocumentViewer
         open={showViewerDialog}
