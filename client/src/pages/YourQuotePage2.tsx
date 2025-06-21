@@ -177,6 +177,7 @@ const FAQSection: React.FC = () => {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { t } = useTranslation();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
@@ -371,17 +372,17 @@ const YourQuotePage: React.FC = () => {
             className="bg-white text-blue-600 hover:bg-gray-100"
             onClick={() => {
               toast({
-                title: useTranslation().t('quote.call_scheduled', 'Call Scheduled'),
-                description: useTranslation().t('quote.call_desc', 'We will call you within 30 minutes to discuss your treatment options.'),
+                title: 'Call Scheduled',
+                description: 'We will call you within 30 minutes to discuss your treatment options.',
               });
             }}
           >
             <Plane className="h-4 w-4 mr-2" />
-            {useTranslation().t('quote.schedule_call', 'Schedule a Call')}
+            Schedule a Call
           </Button>
 
           <div className="text-xs text-blue-100 text-center">
-            {useTranslation().t('quote.quick_help', 'Need quick help? Call us directly')}
+            Need quick help? Call us directly
           </div>
         </div>
       </ConsistentPageHeader>
