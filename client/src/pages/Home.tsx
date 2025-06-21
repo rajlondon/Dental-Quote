@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
 import clinicsData from "@/data/clinics.json";
-import TrendingPackageCard from "@/components/TrendingPackageCard";
 import { trendingPackages } from "@/data/packages";
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
 
