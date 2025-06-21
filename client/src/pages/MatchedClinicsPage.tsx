@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,8 @@ import {
   User,
   Sparkles,
   Zap,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
@@ -76,33 +79,29 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
   const [localTotalGBP, setLocalTotalGBP] = useState<number>(0);
-  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [expandedClinics, setExpandedClinics] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
-  // Always call useEffect to maintain hook order
+  // Initialize data once on mount
   useEffect(() => {
-    if (!isLoaded) {
-      if (treatmentItems.length > 0) {
-        setTreatmentPlan(treatmentItems);
-        setLocalTotalGBP(totalGBP || 0);
-      } else {
-        const savedTreatmentData = localStorage.getItem('treatmentPlanData');
-        if (savedTreatmentData) {
-          try {
-            const parsedData = JSON.parse(savedTreatmentData);
-            if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
-              setTreatmentPlan(parsedData.treatments);
-              setLocalTotalGBP(parsedData.totalGBP || 0);
-            }
-          } catch (error) {
-            console.error('Error parsing treatment data from localStorage:', error);
+    if (treatmentItems.length > 0) {
+      setTreatmentPlan(treatmentItems);
+      setLocalTotalGBP(totalGBP || 0);
+    } else {
+      const savedTreatmentData = localStorage.getItem('treatmentPlanData');
+      if (savedTreatmentData) {
+        try {
+          const parsedData = JSON.parse(savedTreatmentData);
+          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
+            setTreatmentPlan(parsedData.treatments);
+            setLocalTotalGBP(parsedData.totalGBP || 0);
           }
+        } catch (error) {
+          console.error('Error parsing treatment data from localStorage:', error);
         }
       }
-      setIsLoaded(true);
     }
-  }, [treatmentItems, totalGBP, isLoaded]);
+  }, [treatmentItems, totalGBP]);
 
   // Use either props or localStorage data
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
@@ -247,6 +246,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       default:
         return { label: 'Standard', color: 'bg-gray-50 text-gray-700 border-gray-200' };
     }
+  };
+
+  const toggleClinicExpansion = (clinicId: string) => {
+    setExpandedClinics(prev => ({
+      ...prev,
+      [clinicId]: !prev[clinicId]
+    }));
   };
 
   const downloadPdf = (clinicId: string) => {
@@ -406,6 +412,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             {filteredClinics.map((clinic, clinicIndex) => {
               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
               const tierInfo = getTierLabel(clinic.tier);
+              const isExpanded = expandedClinics[clinic.id] || false;
 
               return (
                 <Card key={clinic.id} className="overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white relative">
@@ -587,16 +594,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setExpandedClinics(prev => ({
-                                  ...prev,
-                                  [clinic.id]: !prev[clinic.id]
-                                }))}
+                                onClick={() => toggleClinicExpansion(clinic.id)}
                                 className="text-blue-600 hover:bg-blue-50"
                               >
-                                {expandedClinics[clinic.id] ? 'Show Less' : 'View Details'} 
-                                <svg className={`ml-2 h-4 w-4 transition-transform ${expandedClinics[clinic.id] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+                                {isExpanded ? 'Show Less' : 'View Details'} 
+                                {isExpanded ? (
+                                  <ChevronUp className="ml-2 h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="ml-2 h-4 w-4" />
+                                )}
                               </Button>
                               
                               <div className="flex gap-3">
@@ -653,7 +659,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                   </div>
 
                   {/* Expandable Details Section */}
-                  {expandedClinics[clinic.id] && (
+                  {isExpanded && (
                     <div className="border-t bg-gray-50 p-6">
                       <Tabs defaultValue="features" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
