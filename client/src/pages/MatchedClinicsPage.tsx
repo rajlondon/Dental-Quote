@@ -3,6 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import PageFooterActions from '@/components/PageFooterActions';
 import {
   ArrowLeft,
   Award,
@@ -680,108 +682,70 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   }
 
   return (
-    <main className="container mx-auto py-8 px-4">
-      {/* Back to Quote Button - Top and Prominent */}
-      <div className="mb-6">
+    <main>
+      {/* Consistent Page Header */}
+      <ConsistentPageHeader
+        title="Your Matched Clinics"
+        subtitle={`We've matched your treatment needs with ${filteredClinics.length} top-rated Istanbul dental clinics`}
+        showBackButton={true}
+        backButtonText="Back to Quote Builder"
+        onBackClick={() => {
+          // Save current treatment data to localStorage before going back
+          const treatmentDataToSave = {
+            treatments: activeTreatmentPlan,
+            totalGBP: activeTotalGBP,
+            patientInfo: patientInfo,
+            timestamp: new Date().toISOString()
+          };
+          
+          localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
+          
+          // Navigate back to quote page
+          setLocation('/your-quote');
+          
+          toast({
+            title: "Returning to Quote",
+            description: "You can now modify your treatment plan and patient information.",
+          });
+        }}
+        showLocationInfo={true}
+        location="Istanbul, Turkey"
+        showProgress={true}
+        currentStep={3}
+        totalSteps={3}
+        stepLabels={['Treatment Plan', 'Patient Info', 'Matched Clinics']}
+      >
         <Button 
-          variant="outline" 
-          size="lg"
+          variant="secondary"
+          size="sm"
+          className="bg-white text-blue-600 hover:bg-gray-100 flex items-center" 
           onClick={() => {
-            // Save current treatment data to localStorage before going back
-            const treatmentDataToSave = {
-              treatments: activeTreatmentPlan,
-              totalGBP: activeTotalGBP,
-              patientInfo: patientInfo,
-              timestamp: new Date().toISOString()
-            };
-            
-            localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
-            
-            // Navigate back to quote page
-            setLocation('/your-quote');
-            
             toast({
-              title: "Returning to Quote",
-              description: "You can now modify your treatment plan and patient information.",
+              title: "Quote Details Available in Portal",
+              description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
             });
-          }} 
-          className="flex items-center gap-2 border-2 border-blue-500 text-blue-600 hover:bg-blue-50 font-semibold"
+          }}
         >
-          <ArrowLeft className="h-5 w-5" />
-          Back to Quote Builder
+          <FileCheck className="mr-2 h-4 w-4" />
+          View Quote in Portal
         </Button>
-      </div>
+      </ConsistentPageHeader>
 
-      {/* Quote Progress */}
-      <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center">
-            <div className="relative flex items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">1</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 1</div>
-                <div className="font-medium">Treatment Plan</div>
-              </div>
-              <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
+      <div className="container mx-auto py-8 px-4">
+        {/* Features highlight bar */}
+        <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
+          <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
+            <div className="flex items-center">
+              <Award className="h-4 w-4 text-blue-500 mr-2" />
+              <span>All clinics verified & accredited</span>
             </div>
-
-            <div className="relative flex items-center ml-0 md:ml-2">
-              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">2</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 2</div>
-                <div className="font-medium">Patient Info</div>
-              </div>
-              <div className="hidden md:block w-8 h-0.5 bg-blue-200 ml-2"></div>
+            <div className="flex items-center">
+              <Shield className="h-4 w-4 text-green-500 mr-2" />
+              <span>Treatment guarantees included</span>
             </div>
-
-            <div className="relative flex items-center ml-0 md:ml-2">
-              <div className="h-10 w-10 rounded-full bg-blue-500 border-4 border-blue-100 flex items-center justify-center text-white font-semibold">3</div>
-              <div className="ml-3">
-                <div className="text-sm text-gray-500">Step 3</div>
-                <div className="font-medium">Matched Clinics</div>
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            variant="outline"
-            className="flex items-center" 
-            onClick={() => {
-              toast({
-                title: "Quote Details Available in Portal",
-                description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
-              });
-            }}
-          >
-            <FileCheck className="mr-2 h-4 w-4" />
-            View Quote in Portal
-          </Button>
-        </div>
-      </div>
-
-      {/* Page Header */}
-      <div className="mb-10">
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100 mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start mb-6">
-            <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-3 text-gray-900">Your Matched Clinics</h1>
-              <p className="text-lg text-gray-700 mb-4">
-                We've matched your treatment needs with {filteredClinics.length} top-rated Istanbul dental clinics
-              </p>
-              <div className="flex items-center space-x-6 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Award className="h-4 w-4 text-blue-500 mr-2" />
-                  <span>All clinics verified & accredited</span>
-                </div>
-                <div className="flex items-center">
-                  <Shield className="h-4 w-4 text-green-500 mr-2" />
-                  <span>Treatment guarantees included</span>
-                </div>
-                <div className="flex items-center">
-                  <Heart className="h-4 w-4 text-red-500 mr-2" />
-                  <span>English-speaking staff</span>
-                </div>
-              </div>
+            <div className="flex items-center">
+              <Heart className="h-4 w-4 text-red-500 mr-2" />
+              <span>English-speaking staff</span>
             </div>
           </div>
         </div>
@@ -1687,24 +1651,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         })}
       </div>
 
-      {/* Bottom Action Bar */}
-      <div className="mt-10 border-t pt-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-sm text-gray-600">
-            <p>
-              Need help choosing the right clinic? Our dental tourism specialists are here to help.
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <WhatsAppButton 
-              phoneNumber="+905465465050"
-              message="Hi, I need help choosing the right clinic for my dental treatment. Can you assist me?"
-              className="w-full sm:w-auto"
-            />
-          </div>
-        </div>
-      </div>
+      {/* Consistent Footer Actions */}
+      <PageFooterActions 
+        helpMessage="Need help choosing the right clinic? Our dental tourism specialists are here to help."
+        whatsappNumber="+905465465050"
+      />
     </main>
   );
 };

@@ -65,6 +65,7 @@ import {
 // Import the new components
 import PatientInfoForm, { PatientInfo } from '@/components/PatientInfoForm';
 import TreatmentGuide from '@/components/TreatmentGuide';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
 // Types
 interface QuoteParams {
@@ -325,6 +326,8 @@ const YourQuotePage: React.FC = () => {
     }
   }, []);
 
+  const [activeTab, setActiveTab] = useState('treatment-plan');
+
   return (
     <>
       <Navbar />
@@ -360,6 +363,41 @@ const YourQuotePage: React.FC = () => {
           {searchParams.get('name') && (
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
+
+          {/* Consistent Page Header */}
+          <ConsistentPageHeader
+            title={useTranslation().t('quote.page_title', 'Plan Your Dental Treatment')}
+            subtitle={useTranslation().t('quote.page_subtitle', 'Get personalized quotes from top-rated Istanbul dental clinics')}
+            showLocationInfo={true}
+            location={`${searchParams.get('city') || 'Istanbul'}, Turkey`}
+            travelDate={searchParams.get('departureDate') ? new Date(searchParams.get('departureDate')!).toLocaleDateString() : undefined}
+            showProgress={true}
+            currentStep={currentStep === 'build-plan' ? 1 : currentStep === 'patient-info' ? 2 : currentStep === 'matched-clinics' ? 3 : 4 }
+            totalSteps={4}
+            stepLabels={['Treatment Plan', 'Your Info', 'Clinics', 'Payment']}
+          >
+            {/* Right side quick actions */}
+            <div className="flex flex-col gap-3">
+              <Button 
+                variant="secondary" 
+                size="sm"
+                className="bg-white text-blue-600 hover:bg-gray-100"
+                onClick={() => {
+                  toast({
+                    title: useTranslation().t('quote.call_scheduled', 'Call Scheduled'),
+                    description: useTranslation().t('quote.call_desc', 'We will call you within 30 minutes to discuss your treatment options.'),
+                  });
+                }}
+              >
+                <Plane className="h-4 w-4 mr-2" />
+                {useTranslation().t('quote.schedule_call', 'Schedule a Call')}
+              </Button>
+
+              <div className="text-xs text-blue-100 text-center">
+                {useTranslation().t('quote.quick_help', 'Need quick help? Call us directly')}
+              </div>
+            </div>
+          </ConsistentPageHeader>
 
           {/* Cost Comparison Summary (Added per new spec) */}
           <div className="mb-8">
@@ -444,7 +482,7 @@ const YourQuotePage: React.FC = () => {
           {/* Ready to See Clinics CTA has been removed to streamline mobile experience */}
 
           {/* Header Section */}
-          <div className="mb-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
+          {/* <div className="mb-10 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-8 border border-blue-100">
             <div className="max-w-4xl">
               <h1 className="text-4xl font-bold mb-3 text-gray-900">Build Your Dental Treatment Quote</h1>
               <p className="text-lg text-gray-700 mb-4">
@@ -465,7 +503,7 @@ const YourQuotePage: React.FC = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Progress tracker */}
           <div className="mb-8">
