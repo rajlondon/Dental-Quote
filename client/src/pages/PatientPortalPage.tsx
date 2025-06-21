@@ -27,6 +27,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
 // Mock data for the dashboard view
 const mockBookingData = {
@@ -69,7 +70,8 @@ interface DashboardSectionProps {
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   // Translation removed
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
-  
+  const { t } = useTranslation();
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -77,7 +79,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           {t('portal.dashboard.title', 'Dashboard')}
         </h2>
       </div>
-      
+
       {/* Mobile Navigation Hint - Only visible on mobile */}
       <div className="md:hidden p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
         <div className="flex items-center">
@@ -103,7 +105,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
             </div>
           </div>
         </div>
-        
+
         {/* Quick section links for mobile */}
         <div className="mt-3 pt-3 border-t border-blue-100">
           <p className="text-sm font-medium text-blue-700 mb-2">
@@ -149,7 +151,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </div>
         </div>
       </div>
-      
+
       {/* Dashboard status cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
@@ -166,7 +168,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
             </p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>{t('portal.dashboard.treatment_plan', 'Treatment Plan')}</CardTitle>
@@ -201,7 +203,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-3">
             <CardTitle>{t('portal.dashboard.notifications', 'Notifications')}</CardTitle>
@@ -215,7 +217,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                 </div>
                 <Badge className="bg-blue-500">{mockBookingData.unreadMessages}</Badge>
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Calendar className="h-5 w-5 text-green-500 mr-2" />
@@ -223,7 +225,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                 </div>
                 <Badge className="bg-green-500">{mockBookingData.upcomingAppointments}</Badge>
               </div>
-              
+
               <Button variant="outline" className="w-full mt-2">
                 {t('portal.dashboard.view_all', 'View All Notifications')}
               </Button>
@@ -231,7 +233,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
           </CardContent>
         </Card>
       </div>
-      
+
       {/* More dashboard content would go here... */}
     </div>
   );
@@ -240,10 +242,10 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
 const PatientPortalPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { logoutMutation } = useAuth();
+  const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  // Translation removed
+  const { t } = useTranslation();
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons
@@ -287,7 +289,7 @@ const PatientPortalPage: React.FC = () => {
       onSuccess: () => {
         // Use direct window.location for more reliable navigation after logout
         window.location.href = '/portal-login';
-        
+
         // Toast notification will be shown before redirect
         toast({
           title: t('auth.logout_success', 'Logged out successfully'),
@@ -349,7 +351,11 @@ const PatientPortalPage: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
+      <ConsistentPageHeader
+        title="Patient Portal"
+        subtitle={user ? `Welcome back, ${user.firstName}!` : "Manage your dental journey"}
+      />
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex flex-col flex-grow border-r border-gray-200 bg-white pt-5 pb-4 overflow-y-auto">
@@ -407,7 +413,7 @@ const PatientPortalPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Mobile header and navigation */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-10 bg-white border-b border-gray-200">
         <div className="flex items-center justify-between h-16 px-4">
@@ -435,9 +441,9 @@ const PatientPortalPage: React.FC = () => {
                 <p className="text-sm text-gray-500">
                   {t('portal.welcome', 'Welcome back')}
                 </p>
-              
+
                 <Separator />
-                
+
                 <ScrollArea className="h-[calc(100vh-12rem)]">
                   <nav className="p-4">
                     <ul className="space-y-1">
@@ -461,7 +467,7 @@ const PatientPortalPage: React.FC = () => {
                     </ul>
                   </nav>
                 </ScrollArea>
-                
+
                 <div className="p-4 mt-auto border-t border-gray-200">
                   <Button 
                     variant="outline" 
@@ -471,7 +477,7 @@ const PatientPortalPage: React.FC = () => {
                     <Users className="h-5 w-5 mr-3" />
                     {t('portal.my_profile', 'My Profile')}
                   </Button>
-                
+
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-gray-700 mb-2"
@@ -480,7 +486,7 @@ const PatientPortalPage: React.FC = () => {
                     <UserCog className="h-5 w-5 mr-3" />
                     {t('portal.account_settings', 'Account Settings')}
                   </Button>
-                
+
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-gray-700"
@@ -496,7 +502,7 @@ const PatientPortalPage: React.FC = () => {
               <h1 className="text-lg font-semibold">{t(`portal.nav.${activeSection}`, navItems.find(item => item.id === activeSection)?.label || 'Dashboard')}</h1>
             </div>
           </div>
-          
+
           {/* Add notifications icon in mobile header */}
           <div className="flex items-center space-x-2">
             <NotificationsPopover 
@@ -509,7 +515,7 @@ const PatientPortalPage: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Main Content Area */}
       <div className="md:pl-64 flex flex-col flex-1">
         {/* Desktop header */}
@@ -529,7 +535,7 @@ const PatientPortalPage: React.FC = () => {
                 markAllAsRead={markAllAsRead}
                 deleteNotification={deleteNotification}
               />
-              
+
               <Button 
                 variant="ghost" 
                 size="icon"
@@ -539,7 +545,7 @@ const PatientPortalPage: React.FC = () => {
             </div>
           </div>
         </div>
-      
+
         {/* Main Content */}
         <main className="flex-1 md:p-8 p-4 md:pt-8 pt-20 overflow-auto">
           {renderActiveSection()}

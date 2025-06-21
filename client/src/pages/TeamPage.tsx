@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet";
-import Navbar from "@/components/Navbar";
+import ConsistentPageHeader from "@/components/ConsistentPageHeader";
 import Footer from "@/components/Footer";
 import OptimizedImage from "@/components/OptimizedImage";
 
@@ -32,18 +32,27 @@ Destina is fluent in Turkish, English, and German, making her the perfect liaiso
   }
 ];
 
+import React from 'react';
+import { useLocation } from 'wouter';
+
 export default function TeamPage() {
-  // Translation removed
-  
+  const [, setLocation] = useLocation();
+
   return (
     <>
       <Helmet>
         <title>Meet Our Team | MyDentalFly.com</title>
         <meta name="description" content="Meet the MyDentalFly.com team - dedicated professionals committed to providing exceptional dental tourism experiences in Istanbul, Turkey." />
       </Helmet>
-      
-      <Navbar />
-      
+
+      <ConsistentPageHeader
+        title="Meet Our Team"
+        subtitle="The dedicated professionals behind MyDentalFly's success"
+        showBackButton={true}
+        backButtonText="Back to Home"
+        onBack={() => setLocation('/')}
+      />
+
       <main>
         {/* Hero Section */}
         <section className="py-20 bg-gradient-to-b from-primary/10 to-transparent">
@@ -57,7 +66,7 @@ export default function TeamPage() {
             </div>
           </div>
         </section>
-        
+
         {/* Team Members */}
         <section className="py-16">
           <div className="container mx-auto px-4">
@@ -77,13 +86,13 @@ export default function TeamPage() {
                   <div className="md:w-2/3">
                     <h2 className="text-3xl font-bold text-primary mb-2">{member.name} - {member.role}</h2>
                     <div className="h-1 w-20 bg-secondary mb-6"></div>
-                    
+
                     <div className="mb-6 space-y-4 text-neutral-700">
                       {member.bio.split('\n\n').map((paragraph, idx) => (
                         <p key={idx} className="leading-relaxed">{paragraph}</p>
                       ))}
                     </div>
-                    
+
                     <div className="flex flex-wrap gap-2 mb-6">
                       {member.languages.map(language => (
                         <span key={language} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm">
@@ -91,7 +100,7 @@ export default function TeamPage() {
                         </span>
                       ))}
                     </div>
-                    
+
                     <a 
                       href={`mailto:${member.contactEmail}`} 
                       className="inline-flex items-center text-primary hover:text-primary/80 transition-colors"
@@ -107,7 +116,7 @@ export default function TeamPage() {
             </div>
           </div>
         </section>
-        
+
         {/* Team Values */}
         <section className="py-16 bg-neutral-50">
           <div className="container mx-auto px-4">
@@ -117,7 +126,7 @@ export default function TeamPage() {
                 These principles guide everything we do at MyDentalFly.com, from patient interactions to clinic partnerships.
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <div className="bg-white p-6 rounded-xl shadow-sm border border-neutral-200">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -130,7 +139,7 @@ export default function TeamPage() {
                   We provide complete transparency in pricing, treatment options, and clinic credentials, ensuring you can make informed decisions with confidence.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-xl shadow-sm border border-neutral-200">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,7 +151,7 @@ export default function TeamPage() {
                   We partner only with clinics that meet our rigorous standards for facilities, hygiene, technology, and patient outcomes.
                 </p>
               </div>
-              
+
               <div className="bg-white p-6 rounded-xl shadow-sm border border-neutral-200">
                 <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -157,7 +166,7 @@ export default function TeamPage() {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="py-16 bg-primary/5">
           <div className="container mx-auto px-4">
@@ -184,7 +193,7 @@ export default function TeamPage() {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </>
   );

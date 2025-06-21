@@ -48,6 +48,7 @@ import ClinicReportsSection from '@/components/clinic/ClinicReportsSection';
 import ClinicPortalTesting from '@/components/portal/ClinicPortalTesting';
 import { SpecialOffersManager } from '@/components/clinic/SpecialOffersManager';
 import ClinicMediaSection from '@/components/clinic/ClinicMediaSection';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
 interface ClinicPortalPageProps {
   disableAutoRefresh?: boolean;
@@ -64,12 +65,12 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   const [activeSection, setActiveSection] = useState<string>(initialSection);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
-  
+
   // When disableAutoRefresh is true, block any programmatic refreshes
   React.useEffect(() => {
     if (disableAutoRefresh && typeof window !== 'undefined') {
       console.log("🛡️ Setting up refresh prevention for ClinicPortalPage");
-      
+
       // Use a safer approach - intercept reload attempts with an event handler
       const preventReload = (e: BeforeUnloadEvent) => {
         if (window.location.pathname.includes('clinic-portal')) {
@@ -79,10 +80,10 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           return '';
         }
       };
-      
+
       // Add event listener
       window.addEventListener('beforeunload', preventReload);
-      
+
       // Cleanup function
       return () => {
         window.removeEventListener('beforeunload', preventReload);
@@ -92,39 +93,39 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
 
   // Get auth context for user info and logout functionality
   const { user, logoutMutation } = useAuth();
-  
+
   // CRITICAL FIX: Safer approach to prevent WebSocket-related refreshes
   useEffect(() => {
     if (disableAutoRefresh && typeof window !== 'undefined') {
       console.log("🔌 Adding WebSocket protection for clinic portal");
-      
+
       // Set a global flag to indicate we're in the clinic portal
       (window as any).__inClinicPortal = true;
-      
+
       // Add a more targeted WebSocket prevention - watch for specific patterns
       // This is safer than replacing the WebSocket constructor
       const originalFetch = window.fetch;
       window.fetch = async function preventProblematicFetch(input, init) {
         const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
-        
+
         // Block any refresh-causing API calls
         if (typeof url === 'string' && 
             (url.includes('/api/auth/check') || 
              url.includes('/api/auth/status') || 
              url.includes('/api/auth/verify'))) {
           console.log(`🛡️ Blocking refresh-causing API call: ${url}`);
-          
+
           // Return a fake successful response
           return Promise.resolve(new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: new Headers({ 'Content-Type': 'application/json' })
           }));
         }
-        
+
         // Otherwise proceed with the original fetch
         return originalFetch.apply(window, [input, init]);
       };
-      
+
       // Clean up when unmounting
       return () => {
         (window as any).__inClinicPortal = false;
@@ -132,7 +133,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       };
     }
   }, [disableAutoRefresh]);
-  
+
   // Add page-level refresh prevention
   useEffect(() => {
     // Function to prevent any programmatic page reload
@@ -146,34 +147,34 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       }
       return undefined;
     };
-    
+
     window.addEventListener('beforeunload', preventUnload);
-    
+
     return () => {
       window.removeEventListener('beforeunload', preventUnload);
     };
   }, []);
-  
+
   // Flag to track component mount status
   const isMounted = React.useRef(true);
-  
+
   // SIMPLIFIED: Just a simple effect for initialization - no complicated checks
   useEffect(() => {
     // Skip if no user
     if (!user) {
       return;
     }
-    
+
     console.log("ClinicPortalPage: Initializing for clinic staff user:", user.id);
-    
+
     // Simple straightforward initialization
     initialLoadComplete.current = true;
-    
+
     // Cleanup function for component unmount
     return () => {
       console.log("ClinicPortalPage unmounting");
       isMounted.current = false;
-      
+
       // This prevents issues with WebSocket connection management
       setTimeout(() => {
         if (window.location.pathname !== '/clinic-portal') {
@@ -183,24 +184,24 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       }, 1000);
     };
   }, [user]);
-  
+
   // Component unmount cleanup effect with advanced WebSocket handling
   useEffect(() => {
     // Set a flag on mount to track this instance
     const instanceId = `clinic-portal-instance-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     (window as any).__lastClinicPortalInstance = instanceId;
-    
+
     return () => {
       // Prevent WebSocket connection errors on unmount
       if (isMounted.current) {
         console.log("ClinicPortalPage unmounting, performing cleanup");
-        
+
         // Only perform full cleanup if this is the most recent instance
         // This prevents older unmounted instances from clearing newer ones
         if ((window as any).__lastClinicPortalInstance === instanceId) {
           // Clear any stored session data
           sessionStorage.removeItem('clinic_portal_active');
-          
+
           // Disconnect WebSocket safely if this component is responsible for it
           if (user) {
             // Manually trigger WebSocket cleanup via custom event
@@ -217,7 +218,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       }
     };
   }, [user]);
-  
+
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
     try {
@@ -233,19 +234,19 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           console.log(`Cleared shared WebSocket references for user ${user.id}`);
         }
       }
-      
+
       // Step 1: Mark session as needing reset (for next login)
       sessionStorage.removeItem('clinic_portal_timestamp');
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
-      
+
       // Step 2: Clear WebSocket connections to prevent reconnect loops
       console.log("Manually closing any open WebSocket connections");
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
-      
+
       // Add a brief delay to allow WebSocket to close properly
       await new Promise(resolve => setTimeout(resolve, 100));
-      
+
       // Step 3: Parallel processing - server logout and client cleanup
       // A. Server-side session termination with timeout protection
       const logoutPromise = Promise.race([
@@ -260,31 +261,31 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         // Log but continue even if server logout fails
         console.error("Server logout error:", error);
       });
-      
+
       // B. Client-side cleanup
       queryClient.setQueryData(["/api/auth/user"], null);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      
+
       // Step 4: Complete both operations
       await logoutPromise;
-      
+
       // Step 5: Provide feedback to the user after successful logout
       toast({
         title: t('portal.logout_success', 'Successfully logged out'),
         description: t('portal.logout_message', 'You have been logged out of your account.'),
       });
-      
+
       // Step 6: Redirect to login page
       console.log("Logout sequence complete, redirecting to login page");
       setLocation('/portal-login');
-      
+
     } catch (err) {
       console.error("Logout handler error:", err);
       toast({
         title: t('portal.logout_success', 'Logged out'),
         description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
       });
-      
+
       // Fallback: redirect even if something fails
       setLocation('/portal-login');
     }
@@ -341,7 +342,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           { id: 103, patientName: "Emma Wilson", status: "scheduled", createdAt: new Date().setDate(new Date().getDate() - 3) }
         ]
       };
-      
+
       const getStatusColor = (status: string): string => {
         switch (status.toLowerCase()) {
           case 'pending': return 'bg-yellow-500';
@@ -353,7 +354,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
           default: return 'bg-gray-500';
         }
       };
-      
+
       return (
         <div className="space-y-6">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -368,7 +369,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
                 <p className="text-xs text-muted-foreground">Appointments awaiting confirmation</p>
               </CardContent>
             </Card>
-            
+
             {/* Total Patients Card */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -380,7 +381,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
                 <p className="text-xs text-muted-foreground">Patients associated with your clinic</p>
               </CardContent>
             </Card>
-            
+
             {/* Active Quotes Card */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -392,7 +393,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
                 <p className="text-xs text-muted-foreground">Quotes awaiting response</p>
               </CardContent>
             </Card>
-            
+
             {/* Revenue Card */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -467,7 +468,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
         </div>
       );
     }
-    
+
     // Handle other sections as before
     switch (activeSection) {
       case 'patients':
@@ -600,57 +601,12 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden lg:pl-0">
         {/* Header */}
-        <header className="bg-white border-b p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <h1 className="text-xl font-bold">{t("clinic.title", "Clinic Portal")}</h1>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              {/* Language Switcher */}
-              <div className="mr-2">
-                <Select
-                  defaultValue={i18n.language}
-                  onValueChange={(value) => {
-                    i18n.changeLanguage(value);
-                  }}
-                >
-                  <SelectTrigger className="w-[130px] h-9">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="en">
-                      <div className="flex items-center">
-                        <span className="mr-2">🇬🇧</span> {t("language.en", "English")}
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="tr">
-                      <div className="flex items-center">
-                        <span className="mr-2">🇹🇷</span> {t("language.tr", "Türkçe")}
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button variant="ghost" size="sm" asChild>
-                <Link href="/" className="flex items-center gap-1">
-                  {t("clinic.back_to_site", "Back to Website")}
-                  <ChevronRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-          
-          {/* Breadcrumb */}
-          <div className="flex items-center space-x-2 mt-2 text-sm text-muted-foreground">
-            <span>{t("clinic.title", "Clinic Portal")}</span>
-            <ChevronRight className="h-3 w-3" />
-            <span className="font-medium text-foreground">
-              {navItems.find(item => item.id === activeSection)?.label}
-            </span>
-          </div>
-        </header>
+        <ConsistentPageHeader
+          title={t("clinic.title", "Clinic Portal")}
+          subtitle={navItems.find(item => item.id === activeSection)?.label || ""}
+          backButtonHref="/"
+          backButtonText={t("clinic.back_to_site", "Back to Website")}
+        />
 
         {/* Page content */}
         <main className="flex-1 overflow-auto p-4 md:p-6">

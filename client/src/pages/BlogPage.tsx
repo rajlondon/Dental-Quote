@@ -1,10 +1,17 @@
-import React from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { Link, useLocation } from "wouter";
+The code will be modified to include the ConsistentPageHeader component in the BlogPage, replacing the Navbar and adding a blue banner style.
+```
+
+```replit_final_file
+import React from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, ArrowRight, User } from 'lucide-react';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import Footer from '@/components/Footer';
+import { useLocation } from 'wouter';
 import { 
   Plane as PlaneIcon, 
-  ArrowRight,
   Home,
   Star,
   Users,
@@ -22,7 +29,7 @@ interface BlogPostProps {
 
 const BlogPage: React.FC = () => {
   const [location, setLocation] = useLocation();
-  
+
   const blogPosts: BlogPostProps[] = [
     {
       title: "How MyDentalFly.com Works",
@@ -67,81 +74,15 @@ const BlogPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
-      {/* Hero Section - Styled like HeroSimple */}
-      <section className="relative pb-6 overflow-hidden">
-        {/* Booking.com style dark blue background */}
-        <div className="bg-[#003b95] pb-8 pt-8">
-          <div className="container mx-auto px-4">
-            {/* Service navigation tabs - Booking.com style */}
-            <div className="flex items-center space-x-6 mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:pb-0 md:mx-0 md:px-0">
-              <Link href="/" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <Home className="h-5 w-5 mr-2" />
-                Home
-              </Link>
-              <Link href="/how-it-works" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                How It Works
-              </Link>
-              <Link href="/clinics" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-                Clinics
-              </Link>
-              <Link href="/dental-chart" className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M7 12.5l1.5 2.5l1.5-2.5M7 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
-                  <path d="M17 12.5l1.5 2.5l1.5-2.5M17 20c0-4 4-4 4-8a4 4 0 10-8 0c0 4 4 4 4 8z" />
-                </svg>
-                Dental Chart
-              </Link>
-              <Link href="/blog" className="flex items-center text-white opacity-90 hover:opacity-100 whitespace-nowrap border-b-2 border-white pb-2 px-1 text-sm font-medium">
-                <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2z" />
-                  <path d="M16 2v4M8 2v4M3 10h18" />
-                  <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01" />
-                </svg>
-                Blog
-              </Link>
-            </div>
-      
-            {/* Heading */}
-            <div className="mb-8">
-              <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
-                Dental Tourism Blog
-              </h1>
-              <p className="text-white text-sm md:text-base">
-                Expert advice, guides, and information about dental treatments abroad. Discover everything you need to know about dental procedures, costs, and what to expect.
-              </p>
-            </div>
-            
-            {/* CTA Button */}
-            <Link href="/your-quote" className="inline-flex items-center bg-white text-[#0071c2] hover:bg-gray-100 font-bold py-2 px-4 rounded-lg shadow mb-4">
-              Get Your Free Quote <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-        
-        {/* Trust bar */}
-        <div className="container mx-auto px-4 mt-3">
-          <div className="max-w-5xl mx-auto text-center text-[11px] text-gray-500 flex flex-wrap items-center justify-center">
-            <span className="flex items-center">35+ informative articles</span>
-            <span className="mx-2">•</span>
-            <span className="flex items-center">
-              <Star className="h-2.5 w-2.5 text-yellow-500 fill-yellow-500 mr-0.5" />
-              Expert dental information
-            </span>
-            <span className="mx-2">•</span>
-            <span>Updated monthly</span>
-          </div>
-        </div>
-      </section>
-      
+    <div className="min-h-screen bg-gray-50">
+      <ConsistentPageHeader
+        title="MyDentalFly Blog"
+        subtitle="Expert insights on dental treatments, Istanbul travel tips, and patient stories"
+        showBackButton={true}
+        backButtonText="Back to Home"
+        onBack={() => setLocation('/')}
+      />
+
       <main className="flex-grow">
         {/* Blog Articles */}
         <section className="py-12 bg-neutral-50">
@@ -174,7 +115,7 @@ const BlogPage: React.FC = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
@@ -190,7 +131,7 @@ const BlogPage: React.FC = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

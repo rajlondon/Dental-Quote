@@ -1,13 +1,24 @@
-import React from "react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+import React from 'react';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import Footer from '@/components/Footer';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CheckCircle, Calendar, MapPin, CreditCard, Plane, Users, Star } from 'lucide-react';
+import { useLocation } from 'wouter';
 
 const HowItWorks: React.FC = () => {
+  const [, setLocation] = useLocation();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <ConsistentPageHeader
+        title="How MyDentalFly Works"
+        subtitle="Your complete journey to premium dental care in Istanbul"
+        showBackButton={true}
+        backButtonText="Back to Home"
+        onBack={() => setLocation('/')}
+      />
+
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="bg-primary text-white py-24">
@@ -18,7 +29,7 @@ const HowItWorks: React.FC = () => {
             </p>
           </div>
         </section>
-        
+
         {/* Introduction */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
@@ -33,12 +44,12 @@ const HowItWorks: React.FC = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Process Steps */}
         <section className="py-16 bg-neutral-50">
           <div className="container mx-auto px-4">
             <h2 className="text-3xl font-bold mb-12 text-center text-primary">Our Simple 6-Step Process</h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {/* Step 1 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
@@ -48,7 +59,7 @@ const HowItWorks: React.FC = () => {
                   Use our online calculator to select your required treatments and instantly see pricing. Provide your contact details, and we'll send you a detailed quote.
                 </p>
               </div>
-              
+
               {/* Step 2 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">2</div>
@@ -57,7 +68,7 @@ const HowItWorks: React.FC = () => {
                   Our team will discuss your requirements and answer questions. If you have dental X-rays, our partner clinics will review them.
                 </p>
               </div>
-              
+
               {/* Step 3 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">3</div>
@@ -66,7 +77,7 @@ const HowItWorks: React.FC = () => {
                   Place a £200 deposit to secure your treatment dates. This deposit will be deducted from your final treatment cost when you arrive.
                 </p>
               </div>
-              
+
               {/* Step 4 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">4</div>
@@ -75,7 +86,7 @@ const HowItWorks: React.FC = () => {
                   We handle all your travel logistics — flights, 5-star hotel accommodation, private airport transfers, and clinic transportation.
                 </p>
               </div>
-              
+
               {/* Step 5 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">5</div>
@@ -84,7 +95,7 @@ const HowItWorks: React.FC = () => {
                   Enjoy your treatment at a top-rated Istanbul dental clinic. Between appointments, experience luxury hotel stays and optional extras.
                 </p>
               </div>
-              
+
               {/* Step 6 */}
               <div className="bg-white rounded-xl shadow-md p-6 relative">
                 <div className="w-12 h-12 rounded-full bg-primary text-white flex items-center justify-center text-xl font-bold">6</div>
@@ -96,13 +107,13 @@ const HowItWorks: React.FC = () => {
             </div>
           </div>
         </section>
-        
+
         {/* Why Choose Us */}
         <section className="py-16 bg-white">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-3xl font-bold mb-8 text-primary">Why Choose MyDentalFly.com?</h2>
-              
+
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -115,7 +126,7 @@ const HowItWorks: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-lg">✓</span>
@@ -127,7 +138,7 @@ const HowItWorks: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-lg">✓</span>
@@ -139,7 +150,7 @@ const HowItWorks: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-lg">✓</span>
@@ -151,7 +162,7 @@ const HowItWorks: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-start gap-4">
                   <div className="flex-shrink-0 w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-primary font-bold text-lg">✓</span>
@@ -167,7 +178,7 @@ const HowItWorks: React.FC = () => {
             </div>
           </div>
         </section>
-        
+
         {/* CTA Section */}
         <section className="py-20 bg-primary text-white">
           <div className="container mx-auto px-4 text-center">
@@ -186,7 +197,7 @@ const HowItWorks: React.FC = () => {
           </div>
         </section>
       </main>
-      
+
       <Footer />
     </div>
   );

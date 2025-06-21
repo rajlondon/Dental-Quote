@@ -112,7 +112,7 @@ const ClinicCard = ({
       );
     }
   };
-  
+
   return (
     <div className={`bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-lg ${featured ? 'ring-2 ring-primary' : ''}`}>
       <div className="relative">
@@ -134,7 +134,7 @@ const ClinicCard = ({
           </div>
         )}
       </div>
-      
+
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-semibold text-gray-800 text-lg">{name}</h3>
@@ -143,20 +143,20 @@ const ClinicCard = ({
             <span className="ml-1 font-semibold">{rating.toFixed(1)}</span>
           </div>
         </div>
-        
+
         <div className="flex items-center text-sm text-gray-500 mb-3">
           <Users className="w-3.5 h-3.5 mr-1" />
           <span>{reviewCount} reviews</span>
           <span className="mx-2">•</span>
           <span>{location}</span>
         </div>
-        
+
         <div className="flex items-center text-xs font-medium text-primary mb-4">
           <span className="inline-block px-2 py-1 bg-primary/10 rounded">
             {category}
           </span>
         </div>
-        
+
         <div className="grid grid-cols-2 gap-2">
           <Link href={`/clinic/${id || name.toLowerCase().replace(/\s+/g, '-')}`} className="w-full">
             <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">
@@ -198,12 +198,12 @@ const HowItWorksSection = () => {
       description: "Manage your booking, upload medical records and plan your trip" 
     }
   ];
-  
+
   return (
     <section className="py-16 bg-gray-50">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {steps.map((step, index) => (
             <div key={index} className="flex flex-col items-center text-center">
@@ -215,7 +215,7 @@ const HowItWorksSection = () => {
             </div>
           ))}
         </div>
-        
+
         <div className="text-center mt-12">
           <Button asChild className="bg-white hover:bg-gray-50 text-primary border-2 border-primary/30 hover:border-primary/50 font-medium px-6">
             <Link href="/how-it-works">
@@ -245,7 +245,7 @@ const HomePage: React.FC = () => {
       default:
         category = 'Quality Dental Care';
     }
-    
+
     // Assign real clinic images
     let imagePath = "";
     if (clinic.id === "dentgroup-istanbul") {
@@ -257,7 +257,7 @@ const HomePage: React.FC = () => {
     } else if (clinic.id === "dentakay-istanbul") {
       imagePath = "/images/clinics/dentid-clinic.png"; // DENTID
     }
-    
+
     return {
       id: clinic.id,
       name: clinic.name,
@@ -270,10 +270,10 @@ const HomePage: React.FC = () => {
       tier: clinic.tier
     };
   });
-  
+
   // Filter clinics for different sections
   const popularClinics = formattedClinics;
-  
+
   // Trending clinics - for demo we'll mark premium and clinics with high ratings as trending
   const trendingClinics = formattedClinics
     .filter(clinic => clinic.tier === 'premium' || clinic.rating >= 4.7)
@@ -282,25 +282,25 @@ const HomePage: React.FC = () => {
       category: clinic.category + ' (Trending)'
     }))
     .slice(0, 3); // Show 3 trending clinics
-  
+
   // Set page title
   useEffect(() => {
     document.title = "MyDentalFly - Compare Dental Clinics. Book With Confidence. Fly With a Smile.";
   }, []);
-  
+
   return (
     <>
       <Navbar />
       <HeroSimple />
-      
+
       {/* Premium Offers Carousel */}
       <EnhancedOffersCarousel className="px-4" />
-      
+
       {/* Popular Clinics Section */}
       <section className="py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold mb-8">Popular Clinics</h2>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {popularClinics.map((clinic, index) => (
               <ClinicCard 
@@ -318,7 +318,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
       {/* Trending Packages Section */}
       <section className="py-12 bg-gradient-to-r from-indigo-50 to-blue-50">
         <div className="container mx-auto px-4">
@@ -329,13 +329,13 @@ const HomePage: React.FC = () => {
               Health Vacation Experience
             </div>
           </div>
-          
+
           <div className="mb-6">
             <p className="text-gray-700 max-w-3xl">
               Experience the ultimate health vacation with our all-inclusive packages. Combine top-quality dental treatments with luxurious accommodations, convenient transfers, and exciting Istanbul excursions.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {trendingPackages.map((pkg, index) => (
               <TrendingPackageCard 
@@ -343,7 +343,7 @@ const HomePage: React.FC = () => {
                 package={pkg}
               />
             ))}
-            
+
             {/* Action card */}
             <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               <div className="h-48 bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
@@ -366,10 +366,10 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
-      
+
       {/* How It Works Section */}
       <HowItWorksSection />
-      
+
       <Footer />
     </>
   );
