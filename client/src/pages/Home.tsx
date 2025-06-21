@@ -84,12 +84,12 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {(clinicsData || []).slice(0, 3).map((clinic) => (
-              <div key={clinic.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+              <div key={clinic?.id || Math.random()} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video bg-gray-100 flex items-center justify-center">
                   <Building2 className="h-12 w-12 text-gray-400" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{clinic.name}</h3>
+                  <h3 className="text-xl font-semibold mb-2">{clinic?.name || 'Clinic Name'}</h3>
                   <div className="flex items-center mb-2">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
@@ -100,10 +100,10 @@ const Home: React.FC = () => {
                   </div>
                   <div className="flex items-center text-sm text-gray-600 mb-4">
                     <MapPin className="h-4 w-4 mr-1" />
-                    {clinic.location}
+                    {clinic?.location || 'Location'}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
-                    Specializes in: {(clinic.specialties || []).slice(0, 2).join(", ")}
+                    Specializes in: {(clinic?.specialties || []).slice(0, 2).join(", ") || 'Various treatments'}
                   </div>
                   <Link href="/your-quote">
                     <a className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
