@@ -13,9 +13,9 @@ import { Link } from "wouter";
 import clinicsDataImport from "@/data/clinics.json";
 import { trendingPackages } from "@/data/packages";
 
-// Add safe fallbacks for imported data
-const clinicsData = clinicsDataImport || [];
-const safePackages = trendingPackages || [];
+// Add safe fallbacks for imported data with explicit null checks
+const clinicsData = Array.isArray(clinicsDataImport) ? clinicsDataImport : [];
+const safePackages = Array.isArray(trendingPackages) ? trendingPackages : [];
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
 
 const Home: React.FC = () => {
@@ -53,8 +53,8 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(safePackages || []).map((pkg) => (
-              <TrendingPackageCard key={pkg.id} package={pkg} />
+            {safePackages.map((pkg) => (
+              <TrendingPackageCard key={pkg?.id || Math.random()} package={pkg} />
             ))}
           </div>
         </div>
@@ -83,7 +83,7 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {(clinicsData || []).slice(0, 3).map((clinic) => (
+            {clinicsData.slice(0, 3).map((clinic) => (
               <div key={clinic?.id || Math.random()} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video bg-gray-100 flex items-center justify-center">
                   <Building2 className="h-12 w-12 text-gray-400" />
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
                   <h3 className="text-xl font-semibold mb-2">{clinic?.name || 'Clinic Name'}</h3>
                   <div className="flex items-center mb-2">
                     <div className="flex">
-                      {[...Array(5)].map((_, i) => (
+                      {Array.from({ length: 5 }, (_, i) => (
                         <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
                       ))}
                     </div>
@@ -103,7 +103,7 @@ const Home: React.FC = () => {
                     {clinic?.location || 'Location'}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
-                    Specializes in: {(clinic?.specialties || []).slice(0, 2).join(", ") || 'Various treatments'}
+                    Specializes in: {Array.isArray(clinic?.specialties) ? clinic.specialties.slice(0, 2).join(", ") : 'Various treatments'}
                   </div>
                   <Link href="/your-quote">
                     <a className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
