@@ -60,22 +60,14 @@ function setupReloadTracker() {
 
 // Login form schema
 const loginSchema = z.object({
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  password: z.string().min(8, {
-    message: "Password must be at least 8 characters.",
-  }),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required")
 });
 
 // Admin login schema
 const adminLoginSchema = z.object({
-  email: z.string().email({ 
-    message: "Enter a valid email address" 
-  }),
-  password: z.string().min(6, { 
-    message: "Password must be at least 6 characters" 
-  }),
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required")
 });
 
 // Registration form schema
