@@ -682,7 +682,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   }
 
   return (
-    <main>
+    <>
+      <ConsistentPageHeader 
+        title="Matched Clinics"
+        subtitle="Compare personalized quotes from verified Turkish dental clinics"
+        showBackButton={true}
+        onBack={() => setLocation('/your-quote')}
+      />
+      
+      <main>
         <div className="container mx-auto py-8 px-4">
         {/* Features highlight bar */}
         <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
