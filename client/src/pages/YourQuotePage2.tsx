@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { useLocation, Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import Navbar from '@/components/Navbar';
@@ -177,7 +176,6 @@ const FAQSection: React.FC = () => {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { t } = useTranslation();
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
 
@@ -335,6 +333,7 @@ const YourQuotePage: React.FC = () => {
 
       {/* Consistent Page Header - Always visible across all steps */}
       <ConsistentPageHeader
+        key={`header-${currentStep}-${Date.now()}`}
         title={currentStep === 'build-plan' ? 'Plan Your Dental Treatment' : 
                currentStep === 'patient-info' ? 'Your Information' :
                currentStep === 'matched-clinics' ? 'Your Matched Clinics' :
@@ -347,7 +346,7 @@ const YourQuotePage: React.FC = () => {
         backButtonText={currentStep === 'patient-info' ? 'Back to Treatment Plan' :
                        currentStep === 'matched-clinics' ? 'Back to Your Info' :
                        'Back to Clinics'}
-        onBackClick={() => {
+        onBack={() => {
           if (currentStep === 'patient-info') {
             setCurrentStep('build-plan');
           } else if (currentStep === 'matched-clinics') {

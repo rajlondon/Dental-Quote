@@ -10,7 +10,7 @@ interface ConsistentPageHeaderProps {
   subtitle?: string;
   showBackButton?: boolean;
   backButtonText?: string;
-  onBackClick?: () => void;
+  onBack?: () => void;
   showLocationInfo?: boolean;
   location?: string;
   travelDate?: string;
@@ -26,7 +26,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
   subtitle,
   showBackButton = false,
   backButtonText = "Back",
-  onBackClick,
+  onBack,
   showLocationInfo = false,
   location = "Istanbul, Turkey",
   travelDate,
@@ -39,8 +39,8 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
   const [, setLocation] = useLocation();
 
   const handleBackClick = () => {
-    if (onBackClick) {
-      onBackClick();
+    if (onBack) {
+      onBack();
     } else {
       window.history.back();
     }
