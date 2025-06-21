@@ -1,0 +1,32 @@
+
+Component Error
+An error occurred in the Router component
+
+CardFooter is not defined
+Component Stack:
+
+
+    at AdminDashboardSection (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/admin/AdminDashboardSection.tsx:107:27)
+    at main
+    at div
+    at div
+    at AdminPortalPage (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/pages/AdminPortalPage.tsx:56:28)
+    at AdminQueryProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-admin-queries.tsx:24:38)
+    at AdminPortalGuard (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/AdminPortalGuard.tsx:24:29)
+    at Route (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:323:16)
+    at Switch (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:379:17)
+    at Router
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?v=UdKIE7BLUb4qrJdcM-T9u:652:3)
+    at RTLProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/rtl-provider.tsx:19:31)
+    at Suspense
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+Try Again
+
