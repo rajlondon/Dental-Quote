@@ -97,20 +97,11 @@ const Home: React.FC = () => {
                   <Building2 className="h-12 w-12 text-gray-400" />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-semibold mb-2">{clinic?.name || 'Clinic Name'}</h3>
-                  <div className="flex items-center mb-2">
-                    <div className="flex">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <Star key={i} className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-gray-600">(128 reviews)</span>
-                  </div>
+                  <h3 className="font-semibold text-lg mb-2">{clinic?.name || 'Clinic Name'}</h3>
                   <div className="text-sm text-gray-600 mb-2">
-                    {typeof clinic?.location === 'string' 
-                      ? clinic.location 
-                      : clinic?.location?.city || clinic?.location?.area || 'Location'
-                    }
+                    {typeof clinic?.location === 'object' 
+                      ? `${clinic.location.city || ''}, ${clinic.location.area || ''}`
+                      : clinic?.location || 'Location'}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
                     Specializes in: {

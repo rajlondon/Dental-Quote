@@ -40,12 +40,12 @@ const WhyChooseUs: React.FC = () => {
   return (
     <section id="why-us" className="py-16 bg-neutral-100">
       <div className="container mx-auto px-4">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <h2 className="font-display font-bold text-3xl md:text-4xl text-neutral-800 mb-4">
-            {t('whyUs.title')}
-          </h2>
-          <p className="text-neutral-600">{t('whyUs.subtitle')}</p>
-        </div>
+        <div className="text-center mb-12">
+        <h2 className="text-3xl font-bold text-gray-900 mb-4">Why Choose Us</h2>
+        <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          Trusted by thousands for quality dental care in Turkey
+        </p>
+      </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
           {features.map((feature) => (

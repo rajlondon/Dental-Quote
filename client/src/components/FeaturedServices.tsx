@@ -55,7 +55,7 @@ const FeaturedServices: React.FC = () => {
   const { t } = useTranslation();
 
   const services = [
-    
+
   ];
 
   return (
