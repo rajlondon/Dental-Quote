@@ -831,11 +831,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                                   <p>{treatment.notes}</p>
                                 </TooltipContent>
                               </Tooltip>
-                            </                                </TooltipProvider>
-                              )}
-                            </div>
-                          </div>
+                            </TooltipProvider>
+                          )}
                         </div>
+                      </div>
+                    </div>
                         <div className="text-left sm:text-right mt-2 sm:mt-0">
                           <Badge variant="outline" className="font-medium text-sm">
                             Istanbul: £{Math.round(treatment.priceGBP * 0.35).toLocaleString()}
