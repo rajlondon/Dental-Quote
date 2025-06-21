@@ -831,7 +831,10 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                                   <p>{treatment.notes}</p>
                                 </TooltipContent>
                               </Tooltip>
-                            </TooltipProvider>```text
+                            </TooltipProvider>
+                          )}
+
+```text
 
                     </div>
                     <div className="text-left sm:text-right mt-2 sm:mt-0">
