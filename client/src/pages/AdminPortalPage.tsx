@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
 import DataArchitecturePage from "@/pages/DataArchitecturePage";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ import AdminAnalyticsSection from "@/components/admin/AdminAnalyticsSection";
 import AdminSettingsSection from "@/components/admin/AdminSettingsSection";
 import { OffersApprovalDashboard } from "@/components/admin/OffersApprovalDashboard";
 import AdminPortalGuard from "@/components/AdminPortalGuard";
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
 // Notification type definition
 interface Notification {
@@ -53,20 +54,20 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
-  
+
   // Removed duplicate WebSocket protection - AdminPortalGuard now handles this
-  
+
   // Remove page-level refresh prevention - AdminPortalGuard now handles this more elegantly
   // without showing a browser dialog
-  
+
   // Removed React Query retry disable logic - AdminPortalGuard now handles this
-  
+
   // Flag to track component mount status
   const isMounted = React.useRef(true);
-  
+
   // Apply the disable refetch hook to prevent unwanted refreshes
   useDisableRefetch();
-  
+
   // Simple initialization for admin portal
   useEffect(() => {
     // Skip if no admin user
@@ -75,21 +76,21 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       navigate('/admin-login');
       return;
     }
-    
+
     console.log("AdminPortalPage: Initializing for admin user:", adminUser.id);
-    
+
     // Set flag indicating successful initialization
     initialLoadComplete.current = true;
     (window as any).__adminPortalMounted = true;
-    
+
     // Disable all React Query auto-fetching for this admin session
     console.log("Setting up extra admin portal protections");
-    
+
     // Cleanup function for component unmount
     return () => {
       console.log("AdminPortalPage unmounting");
       isMounted.current = false;
-      
+
       setTimeout(() => {
         if (window.location.pathname !== '/admin-portal') {
           console.log("Clearing admin portal mounted flag after navigation");
@@ -98,36 +99,36 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       }, 1000);
     };
   }, [adminUser, navigate]);
-  
+
   // Ultra-fast direct logout handler
   const handleLogout = () => {
     try {
       // Use both storage options to ensure the guard allows the navigation
       localStorage.setItem('admin_logout_in_progress', 'true');
       sessionStorage.setItem('admin_intentional_logout', 'true');
-      
+
       // Mark the navigation as intentional
       if (typeof window.markAdminPortalNavigation === 'function') {
         window.markAdminPortalNavigation();
       }
-      
+
       // First, send the server logout request
       const logoutRequest = new XMLHttpRequest();
       logoutRequest.open('POST', '/api/auth/logout', false); // Synchronous request
       logoutRequest.setRequestHeader('Content-Type', 'application/json');
       logoutRequest.withCredentials = true;
       logoutRequest.send();
-      
+
       // Clear WebSocket connections
       document.dispatchEvent(new CustomEvent('manual-websocket-close'));
-      
+
       // Clear all local storage used by the app
       localStorage.removeItem('admin_session');
       localStorage.removeItem('auth_guard');
-      
+
       // Clear all session storage used by the app
       sessionStorage.clear();
-      
+
       // Force immediate redirect to home page
       window.location.replace('/');
     } catch (err) {
@@ -136,7 +137,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
       window.location.replace('/');
     }
   };
-  
+
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: "1",
@@ -293,7 +294,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                 />
                 <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
               </div>
-              
+
               {/* Notifications */}
               <div className="relative">
                 <Button 
@@ -309,7 +310,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                     </span>
                   )}
                 </Button>
-                
+
                 {/* Notifications dropdown */}
                 {notificationsOpen && (
                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg z-40 border border-gray-100">
@@ -376,7 +377,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   </div>
                 )}
               </div>
-              
+
               {/* Profile Button */}
               <div className="relative inline-block text-left">
                 <div className="flex items-center">
@@ -390,7 +391,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   </div>
                 </div>
               </div>
-              
+
               {/* Logout Button */}
               <Button variant="ghost" size="icon" onClick={handleLogout} title={t("admin.logout", "Logout")}>
                 <LogOut className="h-5 w-5" />

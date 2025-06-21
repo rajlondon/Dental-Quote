@@ -1,9 +1,19 @@
 import React, { useEffect, useState } from "react";
 // Removed react-i18next
-import Navbar from "@/components/Navbar";
-import HeroSimple from "@/components/HeroSimple";
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import Hero from '@/components/Hero';
+import HeroSimple from '@/components/HeroSimple';
+import TrendingPackageCard from '@/components/TrendingPackageCard';
+import FeaturedServices from '@/components/FeaturedServices';
+import HowItWorks from '@/components/HowItWorks';
+import WhyChooseUs from '@/components/WhyChooseUs';
+import Testimonials from '@/components/Testimonials';
+import CallToAction from '@/components/CallToAction';
 import Footer from "@/components/Footer";
-import SimpleBlogPage from "@/pages/SimpleBlogPage";
+import FAQ from '@/components/FAQ';
+import ContactWidget from '@/components/ContactWidget';
+import WhatsAppButton from '@/components/WhatsAppButton';
+import PremiumOffersCarousel from '@/components/PremiumOffersCarousel';
 import { Button } from "@/components/ui/button";
 import { Star, StarHalf, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Columns, Gem, Zap, Stethoscope, HeartPulse, MapPin } from "lucide-react";
 import { Link } from "wouter";
@@ -290,7 +300,11 @@ const HomePage: React.FC = () => {
 
   return (
     <>
-      <Navbar />
+    <ConsistentPageHeader
+        title="MyDentalFly"
+        subtitle="Premium dental care in Turkey at affordable prices"
+        showBackButton={false}
+      />
       <HeroSimple />
 
       {/* Premium Offers Carousel */}
