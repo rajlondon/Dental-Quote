@@ -793,8 +793,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <ShieldCheck className="h-5 w-5 text-green-500" />
                                     <span className="font-medium">Dental Implants</span>
                                   </div>
-                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>
-                                </div>
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>                                </div>
                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                                   <div className="flex items-center gap-2">
                                     <ShieldCheck className="h-5 w-5 text-green-500" />
