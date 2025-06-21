@@ -103,7 +103,7 @@ const Home: React.FC = () => {
                     {clinic.location}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
-                    Specializes in: {clinic.specialties.slice(0, 2).join(", ")}
+                    Specializes in: {(clinic.specialties || []).slice(0, 2).join(", ")}
                   </div>
                   <Link href="/your-quote">
                     <a className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
