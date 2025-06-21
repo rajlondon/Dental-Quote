@@ -12,11 +12,19 @@ import { Star, Clock, Award, Users, Sparkles, Calculator, Building2, Target, Zap
 import { Link } from "wouter";
 import clinicsDataImport from "@/data/clinics.json";
 import { trendingPackages } from "@/data/packages";
-
-// Add safe fallbacks for imported data with explicit null checks
-const clinicsData = Array.isArray(clinicsDataImport) ? clinicsDataImport : [];
-const safePackages = Array.isArray(trendingPackages) ? trendingPackages : [];
 import EnhancedOffersCarousel from "@/components/EnhancedOffersCarousel";
+
+// Comprehensive safe fallbacks for imported data with multiple checks
+const ensureArray = (data: any): any[] => {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && data.length !== undefined) {
+    return Array.from(data);
+  }
+  return [];
+};
+
+const clinicsData = ensureArray(clinicsDataImport);
+const safePackages = ensureArray(trendingPackages);
 
 const Home: React.FC = () => {
   return (
@@ -53,8 +61,8 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {safePackages.map((pkg) => (
-              <TrendingPackageCard key={pkg?.id || Math.random()} package={pkg} />
+            {safePackages.map((pkg, index) => (
+              <TrendingPackageCard key={pkg?.id || `package-${index}`} package={pkg} />
             ))}
           </div>
         </div>
@@ -83,8 +91,8 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {clinicsData.slice(0, 3).map((clinic) => (
-              <div key={clinic?.id || Math.random()} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            {clinicsData.slice(0, 3).map((clinic, index) => (
+              <div key={clinic?.id || `clinic-${index}`} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video bg-gray-100 flex items-center justify-center">
                   <Building2 className="h-12 w-12 text-gray-400" />
                 </div>
@@ -103,7 +111,11 @@ const Home: React.FC = () => {
                     {clinic?.location || 'Location'}
                   </div>
                   <div className="text-sm text-gray-600 mb-4">
-                    Specializes in: {Array.isArray(clinic?.specialties) ? clinic.specialties.slice(0, 2).join(", ") : 'Various treatments'}
+                    Specializes in: {
+                      Array.isArray(clinic?.specialties) && clinic.specialties.length > 0
+                        ? clinic.specialties.slice(0, 2).join(", ")
+                        : 'Various treatments'
+                    }
                   </div>
                   <Link href="/your-quote">
                     <a className="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
