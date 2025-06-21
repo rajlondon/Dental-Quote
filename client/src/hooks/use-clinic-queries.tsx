@@ -36,7 +36,7 @@ export const ClinicQueryProvider: React.FC<{children: React.ReactNode}> = ({ chi
       window.removeEventListener('beforeunload', preventReload);
       console.log('ClinicQueryProvider unmounted - removed event listeners');
     };
-  }, [toast]);
+  }, []);
   
   return (
     <ClinicQueryContext.Provider value={{
@@ -52,4 +52,5 @@ export const ClinicQueryProvider: React.FC<{children: React.ReactNode}> = ({ chi
  */
 export const useClinicQuerySettings = () => {
   return useContext(ClinicQueryContext);
+};);
 };

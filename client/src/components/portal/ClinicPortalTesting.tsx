@@ -21,7 +21,8 @@ interface ClinicPortalTestingProps {
 }
 
 const ClinicPortalTesting: React.FC<ClinicPortalTestingProps> = ({ setActiveSection }) => {
-  // Translation removed
+  // Placeholder translation function
+  const t = (key: string, fallback: string) => fallback;
   const portalType = 'clinic';
   
   const features = getPortalFeatures(portalType);

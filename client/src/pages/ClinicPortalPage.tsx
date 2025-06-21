@@ -61,7 +61,8 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   disableAutoRefresh = true,
   initialSection = 'dashboard'
 }) => {
-  // Translation removed
+  // Placeholder translation function
+  const t = (key: string, fallback: string) => fallback;
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [activeSection, setActiveSection] = useState<string>(initialSection);
@@ -224,6 +225,9 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
   // Handle logout with improved cleanup sequence for better reliability
   const handleLogout = async () => {
     try {
+      if (!toast) {
+        console.warn('Toast function not available, proceeding with logout');
+      }
       // Clear shared state indicators first to prevent reconnection attempts
       if (user) {
         // Clear connection pooling references
@@ -272,10 +276,12 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
       await logoutPromise;
 
       // Step 5: Provide feedback to the user after successful logout
-      toast({
-        title: t('portal.logout_success', 'Successfully logged out'),
-        description: t('portal.logout_message', 'You have been logged out of your account.'),
-      });
+      if (toast) {
+        toast({
+          title: t('portal.logout_success', 'Successfully logged out'),
+          description: t('portal.logout_message', 'You have been logged out of your account.'),
+        });
+      }
 
       // Step 6: Redirect to login page
       console.log("Logout sequence complete, redirecting to login page");
@@ -283,10 +289,12 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
 
     } catch (err) {
       console.error("Logout handler error:", err);
-      toast({
-        title: t('portal.logout_success', 'Logged out'),
-        description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
-      });
+      if (toast) {
+        toast({
+          title: t('portal.logout_success', 'Logged out'),
+          description: t('portal.logout_error', 'Logout completed with some errors, but you have been signed out.'),
+        });
+      }
 
       // Fallback: redirect even if something fails
       setLocation('/portal-login');
