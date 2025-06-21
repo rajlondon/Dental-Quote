@@ -682,56 +682,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   }
 
   return (
-    <>
-      {/* Consistent Page Header */}
-      <ConsistentPageHeader
-        title="Your Matched Clinics"
-        subtitle={`We've matched your treatment needs with ${filteredClinics.length} top-rated Istanbul dental clinics`}
-        showBackButton={true}
-        backButtonText="Back to Quote Builder"
-        onBackClick={() => {
-          // Save current treatment data to localStorage before going back
-          const treatmentDataToSave = {
-            treatments: activeTreatmentPlan,
-            totalGBP: activeTotalGBP,
-            patientInfo: patientInfo,
-            timestamp: new Date().toISOString()
-          };
-          
-          localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
-          
-          // Navigate back to quote page
-          setLocation('/your-quote');
-          
-          toast({
-            title: "Returning to Quote",
-            description: "You can now modify your treatment plan and patient information.",
-          });
-        }}
-        showLocationInfo={true}
-        location="Istanbul, Turkey"
-        showProgress={true}
-        currentStep={3}
-        totalSteps={3}
-        stepLabels={['Treatment Plan', 'Patient Info', 'Matched Clinics']}
-      >
-        <Button 
-          variant="secondary"
-          size="sm"
-          className="bg-white text-blue-600 hover:bg-gray-100 flex items-center" 
-          onClick={() => {
-            toast({
-              title: "Quote Details Available in Portal",
-              description: "After selecting a clinic, you can access your full treatment details and quote in the Patient Portal.",
-            });
-          }}
-        >
-          <FileCheck className="mr-2 h-4 w-4" />
-          View Quote in Portal
-        </Button>
-      </ConsistentPageHeader>
-
-      <main>
+    <main>
         <div className="container mx-auto py-8 px-4">
         {/* Features highlight bar */}
         <div className="mb-8 bg-gray-50 p-4 rounded-lg border">

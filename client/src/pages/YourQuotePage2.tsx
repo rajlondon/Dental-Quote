@@ -332,10 +332,29 @@ const YourQuotePage: React.FC = () => {
     <>
       <ScrollToTop />
 
-      {/* Consistent Page Header */}
+      {/* Consistent Page Header - Always visible across all steps */}
       <ConsistentPageHeader
-        title={useTranslation().t('quote.page_title', 'Plan Your Dental Treatment')}
-        subtitle={useTranslation().t('quote.page_subtitle', 'Get personalized quotes from top-rated Istanbul dental clinics')}
+        title={currentStep === 'build-plan' ? 'Plan Your Dental Treatment' : 
+               currentStep === 'patient-info' ? 'Your Information' :
+               currentStep === 'matched-clinics' ? 'Your Matched Clinics' :
+               'Secure Your Booking'}
+        subtitle={currentStep === 'build-plan' ? 'Get personalized quotes from top-rated Istanbul dental clinics' :
+                 currentStep === 'patient-info' ? 'Help us create your personalized treatment plan' :
+                 currentStep === 'matched-clinics' ? "We've matched your treatment needs with top-rated Istanbul dental clinics" :
+                 'Complete your booking with a refundable deposit'}
+        showBackButton={currentStep !== 'build-plan'}
+        backButtonText={currentStep === 'patient-info' ? 'Back to Treatment Plan' :
+                       currentStep === 'matched-clinics' ? 'Back to Your Info' :
+                       'Back to Clinics'}
+        onBackClick={() => {
+          if (currentStep === 'patient-info') {
+            setCurrentStep('build-plan');
+          } else if (currentStep === 'matched-clinics') {
+            setCurrentStep('patient-info');
+          } else if (currentStep === 'payment') {
+            setCurrentStep('matched-clinics');
+          }
+        }}
         showLocationInfo={true}
         location={`${searchParams.get('city') || 'Istanbul'}, Turkey`}
         travelDate={searchParams.get('departureDate') ? new Date(searchParams.get('departureDate')!).toLocaleDateString() : undefined}
@@ -368,35 +387,7 @@ const YourQuotePage: React.FC = () => {
       </ConsistentPageHeader>
 
       <main className="min-h-screen bg-gray-50 pb-28">
-        <div className="container mx-auto px-4">
-          {/* Back button */}
-          <div className="mb-6">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="flex items-center text-gray-600"
-              onClick={() => setLocation('/')}
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
-          </div>
-
-          {/* Page header */}
-          {searchParams.get('name') ? (
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">
-              Hello, {searchParams.get('name')?.split(' ')[0]}!
-            </h1>
-          ) : (
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold mb-2">Build Your Treatment Plan</h1>
-              <p className="text-gray-600 mb-6">Choose your treatments below to get a clear quote estimate. Your final treatment plan will be confirmed after your chosen clinic has reviewed your dental information. Payment is only made in-person after consultation at the clinic.</p>
-            </div>
-          )}
-
-          {searchParams.get('name') && (
-            <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
-          )}
+        <div className="container mx-auto px-4 pt-6">
 
           
 

@@ -48,7 +48,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
 
   return (
     <div className="bg-blue-800 text-white shadow-lg">
-      {/* Main Booking.com-style Header Bar */}
+      {/* Main Header Bar - exactly like homepage */}
       <div className="bg-blue-800 border-b border-blue-700">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -66,8 +66,8 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
                 <span className="text-xl font-bold">MyDentalFly</span>
               </div>
               
-              {/* Quick Navigation */}
-              <nav className="hidden md:flex space-x-4">
+              {/* Quick Navigation - same as homepage */}
+              <nav className="hidden lg:flex space-x-4">
                 <Button 
                   variant="ghost" 
                   size="sm" 
@@ -91,27 +91,51 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
                   className="text-white hover:bg-blue-700"
                   onClick={() => setLocation('/patient-portal')}
                 >
-                  My Account
+                  Patient Portal
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-blue-700"
+                  onClick={() => setLocation('/blog')}
+                >
+                  Blog
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-blue-700"
+                  onClick={() => setLocation('/contact')}
+                >
+                  Contact
                 </Button>
               </nav>
             </div>
 
-            {/* Right side - User Actions */}
+            {/* Right side - User Actions - same as homepage */}
             <div className="flex items-center space-x-3">
               <Button 
-                variant="outline" 
+                variant="ghost"
                 size="sm"
-                className="border-white text-white hover:bg-white hover:text-blue-800"
+                className="text-white hover:bg-blue-700 hidden md:flex"
                 onClick={() => setLocation('/patient-portal')}
               >
-                Sign In
+                Patient Portal
+              </Button>
+              <Button 
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-blue-700 hidden md:flex"
+                onClick={() => setLocation('/clinic-portal')}
+              >
+                Clinic Login
               </Button>
               <Button 
                 size="sm"
                 className="bg-white text-blue-800 hover:bg-gray-100"
                 onClick={() => setLocation('/your-quote')}
               >
-                Get Quote
+                Get a Quote
               </Button>
             </div>
           </div>
