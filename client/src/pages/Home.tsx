@@ -1,5 +1,6 @@
 import React from 'react';
-import Hero from '@/components/Hero';
+import Navbar from '@/components/Navbar';
+import HeroSimple from '@/components/HeroSimple';
 import FeaturedServices from '@/components/FeaturedServices';
 import HowItWorks from '@/components/HowItWorks';
 import WhyChooseUs from '@/components/WhyChooseUs';
@@ -29,7 +30,8 @@ const safePackages = ensureArray(trendingPackages);
 const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
-      <Hero />
+      <Navbar />
+      <HeroSimple />
 
       {/* Enhanced Offers Carousel */}
       <section className="py-16 bg-gray-50">
