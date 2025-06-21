@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -55,7 +54,6 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -91,17 +89,14 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       
       // Show success message
       toast({
-        title: t("clinic.patients.add_success", "Patient Added"),
-        description: t(
-          "clinic.patients.add_success_desc",
-          "The patient has been added successfully."
-        ),
+        title: "Patient Added",
+        description: "The patient has been added successfully.",
       });
     },
     onError: (error) => {
       toast({
-        title: t("clinic.patients.add_error", "Error"),
-        description: error.message || t("clinic.patients.add_error_desc", "Failed to add patient"),
+        title: "Error",
+        description: error.message || "Failed to add patient",
         variant: "destructive",
       });
     },
@@ -117,13 +112,10 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {t("clinic.patients.add_patient", "Add Patient")}
+            Add Patient
           </DialogTitle>
           <DialogDescription>
-            {t(
-              "clinic.patients.add_patient_desc",
-              "Enter the details of the new patient"
-            )}
+            Enter the details of the new patient
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +127,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("clinic.patients.form.name", "Full Name")}*
+                    Full Name*
                   </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="John Smith" />
@@ -151,7 +143,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("clinic.patients.form.email", "Email")}*
+                    Email*
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -171,7 +163,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("clinic.patients.form.phone", "Phone Number")}*
+                    Phone Number*
                   </FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="+44 7700 900123" />
@@ -187,7 +179,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("clinic.patients.form.treatment", "Treatment Interest")}
+                    Treatment Interest
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -206,7 +198,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    {t("clinic.patients.form.status", "Status")}*
+                    Status*
                   </FormLabel>
                   <Select
                     onValueChange={field.onChange}
@@ -219,16 +211,16 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                     </FormControl>
                     <SelectContent>
                       <SelectItem value="New Patient">
-                        {t("clinic.patients.status_new", "New Patient")}
+                        New Patient
                       </SelectItem>
                       <SelectItem value="Active">
-                        {t("clinic.patients.status_active", "Active")}
+                        Active
                       </SelectItem>
                       <SelectItem value="Scheduled">
-                        {t("clinic.patients.status_scheduled", "Scheduled")}
+                        Scheduled
                       </SelectItem>
                       <SelectItem value="Completed">
-                        {t("clinic.patients.status_completed", "Completed")}
+                        Completed
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -243,7 +235,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                {t("common.cancel", "Cancel")}
+                Cancel
               </Button>
               <Button
                 type="submit"
@@ -253,7 +245,7 @@ const AddPatientDialog: React.FC<AddPatientDialogProps> = ({
                 {addPatientMutation.isPending && (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 )}
-                {t("clinic.patients.add_patient_submit", "Add Patient")}
+                Add Patient
               </Button>
             </DialogFooter>
             <Alert variant="destructive" className="mt-4">
