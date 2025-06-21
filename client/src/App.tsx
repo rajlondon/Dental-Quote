@@ -68,6 +68,7 @@ import AdminPortalPage from "@/pages/AdminPortalPage";
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
+import SystemHealthDashboard from "./pages/SystemHealthDashboard";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
 import DepositPaymentPage from "@/pages/DepositPaymentPage";
 import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
@@ -303,6 +304,7 @@ function Router() {
 
       {/* Testing and development routes - Portal Communication Tester available in all environments */}
       <Route path="/portal-communication-test" component={PortalCommunicationTester} />
+      <Route path="/system-health" component={SystemHealthDashboard} />
 
       {/* Development-only routes */}
       {process.env.NODE_ENV !== 'production' && (
