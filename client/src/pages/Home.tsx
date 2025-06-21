@@ -53,7 +53,7 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {safePackages.map((pkg) => (
+            {(safePackages || []).map((pkg) => (
               <TrendingPackageCard key={pkg.id} package={pkg} />
             ))}
           </div>
@@ -83,7 +83,7 @@ const Home: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {clinicsData.slice(0, 3).map((clinic) => (
+            {(clinicsData || []).slice(0, 3).map((clinic) => (
               <div key={clinic.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
                 <div className="aspect-video bg-gray-100 flex items-center justify-center">
                   <Building2 className="h-12 w-12 text-gray-400" />
