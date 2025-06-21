@@ -330,10 +330,44 @@ const YourQuotePage: React.FC = () => {
 
   return (
     <>
-      <Navbar />
       <ScrollToTop />
 
-      <main className="min-h-screen bg-gray-50 pt-24 pb-28">
+      {/* Consistent Page Header */}
+      <ConsistentPageHeader
+        title={useTranslation().t('quote.page_title', 'Plan Your Dental Treatment')}
+        subtitle={useTranslation().t('quote.page_subtitle', 'Get personalized quotes from top-rated Istanbul dental clinics')}
+        showLocationInfo={true}
+        location={`${searchParams.get('city') || 'Istanbul'}, Turkey`}
+        travelDate={searchParams.get('departureDate') ? new Date(searchParams.get('departureDate')!).toLocaleDateString() : undefined}
+        showProgress={true}
+        currentStep={currentStep === 'build-plan' ? 1 : currentStep === 'patient-info' ? 2 : currentStep === 'matched-clinics' ? 3 : 4 }
+        totalSteps={4}
+        stepLabels={['Treatment Plan', 'Your Info', 'Clinics', 'Payment']}
+      >
+        {/* Right side quick actions */}
+        <div className="flex flex-col gap-3">
+          <Button 
+            variant="secondary" 
+            size="sm"
+            className="bg-white text-blue-600 hover:bg-gray-100"
+            onClick={() => {
+              toast({
+                title: useTranslation().t('quote.call_scheduled', 'Call Scheduled'),
+                description: useTranslation().t('quote.call_desc', 'We will call you within 30 minutes to discuss your treatment options.'),
+              });
+            }}
+          >
+            <Plane className="h-4 w-4 mr-2" />
+            {useTranslation().t('quote.schedule_call', 'Schedule a Call')}
+          </Button>
+
+          <div className="text-xs text-blue-100 text-center">
+            {useTranslation().t('quote.quick_help', 'Need quick help? Call us directly')}
+          </div>
+        </div>
+      </ConsistentPageHeader>
+
+      <main className="min-h-screen bg-gray-50 pb-28">
         <div className="container mx-auto px-4">
           {/* Back button */}
           <div className="mb-6">
@@ -364,40 +398,7 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
 
-          {/* Consistent Page Header */}
-          <ConsistentPageHeader
-            title={useTranslation().t('quote.page_title', 'Plan Your Dental Treatment')}
-            subtitle={useTranslation().t('quote.page_subtitle', 'Get personalized quotes from top-rated Istanbul dental clinics')}
-            showLocationInfo={true}
-            location={`${searchParams.get('city') || 'Istanbul'}, Turkey`}
-            travelDate={searchParams.get('departureDate') ? new Date(searchParams.get('departureDate')!).toLocaleDateString() : undefined}
-            showProgress={true}
-            currentStep={currentStep === 'build-plan' ? 1 : currentStep === 'patient-info' ? 2 : currentStep === 'matched-clinics' ? 3 : 4 }
-            totalSteps={4}
-            stepLabels={['Treatment Plan', 'Your Info', 'Clinics', 'Payment']}
-          >
-            {/* Right side quick actions */}
-            <div className="flex flex-col gap-3">
-              <Button 
-                variant="secondary" 
-                size="sm"
-                className="bg-white text-blue-600 hover:bg-gray-100"
-                onClick={() => {
-                  toast({
-                    title: useTranslation().t('quote.call_scheduled', 'Call Scheduled'),
-                    description: useTranslation().t('quote.call_desc', 'We will call you within 30 minutes to discuss your treatment options.'),
-                  });
-                }}
-              >
-                <Plane className="h-4 w-4 mr-2" />
-                {useTranslation().t('quote.schedule_call', 'Schedule a Call')}
-              </Button>
-
-              <div className="text-xs text-blue-100 text-center">
-                {useTranslation().t('quote.quick_help', 'Need quick help? Call us directly')}
-              </div>
-            </div>
-          </ConsistentPageHeader>
+          
 
           {/* Cost Comparison Summary (Added per new spec) */}
           <div className="mb-8">

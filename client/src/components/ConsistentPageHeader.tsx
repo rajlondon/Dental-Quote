@@ -3,7 +3,7 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MapPin, Calendar, Users, Plane } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Users, Plane, Home } from 'lucide-react';
 
 interface ConsistentPageHeaderProps {
   title: string;
@@ -47,8 +47,80 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
   };
 
   return (
-    <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-      <div className="container mx-auto px-4 py-6">
+    <div className="bg-blue-800 text-white shadow-lg">
+      {/* Main Booking.com-style Header Bar */}
+      <div className="bg-blue-800 border-b border-blue-700">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            {/* Left side - Logo and Main Navigation */}
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center">
+                <img 
+                  src="/images/mydentalfly-logo.png" 
+                  alt="MyDentalFly" 
+                  className="h-8 w-auto mr-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="text-xl font-bold">MyDentalFly</span>
+              </div>
+              
+              {/* Quick Navigation */}
+              <nav className="hidden md:flex space-x-4">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-blue-700"
+                  onClick={() => setLocation('/')}
+                >
+                  <Home className="h-4 w-4 mr-1" />
+                  Home
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-blue-700"
+                  onClick={() => setLocation('/your-quote')}
+                >
+                  Quote Builder
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-blue-700"
+                  onClick={() => setLocation('/patient-portal')}
+                >
+                  My Account
+                </Button>
+              </nav>
+            </div>
+
+            {/* Right side - User Actions */}
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="border-white text-white hover:bg-white hover:text-blue-800"
+                onClick={() => setLocation('/patient-portal')}
+              >
+                Sign In
+              </Button>
+              <Button 
+                size="sm"
+                className="bg-white text-blue-800 hover:bg-gray-100"
+                onClick={() => setLocation('/your-quote')}
+              >
+                Get Quote
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Page-specific Content */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700">
+        <div className="container mx-auto px-4 py-6">
         {/* Back Button Row */}
         {showBackButton && (
           <div className="mb-4">
@@ -146,6 +218,7 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );

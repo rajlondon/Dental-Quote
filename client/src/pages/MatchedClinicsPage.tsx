@@ -682,7 +682,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   }
 
   return (
-    <main>
+    <>
       {/* Consistent Page Header */}
       <ConsistentPageHeader
         title="Your Matched Clinics"
@@ -731,7 +731,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         </Button>
       </ConsistentPageHeader>
 
-      <div className="container mx-auto py-8 px-4">
+      <main>
+        <div className="container mx-auto py-8 px-4">
         {/* Features highlight bar */}
         <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
           <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
@@ -1652,11 +1653,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       </div>
 
       {/* Consistent Footer Actions */}
-      <PageFooterActions 
-        helpMessage="Need help choosing the right clinic? Our dental tourism specialists are here to help."
-        whatsappNumber="+905465465050"
-      />
-    </main>
+        <PageFooterActions 
+          helpMessage="Need help choosing the right clinic? Our dental tourism specialists are here to help."
+          whatsappNumber="+905465465050"
+        />
+      </main>
+    </>
   );
 };
 
