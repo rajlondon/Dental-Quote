@@ -74,28 +74,35 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 }) => {
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
+  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
+  const [localTotalGBP, setLocalTotalGBP] = useState<number>(0);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
+  const [expandedClinics, setExpandedClinics] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
-  // Load treatment data from localStorage if not provided via props
-  const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>(treatmentItems);
-  const [localTotalGBP, setTotalGBP] = useState<number>(totalGBP || 0);
-
+  // Always call useEffect to maintain hook order
   useEffect(() => {
-    if (treatmentItems.length === 0) {
-      const savedTreatmentData = localStorage.getItem('treatmentPlanData');
-      if (savedTreatmentData) {
-        try {
-          const parsedData = JSON.parse(savedTreatmentData);
-          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
-            setTreatmentPlan(parsedData.treatments);
-            setTotalGBP(parsedData.totalGBP || 0);
+    if (!isLoaded) {
+      if (treatmentItems.length > 0) {
+        setTreatmentPlan(treatmentItems);
+        setLocalTotalGBP(totalGBP || 0);
+      } else {
+        const savedTreatmentData = localStorage.getItem('treatmentPlanData');
+        if (savedTreatmentData) {
+          try {
+            const parsedData = JSON.parse(savedTreatmentData);
+            if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
+              setTreatmentPlan(parsedData.treatments);
+              setLocalTotalGBP(parsedData.totalGBP || 0);
+            }
+          } catch (error) {
+            console.error('Error parsing treatment data from localStorage:', error);
           }
-        } catch (error) {
-          console.error('Error parsing treatment data from localStorage:', error);
         }
       }
+      setIsLoaded(true);
     }
-  }, [treatmentItems.length]);
+  }, [treatmentItems, totalGBP, isLoaded]);
 
   // Use either props or localStorage data
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
@@ -396,10 +403,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
           {/* Clinic Comparison */}
           <div className="space-y-8">
-            {filteredClinics.map((clinic) => {
+            {filteredClinics.map((clinic, clinicIndex) => {
               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
               const tierInfo = getTierLabel(clinic.tier);
-              const [isExpanded, setIsExpanded] = useState(false);
 
               return (
                 <Card key={clinic.id} className="overflow-hidden border border-gray-200 hover:border-blue-400 hover:shadow-lg transition-all duration-200 bg-white relative">
@@ -581,11 +587,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                onClick={() => setIsExpanded(!isExpanded)}
+                                onClick={() => setExpandedClinics(prev => ({
+                                  ...prev,
+                                  [clinic.id]: !prev[clinic.id]
+                                }))}
                                 className="text-blue-600 hover:bg-blue-50"
                               >
-                                {isExpanded ? 'Show Less' : 'View Details'} 
-                                <svg className={`ml-2 h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                {expandedClinics[clinic.id] ? 'Show Less' : 'View Details'} 
+                                <svg className={`ml-2 h-4 w-4 transition-transform ${expandedClinics[clinic.id] ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                               </Button>
@@ -644,7 +653,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                   </div>
 
                   {/* Expandable Details Section */}
-                  {isExpanded && (
+                  {expandedClinics[clinic.id] && (
                     <div className="border-t bg-gray-50 p-6">
                       <Tabs defaultValue="features" className="w-full">
                         <TabsList className="grid w-full grid-cols-4">
