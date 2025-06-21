@@ -23,7 +23,11 @@ import {
   Car,
   Coffee,
   Utensils,
-  Eye
+  Eye,
+  Heart,
+  Target,
+  User,
+  ShieldCheck
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
