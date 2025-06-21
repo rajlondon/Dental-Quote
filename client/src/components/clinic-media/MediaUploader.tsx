@@ -11,19 +11,19 @@ import { MediaType, useClinicMedia } from '@/hooks/use-clinic-media';
 interface MediaUploaderProps {
   clinicId: number;
   mediaType: MediaType;
-  title?: string;
   allowedTypes?: string[];
-  maxSize?: number; // In MB
+  maxFileSize?: number; // in MB
   onUploadComplete?: () => void;
+  maxFiles?: number;
 }
 
 export function MediaUploader({
   clinicId,
   mediaType,
-  title,
-  allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4'],
-  maxSize = 10, // Default 10MB
-  onUploadComplete
+  allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo'],
+  maxFileSize = 50, // 50MB default for video support
+  onUploadComplete,
+  maxFiles = 10
 }: MediaUploaderProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -31,9 +31,9 @@ export function MediaUploader({
   const [mediaTitle, setMediaTitle] = useState('');
   const [description, setDescription] = useState('');
   const [fileError, setFileError] = useState<string | null>(null);
-  
+
   const { uploadMedia, isUploading, uploadProgress } = useClinicMedia(clinicId, mediaType);
-  
+
   // Display title based on media type if not provided
   const displayTitle = title || {
     [MediaType.BEFORE_AFTER]: 'Upload Before/After Images',
@@ -44,29 +44,29 @@ export function MediaUploader({
   // Handle file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    
+
     if (!file) {
       setSelectedFile(null);
       setFilePreview(null);
       setFileError(null);
       return;
     }
-    
+
     // Check file type
     if (!allowedTypes.includes(file.type)) {
       setFileError(`Invalid file type. Allowed types: ${allowedTypes.join(', ')}`);
       return;
     }
-    
+
     // Check file size
-    if (file.size > maxSize * 1024 * 1024) {
-      setFileError(`File too large. Maximum size: ${maxSize}MB`);
+    if (file.size > maxFileSize * 1024 * 1024) {
+      setFileError(`File too large. Maximum size: ${maxFileSize}MB`);
       return;
     }
-    
+
     setFileError(null);
     setSelectedFile(file);
-    
+
     // Generate file preview
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -80,19 +80,19 @@ export function MediaUploader({
       setFilePreview(null);
     }
   };
-  
+
   // Handle file upload
   const handleUpload = () => {
     if (!selectedFile) {
       setFileError('Please select a file to upload');
       return;
     }
-    
+
     if (!mediaTitle.trim()) {
       setFileError('Please enter a title for the media');
       return;
     }
-    
+
     uploadMedia(
       { 
         file: selectedFile, 
@@ -107,12 +107,12 @@ export function MediaUploader({
           setMediaTitle('');
           setDescription('');
           setFileError(null);
-          
+
           // Clear file input
           if (fileInputRef.current) {
             fileInputRef.current.value = '';
           }
-          
+
           // Callback
           if (onUploadComplete) {
             onUploadComplete();
@@ -121,32 +121,32 @@ export function MediaUploader({
       }
     );
   };
-  
+
   // Handle file drop
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    
+
     const file = e.dataTransfer.files[0];
     if (file) {
       // Simulate file input change
       const dataTransfer = new DataTransfer();
       dataTransfer.items.add(file);
-      
+
       if (fileInputRef.current) {
         fileInputRef.current.files = dataTransfer.files;
-        
+
         // Manually trigger change event
         const event = new Event('change', { bubbles: true });
         fileInputRef.current.dispatchEvent(event);
       }
     }
   };
-  
+
   // Handle drag over
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
-  
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -197,7 +197,7 @@ export function MediaUploader({
               <p className="mt-1 text-xs text-gray-500">
                 Allowed types: {allowedTypes.map(type => type.replace('image/', '.').replace('video/', '.')).join(', ')}
                 <br />
-                Max size: {maxSize}MB
+                Max size: {maxFileSize}MB
               </p>
             </div>
           )}
@@ -209,12 +209,12 @@ export function MediaUploader({
             onChange={handleFileChange}
           />
         </div>
-        
+
         {/* Error message */}
         {fileError && (
           <p className="text-sm text-red-500">{fileError}</p>
         )}
-        
+
         {/* File info */}
         {selectedFile && !fileError && (
           <div className="text-sm text-gray-500">
@@ -222,7 +222,7 @@ export function MediaUploader({
             <p>Size: <span className="font-medium">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</span></p>
           </div>
         )}
-        
+
         {/* Title and description inputs */}
         <div className="space-y-2">
           <Label htmlFor="media-title">Title</Label>
@@ -234,7 +234,7 @@ export function MediaUploader({
             disabled={isUploading}
           />
         </div>
-        
+
         <div className="space-y-2">
           <Label htmlFor="media-description">Description (optional)</Label>
           <Textarea
@@ -245,7 +245,7 @@ export function MediaUploader({
             disabled={isUploading}
           />
         </div>
-        
+
         {/* Upload progress bar (visible only during upload) */}
         {isUploading && (
           <div className="space-y-2">
