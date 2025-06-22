@@ -1,7 +1,7 @@
 import React from 'react';
 import Navbar from '@/components/Navbar';
 import HeroSimple from '@/components/HeroSimple';
-import FeaturedServices from '@/components/FeaturedServices';
+
 import HowItWorks from '@/components/HowItWorks';
 import WhyChooseUs from '@/components/WhyChooseUs';
 import Testimonials from '@/components/Testimonials';
@@ -70,8 +70,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Featured Services */}
-      <FeaturedServices />
+      
 
       {/* How It Works */}
       <HowItWorks />
