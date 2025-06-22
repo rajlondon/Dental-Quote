@@ -370,54 +370,75 @@ const DashboardSection: React.FC = () => {
         <CardHeader className="pb-2">
           <CardTitle>{t("portal.dashboard.timeline", "Treatment Timeline")}</CardTitle>
           <CardDescription>
-            {t("portal.dashboard.timeline_desc", "Your dental treatment journey from start to finish")}
+            {hasActiveBooking 
+              ? t("portal.dashboard.timeline_desc", "Your dental treatment journey from start to finish")
+              : t("portal.dashboard.sample_timeline_desc", "Sample timeline showing what your dental journey would look like")
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {!hasActiveBooking && (
+            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Sample Timeline:</strong> This shows what your treatment journey would look like once you submit a quote request.
+              </p>
+            </div>
+          )}
           <div className="relative pb-4">
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
             <div className="space-y-6">
               {timelineEvents.map((event, index) => (
                 <div key={index} className="relative pl-10">
                   <div className={`absolute left-0 p-2 rounded-full ${
-                    event.status === 'completed' 
-                      ? 'bg-green-100' 
-                      : event.status === 'active' 
-                        ? 'bg-blue-100' 
-                        : 'bg-gray-100'
+                    !hasActiveBooking
+                      ? 'bg-gray-100'
+                      : event.status === 'completed' 
+                        ? 'bg-green-100' 
+                        : event.status === 'active' 
+                          ? 'bg-blue-100' 
+                          : 'bg-gray-100'
                   }`}>
                     <div className={`h-2 w-2 rounded-full ${
-                      event.status === 'completed' 
-                        ? 'bg-green-600' 
-                        : event.status === 'active' 
-                          ? 'bg-blue-600' 
-                          : 'bg-gray-400'
+                      !hasActiveBooking
+                        ? 'bg-gray-400'
+                        : event.status === 'completed' 
+                          ? 'bg-green-600' 
+                          : event.status === 'active' 
+                            ? 'bg-blue-600' 
+                            : 'bg-gray-400'
                     }`}></div>
                   </div>
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
                     <div>
                       <p className={`font-medium ${
-                        event.status === 'completed' 
-                          ? 'text-gray-700' 
-                          : event.status === 'active' 
-                            ? 'text-blue-700' 
-                            : 'text-gray-500'
+                        !hasActiveBooking
+                          ? 'text-gray-500'
+                          : event.status === 'completed' 
+                            ? 'text-gray-700' 
+                            : event.status === 'active' 
+                              ? 'text-blue-700' 
+                              : 'text-gray-500'
                       }`}>{event.event}</p>
                       <p className="text-xs text-gray-500">{event.date}</p>
                     </div>
-                    {event.status === 'completed' && (
+                    {hasActiveBooking && event.status === 'completed' && (
                       <Badge className="mt-1 sm:mt-0 bg-green-50 text-green-700 border-green-200">
                         {t("portal.dashboard.completed", "Completed")}
                       </Badge>
                     )}
-                    {event.status === 'active' && (
+                    {hasActiveBooking && event.status === 'active' && (
                       <Badge className="mt-1 sm:mt-0 bg-blue-50 text-blue-700 border-blue-200">
                         {t("portal.dashboard.in_progress", "In Progress")}
                       </Badge>
                     )}
-                    {event.status === 'upcoming' && (
+                    {hasActiveBooking && event.status === 'upcoming' && (
                       <Badge className="mt-1 sm:mt-0 bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100">
                         {t("portal.dashboard.upcoming", "Upcoming")}
+                      </Badge>
+                    )}
+                    {!hasActiveBooking && (
+                      <Badge className="mt-1 sm:mt-0 bg-gray-50 text-gray-600 border-gray-200">
+                        {t("portal.dashboard.sample", "Sample")}
                       </Badge>
                     )}
                   </div>
@@ -428,7 +449,10 @@ const DashboardSection: React.FC = () => {
         </CardContent>
         <CardFooter className="pt-0 flex justify-center">
           <Button variant="outline" className="gap-1 text-sm">
-            {t("portal.dashboard.view_detailed_timeline", "View Detailed Timeline")}
+            {hasActiveBooking 
+              ? t("portal.dashboard.view_detailed_timeline", "View Detailed Timeline")
+              : t("portal.dashboard.start_your_journey", "Start Your Journey")
+            }
             <ArrowRight className="h-3.5 w-3.5" />
           </Button>
         </CardFooter>
@@ -497,21 +521,23 @@ const DashboardSection: React.FC = () => {
       {!hasActiveBooking && (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+            <div className="flex-1">
               <h2 className="text-2xl font-bold mb-2">
                 {t('portal.dashboard.get_started', 'Get started with your treatment')}
               </h2>
-              <p className="text-primary-foreground/80">
+              <p className="text-gray-600">
                 {t('portal.dashboard.get_started_message', 'Ready to begin? Get a personalized quote now.')}
               </p>
             </div>
-            <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => window.location.href = '/pricing?city=Istanbul&treatment=dental-implants&from=dashboard'}
-                >
-                  {t('portal.dashboard.get_quote', 'Get Your Quote')}
-                </Button>
+            <div className="md:ml-6">
+              <Button 
+                className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 px-8 py-3"
+                onClick={() => window.location.href = '/pricing?city=Istanbul&treatment=dental-implants&from=dashboard'}
+              >
+                {t('portal.dashboard.get_quote', 'Get Your Quote')}
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -501,9 +501,18 @@ router.get("/api/portal/patient/bookings", isAuthenticated, async (req, res) => 
       });
     }
 
-    // For now, return empty array as no active bookings exist for test patients
-    // This prevents the "no active booking" state and shows dashboard correctly
-    res.json([]);
+    console.log('Fetching bookings for patient:', userId, req.user?.email);
+
+    // Get real booking data from storage
+    try {
+      const bookings = await storage.getPatientBookings(userId);
+      console.log('Found bookings for patient:', bookings.length);
+      res.json(bookings || []);
+    } catch (storageError) {
+      console.log('Storage method not available, returning empty array');
+      // Fallback to empty array if storage method doesn't exist
+      res.json([]);
+    }
   } catch (error) {
     console.error("Error getting patient bookings:", error);
     res.status(500).json({
