@@ -52,5 +52,4 @@ export const ClinicQueryProvider: React.FC<{children: React.ReactNode}> = ({ chi
  */
 export const useClinicQuerySettings = () => {
   return useContext(ClinicQueryContext);
-};);
 };
