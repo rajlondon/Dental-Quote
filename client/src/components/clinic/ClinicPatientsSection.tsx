@@ -115,9 +115,9 @@ const ClinicPatientsSection: React.FC = () => {
       
       <Card>
         <CardHeader>
-          <CardTitle>{t("clinic.patients.title", "Patient Management")}</CardTitle>
+          <CardTitle>Patient Management</CardTitle>
           <CardDescription>
-            {t("clinic.patients.description", "View and manage your clinic's patients and their treatment history")}
+            View and manage your clinic's patients and their treatment history
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -137,7 +137,7 @@ const ClinicPatientsSection: React.FC = () => {
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input 
                   className="pl-10 w-full" 
-                  placeholder={t("clinic.patients.search", "Search patients...")} 
+                  placeholder="Search patients..." 
                   value={searchInput}
                   onChange={handleSearchChange}
                 />
@@ -145,14 +145,14 @@ const ClinicPatientsSection: React.FC = () => {
               
               <Select value={status} onValueChange={setStatus}>
                 <SelectTrigger className="w-full md:w-40">
-                  <SelectValue placeholder={t("clinic.patients.status_filter", "Status")} />
+                  <SelectValue placeholder="Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("clinic.patients.all_statuses", "All Statuses")}</SelectItem>
-                  <SelectItem value="Active">{t("clinic.patients.status_active", "Active")}</SelectItem>
-                  <SelectItem value="Completed">{t("clinic.patients.status_completed", "Completed")}</SelectItem>
-                  <SelectItem value="Scheduled">{t("clinic.patients.status_scheduled", "Scheduled")}</SelectItem>
-                  <SelectItem value="New Patient">{t("clinic.patients.status_new", "New Patient")}</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Active">Active</SelectItem>
+                  <SelectItem value="Completed">Completed</SelectItem>
+                  <SelectItem value="Scheduled">Scheduled</SelectItem>
+                  <SelectItem value="New Patient">New Patient</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -162,7 +162,7 @@ const ClinicPatientsSection: React.FC = () => {
               className="w-full sm:w-auto gap-2"
             >
               <Plus className="h-4 w-4" />
-              {t("clinic.patients.add_patient", "Add Patient")}
+              Add Patient
             </Button>
           </div>
 
@@ -170,14 +170,14 @@ const ClinicPatientsSection: React.FC = () => {
           {isLoading && (
             <div className="flex justify-center items-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2">{t("common.loading", "Loading...")}</span>
+              <span className="ml-2">Loading...</span>
             </div>
           )}
 
           {/* Error state */}
           {isError && !isLoading && (
             <div className="flex justify-center items-center py-8 text-destructive">
-              <p>{t("common.error_loading", "Error loading data. Please try again.")}</p>
+              <p>Error loading data. Please try again.</p>
             </div>
           )}
 
@@ -188,11 +188,11 @@ const ClinicPatientsSection: React.FC = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[50px]">#</TableHead>
-                    <TableHead>{t("clinic.patients.name", "Name")}</TableHead>
-                    <TableHead className="hidden md:table-cell">{t("clinic.patients.contact", "Contact")}</TableHead>
-                    <TableHead>{t("clinic.patients.treatment", "Treatment")}</TableHead>
-                    <TableHead>{t("clinic.patients.status", "Status")}</TableHead>
-                    <TableHead className="hidden md:table-cell">{t("clinic.patients.last_visit", "Last Visit")}</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead className="hidden md:table-cell">Contact</TableHead>
+                    <TableHead>Treatment</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="hidden md:table-cell">Last Visit</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -200,7 +200,7 @@ const ClinicPatientsSection: React.FC = () => {
                   {data.data.patients.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                        {t("clinic.patients.no_patients", "No patients found")}
+                        No patients found
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -265,17 +265,13 @@ const ClinicPatientsSection: React.FC = () => {
                 disabled={page <= 1}
                 onClick={handlePreviousPage}
               >
-                {t("clinic.patients.previous", "Previous")}
+                Previous
               </Button>
               <div className="text-sm text-muted-foreground">
                 {data.data.pagination.total > 0 ? (
-                  t("clinic.patients.page_info", "Showing {{start}} to {{end}} of {{total}} patients", { 
-                    start: (page - 1) * limit + 1, 
-                    end: Math.min(page * limit, data.data.pagination.total), 
-                    total: data.data.pagination.total 
-                  })
+                  `Showing ${(page - 1) * limit + 1} to ${Math.min(page * limit, data.data.pagination.total)} of ${data.data.pagination.total} patients`
                 ) : (
-                  t("clinic.patients.no_results", "No results")
+                  "No results"
                 )}
               </div>
               <Button 
@@ -284,7 +280,7 @@ const ClinicPatientsSection: React.FC = () => {
                 disabled={!data.data.pagination || page >= data.data.pagination.pages}
                 onClick={handleNextPage}
               >
-                {t("clinic.patients.next", "Next")}
+                Next
               </Button>
             </div>
           )}
