@@ -10,6 +10,9 @@ import {
   CalendarClock, FileText, MessageSquare, Stethoscope, 
   Plane, Home, CreditCard, Clipboard, ArrowRight, ChevronUp
 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
 
 // Sample treatment data
 const treatmentOverview = {
@@ -79,6 +82,19 @@ const timelineEvents = [
 ];
 
 const DashboardSection: React.FC = () => {
+  const { user } = useAuth();
+
+  // Fetch real patient data
+  const { data: dashboardData, isLoading, error } = useQuery({
+    queryKey: ['patient-dashboard', user?.id],
+    queryFn: async () => {
+      const response = await api.get('/api/portal/patient/dashboard');
+      return response.data;
+    },
+    enabled: !!user?.id,
+    staleTime: 60000, // 1 minute
+    retry: 2
+  });
   // Translation removed
 
   return (
@@ -133,7 +149,7 @@ const DashboardSection: React.FC = () => {
               </Badge>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <div className="flex justify-between items-center">
               <p className="text-sm font-medium">{t("portal.dashboard.treatment_progress", "Treatment Progress")}</p>
@@ -242,7 +258,7 @@ const DashboardSection: React.FC = () => {
                   </div>
                 </div>
               </Button>
-              
+
               <Button variant="outline" className="w-full justify-start text-left h-auto py-3 px-4">
                 <div className="flex items-center">
                   <div className="bg-purple-50 p-2 rounded-full mr-3">
@@ -254,7 +270,7 @@ const DashboardSection: React.FC = () => {
                   </div>
                 </div>
               </Button>
-              
+
               <Button variant="outline" className="w-full justify-start text-left h-auto py-3 px-4">
                 <div className="flex items-center">
                   <div className="bg-green-50 p-2 rounded-full mr-3">
@@ -393,7 +409,7 @@ const DashboardSection: React.FC = () => {
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
             </div>
-            
+
             <div className="border rounded-lg p-4">
               <div className="flex items-center mb-3">
                 <div className="p-2 bg-amber-50 rounded-full mr-3">
@@ -406,7 +422,7 @@ const DashboardSection: React.FC = () => {
                 {t("portal.dashboard.view_details", "View Details")}
               </Button>
             </div>
-            
+
             <div className="border rounded-lg p-4">
               <div className="flex items-center mb-3">
                 <div className="p-2 bg-green-50 rounded-full mr-3">

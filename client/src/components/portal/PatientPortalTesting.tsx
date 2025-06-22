@@ -26,17 +26,44 @@ const PatientPortalTesting: React.FC<{
   const { toast } = useToast();
   const [isCreatingTestBooking, setIsCreatingTestBooking] = useState(false);
   
-  // Quick action to create a demo quote
-  const createDemoQuote = () => {
-    toast({
-      title: "Demo Quote Created",
-      description: "A demo quote request has been created for testing purposes.",
-    });
-    
-    // Navigate to treatment comparison
-    setTimeout(() => {
-      setActiveSection('treatment_comparison');
-    }, 1500);
+  // Create a real quote request
+  const createDemoQuote = async () => {
+    try {
+      const response = await apiRequest('POST', '/api/quotes', {
+        treatment: 'dental_implants',
+        specificTreatment: 'single_implant',
+        name: 'Test Patient',
+        email: 'patient@test.com',
+        phone: '+44 7700 900123',
+        departureCity: 'London',
+        travelMonth: 'March 2025',
+        budget: '2000-5000',
+        hasXrays: false,
+        consent: true
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Quote Request Created",
+          description: `Quote request #${data.quoteRequest.id} created successfully.`,
+        });
+        
+        // Navigate to treatment comparison with real data
+        setTimeout(() => {
+          setActiveSection('treatment_comparison');
+        }, 1500);
+      } else {
+        throw new Error(data.message || 'Failed to create quote');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: `Failed to create quote: ${error.message}`,
+        variant: "destructive"
+      });
+    }
   };
   
   // Quick action to upload a demo document

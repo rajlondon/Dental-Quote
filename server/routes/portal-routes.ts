@@ -169,16 +169,43 @@ router.get("/api/portal/admin/users", ensureRole("admin"), async (req, res) => {
 
 router.get("/api/portal/admin/dashboard", ensureRole("admin"), async (req, res) => {
   try {
-    // TODO: Implement admin dashboard data retrieval
+    // Get real dashboard statistics from database
+    const totalUsers = await storage.getUserCount();
+    const totalClinics = await storage.getClinicCount();
+    const totalQuotes = await storage.getQuoteRequestCount();
+    const recentBookings = await storage.getRecentBookings(5);
+    const pendingQuotes = await storage.getPendingQuotes(10);
+    const recentUsers = await storage.getRecentUsers(5);
     
     res.json({
       success: true,
       message: "Admin dashboard data",
       stats: {
-        totalUsers: 0,
-        totalClinics: 0,
-        totalQuotes: 0,
-        recentBookings: []
+        totalUsers,
+        totalClinics,
+        totalQuotes,
+        recentBookings: recentBookings.map(booking => ({
+          id: booking.id,
+          bookingReference: booking.bookingReference,
+          patientName: `${booking.user?.firstName || ''} ${booking.user?.lastName || ''}`.trim() || 'Unknown',
+          clinicName: booking.clinic?.name || 'Unknown Clinic',
+          status: booking.status,
+          createdAt: booking.createdAt
+        })),
+        pendingQuotes: pendingQuotes.map(quote => ({
+          id: quote.id,
+          patientName: quote.name,
+          treatment: quote.treatment,
+          status: quote.status,
+          createdAt: quote.createdAt
+        })),
+        recentUsers: recentUsers.map(user => ({
+          id: user.id,
+          name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown',
+          email: user.email,
+          role: user.role,
+          createdAt: user.createdAt
+        }))
       }
     });
   } catch (error) {
@@ -412,6 +439,51 @@ router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => 
     res.status(500).json({
       success: false,
       message: "Failed to retrieve extended profile data",
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+});
+
+// Patient dashboard endpoint
+router.get("/api/portal/patient/dashboard", isAuthenticated, async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "User not authenticated"
+      });
+    }
+
+    // Get real patient data from database
+    const bookings = await storage.getPatientBookings(userId);
+    const quotes = await storage.getPatientQuotes(userId);
+    const upcomingAppointments = await storage.getPatientAppointments(userId);
+    
+    // Calculate statistics
+    const stats = {
+      activeBookings: bookings.filter(b => ['confirmed', 'in_progress'].includes(b.status)).length,
+      completedTreatments: bookings.filter(b => b.status === 'completed').length,
+      pendingQuotes: quotes.filter(q => q.status === 'pending').length,
+      totalSavings: bookings.reduce((sum, b) => sum + (b.totalSaved || 0), 0)
+    };
+
+    res.json({
+      success: true,
+      message: "Patient dashboard data retrieved",
+      data: {
+        stats,
+        recentBookings: bookings.slice(0, 3),
+        upcomingAppointments: upcomingAppointments.slice(0, 3),
+        recentQuotes: quotes.slice(0, 5)
+      }
+    });
+  } catch (error) {
+    console.error("Error getting patient dashboard:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get dashboard data",
       error: error instanceof Error ? error.message : String(error)
     });
   }
