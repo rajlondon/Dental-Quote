@@ -18,7 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import {
   ArrowRight, Settings, Building, Users, PlusCircle, Save, Trash2,
   Award, BadgeCheck, Stethoscope, Tag, ImagePlus, Edit,
-  User, Sparkles, Hospital, ShieldCheck
+  User, Sparkles, Hospital, ShieldCheck, Video
 } from 'lucide-react';
 
 // Mock data for treatments (in a real app this would come from an API)
@@ -79,6 +79,8 @@ const ClinicSettingsSection: React.FC = () => {
       "clinic.settings.profile.year_established": "Year Established",
       "clinic.settings.profile.photos": "Clinic Photos",
       "clinic.settings.profile.add_photo": "Add Clinic Photo",
+      "clinic.settings.profile.videos": "Clinic Videos",
+      "clinic.settings.profile.add_video": "Add Clinic Video",
       "clinic.settings.profile.save": "Save Profile",
       "clinic.settings.treatments.title": "Treatment Management",
       "clinic.settings.treatments.description": "Add, edit, and manage the treatments your clinic offers",
@@ -175,7 +177,9 @@ const ClinicSettingsSection: React.FC = () => {
     email: "info@dentgroup-istanbul.com",
     website: "https://dentgroup-istanbul.com",
     yearEstablished: 2010,
-    facilities: ["Free WiFi", "Airport Pickup", "Translation Services", "Hotel Arrangements"]
+    facilities: ["Free WiFi", "Airport Pickup", "Translation Services", "Hotel Arrangements"],
+    photos: [],
+    videos: []
   });
   
   // States for treatments, doctors, accreditations, and promotions
@@ -259,6 +263,46 @@ const ClinicSettingsSection: React.FC = () => {
   const handleSaveProfile = () => {
     // In a real app, this would save the profile to the backend
     alert("Profile saved successfully!");
+  };
+
+  // Photo upload handler
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newPhotos = Array.from(files).map(file => URL.createObjectURL(file));
+      setClinicProfile(prev => ({
+        ...prev,
+        photos: [...(prev.photos || []), ...newPhotos]
+      }));
+    }
+  };
+
+  // Video upload handler
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const newVideos = Array.from(files).map(file => URL.createObjectURL(file));
+      setClinicProfile(prev => ({
+        ...prev,
+        videos: [...(prev.videos || []), ...newVideos]
+      }));
+    }
+  };
+
+  // Remove photo handler
+  const handleRemovePhoto = (index: number) => {
+    setClinicProfile(prev => ({
+      ...prev,
+      photos: prev.photos?.filter((_, i) => i !== index) || []
+    }));
+  };
+
+  // Remove video handler
+  const handleRemoveVideo = (index: number) => {
+    setClinicProfile(prev => ({
+      ...prev,
+      videos: prev.videos?.filter((_, i) => i !== index) || []
+    }));
   };
 
   return (
@@ -384,12 +428,90 @@ const ClinicSettingsSection: React.FC = () => {
                 </div>
               </div>
               
-              <div className="space-y-2 mt-6">
-                <Label className="mb-2 block">{t("clinic.settings.profile.photos", "Clinic Photos")}</Label>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-32 cursor-pointer hover:border-primary hover:bg-primary/5">
-                    <ImagePlus className="h-10 w-10 text-gray-400" />
-                    <span className="text-sm mt-2 text-gray-500">{t("clinic.settings.profile.add_photo", "Add Clinic Photo")}</span>
+              <div className="space-y-6 mt-6">
+                {/* Clinic Photos Section */}
+                <div className="space-y-2">
+                  <Label className="mb-2 block">{t("clinic.settings.profile.photos", "Clinic Photos")}</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {clinicProfile.photos && clinicProfile.photos.length > 0 ? (
+                      clinicProfile.photos.map((photo, index) => (
+                        <div key={index} className="relative group">
+                          <img 
+                            src={photo} 
+                            alt={`Clinic Photo ${index + 1}`}
+                            className="w-full h-32 object-cover rounded-lg border"
+                          />
+                          <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleRemovePhoto(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : null}
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-32 cursor-pointer hover:border-primary hover:bg-primary/5"
+                      onClick={() => document.getElementById('photo-upload')?.click()}
+                    >
+                      <ImagePlus className="h-10 w-10 text-gray-400" />
+                      <span className="text-sm mt-2 text-gray-500">{t("clinic.settings.profile.add_photo", "Add Clinic Photo")}</span>
+                    </div>
+                    <input 
+                      id="photo-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+                  </div>
+                </div>
+
+                {/* Clinic Videos Section */}
+                <div className="space-y-2">
+                  <Label className="mb-2 block">{t("clinic.settings.profile.videos", "Clinic Videos")}</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {clinicProfile.videos && clinicProfile.videos.length > 0 ? (
+                      clinicProfile.videos.map((video, index) => (
+                        <div key={index} className="relative group">
+                          <video 
+                            src={video} 
+                            className="w-full h-40 object-cover rounded-lg border"
+                            controls
+                          />
+                          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button 
+                              size="sm" 
+                              variant="destructive" 
+                              className="h-8 w-8 p-0"
+                              onClick={() => handleRemoveVideo(index)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : null}
+                    <div 
+                      className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center h-40 cursor-pointer hover:border-primary hover:bg-primary/5"
+                      onClick={() => document.getElementById('video-upload')?.click()}
+                    >
+                      <Video className="h-10 w-10 text-gray-400" />
+                      <span className="text-sm mt-2 text-gray-500">{t("clinic.settings.profile.add_video", "Add Clinic Video")}</span>
+                    </div>
+                    <input 
+                      id="video-upload"
+                      type="file"
+                      accept="video/*"
+                      multiple
+                      className="hidden"
+                      onChange={handleVideoUpload}
+                    />
                   </div>
                 </div>
               </div>
