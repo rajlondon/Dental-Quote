@@ -76,28 +76,38 @@ const timelineEvents = [
 const DashboardSection: React.FC = () => {
   const { user } = useAuth();
 
-  // Fetch real patient data
+  // Fetch real patient data - only if user is authenticated
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['patient-dashboard', user?.id],
     queryFn: async () => {
-      const response = await api.get('/api/portal/patient/dashboard');
-      return response.data;
+      try {
+        const response = await api.get('/api/portal/patient/dashboard');
+        return response.data;
+      } catch (error) {
+        console.log('Dashboard API call failed:', error);
+        return null;
+      }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!user?.email,
     staleTime: 60000, // 1 minute
-    retry: 2
+    retry: false // Don't retry failed auth requests
   });
 
-  // Fetch bookings data separately
+  // Fetch bookings data separately - only if user is authenticated
   const { data: bookingData, isLoading: bookingLoading } = useQuery({
     queryKey: ['patient-bookings', user?.id],
     queryFn: async () => {
-      const response = await api.get('/api/portal/patient/bookings');
-      return response.data;
+      try {
+        const response = await api.get('/api/portal/patient/bookings');
+        return response.data;
+      } catch (error) {
+        console.log('Bookings API call failed:', error);
+        return null;
+      }
     },
-    enabled: !!user?.id,
+    enabled: !!user?.id && !!user?.email,
     staleTime: 60000, // 1 minute
-    retry: 2
+    retry: false // Don't retry failed auth requests
   });
 
   // Use real user data or fallback to defaults

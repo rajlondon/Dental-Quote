@@ -855,4 +855,58 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
   }
 });
 
+// Patient dashboard endpoint
+router.get('/patient/dashboard', isAuthenticated, async (req, res) => {
+  try {
+    console.log('Patient dashboard request for user:', req.user?.id, req.user?.email);
+
+    if (!req.user) {
+      console.log('No user found in request');
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Mock dashboard data for now
+    const dashboardData = {
+      user: req.user,
+      stats: {
+        appointments: 2,
+        treatments: 1,
+        messages: 3
+      },
+      recentActivity: [
+        { id: 1, action: 'Quote approved', date: new Date().toISOString() },
+        { id: 2, action: 'Treatment plan created', date: new Date().toISOString() }
+      ]
+    };
+
+    console.log('Sending dashboard data for user:', req.user.email);
+    res.json(dashboardData);
+  } catch (error) {
+    console.error('Error fetching patient dashboard:', error);
+    res.status(500).json({ error: 'Failed to fetch dashboard data' });
+  }
+});
+
+// Patient bookings endpoint
+router.get('/patient/bookings', isAuthenticated, async (req, res) => {
+  try {
+    console.log('Patient bookings request for user:', req.user?.id, req.user?.email);
+
+    if (!req.user) {
+      console.log('No user found in bookings request');
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Mock booking data for now
+    const bookingData = [];
+
+    console.log('Sending booking data for user:', req.user.email);
+    res.json(bookingData);
+  } catch (error) {
+```python
+    console.error('Error fetching patient bookings:', error);
+    res.status(500).json({ error: 'Failed to fetch booking data' });
+  }
+});
+
 export default router;
