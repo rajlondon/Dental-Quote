@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useToast } from "@/hooks/use-toast";
 // Removed react-i18next
 import { 
   Card, 
@@ -55,6 +56,8 @@ const initialPromotions = [
 ];
 
 const ClinicSettingsSection: React.FC = () => {
+  const { toast } = useToast();
+  
   // Translation placeholder function
   const t = (key: string, fallback?: string) => {
     const translations: { [key: string]: string } = {
@@ -184,6 +187,25 @@ const ClinicSettingsSection: React.FC = () => {
   
   // States for treatments, doctors, accreditations, and promotions
   const [treatments, setTreatments] = useState(initialTreatments);
+  
+  // Load treatments from API on component mount
+  useEffect(() => {
+    const loadTreatments = async () => {
+      try {
+        const response = await fetch('/api/clinic/treatments');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.treatments) {
+            setTreatments(data.treatments);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading treatments:', error);
+      }
+    };
+    
+    loadTreatments();
+  }, []);
   const [newTreatment, setNewTreatment] = useState({ name: "", category: "", priceGBP: 0, priceUSD: 0, priceEUR: 0, guarantee: "" });
   
   const [doctors, setDoctors] = useState(initialDoctors);
@@ -204,9 +226,36 @@ const ClinicSettingsSection: React.FC = () => {
   });
 
   // Treatment management functions
-  const handleAddTreatment = () => {
-    setTreatments([...treatments, { ...newTreatment, id: Date.now() }]);
-    setNewTreatment({ name: "", category: "", priceGBP: 0, priceUSD: 0, priceEUR: 0, guarantee: "" });
+  const handleAddTreatment = async () => {
+    try {
+      const response = await fetch('/api/clinic/treatments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newTreatment)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add treatment');
+      }
+      
+      const savedTreatment = await response.json();
+      setTreatments([...treatments, savedTreatment]);
+      setNewTreatment({ name: "", category: "", priceGBP: 0, priceUSD: 0, priceEUR: 0, guarantee: "" });
+      
+      toast({
+        title: "Treatment Added",
+        description: `${savedTreatment.name} has been added successfully.`,
+      });
+    } catch (error) {
+      console.error('Error adding treatment:', error);
+      toast({
+        title: "Error",
+        description: "Failed to add treatment. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleDeleteTreatment = (id: number) => {
@@ -260,9 +309,35 @@ const ClinicSettingsSection: React.FC = () => {
     });
   };
 
-  const handleSaveProfile = () => {
-    // In a real app, this would save the profile to the backend
-    alert("Profile saved successfully!");
+  const handleSaveProfile = async () => {
+    try {
+      const response = await fetch('/api/clinic/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clinicProfile)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to save profile');
+      }
+      
+      const result = await response.json();
+      console.log('Profile saved successfully:', result);
+      
+      toast({
+        title: "Profile Saved",
+        description: "Your clinic profile has been updated successfully.",
+      });
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save profile. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   // Photo upload handler
