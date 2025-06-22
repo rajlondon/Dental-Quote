@@ -5,7 +5,17 @@ import { Button } from "@/components/ui/button";
 import { BarChart3, ArrowRight } from 'lucide-react';
 
 const ClinicAnalyticsSection: React.FC = () => {
-  // Translation removed
+  // Translation placeholder function
+  const t = (key: string, fallback?: string) => {
+    const translations: { [key: string]: string } = {
+      "clinic.analytics.title": "Clinic Analytics",
+      "clinic.analytics.description": "Track clinic performance, patient satisfaction, and treatment outcomes",
+      "clinic.analytics.coming_soon": "Analytics Dashboard Coming Soon",
+      "clinic.analytics.coming_soon_desc": "The analytics dashboard is under development. Soon you'll be able to track your clinic's performance, patient satisfaction rates, and treatment outcomes with detailed charts and reports.",
+      "clinic.analytics.learn_more": "Learn More"
+    };
+    return translations[key] || fallback || key;
+  };
 
   return (
     <div className="space-y-6">
