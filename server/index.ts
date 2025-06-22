@@ -392,10 +392,11 @@ app.use((req, res, next) => {
     });
   }
 
-  // ALWAYS serve the app on port 3001
+  // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const PORT = process.env.PORT || 5000;
+  const port = PORT;
 
 // Kill any existing processes on the port before starting
 const killExistingProcesses = () => {
@@ -409,10 +410,7 @@ const killExistingProcesses = () => {
 };
 
 killExistingProcesses();
-  server.listen({
-    port,
-    host: "0.0.0.0",
-  }, () => {
+  server.listen(port, "0.0.0.0", () => {
     log(`serving on port ${port}`);
     log(`Server is accessible at http://0.0.0.0:${port}`);
     log(`For Replit environments, use the "Open in new tab" button`);
