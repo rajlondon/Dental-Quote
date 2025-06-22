@@ -638,32 +638,44 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   size="lg"
                                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 shadow-md hover:shadow-lg transition-all duration-200" 
                                   onClick={() => {
-                                    setSelectedClinic(clinic.id);
-                                    localStorage.setItem('selectedClinicId', clinic.id);
+                                    try {
+                                      setSelectedClinic(clinic.id);
+                                      localStorage.setItem('selectedClinicId', clinic.id);
 
-                                    const bookingData = {
-                                      clinicId: clinic.id,
-                                      clinicName: clinic.name,
-                                      treatments: clinicTreatments,
-                                      totalPrice: totalPrice,
-                                      treatmentPlan: activeTreatmentPlan,
-                                      patientInfo: patientInfo,
-                                      timestamp: new Date().toISOString()
-                                    };
+                                      const bookingData = {
+                                        clinicId: clinic.id,
+                                        clinicName: clinic.name,
+                                        treatments: clinicTreatments,
+                                        totalPrice: totalPrice,
+                                        treatmentPlan: activeTreatmentPlan,
+                                        patientInfo: patientInfo,
+                                        timestamp: new Date().toISOString()
+                                      };
 
-                                    localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
-                                    localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+                                      localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
+                                      localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
 
-                                    if (onSelectClinic) {
-                                      onSelectClinic(clinic.id);
+                                      if (onSelectClinic) {
+                                        onSelectClinic(clinic.id);
+                                      }
+
+                                      // Use setTimeout to ensure state updates are processed
+                                      setTimeout(() => {
+                                        setLocation('/patient-portal');
+                                      }, 100);
+
+                                      toast({
+                                        title: "Clinic Selected",
+                                        description: "Sign in to your patient portal to complete your booking.",
+                                      });
+                                    } catch (error) {
+                                      console.error('Error in Reserve Now button:', error);
+                                      toast({
+                                        title: "Error",
+                                        description: "There was an error processing your selection. Please try again.",
+                                        variant: "destructive"
+                                      });
                                     }
-
-                                    setLocation('/patient-portal');
-
-                                    toast({
-                                      title: "Clinic Selected",
-                                      description: "Sign in to your patient portal to complete your booking.",
-                                    });
                                   }}
                                 >
                                   <Heart className="mr-2 h-4 w-4" />

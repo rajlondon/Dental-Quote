@@ -43,6 +43,9 @@ interface NotificationsPopoverProps {
   onRetryConnection?: () => void;
 }
 
+// Simple translation function fallback
+const t = (key: string, defaultValue: string) => defaultValue;
+
 export function NotificationsPopover({ 
   notifications, 
   unreadCount, 
@@ -56,11 +59,11 @@ export function NotificationsPopover({
   const [isOpen, setIsOpen] = useState(false);
   const [_, setLocation] = useLocation();
   const [showTooltip, setShowTooltip] = useState(false);
-  
+
   // Show connectivity tooltip after short delay when disconnected
   useEffect(() => {
     let tooltipTimer: NodeJS.Timeout | null = null;
-    
+
     if (!connected) {
       tooltipTimer = setTimeout(() => {
         setShowTooltip(true);
@@ -68,7 +71,7 @@ export function NotificationsPopover({
     } else {
       setShowTooltip(false);
     }
-    
+
     return () => {
       if (tooltipTimer) {
         clearTimeout(tooltipTimer);
@@ -82,12 +85,12 @@ export function NotificationsPopover({
       if (!notification.read) {
         await markAsRead(notification.id);
       }
-      
+
       // Navigate after marking as read
       if (notification.actionUrl) {
         setLocation(notification.actionUrl);
       }
-      
+
       setIsOpen(false);
     } catch (error) {
       console.error('Error handling notification click:', error);
@@ -267,7 +270,7 @@ export function NotificationsPopover({
                           </p>
                         </div>
                       </div>
-                      
+
                       {/* Delete button with tooltip */}
                       <div className="absolute right-2 top-2">
                         <TooltipProvider>
