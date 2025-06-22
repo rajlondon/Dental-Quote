@@ -31,22 +31,7 @@ import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
 import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 
-// Mock data for the dashboard view
-const mockBookingData = {
-  status: "Confirmed",
-  clinic: "DentSpa Istanbul",
-  treatmentPlan: {
-    items: [
-      { treatment: "Dental Implant", quantity: 4 },
-      { treatment: "Porcelain Crown", quantity: 6 },
-      { treatment: "Root Canal", quantity: 2 }
-    ],
-    totalGBP: 3200
-  },
-  unreadMessages: 3,
-  upcomingAppointments: 1,
-  journeyProgress: 35
-};
+// Real booking data will be fetched from API
 
 // Import components 
 import MessagesSection from '@/components/portal/MessagesSection';
@@ -71,7 +56,21 @@ interface DashboardSectionProps {
 // Dashboard section component
 const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
   const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
-  
+  const { user } = useAuth();
+
+  // Fetch real booking data
+  const { data: bookingData, isLoading: bookingLoading } = useQuery({
+    queryKey: ['patient-bookings', user?.id],
+    queryFn: async () => {
+      const response = await api.get('/api/portal/patient/bookings');
+      return response.data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Use real data or show "Get Started" state
+  const hasActiveBooking = bookingData && bookingData.length > 0;
+  const activeBooking = hasActiveBooking ? bookingData[0] : null;
 
   return (
     <div className="space-y-6">
@@ -155,55 +154,102 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
 
       {/* Dashboard status cards */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>{t('portal.dashboard.booking_status', 'Booking Status')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <Badge className="bg-green-500">{mockBookingData.status}</Badge>
-              <span className="ml-2 text-gray-600">{t('portal.dashboard.deposit_paid', 'Deposit Paid')}</span>
-            </div>
-            <p className="mt-2 text-sm text-gray-600">
-              {t('portal.dashboard.clinic', 'Clinic')}: <strong>{mockBookingData.clinic}</strong>
-            </p>
-          </CardContent>
-        </Card>
+        {hasActiveBooking ? (
+          <>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>{t('portal.dashboard.booking_status', 'Booking Status')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center">
+                  <Badge className="bg-green-500">{activeBooking.status || 'Active'}</Badge>
+                  <span className="ml-2 text-gray-600">{activeBooking.paymentStatus || 'In Progress'}</span>
+                </div>
+                <p className="mt-2 text-sm text-gray-600">
+                  {t('portal.dashboard.clinic', 'Clinic')}: <strong>{activeBooking.clinicName || 'Processing'}</strong>
+                </p>
+              </CardContent>
+            </Card>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>{t('portal.dashboard.treatment_plan', 'Treatment Plan')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="text-sm space-y-1">
-              {mockBookingData.treatmentPlan.items.map((item, index) => (
-                <li key={index} className="flex justify-between">
-                  <span>{item.treatment}</span>
-                  <span className="text-gray-600">x{item.quantity}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between">
-              <span className="font-medium">{t('portal.dashboard.total', 'Total')}:</span>
-              <span className="font-bold">£{mockBookingData.treatmentPlan.totalGBP}</span>
-            </div>
-            <div className="space-y-2 mt-4">
-              <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700"
-                onClick={() => setActiveSection('treatment_plan')}
-              >
-                {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
-              </Button>
-              <Button 
-                variant="outline"
-                className="w-full"
-                onClick={() => setActiveSection('treatment_comparison')}
-              >
-                {t('portal.dashboard.compare_treatments', 'Compare Treatment Options')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>{t('portal.dashboard.treatment_plan', 'Treatment Plan')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeBooking.treatmentPlan ? (
+                  <>
+                    <ul className="text-sm space-y-1">
+                      {activeBooking.treatmentPlan.items?.map((item, index) => (
+                        <li key={index} className="flex justify-between">
+                          <span>{item.treatment}</span>
+                          <span className="text-gray-600">x{item.quantity}</span>
+                        </li>
+                      )) || <li>Treatment details being prepared</li>}
+                    </ul>
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between">
+                      <span className="font-medium">{t('portal.dashboard.total', 'Total')}:</span>
+                      <span className="font-bold">£{activeBooking.totalAmount || 'TBC'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">Treatment plan being prepared by your clinic</p>
+                )}
+                <div className="space-y-2 mt-4">
+                  <Button 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    onClick={() => setActiveSection('treatment_plan')}
+                  >
+                    {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setActiveSection('treatment_comparison')}
+                  >
+                    {t('portal.dashboard.compare_treatments', 'Compare Treatment Options')}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>{t('portal.dashboard.get_started', 'Get Started')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('portal.dashboard.no_active_booking', 'You don\'t have any active bookings yet. Start by getting a quote!')}
+                </p>
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => window.location.href = '/?city=Istanbul&treatment=dental-implants'}
+                >
+                  {t('portal.dashboard.get_quote', 'Get Your Quote')}
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>{t('portal.dashboard.your_quotes', 'Your Quotes')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600 mb-4">
+                  {t('portal.dashboard.manage_quotes', 'View and manage your quote requests')}
+                </p>
+                <Button 
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setActiveSection('quotes')}
+                >
+                  {t('portal.dashboard.view_quotes', 'View My Quotes')}
+                </Button>
+              </CardContent>
+            </Card>
+          </>
+        )}
 
         <Card>
           <CardHeader className="pb-3">
@@ -216,7 +262,7 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                   <MessageSquare className="h-5 w-5 text-blue-500 mr-2" />
                   <span>{t('portal.dashboard.unread_messages', 'Unread Messages')}</span>
                 </div>
-                <Badge className="bg-blue-500">{mockBookingData.unreadMessages}</Badge>
+                <Badge className="bg-blue-500">{activeBooking?.unreadMessages || 0}</Badge>
               </div>
 
               <div className="flex items-center justify-between">
@@ -224,10 +270,14 @@ const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection })
                   <Calendar className="h-5 w-5 text-green-500 mr-2" />
                   <span>{t('portal.dashboard.upcoming_appointments', 'Upcoming Appointments')}</span>
                 </div>
-                <Badge className="bg-green-500">{mockBookingData.upcomingAppointments}</Badge>
+                <Badge className="bg-green-500">{activeBooking?.upcomingAppointments || 0}</Badge>
               </div>
 
-              <Button variant="outline" className="w-full mt-2">
+              <Button 
+                variant="outline" 
+                className="w-full mt-2"
+                onClick={() => setActiveSection('messages')}
+              >
                 {t('portal.dashboard.view_all', 'View All Notifications')}
               </Button>
             </div>

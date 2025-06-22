@@ -22,22 +22,7 @@ const t = (key: string, fallback: string, options?: any) => {
   return fallback;
 };
 
-// Sample treatment data
-const treatmentOverview = {
-  name: "John Smith",
-  nextAppointment: "June 15, 2025",
-  treatmentPlan: "Dental Implants & Crowns",
-  clinic: "Maltepe Dental Clinic",
-  progress: 65,
-  documents: 4,
-  messages: 2,
-  paymentStatus: "Deposit Paid",
-  trip: {
-    flight: "June 14, 2025",
-    hotel: "Grand Hyatt Istanbul",
-    transfer: "Airport Transfer Confirmed"
-  },
-};
+// This will be replaced by real data from the API
 
 // Sample action items
 const patientActions = [
@@ -104,6 +89,38 @@ const DashboardSection: React.FC = () => {
     retry: 2
   });
 
+  // Use real user data or fallback to defaults
+  const userName = user?.firstName || user?.email || "Patient";
+  const treatmentOverview = dashboardData ? {
+    name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
+    nextAppointment: dashboardData.nextAppointment || "To be scheduled",
+    treatmentPlan: dashboardData.treatmentPlan || "No active treatment plan",
+    clinic: dashboardData.clinic || "No clinic selected",
+    progress: dashboardData.progress || 0,
+    documents: dashboardData.documents || 0,
+    messages: dashboardData.messages || 0,
+    paymentStatus: dashboardData.paymentStatus || "No payments",
+    trip: dashboardData.trip || {
+      flight: "Not booked",
+      hotel: "Not selected",
+      transfer: "Not arranged"
+    },
+  } : {
+    name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
+    nextAppointment: "Please submit a quote request to begin",
+    treatmentPlan: "No active treatment plan",
+    clinic: "No clinic selected yet",
+    progress: 0,
+    documents: 0,
+    messages: 0,
+    paymentStatus: "No payments made",
+    trip: {
+      flight: "Not booked",
+      hotel: "Not selected", 
+      transfer: "Not arranged"
+    },
+  };
+
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
@@ -112,7 +129,7 @@ const DashboardSection: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">
-                {t("portal.dashboard.welcome", "Welcome, {{name}}!", { name: treatmentOverview.name.split(' ')[0] })}
+                {t("portal.dashboard.welcome", "Welcome, {{name}}!", { name: userName })}
               </h2>
               <p className="text-primary-foreground/80">
                 {t("portal.dashboard.welcome_message", "Your journey to a beautiful new smile is underway.")}
@@ -120,7 +137,7 @@ const DashboardSection: React.FC = () => {
             </div>
             <Avatar className="h-16 w-16 border-2 border-white">
               <AvatarFallback className="text-xl bg-primary-foreground text-primary">
-                {treatmentOverview.name.split(' ').map(n => n[0]).join('')}
+                {userName.split(' ').map(n => n[0]).join('').toUpperCase()}
               </AvatarFallback>
             </Avatar>
           </div>

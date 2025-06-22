@@ -30,7 +30,7 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
   try {
     const userId = req.user?.id;
     const updateData = req.body;
-    
+
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -61,7 +61,7 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
       if (allowedFields.includes(key)) {
         // Handle mapping of camelCase field names to snake_case DB columns
         const dbKey = key.replace(/([A-Z])/g, '_$1').toLowerCase();
-        
+
         // Special handling for JSON fields
         if (key === 'medicalInfo') {
           sanitizedData['medical_info'] = updateData[key];
@@ -94,19 +94,19 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
       'lastName': 'last_name', 
       'phone': 'phone'
     };
-    
+
     // Check if critical fields are present in sanitized data or in existing user data
     let isProfileComplete = Object.entries(criticalFieldsMapping).every(([fieldName, dbField]) => {
       // Check if field is in our sanitized data
       if (sanitizedData[dbField] !== undefined) {
         return true;
       }
-      
+
       // If not in sanitized data, check existing user data
       const user_any = req.user as any;
       return user_any && user_any[fieldName] !== null && user_any[fieldName] !== undefined;
     });
-    
+
     if (isProfileComplete) {
       sanitizedData['profile_complete'] = true;
     }
@@ -114,7 +114,7 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
     // Update user in database
     try {
       const updatedUser = await storage.updateUser(userId, sanitizedData);
-      
+
       if (!updatedUser) {
         return res.status(404).json({
           success: false,
@@ -124,7 +124,7 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
 
       // Return success with updated user (excluding sensitive fields)
       const { password, ...safeUserData } = updatedUser;
-      
+
       res.json({
         success: true,
         message: "Profile updated successfully",
@@ -152,7 +152,7 @@ router.post("/api/portal/update-profile", isAuthenticated, csrfProtection, async
 router.get("/api/portal/admin/users", ensureRole("admin"), async (req, res) => {
   try {
     // TODO: Implement get all users from storage
-    
+
     res.json({
       success: true,
       message: "Admin users endpoint"
@@ -176,7 +176,7 @@ router.get("/api/portal/admin/dashboard", ensureRole("admin"), async (req, res) 
     const recentBookings = await storage.getRecentBookings(5);
     const pendingQuotes = await storage.getPendingQuotes(10);
     const recentUsers = await storage.getRecentUsers(5);
-    
+
     res.json({
       success: true,
       message: "Admin dashboard data",
@@ -222,10 +222,10 @@ router.get("/api/portal/admin/dashboard", ensureRole("admin"), async (req, res) 
 router.get("/api/portal/clinic/dashboard", ensureRole("clinic_staff"), async (req, res) => {
   try {
     const clinicId = req.user?.clinicId || 1; // Use default clinic ID if not set
-    
+
     // No longer returning an error if clinicId is missing
     console.log(`Clinic dashboard: Using clinic ID: ${clinicId} for user ${req.user?.email}`);
-    
+
     // Return more detailed demo data to match the new structure
     res.json({
       success: true,
@@ -261,12 +261,12 @@ router.get("/api/portal/clinic/dashboard", ensureRole("clinic_staff"), async (re
 router.get("/api/portal/clinic/profile", ensureRole("clinic_staff"), async (req, res) => {
   try {
     const clinicId = req.user?.clinicId || 1; // Use default clinic ID if not set
-    
+
     // No longer returning an error if clinicId is missing
     console.log(`Clinic profile: Using clinic ID: ${clinicId} for user ${req.user?.email}`);
-    
+
     // TODO: Implement get clinic profile from storage
-    
+
     res.json({
       success: true,
       message: "Clinic profile retrieved",
@@ -309,7 +309,7 @@ router.get("/api/portal/debug", isAuthenticated, (req, res) => {
 router.get("/api/portal/dashboard", isAuthenticated, async (req, res) => {
   try {
     console.log("Dashboard endpoint called for user:", req.user?.id, "with role:", req.user?.role);
-    
+
     // Check the user role and provide appropriate data
     const userRole = req.user?.role;
     let dashboardData;
@@ -318,10 +318,10 @@ router.get("/api/portal/dashboard", isAuthenticated, async (req, res) => {
     if (userRole === 'clinic_staff') {
       // Get clinic data directly instead of redirecting
       const clinicId = req.user?.clinicId || 1; // Fallback to default clinicId if not set
-      
+
       // No longer returning an error if clinicId is missing
       console.log(`Using clinic ID: ${clinicId} for user ${req.user?.email}`);
-      
+
       // Use the same data as the clinic-specific endpoint
       dashboardData = {
         success: true,
@@ -373,7 +373,7 @@ router.get("/api/portal/dashboard", isAuthenticated, async (req, res) => {
         }
       };
     }
-    
+
     // Return the role-appropriate dashboard data
     return res.json(dashboardData);
   } catch (error) {
@@ -390,19 +390,19 @@ router.get("/api/portal/dashboard", isAuthenticated, async (req, res) => {
 router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({
         success: false,
         message: "User not authenticated"
       });
     }
-    
+
     // For now, just return the complete user data
     // In a real production environment, we'd store these in separate tables
     // and join the data here
     const userData = await storage.getUser(userId);
-    
+
     if (!userData) {
       return res.status(404).json({
         success: false, 
@@ -413,7 +413,7 @@ router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => 
     // Extract just the fields we need, handling potentially missing fields
     // TypeScript doesn't know about our new fields, so we need to use type assertions
     const userData_any = userData as any;
-    
+
     const medicalInfo = userData_any.medical_info || null;
     const emergencyContact = userData_any.emergency_contact || null;
     const address = userData_any.address || null;
@@ -421,7 +421,7 @@ router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => 
     const nationality = userData_any.nationality || null;
     const preferredLanguage = userData_any.preferred_language || null;
     const passportNumber = userData_any.passport_number || null;
-    
+
     res.json({
       success: true,
       data: {
@@ -448,7 +448,7 @@ router.get("/api/portal/extended-profile", isAuthenticated, async (req, res) => 
 router.get("/api/portal/patient/dashboard", isAuthenticated, async (req, res) => {
   try {
     const userId = req.user?.id;
-    
+
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -460,7 +460,7 @@ router.get("/api/portal/patient/dashboard", isAuthenticated, async (req, res) =>
     const bookings = await storage.getPatientBookings(userId);
     const quotes = await storage.getPatientQuotes(userId);
     const upcomingAppointments = await storage.getPatientAppointments(userId);
-    
+
     // Calculate statistics
     const stats = {
       activeBookings: bookings.filter(b => ['confirmed', 'in_progress'].includes(b.status)).length,
@@ -511,12 +511,12 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
     const limit = parseInt(req.query.limit as string) || 10;
     const search = (req.query.search as string) || '';
     const status = (req.query.status as string) || 'all';
-    
+
     // Calculate pagination values
     const skip = (page - 1) * limit;
-    
+
     console.log(`Retrieving patients for clinic ${clinicId}, page ${page}, limit ${limit}, search "${search}", status "${status}"`);
-    
+
     // Mock data with pagination support
     const allPatients = [
       {
@@ -700,7 +700,7 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
         lastVisit: "2025-04-18"
       }
     ];
-    
+
     // Filter by search term (name, email, or phone)
     let filteredPatients = allPatients;
     if (search) {
@@ -711,25 +711,25 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
         patient.phone.includes(search)
       );
     }
-    
+
     // Filter by status if not 'all'
     if (status && status !== 'all') {
       filteredPatients = filteredPatients.filter(patient => 
         patient.status.toLowerCase() === status.toLowerCase()
       );
     }
-    
+
     // Get total count for pagination
     const total = filteredPatients.length;
-    
+
     // Apply pagination
     const paginatedPatients = filteredPatients.slice(skip, skip + limit);
-    
+
     // Mask contact information for non-completed patients
     const maskedPatients = paginatedPatients.map(patient => {
       // Clone the patient object
       const maskedPatient = { ...patient };
-      
+
       // Only show full contact info for completed patients
       if (maskedPatient.status !== "Completed") {
         // Mask email if exists
@@ -739,7 +739,7 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
             maskedPatient.email = `${username.substring(0, 1)}***@${domain}`;
           }
         }
-        
+
         // Mask phone if exists
         if (maskedPatient.phone) {
           const phoneLength = maskedPatient.phone.length;
@@ -748,10 +748,10 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
           }
         }
       }
-      
+
       return maskedPatient;
     });
-    
+
     // Return the paginated, filtered, and masked results
     res.json({
       success: true,
@@ -766,7 +766,7 @@ router.get("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res) 
         }
       }
     });
-    
+
   } catch (error) {
     console.error("Error retrieving patients:", error);
     res.status(500).json({
@@ -781,7 +781,7 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
   try {
     const clinicId = req.user?.clinicId || 1;
     const { name, email, phone, treatment, status } = req.body;
-    
+
     // Basic validation
     if (!name || !email || !phone || !status) {
       return res.status(400).json({
@@ -789,7 +789,7 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
         message: "Missing required fields"
       });
     }
-    
+
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -798,9 +798,9 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
         message: "Invalid email format"
       });
     }
-    
+
     console.log(`Creating new patient for clinic ${clinicId}: ${name}, ${email}`);
-    
+
     // Mock creating a new patient (in a real app, this would save to the database)
     // For now, we'll just return success with a mocked ID
     const newPatient = {
@@ -812,7 +812,7 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
       status,
       lastVisit: null
     };
-    
+
     res.status(201).json({
       success: true,
       message: "Patient created successfully",
@@ -820,7 +820,7 @@ router.post("/api/clinic/patients", ensureRole("clinic_staff"), async (req, res)
         patient: newPatient
       }
     });
-    
+
   } catch (error) {
     console.error("Error creating patient:", error);
     res.status(500).json({
