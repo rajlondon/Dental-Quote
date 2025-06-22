@@ -129,9 +129,8 @@ export const TreatmentPlansSection = () => {
   const [isUpdateDialogOpen, setIsUpdateDialogOpen] = useState<boolean>(false);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState<boolean>(false);
   
-  // Get current locale for formatting
-  const currentLanguage = i18n.language || 'en';
-  const locale = currentLanguage === 'tr' ? 'tr-TR' : 'en-GB';
+  // Use default locale for formatting
+  const locale = 'en-GB';
 
   // Convert tab to filter status
   const getStatusFilter = (): string | undefined => {
@@ -270,14 +269,14 @@ export const TreatmentPlansSection = () => {
     try {
       await deleteMutation.mutateAsync(id);
       toast({
-        title: t("clinic.treatment_plans.delete.success_title", "Success"),
-        description: t("clinic.treatment_plans.delete.success_description", "Treatment plan has been deleted."),
+        title: "Success",
+        description: "Treatment plan has been deleted.",
       });
     } catch (error) {
       console.error("Error deleting treatment plan:", error);
       toast({
-        title: t("clinic.treatment_plans.delete.failed_title", "Delete failed"),
-        description: t("clinic.treatment_plans.delete.failed_description", "Could not delete the treatment plan."),
+        title: "Delete failed",
+        description: "Could not delete the treatment plan.",
         variant: "destructive",
       });
     }
@@ -293,14 +292,14 @@ export const TreatmentPlansSection = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <CardTitle>
-                {t("clinic.treatment_plans.title", "Treatment Plans")}
+                Treatment Plans
               </CardTitle>
               <CardDescription>
-                {t("clinic.treatment_plans.description", "Manage treatment plans for your patients")}
+                Manage treatment plans for your patients
               </CardDescription>
             </div>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" /> {t("clinic.treatment_plans.new_button", "New Treatment Plan")}
+              <PlusCircle className="mr-2 h-4 w-4" /> New Treatment Plan
             </Button>
           </div>
 
@@ -348,21 +347,21 @@ export const TreatmentPlansSection = () => {
               </div>
             ) : isError ? (
               <div className="text-center py-8 text-destructive">
-                <p>{t("clinic.treatment_plans.error_loading", "Error loading treatment plans:")}{" "}{error?.message || t("common.unknown_error", "Unknown error")}</p>
+                <p>Error loading treatment plans: {error?.message || "Unknown error"}</p>
               </div>
             ) : data?.data?.treatmentPlans?.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                <p>{t("clinic.treatment_plans.no_plans_found", "No treatment plans found")}</p>
+                <p>No treatment plans found</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b text-xs text-muted-foreground">
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.patient", "Patient")}</th>
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.title", "Title")}</th>
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.created", "Created")}</th>
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.status", "Status")}</th>
+                      <th className="p-4 text-left font-medium">Patient</th>
+                      <th className="p-4 text-left font-medium">Title</th>
+                      <th className="p-4 text-left font-medium">Created</th>
+                      <th className="p-4 text-left font-medium">Status</th>
                       <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.payment", "Payment")}</th>
                       <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.total", "Total")}</th>
                       <th className="p-4 text-right font-medium">{t("clinic.treatment_plans.columns.actions", "Actions")}</th>
