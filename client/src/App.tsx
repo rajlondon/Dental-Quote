@@ -104,7 +104,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 
-function Router() {
+function AppRouter() {
   return (
     <Switch>
               <Route path="/test" component={() => <div className="p-8 text-center"><h1 className="text-2xl">Test Route Working!</h1></div>} />
@@ -386,7 +386,7 @@ function App() {
                     <ReloadTranslations />
                   }
                   <ErrorBoundary componentName="Router">
-                    <Router />
+                    <AppRouter />
                   </ErrorBoundary>
                   <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
                   <EnvironmentBadge />
