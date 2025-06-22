@@ -85,6 +85,9 @@ interface Appointment {
 }
 
 const ClinicAppointmentsSection: React.FC = () => {
+  // Placeholder translation function
+  const t = (key: string, fallback?: string) => fallback || key;
+
   // Translation removed
   const { toast } = useToast();
   const { user } = useAuth();
@@ -105,7 +108,7 @@ const ClinicAppointmentsSection: React.FC = () => {
   const [appointmentDoctor, setAppointmentDoctor] = useState<string>('');
   const [appointmentNotes, setAppointmentNotes] = useState<string>('');
   const [isVirtualAppointment, setIsVirtualAppointment] = useState<boolean>(false);
-  
+
   // Use the real API data
   const { 
     appointments: realAppointments, 
@@ -117,17 +120,17 @@ const ClinicAppointmentsSection: React.FC = () => {
     cancelAppointment,
     isCreating
   } = useAppointments();
-  
+
   // Use bookings data to get patient information
   const bookingsHook = useBookings();
   const bookings = bookingsHook.data;
   const isLoadingBookings = bookingsHook.isLoading;
-  
+
   // Sync the selectedDate in the UI with the API hook
   useEffect(() => {
     setApiSelectedDate(currentDate);
   }, [currentDate, setApiSelectedDate]);
-  
+
   // Convert real appointments to the format expected by the UI
   const convertedAppointments: Appointment[] = (realAppointments || []).map((app: AppointmentData) => {
     // Find the booking for this appointment to get patient info
@@ -135,18 +138,18 @@ const ClinicAppointmentsSection: React.FC = () => {
     const patientName = booking?.patientName || 'Unknown Patient';
     const patientEmail = booking?.patientEmail || '';
     const patientPhone = booking?.patientPhone || '';
-    
+
     // Get initials from patient name
     const patientInitials = patientName
       .split(' ')
       .map((n: string) => n[0])
       .join('')
       .toUpperCase();
-    
+
     // Parse dates
     const startDate = app.startTime instanceof Date ? app.startTime : new Date(app.startTime);
     const endDate = app.endTime instanceof Date ? app.endTime : new Date(app.endTime);
-    
+
     return {
       id: app.id.toString(),
       patientName,
@@ -165,7 +168,7 @@ const ClinicAppointmentsSection: React.FC = () => {
       doctorId: 'n/a'
     };
   });
-  
+
   // Use converted appointments if available, otherwise show empty state
   const appointments: Appointment[] = isLoadingAppointments || !realAppointments || realAppointments.length === 0 
     ? [] 
@@ -275,7 +278,7 @@ const ClinicAppointmentsSection: React.FC = () => {
       });
       return;
     }
-    
+
     if (!appointmentTitle || !appointmentType || !appointmentTime || !appointmentDate) {
       toast({
         title: "Missing information",
@@ -284,19 +287,19 @@ const ClinicAppointmentsSection: React.FC = () => {
       });
       return;
     }
-    
+
     // Calculate end time based on duration
     const startTime = new Date(appointmentDate);
     const [hours, minutes] = appointmentTime.split(':').map(Number);
     startTime.setHours(hours, minutes, 0, 0);
-    
+
     const endTime = new Date(startTime);
     endTime.setMinutes(endTime.getMinutes() + parseInt(appointmentDuration, 10));
-    
+
     // Format dates as ISO strings for API
     const startTimeISO = startTime.toISOString();
     const endTimeISO = endTime.toISOString();
-    
+
     // Create the appointment data
     const appointmentData: CreateAppointmentData = {
       bookingId: selectedBookingId || 0, // If 0, it's a standalone clinic appointment
@@ -310,7 +313,7 @@ const ClinicAppointmentsSection: React.FC = () => {
       reminderSent: false,
       followUpRequired: false
     };
-    
+
     try {
       // Call the API to create the appointment
       if (selectedBookingId) {
@@ -325,7 +328,7 @@ const ClinicAppointmentsSection: React.FC = () => {
         const { bookingId, ...standaloneAppointmentData } = appointmentData;
         createAppointment(standaloneAppointmentData);
       }
-      
+
       // Reset form fields
       setAppointmentTitle('');
       setAppointmentType('');
@@ -335,10 +338,10 @@ const ClinicAppointmentsSection: React.FC = () => {
       setIsVirtualAppointment(false);
       setSelectedBookingId(null);
       setSelectedPatient('');
-      
+
       // Close the dialog
       setShowAddAppointment(false);
-      
+
       // No need for success toast here as it's already shown in the mutation's onSuccess handler
     } catch (error) {
       console.error('Error creating appointment:', error);
@@ -369,7 +372,7 @@ const ClinicAppointmentsSection: React.FC = () => {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent>
           {/* Calendar Navigation */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -526,7 +529,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                             <div className="text-lg font-medium">{appointment.time}</div>
                             <div className="text-xs text-gray-500">{appointment.duration}</div>
                           </div>
-                          
+
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
                               <Avatar className="h-8 w-8">
@@ -543,7 +546,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                                 <div className="text-xs text-gray-500">{appointment.patientPhone}</div>
                               </div>
                             </div>
-                            
+
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-2">
                               <div className="flex items-center text-sm text-gray-600">
                                 <User className="h-3.5 w-3.5 mr-1 text-gray-400" />
@@ -560,7 +563,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                                 </div>
                               )}
                             </div>
-                            
+
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <Badge variant="secondary">{appointment.type}</Badge>
@@ -610,13 +613,13 @@ const ClinicAppointmentsSection: React.FC = () => {
                   </div>
                 ))}
               </div>
-              
+
               <div className="grid grid-cols-7 divide-x min-h-[400px]">
                 {getDayHeaders().map((day, i) => {
                   const dayAppointments = appointments.filter(app => 
                     format(app.date, 'yyyy-MM-dd') === format(day.date, 'yyyy-MM-dd')
                   );
-                  
+
                   return (
                     <div key={i} className={`p-2 ${day.isToday ? 'bg-primary/5' : ''}`}>
                       {dayAppointments.length > 0 ? (
@@ -669,14 +672,14 @@ const ClinicAppointmentsSection: React.FC = () => {
             </div>
           )}
         </CardContent>
-        
+
         <CardFooter className="border-t bg-gray-50 px-6 py-3">
           <div className="w-full flex flex-wrap items-center justify-between gap-2">
             <div className="text-sm text-gray-500 flex items-center">
               <Clock className="h-4 w-4 mr-2 text-gray-400" />
               All times are in local Istanbul time (UTC+3)
             </div>
-            
+
             <div className="flex items-center gap-2">
               <div className="flex items-center">
                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 mr-2">
@@ -715,7 +718,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                   View and manage appointment information
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-md">
                   <Avatar className="h-10 w-10">
@@ -741,7 +744,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 p-3 rounded-md">
                     <div className="text-sm text-gray-500">Date</div>
@@ -752,17 +755,17 @@ const ClinicAppointmentsSection: React.FC = () => {
                     <div className="font-medium">{selectedAppointment.time} - {selectedAppointment.endTime}</div>
                   </div>
                 </div>
-                
+
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="text-sm text-gray-500">Appointment Type</div>
                   <div className="font-medium">{selectedAppointment.type}</div>
                 </div>
-                
+
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="text-sm text-gray-500">Doctor</div>
                   <div className="font-medium">{selectedAppointment.doctorName}</div>
                 </div>
-                
+
                 <div className="bg-gray-50 p-3 rounded-md">
                   <div className="text-sm text-gray-500">Status</div>
                   <div className="flex items-center gap-2">
@@ -772,7 +775,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {selectedAppointment.notes && (
                   <div className="bg-amber-50 p-3 rounded-md">
                     <div className="flex items-start gap-2">
@@ -784,7 +787,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {selectedAppointment.status === 'pending' && (
                   <div className="bg-yellow-50 p-3 rounded-md">
                     <div className="flex items-center gap-2 mb-2">
@@ -804,7 +807,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <DialogFooter className="flex justify-between items-center gap-2">
                 {selectedAppointment.status !== 'completed' && selectedAppointment.status !== 'cancelled' && (
                   <Button
@@ -834,9 +837,9 @@ const ClinicAppointmentsSection: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-      
+
       {/* Add Appointment Dialog */}
-      <Dialog open={showAddAppointment} onOpenChange={setShowAddAppointment}>
+      <Dialog open{showAddAppointment} onOpenChange={setShowAddAppointment}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center">
@@ -847,7 +850,7 @@ const ClinicAppointmentsSection: React.FC = () => {
               Fill in the details to create a new appointment
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="patient" className="text-sm font-medium">Booking/Patient</label>
@@ -882,7 +885,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">Appointment Title*</label>
               <Input 
@@ -892,7 +895,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 placeholder="E.g., Initial Consultation, Follow-up"
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label htmlFor="date" className="text-sm font-medium">Date*</label>
@@ -916,7 +919,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div className="space-y-2">
                 <label htmlFor="time" className="text-sm font-medium">Time*</label>
                 <Select value={appointmentTime} onValueChange={setAppointmentTime}>
@@ -941,7 +944,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </Select>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="duration" className="text-sm font-medium">Duration*</label>
               <Select value={appointmentDuration} onValueChange={setAppointmentDuration}>
@@ -958,7 +961,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="type" className="text-sm font-medium">Appointment Type*</label>
               <Select value={appointmentType} onValueChange={setAppointmentType}>
@@ -974,7 +977,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="doctor" className="text-sm font-medium">Doctor</label>
               <Select value={appointmentDoctor} onValueChange={setAppointmentDoctor}>
@@ -990,7 +993,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="notes" className="text-sm font-medium">Notes</label>
               <Input 
@@ -1000,7 +1003,7 @@ const ClinicAppointmentsSection: React.FC = () => {
                 placeholder="Additional information about the appointment"
               />
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Checkbox 
                 id="virtual" 
@@ -1019,7 +1022,7 @@ const ClinicAppointmentsSection: React.FC = () => {
               </label>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddAppointment(false)}>
               Cancel
