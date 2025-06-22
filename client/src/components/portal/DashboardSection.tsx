@@ -89,21 +89,35 @@ const DashboardSection: React.FC = () => {
     retry: 2
   });
 
+  // Fetch bookings data separately
+  const { data: bookingData, isLoading: bookingLoading } = useQuery({
+    queryKey: ['patient-bookings', user?.id],
+    queryFn: async () => {
+      const response = await api.get('/api/portal/patient/bookings');
+      return response.data;
+    },
+    enabled: !!user?.id,
+    staleTime: 60000, // 1 minute
+    retry: 2
+  });
+
   // Use real user data or fallback to defaults
   const userName = user?.firstName || user?.email || "Patient";
-  const treatmentOverview = dashboardData ? {
+  const hasActiveBooking = bookingData && bookingData.length > 0;
+  
+  const treatmentOverview = hasActiveBooking ? {
     name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
-    nextAppointment: dashboardData.nextAppointment || "To be scheduled",
-    treatmentPlan: dashboardData.treatmentPlan || "No active treatment plan",
-    clinic: dashboardData.clinic || "No clinic selected",
-    progress: dashboardData.progress || 0,
-    documents: dashboardData.documents || 0,
-    messages: dashboardData.messages || 0,
-    paymentStatus: dashboardData.paymentStatus || "No payments",
-    trip: dashboardData.trip || {
-      flight: "Not booked",
-      hotel: "Not selected",
-      transfer: "Not arranged"
+    nextAppointment: bookingData[0]?.nextAppointment || "To be scheduled",
+    treatmentPlan: bookingData[0]?.treatmentPlan || "Treatment plan being prepared",
+    clinic: bookingData[0]?.clinic || "Clinic assigned",
+    progress: bookingData[0]?.progress || 25,
+    documents: bookingData[0]?.documents || 0,
+    messages: bookingData[0]?.messages || 0,
+    paymentStatus: bookingData[0]?.paymentStatus || "In Progress",
+    trip: bookingData[0]?.trip || {
+      flight: "To be booked",
+      hotel: "To be selected",
+      transfer: "To be arranged"
     },
   } : {
     name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
