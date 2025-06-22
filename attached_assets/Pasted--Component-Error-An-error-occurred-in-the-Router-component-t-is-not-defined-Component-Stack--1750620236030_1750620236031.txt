@@ -1,0 +1,33 @@
+
+Component Error
+An error occurred in the Router component
+
+t is not defined
+Component Stack:
+
+
+    at ClinicAppointmentsSection (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/clinic/ClinicAppointmentsSection.tsx:81:21)
+    at main
+    at div
+    at div
+    at ClinicPortalPage (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/pages/ClinicPortalPage.tsx:73:3)
+    at ClinicQueryProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-clinic-queries.tsx:23:39)
+    at ClinicGuard (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ClinicGuard.tsx:24:24)
+    at Route (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:323:16)
+    at Switch (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:379:17)
+    at Router
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at Suspense
+    at BookingsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AdminAuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:11:5)
+    at App (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?v=t_VqwC5QT447Eh9CEYsET:652:3)
+    at RTLProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/rtl-provider.tsx:19:31)
+    at Suspense
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+Try Again
+
+Notification Validation ErrorAn unexpected error occurred
