@@ -70,7 +70,19 @@ const pendingQuotes = [
   { id: 3, patient: 'Patricia Davis', treatments: 'Full Mouth Reconstruction', date: 'May 13, 2025', status: 'In Progress' },
 ];
 
-const AdminDashboardSection: React.FC = () => {
+export const AdminDashboardSection: React.FC = () => {
+  // Translation placeholder function
+  const t = (key: string) => {
+    const translations: { [key: string]: string } = {
+      'admin.dashboard.title': 'Admin Dashboard',
+      'admin.dashboard.overview': 'System Overview',
+      'admin.dashboard.stats': 'Statistics',
+      'admin.dashboard.recent': 'Recent Activity',
+      'common.loading': 'Loading...',
+      'common.error': 'Error loading data'
+    };
+    return translations[key] || key;
+  };
   // Translation removed
   const [, setLocation] = useLocation();
 

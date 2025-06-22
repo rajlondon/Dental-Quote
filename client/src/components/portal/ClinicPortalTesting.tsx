@@ -22,7 +22,7 @@ interface ClinicPortalTestingProps {
 
 const ClinicPortalTesting: React.FC<ClinicPortalTestingProps> = ({ setActiveSection }) => {
   // Placeholder translation function
-  const t = (key: string, fallback: string) => fallback;
+  const t = (key: string, fallback?: string) => fallback || key;
   const portalType = 'clinic';
   
   const features = getPortalFeatures(portalType);

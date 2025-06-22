@@ -10,7 +10,40 @@ import {
 } from 'lucide-react';
 
 const ClinicReportsSection: React.FC = () => {
-  // Translation removed
+  // Translation placeholder function
+  const t = (key: string) => {
+    const translations: { [key: string]: string } = {
+      'reports.title': 'Reports & Analytics',
+      'reports.description': 'View clinic performance and analytics',
+      'reports.revenue': 'Revenue',
+      'reports.patients': 'Patients',
+      'reports.appointments': 'Appointments',
+      'reports.treatments': 'Treatments',
+      'reports.period': 'Period',
+      'reports.thisMonth': 'This Month',
+      'reports.lastMonth': 'Last Month',
+      'reports.thisYear': 'This Year',
+      'reports.export': 'Export Report',
+      'reports.loading': 'Loading reports...',
+      'reports.noData': 'No data available',
+      'common.loading': 'Loading...',
+      'common.error': 'Error loading data',
+      "clinic.reports.title": "Reports & Analytics",
+      "clinic.reports.description": "View and generate reports on patient treatments and clinic performance",
+      "clinic.reports.patient": "Patient Reports",
+      "clinic.reports.analytics": "Analytics Reports",
+      "clinic.reports.upload": "Upload Report",
+      "clinic.reports.report_id": "Report ID",
+      "clinic.reports.type": "Report Type",
+      "clinic.reports.date": "Date Created",
+      "clinic.reports.created_by": "Created By",
+      "clinic.reports.actions": "Actions",
+      "clinic.reports.view": "View Report",
+      "clinic.reports.download": "Download PDF",
+      "clinic.reports.more": "More Options"
+    };
+    return translations[key] || key;
+  };
 
   // Sample reports data - in a real app, this would come from an API
   const patientReports = [
@@ -91,36 +124,36 @@ const ClinicReportsSection: React.FC = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>{t("clinic.reports.title", "Reports & Analytics")}</CardTitle>
+          <CardTitle>{t("clinic.reports.title")}</CardTitle>
           <CardDescription>
-            {t("clinic.reports.description", "View and generate reports on patient treatments and clinic performance")}
+            {t("clinic.reports.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="patient">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
               <TabsList>
-                <TabsTrigger value="patient">{t("clinic.reports.patient", "Patient Reports")}</TabsTrigger>
-                <TabsTrigger value="analytics">{t("clinic.reports.analytics", "Analytics Reports")}</TabsTrigger>
+                <TabsTrigger value="patient">{t("clinic.reports.patient")}</TabsTrigger>
+                <TabsTrigger value="analytics">{t("clinic.reports.analytics")}</TabsTrigger>
               </TabsList>
-              
+
               <Button className="w-full sm:w-auto gap-2">
                 <Upload className="h-4 w-4" />
-                {t("clinic.reports.upload", "Upload Report")}
+                {t("clinic.reports.upload")}
               </Button>
             </div>
-            
+
             <TabsContent value="patient" className="mt-0">
               <div className="rounded-md border overflow-hidden">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("clinic.reports.report_id", "Report ID")}</TableHead>
-                      <TableHead>{t("clinic.reports.patient", "Patient")}</TableHead>
-                      <TableHead>{t("clinic.reports.type", "Report Type")}</TableHead>
-                      <TableHead className="hidden md:table-cell">{t("clinic.reports.date", "Date Created")}</TableHead>
-                      <TableHead className="hidden md:table-cell">{t("clinic.reports.created_by", "Created By")}</TableHead>
-                      <TableHead className="text-right">{t("clinic.reports.actions", "Actions")}</TableHead>
+                      <TableHead>{t("clinic.reports.report_id")}</TableHead>
+                      <TableHead>{t("clinic.reports.patient")}</TableHead>
+                      <TableHead>{t("clinic.reports.type")}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t("clinic.reports.date")}</TableHead>
+                      <TableHead className="hidden md:table-cell">{t("clinic.reports.created_by")}</TableHead>
+                      <TableHead className="text-right">{t("clinic.reports.actions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -150,13 +183,13 @@ const ClinicReportsSection: React.FC = () => {
                         <TableCell className="hidden md:table-cell">{report.createdBy}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon" title={t("clinic.reports.view", "View Report")}>
+                            <Button variant="ghost" size="icon" title={t("clinic.reports.view")}>
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" title={t("clinic.reports.download", "Download PDF")}>
+                            <Button variant="ghost" size="icon" title={t("clinic.reports.download")}>
                               <Download className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" title={t("clinic.reports.more", "More Options")}>
+                            <Button variant="ghost" size="icon" title={t("clinic.reports.more")}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>
@@ -167,7 +200,7 @@ const ClinicReportsSection: React.FC = () => {
                 </Table>
               </div>
             </TabsContent>
-            
+
             <TabsContent value="analytics" className="mt-0">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {analyticsReports.map((report) => (
@@ -196,11 +229,11 @@ const ClinicReportsSection: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
                             <Eye className="h-3 w-3 mr-1" />
-                            {t("clinic.reports.view", "View")}
+                            {t("clinic.reports.view")}
                           </Button>
                           <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
                             <Download className="h-3 w-3 mr-1" />
-                            {t("clinic.reports.download", "Download")}
+                            {t("clinic.reports.download")}
                           </Button>
                         </div>
                       </div>

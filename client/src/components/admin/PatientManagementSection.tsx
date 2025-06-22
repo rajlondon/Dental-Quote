@@ -31,6 +31,38 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+// Translation placeholder function
+const t = (key: string) => {
+  // Static translations for common keys
+  const translations: { [key: string]: string } = {
+    'patients.title': 'Patient Management',
+    'patients.description': 'Manage patient records and information',
+    'patients.search': 'Search patients...',
+    'patients.filter': 'Filter by status',
+    'patients.all': 'All Patients',
+    'patients.active': 'Active',
+    'patients.inactive': 'Inactive',
+    'patients.pending': 'Pending',
+    'patients.export': 'Export Data',
+    'patients.add': 'Add Patient',
+    'patients.name': 'Name',
+    'patients.email': 'Email',
+    'patients.phone': 'Phone',
+    'patients.status': 'Status',
+    'patients.lastVisit': 'Last Visit',
+    'patients.totalSpent': 'Total Spent',
+    'patients.actions': 'Actions',
+    'patients.view': 'View',
+    'patients.edit': 'Edit',
+    'patients.delete': 'Delete',
+    'patients.contact': 'Contact',
+    'common.loading': 'Loading...',
+    'common.noData': 'No patients found',
+    'common.error': 'Error loading data'
+  };
+  return translations[key] || key;
+};
+
 // Sample patient data
 const patients = [
   { 
