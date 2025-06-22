@@ -839,7 +839,7 @@ const ClinicAppointmentsSection: React.FC = () => {
       </Dialog>
 
       {/* Add Appointment Dialog */}
-      <Dialog open{showAddAppointment} onOpenChange={setShowAddAppointment}>
+      <Dialog open={showAddAppointment} onOpenChange={setShowAddAppointment}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center">
