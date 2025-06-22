@@ -903,7 +903,6 @@ router.get('/patient/bookings', isAuthenticated, async (req, res) => {
     console.log('Sending booking data for user:', req.user.email);
     res.json(bookingData);
   } catch (error) {
-```python
     console.error('Error fetching patient bookings:', error);
     res.status(500).json({ error: 'Failed to fetch booking data' });
   }
