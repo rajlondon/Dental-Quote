@@ -1,117 +1,77 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from './button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './card';
-import { AlertCircle, RefreshCw } from 'lucide-react';
-import { logErrorToService } from '@/lib/error-handler';
 
 interface Props {
   children: ReactNode;
-  fallback?: ReactNode;
-  onReset?: () => void;
   componentName?: string;
 }
 
 interface State {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  error?: Error;
+  errorInfo?: ErrorInfo;
 }
 
-/**
- * ErrorBoundary component for catching and displaying React component errors
- * 
- * Usage:
- * <ErrorBoundary componentName="MyComponent">
- *   <MyComponent />
- * </ErrorBoundary>
- */
-class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
-    hasError: false,
-    error: null,
-    errorInfo: null
-  };
-
-  // Update state when component fails
-  public static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error, errorInfo: null };
+export class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
+    super(props);
+    this.state = { hasError: false };
   }
 
-  // Log the error when it occurs
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({ errorInfo });
-    
-    // Log error to service with component context
-    logErrorToService(error, {
-      componentStack: errorInfo.componentStack,
-      componentName: this.props.componentName || 'Unknown'
-    });
+  static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
   }
 
-  // Reset the error state
-  private handleReset = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null
-    });
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    this.setState({ error, errorInfo });
+  }
 
-    // Call custom reset handler if provided
-    if (this.props.onReset) {
-      this.props.onReset();
-    }
-  };
-
-  public render() {
-    // If no error, render children normally
-    if (!this.state.hasError) {
-      return this.props.children;
-    }
-    
-    // If custom fallback is provided, use it
-    if (this.props.fallback) {
-      return this.props.fallback;
-    }
-
-    // Default error UI
-    return (
-      <Card className="w-full">
-        <CardHeader className="bg-red-50">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <CardTitle className="text-red-600">Component Error</CardTitle>
-          </div>
-          <CardDescription>
-            {this.props.componentName 
-              ? `An error occurred in the ${this.props.componentName} component` 
-              : 'An error occurred while rendering this component'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="text-sm text-gray-700 mb-4">
-            {this.state.error?.message || 'Unknown error'}
-          </div>
-          {process.env.NODE_ENV !== 'production' && this.state.errorInfo && (
-            <div className="mt-4">
-              <p className="text-xs font-medium text-gray-500 mb-1">Component Stack:</p>
-              <pre className="text-xs overflow-auto bg-gray-100 p-3 rounded max-h-40">
-                {this.state.errorInfo.componentStack}
-              </pre>
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center mb-4">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.966-.833-2.732 0L3.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Something went wrong
+                </h3>
+                <div className="mt-2 text-sm text-gray-500">
+                  {this.props.componentName && (
+                    <p>Component: {this.props.componentName}</p>
+                  )}
+                  <p>Please refresh the page to try again.</p>
+                </div>
+              </div>
             </div>
-          )}
-        </CardContent>
-        <CardFooter className="bg-gray-50 border-t flex justify-end">
-          <Button 
-            variant="outline" 
-            onClick={this.handleReset} 
-            className="flex items-center"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Try Again
-          </Button>
-        </CardFooter>
-      </Card>
-    );
+            <div className="mt-4">
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+              >
+                Refresh Page
+              </button>
+            </div>
+            {process.env.NODE_ENV === 'development' && this.state.error && (
+              <details className="mt-4">
+                <summary className="cursor-pointer text-sm text-gray-600">Error Details</summary>
+                <pre className="mt-2 text-xs text-gray-800 bg-gray-100 p-2 rounded overflow-auto">
+                  {this.state.error.toString()}
+                  {this.state.errorInfo?.componentStack}
+                </pre>
+              </details>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
   }
 }
 
