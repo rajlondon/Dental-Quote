@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -104,7 +103,7 @@ const DashboardSection: React.FC = () => {
   // Use real user data or fallback to defaults
   const userName = user?.firstName || user?.email || "Patient";
   const hasActiveBooking = bookingData && bookingData.length > 0;
-  
+
   const treatmentOverview = hasActiveBooking ? {
     name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
     nextAppointment: bookingData[0]?.nextAppointment || "To be scheduled",
@@ -484,6 +483,29 @@ const DashboardSection: React.FC = () => {
           </Button>
         </CardFooter>
       </Card>
+      {/* Get Started Button */}
+      {!hasActiveBooking && (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold mb-2">
+                {t('portal.dashboard.get_started', 'Get started with your treatment')}
+              </h2>
+              <p className="text-primary-foreground/80">
+                {t('portal.dashboard.get_started_message', 'Ready to begin? Get a personalized quote now.')}
+              </p>
+            </div>
+            <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={() => window.location.href = '/pricing?city=Istanbul&treatment=dental-implants&from=dashboard'}
+                >
+                  {t('portal.dashboard.get_quote', 'Get Your Quote')}
+                </Button>
+          </div>
+        </CardContent>
+      </Card>
+      )}
     </div>
   );
 };
