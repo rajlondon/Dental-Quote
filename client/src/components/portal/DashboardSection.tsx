@@ -1,5 +1,5 @@
+
 import React from 'react';
-// Removed react-i18next
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +13,14 @@ import {
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+
+// Translation function placeholder
+const t = (key: string, fallback: string, options?: any) => {
+  if (options && options.name) {
+    return fallback.replace('{{name}}', options.name);
+  }
+  return fallback;
+};
 
 // Sample treatment data
 const treatmentOverview = {
@@ -95,7 +103,6 @@ const DashboardSection: React.FC = () => {
     staleTime: 60000, // 1 minute
     retry: 2
   });
-  // Translation removed
 
   return (
     <div className="space-y-6">
@@ -166,9 +173,9 @@ const DashboardSection: React.FC = () => {
       {/* Action Items & Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Action Items */}
-        <Card className="md:col-span-2">
+        <Card className="md:col-span-2" id="next-steps-section">
           <CardHeader className="pb-2">
-            <CardTitle>{t("portal.dashboard.action_items", "Action Items")}</CardTitle>
+            <CardTitle>{t("portal.dashboard.action_items", "Next Steps")}</CardTitle>
             <CardDescription>
               {t("portal.dashboard.action_desc", "Items that require your attention")}
             </CardDescription>
@@ -318,8 +325,8 @@ const DashboardSection: React.FC = () => {
         </Card>
       </div>
 
-      {/* Travel & Treatment Timeline */}
-      <Card>
+      {/* Treatment Timeline */}
+      <Card id="dental-journey-section">
         <CardHeader className="pb-2">
           <CardTitle>{t("portal.dashboard.timeline", "Treatment Timeline")}</CardTitle>
           <CardDescription>
@@ -388,7 +395,7 @@ const DashboardSection: React.FC = () => {
       </Card>
 
       {/* Travel Arrangements */}
-      <Card>
+      <Card id="hotel-section">
         <CardHeader className="pb-2">
           <CardTitle>{t("portal.dashboard.travel_arrangements", "Travel Arrangements")}</CardTitle>
           <CardDescription>
