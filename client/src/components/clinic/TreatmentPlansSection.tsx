@@ -56,19 +56,19 @@ const StatusBadge = ({ status }: { status: TreatmentPlanStatus }) => {
   const getLabel = () => {
     switch (status) {
       case TreatmentPlanStatus.DRAFT:
-        return t("clinic.treatment_plans.status.draft", "Draft");
+        return "Draft";
       case TreatmentPlanStatus.SENT:
-        return t("clinic.treatment_plans.status.sent", "Sent");
+        return "Sent";
       case TreatmentPlanStatus.ACCEPTED:
-        return t("clinic.treatment_plans.status.accepted", "Accepted");
+        return "Accepted";
       case TreatmentPlanStatus.IN_PROGRESS:
-        return t("clinic.treatment_plans.status.in_progress", "In Progress");
+        return "In Progress";
       case TreatmentPlanStatus.COMPLETED:
-        return t("clinic.treatment_plans.status.completed", "Completed");
+        return "Completed";
       case TreatmentPlanStatus.REJECTED:
-        return t("clinic.treatment_plans.status.rejected", "Rejected");
+        return "Rejected";
       case TreatmentPlanStatus.CANCELLED:
-        return t("clinic.treatment_plans.status.cancelled", "Cancelled");
+        return "Cancelled";
       default:
         return status;
     }
@@ -101,13 +101,13 @@ const PaymentBadge = ({ status }: { status: PaymentStatus }) => {
   const getLabel = () => {
     switch (status) {
       case PaymentStatus.PAID:
-        return t("clinic.treatment_plans.payment.paid", "Paid");
+        return "Paid";
       case PaymentStatus.PARTIAL:
-        return t("clinic.treatment_plans.payment.partial", "Partial");
+        return "Partial";
       case PaymentStatus.PENDING:
-        return t("clinic.treatment_plans.payment.pending", "Pending");
+        return "Pending";
       case PaymentStatus.REFUNDED:
-        return t("clinic.treatment_plans.payment.refunded", "Refunded");
+        return "Refunded";
       default:
         return status;
     }
@@ -165,8 +165,8 @@ export const TreatmentPlansSection = () => {
   const handleDownload = async (plan: any) => {
     try {
       toast({
-        title: t("clinic.treatment_plans.download.title", "Downloading treatment plan"),
-        description: t("clinic.treatment_plans.download.preparing", "Preparing the document for download..."),
+        title: "Downloading treatment plan",
+        description: "Preparing the document for download...",
       });
       
       // Make API call to get the PDF file
@@ -186,8 +186,8 @@ export const TreatmentPlansSection = () => {
         a.remove();
         
         toast({
-          title: t("clinic.treatment_plans.download.complete_title", "Download complete"),
-          description: t("clinic.treatment_plans.download.complete_description", "Treatment plan has been downloaded successfully."),
+          title: "Download complete",
+          description: "Treatment plan has been downloaded successfully.",
         });
       } else {
         throw new Error("Failed to download file");
@@ -195,8 +195,8 @@ export const TreatmentPlansSection = () => {
     } catch (error) {
       console.error("Error downloading treatment plan:", error);
       toast({
-        title: t("clinic.treatment_plans.download.failed_title", "Download failed"),
-        description: t("clinic.treatment_plans.download.failed_description", "Could not download the treatment plan."),
+        title: "Download failed",
+        description: "Could not download the treatment plan.",
         variant: "destructive",
       });
     }
@@ -206,8 +206,8 @@ export const TreatmentPlansSection = () => {
   const handleSendToPatient = async (plan: any) => {
     try {
       toast({
-        title: t("clinic.treatment_plans.send.title", "Sending to patient"),
-        description: t("clinic.treatment_plans.send.description", "Sending treatment plan to {{name}}...", { name: plan.patientName }),
+        title: "Sending to patient",
+        description: `Sending treatment plan to ${plan.patientName}...`,
       });
       
       // Make API call to send the treatment plan to the patient
@@ -225,8 +225,8 @@ export const TreatmentPlansSection = () => {
         }
         
         toast({
-          title: t("clinic.treatment_plans.send.success_title", "Success"),
-          description: t("clinic.treatment_plans.send.success_description", "Treatment plan has been sent to {{name}}.", { name: plan.patientName }),
+          title: "Success",
+          description: `Treatment plan has been sent to ${plan.patientName}.`,
         });
       } else {
         const errorData = await response.json();
@@ -235,8 +235,8 @@ export const TreatmentPlansSection = () => {
     } catch (error) {
       console.error("Error sending treatment plan:", error);
       toast({
-        title: t("clinic.treatment_plans.send.failed_title", "Send failed"),
-        description: t("clinic.treatment_plans.send.failed_description", "Could not send the treatment plan to the patient."),
+        title: "Send failed",
+        description: "Could not send the treatment plan to the patient.",
         variant: "destructive",
       });
     }
@@ -308,7 +308,7 @@ export const TreatmentPlansSection = () => {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder={t("clinic.treatment_plans.search_placeholder", "Search by name or title...")}
+              placeholder="Search by name or title..."
               className="w-full pl-8"
               value={search}
               onChange={handleSearchChange}
@@ -320,22 +320,22 @@ export const TreatmentPlansSection = () => {
       <Tabs defaultValue="all" className="mx-6" onValueChange={setCurrentTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="all">
-            {t("clinic.treatment_plans.tabs.all", "All")}
+            All
           </TabsTrigger>
           <TabsTrigger value={TreatmentPlanStatus.DRAFT}>
-            {t("clinic.treatment_plans.tabs.draft", "Draft")}
+            Draft
           </TabsTrigger>
           <TabsTrigger value={TreatmentPlanStatus.SENT}>
-            {t("clinic.treatment_plans.tabs.sent", "Sent")}
+            Sent
           </TabsTrigger>
           <TabsTrigger value={TreatmentPlanStatus.ACCEPTED}>
-            {t("clinic.treatment_plans.tabs.accepted", "Accepted")}
+            Accepted
           </TabsTrigger>
           <TabsTrigger value={TreatmentPlanStatus.IN_PROGRESS}>
-            {t("clinic.treatment_plans.tabs.in_progress", "In Progress")}
+            In Progress
           </TabsTrigger>
           <TabsTrigger value={TreatmentPlanStatus.COMPLETED}>
-            {t("clinic.treatment_plans.tabs.completed", "Completed")}
+            Completed
           </TabsTrigger>
         </TabsList>
 
@@ -362,9 +362,9 @@ export const TreatmentPlansSection = () => {
                       <th className="p-4 text-left font-medium">Title</th>
                       <th className="p-4 text-left font-medium">Created</th>
                       <th className="p-4 text-left font-medium">Status</th>
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.payment", "Payment")}</th>
-                      <th className="p-4 text-left font-medium">{t("clinic.treatment_plans.columns.total", "Total")}</th>
-                      <th className="p-4 text-right font-medium">{t("clinic.treatment_plans.columns.actions", "Actions")}</th>
+                      <th className="p-4 text-left font-medium">Payment</th>
+                      <th className="p-4 text-left font-medium">Total</th>
+                      <th className="p-4 text-right font-medium">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -393,10 +393,10 @@ export const TreatmentPlansSection = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>{t("common.actions", "Actions")}</DropdownMenuLabel>
+                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
                               <DropdownMenuItem onClick={() => handleView(plan)}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                {t("common.view", "View")}
+                                View
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => {
@@ -405,15 +405,15 @@ export const TreatmentPlansSection = () => {
                                 }}
                               >
                                 <FileEdit className="mr-2 h-4 w-4" />
-                                {t("common.edit", "Edit")}
+                                Edit
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownload(plan)}>
                                 <Download className="mr-2 h-4 w-4" />
-                                {t("common.download", "Download")}
+                                Download
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleSendToPatient(plan)}>
                                 <Send className="mr-2 h-4 w-4" />
-                                {t("clinic.treatment_plans.actions.send_to_patient", "Send to Patient")}
+                                Send to Patient
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <AlertDialog>
@@ -423,25 +423,25 @@ export const TreatmentPlansSection = () => {
                                     className="text-destructive focus:text-destructive"
                                   >
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    {t("common.delete", "Delete")}
+                                    Delete
                                   </DropdownMenuItem>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                   <AlertDialogHeader>
-                                    <AlertDialogTitle>{t("common.confirm_delete.title", "Are you sure?")}</AlertDialogTitle>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                     <AlertDialogDescription>
-                                      {t("common.confirm_delete.description", "This action cannot be undone. This will permanently delete the treatment plan and remove it from our servers.")}
+                                      This action cannot be undone. This will permanently delete the treatment plan and remove it from our servers.
                                     </AlertDialogDescription>
                                   </AlertDialogHeader>
                                   <AlertDialogFooter>
-                                    <AlertDialogCancel>{t("common.cancel", "Cancel")}</AlertDialogCancel>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                                     <AlertDialogAction onClick={() => handleDelete(plan.id)}>
                                       {deleteMutation.isPending ? (
                                         <>
                                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                          {t("common.deleting", "Deleting...")}
+                                          Deleting...
                                         </>
-                                      ) : t("common.delete", "Delete")}
+                                      ) : "Delete"}
                                     </AlertDialogAction>
                                   </AlertDialogFooter>
                                 </AlertDialogContent>
