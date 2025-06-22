@@ -42,6 +42,7 @@ import PatientQuotesPage from '@/pages/patient/PatientQuotesPage';
 import PatientQuoteXrayUploadPage from '@/pages/patient/PatientQuoteXrayUploadPage';
 import PatientQuoteReviewPage from '@/pages/patient/PatientQuoteReviewPage';
 import FlightBookingSection from '@/components/portal/FlightBookingSection';
+import DashboardSectionComponent from '@/components/portal/DashboardSection';
 const AppointmentsSection = () => <div className="p-4">Appointments functionality would go here</div>;
 const DocumentsSection = () => <div className="p-4">Documents functionality would go here</div>;
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
@@ -50,247 +51,8 @@ const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details w
 const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
 
-// Dashboard section component interface
-interface DashboardSectionProps {
-  setActiveSection: (section: string) => void;
-}
-
-// Dashboard section component
-const DashboardSection: React.FC<DashboardSectionProps> = ({ setActiveSection }) => {
-  const [hotelViewMode, setHotelViewMode] = useState<'selection' | 'confirmed' | 'self-arranged'>('selection');
-  const { user } = useAuth();
-
-  // Fetch real booking data
-  const { data: bookingData, isLoading: bookingLoading } = useQuery({
-    queryKey: ['patient-bookings', user?.id],
-    queryFn: async () => {
-      const response = await api.get('/api/portal/patient/bookings');
-      return response.data;
-    },
-    enabled: !!user?.id,
-  });
-
-  // Use real data or show "Get Started" state
-  const hasActiveBooking = bookingData && bookingData.length > 0;
-  const activeBooking = hasActiveBooking ? bookingData[0] : null;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">
-          Dashboard
-        </h2>
-      </div>
-
-      {/* Mobile Navigation Hint - Only visible on mobile */}
-      <div className="md:hidden p-4 bg-blue-50 rounded-lg border border-blue-100 mb-4">
-        <div className="flex items-center">
-          <div className="bg-blue-100 rounded-full p-2 mr-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-600">
-              <path d="M9 18l6-6-6-6"></path>
-            </svg>
-          </div>
-          <div>
-            <h3 className="font-medium text-blue-800">
-              {t('portal.dashboard.mobile_hint_title', 'Explore Your Dashboard')}
-            </h3>
-            <p className="text-sm text-blue-600">
-              {t('portal.dashboard.mobile_hint_description', 'Scroll down to see all sections including your dental journey, hotel options, and flight details')}
-            </p>
-            <div className="flex items-center mt-2 text-blue-700 text-sm">
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-1">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-              {t('portal.dashboard.hamburger_hint', 'Tap the menu icon for more options')}
-            </div>
-          </div>
-        </div>
-
-        {/* Quick section links for mobile */}
-        <div className="mt-3 pt-3 border-t border-blue-100">
-          <p className="text-sm font-medium text-blue-700 mb-2">
-            {t('portal.dashboard.quick_links', 'Quick Navigation')}:
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button 
-              onClick={() => {
-                const nextStepsElement = document.getElementById('next-steps-section');
-                nextStepsElement?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
-            >
-              {t('portal.dashboard.next_steps', 'Next Steps')}
-            </button>
-            <button 
-              onClick={() => {
-                const journeyElement = document.getElementById('dental-journey-section');
-                journeyElement?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
-            >
-              {t('portal.dashboard.your_journey', 'Dental Journey')}
-            </button>
-            <button 
-              onClick={() => {
-                const hotelElement = document.getElementById('hotel-section');
-                hotelElement?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
-            >
-              {t('portal.dashboard.hotel', 'Hotel Options')}
-            </button>
-            <button 
-              onClick={() => {
-                const flightElement = document.getElementById('flight-section');
-                flightElement?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="text-xs bg-white text-blue-600 border border-blue-200 rounded-full px-3 py-1 hover:bg-blue-50"
-            >
-              {t('portal.dashboard.flight_details', 'Flight Details')}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Dashboard status cards */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {hasActiveBooking ? (
-          <>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>{t('portal.dashboard.booking_status', 'Booking Status')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center">
-                  <Badge className="bg-green-500">{activeBooking.status || 'Active'}</Badge>
-                  <span className="ml-2 text-gray-600">{activeBooking.paymentStatus || 'In Progress'}</span>
-                </div>
-                <p className="mt-2 text-sm text-gray-600">
-                  {t('portal.dashboard.clinic', 'Clinic')}: <strong>{activeBooking.clinicName || 'Processing'}</strong>
-                </p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>{t('portal.dashboard.treatment_plan', 'Treatment Plan')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeBooking.treatmentPlan ? (
-                  <>
-                    <ul className="text-sm space-y-1">
-                      {activeBooking.treatmentPlan.items?.map((item, index) => (
-                        <li key={index} className="flex justify-between">
-                          <span>{item.treatment}</span>
-                          <span className="text-gray-600">x{item.quantity}</span>
-                        </li>
-                      )) || <li>Treatment details being prepared</li>}
-                    </ul>
-                    <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between">
-                      <span className="font-medium">{t('portal.dashboard.total', 'Total')}:</span>
-                      <span className="font-bold">£{activeBooking.totalAmount || 'TBC'}</span>
-                    </div>
-                  </>
-                ) : (
-                  <p className="text-sm text-gray-500">Treatment plan being prepared by your clinic</p>
-                )}
-                <div className="space-y-2 mt-4">
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setActiveSection('treatment_plan')}
-                  >
-                    {t('portal.dashboard.view_treatment_plan', 'View Full Treatment Plan')}
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setActiveSection('treatment_comparison')}
-                  >
-                    {t('portal.dashboard.compare_treatments', 'Compare Treatment Options')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </>
-        ) : (
-          <>
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>{t('portal.dashboard.get_started', 'Get Started')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  {t('portal.dashboard.no_active_booking', 'You don\'t have any active bookings yet. Start by getting a quote!')}
-                </p>
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={() => window.location.href = '/?city=Istanbul&treatment=dental-implants'}
-                >
-                  {t('portal.dashboard.get_quote', 'Get Your Quote')}
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle>{t('portal.dashboard.your_quotes', 'Your Quotes')}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 mb-4">
-                  {t('portal.dashboard.manage_quotes', 'View and manage your quote requests')}
-                </p>
-                <Button 
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setActiveSection('quotes')}
-                >
-                  {t('portal.dashboard.view_quotes', 'View My Quotes')}
-                </Button>
-              </CardContent>
-            </Card>
-          </>
-        )}
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle>{t('portal.dashboard.notifications', 'Notifications')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <MessageSquare className="h-5 w-5 text-blue-500 mr-2" />
-                  <span>{t('portal.dashboard.unread_messages', 'Unread Messages')}</span>
-                </div>
-                <Badge className="bg-blue-500">{activeBooking?.unreadMessages || 0}</Badge>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Calendar className="h-5 w-5 text-green-500 mr-2" />
-                  <span>{t('portal.dashboard.upcoming_appointments', 'Upcoming Appointments')}</span>
-                </div>
-                <Badge className="bg-green-500">{activeBooking?.upcomingAppointments || 0}</Badge>
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full mt-2"
-                onClick={() => setActiveSection('messages')}
-              >
-                {t('portal.dashboard.view_all', 'View All Notifications')}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* More dashboard content would go here... */}
-    </div>
-  );
-};
+// Use the imported dashboard component
+const DashboardSection = DashboardSectionComponent;
 
 const PatientPortalPage: React.FC = () => {
   const [activeSection, setActiveSection] = useState('dashboard');
@@ -371,7 +133,7 @@ const PatientPortalPage: React.FC = () => {
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'dashboard':
-        return <DashboardSection setActiveSection={setActiveSection} />;
+        return <DashboardSection />;
       case 'messages':
         return <MessagesSection />;
       case 'quotes':
@@ -399,7 +161,7 @@ const PatientPortalPage: React.FC = () => {
       case 'testing':
         return <PatientPortalTesting setActiveSection={setActiveSection} />;
       default:
-        return <DashboardSection setActiveSection={setActiveSection} />;
+        return <DashboardSection />;
     }
   };
 
