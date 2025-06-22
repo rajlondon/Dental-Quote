@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense } from "react";
-import { Switch, Route, Redirect } from "wouter";
+import { Switch, Route, Router, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -102,12 +102,13 @@ import ReloadTranslations from "@/components/ReloadTranslations";
 import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
 import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
+import { LoadingSpinner } from "./components/LoadingSpinner";
 
 function Router() {
   return (
     <Switch>
-      {/* Public Routes */}
-      <Route path="/" component={Home} />
+              <Route path="/test" component={() => <div className="p-8 text-center"><h1 className="text-2xl">Test Route Working!</h1></div>} />
+              <Route path="/" component={Home} />
       <Route path="/home" component={Home} />
       <Route path="/index">
         {() => <Redirect to="/" />}
@@ -374,7 +375,11 @@ function App() {
           <AdminAuthProvider>
             <NotificationsProvider>
               <BookingsProvider>
-                <Suspense fallback={<div>Loading...</div>}>
+                <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen">
+            <LoadingSpinner />
+          </div>
+        }>
                   <ScrollToTop />
                   {/* Only exclude ReloadTranslations on clinic portal path */}
                   {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 

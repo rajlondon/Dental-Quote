@@ -8,6 +8,8 @@ import { RTLProvider } from '@/components/ui/rtl-provider'; // Import RTL provid
 
 // Extend global CSS with custom styles
 import { createGlobalStyle } from "styled-components";
+import { Toaster } from "./components/ui/toaster";
+import { ErrorBoundary } from "./components/ui/error-boundary";
 
 const GlobalStyle = createGlobalStyle`
   :root {
@@ -37,17 +39,24 @@ const Loading = () => (
 );
 
 const rootElement = document.getElementById("root");
+if (!rootElement) {
+  throw new Error("Root element not found");
+}
+
 if (rootElement) {
   createRoot(rootElement).render(
     <React.StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <GlobalStyle />
-        <Suspense fallback={<Loading />}>
-          <RTLProvider>
-            <App />
-          </RTLProvider>
-        </Suspense>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <GlobalStyle />
+          <Suspense fallback={<Loading />}>
+            <RTLProvider>
+              <App />
+              <Toaster />
+            </RTLProvider>
+          </Suspense>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 }
