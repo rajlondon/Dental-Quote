@@ -45,7 +45,11 @@ import {
   HeartHandshake,
   Pencil,
   Heart,
-  Users
+  Users,
+  Stethoscope,
+  CalendarDays,
+  PoundSterling,
+  Edit
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import EditQuoteModal from '@/components/EditQuoteModal';
@@ -522,87 +526,70 @@ const YourQuotePage: React.FC = () => {
 
           {/* Quote Preferences Summary */}
           <div className="mb-8">
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
-              <div className="flex justify-between items-start mb-4">
-                <div>
-                  <h3 className="text-xl font-semibold mb-1">Your Travel & Treatment Plan</h3>
-                  <p className="text-blue-100 text-sm">Complete dental care with premium travel experience</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleEditQuote}
-                  className="flex items-center gap-2 text-xs h-8 bg-white/10 border-white/20 text-white hover:bg-white/20"
-                >
-                  <Pencil className="h-3 w-3" />
-                  Edit
-                </Button>
-              </div>
+            
+{/* Blue banner with quote parameters - matching homepage style */}
+        <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-12 relative overflow-hidden">
+          {/* Gold accent background pattern */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-yellow-400/20 to-transparent"></div>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <MapPin className="h-4 w-4 text-blue-200" />
-                    <p className="text-xs font-medium text-blue-200">Destination</p>
-                  </div>
-                  <p className="font-semibold">{searchParams.get('city') || 'Istanbul'}, Turkey</p>
-                </div>
-
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Calendar className="h-4 w-4 text-blue-200" />
-                    <p className="text-xs font-medium text-blue-200">Travel Dates</p>
-                  </div>
-                  <p className="font-semibold text-sm">
-                    {searchParams.get('departureDate') ? 
-                      `${new Date(searchParams.get('departureDate') || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${new Date(searchParams.get('returnDate') || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` :
-                      quoteParams.travelMonth
-                    }
-                  </p>
-                </div>
-
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Users className="h-4 w-4 text-blue-200" />
-                    <p className="text-xs font-medium text-blue-200">Travelers</p>
-                  </div>
-                  <p className="font-semibold">{quoteParams.travelers || 1} {(quoteParams.travelers || 1) === 1 ? 'Adult' : 'Adults'}</p>
-                  <p className="text-xs text-blue-200">{(quoteParams.travelers || 1) === 1 ? 'Add companions?' : 'Travel party'}</p>
-                </div>
-
-                <div className="bg-white/10 rounded-lg p-3">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Heart className="h-4 w-4 text-blue-200" />
-                    <p className="text-xs font-medium text-blue-200">Treatment</p>
-                  </div>
-                  <p className="font-semibold text-sm">{quoteParams.treatment}</p>
-                  <p className="text-xs text-blue-200">{quoteParams.budget}</p>
-                </div>
-              </div>
-
-              {treatmentItems.length > 0 && (
-                <div className="bg-white/10 rounded-lg p-4">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-blue-200">Estimated Istanbul Price</p>
-                      <p className="text-2xl font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</p>
+          <div className="container mx-auto px-4 relative z-10">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+              <div>
+                <h2 className="text-3xl font-bold mb-4 text-white">
+                  Your Travel Plan
+                  <span className="text-yellow-400 ml-2">✈️</span>
+                </h2>
+                <div className="flex flex-wrap gap-8 text-blue-100">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-400/20 rounded-full">
+                      <MapPin className="h-5 w-5 text-yellow-400" />
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-blue-200 mb-1">Additional Services Available:</p>
-                      <div className="flex flex-wrap gap-1">
-                        <span className="bg-white/20 px-2 py-1 rounded text-xs">Hotel Packages</span>
-                        <span className="bg-white/20 px-2 py-1 rounded text-xs">Airport Transfers</span>
-                        <span className="bg-white/20 px-2 py-1 rounded text-xs">City Tours</span>
+                    <div>
+                      <div className="text-sm text-blue-200 uppercase tracking-wide">Destination</div>
+                      <div className="font-semibold text-white">{searchParams.get('city') || 'Istanbul'}, Turkey</div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-400/20 rounded-full">
+                      <CalendarDays className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-blue-200 uppercase tracking-wide">Travel Dates</div>
+                      <div className="font-semibold text-white">
+                        {searchParams.get('departureDate') && searchParams.get('returnDate') 
+                          ? `${new Date(searchParams.get('departureDate')!).toLocaleDateString()} - ${new Date(searchParams.get('returnDate')!).toLocaleDateString()}`
+                          : 'Select dates'
+                        }
                       </div>
                     </div>
                   </div>
-                  <p className="text-xs text-blue-200 mt-2">
-                    ✨ Hotel stays often included in treatment packages depending on the cost of your treatment
-                  </p>
+
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-yellow-400/20 rounded-full">
+                      <Users className="h-5 w-5 text-yellow-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-blue-200 uppercase tracking-wide">Travellers</div>
+                      <div className="font-semibold text-white">1 Person</div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
+
+              <Button 
+                onClick={() => setIsEditModalOpen(true)}
+                className="bg-yellow-400 text-blue-900 hover:bg-yellow-300 border-0 font-semibold px-6 py-3 shadow-lg"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Details
+              </Button>
             </div>
           </div>
+        </section>
+</div>
           {/* Cost Comparison Summary */}
           <div className="mb-8">
             <Card>
