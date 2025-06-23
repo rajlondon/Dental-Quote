@@ -385,7 +385,7 @@ const YourQuotePage: React.FC = () => {
     // Check if coming from search first
     const urlParams = new URLSearchParams(window.location.search);
     const treatment = urlParams.get('treatment');
-    
+
     if (treatment) {
       console.log('User came from search for:', treatment, '- starting with empty treatment plan');
       // Clear localStorage immediately
@@ -425,17 +425,17 @@ const YourQuotePage: React.FC = () => {
   // Function to save updated quote parameters
   const handleSaveQuoteParams = (params: QuoteParams) => {
     setQuoteParams(params);
-    
+
     // Update URL parameters to keep everything in sync
     const newSearchParams = new URLSearchParams(window.location.search);
     newSearchParams.set('treatment', params.treatment);
     newSearchParams.set('travelMonth', params.travelMonth);
     newSearchParams.set('budget', params.budget);
-    
+
     // Update the URL without causing a page reload
     const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
     window.history.replaceState({}, '', newUrl);
-    
+
     toast({
       title: "Quote Updated",
       description: "Your quote preferences have been updated.",
@@ -545,7 +545,7 @@ const YourQuotePage: React.FC = () => {
                   </div>
                   <p className="font-semibold">{searchParams.get('city') || 'Istanbul'}, Turkey</p>
                 </div>
-                
+
                 <div className="bg-white/10 rounded-lg p-3">
                   <div className="flex items-center gap-2 mb-1">
                     <Calendar className="h-4 w-4 text-blue-200" />
@@ -631,7 +631,16 @@ const YourQuotePage: React.FC = () => {
           <EditQuoteModal
             isOpen={isEditModalOpen}
             onClose={() => setIsEditModalOpen(false)}
-            initialParams={quoteParams}
+            initialData={{
+              treatment: quoteParams.treatment,
+              travelMonth: quoteParams.travelMonth,
+              budget: quoteParams.budget,
+              city: new URLSearchParams(window.location.search).get('city') || 'Istanbul',
+              origin: new URLSearchParams(window.location.search).get('origin') || 'uk',
+              departureDate: new URLSearchParams(window.location.search).get('departureDate') || '2025-06-23',
+              returnDate: new URLSearchParams(window.location.search).get('returnDate') || '2025-07-07',
+              travelDate: new URLSearchParams(window.location.search).get('travelDate') || '2025-06-23',
+            }}
             onSave={handleSaveQuoteParams}
           />
 
