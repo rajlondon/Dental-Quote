@@ -44,7 +44,8 @@ import {
   CheckCircle,
   HeartHandshake,
   Pencil,
-  Heart
+  Heart,
+  Users
 } from 'lucide-react';
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import EditQuoteModal from '@/components/EditQuoteModal';
