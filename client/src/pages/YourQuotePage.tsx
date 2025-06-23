@@ -425,6 +425,17 @@ const YourQuotePage: React.FC = () => {
   // Function to save updated quote parameters
   const handleSaveQuoteParams = (params: QuoteParams) => {
     setQuoteParams(params);
+    
+    // Update URL parameters to keep everything in sync
+    const newSearchParams = new URLSearchParams(window.location.search);
+    newSearchParams.set('treatment', params.treatment);
+    newSearchParams.set('travelMonth', params.travelMonth);
+    newSearchParams.set('budget', params.budget);
+    
+    // Update the URL without causing a page reload
+    const newUrl = `${window.location.pathname}?${newSearchParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+    
     toast({
       title: "Quote Updated",
       description: "Your quote preferences have been updated.",
