@@ -87,6 +87,7 @@ interface QuoteParams {
   treatment: string;
   travelMonth: string;
   budget: string;
+  travelers?: number;
 }
 
 interface TreatmentItem {
@@ -308,7 +309,8 @@ const YourQuotePage: React.FC = () => {
   const [quoteParams, setQuoteParams] = useState<QuoteParams>({
     treatment: searchParams.get('treatment') || 'Dental Implants',
     travelMonth: searchParams.get('travelMonth') || 'Flexible',
-    budget: searchParams.get('budget') || '£1,500 - £2,500'
+    budget: searchParams.get('budget') || '£1,500 - £2,500',
+    travelers: parseInt(searchParams.get('travelers') || '1')
   });
 
   // Special offer data (if passed from homepage or stored in sessionStorage)
@@ -564,8 +566,8 @@ const YourQuotePage: React.FC = () => {
                     <Users className="h-4 w-4 text-blue-200" />
                     <p className="text-xs font-medium text-blue-200">Travelers</p>
                   </div>
-                  <p className="font-semibold">1 Adult</p>
-                  <p className="text-xs text-blue-200">Add companions?</p>
+                  <p className="font-semibold">{quoteParams.travelers || 1} {(quoteParams.travelers || 1) === 1 ? 'Adult' : 'Adults'}</p>
+                  <p className="text-xs text-blue-200">{(quoteParams.travelers || 1) === 1 ? 'Add companions?' : 'Travel party'}</p>
                 </div>
 
                 <div className="bg-white/10 rounded-lg p-3">
@@ -640,6 +642,7 @@ const YourQuotePage: React.FC = () => {
               departureDate: new URLSearchParams(window.location.search).get('departureDate') || '2025-06-23',
               returnDate: new URLSearchParams(window.location.search).get('returnDate') || '2025-07-07',
               travelDate: new URLSearchParams(window.location.search).get('travelDate') || '2025-06-23',
+              travelers: quoteParams.travelers || 1,
             }}
             onSave={handleSaveQuoteParams}
           />

@@ -42,6 +42,7 @@ const formSchema = z.object({
   origin: z.string().min(1, 'Origin is required'),
   departureDate: z.date(),
   returnDate: z.date(),
+  travelers: z.number().min(1, 'At least 1 traveler required').default(1),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -55,6 +56,7 @@ export interface QuoteParams {
   departureDate: string;
   returnDate: string;
   travelDate: string;
+  travelers?: number;
 }
 
 interface EditQuoteModalProps {
@@ -129,6 +131,7 @@ export default function EditQuoteModal({
       origin: initialData.origin,
       departureDate: new Date(initialData.departureDate),
       returnDate: new Date(initialData.returnDate),
+      travelers: initialData.travelers || 1,
     },
   });
 
@@ -142,6 +145,7 @@ export default function EditQuoteModal({
       departureDate: data.departureDate.toISOString().split('T')[0],
       returnDate: data.returnDate.toISOString().split('T')[0],
       travelDate: data.departureDate.toISOString().split('T')[0], // Use departure date as travel date
+      travelers: data.travelers,
     };
     onSave(updatedParams);
     onClose();
@@ -239,29 +243,50 @@ export default function EditQuoteModal({
 
               <FormField
                 control={form.control}
-                name="travelMonth"
+                name="travelers"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Travel Month</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select month" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {TRAVEL_MONTH_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormLabel>Number of Travelers</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        min="1" 
+                        max="10" 
+                        {...field} 
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                        value={field.value}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+
+            <FormField
+              control={form.control}
+              name="travelMonth"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Travel Month</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select month" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {TRAVEL_MONTH_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <FormField
