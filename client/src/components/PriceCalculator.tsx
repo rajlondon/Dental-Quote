@@ -1427,6 +1427,84 @@ export default function PriceCalculator({
                                               </SelectItem>
                                             ))}
 
+                                          {/* PERIODONTICS & GUM TREATMENTS */}
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                            Gum Treatments & Periodontics
+                                          </SelectLabel>
+                                          {treatments
+                                            .filter(
+                                              (treatment) =>
+                                                treatment.treatment &&
+                                                (treatment.category === "PERIODONTICS" ||
+                                                  treatment.treatment.toLowerCase().includes("gum") ||
+                                                  treatment.treatment.toLowerCase().includes("periodontal") ||
+                                                  treatment.treatment.toLowerCase().includes("scaling")) &&
+                                                treatment.treatment.trim() !== "",
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem
+                                                key={`periodontics-${treatment.treatment}`}
+                                                value={treatment.treatment}
+                                                className="py-3 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">
+                                                    {formatTreatmentName(
+                                                      treatment.treatment,
+                                                    )}
+                                                  </span>
+                                                  {hasComplexTerms(
+                                                    treatment.treatment,
+                                                  ) && (
+                                                    <DentalTermTooltip
+                                                      treatment={
+                                                        treatment.treatment
+                                                      }
+                                                    />
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            ))}
+
+                                          {/* ORAL SURGERY */}
+                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                            Oral Surgery
+                                          </SelectLabel>
+                                          {treatments
+                                            .filter(
+                                              (treatment) =>
+                                                treatment.treatment &&
+                                                (treatment.category === "ORAL_SURGERY" ||
+                                                  treatment.treatment.toLowerCase().includes("bone graft") ||
+                                                  treatment.treatment.toLowerCase().includes("sinus lift") ||
+                                                  treatment.treatment.toLowerCase().includes("extraction")) &&
+                                                treatment.treatment.trim() !== "",
+                                            )
+                                            .map((treatment, idx) => (
+                                              <SelectItem
+                                                key={`oral-surgery-${treatment.treatment}`}
+                                                value={treatment.treatment}
+                                                className="py-3 cursor-pointer"
+                                              >
+                                                <div className="flex items-center w-full">
+                                                  <span className="flex-1">
+                                                    {formatTreatmentName(
+                                                      treatment.treatment,
+                                                    )}
+                                                  </span>
+                                                  {hasComplexTerms(
+                                                    treatment.treatment,
+                                                  ) && (
+                                                    <DentalTermTooltip
+                                                      treatment={
+                                                        treatment.treatment
+                                                      }
+                                                    />
+                                                  )}
+                                                </div>
+                                              </SelectItem>
+                                            ))}
+
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
                                           <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
                                             Dentures & Orthodontics

@@ -203,6 +203,122 @@ const ukPricesByTreatment: Record<string, UKPriceData> = {
       average: 95
     },
     average: 108
+  },
+
+  // All-on-4/6 Implant Solutions
+  "All-on-4 Implants (Full Arch)": {
+    london: {
+      min: 15000,
+      max: 25000,
+      average: 20000
+    },
+    manchester: {
+      min: 12000,
+      max: 20000,
+      average: 16000
+    },
+    average: 18000
+  },
+
+  "All-on-6 Implants (Full Arch)": {
+    london: {
+      min: 18000,
+      max: 30000,
+      average: 24000
+    },
+    manchester: {
+      min: 15000,
+      max: 25000,
+      average: 20000
+    },
+    average: 22000
+  },
+
+  // Gum Treatments
+  "Gum Disease Treatment": {
+    london: {
+      min: 200,
+      max: 500,
+      average: 350
+    },
+    manchester: {
+      min: 150,
+      max: 400,
+      average: 275
+    },
+    average: 313
+  },
+
+  "Deep Cleaning (Scaling & Root Planing)": {
+    london: {
+      min: 150,
+      max: 400,
+      average: 275
+    },
+    manchester: {
+      min: 120,
+      max: 300,
+      average: 210
+    },
+    average: 243
+  },
+
+  // Oral Surgery
+  "Bone Grafting": {
+    london: {
+      min: 800,
+      max: 1500,
+      average: 1150
+    },
+    manchester: {
+      min: 600,
+      max: 1200,
+      average: 900
+    },
+    average: 1025
+  },
+
+  "Sinus Lift": {
+    london: {
+      min: 1200,
+      max: 2500,
+      average: 1850
+    },
+    manchester: {
+      min: 1000,
+      max: 2000,
+      average: 1500
+    },
+    average: 1675
+  },
+
+  // Advanced Cosmetic
+  "Smile Makeover (Complete)": {
+    london: {
+      min: 8000,
+      max: 15000,
+      average: 11500
+    },
+    manchester: {
+      min: 6000,
+      max: 12000,
+      average: 9000
+    },
+    average: 10250
+  },
+
+  "Composite Bonding": {
+    london: {
+      min: 200,
+      max: 400,
+      average: 300
+    },
+    manchester: {
+      min: 150,
+      max: 350,
+      average: 250
+    },
+    average: 275
   }
 };
 
