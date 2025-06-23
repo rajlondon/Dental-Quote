@@ -49,6 +49,7 @@ import {
 import { getUKPriceForIstanbulTreatment } from '@/services/ukDentalPriceService';
 import EditQuoteModal from '@/components/EditQuoteModal';
 import TreatmentPlanBuilder from '@/components/TreatmentPlanBuilder';
+import TreatmentGuide from '@/components/TreatmentGuide';
 
 // Types
 interface ClinicInfo {
@@ -576,6 +577,9 @@ const YourQuotePage: React.FC = () => {
               </CardContent>
             </Card>
           </div>
+
+          {/* Dental Treatment Guide */}
+          <TreatmentGuide />
 
           {/* Edit Quote Modal */}
           <EditQuoteModal
