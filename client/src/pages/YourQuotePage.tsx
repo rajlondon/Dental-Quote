@@ -506,54 +506,88 @@ const YourQuotePage: React.FC = () => {
             <p className="text-gray-600 mb-6 text-lg">Let's create your personalized dental treatment quote</p>
           )}
 
-          {/* Quote Parameters Summary */}
+          {/* Quote Preferences Summary */}
           <div className="mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg">Quote Preferences</CardTitle>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleEditQuote}
-                    className="flex items-center gap-2 text-xs h-8"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </Button>
+            <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-xl font-semibold mb-1">Your Travel & Treatment Plan</h3>
+                  <p className="text-blue-100 text-sm">Complete dental care with premium travel experience</p>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Treatment</p>
-                    <p className="font-medium">{quoteParams.treatment}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleEditQuote}
+                  className="flex items-center gap-2 text-xs h-8 bg-white/10 border-white/20 text-white hover:bg-white/20"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Edit
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <MapPin className="h-4 w-4 text-blue-200" />
+                    <p className="text-xs font-medium text-blue-200">Destination</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Travel Month</p>
-                    <p className="font-medium">{quoteParams.travelMonth}</p>
+                  <p className="font-semibold">{searchParams.get('city') || 'Istanbul'}, Turkey</p>
+                </div>
+                
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="h-4 w-4 text-blue-200" />
+                    <p className="text-xs font-medium text-blue-200">Travel Dates</p>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-500">Budget Range</p>
-                    <p className="font-medium">{quoteParams.budget}</p>
-                  </div>
+                  <p className="font-semibold text-sm">
+                    {searchParams.get('departureDate') ? 
+                      `${new Date(searchParams.get('departureDate') || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - ${new Date(searchParams.get('returnDate') || '').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` :
+                      quoteParams.travelMonth
+                    }
+                  </p>
                 </div>
 
-                {treatmentItems.length > 0 && (
-                  <div className="flex justify-end mt-4">
-                    <div className="bg-blue-50 py-2 px-4 rounded-md">
-                      <div className="flex justify-between gap-4 text-sm">
-                        <span className="text-gray-700">Estimated Istanbul Price:</span>
-                        <span className="font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</span>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">
-                        Hotel stays often included in treatment packages depending on the cost of your treatment.
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Users className="h-4 w-4 text-blue-200" />
+                    <p className="text-xs font-medium text-blue-200">Travelers</p>
+                  </div>
+                  <p className="font-semibold">1 Adult</p>
+                  <p className="text-xs text-blue-200">Add companions?</p>
+                </div>
+
+                <div className="bg-white/10 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Heart className="h-4 w-4 text-blue-200" />
+                    <p className="text-xs font-medium text-blue-200">Treatment</p>
+                  </div>
+                  <p className="font-semibold text-sm">{quoteParams.treatment}</p>
+                  <p className="text-xs text-blue-200">{quoteParams.budget}</p>
+                </div>
+              </div>
+
+              {treatmentItems.length > 0 && (
+                <div className="bg-white/10 rounded-lg p-4">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-medium text-blue-200">Estimated Istanbul Price</p>
+                      <p className="text-2xl font-bold">£{formatCurrency(Math.round(totalGBP * 0.35))}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-blue-200 mb-1">Additional Services Available:</p>
+                      <div className="flex flex-wrap gap-1">
+                        <span className="bg-white/20 px-2 py-1 rounded text-xs">Hotel Packages</span>
+                        <span className="bg-white/20 px-2 py-1 rounded text-xs">Airport Transfers</span>
+                        <span className="bg-white/20 px-2 py-1 rounded text-xs">City Tours</span>
                       </div>
                     </div>
                   </div>
-                )}
-              </CardContent>
-            </Card>
+                  <p className="text-xs text-blue-200 mt-2">
+                    ✨ Hotel stays often included in treatment packages depending on the cost of your treatment
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
           {/* Cost Comparison Summary */}
           <div className="mb-8">
