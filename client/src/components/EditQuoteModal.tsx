@@ -58,8 +58,8 @@ export interface QuoteParams {
 }
 
 interface EditQuoteModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  isOpen: boolean;
+  onClose: () => void;
   initialData: QuoteParams;
   onSave: (data: QuoteParams) => void;
 }
@@ -114,8 +114,8 @@ const ORIGIN_OPTIONS = [
 ];
 
 export default function EditQuoteModal({
-  open,
-  onOpenChange,
+  isOpen,
+  onClose,
   initialData,
   onSave,
 }: EditQuoteModalProps) {
@@ -144,11 +144,11 @@ export default function EditQuoteModal({
       travelDate: data.departureDate.toISOString().split('T')[0], // Use departure date as travel date
     };
     onSave(updatedParams);
-    onOpenChange(false);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Your Quote</DialogTitle>
@@ -375,7 +375,7 @@ export default function EditQuoteModal({
             />
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
               <Button type="submit">Update Quote</Button>
