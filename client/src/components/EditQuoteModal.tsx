@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,20 +27,11 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 
 const formSchema = z.object({
   treatment: z.string().min(1, 'Treatment is required'),
   travelMonth: z.string().min(1, 'Travel month is required'),
   budget: z.string().min(1, 'Budget is required'),
-  city: z.string().min(1, 'City is required'),
-  origin: z.string().min(1, 'Origin is required'),
-  departureDate: z.date(),
-  returnDate: z.date(),
   travelers: z.number().min(1, 'At least 1 traveler required').default(1),
 });
 
@@ -51,11 +41,6 @@ export interface QuoteParams {
   treatment: string;
   travelMonth: string;
   budget: string;
-  city: string;
-  origin: string;
-  departureDate: string;
-  returnDate: string;
-  travelDate: string;
   travelers?: number;
 }
 
@@ -67,13 +52,13 @@ interface EditQuoteModalProps {
 }
 
 const TREATMENT_OPTIONS = [
-  { value: 'dental-implants', label: 'Dental Implants' },
-  { value: 'veneers', label: 'Veneers' },
-  { value: 'crowns', label: 'Crowns' },
-  { value: 'hollywood-smile', label: 'Hollywood Smile' },
-  { value: 'teeth-whitening', label: 'Teeth Whitening' },
-  { value: 'orthodontics', label: 'Orthodontics' },
-  { value: 'full-mouth-restoration', label: 'Full Mouth Restoration' },
+  { value: 'Dental Implants', label: 'Dental Implants' },
+  { value: 'Veneers', label: 'Veneers' },
+  { value: 'Crowns', label: 'Crowns' },
+  { value: 'Hollywood Smile', label: 'Hollywood Smile' },
+  { value: 'Teeth Whitening', label: 'Teeth Whitening' },
+  { value: 'Orthodontics', label: 'Orthodontics' },
+  { value: 'Full Mouth Restoration', label: 'Full Mouth Restoration' },
 ];
 
 const TRAVEL_MONTH_OPTIONS = [
@@ -93,26 +78,11 @@ const TRAVEL_MONTH_OPTIONS = [
 ];
 
 const BUDGET_OPTIONS = [
-  { value: '1000-3000', label: '£1,000 - £3,000' },
-  { value: '3000-5000', label: '£3,000 - £5,000' },
-  { value: '5000-8000', label: '£5,000 - £8,000' },
-  { value: '8000-12000', label: '£8,000 - £12,000' },
-  { value: '12000+', label: '£12,000+' },
-];
-
-const CITY_OPTIONS = [
-  { value: 'Istanbul', label: 'Istanbul' },
-  { value: 'Ankara', label: 'Ankara' },
-  { value: 'Antalya', label: 'Antalya' },
-];
-
-const ORIGIN_OPTIONS = [
-  { value: 'uk', label: 'United Kingdom' },
-  { value: 'germany', label: 'Germany' },
-  { value: 'france', label: 'France' },
-  { value: 'netherlands', label: 'Netherlands' },
-  { value: 'belgium', label: 'Belgium' },
-  { value: 'ireland', label: 'Ireland' },
+  { value: '£1,000 - £3,000', label: '£1,000 - £3,000' },
+  { value: '£3,000 - £5,000', label: '£3,000 - £5,000' },
+  { value: '£5,000 - £8,000', label: '£5,000 - £8,000' },
+  { value: '£8,000 - £12,000', label: '£8,000 - £12,000' },
+  { value: '£12,000+', label: '£12,000+' },
 ];
 
 export default function EditQuoteModal({
@@ -127,10 +97,6 @@ export default function EditQuoteModal({
       treatment: initialData.treatment,
       travelMonth: initialData.travelMonth,
       budget: initialData.budget,
-      city: initialData.city,
-      origin: initialData.origin,
-      departureDate: new Date(initialData.departureDate),
-      returnDate: new Date(initialData.returnDate),
       travelers: initialData.travelers || 1,
     },
   });
@@ -140,11 +106,6 @@ export default function EditQuoteModal({
       treatment: data.treatment,
       travelMonth: data.travelMonth,
       budget: data.budget,
-      city: data.city,
-      origin: data.origin,
-      departureDate: data.departureDate.toISOString().split('T')[0],
-      returnDate: data.returnDate.toISOString().split('T')[0],
-      travelDate: data.departureDate.toISOString().split('T')[0], // Use departure date as travel date
       travelers: data.travelers,
     };
     onSave(updatedParams);
@@ -153,122 +114,47 @@ export default function EditQuoteModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
           <DialogTitle>Edit Your Quote</DialogTitle>
           <DialogDescription>
-            Update your treatment preferences and travel details. We'll recalculate your options.
+            Update your treatment preferences and travel details.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="treatment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Treatment</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select treatment" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {TREATMENT_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="city"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Destination City</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select city" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CITY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="origin"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Origin Country</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select origin" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {ORIGIN_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="travelers"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Number of Travelers</FormLabel>
+            <FormField
+              control={form.control}
+              name="treatment"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Treatment</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        max="10" 
-                        {...field} 
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
-                        value={field.value}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select treatment" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      {TREATMENT_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
               name="travelMonth"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Preferred Travel Month</FormLabel>
+                  <FormLabel>Travel Month</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -287,92 +173,6 @@ export default function EditQuoteModal({
                 </FormItem>
               )}
             />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="departureDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Departure Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="returnDate"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Return Date</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                            )}
-                          >
-                            {field.value ? (
-                              format(field.value, "PPP")
-                            ) : (
-                              <span>Pick a date</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          disabled={(date) =>
-                            date < new Date() || date < new Date("1900-01-01")
-                          }
-                          initialFocus
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
             <FormField
               control={form.control}
@@ -394,6 +194,27 @@ export default function EditQuoteModal({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="travelers"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Number of Travelers</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="1" 
+                      max="10" 
+                      {...field} 
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      value={field.value}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}

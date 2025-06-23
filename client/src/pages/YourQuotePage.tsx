@@ -637,11 +637,6 @@ const YourQuotePage: React.FC = () => {
               treatment: quoteParams.treatment,
               travelMonth: quoteParams.travelMonth,
               budget: quoteParams.budget,
-              city: new URLSearchParams(window.location.search).get('city') || 'Istanbul',
-              origin: new URLSearchParams(window.location.search).get('origin') || 'uk',
-              departureDate: new URLSearchParams(window.location.search).get('departureDate') || '2025-06-23',
-              returnDate: new URLSearchParams(window.location.search).get('returnDate') || '2025-07-07',
-              travelDate: new URLSearchParams(window.location.search).get('travelDate') || '2025-06-23',
               travelers: quoteParams.travelers || 1,
             }}
             onSave={handleSaveQuoteParams}
