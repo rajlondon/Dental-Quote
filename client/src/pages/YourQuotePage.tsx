@@ -235,6 +235,196 @@ const CLINIC_DATA: ClinicInfo[] = [
   }
 ];
 
+// Patient Preferences Section Component
+const PatientPreferencesSection: React.FC = () => {
+  const [preferences, setPreferences] = useState<{
+    budgetPriority: 'low' | 'medium' | 'high' | null;
+    priority: 'cost' | 'quality' | 'location' | null;
+    holidayInterest: boolean;
+  }>(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return {
+      budgetPriority: urlParams.get('budgetPriority') as 'low' | 'medium' | 'high' || null,
+      priority: urlParams.get('priority') as 'cost' | 'quality' | 'location' || null,
+      holidayInterest: urlParams.get('holidayInterest') === 'true'
+    };
+  });
+
+  const handlePreferenceChange = (key: string, value: any) => {
+    const newPreferences = { ...preferences, [key]: value };
+    setPreferences(newPreferences);
+
+    // Update URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    if (value === null || value === false) {
+      urlParams.delete(key);
+    } else {
+      urlParams.set(key, value.toString());
+    }
+    const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  const hasAnyPreferences = preferences.budgetPriority || preferences.priority || preferences.holidayInterest;
+
+  return (
+    <div className="mb-8">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <HeartHandshake className="h-5 w-5 text-blue-600" />
+            Help Us Find Your Perfect Clinic
+          </CardTitle>
+          <CardDescription>
+            Tell us what matters most to you so we can recommend the best clinics for your needs
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Budget Priority Selection */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-3 block">
+              What's your budget range?
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { value: 'low', label: 'Budget-friendly', desc: 'Under £2000', icon: '💰' },
+                { value: 'medium', label: 'Mid-range', desc: '£2000-3000', icon: '🎯' },
+                { value: 'high', label: 'Premium', desc: '£3000+', icon: '👑' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handlePreferenceChange('budgetPriority', 
+                    preferences.budgetPriority === option.value ? null : option.value)}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    preferences.budgetPriority === option.value
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{option.icon}</span>
+                    <span className="font-medium">{option.label}</span>
+                  </div>
+                  <p className="text-sm text-gray-600">{option.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Priority Selection */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-3 block">
+              What's most important to you?
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {[
+                { value: 'cost', label: 'Best Price', desc: 'Most affordable options', icon: '💸' },
+                { value: 'quality', label: 'Highest Quality', desc: 'Premium materials & care', icon: '🏆' },
+                { value: 'location', label: 'Great Location', desc: 'Central Istanbul areas', icon: '🌅' }
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => handlePreferenceChange('priority', 
+                    preferences.priority === option.value ? null : option.value)}
+                  className={`p-4 rounded-lg border-2 text-left transition-all ${
+                    preferences.priority === option.value
+                      ? 'border-green-500 bg-green-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-lg">{option.icon}</span>
+                    <span className="font-medium">{option.label}</span>
+                  </div>
+                  <p className="text-sm text-gray-600">{option.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Holiday Interest Toggle */}
+          <div>
+            <label className="text-sm font-medium text-gray-700 mb-3 block">
+              Travel preferences
+            </label>
+            <button
+              onClick={() => handlePreferenceChange('holidayInterest', !preferences.holidayInterest)}
+              className={`p-4 rounded-lg border-2 text-left w-full transition-all ${
+                preferences.holidayInterest
+                  ? 'border-yellow-500 bg-yellow-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🏖️</span>
+                  <span className="font-medium">I want to combine treatment with a Turkish holiday</span>
+                </div>
+                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
+                  preferences.holidayInterest 
+                    ? 'border-yellow-500 bg-yellow-500' 
+                    : 'border-gray-300'
+                }`}>
+                  {preferences.holidayInterest && <Check className="h-3 w-3 text-white" />}
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                We'll recommend clinics near tourist attractions and include sightseeing options
+              </p>
+            </button>
+          </div>
+
+          {/* Smart Matching Status */}
+          {hasAnyPreferences && (
+            <div className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="p-1 bg-blue-100 rounded-full">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                </div>
+                <p className="text-sm font-medium text-blue-800">Smart Matching Active</p>
+              </div>
+              <p className="text-xs text-blue-600">
+                Great! We'll prioritize clinics that match your preferences when you view clinic options.
+              </p>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {preferences.budgetPriority && (
+                  <Badge className="bg-blue-100 text-blue-800">
+                    {preferences.budgetPriority === 'low' && '💰 Budget-friendly'}
+                    {preferences.budgetPriority === 'medium' && '🎯 Mid-range'}
+                    {preferences.budgetPriority === 'high' && '👑 Premium'}
+                  </Badge>
+                )}
+                {preferences.priority && (
+                  <Badge className="bg-green-100 text-green-800">
+                    {preferences.priority === 'cost' && '💸 Best price'}
+                    {preferences.priority === 'quality' && '🏆 Highest quality'}
+                    {preferences.priority === 'location' && '🌅 Great location'}
+                  </Badge>
+                )}
+                {preferences.holidayInterest && (
+                  <Badge className="bg-yellow-100 text-yellow-800">
+                    🏖️ Holiday combo
+                  </Badge>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Help Text */}
+          {!hasAnyPreferences && (
+            <div className="text-center p-6 bg-gray-50 rounded-lg">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-2" />
+              <p className="text-sm text-gray-600">
+                Select your preferences above to enable smart clinic matching
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
 // Helper components
 const RatingStars: React.FC<{ rating: number }> = ({ rating }) => {
   const fullStars = Math.floor(rating);
@@ -590,80 +780,8 @@ const YourQuotePage: React.FC = () => {
           </div>
         </section>
 </div>
-          {/* Patient Preferences Summary */}
-          {(searchParams.get('budgetPriority') || searchParams.get('priority') || searchParams.get('holidayInterest')) && (
-            <div className="mb-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <HeartHandshake className="h-5 w-5 text-blue-600" />
-                    Your Treatment Preferences
-                  </CardTitle>
-                  <CardDescription>We'll use these preferences to recommend the best clinics for you</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {searchParams.get('budgetPriority') && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                        <div className="p-2 bg-blue-100 rounded-full">
-                          <PoundSterling className="h-4 w-4 text-blue-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-blue-800">Budget Range</p>
-                          <p className="text-sm text-blue-600">
-                            {searchParams.get('budgetPriority') === 'low' && '💰 Budget-friendly (Under £2000)'}
-                            {searchParams.get('budgetPriority') === 'medium' && '🎯 Mid-range (£2000-3000)'}
-                            {searchParams.get('budgetPriority') === 'high' && '👑 Premium (£3000+)'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {searchParams.get('priority') && (
-                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
-                        <div className="p-2 bg-green-100 rounded-full">
-                          <Star className="h-4 w-4 text-green-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-green-800">Priority</p>
-                          <p className="text-sm text-green-600">
-                            {searchParams.get('priority') === 'cost' && '💸 Best price'}
-                            {searchParams.get('priority') === 'quality' && '🏆 Highest quality'}
-                            {searchParams.get('priority') === 'location' && '🌅 Great location'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {searchParams.get('holidayInterest') === 'true' && (
-                      <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
-                        <div className="p-2 bg-yellow-100 rounded-full">
-                          <Sparkles className="h-4 w-4 text-yellow-600" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-yellow-800">Holiday Interest</p>
-                          <p className="text-sm text-yellow-600">🏖️ Combining with Turkish holiday</p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Smart matching indicator */}
-                  <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-                    <div className="flex items-center gap-2">
-                      <div className="p-1 bg-blue-100 rounded-full">
-                        <Check className="h-3 w-3 text-blue-600" />
-                      </div>
-                      <p className="text-sm font-medium text-blue-800">Smart Matching Active</p>
-                    </div>
-                    <p className="text-xs text-blue-600 mt-1">
-                      We'll prioritize clinics that match your preferences when you continue to clinic selection
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
+          {/* Patient Preferences Selection */}
+          <PatientPreferencesSection />
 
           {/* Cost Comparison Summary */}
           <div className="mb-8">
