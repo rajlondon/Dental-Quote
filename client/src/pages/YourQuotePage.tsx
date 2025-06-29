@@ -287,9 +287,9 @@ const PatientPreferencesSection: React.FC = () => {
             </label>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               {[
-                { value: 'low', label: 'Budget-friendly', desc: 'Under £2000', icon: '💰' },
-                { value: 'medium', label: 'Mid-range', desc: '£2000-3000', icon: '🎯' },
-                { value: 'high', label: 'Premium', desc: '£3000+', icon: '👑' }
+                { value: 'low', label: 'Budget-friendly', desc: 'Most affordable options', icon: '💰' },
+                { value: 'medium', label: 'Mid-range', desc: 'Quality meets value', icon: '🎯' },
+                { value: 'high', label: 'Premium', desc: 'Highest quality materials', icon: '👑' }
               ].map((option) => (
                 <button
                   key={option.value}
