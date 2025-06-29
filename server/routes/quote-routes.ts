@@ -434,6 +434,126 @@ router.post("/:id/versions", isAuthenticated, async (req, res, next) => {
   }
 });
 
+// Smart assign quote to best matching clinics (admin only)
+router.post("/:id/smart-assign", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
+  try {
+    const quoteId = parseInt(req.params.id);
+    
+    console.log(`[DEBUG] Smart assign request for quote ID: ${quoteId}`);
+    
+    if (isNaN(quoteId)) {
+      throw new BadRequestError("Invalid quote ID");
+    }
+    
+    const quote = await storage.getQuoteRequest(quoteId);
+    
+    if (!quote) {
+      throw new NotFoundError("Quote request not found");
+    }
+    
+    console.log(`[DEBUG] Found quote: ${quote.treatment}`);
+    
+    // Get all available clinics
+    const allClinics = await storage.getAllClinics();
+    
+    if (!allClinics || allClinics.length === 0) {
+      throw new BadRequestError("No clinics available for assignment");
+    }
+    
+    // Prepare quote request for engine
+    const quoteRequest = {
+      id: quote.id.toString(),
+      treatments: [quote.treatment],
+      patientPreferences: quote.patientPreferences ? JSON.parse(quote.patientPreferences) : undefined
+    };
+    
+    // Enhanced clinic data (simplified mapping)
+    const enhancedClinics = allClinics.map(clinic => ({
+      id: clinic.id.toString(),
+      name: clinic.name,
+      location: `${clinic.city}, ${clinic.country}`,
+      rating: clinic.rating || 4.0,
+      tier: clinic.tier || 'mid',
+      specialties: clinic.specialties || ['General Dentistry'],
+      features: clinic.features || [],
+      priceGBP: clinic.priceGBP || 2000,
+      distanceFromBeach: clinic.distanceFromBeach || 20,
+      touristArea: clinic.touristArea || false,
+      packages: {
+        budget: (clinic.tier || 'mid') === 'affordable',
+        premium: (clinic.tier || 'mid') === 'premium',
+        holiday: clinic.touristArea || false
+      }
+    }));
+    
+    // Import and use QuoteEngine (dynamic import to avoid module issues)
+    const { QuoteEngine } = await import('../../../client/src/services/quoteEngine');
+    
+    const recommendedClinics = QuoteEngine.assignBestClinics(quoteRequest, enhancedClinics);
+    
+    console.log(`[DEBUG] Recommended ${recommendedClinics.length} clinics for quote ${quoteId}`);
+    
+    // Auto-assign to the top clinic
+    if (recommendedClinics.length > 0) {
+      const topClinic = recommendedClinics[0];
+      const clinicId = parseInt(topClinic.id);
+      
+      const updatedQuote = await storage.updateQuoteRequest(quoteId, {
+        selectedClinicId: clinicId,
+        status: "assigned",
+        smartAssignmentData: JSON.stringify({
+          recommendations: recommendedClinics,
+          assignedAt: new Date().toISOString(),
+          assignmentReason: "Smart algorithm selection"
+        })
+      });
+      
+      // Create notification for clinic staff
+      const clinicStaff = await storage.getUsersByClinicId(clinicId);
+      
+      for (const staffMember of clinicStaff) {
+        try {
+          await storage.createNotification({
+            title: "Smart Quote Assignment",
+            message: `A quote has been automatically assigned to your clinic based on patient preferences`,
+            category: "treatment",
+            priority: "medium",
+            target_type: "clinic",
+            target_id: String(staffMember.id),
+            source_type: "admin",
+            source_id: String(req.user!.id),
+            action_url: `/clinic/quotes/${quoteId}`,
+            status: "unread"
+          });
+        } catch (error) {
+          console.error(`Failed to create notification for user ${staffMember.id}:`, error);
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: "Quote smart assigned successfully",
+        data: {
+          assignedClinic: topClinic,
+          allRecommendations: recommendedClinics,
+          updatedQuote
+        }
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "No suitable clinics found for this quote",
+        data: {
+          recommendations: [],
+          quote
+        }
+      });
+    }
+  } catch (error) {
+    next(error);
+  }
+});
+
 // Assign a quote to a clinic (admin only)
 router.post("/:id/assign-clinic", isAuthenticated, ensureRole("admin"), async (req, res, next) => {
   try {

@@ -160,6 +160,35 @@ export default function AdminAssignQuotePage() {
     }
   };
 
+  const handleSmartAssign = async () => {
+    try {
+      const response = await apiRequest("POST", `/api/quotes/${quoteId}/smart-assign`);
+      const result = await response.json();
+      
+      if (result.success) {
+        toast({
+          title: "Smart Assignment Complete",
+          description: `Quote assigned to ${result.data.assignedClinic.name} based on patient preferences.`,
+        });
+        
+        // Redirect back to the quote details
+        setLocation(`/admin/quotes/${quoteId}`);
+      } else {
+        toast({
+          title: "No Match Found",
+          description: result.message || "No suitable clinics found for this quote.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to perform smart assignment.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleBack = () => {
     setLocation(`/admin/quotes/${quoteId}`);
   };
@@ -212,14 +241,26 @@ export default function AdminAssignQuotePage() {
           </CardContent>
         </Card>
         
-        <div className="flex items-center relative max-w-md">
-          <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
-          <Input
-            placeholder="Search clinics by name, location, or specialties..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center relative max-w-md flex-1">
+            <Search className="h-4 w-4 absolute left-3 top-3 text-muted-foreground" />
+            <Input
+              placeholder="Search clinics by name, location, or specialties..."
+              className="pl-10"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <Button
+            onClick={handleSmartAssign}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white flex items-center gap-2 px-6"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Smart Assign
+          </Button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

@@ -55,7 +55,7 @@ export interface QuoteRequest {
   patientCountry?: string;
   patientCity?: string;
   patientLanguage?: string;
-  
+
   // Special offer information
   specialOffer?: {
     id: string;
@@ -67,7 +67,7 @@ export interface QuoteRequest {
     expiryDate?: string;
     terms?: string;
   };
-  
+
   // Relations (populated on demand)
   user?: User;
   selectedClinic?: Clinic;
@@ -81,7 +81,7 @@ export interface QuoteVersion {
   createdAt: string;
   status: "draft" | "sent" | "accepted" | "rejected";
   quoteData: QuoteData;
-  
+
   // Relations (populated on demand)
   createdBy?: User;
 }
@@ -125,4 +125,20 @@ export interface QuoteTreatment {
   total: number;
   teethNumbers?: number[]; // For dental treatments
   category?: string;
+}
+
+export interface ClinicInfo {
+  id: string;
+  name: string;
+  tier: "affordable" | "mid" | "premium";
+  priceGBP: number;
+  priceUSD: number;
+  location: string;
+  rating: number;
+  guarantee: string;
+  materials: string[];
+  conciergeType: "ids" | "clinic";
+  specialties?: string[];
+  features: string[];
+  description: string;
 }

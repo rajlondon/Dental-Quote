@@ -44,6 +44,9 @@ const formSchema = z.object({
   phone: z.string().min(1, "Phone number is required")
     .regex(/^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/, "Please enter a valid phone number"),
   budget: z.string().optional(),
+  budgetPriority: z.enum(["low", "medium", "high"]).optional(),
+  priority: z.enum(["cost", "quality", "location"]).optional(),
+  holidayInterest: z.boolean().default(false),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   needsAccommodation: z.boolean().default(false),
@@ -108,6 +111,9 @@ const QuoteForm: React.FC = () => {
       email: "",
       phone: "",
       budget: "",
+      budgetPriority: undefined,
+      priority: undefined,
+      holidayInterest: false,
       startDate: undefined,
       endDate: undefined,
       needsAccommodation: false,
@@ -245,6 +251,9 @@ const QuoteForm: React.FC = () => {
                         treatment: `${data.treatmentType} - ${data.specificTreatment}`,
                         otherTreatment: data.otherTreatment || 'Not specified',
                         budget: data.budget || 'Not specified',
+                        budgetPriority: data.budgetPriority || 'Not specified',
+                        priority: data.priority || 'Not specified',
+                        holidayInterest: data.holidayInterest ? "Yes" : "No",
                         dates: data.startDate && data.endDate 
                           ? `${format(data.startDate, 'MMM dd, yyyy')} - ${format(data.endDate, 'MMM dd, yyyy')}` 
                           : 'No dates selected',
@@ -522,6 +531,80 @@ const QuoteForm: React.FC = () => {
                       </FormItem>
                     )}
                   />
+                  
+                  {/* Patient Preferences Section */}
+                  <div className="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="font-semibold text-blue-800">Help us find your perfect clinic</h3>
+                    <p className="text-sm text-blue-600">These preferences help us recommend the best clinics for you</p>
+                    
+                    <FormField
+                      control={form.control}
+                      name="budgetPriority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Budget Range</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your budget preference" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="low">💰 Budget-friendly (Under £2000)</SelectItem>
+                              <SelectItem value="medium">🎯 Mid-range (£2000-3000)</SelectItem>
+                              <SelectItem value="high">👑 Premium (£3000+)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="priority"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>What's most important to you?</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select your priority" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="cost">💸 Best price</SelectItem>
+                              <SelectItem value="quality">🏆 Highest quality</SelectItem>
+                              <SelectItem value="location">🌅 Great location</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="holidayInterest"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0 py-2">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm text-blue-700">
+                              🏖️ I'm interested in combining my treatment with a Turkish holiday
+                            </FormLabel>
+                            <p className="text-xs text-blue-600">We'll recommend clinics near tourist areas and beaches</p>
+                            <FormMessage />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   
                   {/* Date Range Selection */}
                   <div className="space-y-2">
