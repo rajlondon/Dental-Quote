@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -32,6 +32,7 @@ import {
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
 import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import { QuoteEngine, enhanceClinicData, type QuoteRequest, type EnhancedClinic } from '@/services/quoteEngine';
 
 interface TreatmentItem {
   id: string;
@@ -378,6 +379,102 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     );
   }
 
+  // Smart matching state
+  const [isSmartMatchEnabled, setIsSmartMatchEnabled] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('smartMatch') === 'true';
+  });
+
+  // Clinics state with smart matching
+  const [clinics, setClinics] = useState(() => {
+    let clinicsList = [...clinicsData];
+
+    // Apply smart matching if enabled and we have preferences
+    if (isSmartMatchEnabled && activeTreatmentPlan.length > 0) {
+      const treatmentPlanData = localStorage.getItem('treatmentPlanData');
+      if (treatmentPlanData) {
+        try {
+          const parsedData = JSON.parse(treatmentPlanData);
+          if (parsedData.patientPreferences) {
+            // Create a quote request for the smart engine
+            const quoteRequest: QuoteRequest = {
+              id: 'temp-' + Date.now(),
+              treatments: activeTreatmentPlan.map(item => item.name),
+              patientPreferences: parsedData.patientPreferences
+            };
+
+            // Enhance clinic data for the engine
+            const enhancedClinics: EnhancedClinic[] = clinicsList.map(clinic => enhanceClinicData({
+              ...clinic,
+              specialties: getClinicSpecialties(clinic.id)
+            }));
+
+            // Get smart-matched clinics
+            const smartMatched = QuoteEngine.assignBestClinics(quoteRequest, enhancedClinics);
+
+            // Convert back to ClinicInfo format and maintain all original clinics
+            const smartMatchedIds = new Set(smartMatched.map(c => c.id));
+            clinicsList = [
+              ...clinicsList.filter(c => smartMatchedIds.has(c.id)),
+              ...clinicsList.filter(c => !smartMatchedIds.has(c.id))
+            ];
+
+            console.log('Smart matching applied:', {
+              preferences: parsedData.patientPreferences,
+              matchedClinics: smartMatched.length,
+              topMatch: smartMatched[0]?.name
+            });
+          }
+        } catch (error) {
+          console.error('Error applying smart matching:', error);
+        }
+      }
+    }
+
+    // Apply special offer sorting if exists
+    // if (specialOffer && specialOffer.clinicId) {
+    //   clinicsList = clinicsList.sort((a, b) => {
+    //     if (a.id === specialOffer.clinicId) return -1;
+    //     if (b.id === specialOffer.clinicId) return 1;
+    //     // If smart matching is enabled, maintain smart order for non-offer clinics
+    //     if (isSmartMatchEnabled) return 0;
+    //     if (a.tier === 'premium' && b.tier !== 'premium') return -1;
+    //     if (a.tier !== 'premium' && b.tier === 'premium') return 1;
+    //     return a.priceGBP - b.priceGBP;
+    //   });
+
+    //   clinicsList = clinicsList.map(clinic => {
+    //     if (clinic.id === specialOffer.clinicId) {
+    //       return {
+    //         ...clinic,
+    //         hasSpecialOffer: true,
+    //         specialOfferDetails: {
+    //           id: specialOffer.id,
+    //           title: specialOffer.title,
+    //           discountValue: specialOffer.discountValue,
+    //           discountType: specialOffer.discountType
+    //         }
+    //       };
+    //     }
+    //     return clinic;
+    //   });
+    // }
+
+    return clinicsList;
+  });
+
+  // Helper function to get clinic specialties
+  const getClinicSpecialties = (clinicId: string): string[] => {
+    const specialtyMap: Record<string, string[]> = {
+      'istanbul-dental-care': ['General Dentistry', 'Cosmetic Dentistry', 'Implant Dentistry'],
+      'dentgroup-istanbul': ['Implant Dentistry', 'Cosmetic Dentistry', 'Orthodontics'],
+      'maltepe-dental-clinic': ['Implant Dentistry', 'Cosmetic Dentistry', 'Oral Surgery', 'Full Mouth Reconstruction'],
+      'dentakay-clinic': ['Cosmetic Dentistry', 'Implant Dentistry', 'Orthodontics', 'Full Mouth Reconstruction'],
+      'crown-dental': ['Cosmetic Dentistry', 'General Dentistry', 'Implant Dentistry']
+    };
+    return specialtyMap[clinicId] || ['General Dentistry'];
+  };
+
   return (
     <>
       <ConsistentPageHeader
@@ -429,10 +526,73 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               <span>£{Math.round(ukTotal)}</span>
             </div>
           </div>
+           {/* Smart Matching Status */}
+        {isSmartMatchEnabled && (
+          <div className="mb-6">
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-full">
+                    <Sparkles className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-800">Smart Matching Active</h3>
+                    <p className="text-sm text-blue-600">
+                      Clinics are ranked based on your preferences. Top matches appear first.
+                    </p>
+                  </div>
+                  <div className="ml-auto">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsSmartMatchEnabled(false)}
+                      className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                    >
+                      View All Clinics
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Quick Filter Options */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-3">
+            {Object.entries(QuoteEngine.getFilterOptions()).map(([key, option]) => (
+              <Button
+                key={key}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-sm"
+                onClick={() => {
+                  // Apply quick filter
+                  const filtered = option.filter(clinicsData.map(c => enhanceClinicData(c)));
+                  setClinics(filtered.map(ec => clinicsData.find(c => c.id === ec.id)!).filter(Boolean));
+                }}
+              >
+                <span>{option.title}</span>
+              </Button>
+            ))}
+
+            {!isSmartMatchEnabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-sm bg-blue-50 border-blue-300 text-blue-700"
+                onClick={() => setIsSmartMatchEnabled(true)}
+              >
+                <Sparkles className="h-4 w-4" />
+                Enable Smart Matching
+              </Button>
+            )}
+          </div>
+        </div>
 
           {/* Clinic Comparison */}
           <div className="space-y-8">
-            {filteredClinics.map((clinic, clinicIndex) => {
+            {clinics.map((clinic, clinicIndex) => {
               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
               const tierInfo = getTierLabel(clinic.tier);
               const isExpanded = expandedClinics[clinic.id] || false;
@@ -459,6 +619,20 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
                   {/* Main Card Content */}
                   <div className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-xl font-bold text-gray-900">{clinic.name}</h3>
+                      <TierBadge tier={clinic.tier} />
+                      {isSmartMatchEnabled && clinicIndex < 3 && (
+                        <Badge className="bg-blue-100 text-blue-800 text-xs">
+                          <Sparkles className="h-3 w-3 mr-1" />
+                          Smart Match
+                        </Badge>
+                      )}
+                    </div>
+
+                    
+                  </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       {/* Clinic Info - Left Column */}
                       <div className="lg:col-span-1">
@@ -647,7 +821,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         clinicName: clinic.name,
                                         treatments: clinicTreatments,
                                         totalPrice: totalPrice,
-                                        treatmentPlan: activeTreatmentPlan,
+                                        treatmentPlan:activeTreatmentPlan,
                                         patientInfo: patientInfo,
                                         timestamp: new Date().toISOString()
                                       };
@@ -905,6 +1079,38 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         </div>
       </main>
     </>
+  );
+};
+
+interface TierBadgeProps {
+  tier: string;
+}
+
+const TierBadge: React.FC<TierBadgeProps> = ({ tier }) => {
+  let label: string;
+  let color: string;
+
+  switch (tier) {
+    case 'premium':
+      label = 'Premium';
+      color = 'bg-amber-500';
+      break;
+    case 'standard':
+      label = 'Standard';
+      color = 'bg-blue-500';
+      break;
+    case 'affordable':
+      label = 'Affordable';
+      color = 'bg-green-500';
+      break;
+    default:
+      label = 'Unknown';
+      color = 'bg-gray-500';
+      break;
+  }
+
+  return (
+    <Badge className={`${color} text-white`}>{label}</Badge>
   );
 };
 

@@ -590,6 +590,81 @@ const YourQuotePage: React.FC = () => {
           </div>
         </section>
 </div>
+          {/* Patient Preferences Summary */}
+          {(searchParams.get('budgetPriority') || searchParams.get('priority') || searchParams.get('holidayInterest')) && (
+            <div className="mb-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <HeartHandshake className="h-5 w-5 text-blue-600" />
+                    Your Treatment Preferences
+                  </CardTitle>
+                  <CardDescription>We'll use these preferences to recommend the best clinics for you</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {searchParams.get('budgetPriority') && (
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                        <div className="p-2 bg-blue-100 rounded-full">
+                          <PoundSterling className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">Budget Range</p>
+                          <p className="text-sm text-blue-600">
+                            {searchParams.get('budgetPriority') === 'low' && '💰 Budget-friendly (Under £2000)'}
+                            {searchParams.get('budgetPriority') === 'medium' && '🎯 Mid-range (£2000-3000)'}
+                            {searchParams.get('budgetPriority') === 'high' && '👑 Premium (£3000+)'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {searchParams.get('priority') && (
+                      <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                        <div className="p-2 bg-green-100 rounded-full">
+                          <Star className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Priority</p>
+                          <p className="text-sm text-green-600">
+                            {searchParams.get('priority') === 'cost' && '💸 Best price'}
+                            {searchParams.get('priority') === 'quality' && '🏆 Highest quality'}
+                            {searchParams.get('priority') === 'location' && '🌅 Great location'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {searchParams.get('holidayInterest') === 'true' && (
+                      <div className="flex items-center gap-3 p-3 bg-yellow-50 rounded-lg">
+                        <div className="p-2 bg-yellow-100 rounded-full">
+                          <Sparkles className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Holiday Interest</p>
+                          <p className="text-sm text-yellow-600">🏖️ Combining with Turkish holiday</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Smart matching indicator */}
+                  <div className="mt-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center gap-2">
+                      <div className="p-1 bg-blue-100 rounded-full">
+                        <Check className="h-3 w-3 text-blue-600" />
+                      </div>
+                      <p className="text-sm font-medium text-blue-800">Smart Matching Active</p>
+                    </div>
+                    <p className="text-xs text-blue-600 mt-1">
+                      We'll prioritize clinics that match your preferences when you continue to clinic selection
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Cost Comparison Summary */}
           <div className="mb-8">
             <Card>
@@ -652,24 +727,29 @@ const YourQuotePage: React.FC = () => {
                     </div>
                     <Button 
                       onClick={() => {
-                        // Save the current treatment data
+                        // Save the current treatment data with preferences
                         const treatmentDataToSave = {
                           treatments: treatmentItems,
                           totalGBP: totalGBP,
                           patientInfo: null, // Will be collected in the next step
+                          patientPreferences: {
+                            budget: searchParams.get('budgetPriority') as 'low' | 'medium' | 'high' || 'medium',
+                            priority: searchParams.get('priority') as 'cost' | 'quality' | 'location' || 'quality',
+                            holidayInterest: searchParams.get('holidayInterest') === 'true'
+                          },
                           timestamp: new Date().toISOString()
                         };
 
                         localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
 
-                        // Navigate to matched clinics
-                        setLocation('/matched-clinics');
+                        // Navigate to matched clinics with smart matching
+                        setLocation('/matched-clinics?smartMatch=true');
                       }}
                       className="flex items-center gap-2"
                       size="lg"
                     >
                       <Heart className="h-4 w-4" />
-                      Continue to Matched Clinics
+                      Continue to Smart-Matched Clinics
                     </Button>
                   </div>
                 </CardContent>
