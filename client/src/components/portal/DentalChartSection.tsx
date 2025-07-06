@@ -28,7 +28,7 @@ const DentalChartSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedChartIndex, setSelectedChartIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
-  
+
   // Interactive chart state
   const [isInteractive, setIsInteractive] = useState(false);
   const [currentTeethData, setCurrentTeethData] = useState<any[]>([]);
@@ -36,7 +36,7 @@ const DentalChartSection: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  
+
   // Get patient info from localStorage or session
   const [patientEmail, setPatientEmail] = useState<string>('');
   const [patientName, setPatientName] = useState<string>('');
@@ -99,7 +99,7 @@ const DentalChartSection: React.FC = () => {
 
     try {
       setIsSaving(true);
-      
+
       const chartData = {
         patientName: patientName,
         patientEmail: patientEmail,
@@ -110,14 +110,14 @@ const DentalChartSection: React.FC = () => {
       };
 
       const response = await axios.post('/api/save-dental-chart', chartData);
-      
+
       if (response.data.success) {
         setHasUnsavedChanges(false);
         toast({
           title: "Chart Saved",
           description: "Your dental chart has been saved successfully",
         });
-        
+
         // Refresh the charts list
         if (patientEmail) {
           fetchCharts();
@@ -148,7 +148,7 @@ const DentalChartSection: React.FC = () => {
 
     try {
       setIsSending(true);
-      
+
       const chartData = {
         patientName: patientName,
         patientEmail: patientEmail,
@@ -160,13 +160,13 @@ const DentalChartSection: React.FC = () => {
       };
 
       const response = await axios.post('/api/send-dental-chart-to-clinic', chartData);
-      
+
       if (response.data.success) {
         toast({
           title: "Sent to Clinic",
           description: "Your dental chart has been sent to the clinic successfully",
         });
-        
+
         // Auto-save after sending
         await saveChartData();
       }
@@ -193,15 +193,15 @@ const DentalChartSection: React.FC = () => {
       // In a real implementation, this would use the authenticated user's info
       // For now, we'll simulate fetching charts from the API
       const response = await axios.get('/api/get-patient-dental-charts');
-      
+
       if (response.data.success && response.data.charts) {
         // Sort charts by date, newest first
         const sortedCharts = response.data.charts.sort((a: ChartData, b: ChartData) => 
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
         );
-        
+
         setCharts(sortedCharts);
-        
+
         // Select the most recent chart by default
         if (sortedCharts.length > 0) {
           setSelectedChartIndex(0);
@@ -257,11 +257,11 @@ const DentalChartSection: React.FC = () => {
     } catch (error) {
       console.error('Error fetching dental charts:', error);
       toast({
-        title: t('portal.dental_chart.error', 'Error'),
-        description: t('portal.dental_chart.fetch_error', 'Failed to load your dental charts. Please try again later.'),
+        title: 'Error',
+        description: 'Failed to load your dental charts. Please try again later.',
         variant: 'destructive',
       });
-      
+
       // For demo purposes, create a mock chart
       const mockCharts: ChartData[] = [
         {
@@ -353,26 +353,26 @@ const DentalChartSection: React.FC = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">
-            {t('portal.dental_chart.title', 'Dental Chart')}
-          </h2>
+              Dental Chart
+            </h2>
         </div>
-        
+
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">
-                {t('portal.dental_chart.no_charts', 'No Dental Charts Found')}
+                No Dental Charts Found
               </h3>
               <p className="text-gray-500 max-w-md mx-auto">
-                {t('portal.dental_chart.no_charts_desc', 'You don\'t have any dental charts yet. Your dental chart will be created after your initial consultation with the dentist.')}
+                You don't have any dental charts yet. Your dental chart will be created after your initial consultation with the dentist.
               </p>
               <Button 
                 variant="outline" 
                 className="mt-4"
                 onClick={() => fetchCharts()}
               >
-                {t('portal.dental_chart.refresh', 'Refresh')}
+                Refresh
               </Button>
             </div>
           </CardContent>
@@ -396,7 +396,7 @@ const DentalChartSection: React.FC = () => {
           </Button>
         </div>
       </div>
-      
+
       <Card>
         <CardHeader>
           <CardTitle>
@@ -457,7 +457,7 @@ const DentalChartSection: React.FC = () => {
                       </Badge>
                     )}
                   </div>
-                  
+
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -467,7 +467,7 @@ const DentalChartSection: React.FC = () => {
                       <Save className="h-4 w-4 mr-2" />
                       {isSaving ? "Saving..." : "Save Chart"}
                     </Button>
-                    
+
                     <Button
                       onClick={sendToClinic}
                       disabled={isSending || !currentTeethData.length}
@@ -520,7 +520,7 @@ const DentalChartSection: React.FC = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="mb-4">
                     <h3 className="font-medium">
                       Dental Chart from {formatDate(charts[selectedChartIndex].createdAt)}
@@ -529,14 +529,14 @@ const DentalChartSection: React.FC = () => {
                       Last updated: {formatTime(charts[selectedChartIndex].createdAt)}
                     </p>
                   </div>
-                  
+
                   <div className="bg-gray-50 p-4 rounded-lg border">
                     <DentalChart 
                       initialTeeth={charts[selectedChartIndex].dentalChartData}
                       readOnly={true}
                     />
                   </div>
-                  
+
                   <div className="flex justify-end mt-4">
                     <Button variant="outline" size="sm">
                       <Download className="h-4 w-4 mr-2" />
