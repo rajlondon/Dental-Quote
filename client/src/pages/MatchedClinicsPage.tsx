@@ -92,35 +92,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('smartMatch') === 'true';
   });
-  const [clinics, setClinics] = useState(clinicsData);
   const { toast } = useToast();
 
-  // Initialize data once on mount
-  useEffect(() => {
-    if (treatmentItems.length > 0) {
-      setTreatmentPlan(treatmentItems);
-      setLocalTotalGBP(totalGBP || 0);
-    } else {
-      const savedTreatmentData = localStorage.getItem('treatmentPlanData');
-      if (savedTreatmentData) {
-        try {
-          const parsedData = JSON.parse(savedTreatmentData);
-          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
-            setTreatmentPlan(parsedData.treatments);
-            setLocalTotalGBP(parsedData.totalGBP || 0);
-          }
-        } catch (error) {
-          console.error('Error parsing treatment data from localStorage:', error);
-        }
-      }
-    }
-  }, []); // Remove dependencies that were causing infinite loops
-
-  // Use either props or localStorage data
-  const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
-  const activeTotalGBP = totalGBP || localTotalGBP;
-
-  // Fixed clinic data - consistent structure
+  // Fixed clinic data - consistent structure - moved before useState
   const clinicsData = [
     {
       id: 'dentspa',
@@ -217,6 +191,34 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
   ];
+
+  // Initialize state after clinicsData is declared
+  const [clinics, setClinics] = useState(clinicsData);
+
+  // Initialize data once on mount
+  useEffect(() => {
+    if (treatmentItems.length > 0) {
+      setTreatmentPlan(treatmentItems);
+      setLocalTotalGBP(totalGBP || 0);
+    } else {
+      const savedTreatmentData = localStorage.getItem('treatmentPlanData');
+      if (savedTreatmentData) {
+        try {
+          const parsedData = JSON.parse(savedTreatmentData);
+          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
+            setTreatmentPlan(parsedData.treatments);
+            setLocalTotalGBP(parsedData.totalGBP || 0);
+          }
+        } catch (error) {
+          console.error('Error parsing treatment data from localStorage:', error);
+        }
+      }
+    }
+  }, []); // Remove dependencies that were causing infinite loops
+
+  // Use either props or localStorage data
+  const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
+  const activeTotalGBP = totalGBP || localTotalGBP;
 
   // Check for promo code filtering
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
@@ -417,7 +419,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
 
     setClinics(clinicsList);
-  }, [isSmartMatchEnabled, activeTreatmentPlan.length]);
+  }, [isSmartMatchEnabled, activeTreatmentPlan.length, clinicsData]);
 
   // Helper function to get clinic specialties
   const getClinicSpecialties = (clinicId: string): string[] => {
