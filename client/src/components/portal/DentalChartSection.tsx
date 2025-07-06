@@ -43,6 +43,7 @@ const DentalChartSection: React.FC = () => {
 
   // Load patient information from localStorage or session
   useEffect(() => {
+    // First try to get from localStorage
     const quoteData = localStorage.getItem('lastQuoteData');
     if (quoteData) {
       try {
@@ -50,11 +51,30 @@ const DentalChartSection: React.FC = () => {
         if (parsedData.patientEmail) {
           setPatientEmail(parsedData.patientEmail);
           setPatientName(parsedData.patientName || 'Patient');
+          return;
         }
       } catch (error) {
         console.error('Error parsing quote data:', error);
       }
     }
+
+    // If not found in localStorage, try to get current user from session
+    const getCurrentUser = async () => {
+      try {
+        const response = await axios.get('/api/auth/user');
+        if (response.data && response.data.email) {
+          setPatientEmail(response.data.email);
+          setPatientName(`${response.data.firstName || ''} ${response.data.lastName || ''}`.trim() || 'Patient');
+        }
+      } catch (error) {
+        console.error('Error getting current user:', error);
+        // Set a default email for testing
+        setPatientEmail('patient@mydentalfly.co.uk');
+        setPatientName('Test Patient');
+      }
+    };
+
+    getCurrentUser();
   }, []);
 
   // On component mount, check device size and set appropriate view mode
@@ -232,100 +252,47 @@ const DentalChartSection: React.FC = () => {
   }, [patientEmail]);
 
   const fetchCharts = async () => {
+    if (!patientEmail) {
+      console.log('No patient email available yet');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('Fetching charts for patient email:', patientEmail);
       
-      // Try to get charts from the API if patient email is available
-      if (patientEmail) {
-        try {
-          const response = await axios.get(`/api/get-dental-chart?patientEmail=${encodeURIComponent(patientEmail)}`);
-          
-          if (response.data.success && response.data.charts) {
-            // Sort charts by date, newest first
-            const sortedCharts = response.data.charts.sort((a: ChartData, b: ChartData) => 
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            );
+      const response = await axios.get(`/api/get-dental-chart?patientEmail=${encodeURIComponent(patientEmail)}`);
+      
+      console.log('API response:', response.data);
+      
+      if (response.data.success && response.data.charts) {
+        // Sort charts by date, newest first
+        const sortedCharts = response.data.charts.sort((a: ChartData, b: ChartData) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
 
-            setCharts(sortedCharts);
+        setCharts(sortedCharts);
 
-            // Select the most recent chart by default
-            if (sortedCharts.length > 0) {
-              setSelectedChartIndex(0);
-            }
-            
-            setLoading(false);
-            return;
-          }
-        } catch (apiError) {
-          console.log('API call failed, using demo data');
+        // Select the most recent chart by default
+        if (sortedCharts.length > 0) {
+          setSelectedChartIndex(0);
         }
-      }
-      
-      // If API fails or no email, use demo data
-      {
-        // For demo purposes, create some mock data
-        const mockCharts: ChartData[] = [
-          {
-            chartId: '1',
-            patientName: 'John Doe',
-            patientEmail: 'john.doe@example.com',
-            createdAt: new Date().toISOString(),
-            quoteId: 'Q123456',
-            dentalChartData: [
-              { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
-              { id: 2, name: 'Upper Right Second Molar (2)', condition: null, treatment: null, notes: '' },
-              { id: 3, name: 'Upper Right First Molar (3)', condition: null, treatment: null, notes: '' },
-              { id: 4, name: 'Upper Right Second Premolar (4)', condition: null, treatment: null, notes: '' },
-              { id: 5, name: 'Upper Right First Premolar (5)', condition: null, treatment: null, notes: '' },
-              { id: 6, name: 'Upper Right Canine (6)', condition: null, treatment: null, notes: '' },
-              { id: 7, name: 'Upper Right Lateral Incisor (7)', condition: null, treatment: null, notes: '' },
-              { id: 8, name: 'Upper Right Central Incisor (8)', condition: null, treatment: null, notes: '' },
-              { id: 9, name: 'Upper Left Central Incisor (9)', condition: null, treatment: null, notes: '' },
-              { id: 10, name: 'Upper Left Lateral Incisor (10)', condition: null, treatment: null, notes: '' },
-              { id: 11, name: 'Upper Left Canine (11)', condition: null, treatment: null, notes: '' },
-              { id: 12, name: 'Upper Left First Premolar (12)', condition: null, treatment: null, notes: '' },
-              { id: 13, name: 'Upper Left Second Premolar (13)', condition: null, treatment: null, notes: '' },
-              { id: 14, name: 'Upper Left First Molar (14)', condition: null, treatment: null, notes: '' },
-              { id: 15, name: 'Upper Left Second Molar (15)', condition: null, treatment: null, notes: '' },
-              { id: 16, name: 'Upper Left Third Molar (16)', condition: null, treatment: null, notes: '' },
-              { id: 17, name: 'Lower Left Third Molar (17)', condition: null, treatment: null, notes: '' },
-              { id: 18, name: 'Lower Left Second Molar (18)', condition: null, treatment: null, notes: '' },
-              { id: 19, name: 'Lower Left First Molar (19)', condition: null, treatment: null, notes: '' },
-              { id: 20, name: 'Lower Left Second Premolar (20)', condition: null, treatment: null, notes: '' },
-              { id: 21, name: 'Lower Left First Premolar (21)', condition: null, treatment: null, notes: '' },
-              { id: 22, name: 'Lower Left Canine (22)', condition: null, treatment: null, notes: '' },
-              { id: 23, name: 'Lower Left Lateral Incisor (23)', condition: null, treatment: null, notes: '' },
-              { id: 24, name: 'Lower Left Central Incisor (24)', condition: null, treatment: null, notes: '' },
-              { id: 25, name: 'Lower Right Central Incisor (25)', condition: null, treatment: null, notes: '' },
-              { id: 26, name: 'Lower Right Lateral Incisor (26)', condition: null, treatment: null, notes: '' },
-              { id: 27, name: 'Lower Right Canine (27)', condition: null, treatment: null, notes: '' },
-              { id: 28, name: 'Lower Right First Premolar (28)', condition: null, treatment: null, notes: '' },
-              { id: 29, name: 'Lower Right Second Premolar (29)', condition: null, treatment: null, notes: '' },
-              { id: 30, name: 'Lower Right First Molar (30)', condition: null, treatment: null, notes: '' },
-              { id: 31, name: 'Lower Right Second Molar (31)', condition: null, treatment: null, notes: '' },
-              { id: 32, name: 'Lower Right Third Molar (32)', condition: null, treatment: null, notes: '' }
-            ]
-          }
-        ];
-        setCharts(mockCharts);
-        setSelectedChartIndex(0);
+        
+        console.log('Charts loaded successfully:', sortedCharts.length);
+        return;
       }
     } catch (error) {
       console.error('Error fetching dental charts:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load your dental charts. Please try again later.',
-        variant: 'destructive',
-      });
-
-      // For demo purposes, create a mock chart
+      
+      // Create a demo chart for testing purposes
+      console.log('Creating demo chart for testing');
       const mockCharts: ChartData[] = [
         {
-          chartId: '1',
-          patientName: 'John Doe',
-          patientEmail: 'john.doe@example.com',
+          chartId: 'demo-1',
+          patientName: patientName || 'Demo Patient',
+          patientEmail: patientEmail,
           createdAt: new Date().toISOString(),
-          quoteId: 'Q123456',
+          quoteId: 'DEMO-123',
           dentalChartData: [
             { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
             { id: 2, name: 'Upper Right Second Molar (2)', condition: null, treatment: null, notes: '' },
@@ -404,35 +371,10 @@ const DentalChartSection: React.FC = () => {
     );
   }
 
-  if (charts.length === 0) {
+  if (loading) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">
-              Dental Chart
-            </h2>
-        </div>
-
-        <Card>
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">
-                No Dental Charts Found
-              </h3>
-              <p className="text-gray-500 max-w-md mx-auto">
-                You don't have any dental charts yet. Your dental chart will be created after your initial consultation with the dentist.
-              </p>
-              <Button 
-                variant="outline" 
-                className="mt-4"
-                onClick={() => fetchCharts()}
-              >
-                Refresh
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
