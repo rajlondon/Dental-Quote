@@ -957,6 +957,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Send dental chart to clinic
+  app.post('/api/send-dental-chart-to-clinic', async (req: Request, res: Response) => {
+    try {
+      const { 
+        patientName, 
+        patientEmail, 
+        dentalChartData, 
+        patientNotes, 
+        quoteId 
+      } = req.body;
+
+      // Validate required fields
+      if (!patientEmail || !dentalChartData) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Missing required fields (patientEmail, dentalChartData)' 
+        });
+      }
+
+      // Create a unique key for this chart
+      const timestamp = Date.now();
+      const key = `chart_${patientEmail.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${timestamp}`;
+
+      const chartData = {
+        chartId: key,
+        patientName: patientName || 'Unknown Patient',
+        patientEmail: patientEmail.toLowerCase(),
+        dentalChartData,
+        patientNotes: patientNotes || '',
+        createdAt: new Date().toISOString(),
+        quoteId: quoteId || null,
+        sentToClinic: true,
+        sentToClinicAt: new Date().toISOString()
+      };
+
+      // Store the chart data
+      dentalChartStorage.set(key, chartData);
+
+      // Log clinic notification (in production, this would send actual notifications)
+      console.log(`Dental chart sent to clinic for patient: ${patientEmail}`);
+      console.log(`Chart ID: ${key}`);
+      console.log(`Patient notes: ${patientNotes}`);
+
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Dental chart sent to clinic successfully',
+        chartId: key
+      });
+    } catch (error) {
+      console.error('Error sending dental chart to clinic:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to send dental chart to clinic' 
+      });
+    }
+  });
+
   // Get list of all patient dental charts (for clinic access)
   // In a real implementation, this would be protected by authentication
   app.get('/api/all-dental-charts', async (req: Request, res: Response) => {
@@ -971,7 +1028,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           patientName: data.patientName,
           patientEmail: data.patientEmail,
           createdAt: data.createdAt,
-          quoteId: data.quoteId
+          quoteId: data.quoteId,
+          sentToClinic: data.sentToClinic || false,
+          sentToClinicAt: data.sentToClinicAt || null,
+          patientNotes: data.patientNotes || ''
         }));
 
       return res.status(200).json({ 

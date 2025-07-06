@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DentalChart } from '@/components/DentalChart';
 import { useToast } from '@/hooks/use-toast';
 import axios from 'axios';
-import { AlertCircle, Calendar, Clock, Download, Info } from 'lucide-react';
+import { AlertCircle, Calendar, Clock, Download, Info, Save, Send, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 interface ChartData {
   chartId: string;
@@ -26,6 +28,34 @@ const DentalChartSection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [selectedChartIndex, setSelectedChartIndex] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<'desktop' | 'mobile'>('desktop');
+  
+  // Interactive chart state
+  const [isInteractive, setIsInteractive] = useState(false);
+  const [currentTeethData, setCurrentTeethData] = useState<any[]>([]);
+  const [patientNotes, setPatientNotes] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Get patient info from localStorage or session
+  const [patientEmail, setPatientEmail] = useState<string>('');
+  const [patientName, setPatientName] = useState<string>('');
+
+  // Load patient information from localStorage or session
+  useEffect(() => {
+    const quoteData = localStorage.getItem('lastQuoteData');
+    if (quoteData) {
+      try {
+        const parsedData = JSON.parse(quoteData);
+        if (parsedData.patientEmail) {
+          setPatientEmail(parsedData.patientEmail);
+          setPatientName(parsedData.patientName || 'Patient');
+        }
+      } catch (error) {
+        console.error('Error parsing quote data:', error);
+      }
+    }
+  }, []);
 
   // On component mount, check device size and set appropriate view mode
   useEffect(() => {
@@ -48,6 +78,109 @@ const DentalChartSection: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  // Handle teeth data updates from interactive chart
+  const handleTeethUpdate = (teethData: any[]) => {
+    setCurrentTeethData(teethData);
+    setHasUnsavedChanges(true);
+    console.log('Teeth data updated:', teethData);
+  };
+
+  // Save chart data locally and to server
+  const saveChartData = async () => {
+    if (!patientEmail || !currentTeethData.length) {
+      toast({
+        title: "Save Failed",
+        description: "Missing patient information or chart data",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      const chartData = {
+        patientName: patientName,
+        patientEmail: patientEmail,
+        dentalChartData: currentTeethData,
+        patientNotes: patientNotes,
+        createdAt: new Date().toISOString(),
+        quoteId: localStorage.getItem('lastQuoteId') || null
+      };
+
+      const response = await axios.post('/api/save-dental-chart', chartData);
+      
+      if (response.data.success) {
+        setHasUnsavedChanges(false);
+        toast({
+          title: "Chart Saved",
+          description: "Your dental chart has been saved successfully",
+        });
+        
+        // Refresh the charts list
+        if (patientEmail) {
+          fetchCharts();
+        }
+      }
+    } catch (error) {
+      console.error('Error saving chart:', error);
+      toast({
+        title: "Save Failed",
+        description: "Failed to save your dental chart. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Send chart to clinic
+  const sendToClinic = async () => {
+    if (!patientEmail || !currentTeethData.length) {
+      toast({
+        title: "Send Failed",
+        description: "Missing patient information or chart data",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsSending(true);
+      
+      const chartData = {
+        patientName: patientName,
+        patientEmail: patientEmail,
+        dentalChartData: currentTeethData,
+        patientNotes: patientNotes,
+        createdAt: new Date().toISOString(),
+        quoteId: localStorage.getItem('lastQuoteId') || null,
+        sendToClinic: true
+      };
+
+      const response = await axios.post('/api/send-dental-chart-to-clinic', chartData);
+      
+      if (response.data.success) {
+        toast({
+          title: "Sent to Clinic",
+          description: "Your dental chart has been sent to the clinic successfully",
+        });
+        
+        // Auto-save after sending
+        await saveChartData();
+      }
+    } catch (error) {
+      console.error('Error sending chart to clinic:', error);
+      toast({
+        title: "Send Failed",
+        description: "Failed to send your dental chart to the clinic. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // Fetch dental charts for the patient
   useEffect(() => {
@@ -252,175 +385,180 @@ const DentalChartSection: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-          {t('portal.dental_chart.title', 'Dental Chart')}
+          Dental Chart
         </h2>
+        <div className="flex gap-2">
+          <Button
+            variant={isInteractive ? "default" : "outline"}
+            onClick={() => setIsInteractive(!isInteractive)}
+          >
+            {isInteractive ? "View Mode" : "Edit Mode"}
+          </Button>
+        </div>
       </div>
       
       <Card>
         <CardHeader>
           <CardTitle>
-            {t('portal.dental_chart.your_chart', 'Your Dental Chart')}
+            {isInteractive ? "Interactive Dental Chart" : "Your Dental Chart"}
           </CardTitle>
           <CardDescription>
-            {t('portal.dental_chart.desc', 'View and track your dental conditions and treatments')}
+            {isInteractive 
+              ? "Click on teeth to mark conditions and treatments, then save or send to clinic"
+              : "View and track your dental conditions and treatments"
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
-            <Alert className="bg-blue-50 text-blue-700 border-blue-100">
-              <Info className="h-4 w-4" />
-              <AlertTitle>
-                {t('portal.dental_chart.info_title', 'About Your Dental Chart')}
-              </AlertTitle>
-              <AlertDescription>
-                {t('portal.dental_chart.info_desc', 'This chart shows your current dental status. It will be updated by your dentist during your treatment.')}
-              </AlertDescription>
-            </Alert>
-          </div>
-
-          {selectedChartIndex !== null && charts[selectedChartIndex] && (
+          {isInteractive ? (
             <div>
-              {charts.length > 1 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-2">
-                    {t('portal.dental_chart.chart_history', 'Chart History')}
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {charts.map((chart, index) => (
-                      <Badge
-                        key={chart.chartId}
-                        variant={selectedChartIndex === index ? "default" : "outline"}
-                        className={`cursor-pointer ${selectedChartIndex === index ? "" : "hover:bg-gray-100"}`}
-                        onClick={() => setSelectedChartIndex(index)}
-                      >
-                        {formatDate(chart.createdAt)}
-                        {index === 0 && (
-                          <span className="ml-1 text-xs">
-                            ({t('portal.dental_chart.latest', 'Latest')})
-                          </span>
-                        )}
+              <div className="mb-6">
+                <Alert className="bg-green-50 text-green-700 border-green-100">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>
+                    Interactive Mode
+                  </AlertTitle>
+                  <AlertDescription>
+                    Click on any tooth to mark conditions (chipped, missing, painful) or desired treatments (implants, crowns, veneers). Your changes will be saved and can be sent to the clinic.
+                  </AlertDescription>
+                </Alert>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-lg border mb-6">
+                <DentalChart 
+                  onTeethUpdate={handleTeethUpdate}
+                  patientEmail={patientEmail}
+                  patientName={patientName}
+                  readOnly={false}
+                />
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="patient-notes">Additional Notes for Clinic</Label>
+                  <Textarea
+                    id="patient-notes"
+                    placeholder="Add any specific concerns, pain levels, or requests for the clinic..."
+                    value={patientNotes}
+                    onChange={(e) => {
+                      setPatientNotes(e.target.value);
+                      setHasUnsavedChanges(true);
+                    }}
+                    className="mt-1"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    {hasUnsavedChanges && (
+                      <Badge variant="outline" className="text-amber-600 border-amber-600">
+                        Unsaved Changes
                       </Badge>
-                    ))}
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={saveChartData}
+                      disabled={isSaving || !currentTeethData.length}
+                    >
+                      <Save className="h-4 w-4 mr-2" />
+                      {isSaving ? "Saving..." : "Save Chart"}
+                    </Button>
+                    
+                    <Button
+                      onClick={sendToClinic}
+                      disabled={isSending || !currentTeethData.length}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      {isSending ? "Sending..." : "Send to Clinic"}
+                    </Button>
                   </div>
                 </div>
-              )}
-              
-              <div className="mb-4">
-                <h3 className="font-medium">
-                  {t('portal.dental_chart.chart_from', 'Dental Chart from')}{' '}
-                  {formatDate(charts[selectedChartIndex].createdAt)}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  {t('portal.dental_chart.last_updated', 'Last updated')}: {formatTime(charts[selectedChartIndex].createdAt)}
-                </p>
               </div>
-              
-              <Tabs defaultValue={viewMode} onValueChange={(value) => setViewMode(value as 'desktop' | 'mobile')}>
-                <div className="flex justify-end mb-4">
-                  <TabsList>
-                    <TabsTrigger value="desktop">
-                      {t('portal.dental_chart.detailed_view', 'Detailed View')}
-                    </TabsTrigger>
-                    <TabsTrigger value="mobile">
-                      {t('portal.dental_chart.simple_view', 'Simple View')}
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
-                
-                <TabsContent value="desktop" className="mt-0">
+            </div>
+          ) : (
+            <div>
+              <div className="mb-6">
+                <Alert className="bg-blue-50 text-blue-700 border-blue-100">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>
+                    About Your Dental Chart
+                  </AlertTitle>
+                  <AlertDescription>
+                    This chart shows your current dental status. Switch to Edit Mode to update your dental information and send it to the clinic.
+                  </AlertDescription>
+                </Alert>
+              </div>
+
+              {selectedChartIndex !== null && charts[selectedChartIndex] ? (
+                <div>
+                  {charts.length > 1 && (
+                    <div className="mb-6">
+                      <h3 className="text-sm font-medium mb-2">
+                        Chart History
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {charts.map((chart, index) => (
+                          <Badge
+                            key={chart.chartId}
+                            variant={selectedChartIndex === index ? "default" : "outline"}
+                            className={`cursor-pointer ${selectedChartIndex === index ? "" : "hover:bg-gray-100"}`}
+                            onClick={() => setSelectedChartIndex(index)}
+                          >
+                            {formatDate(chart.createdAt)}
+                            {index === 0 && (
+                              <span className="ml-1 text-xs">
+                                (Latest)
+                              </span>
+                            )}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <h3 className="font-medium">
+                      Dental Chart from {formatDate(charts[selectedChartIndex].createdAt)}
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Last updated: {formatTime(charts[selectedChartIndex].createdAt)}
+                    </p>
+                  </div>
+                  
                   <div className="bg-gray-50 p-4 rounded-lg border">
                     <DentalChart 
                       initialTeeth={charts[selectedChartIndex].dentalChartData}
                       readOnly={true}
                     />
                   </div>
-                </TabsContent>
-                
-                <TabsContent value="mobile" className="mt-0">
-                  <div className="bg-gray-50 p-4 rounded-lg border">
-                    <h4 className="font-medium mb-4">
-                      {t('portal.dental_chart.simplified_chart', 'Simplified Dental Chart')}
-                    </h4>
-                    
-                    <div className="space-y-6">
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          {t('portal.dental_chart.upper_teeth', 'Upper Teeth')}
-                        </h5>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="border rounded-lg p-3">
-                            <h6 className="text-xs font-medium text-gray-500 mb-2">
-                              {t('portal.dental_chart.upper_right', 'Upper Right')}
-                            </h6>
-                            <ul className="text-sm space-y-2">
-                              {Array.from({ length: 8 }, (_, i) => i + 1).map(num => (
-                                <li key={`ur-${num}`} className="flex justify-between">
-                                  <span>UR{num}</span>
-                                  <span className="text-green-600">Healthy</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="border rounded-lg p-3">
-                            <h6 className="text-xs font-medium text-gray-500 mb-2">
-                              {t('portal.dental_chart.upper_left', 'Upper Left')}
-                            </h6>
-                            <ul className="text-sm space-y-2">
-                              {Array.from({ length: 8 }, (_, i) => i + 1).map(num => (
-                                <li key={`ul-${num}`} className="flex justify-between">
-                                  <span>UL{num}</span>
-                                  <span className="text-green-600">Healthy</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h5 className="text-sm font-medium mb-2">
-                          {t('portal.dental_chart.lower_teeth', 'Lower Teeth')}
-                        </h5>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="border rounded-lg p-3">
-                            <h6 className="text-xs font-medium text-gray-500 mb-2">
-                              {t('portal.dental_chart.lower_right', 'Lower Right')}
-                            </h6>
-                            <ul className="text-sm space-y-2">
-                              {Array.from({ length: 8 }, (_, i) => i + 1).map(num => (
-                                <li key={`lr-${num}`} className="flex justify-between">
-                                  <span>LR{num}</span>
-                                  <span className="text-green-600">Healthy</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div className="border rounded-lg p-3">
-                            <h6 className="text-xs font-medium text-gray-500 mb-2">
-                              {t('portal.dental_chart.lower_left', 'Lower Left')}
-                            </h6>
-                            <ul className="text-sm space-y-2">
-                              {Array.from({ length: 8 }, (_, i) => i + 1).map(num => (
-                                <li key={`ll-${num}`} className="flex justify-between">
-                                  <span>LL{num}</span>
-                                  <span className="text-green-600">Healthy</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  
+                  <div className="flex justify-end mt-4">
+                    <Button variant="outline" size="sm">
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Chart
+                    </Button>
                   </div>
-                </TabsContent>
-              </Tabs>
-              
-              <div className="flex justify-end mt-4">
-                <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
-                  {t('portal.dental_chart.export', 'Export Chart')}
-                </Button>
-              </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No Dental Charts Found</h3>
+                  <p className="text-gray-500 max-w-md mx-auto mb-4">
+                    You don't have any dental charts yet. Switch to Edit Mode to create your first dental chart.
+                  </p>
+                  <Button 
+                    onClick={() => setIsInteractive(true)}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Create Your Dental Chart
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

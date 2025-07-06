@@ -107,7 +107,7 @@ export default function ClinicDentalCharts() {
                 Patient Dental Charts
               </CardTitle>
               <CardDescription className="text-gray-600">
-                View and manage all patient dental chart data
+                View and manage all patient dental chart data including charts sent from patient portal
               </CardDescription>
             </div>
             
@@ -128,7 +128,7 @@ export default function ClinicDentalCharts() {
             <div className="p-6">
               <div className="mb-4 flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-800">
-                  Dental Chart
+                  Patient Dental Chart
                 </h3>
                 <Button 
                   variant="outline" 
