@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,104 @@ interface ClinicTreatmentPrice {
   category: string;
 }
 
+// Fixed clinic data - defined outside component to prevent re-initialization issues
+const clinicsData = [
+  {
+    id: 'dentspa',
+    name: 'DentSpa Istanbul',
+    tier: 'premium',
+    description: 'A premium clinic offering luxury dental services with state-of-the-art technology and experienced international dentists.',
+    priceFactor: 0.35,
+    ratings: {
+      overall: 4.9,
+      reviews: 453,
+      cleanliness: 4.9,
+      staff: 4.9,
+      value: 4.8,
+      location: 4.8
+    },
+    location: {
+      area: 'Kadıköy',
+      city: 'Istanbul'
+    },
+    features: [
+      'Free Airport Transfer',
+      'Hotel Arrangement',
+      'Multilingual Staff',
+      'VIP Treatment Options',
+      'Digital X-ray equipment'
+    ],
+    guarantees: {
+      implants: '10 years',
+      veneers: '5 years',
+      crowns: '5 years',
+      fillings: '2 years'
+    }
+  },
+  {
+    id: 'beyazada',
+    name: 'Beyaz Ada Dental Clinic',
+    tier: 'standard',
+    description: 'A well-established mid-range clinic offering quality dental treatments at competitive prices.',
+    priceFactor: 0.30,
+    ratings: {
+      overall: 4.7,
+      reviews: 243,
+      cleanliness: 4.8,
+      staff: 4.7,
+      value: 4.9,
+      location: 4.5
+    },
+    location: {
+      area: 'Şişli',
+      city: 'Istanbul'
+    },
+    features: [
+      'Modern clinic facilities',
+      'Airport pickup service',
+      'Hotel booking assistance',
+      'Multi-language service'
+    ],
+    guarantees: {
+      implants: '5 years',
+      veneers: '3 years',
+      crowns: '3 years',
+      fillings: '1 year'
+    }
+  },
+  {
+    id: 'maltepe',
+    name: 'Maltepe Dental Center',
+    tier: 'affordable',
+    description: 'Budget-friendly clinic providing essential dental services at very competitive rates.',
+    priceFactor: 0.25,
+    ratings: {
+      overall: 4.5,
+      reviews: 178,
+      cleanliness: 4.6,
+      staff: 4.4,
+      value: 4.9,
+      location: 4.2
+    },
+    location: {
+      area: 'Maltepe',
+      city: 'Istanbul'
+    },
+    features: [
+      'Budget-friendly options',
+      'Basic airport transfer',
+      'Hotel recommendations',
+      'English-speaking staff'
+    ],
+    guarantees: {
+      implants: '3 years',
+      veneers: '2 years',
+      crowns: '2 years',
+      fillings: '1 year'
+    }
+  }
+];
+
 const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   treatmentItems = [],
   patientInfo,
@@ -83,6 +182,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   onQuoteDownload,
   onEmailQuote,
 }) => {
+  // ALL HOOKS MUST BE CALLED IN THE SAME ORDER EVERY TIME
   const [, setLocation] = useLocation();
   const [selectedClinic, setSelectedClinic] = useState<string | null>(null);
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
@@ -92,108 +192,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('smartMatch') === 'true';
   });
-  const { toast } = useToast();
-
-  // Fixed clinic data - consistent structure - moved before useState
-  const clinicsData = [
-    {
-      id: 'dentspa',
-      name: 'DentSpa Istanbul',
-      tier: 'premium',
-      description: 'A premium clinic offering luxury dental services with state-of-the-art technology and experienced international dentists.',
-      priceFactor: 0.35,
-      ratings: {
-        overall: 4.9,
-        reviews: 453,
-        cleanliness: 4.9,
-        staff: 4.9,
-        value: 4.8,
-        location: 4.8
-      },
-      location: {
-        area: 'Kadıköy',
-        city: 'Istanbul'
-      },
-      features: [
-        'Free Airport Transfer',
-        'Hotel Arrangement',
-        'Multilingual Staff',
-        'VIP Treatment Options',
-        'Digital X-ray equipment'
-      ],
-      guarantees: {
-        implants: '10 years',
-        veneers: '5 years',
-        crowns: '5 years',
-        fillings: '2 years'
-      }
-    },
-    {
-      id: 'beyazada',
-      name: 'Beyaz Ada Dental Clinic',
-      tier: 'standard',
-      description: 'A well-established mid-range clinic offering quality dental treatments at competitive prices.',
-      priceFactor: 0.30,
-      ratings: {
-        overall: 4.7,
-        reviews: 243,
-        cleanliness: 4.8,
-        staff: 4.7,
-        value: 4.9,
-        location: 4.5
-      },
-      location: {
-        area: 'Şişli',
-        city: 'Istanbul'
-      },
-      features: [
-        'Modern clinic facilities',
-        'Airport pickup service',
-        'Hotel booking assistance',
-        'Multi-language service'
-      ],
-      guarantees: {
-        implants: '5 years',
-        veneers: '3 years',
-        crowns: '3 years',
-        fillings: '1 year'
-      }
-    },
-    {
-      id: 'maltepe',
-      name: 'Maltepe Dental Center',
-      tier: 'affordable',
-      description: 'Budget-friendly clinic providing essential dental services at very competitive rates.',
-      priceFactor: 0.25,
-      ratings: {
-        overall: 4.5,
-        reviews: 178,
-        cleanliness: 4.6,
-        staff: 4.4,
-        value: 4.9,
-        location: 4.2
-      },
-      location: {
-        area: 'Maltepe',
-        city: 'Istanbul'
-      },
-      features: [
-        'Budget-friendly options',
-        'Basic airport transfer',
-        'Hotel recommendations',
-        'English-speaking staff'
-      ],
-      guarantees: {
-        implants: '3 years',
-        veneers: '2 years',
-        crowns: '2 years',
-        fillings: '1 year'
-      }
-    }
-  ];
-
-  // Initialize state after clinicsData is declared
   const [clinics, setClinics] = useState(clinicsData);
+  const { toast } = useToast();
 
   // Initialize data once on mount
   useEffect(() => {
@@ -214,7 +214,51 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         }
       }
     }
-  }, []); // Remove dependencies that were causing infinite loops
+  }, [treatmentItems.length, totalGBP]);
+
+  // Apply smart matching logic
+  useEffect(() => {
+    let clinicsList = [...clinicsData];
+
+    if (isSmartMatchEnabled && treatmentPlan.length > 0) {
+      const treatmentPlanData = localStorage.getItem('treatmentPlanData');
+      if (treatmentPlanData) {
+        try {
+          const parsedData = JSON.parse(treatmentPlanData);
+          if (parsedData.patientPreferences) {
+            const quoteRequest: QuoteRequest = {
+              id: 'temp-' + Date.now(),
+              treatments: treatmentPlan.map(item => item.name),
+              patientPreferences: parsedData.patientPreferences
+            };
+
+            const enhancedClinics: EnhancedClinic[] = clinicsList.map(clinic => enhanceClinicData({
+              ...clinic,
+              specialties: getClinicSpecialties(clinic.id)
+            }));
+
+            const smartMatched = QuoteEngine.assignBestClinics(quoteRequest, enhancedClinics);
+            const smartMatchedIds = new Set(smartMatched.map(c => c.id));
+            
+            clinicsList = [
+              ...clinicsList.filter(c => smartMatchedIds.has(c.id)),
+              ...clinicsList.filter(c => !smartMatchedIds.has(c.id))
+            ];
+
+            console.log('Smart matching applied:', {
+              preferences: parsedData.patientPreferences,
+              matchedClinics: smartMatched.length,
+              topMatch: smartMatched[0]?.name
+            });
+          }
+        } catch (error) {
+          console.error('Error applying smart matching:', error);
+        }
+      }
+    }
+
+    setClinics(clinicsList);
+  }, [isSmartMatchEnabled, treatmentPlan.length]);
 
   // Use either props or localStorage data
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
@@ -348,10 +392,20 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
   };
 
+  // Helper function to get clinic specialties
+  const getClinicSpecialties = (clinicId: string): string[] => {
+    const specialtyMap: Record<string, string[]> = {
+      'istanbul-dental-care': ['General Dentistry', 'Cosmetic Dentistry', 'Implant Dentistry'],
+      'dentgroup-istanbul': ['Implant Dentistry', 'Cosmetic Dentistry', 'Orthodontics'],
+      'maltepe-dental-clinic': ['Implant Dentistry', 'Cosmetic Dentistry', 'Oral Surgery', 'Full Mouth Reconstruction'],
+      'dentakay-clinic': ['Cosmetic Dentistry', 'Implant Dentistry', 'Orthodontics', 'Full Mouth Reconstruction'],
+      'crown-dental': ['Cosmetic Dentistry', 'General Dentistry', 'Implant Dentistry']
+    };
+    return specialtyMap[clinicId] || ['General Dentistry'];
+  };
+
   // Calculate UK total for comparison
   const ukTotal = activeTreatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
-
-  
 
   if (!activeTreatmentPlan.length) {
     return (
@@ -371,67 +425,6 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       </>
     );
   }
-
-  // Apply smart matching logic in useEffect to avoid hooks order issues
-  useEffect(() => {
-    let clinicsList = [...clinicsData];
-
-    // Apply smart matching if enabled and we have preferences
-    if (isSmartMatchEnabled && activeTreatmentPlan.length > 0) {
-      const treatmentPlanData = localStorage.getItem('treatmentPlanData');
-      if (treatmentPlanData) {
-        try {
-          const parsedData = JSON.parse(treatmentPlanData);
-          if (parsedData.patientPreferences) {
-            // Create a quote request for the smart engine
-            const quoteRequest: QuoteRequest = {
-              id: 'temp-' + Date.now(),
-              treatments: activeTreatmentPlan.map(item => item.name),
-              patientPreferences: parsedData.patientPreferences
-            };
-
-            // Enhance clinic data for the engine
-            const enhancedClinics: EnhancedClinic[] = clinicsList.map(clinic => enhanceClinicData({
-              ...clinic,
-              specialties: getClinicSpecialties(clinic.id)
-            }));
-
-            // Get smart-matched clinics
-            const smartMatched = QuoteEngine.assignBestClinics(quoteRequest, enhancedClinics);
-
-            // Convert back to ClinicInfo format and maintain all original clinics
-            const smartMatchedIds = new Set(smartMatched.map(c => c.id));
-            clinicsList = [
-              ...clinicsList.filter(c => smartMatchedIds.has(c.id)),
-              ...clinicsList.filter(c => !smartMatchedIds.has(c.id))
-            ];
-
-            console.log('Smart matching applied:', {
-              preferences: parsedData.patientPreferences,
-              matchedClinics: smartMatched.length,
-              topMatch: smartMatched[0]?.name
-            });
-          }
-        } catch (error) {
-          console.error('Error applying smart matching:', error);
-        }
-      }
-    }
-
-    setClinics(clinicsList);
-  }, [isSmartMatchEnabled]);
-
-  // Helper function to get clinic specialties
-  const getClinicSpecialties = (clinicId: string): string[] => {
-    const specialtyMap: Record<string, string[]> = {
-      'istanbul-dental-care': ['General Dentistry', 'Cosmetic Dentistry', 'Implant Dentistry'],
-      'dentgroup-istanbul': ['Implant Dentistry', 'Cosmetic Dentistry', 'Orthodontics'],
-      'maltepe-dental-clinic': ['Implant Dentistry', 'Cosmetic Dentistry', 'Oral Surgery', 'Full Mouth Reconstruction'],
-      'dentakay-clinic': ['Cosmetic Dentistry', 'Implant Dentistry', 'Orthodontics', 'Full Mouth Reconstruction'],
-      'crown-dental': ['Cosmetic Dentistry', 'General Dentistry', 'Implant Dentistry']
-    };
-    return specialtyMap[clinicId] || ['General Dentistry'];
-  };
 
   return (
     <>
@@ -484,53 +477,54 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
               <span>£{Math.round(ukTotal)}</span>
             </div>
           </div>
-           {/* Smart Matching Status */}
-        {isSmartMatchEnabled && (
-          <div className="mb-6">
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Sparkles className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-blue-800">Smart Matching Active</h3>
-                    <p className="text-sm text-blue-600">
-                      Clinics are ranked based on your preferences. Top matches appear first.
-                    </p>
-                  </div>
-                  <div className="ml-auto">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => setIsSmartMatchEnabled(false)}
-                      className="text-blue-600 border-blue-300 hover:bg-blue-100"
-                    >
-                      View All Clinics
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )}
 
-        {/* Quick Filter Options - Simplified */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-3">
-            {!isSmartMatchEnabled && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-sm bg-blue-50 border-blue-300 text-blue-700"
-                onClick={() => setIsSmartMatchEnabled(true)}
-              >
-                <Sparkles className="h-4 w-4" />
-                Enable Smart Matching
-              </Button>
-            )}
+          {/* Smart Matching Status */}
+          {isSmartMatchEnabled && (
+            <div className="mb-6">
+              <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-100 rounded-full">
+                      <Sparkles className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-blue-800">Smart Matching Active</h3>
+                      <p className="text-sm text-blue-600">
+                        Clinics are ranked based on your preferences. Top matches appear first.
+                      </p>
+                    </div>
+                    <div className="ml-auto">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setIsSmartMatchEnabled(false)}
+                        className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                      >
+                        View All Clinics
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Quick Filter Options */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-3">
+              {!isSmartMatchEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2 text-sm bg-blue-50 border-blue-300 text-blue-700"
+                  onClick={() => setIsSmartMatchEnabled(true)}
+                >
+                  <Sparkles className="h-4 w-4" />
+                  Enable Smart Matching
+                </Button>
+              )}
+            </div>
           </div>
-        </div>
 
           {/* Clinic Comparison */}
           <div className="space-y-8">
@@ -561,20 +555,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
                   {/* Main Card Content */}
                   <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-bold text-gray-900">{clinic.name}</h3>
-                      <TierBadge tier={clinic.tier} />
-                      {isSmartMatchEnabled && clinicIndex < 3 && (
-                        <Badge className="bg-blue-100 text-blue-800 text-xs">
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Smart Match
-                        </Badge>
-                      )}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <h3 className="text-xl font-bold text-gray-900">{clinic.name}</h3>
+                        <TierBadge tier={clinic.tier} />
+                        {isSmartMatchEnabled && clinicIndex < 3 && (
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Smart Match
+                          </Badge>
+                        )}
+                      </div>
                     </div>
 
-                    
-                  </div>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                       {/* Clinic Info - Left Column */}
                       <div className="lg:col-span-1">
@@ -763,7 +756,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         clinicName: clinic.name,
                                         treatments: clinicTreatments,
                                         totalPrice: totalPrice,
-                                        treatmentPlan:activeTreatmentPlan,
+                                        treatmentPlan: activeTreatmentPlan,
                                         patientInfo: patientInfo,
                                         timestamp: new Date().toISOString()
                                       };
@@ -775,7 +768,6 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         onSelectClinic(clinic.id);
                                       }
 
-                                      // Use setTimeout to ensure state updates are processed
                                       setTimeout(() => {
                                         setLocation('/patient-portal');
                                       }, 100);
@@ -923,8 +915,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     <ShieldCheck className="h-5 w-5 text-green-500" />
                                     <span className="font-medium">Dental Implants</span>
                                   </div>
-                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>                                </div>
-                               <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                                  <span className="text-sm font-medium text-green-600">{clinic.guarantees.implants}</span>
+                                </div>
+                                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                                   <div className="flex items-center gap-2">
                                     <ShieldCheck className="h-5 w-5 text-green-500" />
                                     <span className="font-medium">Veneers</span>
