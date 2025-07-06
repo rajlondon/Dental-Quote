@@ -24,10 +24,10 @@ const ConsistentPageHeader: React.FC<ConsistentPageHeaderProps> = ({
   const isInPortal = location.includes('-portal');
 
   return (
-    <header className="bg-primary text-primary-foreground">
+    <header className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white">
       {/* Only show main website navigation if NOT in a portal */}
       {!isInPortal && (
-        <nav className="border-b border-primary-foreground/20">
+        <nav className="border-b border-white/20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center space-x-8">
