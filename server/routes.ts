@@ -1014,6 +1014,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get dental charts for a specific patient (for patient portal)
+  app.get('/api/get-patient-dental-charts', async (req: Request, res: Response) => {
+    try {
+      // Get all charts from storage and return them
+      const allCharts = Array.from(dentalChartStorage.values());
+      
+      // In a real app, this would filter by authenticated user
+      // For now, return all charts
+      return res.status(200).json({ 
+        success: true, 
+        charts: allCharts 
+      });
+    } catch (error) {
+      console.error('Error retrieving patient dental charts:', error);
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Failed to retrieve patient dental charts' 
+      });
+    }
+  });
+
   // Get list of all patient dental charts (for clinic access)
   // In a real implementation, this would be protected by authentication
   app.get('/api/all-dental-charts', async (req: Request, res: Response) => {

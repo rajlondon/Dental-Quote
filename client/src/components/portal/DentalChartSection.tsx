@@ -79,6 +79,48 @@ const DentalChartSection: React.FC = () => {
     };
   }, []);
 
+  // Initialize teeth data when switching to interactive mode
+  useEffect(() => {
+    if (isInteractive && currentTeethData.length === 0) {
+      // Initialize with default teeth structure
+      const defaultTeeth = [
+        { id: 1, name: 'Upper Right Third Molar (1)', condition: null, treatment: null, notes: '' },
+        { id: 2, name: 'Upper Right Second Molar (2)', condition: null, treatment: null, notes: '' },
+        { id: 3, name: 'Upper Right First Molar (3)', condition: null, treatment: null, notes: '' },
+        { id: 4, name: 'Upper Right Second Premolar (4)', condition: null, treatment: null, notes: '' },
+        { id: 5, name: 'Upper Right First Premolar (5)', condition: null, treatment: null, notes: '' },
+        { id: 6, name: 'Upper Right Canine (6)', condition: null, treatment: null, notes: '' },
+        { id: 7, name: 'Upper Right Lateral Incisor (7)', condition: null, treatment: null, notes: '' },
+        { id: 8, name: 'Upper Right Central Incisor (8)', condition: null, treatment: null, notes: '' },
+        { id: 9, name: 'Upper Left Central Incisor (9)', condition: null, treatment: null, notes: '' },
+        { id: 10, name: 'Upper Left Lateral Incisor (10)', condition: null, treatment: null, notes: '' },
+        { id: 11, name: 'Upper Left Canine (11)', condition: null, treatment: null, notes: '' },
+        { id: 12, name: 'Upper Left First Premolar (12)', condition: null, treatment: null, notes: '' },
+        { id: 13, name: 'Upper Left Second Premolar (13)', condition: null, treatment: null, notes: '' },
+        { id: 14, name: 'Upper Left First Molar (14)', condition: null, treatment: null, notes: '' },
+        { id: 15, name: 'Upper Left Second Molar (15)', condition: null, treatment: null, notes: '' },
+        { id: 16, name: 'Upper Left Third Molar (16)', condition: null, treatment: null, notes: '' },
+        { id: 17, name: 'Lower Left Third Molar (17)', condition: null, treatment: null, notes: '' },
+        { id: 18, name: 'Lower Left Second Molar (18)', condition: null, treatment: null, notes: '' },
+        { id: 19, name: 'Lower Left First Molar (19)', condition: null, treatment: null, notes: '' },
+        { id: 20, name: 'Lower Left Second Premolar (20)', condition: null, treatment: null, notes: '' },
+        { id: 21, name: 'Lower Left First Premolar (21)', condition: null, treatment: null, notes: '' },
+        { id: 22, name: 'Lower Left Canine (22)', condition: null, treatment: null, notes: '' },
+        { id: 23, name: 'Lower Left Lateral Incisor (23)', condition: null, treatment: null, notes: '' },
+        { id: 24, name: 'Lower Left Central Incisor (24)', condition: null, treatment: null, notes: '' },
+        { id: 25, name: 'Lower Right Central Incisor (25)', condition: null, treatment: null, notes: '' },
+        { id: 26, name: 'Lower Right Lateral Incisor (26)', condition: null, treatment: null, notes: '' },
+        { id: 27, name: 'Lower Right Canine (27)', condition: null, treatment: null, notes: '' },
+        { id: 28, name: 'Lower Right First Premolar (28)', condition: null, treatment: null, notes: '' },
+        { id: 29, name: 'Lower Right Second Premolar (29)', condition: null, treatment: null, notes: '' },
+        { id: 30, name: 'Lower Right First Molar (30)', condition: null, treatment: null, notes: '' },
+        { id: 31, name: 'Lower Right Second Molar (31)', condition: null, treatment: null, notes: '' },
+        { id: 32, name: 'Lower Right Third Molar (32)', condition: null, treatment: null, notes: '' }
+      ];
+      setCurrentTeethData(defaultTeeth);
+    }
+  }, [isInteractive]);
+
   // Handle teeth data updates from interactive chart
   const handleTeethUpdate = (teethData: any[]) => {
     setCurrentTeethData(teethData);
@@ -111,7 +153,7 @@ const DentalChartSection: React.FC = () => {
 
       const response = await axios.post('/api/save-dental-chart', chartData);
 
-      if (response.data.success) {
+      if (response.data && response.data.success) {
         setHasUnsavedChanges(false);
         toast({
           title: "Chart Saved",
@@ -184,29 +226,43 @@ const DentalChartSection: React.FC = () => {
 
   // Fetch dental charts for the patient
   useEffect(() => {
-    fetchCharts();
-  }, []);
+    if (patientEmail) {
+      fetchCharts();
+    }
+  }, [patientEmail]);
 
   const fetchCharts = async () => {
     try {
       setLoading(true);
-      // In a real implementation, this would use the authenticated user's info
-      // For now, we'll simulate fetching charts from the API
-      const response = await axios.get('/api/get-patient-dental-charts');
+      
+      // Try to get charts from the API if patient email is available
+      if (patientEmail) {
+        try {
+          const response = await axios.get(`/api/get-dental-chart?patientEmail=${encodeURIComponent(patientEmail)}`);
+          
+          if (response.data.success && response.data.charts) {
+            // Sort charts by date, newest first
+            const sortedCharts = response.data.charts.sort((a: ChartData, b: ChartData) => 
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            );
 
-      if (response.data.success && response.data.charts) {
-        // Sort charts by date, newest first
-        const sortedCharts = response.data.charts.sort((a: ChartData, b: ChartData) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        );
+            setCharts(sortedCharts);
 
-        setCharts(sortedCharts);
-
-        // Select the most recent chart by default
-        if (sortedCharts.length > 0) {
-          setSelectedChartIndex(0);
+            // Select the most recent chart by default
+            if (sortedCharts.length > 0) {
+              setSelectedChartIndex(0);
+            }
+            
+            setLoading(false);
+            return;
+          }
+        } catch (apiError) {
+          console.log('API call failed, using demo data');
         }
-      } else {
+      }
+      
+      // If API fails or no email, use demo data
+      {
         // For demo purposes, create some mock data
         const mockCharts: ChartData[] = [
           {
