@@ -88,6 +88,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const [treatmentPlan, setTreatmentPlan] = useState<TreatmentItem[]>([]);
   const [localTotalGBP, setLocalTotalGBP] = useState<number>(0);
   const [expandedClinics, setExpandedClinics] = useState<{[key: string]: boolean}>({});
+  const [isSmartMatchEnabled, setIsSmartMatchEnabled] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('smartMatch') === 'true';
+  });
+  const [clinics, setClinics] = useState(clinicsData);
   const { toast } = useToast();
 
   // Initialize data once on mount
@@ -344,21 +349,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Calculate UK total for comparison
   const ukTotal = activeTreatmentPlan.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
-  // Load treatment plan from localStorage only once on mount
-  useEffect(() => {
-    if (treatmentItems.length === 0) {
-      const savedPlan = localStorage.getItem('treatmentPlan');
-      if (savedPlan) {
-        try {
-          const parsedPlan = JSON.parse(savedPlan);
-          setTreatmentPlan(parsedPlan);
-        } catch (error) {
-          console.error('Error parsing saved treatment plan:', error);
-          setTreatmentPlan([]);
-        }
-      }
-    }
-  }, []); // Empty dependency array to run only once
+  
 
   if (!activeTreatmentPlan.length) {
     return (
@@ -379,14 +370,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     );
   }
 
-  // Smart matching state
-  const [isSmartMatchEnabled, setIsSmartMatchEnabled] = useState(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('smartMatch') === 'true';
-  });
-
-  // Clinics state with smart matching
-  const [clinics, setClinics] = useState(() => {
+  // Apply smart matching logic in useEffect to avoid hooks order issues
+  useEffect(() => {
     let clinicsList = [...clinicsData];
 
     // Apply smart matching if enabled and we have preferences
@@ -431,37 +416,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       }
     }
 
-    // Apply special offer sorting if exists
-    // if (specialOffer && specialOffer.clinicId) {
-    //   clinicsList = clinicsList.sort((a, b) => {
-    //     if (a.id === specialOffer.clinicId) return -1;
-    //     if (b.id === specialOffer.clinicId) return 1;
-    //     // If smart matching is enabled, maintain smart order for non-offer clinics
-    //     if (isSmartMatchEnabled) return 0;
-    //     if (a.tier === 'premium' && b.tier !== 'premium') return -1;
-    //     if (a.tier !== 'premium' && b.tier === 'premium') return 1;
-    //     return a.priceGBP - b.priceGBP;
-    //   });
-
-    //   clinicsList = clinicsList.map(clinic => {
-    //     if (clinic.id === specialOffer.clinicId) {
-    //       return {
-    //         ...clinic,
-    //         hasSpecialOffer: true,
-    //         specialOfferDetails: {
-    //           id: specialOffer.id,
-    //           title: specialOffer.title,
-    //           discountValue: specialOffer.discountValue,
-    //           discountType: specialOffer.discountType
-    //         }
-    //       };
-    //     }
-    //     return clinic;
-    //   });
-    // }
-
-    return clinicsList;
-  });
+    setClinics(clinicsList);
+  }, [isSmartMatchEnabled, activeTreatmentPlan.length]);
 
   // Helper function to get clinic specialties
   const getClinicSpecialties = (clinicId: string): string[] => {
