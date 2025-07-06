@@ -48,7 +48,7 @@ const DocumentsSection = () => <div className="p-4">Documents functionality woul
 const SupportSection = () => <div className="p-4">Support functionality would go here</div>;
 const ProfileSection = () => <div className="p-4">Profile functionality would go here</div>;
 const TreatmentPlanSection = () => <div className="p-4">Treatment Plan details would go here</div>;
-const DentalChartSection = () => <div className="p-4">Dental chart would go here</div>;
+import DentalChartSection from '@/components/portal/DentalChartSection';
 const TreatmentComparisonSection = () => <div className="p-4">Treatment comparison would go here</div>;
 
 // Use the imported dashboard component

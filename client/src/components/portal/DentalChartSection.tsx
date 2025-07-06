@@ -361,14 +361,14 @@ const DentalChartSection: React.FC = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-          Dental Chart
+          Interactive Dental Chart
         </h2>
         <div className="flex gap-2">
           <Button
             variant={isInteractive ? "default" : "outline"}
             onClick={() => setIsInteractive(!isInteractive)}
           >
-            {isInteractive ? "View Mode" : "Edit Mode"}
+            {isInteractive ? "View Mode" : "Interactive Mode"}
           </Button>
         </div>
       </div>
@@ -376,165 +376,114 @@ const DentalChartSection: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>
-            {isInteractive ? "Interactive Dental Chart" : "Your Dental Chart"}
+            Mark Your Dental Conditions & Treatments
           </CardTitle>
           <CardDescription>
-            {isInteractive 
-              ? "Click on teeth to mark conditions and treatments, then save or send to clinic"
-              : "View and track your dental conditions and treatments"
-            }
+            Use our interactive dental chart to mark existing conditions and desired treatments. Your clinic will receive this information to create a personalized treatment plan.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {isInteractive ? (
+          <div className="mb-6">
+            <Alert className="bg-blue-50 text-blue-700 border-blue-100">
+              <Info className="h-4 w-4" />
+              <AlertTitle>
+                How to Use
+              </AlertTitle>
+              <AlertDescription>
+                Click on any tooth to mark conditions (chipped, missing, painful) or desired treatments (implants, crowns, veneers). Your changes are automatically saved and can be sent to your chosen clinic.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <div className="bg-white p-6 rounded-lg border shadow-sm mb-6">
+            <DentalChart 
+              onTeethUpdate={handleTeethUpdate}
+              patientEmail={patientEmail}
+              patientName={patientName}
+              readOnly={!isInteractive}
+            />
+          </div>
+
+          <div className="space-y-4">
             <div>
-              <div className="mb-6">
-                <Alert className="bg-green-50 text-green-700 border-green-100">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>
-                    Interactive Mode
-                  </AlertTitle>
-                  <AlertDescription>
-                    Click on any tooth to mark conditions (chipped, missing, painful) or desired treatments (implants, crowns, veneers). Your changes will be saved and can be sent to the clinic.
-                  </AlertDescription>
-                </Alert>
+              <Label htmlFor="patient-notes">Additional Notes for Clinic</Label>
+              <Textarea
+                id="patient-notes"
+                placeholder="Describe any pain, sensitivity, concerns, or specific requests for your treatment..."
+                value={patientNotes}
+                onChange={(e) => {
+                  setPatientNotes(e.target.value);
+                  setHasUnsavedChanges(true);
+                }}
+                className="mt-1"
+                rows={4}
+              />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+              <div className="flex items-center gap-2">
+                {hasUnsavedChanges && (
+                  <Badge variant="outline" className="text-amber-600 border-amber-600">
+                    <AlertCircle className="h-3 w-3 mr-1" />
+                    Unsaved Changes
+                  </Badge>
+                )}
+                {currentTeethData.length > 0 && (
+                  <Badge variant="outline" className="text-green-600 border-green-600">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    {currentTeethData.filter(tooth => tooth.condition || tooth.treatment).length} teeth marked
+                  </Badge>
+                )}
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg border mb-6">
-                <DentalChart 
-                  onTeethUpdate={handleTeethUpdate}
-                  patientEmail={patientEmail}
-                  patientName={patientName}
-                  readOnly={false}
-                />
-              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={saveChartData}
+                  disabled={isSaving || !currentTeethData.length}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? "Saving..." : "Save Chart"}
+                </Button>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="patient-notes">Additional Notes for Clinic</Label>
-                  <Textarea
-                    id="patient-notes"
-                    placeholder="Add any specific concerns, pain levels, or requests for the clinic..."
-                    value={patientNotes}
-                    onChange={(e) => {
-                      setPatientNotes(e.target.value);
-                      setHasUnsavedChanges(true);
-                    }}
-                    className="mt-1"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    {hasUnsavedChanges && (
-                      <Badge variant="outline" className="text-amber-600 border-amber-600">
-                        Unsaved Changes
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={saveChartData}
-                      disabled={isSaving || !currentTeethData.length}
-                    >
-                      <Save className="h-4 w-4 mr-2" />
-                      {isSaving ? "Saving..." : "Save Chart"}
-                    </Button>
-
-                    <Button
-                      onClick={sendToClinic}
-                      disabled={isSending || !currentTeethData.length}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      {isSending ? "Sending..." : "Send to Clinic"}
-                    </Button>
-                  </div>
-                </div>
+                <Button
+                  onClick={sendToClinic}
+                  disabled={isSending || !currentTeethData.length}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <Send className="h-4 w-4 mr-2" />
+                  {isSending ? "Sending..." : "Send to Clinic"}
+                </Button>
               </div>
             </div>
-          ) : (
-            <div>
-              <div className="mb-6">
-                <Alert className="bg-blue-50 text-blue-700 border-blue-100">
-                  <Info className="h-4 w-4" />
-                  <AlertTitle>
-                    About Your Dental Chart
-                  </AlertTitle>
-                  <AlertDescription>
-                    This chart shows your current dental status. Switch to Edit Mode to update your dental information and send it to the clinic.
-                  </AlertDescription>
-                </Alert>
-              </div>
+          </div>
 
-              {selectedChartIndex !== null && charts[selectedChartIndex] ? (
-                <div>
-                  {charts.length > 1 && (
-                    <div className="mb-6">
-                      <h3 className="text-sm font-medium mb-2">
-                        Chart History
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {charts.map((chart, index) => (
-                          <Badge
-                            key={chart.chartId}
-                            variant={selectedChartIndex === index ? "default" : "outline"}
-                            className={`cursor-pointer ${selectedChartIndex === index ? "" : "hover:bg-gray-100"}`}
-                            onClick={() => setSelectedChartIndex(index)}
-                          >
-                            {formatDate(chart.createdAt)}
-                            {index === 0 && (
-                              <span className="ml-1 text-xs">
-                                (Latest)
-                              </span>
-                            )}
-                          </Badge>
-                        ))}
+          {/* Chart History Section */}
+          {charts.length > 0 && (
+            <div className="mt-8 pt-6 border-t">
+              <h3 className="text-lg font-semibold mb-4">Previous Charts</h3>
+              <div className="grid gap-4">
+                {charts.map((chart, index) => (
+                  <div key={chart.chartId} className="border rounded-lg p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <h4 className="font-medium">Chart from {formatDate(chart.createdAt)}</h4>
+                        <p className="text-sm text-gray-500">{formatTime(chart.createdAt)}</p>
                       </div>
+                      <Badge variant={index === 0 ? "default" : "outline"}>
+                        {index === 0 ? "Latest" : "Previous"}
+                      </Badge>
                     </div>
-                  )}
-
-                  <div className="mb-4">
-                    <h3 className="font-medium">
-                      Dental Chart from {formatDate(charts[selectedChartIndex].createdAt)}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      Last updated: {formatTime(charts[selectedChartIndex].createdAt)}
-                    </p>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg border">
-                    <DentalChart 
-                      initialTeeth={charts[selectedChartIndex].dentalChartData}
-                      readOnly={true}
-                    />
-                  </div>
-
-                  <div className="flex justify-end mt-4">
-                    <Button variant="outline" size="sm">
-                      <Download className="h-4 w-4 mr-2" />
-                      Export Chart
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedChartIndex(index)}
+                    >
+                      View Chart
                     </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No Dental Charts Found</h3>
-                  <p className="text-gray-500 max-w-md mx-auto mb-4">
-                    You don't have any dental charts yet. Switch to Edit Mode to create your first dental chart.
-                  </p>
-                  <Button 
-                    onClick={() => setIsInteractive(true)}
-                    className="bg-green-600 hover:bg-green-700"
-                  >
-                    Create Your Dental Chart
-                  </Button>
-                </div>
-              )}
+                ))}
+              </div>
             </div>
           )}
         </CardContent>
