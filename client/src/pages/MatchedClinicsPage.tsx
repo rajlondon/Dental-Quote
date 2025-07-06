@@ -419,7 +419,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     }
 
     setClinics(clinicsList);
-  }, [isSmartMatchEnabled, activeTreatmentPlan.length, clinicsData]);
+  }, [isSmartMatchEnabled]);
 
   // Helper function to get clinic specialties
   const getClinicSpecialties = (clinicId: string): string[] => {
@@ -515,25 +515,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           </div>
         )}
 
-        {/* Quick Filter Options */}
+        {/* Quick Filter Options - Simplified */}
         <div className="mb-6">
           <div className="flex flex-wrap gap-3">
-            {Object.entries(QuoteEngine.getFilterOptions()).map(([key, option]) => (
-              <Button
-                key={key}
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-2 text-sm"
-                onClick={() => {
-                  // Apply quick filter
-                  const filtered = option.filter(clinicsData.map(c => enhanceClinicData(c)));
-                  setClinics(filtered.map(ec => clinicsData.find(c => c.id === ec.id)!).filter(Boolean));
-                }}
-              >
-                <span>{option.title}</span>
-              </Button>
-            ))}
-
             {!isSmartMatchEnabled && (
               <Button
                 variant="outline"
