@@ -8,7 +8,7 @@ import { format, addDays } from "date-fns";
 
 // Simple Hero component with minimal interaction
 const HeroSimple: React.FC = () => {
-  const [, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // Simple state for only city and departure date
   const [city, setCity] = useState("Istanbul");
@@ -47,7 +47,7 @@ const HeroSimple: React.FC = () => {
     }
 
     // Navigate to quote page with parameters
-    navigate(`/your-quote?city=${city}&treatment=${defaultTreatment}&origin=${defaultOrigin}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}&travelDate=${outDateFormatted}`);
+    setLocation(`/your-quote?city=${city}&treatment=${defaultTreatment}&origin=${defaultOrigin}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}&travelDate=${outDateFormatted}`);
   };
 
   return (
@@ -58,7 +58,7 @@ const HeroSimple: React.FC = () => {
           {/* Service navigation tabs - Booking.com style */}
           <div className="flex items-center space-x-6 mb-6 overflow-x-auto pb-2 -mx-4 px-4 md:pb-0 md:mx-0 md:px-0">
             <div 
-              onClick={() => navigate('/dental-implants')}
+              onClick={() => setLocation('/dental-implants')}
               className="flex items-center text-white opacity-90 hover:opacity-100 whitespace-nowrap border-b-2 border-white pb-2 px-1 text-sm font-medium cursor-pointer"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -67,7 +67,7 @@ const HeroSimple: React.FC = () => {
               Dental Implants
             </div>
             <div 
-              onClick={() => navigate('/veneers')}
+              onClick={() => setLocation('/veneers')}
               className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm cursor-pointer"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -77,7 +77,7 @@ const HeroSimple: React.FC = () => {
               Veneers & Crowns
             </div>
             <div 
-              onClick={() => navigate('/hollywood-smile')}
+              onClick={() => setLocation('/hollywood-smile')}
               className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm cursor-pointer"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -86,7 +86,7 @@ const HeroSimple: React.FC = () => {
               Hollywood Smile
             </div>
             <div 
-              onClick={() => navigate('/full-mouth')}
+              onClick={() => setLocation('/full-mouth')}
               className="flex items-center text-white opacity-70 hover:opacity-100 whitespace-nowrap pb-2 px-1 text-sm cursor-pointer"
             >
               <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

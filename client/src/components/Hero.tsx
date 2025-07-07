@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 // Translation removed - using English text directly
-import { useLocation, Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { 
   Plane as PlaneIcon, 
   ArrowRight, 
