@@ -145,7 +145,7 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
   }
 
   if (!adminUser) {
-    return <Redirect to="/admin-login" />;
+    return <Redirect to="/admin-portal" />;
   }
 
   if (adminUser.role !== 'admin') {
@@ -154,7 +154,7 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
       description: 'You do not have permission to access the admin portal.',
       variant: 'destructive',
     });
-    return <Redirect to="/admin-login" />;
+    return <Redirect to="/admin-portal" />;
   }
 
   if (!initialized) {

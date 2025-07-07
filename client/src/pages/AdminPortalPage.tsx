@@ -76,7 +76,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
     // Skip if no admin user
     if (!adminUser) {
       console.log("No admin user found, redirecting to login");
-      navigate('/admin-login');
+      navigate('/admin-portal');
       return;
     }
 
