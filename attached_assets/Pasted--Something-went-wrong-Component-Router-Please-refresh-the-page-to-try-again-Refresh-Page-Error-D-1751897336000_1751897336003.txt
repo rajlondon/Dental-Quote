@@ -1,0 +1,33 @@
+
+Something went wrong
+Component: Router
+
+Please refresh the page to try again.
+
+Refresh Page
+Error Details
+TypeError: Cannot read properties of undefined (reading 'map')
+    at ClinicPortalTesting (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/portal/ClinicPortalTesting.tsx:32:32)
+    at main
+    at div
+    at div
+    at ClinicPortalPage (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/pages/ClinicPortalPage.tsx:73:3)
+    at ClinicQueryProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-clinic-queries.tsx:23:39)
+    at ClinicGuard (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ClinicGuard.tsx?t=1751896634804:24:24)
+    at Route (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:323:16)
+    at Switch (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:379:17)
+    at AppRouter (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?t=1751896634804&v=cP00H5Yav63qY3LX4a6e2:118:9)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:7:5)
+    at Suspense
+    at BookingsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-notifications.tsx?t=1751896634141:25:41)
+    at AdminAuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-admin-auth.tsx:22:37)
+    at AuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-auth.tsx?t=1751896634141:27:32)
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:7:5)
+    at App (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?t=1751896634804&v=cP00H5Yav63qY3LX4a6e2:691:3)
+    at RTLProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/rtl-provider.tsx:19:31)
+    at Suspense
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx?v=cP00H5Yav63qY3LX4a6e2:7:5)
+

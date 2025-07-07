@@ -172,6 +172,82 @@ router.get('/user', async (req, res) => {
   }
 });
 
+// General login endpoint for portal login
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and password are required' 
+      });
+    }
+
+    // Query for user with any role
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    if (user.length === 0) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid credentials' 
+      });
+    }
+
+    const userData = user[0];
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, userData.password_hash);
+    if (!isValidPassword) {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid credentials' 
+      });
+    }
+
+    // Create session
+    req.session.userId = userData.id;
+    req.session.userRole = userData.role;
+
+    // Save session explicitly
+    await new Promise((resolve, reject) => {
+      req.session.save((err) => {
+        if (err) reject(err);
+        else resolve(true);
+      });
+    });
+
+    console.log('User session created:', {
+      userId: req.session.userId,
+      userRole: req.session.userRole,
+      sessionId: req.sessionID
+    });
+
+    // Return user data
+    res.json({
+      success: true,
+      user: {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        firstName: userData.first_name,
+        lastName: userData.last_name
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Internal server error' 
+    });
+  }
+});
+
 // Get admin user session
 router.get('/admin-user', async (req, res) => {
   try {
