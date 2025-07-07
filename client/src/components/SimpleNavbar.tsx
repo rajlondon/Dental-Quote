@@ -23,13 +23,13 @@ const SimpleNavbar: React.FC = () => {
             />
           </a>
         </div>
-        
+
         <div className="hidden md:flex items-center space-x-3">
           <a href="/your-quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-4 py-1.5 rounded-md flex items-center text-sm">
             <Calculator className="h-4 w-4 mr-1.5" />
-            {t('navbar.get_quote', 'Get a Quote')}
+            Get a Quote
           </a>
-          
+
           <div className="relative group">
             <a href="/dental-chart" className="text-neutral-600 hover:text-primary transition-colors text-xs flex items-center">
               <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -49,41 +49,41 @@ const SimpleNavbar: React.FC = () => {
               </a>
             </div>
           </div>
-          
+
           <a href="/portal-login" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.patient_portal', 'Patient Portal')}
+            Patient Portal
           </a>
-          
+
           <a href="/portal-login?type=clinic" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.clinic_login', 'Clinic Login')}
+            Clinic Login
           </a>
-          
+
           <a href="/blog" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.blog', 'Blog')}
+            Blog
           </a>
-          
+
           <a href="#contact" className="text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.contact', 'Contact')}
+            Contact
           </a>
-          
+
           <LanguageSwitcher />
         </div>
-        
+
         <div className="md:hidden flex items-center gap-2">
           <a href="/your-quote" className="bg-[#0071c2] hover:bg-[#00487a] text-white font-bold px-2 py-1 rounded-md flex items-center text-xs">
             <Calculator className="h-3 w-3 mr-1" />
-            {t('navbar.get_quote', 'Quote')}
+            Quote
           </a>
-          
+
           <a href="/dental-chart" className="text-neutral-600 hover:text-primary transition-colors flex items-center text-xs">
             <svg className="h-3 w-3 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M12 2v4m0 12v4M2 12h4m12 0h4m-9-9l-3 3m12 12l-3-3M3 3l3 3m12 12l3 3M3 21l3-3m12-12l3-3" />
             </svg>
             Services
           </a>
-          
+
           <LanguageSwitcher />
-          
+
           <button 
             className="text-primary p-1" 
             onClick={toggleMobileMenu}
@@ -97,7 +97,7 @@ const SimpleNavbar: React.FC = () => {
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
       <div 
         className={`md:hidden bg-white border-t border-gray-100 shadow-lg overflow-hidden transition-all duration-300 ${
@@ -107,39 +107,39 @@ const SimpleNavbar: React.FC = () => {
       >
         <div className="px-3 py-2 space-y-2">
           <a href="/your-quote" className="block py-1.5 bg-[#0071c2] text-white font-bold hover:bg-[#00487a] text-xs rounded px-3 mb-2">
-            {t('navbar.get_quote', 'Get a Quote')}
+            Get a Quote
           </a>
-          
+
           <a href="/dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             Interactive Dental Chart
           </a>
-          
+
           <a href="/my-dental-chart" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             My Saved Dental Charts
           </a>
-          
+
           <a href="/dental-advice" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
             AI Dental Treatment Advice
           </a>
-          
+
           <a href="/portal-login" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.patient_portal', 'Patient Portal')}
+            Patient Portal
           </a>
-          
+
           <a href="/portal-login?type=clinic" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.clinic_login', 'Clinic Login')}
+            Clinic Login
           </a>
-          
+
           <a href="/blog" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.blog', 'Blog')}
+            Blog
           </a>
-          
+
           <a href="/about" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.about', 'About Us')}
+            About Us
           </a>
-          
+
           <a href="#contact" className="block text-neutral-600 hover:text-primary transition-colors text-xs">
-            {t('navbar.contact', 'Contact')}
+            Contact
           </a>
         </div>
       </div>
