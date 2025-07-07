@@ -48,7 +48,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
         // Use the admin auth endpoint to verify the session
         // Fall back to cached session if API fails
-        const res = await apiRequest("GET", "/api/auth/user");
+        const res = await apiRequest("GET", "/api/auth/admin-user");
         const userData = await res.json();
 
         if (userData && userData.role === 'admin') {

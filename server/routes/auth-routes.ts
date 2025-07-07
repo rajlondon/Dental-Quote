@@ -1,5 +1,9 @@
 import { Router } from "express";
 import passport from "passport";
+import bcrypt from "bcrypt";
+import { db } from "../db";
+import { users } from "../../shared/schema";
+import { and, eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -119,6 +123,40 @@ router.post('/admin-login', async (req, res) => {
       success: false, 
       message: 'Internal server error' 
     });
+  }
+});
+
+// General user session endpoint (for compatibility)
+router.get('/user', async (req, res) => {
+  try {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: 'Not authenticated' });
+    }
+
+    const user = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.session.userId))
+      .limit(1);
+
+    if (user.length === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const userData = user[0];
+    res.json({
+      user: {
+        id: userData.id,
+        email: userData.email,
+        role: userData.role,
+        firstName: userData.first_name,
+        lastName: userData.last_name
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
