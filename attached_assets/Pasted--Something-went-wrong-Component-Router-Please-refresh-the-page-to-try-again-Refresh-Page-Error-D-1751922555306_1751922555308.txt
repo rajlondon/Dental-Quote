@@ -1,0 +1,72 @@
+
+Something went wrong
+Component: Router
+
+Please refresh the page to try again.
+
+Refresh Page
+Error Details
+Error: `SelectLabel` must be used within `SelectGroup`
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=c212b9f4:832:13
+    at _c9 (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/select.tsx:185:12)
+    at div
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QCAFA6Y2.js?v=c212b9f4:41:13
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:52:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:33:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=c212b9f4:98:15
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=c212b9f4:754:13
+    at div
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:52:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:33:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=c212b9f4:98:15
+    at Provider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ICA7ZJMY.js?v=c212b9f4:38:15)
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=c212b9f4:298:58
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:52:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-D3CTYCI6.js?v=c212b9f4:33:11
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-QCAFA6Y2.js?v=c212b9f4:41:13
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-NUDZVE4E.js?v=c212b9f4:260:22
+    at SelectPortal
+    at _c7 (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/select.tsx:122:12)
+    at Provider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ICA7ZJMY.js?v=c212b9f4:38:15)
+    at Provider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=c212b9f4:28:15)
+    at CollectionProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-LP3SNE3I.js?v=c212b9f4:89:13)
+    at Provider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-ICA7ZJMY.js?v=c212b9f4:38:15)
+    at Provider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5I4RE5FG.js?v=c212b9f4:1915:15)
+    at Popper (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5I4RE5FG.js?v=c212b9f4:1972:11)
+    at Select (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-select.js?v=c212b9f4:86:5)
+    at div
+    at https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/form.tsx:71:6
+    at Controller (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BW5TH624.js?v=c212b9f4:313:35)
+    at FormField (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/form.tsx:32:6)
+    at div
+    at div
+    at div
+    at div
+    at form
+    at FormProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-BW5TH624.js?v=c212b9f4:102:11)
+    at div
+    at div
+    at div
+    at div
+    at div
+    at section
+    at PriceCalculator (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/PriceCalculator.tsx?t=1751922413384:250:3)
+    at div
+    at div
+    at PricingPage (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/pages/PricingPage.tsx?t=1751922413384:28:27)
+    at Route (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:323:16)
+    at Switch (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=c212b9f4:379:17)
+    at AppRouter (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?t=1751922413384&v=0LH50tTQryB3hwF9kJ724:117:9)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:7:5)
+    at Suspense
+    at BookingsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-bookings.tsx:23:36)
+    at NotificationsProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-notifications.tsx:25:41)
+    at AuthProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/hooks/use-auth.tsx:27:32)
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx:7:5)
+    at App (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/App.tsx?t=1751922413384&v=0LH50tTQryB3hwF9kJ724:690:3)
+    at RTLProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/rtl-provider.tsx:19:31)
+    at Suspense
+    at QueryClientProvider (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@tanstack_react-query.js?v=c212b9f4:2805:3)
+    at ErrorBoundary (https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/src/components/ui/error-boundary.tsx?v=0LH50tTQryB3hwF9kJ724:7:5)
+
