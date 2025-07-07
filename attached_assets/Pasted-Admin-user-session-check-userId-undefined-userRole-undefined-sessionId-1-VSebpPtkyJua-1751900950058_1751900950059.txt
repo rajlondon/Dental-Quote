@@ -1,0 +1,185 @@
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: '1-VSebpPtkyJuaRcHK7ldFVE4JB0K-g_'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:57:32 PM [express] GET /api/auth/admin-user 401 in 0ms :: {"message":"Not authenticated as admin"}
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'lWrDuK0kpq-_yDYrwCAsUudBugUKEo7A'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:57:32 PM [express] GET /api/auth/admin-user 401 in 0ms :: {"message":"Not authenticated as admin"}
+GET /api/special-offers/homepage called
+Special Offers map size: 5
+Processing clinic 1 with 1 offers
+Adding offer to homepage: Free Consultation Package
+Processing clinic 2 with 1 offers
+Adding offer to homepage: Premium Hotel Deal
+Processing clinic 3 with 1 offers
+Adding offer to homepage: Dental Implant + Crown Bundle
+Processing clinic 4 with 1 offers
+Adding offer to homepage: Luxury Airport Transfer
+Processing clinic 5 with 1 offers
+Total homepage offers after filtering: 4
+Returning 4 top offers for homepage
+2:58:00 PM [express] GET /api/special-offers/homepage 304 in 1ms :: [{"id":"ac36590b-b0dc-434e-ba74-…
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'TnYjepetHcsULeOPkTrKiNVVFJyVvYx3'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:58:00 PM [express] GET /api/auth/admin-user 401 in 0ms :: {"message":"Not authenticated as admin"}
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: '7M1DHGBsjYDE77koxRnU3sAZPBo7DUiJ'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:58:01 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+GET /api/special-offers/homepage called
+Special Offers map size: 5
+Processing clinic 1 with 1 offers
+Adding offer to homepage: Free Consultation Package
+Processing clinic 2 with 1 offers
+Adding offer to homepage: Premium Hotel Deal
+Processing clinic 3 with 1 offers
+Adding offer to homepage: Dental Implant + Crown Bundle
+Processing clinic 4 with 1 offers
+Adding offer to homepage: Luxury Airport Transfer
+Processing clinic 5 with 1 offers
+Total homepage offers after filtering: 4
+Returning 4 top offers for homepage
+2:58:35 PM [express] GET /api/special-offers/homepage 304 in 1ms :: [{"id":"ac36590b-b0dc-434e-ba74-…
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'YdrMhYS6Imy03kDnyb0DcgIib_dHUFDa'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:58:35 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'qfPDM_XKdXlFZ43vXW9OBC7eIk1Ks2uv'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:58:36 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+GET /api/special-offers/homepage called
+Special Offers map size: 5
+Processing clinic 1 with 1 offers
+Adding offer to homepage: Free Consultation Package
+Processing clinic 2 with 1 offers
+Adding offer to homepage: Premium Hotel Deal
+Processing clinic 3 with 1 offers
+Adding offer to homepage: Dental Implant + Crown Bundle
+Processing clinic 4 with 1 offers
+Adding offer to homepage: Luxury Airport Transfer
+Processing clinic 5 with 1 offers
+Total homepage offers after filtering: 4
+Returning 4 top offers for homepage
+2:59:13 PM [express] GET /api/special-offers/homepage 304 in 1ms :: [{"id":"ac36590b-b0dc-434e-ba74-…
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: '04bUGTCLi7-ca__fEZYplaTjh1fxEnNj'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:59:13 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'zq0G48Igu_sv-pA-f7BwMtsqX32_ajsC'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+2:59:14 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+Recreating admin user...
+Deleted existing admin users: Result {
+  command: 'DELETE',
+  rowCount: 1,
+  oid: null,
+  rows: [],
+  fields: [],
+  _parsers: undefined,
+  _types: { getTypeParser: [Function: getTypeParser] },
+  RowCtor: null,
+  rowAsArray: false
+}
+Generated fresh password hash, length: 60
+Created fresh admin user: {
+  id: 7,
+  email: 'admin@mydentalfly.com',
+  role: 'admin',
+  hasPassword: false,
+  passwordLength: undefined
+}
+Recreate admin error: Error: data and hash arguments required
+    at Object.compare (/home/runner/workspace/node_modules/bcrypt/bcrypt.js:208:17)
+    at /home/runner/workspace/node_modules/bcrypt/promises.js:29:12
+    at new Promise (<anonymous>)
+    at module.exports.promise (/home/runner/workspace/node_modules/bcrypt/promises.js:20:12)
+    at Object.compare (/home/runner/workspace/node_modules/bcrypt/bcrypt.js:204:25)
+    at <anonymous> (/home/runner/workspace/server/routes/auth-routes.ts:534:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2:59:17 PM [express] POST /api/auth/recreate-admin 500 in 621ms :: {"success":false,"message":"Faile…
+Recreating admin user...
+Deleted existing admin users: Result {
+  command: 'DELETE',
+  rowCount: 1,
+  oid: null,
+  rows: [],
+  fields: [],
+  _parsers: undefined,
+  _types: { getTypeParser: [Function: getTypeParser] },
+  RowCtor: null,
+  rowAsArray: false
+}
+Generated fresh password hash, length: 60
+Created fresh admin user: {
+  id: 8,
+  email: 'admin@mydentalfly.com',
+  role: 'admin',
+  hasPassword: false,
+  passwordLength: undefined
+}
+Recreate admin error: Error: data and hash arguments required
+    at Object.compare (/home/runner/workspace/node_modules/bcrypt/bcrypt.js:208:17)
+    at /home/runner/workspace/node_modules/bcrypt/promises.js:29:12
+    at new Promise (<anonymous>)
+    at module.exports.promise (/home/runner/workspace/node_modules/bcrypt/promises.js:20:12)
+    at Object.compare (/home/runner/workspace/node_modules/bcrypt/bcrypt.js:204:25)
+    at <anonymous> (/home/runner/workspace/server/routes/auth-routes.ts:534:37)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+3:00:29 PM [express] POST /api/auth/recreate-admin 500 in 514ms :: {"success":false,"message":"Faile…
+Debug users error: TypeError: Cannot convert undefined or null to object
+    at Function.entries (<anonymous>)
+    at orderSelectedFields (/home/runner/workspace/node_modules/src/utils.ts:77:16)
+    at <anonymous> (/home/runner/workspace/node_modules/src/utils.ts:88:19)
+    at Array.reduce (<anonymous>)
+    at orderSelectedFields (/home/runner/workspace/node_modules/src/utils.ts:77:32)
+    at <anonymous> (/home/runner/workspace/node_modules/src/pg-core/query-builders/select.ts:979:23)
+    at Object.startActiveSpan (/home/runner/workspace/node_modules/src/tracing.ts:27:11)
+    at PgSelectBase._prepare (/home/runner/workspace/node_modules/src/pg-core/query-builders/select.ts:978:17)
+    at <anonymous> (/home/runner/workspace/node_modules/src/pg-core/query-builders/select.ts:1009:16)
+    at Object.startActiveSpan (/home/runner/workspace/node_modules/src/tracing.ts:27:11)
+    at PgSelectBase.execute (/home/runner/workspace/node_modules/src/pg-core/query-builders/select.ts:1008:17)
+    at PgSelectBase.then (/home/runner/workspace/node_modules/src/query-promise.ts:31:15)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+3:02:30 PM [express] GET /api/auth/debug-users 500 in 4ms :: {"success":false,"message":"Failed to f…
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'SzEpTTRel24y_lBWkRE3Gzn0DHH8O3iF'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+3:08:05 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
+Admin user session check: {
+  userId: undefined,
+  userRole: undefined,
+  sessionId: 'bfwn1_u8U5Ts1dy5KlSxs45SyA3o1tM_'
+}
+Admin session validation failed: { hasUserId: false, userRole: undefined }
+3:08:05 PM [express] GET /api/auth/admin-user 401 in 1ms :: {"message":"Not authenticated as admin"}
