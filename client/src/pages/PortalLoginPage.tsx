@@ -307,28 +307,7 @@ const PortalLoginPage: React.FC = () => {
 
       if (userData.role === 'admin') {
         console.log("Admin user detected, redirecting to admin portal");
-        // Pre-cache user data
-        sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
-        sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-
-        // Special handling for admin to prevent refresh issues
-        sessionStorage.setItem('admin_portal_timestamp', Date.now().toString());
-        sessionStorage.setItem('admin_role_verified', 'true');
-
-        // Set a guard to prevent automatic redirects to login
-        localStorage.setItem('auth_guard', Date.now().toString());
-
-        // Flag in sessionStorage that we're doing a protected navigation
-        sessionStorage.setItem('admin_protected_navigation', 'true');
-
-        // Add slight delay to make sure everything is written
-        setTimeout(() => {
-          console.log("Admin portal redirect with all caches prepared");
-          // Set a flag that this is an intentional direct navigation, not a refresh
-          (window as any).__directAdminNavigation = true;
-          setLocation('/admin-portal');
-        }, 100);
-
+        setLocation('/admin-portal');
       } else if (userData.role === 'clinic') {
         console.log("Clinic staff detected, redirecting to clinic portal");
 
@@ -821,7 +800,6 @@ const PortalLoginPage: React.FC = () => {
                                   type="password" 
                                   placeholder="••••••••" 
                                   className="pl-10" 
-                                  {...field} 
                                 />
                               </div>
                             </FormControl>
@@ -886,8 +864,7 @@ const PortalLoginPage: React.FC = () => {
                                   className="pl-10" 
                                   {...field} 
                                 />
-                              </div>
-                            </FormControl>
+                              </div>                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -924,7 +901,6 @@ const PortalLoginPage: React.FC = () => {
                                 <Input 
                                   placeholder="+44 7700 900123" 
                                   className="pl-10" 
-                                  {...field} 
                                 />
                               </div>
                             </FormControl>
@@ -945,7 +921,6 @@ const PortalLoginPage: React.FC = () => {
                                   type="password" 
                                   placeholder="••••••••" 
                                   className="pl-10" 
-                                  {...field} 
                                 />
                               </div>
                             </FormControl>
@@ -966,7 +941,6 @@ const PortalLoginPage: React.FC = () => {
                                   type="password" 
                                   placeholder="••••••••" 
                                   className="pl-10" 
-                                  {...field} 
                                 />
                               </div>
                             </FormControl>
