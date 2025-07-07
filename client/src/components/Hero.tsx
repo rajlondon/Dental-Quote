@@ -15,7 +15,7 @@ import { format, addDays } from "date-fns";
 
 const Hero: React.FC = () => {
   // // Translation removed // Removed translation usage
-  const [, setLocation] = useLocation();
+  const [location, navigate] = useLocation();
 
   // Search form state
   const [selectedCity, setSelectedCity] = useState("Istanbul");
@@ -67,7 +67,7 @@ const Hero: React.FC = () => {
     const treatmentValue = selectedTreatmentObj ? selectedTreatmentObj.value : "dental-implants";
 
     // Go directly to price calculator with city and treatment context
-    setLocation(`/pricing?city=${selectedCity}&treatment=${treatmentValue}&from=search`);
+    navigate(`/pricing?city=${selectedCity}&treatment=${treatmentValue}&from=search`);
 
     console.log(`Navigating directly to treatment selection with:
       City: ${selectedCity}

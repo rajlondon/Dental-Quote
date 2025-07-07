@@ -8,48 +8,48 @@ import { format, addDays } from "date-fns";
 
 // Simple Hero component with minimal interaction
 const HeroSimple: React.FC = () => {
-  const [, setLocation] = useLocation();
-  
+  const [, navigate] = useLocation();
+
   // Simple state for only city and departure date
   const [city, setCity] = useState("Istanbul");
   const [departureDate, setDepartureDate] = useState(new Date());
-  
+
   // Default values we'll use but not show to the user
   const defaultTreatment = "dental-implants";
   const defaultOrigin = "uk";
   const returnDate = addDays(departureDate, 14);
-  
+
   // City options with coming soon locations
   const cities = ["Istanbul"];
   const comingSoonCities = ["Antalya (Coming Soon)", "Izmir (Coming Soon)", "Budapest (Coming Soon)", "Dubai (Coming Soon)"];
   const allCities = [...cities, ...comingSoonCities];
-  
+
   // City select handler
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setCity(e.target.value);
   };
-  
+
   // Date change handler
   const handleDepartureDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDepartureDate(new Date(e.target.value));
   };
-  
+
   // Handle search with minimal parameters
   const handleSearch = () => {
     // Format dates for URL
     const outDateFormatted = format(departureDate, "yyyy-MM-dd");
     const returnDateFormatted = format(returnDate, "yyyy-MM-dd");
-    
+
     // Prevent searching for disabled cities
     if (comingSoonCities.some(c => c === city)) {
       alert("This location is coming soon. Please select Istanbul for now.");
       return;
     }
-    
+
     // Navigate to quote page with parameters
-    setLocation(`/your-quote?city=${city}&treatment=${defaultTreatment}&origin=${defaultOrigin}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}&travelDate=${outDateFormatted}`);
+    navigate(`/your-quote?city=${city}&treatment=${defaultTreatment}&origin=${defaultOrigin}&departureDate=${outDateFormatted}&returnDate=${returnDateFormatted}&travelDate=${outDateFormatted}`);
   };
-  
+
   return (
     <section className="relative pb-12 overflow-hidden">
       {/* Booking.com style dark blue background */}
@@ -83,7 +83,7 @@ const HeroSimple: React.FC = () => {
               Full Mouth Reconstruction
             </Link>
           </div>
-      
+
           {/* Heading */}
           <div className="mb-8">
             <h1 className="text-white text-3xl md:text-4xl font-bold mb-2">
@@ -93,7 +93,7 @@ const HeroSimple: React.FC = () => {
               Book and compare accredited clinics abroad, save up to 70%, and manage every detail in one secure portal.
             </p>
           </div>
-          
+
           {/* Search Box */}
           <div className="max-w-5xl mx-auto">
             {/* Desktop: Horizontal form */}
@@ -115,10 +115,10 @@ const HeroSimple: React.FC = () => {
                       {cities.map(c => (
                         <option key={c} value={c}>{c}</option>
                       ))}
-                      
+
                       {/* Add a divider */}
                       <option disabled>──────────</option>
-                      
+
                       {/* Coming soon cities */}
                       {comingSoonCities.map(c => (
                         <option key={c} value={c} disabled className="text-gray-400">{c}</option>
@@ -126,7 +126,7 @@ const HeroSimple: React.FC = () => {
                     </select>
                   </div>
                 </div>
-                
+
                 {/* Departure date */}
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">When?</label>
@@ -144,7 +144,7 @@ const HeroSimple: React.FC = () => {
                   </div>
                 </div>
               </div>
-              
+
               {/* Search button - Booking.com style */}
               <div className="ml-4 flex items-center">
                 <button 
@@ -155,7 +155,7 @@ const HeroSimple: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             {/* Mobile: Stacked form */}
             <div className="md:hidden bg-white rounded-lg border-2 border-yellow-400 p-4">
               {/* City select */}
@@ -174,10 +174,10 @@ const HeroSimple: React.FC = () => {
                     {cities.map(c => (
                       <option key={c} value={c}>{c}</option>
                     ))}
-                    
+
                     {/* Add a divider */}
                     <option disabled>──────────</option>
-                    
+
                     {/* Coming soon cities */}
                     {comingSoonCities.map(c => (
                       <option key={c} value={c} disabled className="text-gray-400">{c}</option>
@@ -185,7 +185,7 @@ const HeroSimple: React.FC = () => {
                   </select>
                 </div>
               </div>
-              
+
               {/* Departure date */}
               <div className="mb-4">
                 <label className="block text-xs text-gray-500 mb-1">When?</label>
@@ -202,7 +202,7 @@ const HeroSimple: React.FC = () => {
                   />
                 </div>
               </div>
-              
+
               {/* Search button - Booking.com style */}
               <button 
                 onClick={handleSearch}
@@ -214,7 +214,7 @@ const HeroSimple: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Trust bar */}
       <div className="container mx-auto px-4 mt-3">
         <div className="max-w-5xl mx-auto text-center text-[11px] text-gray-500 flex flex-wrap items-center justify-center">
@@ -230,7 +230,7 @@ const HeroSimple: React.FC = () => {
           <span className="mx-2">•</span>
           <span>Data fully encrypted</span>
         </div>
-        
+
 
       </div>
     </section>
