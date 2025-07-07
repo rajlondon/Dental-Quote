@@ -1,0 +1,147 @@
+const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+
+// Database connection using environment variables
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+async function createTestUser() {
+  const client = await pool.connect();
+  
+  try {
+    console.log('🔌 Connected to PostgreSQL database');
+    
+    // Step 1: Test database connection
+    const connectionTest = await client.query('SELECT NOW() as current_time');
+    console.log('✅ Database connection successful:', connectionTest.rows[0].current_time);
+    
+    // Step 2: Hash password using bcrypt
+    const testEmail = 'test@mydentalfly.com';
+    const testPassword = 'Test123!';
+    const saltRounds = 10;
+    
+    console.log('\n🔐 Hashing password...');
+    console.log('Password to hash:', testPassword);
+    console.log('Salt rounds:', saltRounds);
+    
+    const hashedPassword = await bcrypt.hash(testPassword, saltRounds);
+    console.log('✅ Password hashed successfully');
+    console.log('Hash length:', hashedPassword.length);
+    console.log('Hash preview:', hashedPassword.substring(0, 20) + '...');
+    
+    // Step 3: Check if user already exists
+    console.log('\n🔍 Checking if user already exists...');
+    const existingUser = await client.query(
+      'SELECT id, email, role FROM users WHERE email = $1',
+      [testEmail]
+    );
+    
+    if (existingUser.rows.length > 0) {
+      console.log('⚠️  User already exists:', existingUser.rows[0]);
+      console.log('Deleting existing user...');
+      await client.query('DELETE FROM users WHERE email = $1', [testEmail]);
+      console.log('✅ Existing user deleted');
+    }
+    
+    // Step 4: Insert test user with hashed password
+    console.log('\n👤 Creating new test user...');
+    const insertQuery = `
+      INSERT INTO users (
+        email, 
+        password_hash, 
+        role, 
+        first_name, 
+        last_name, 
+        email_verified, 
+        profile_complete, 
+        status, 
+        created_at, 
+        updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING id, email, role, first_name, last_name, created_at
+    `;
+    
+    const insertValues = [
+      testEmail,           // email
+      hashedPassword,      // password_hash (note: using password_hash not password)
+      'admin',            // role
+      'Test',             // first_name
+      'User',             // last_name
+      true,               // email_verified
+      true,               // profile_complete
+      'active',           // status
+      new Date(),         // created_at
+      new Date()          // updated_at
+    ];
+    
+    const result = await client.query(insertQuery, insertValues);
+    const newUser = result.rows[0];
+    
+    console.log('✅ User created successfully:');
+    console.log('- ID:', newUser.id);
+    console.log('- Email:', newUser.email);
+    console.log('- Role:', newUser.role);
+    console.log('- Name:', newUser.first_name, newUser.last_name);
+    console.log('- Created:', newUser.created_at);
+    
+    // Step 5: Verify the user was created correctly
+    console.log('\n🔍 Verifying user creation...');
+    const verifyQuery = `
+      SELECT id, email, role, first_name, last_name, password_hash, 
+             email_verified, profile_complete, status, created_at
+      FROM users 
+      WHERE email = $1
+    `;
+    
+    const verifyResult = await client.query(verifyQuery, [testEmail]);
+    
+    if (verifyResult.rows.length === 0) {
+      throw new Error('User not found after creation!');
+    }
+    
+    const savedUser = verifyResult.rows[0];
+    console.log('✅ User found in database:');
+    console.log('- ID:', savedUser.id);
+    console.log('- Email:', savedUser.email);
+    console.log('- Role:', savedUser.role);
+    console.log('- Has password_hash:', !!savedUser.password_hash);
+    console.log('- Password hash length:', savedUser.password_hash?.length || 0);
+    console.log('- Email verified:', savedUser.email_verified);
+    console.log('- Profile complete:', savedUser.profile_complete);
+    console.log('- Status:', savedUser.status);
+    
+    // Step 6: Test password verification
+    console.log('\n🔐 Testing password verification...');
+    const passwordTest = await bcrypt.compare(testPassword, savedUser.password_hash);
+    console.log('Password verification result:', passwordTest);
+    
+    if (!passwordTest) {
+      throw new Error('Password verification failed!');
+    }
+    
+    console.log('✅ Password verification successful!');
+    
+    // Step 7: Final summary
+    console.log('\n🎉 SUCCESS! Test user created and verified:');
+    console.log('📧 Email:', testEmail);
+    console.log('🔑 Password:', testPassword);
+    console.log('👤 Role:', savedUser.role);
+    console.log('🆔 User ID:', savedUser.id);
+    console.log('\n🚀 You can now use these credentials to log in!');
+    
+  } catch (error) {
+    console.error('❌ Error creating test user:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack
+    });
+  } finally {
+    client.release();
+    await pool.end();
+  }
+}
+
+// Run the script
+createTestUser().catch(console.error);
