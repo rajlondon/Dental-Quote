@@ -149,55 +149,29 @@ export async function setupAuth(app: Express) {
       
       // Check our fast in-memory session cache first
       if (userSessionCache.has(id)) {
-        // Only log occasionally to reduce console noise
-        if (Math.random() < 0.01) { // Log 1% of cache hits
-          console.log(`Using cached user session for ID: ${id}`);
-        }
-        return done(null, userSessionCache.get(id));
+        const cachedUser = userSessionCache.get(id);
+        console.log(`Using cached user session for ID: ${id}, role: ${cachedUser?.role}`);
+        return done(null, cachedUser);
       }
       
       console.log(`Deserializing user session for ID: ${id}`);
       
-      // If no valid cache, try the database with timeout protection
-      let dbQueryTimeout: NodeJS.Timeout | null = null;
-      
       try {
-        // Set a timeout for the database query to prevent hanging requests
-        const timeoutPromise = new Promise<null>((_, reject) => {
-          dbQueryTimeout = setTimeout(() => {
-            reject(new Error("Database query timed out during session restore"));
-          }, 5000); // 5 second timeout
-        });
-        
-        // Race the database query against the timeout
-        const userResult = await Promise.race([
-          db.select({
-            id: users.id,
-            email: users.email,
-            role: users.role,
-            firstName: users.firstName,
-            lastName: users.lastName,
-            profileImage: users.profileImage,
-            clinicId: users.clinicId,
-            emailVerified: users.emailVerified,
-            status: users.status
-          }).from(users).where(eq(users.id, id)),
-          timeoutPromise
-        ]);
-        
-        // Clear the timeout if query completes
-        if (dbQueryTimeout) {
-          clearTimeout(dbQueryTimeout);
-          dbQueryTimeout = null;
-        }
-        
-        // If we got a null result from the race, the timeout won
-        if (userResult === null) {
-          throw new Error("Database query timed out");
-        }
+        // Direct database query without timeout race condition
+        const userResult = await db.select({
+          id: users.id,
+          email: users.email,
+          role: users.role,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          profileImage: users.profileImage,
+          clinicId: users.clinicId,
+          emailVerified: users.emailVerified,
+          status: users.status
+        }).from(users).where(eq(users.id, id));
         
         // Extract user from query results
-        const [user] = userResult as any;
+        const [user] = userResult;
         
         if (!user) {
           console.warn(`Session references non-existent user ID: ${id}`);
@@ -217,65 +191,37 @@ export async function setupAuth(app: Express) {
           status: user.status || 'pending'
         };
         
-        // Special handling for clinic users
-        if (user.role === 'clinic') {
-          console.log(`Clinic staff session restored for user ${user.id}`);
-        }
+        console.log(`Successfully deserialized user ${user.id} with role ${user.role}`);
         
-        // Cache the user in memory for future requests (much faster)
+        // Cache the user in memory for future requests
         userSessionCache.set(id, userForAuth);
         
         done(null, userForAuth);
       } catch (dbErr) {
-        // Clean up timeout if it's still active
-        if (dbQueryTimeout) {
-          clearTimeout(dbQueryTimeout);
-        }
-        
         console.error("Database error during session restore:", dbErr);
-        
-        // On database error, create a fallback user to maintain session continuity
-        console.log("Creating minimal fallback user during database outage");
-        
-        // Create minimal user object for emergency fallback
-        const fallbackUser = {
-          id: id,
-          email: "session-recovery@mydentalfly.local",
-          role: "recovery_mode"
-        };
-        
-        done(null, fallbackUser);
+        // Return null to indicate authentication failure
+        done(null, false);
       }
     } catch (err) {
       console.error("Critical session deserialization error:", err);
       // Don't pass error to done() as it can crash the application
-      // Instead, fail authentication gracefully
       done(null, false);
     }
   });
 
-  // Login endpoint with enhanced email verification handling and clinic session optimization
+  // Login endpoint with enhanced email verification handling
   app.post("/api/auth/login", (req, res, next) => {
-    // Special session optimization for clinic staff to prevent double login
-    // Check if already authenticated as clinic with same email
-    if (req.isAuthenticated() && 
-        req.user.role === 'clinic' && 
-        req.user.email === req.body.email) {
-      
-      console.log("Already authenticated as clinic staff with same email, reusing session");
-      
-      // Return the existing session instead of creating a new one
-      return res.json({ 
-        success: true, 
-        user: req.user,
-        sessionReused: true
-      });
-    }
+    console.log(`Login attempt for email: ${req.body.email}`);
     
     passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) return next(err);
+      if (err) {
+        console.error("Authentication error:", err);
+        return next(err);
+      }
       
       if (!user) {
+        console.log("Authentication failed:", info?.message || "Unknown reason");
+        
         // Check if this is specifically a verification issue
         if (info && info.message === "Please verify your email before logging in") {
           return res.status(403).json({ 
@@ -293,8 +239,18 @@ export async function setupAuth(app: Express) {
         });
       }
       
+      console.log(`Authentication successful for user ${user.id} with role ${user.role}`);
+      
       req.login(user, (err: Error | null) => {
-        if (err) return next(err);
+        if (err) {
+          console.error("Session creation error:", err);
+          return next(err);
+        }
+        
+        console.log(`Session created successfully for user ${user.id}`);
+        
+        // Cache the user immediately
+        userSessionCache.set(user.id, user);
         
         // Include unverified status warning in the response if needed
         if (user.role === 'patient' && !user.emailVerified) {
@@ -303,11 +259,6 @@ export async function setupAuth(app: Express) {
             user,
             warnings: ["Your email is not verified. Some features may be limited."]
           });
-        }
-        
-        // Add special logging for clinic staff
-        if (user.role === 'clinic') {
-          console.log(`Authenticated clinic staff: ${user.id} (${user.email})`);
         }
         
         return res.json({ success: true, user });

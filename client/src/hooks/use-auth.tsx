@@ -91,13 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/auth/user"],
     queryFn: async () => {
-      // If we're in admin mode and already have cached data, return it directly to prevent loops
-      if (window.location.pathname === '/admin-portal' && userDataRef.current) {
-        console.log("Returning cached user data for admin portal to prevent refresh loops");
-        return userDataRef.current;
-      }
-
-      // Check sessionStorage cache
+      // Check sessionStorage cache first
       const cachedUserData = sessionStorage.getItem('cached_user_data');
       const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
             
@@ -105,21 +99,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const timestamp = parseInt(cachedTimestamp, 10);
         const age = Date.now() - timestamp;
         
-        if (age < 30000) { // 30 seconds cache for stability
+        if (age < 10000) { // 10 seconds cache for quick access
           const parsedUser = JSON.parse(cachedUserData);
           userDataRef.current = parsedUser;
-          console.log(`Using cached user data (${age}ms old)`);
+          console.log(`Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
           return parsedUser;
         }
       }
       
-      // Fetch fresh data
+      // Fetch fresh data from server
       try {
-        console.log("Fetching fresh user data");
+        console.log("Fetching fresh user data from server");
         const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
         
-        // Update cache
+        console.log("Server response user data:", userData ? `ID: ${userData.id}, Role: ${userData.role}` : 'null');
+        
+        // Update cache and ref
         if (userData) {
           userDataRef.current = userData;
           sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
@@ -132,6 +128,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         return userData;
       } catch (error: any) {
+        console.error("User data fetch error:", error);
+        
         if (error.response?.status === 401) {
           console.warn("Authentication failed - session may have expired");
           userDataRef.current = null;
@@ -142,8 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);
       }
     },
-    staleTime: 30000, // Increase stale time to 30 seconds for more stability
-    refetchOnWindowFocus: false // Disable refetching on window focus to prevent loops
+    staleTime: 30000,
+    refetchOnWindowFocus: false,
+    retry: 1 // Only retry once to avoid excessive requests
   });
   
   // Login mutation with enhanced verification handling
