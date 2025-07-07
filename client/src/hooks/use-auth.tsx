@@ -135,6 +135,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           userDataRef.current = null;
           sessionStorage.removeItem('cached_user_data');
           sessionStorage.removeItem('cached_user_timestamp');
+          
+          // Check if we just logged in (within 5 seconds) - if so, don't clear the session immediately
+          const loginTimestamp = sessionStorage.getItem('login_timestamp');
+          const timeSinceLogin = loginTimestamp ? Date.now() - parseInt(loginTimestamp) : Infinity;
+          
+          if (timeSinceLogin < 5000) {
+            console.log("Recent login detected, retrying auth request in 1 second");
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Retry the request once more
+            try {
+              const retryRes = await api.get("/auth/user");
+              const retryUserData = retryRes.data.user || null;
+              if (retryUserData) {
+                userDataRef.current = retryUserData;
+                sessionStorage.setItem('cached_user_data', JSON.stringify(retryUserData));
+                sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+                return retryUserData;
+              }
+            } catch (retryError) {
+              console.error("Retry auth request also failed:", retryError);
+            }
+          }
+          
           return null;
         }
         throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);

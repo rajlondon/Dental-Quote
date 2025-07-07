@@ -77,34 +77,34 @@ export async function setupAuth(app: Express) {
       try {
         // Log authentication request
         console.log(`Authentication attempt for email: ${email}`);
-        
+
         // Find user by email
         const [user] = await db.select().from(users).where(eq(users.email, email));
-        
+
         if (!user) {
           console.log(`Authentication failed: Unknown user with email ${email}`);
           return done(null, false, { message: "Unknown user" });
         }
-        
+
         // Check if user has a password
         if (!user.password) {
           console.log(`Authentication failed: Password not set for user ${user.id}`);
           return done(null, false, { message: "Password not set" });
         }
-        
+
         // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
           console.log(`Authentication failed: Incorrect password for user ${user.id}`);
           return done(null, false, { message: "Incorrect password" });
         }
-        
+
         // Check if email is verified for patients (admin and clinic users can bypass)
         if (user.role === 'patient' && user.status === 'pending' && !user.emailVerified) {
           console.log(`Authentication failed: Unverified email for patient ${user.id}`);
           return done(null, false, { message: "Please verify your email before logging in" });
         }
-        
+
         // Return user without password
         const { password: _, ...userWithoutPassword } = user;
         // Cast to match the Express.User interface
@@ -119,9 +119,9 @@ export async function setupAuth(app: Express) {
           emailVerified: user.emailVerified || false,
           status: user.status || 'pending'
         };
-        
+
         console.log(`Authentication successful for user ${user.id} with role ${user.role}`);
-        
+
         return done(null, userForAuth);
       } catch (err) {
         console.error("Authentication error:", err);
@@ -146,16 +146,16 @@ export async function setupAuth(app: Express) {
         console.error(`Invalid session user ID (${typeof id}): ${id}`);
         return done(null, false);
       }
-      
+
       // Check our fast in-memory session cache first
       if (userSessionCache.has(id)) {
         const cachedUser = userSessionCache.get(id);
         console.log(`Using cached user session for ID: ${id}, role: ${cachedUser?.role}`);
         return done(null, cachedUser);
       }
-      
+
       console.log(`Deserializing user session for ID: ${id}`);
-      
+
       try {
         // Direct database query without timeout race condition
         const userResult = await db.select({
@@ -169,15 +169,15 @@ export async function setupAuth(app: Express) {
           emailVerified: users.emailVerified,
           status: users.status
         }).from(users).where(eq(users.id, id));
-        
+
         // Extract user from query results
         const [user] = userResult;
-        
+
         if (!user) {
           console.warn(`Session references non-existent user ID: ${id}`);
           return done(null, false);
         }
-        
+
         // Transform null values to undefined to match the Express.User interface
         const userForAuth = {
           id: user.id,
@@ -188,14 +188,14 @@ export async function setupAuth(app: Express) {
           profileImage: user.profileImage || undefined,
           clinicId: user.clinicId || undefined,
           emailVerified: user.emailVerified || false,
-          status: user.status || 'pending'
+          status: users.status || 'pending'
         };
-        
+
         console.log(`Successfully deserialized user ${user.id} with role ${user.role}`);
-        
+
         // Cache the user in memory for future requests
         userSessionCache.set(id, userForAuth);
-        
+
         done(null, userForAuth);
       } catch (dbErr) {
         console.error("Database error during session restore:", dbErr);
@@ -209,68 +209,92 @@ export async function setupAuth(app: Express) {
     }
   });
 
-  // Login endpoint with enhanced email verification handling
-  app.post("/api/auth/login", (req, res, next) => {
-    console.log(`Login attempt for email: ${req.body.email}`);
-    
-    passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
-      if (err) {
-        console.error("Authentication error:", err);
-        return next(err);
+  // Login endpoint
+  app.post('/api/auth/login', async (req, res) => {
+    console.log('Login attempt for:', req.body.email);
+
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
       }
-      
+
+      // Check if user exists and password is correct
+      const [user] = await db.select().from(users).where(eq(users.email, email));
+
       if (!user) {
-        console.log("Authentication failed:", info?.message || "Unknown reason");
-        
-        // Check if this is specifically a verification issue
-        if (info && info.message === "Please verify your email before logging in") {
-          return res.status(403).json({ 
-            success: false, 
-            message: "Your email address has not been verified yet",
-            code: "EMAIL_NOT_VERIFIED",
-            email: req.body.email
-          });
-        }
-        
-        // General authentication failure
-        return res.status(401).json({ 
-          success: false, 
-          message: info?.message || "Authentication failed" 
+        console.log('User not found:', email);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      if (!user.password) {
+        console.log('User has no password set:', email);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        console.log('Invalid password for:', email);
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Check email verification for patients
+      if (user.role === 'patient' && !user.emailVerified) {
+        console.log('Email not verified for patient:', email);
+        return res.status(403).json({ 
+          message: 'Please verify your email before logging in',
+          code: 'EMAIL_NOT_VERIFIED',
+          email: user.email
         });
       }
-      
-      console.log(`Authentication successful for user ${user.id} with role ${user.role}`);
-      
-      req.login(user, (err: Error | null) => {
+
+      // Store user in session with proper structure
+      const sessionUser = {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        emailVerified: user.emailVerified,
+        profileComplete: user.profileComplete,
+        status: user.status,
+        clinicId: user.clinicId,
+        stripeCustomerId: user.stripeCustomerId,
+        phone: user.phone
+      };
+
+      req.session.user = sessionUser;
+
+      console.log('Login successful for:', email, 'Role:', user.role);
+
+      // Save session explicitly and ensure it's committed
+      req.session.save((err) => {
         if (err) {
-          console.error("Session creation error:", err);
-          return next(err);
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: 'Session save failed' });
         }
-        
-        console.log(`Session created successfully for user ${user.id}`);
-        
-        // Cache the user immediately
-        userSessionCache.set(user.id, user);
-        
-        // Include unverified status warning in the response if needed
-        if (user.role === 'patient' && !user.emailVerified) {
-          return res.json({ 
-            success: true, 
-            user,
-            warnings: ["Your email is not verified. Some features may be limited."]
-          });
-        }
-        
-        return res.json({ success: true, user });
+
+        console.log('Session saved successfully for user:', user.email, 'Session ID:', req.session.id);
+
+        res.json({
+          success: true,
+          user: sessionUser
+        });
       });
-    })(req, res, next);
+
+    } catch (error) {
+      console.error('Login error:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
   });
 
   // Logout endpoint
     app.post("/api/auth/logout", (req, res) => {
     // Get user ID before logout to clear from cache
     const userId = req.user?.id;
-    
+
     req.logout((err) => {
       if (err) return res.status(500).json({ success: false, message: "Logout failed" });
 
@@ -278,13 +302,13 @@ export async function setupAuth(app: Express) {
   app.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
   );
-  
+
   app.get('/auth/google/callback',
     passport.authenticate('google', { failureRedirect: '/portal-login?error=google_auth_failed' }),
     (req, res) => {
       // Successful authentication, redirect based on user role
       const user = req.user as any;
-      
+
       if (user.role === 'admin') {
         res.redirect('/admin-dashboard');
       } else if (user.role === 'clinic_staff') {
@@ -294,19 +318,19 @@ export async function setupAuth(app: Express) {
       }
     }
   );
-      
+
       // Clear user from session cache if we have the ID
       if (userId && userSessionCache.has(userId)) {
         userSessionCache.delete(userId);
         console.log(`Cleared user ${userId} from session cache on logout`);
       }
-      
+
       // Destroy the session completely
       req.session.destroy((sessionErr) => {
         if (sessionErr) {
           console.error("Session destroy error:", sessionErr);
         }
-        
+
         // Clear the session cookie
         res.clearCookie('connect.sid', {
           path: '/',
@@ -314,7 +338,7 @@ export async function setupAuth(app: Express) {
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax'
         });
-        
+
         res.json({ success: true, message: "Logged out successfully" });
       });
     });
@@ -338,13 +362,21 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
     `);
     next();
   });
-  
+
   // Current user endpoint
-  app.get("/api/auth/user", (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ success: false, message: "Not authenticated" });
+  app.get("/api/auth/user", (req: any, res) => {
+    console.log('Auth check - Session exists:', !!req.session);
+    console.log('Auth check - Session user:', req.session?.user?.email);
+    console.log('Auth check - Session ID:', req.sessionID);
+    console.log('Auth check - Full session:', req.session);
+
+    if (!req.session?.user) {
+      console.log('No user in session, returning 401');
+      return res.status(401).json({ error: 'Not authenticated', user: null });
     }
-    res.json({ success: true, user: req.user });
+
+    console.log('Returning user from session:', req.session.user.email, 'Role:', req.session.user.role);
+    res.json({ user: req.session.user });
   });
 
   // Create admin and clinic users if they don't exist
@@ -365,10 +397,10 @@ async function seedUsers() {
       // Don't throw here, just return to continue with the rest of the app setup
       return;
     }
-    
+
     // Check if admin user exists
     const [adminExists] = await db.select().from(users).where(eq(users.email, "admin@mydentalfly.com"));
-    
+
     if (!adminExists) {
       const adminPassword = await bcrypt.hash("Admin123!", 10);
       await db.insert(users).values({
@@ -388,7 +420,7 @@ async function seedUsers() {
 
     // Check if clinic user exists
     const [clinicExists] = await db.select().from(users).where(eq(users.email, "clinic@mydentalfly.com"));
-    
+
     if (!clinicExists) {
       const clinicPassword = await bcrypt.hash("Clinic123!", 10);
       await db.insert(users).values({
@@ -405,10 +437,10 @@ async function seedUsers() {
     } else {
       console.log("ℹ️ Clinic user already exists");
     }
-    
+
     // Check if patient user exists
     const [patientExists] = await db.select().from(users).where(eq(users.email, "patient@mydentalfly.com"));
-    
+
     if (!patientExists) {
       const patientPassword = await bcrypt.hash("Patient123!", 10);
       await db.insert(users).values({
@@ -428,7 +460,7 @@ async function seedUsers() {
 
     // Check if test admin user exists
     const [testAdminExists] = await db.select().from(users).where(eq(users.email, "test@mydentalfly.co.uk"));
-    
+
     if (!testAdminExists) {
       const testAdminPassword = await bcrypt.hash("Test123!", 10);
       await db.insert(users).values({
