@@ -723,11 +723,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                     className="w-full bg-primary hover:bg-primary/90"
                     onClick={() => {
-                      // Navigate to quote page with promo code pre-filled
-                      const quotePage = offer.promo_code ? 
-                        `/pricing?promo=${encodeURIComponent(offer.promo_code)}` : 
-                        '/pricing';
-                      window.location.href = quotePage;
+                      // Store promo code in session storage for persistence
+                      if (offer.promo_code) {
+                        sessionStorage.setItem('pendingPromoCode', offer.promo_code);
+                      }
+
+                      // Navigate to Your Quote page (treatment plan builder) with promo code
+                      setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
 
                       toast({
                         title: "Package Selected",
