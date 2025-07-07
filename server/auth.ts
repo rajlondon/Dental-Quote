@@ -250,7 +250,7 @@ export async function setupAuth(app: Express) {
         });
       }
 
-      // Store user in session with proper structure
+      // Store user in session with proper structure that matches Express.User interface
       const sessionUser = {
         id: user.id,
         email: user.email,
@@ -266,6 +266,19 @@ export async function setupAuth(app: Express) {
       };
 
       req.session.user = sessionUser;
+      
+      // Also set req.user for immediate availability
+      req.user = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profileImage: user.profileImage,
+        clinicId: user.clinicId,
+        emailVerified: user.emailVerified,
+        status: user.status
+      };
 
       console.log('Login successful for:', email, 'Role:', user.role);
 
@@ -353,6 +366,8 @@ Method: ${req.method}
 Authenticated: ${req.isAuthenticated()}
 User ID: ${req.user?.id}
 User Role: ${req.user?.role}
+Session User: ${req.session?.user?.email || 'NONE'}
+Session User Role: ${req.session?.user?.role || 'NONE'}
 Has Cookie Header: ${!!req.headers.cookie}
 Cookie Length: ${req.headers.cookie ? req.headers.cookie.length : 0}
 Cookie Preview: ${req.headers.cookie ? req.headers.cookie.substring(0, 40) + '...' : 'NONE'}
@@ -367,16 +382,23 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
   app.get("/api/auth/user", (req: any, res) => {
     console.log('Auth check - Session exists:', !!req.session);
     console.log('Auth check - Session user:', req.session?.user?.email);
+    console.log('Auth check - req.user:', req.user?.email);
     console.log('Auth check - Session ID:', req.sessionID);
-    console.log('Auth check - Full session:', req.session);
+    console.log('Auth check - isAuthenticated:', req.isAuthenticated());
 
-    if (!req.session?.user) {
-      console.log('No user in session, returning 401');
+    // Check both session and passport authentication
+    const sessionUser = req.session?.user;
+    const passportUser = req.user;
+    
+    if (!sessionUser && !passportUser) {
+      console.log('No user in session or passport, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
     }
 
-    console.log('Returning user from session:', req.session.user.email, 'Role:', req.session.user.role);
-    res.json({ user: req.session.user });
+    // Prefer session user, fall back to passport user
+    const user = sessionUser || passportUser;
+    console.log('Returning user:', user.email, 'Role:', user.role);
+    res.json({ user });
   });
 
   // Create admin and clinic users if they don't exist
