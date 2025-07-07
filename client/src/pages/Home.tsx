@@ -122,11 +122,9 @@ const Home: React.FC = () => {
             </div>
 
             <div className="text-center mt-12">
-              <Link href="/your-quote">
-                <a className="inline-flex items-center bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
-                  <Calculator className="h-5 w-5 mr-2" />
-                  View All Clinics & Get Quote
-                </a>
+              <Link href="/your-quote" className="inline-flex items-center bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                <Calculator className="h-5 w-5 mr-2" />
+                View All Clinics & Get Quote
               </Link>
             </div>
           </div>

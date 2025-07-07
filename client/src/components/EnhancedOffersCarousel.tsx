@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useLocation } from "wouter";
@@ -717,10 +716,13 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       className="flex-1 bg-primary hover:bg-primary/90"
                       onClick={() => {
-                        // Store promo code in session storage for persistence
-                        if (offer.promo_code) {
-                          sessionStorage.setItem('pendingPromoCode', offer.promo_code);
-                        }
+                        // Store selected offer in session storage for persistence
+                        sessionStorage.setItem('selectedOffer', JSON.stringify({
+                          id: offer.id,
+                          name: offer.name,
+                          promo_code: offer.promo_code,
+                          clinic_id: offer.clinic_id
+                        }));
 
                         // Navigate to Your Quote page (treatment plan builder) with promo code
                         navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
