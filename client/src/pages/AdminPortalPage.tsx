@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { useAdminAuth } from "@/hooks/use-admin-auth";
+import { useAuth } from "@/hooks/use-auth";  // CHANGED: Use working auth
 
 // Placeholder translation function
 const t = (key: string, fallback: string) => fallback;
@@ -53,17 +53,10 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
   // Translation removed
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { adminUser, adminLogout } = useAdminAuth();
+  const { user, logoutMutation } = useAuth();  // CHANGED: Use working auth
   const [activeSection, setActiveSection] = useState<string>("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const initialLoadComplete = React.useRef(false);
-
-  // Removed duplicate WebSocket protection - AdminPortalGuard now handles this
-
-  // Remove page-level refresh prevention - AdminPortalGuard now handles this more elegantly
-  // without showing a browser dialog
-
-  // Removed React Query retry disable logic - AdminPortalGuard now handles this
 
   // Flag to track component mount status
   const isMounted = React.useRef(true);
@@ -73,14 +66,14 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
 
   // Simple initialization for admin portal
   useEffect(() => {
-    // Skip if no admin user
-    if (!adminUser) {
+    // Skip if no user or not admin
+    if (!user || user.role !== 'admin') {
       console.log("No admin user found, redirecting to login");
-      navigate('/admin-portal');
+      navigate('/portal-login');  // CHANGED: Use working login
       return;
     }
 
-    console.log("AdminPortalPage: Initializing for admin user:", adminUser.id);
+    console.log("AdminPortalPage: Initializing for admin user:", user.id);
 
     // Set flag indicating successful initialization
     initialLoadComplete.current = true;
@@ -101,9 +94,9 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         }
       }, 1000);
     };
-  }, [adminUser, navigate]);
+  }, [user, navigate]);  // CHANGED: Use user instead of adminUser
 
-  // Ultra-fast direct logout handler
+  // CHANGED: Updated logout handler to use working auth
   const handleLogout = () => {
     try {
       // Use both storage options to ensure the guard allows the navigation
@@ -115,25 +108,16 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
         window.markAdminPortalNavigation();
       }
 
-      // First, send the server logout request
-      const logoutRequest = new XMLHttpRequest();
-      logoutRequest.open('POST', '/api/auth/logout', false); // Synchronous request
-      logoutRequest.setRequestHeader('Content-Type', 'application/json');
-      logoutRequest.withCredentials = true;
-      logoutRequest.send();
+      // Use the working logout mutation
+      logoutMutation.mutate();
 
-      // Clear WebSocket connections
-      document.dispatchEvent(new CustomEvent('manual-websocket-close'));
-
-      // Clear all local storage used by the app
+      // Clear additional admin-specific storage
       localStorage.removeItem('admin_session');
       localStorage.removeItem('auth_guard');
-
-      // Clear all session storage used by the app
       sessionStorage.clear();
 
-      // Force immediate redirect to home page
-      window.location.replace('/');
+      // Navigate to home
+      navigate('/');
     } catch (err) {
       console.error("Admin logout error:", err);
       // Force redirect to home page as a fallback
@@ -390,7 +374,7 @@ const AdminPortalPage: React.FC<AdminPortalPageProps> = ({ disableAutoRefresh = 
                   </div>
                   <div className="hidden md:block ml-2 text-sm">
                     <div className="font-medium text-gray-700">Admin</div>
-                    <div className="text-xs text-gray-500">{adminUser?.email || "admin@mydentalfly.com"}</div>
+                    <div className="text-xs text-gray-500">{user?.email || "admin@test.com"}</div>
                   </div>
                 </div>
               </div>

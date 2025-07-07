@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { useAuth } from '@/hooks/use-auth';  // CHANGED: Use working auth
 import { Redirect } from 'wouter';
 import { Loader2 } from 'lucide-react';
 import { AdminQueryProvider } from '@/hooks/use-admin-queries';
@@ -13,15 +13,14 @@ declare global {
 }
 
 /**
- * AdminPortalGuard - Implemented using the same pattern as the working ClinicGuard
- * This component provides a protected environment that prevents refresh cycles
+ * AdminPortalGuard - Updated to use the working auth system
  */
 interface AdminPortalGuardProps {
   children: React.ReactNode;
 }
 
 const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
-  const { adminUser, isLoading } = useAdminAuth();
+  const { user, isLoading } = useAuth();  // CHANGED: Use working auth
   const { toast } = useToast();
   const [initialized, setInitialized] = useState(false);
   const refreshBlockedRef = useRef(false);
@@ -144,17 +143,9 @@ const AdminPortalGuard: React.FC<AdminPortalGuardProps> = ({ children }) => {
     );
   }
 
-  if (!adminUser) {
-    return <Redirect to="/admin-portal" />;
-  }
-
-  if (adminUser.role !== 'admin') {
-    toast({
-      title: 'Access Denied',
-      description: 'You do not have permission to access the admin portal.',
-      variant: 'destructive',
-    });
-    return <Redirect to="/admin-portal" />;
+  // CHANGED: Updated logic to use working auth
+  if (!user || user.role !== 'admin') {
+    return <Redirect to="/portal-login" />;  // CHANGED: Redirect to working login
   }
 
   if (!initialized) {

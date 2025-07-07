@@ -26,7 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
-import { useAdminAuth } from '@/hooks/use-admin-auth';
+import { useAuth } from '@/hooks/use-auth';  // CHANGED: Use working auth
 
 // Admin Login Form Schema
 const adminLoginSchema = z.object({
@@ -40,7 +40,7 @@ const AdminLoginPage: React.FC = () => {
   // Translation removed
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { adminUser, adminLogin, isLoading } = useAdminAuth();
+  const { user, loginMutation } = useAuth();  // CHANGED: Use working auth
   const [loginError, setLoginError] = useState<string | null>(null);
   
   // Define a secure form with validation
@@ -52,21 +52,35 @@ const AdminLoginPage: React.FC = () => {
     },
   });
   
-  // Redirect if already logged in
+  // Redirect if already logged in as admin
   useEffect(() => {
-    if (adminUser) {
+    if (user && user.role === 'admin') {  // CHANGED: Check user role
       console.log('Already logged in as admin, redirecting to admin portal');
       navigate('/admin-portal');
     }
-  }, [adminUser, navigate]);
+  }, [user, navigate]);
   
   // Handle form submission
   const onSubmit = async (values: AdminLoginFormValues) => {
     setLoginError(null);
     
     try {
-      // Call the admin-specific login function
-      await adminLogin(values.email, values.password);
+      // Use the working login mutation
+      const result = await loginMutation.mutateAsync({
+        email: values.email,
+        password: values.password,
+      });
+      
+      // Check if user is admin
+      if (result.role !== 'admin') {
+        setLoginError('This account does not have admin privileges.');
+        toast({
+          title: 'Access denied',
+          description: 'This account does not have admin privileges.',
+          variant: 'destructive',
+        });
+        return;
+      }
       
       // Show success toast
       toast({
@@ -76,11 +90,12 @@ const AdminLoginPage: React.FC = () => {
       
       // Redirect to admin portal
       navigate('/admin-portal');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Admin login error:', error);
       
       // Handle login error
-      setLoginError('Invalid email or password. Please try again.');
+      const errorMessage = error.message || 'Invalid email or password. Please try again.';
+      setLoginError(errorMessage);
       
       toast({
         title: 'Login failed',
@@ -124,7 +139,7 @@ const AdminLoginPage: React.FC = () => {
                     <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
-                        placeholder="admin@mydentalfly.com" 
+                        placeholder="admin@test.com" 
                         type="email" 
                         autoComplete="email"
                         {...field} 
@@ -157,9 +172,9 @@ const AdminLoginPage: React.FC = () => {
               <Button 
                 type="submit" 
                 className="w-full mt-6"
-                disabled={isLoading}
+                disabled={loginMutation.isPending}  // CHANGED: Use working auth loading state
               >
-                {isLoading ? (
+                {loginMutation.isPending ? (  // CHANGED: Use working auth loading state
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Logging in...

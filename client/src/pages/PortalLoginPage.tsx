@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
-import { useAdminAuth } from '@/hooks/use-admin-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
@@ -101,7 +100,6 @@ const PortalLoginPage: React.FC = () => {
   // Translation removed
   const [, setLocation] = useLocation();
   const { user, loginMutation } = useAuth();
-  const { adminUser, adminLogin, isLoading: adminIsLoading } = useAdminAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [hasSelectedClinic, setHasSelectedClinic] = useState(false);
@@ -456,7 +454,7 @@ const PortalLoginPage: React.FC = () => {
 
     try {
       // Call the admin-specific login function
-      await adminLogin(values.email, values.password);
+      const result = await loginMutation.mutateAsync(values); if (result.role !== "admin") throw new Error("Not an admin account");
 
       // Show success toast
       toast({
@@ -810,10 +808,10 @@ const PortalLoginPage: React.FC = () => {
                       <Button 
                         type="submit" 
                         className="w-full" 
-                        disabled={adminIsLoading}
+                        disabled={loginMutation.isPending}
                         variant="default"
                       >
-                        {adminIsLoading ? (
+                        {loginMutation.isPending ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Signing in to Admin...
