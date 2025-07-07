@@ -40,17 +40,17 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function checkAdminSession() {
       if (loadAttempted) return;
-      
+
       setLoadAttempted(true);
-      
+
       try {
         setIsLoading(true);
-        
+
         // Use the admin auth endpoint to verify the session
         // Fall back to cached session if API fails
         const res = await apiRequest("GET", "/api/auth/user");
         const userData = await res.json();
-        
+
         if (userData && userData.role === 'admin') {
           console.log("Admin session verified from API");
           setAdminUserState(userData as AdminUser);
@@ -69,7 +69,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         setIsLoading(false);
       }
     }
-    
+
     checkAdminSession();
   }, [adminUserState, loadAttempted, setAdminUserState]);
 
@@ -77,21 +77,21 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   const adminLogin = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const res = await apiRequest("POST", "/api/auth/login", { email, password });
       const data = await res.json();
-      
+
       if (!data || !data.user || data.user.role !== 'admin') {
         throw new Error("Admin authentication failed - not an admin account");
       }
-      
+
       // Set the admin user in state
       setAdminUserState(data.user as AdminUser);
-      
+
       // Save client ID for session tracking
       console.log(`New admin client registered with ID: ${data.user.id}`);
-      
+
     } catch (err: any) {
       setError(err);
       throw err;
@@ -103,7 +103,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   // Admin logout function
   const adminLogout = async (): Promise<void> => {
     setIsLoading(true);
-    
+
     try {
       // First, clear admin-specific session flags
       if (typeof window !== 'undefined') {
@@ -112,17 +112,17 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem('admin_portal_timestamp');
         sessionStorage.removeItem('admin_protected_navigation');
         sessionStorage.removeItem('admin_role_verified');
-        
+
         // Set a flag indicating intentional logout
         sessionStorage.setItem('admin_logout_redirect', 'true');
       }
-      
+
       // Clear the admin user state first to prevent interception
       setAdminUserState(null);
-      
+
       // Call the server logout API
       await apiRequest("POST", "/api/auth/logout");
-      
+
       // Manual redirect to home or login page
       if (typeof window !== 'undefined') {
         window.location.href = '/'; // Force hard redirect to avoid 404
