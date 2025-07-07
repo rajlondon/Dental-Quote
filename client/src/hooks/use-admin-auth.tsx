@@ -79,24 +79,37 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const res = await apiRequest("POST", "/api/auth/admin-login", { email, password });
-      const data = await res.json();
+      console.log('Attempting admin login for:', email);
 
-      if (!data || !data.user || data.user.role !== 'admin') {
-        throw new Error("Admin authentication failed - not an admin account");
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+      console.log('Admin login response:', data);
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Admin login failed');
       }
 
-      // Set the admin user in state
+      if (!data.user || data.user.role !== 'admin') {
+        throw new Error('Not an admin account');
+      }
+
       setAdminUserState(data.user as AdminUser);
-
-      // Save client ID for session tracking
-      console.log(`New admin client registered with ID: ${data.user.id}`);
-
-    } catch (err: any) {
-      setError(err);
-      throw err;
-    } finally {
+      console.log('Admin login successful, user set:', data.user);
       setIsLoading(false);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      console.error('Admin login error:', errorMessage);
+      setError(errorMessage);
+      setIsLoading(false);
+      throw err;
     }
   };
 
