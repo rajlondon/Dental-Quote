@@ -1,10 +1,3 @@
-` tags with the complete modified code, ensuring all changes are incorporated and the code is fully functional.
-
-```
-Updated the Request Quote button's onClick function to navigate to the treatment plan builder page with the promo code.
-```
-
-<replit_final_file>
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from "wouter";
