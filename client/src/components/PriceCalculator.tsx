@@ -70,7 +70,8 @@ import {
   getDefaultFlightEstimate,
 } from "@/services/flightEstimatesService";
 
-// Function to format treatment names to be more user-friendly
+// Function to format treatment names to be more user-friendly  
+// Fixed translation issue - no translation functions used
 const formatTreatmentName = (name: string): string => {
   return name
     .replace(/(\w)([A-Z])/g, "$1 $2") // Add space between camelCase words
