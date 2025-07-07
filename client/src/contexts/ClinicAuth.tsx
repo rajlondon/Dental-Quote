@@ -19,9 +19,10 @@ async function fetchMe() {
   try {
     // Use our configured API client to ensure cookies are sent
     const response = await api.get("/api/auth/user");
+    console.log("ClinicAuth: API response:", response.data);
     return response.data.user;
   } catch (error) {
-    console.error("Error fetching user data:", error);
+    console.error("ClinicAuth: Error fetching user data:", error);
     return null;
   }
 }
@@ -39,19 +40,19 @@ export function ClinicAuthProvider({ children }: { children: React.ReactNode }) 
   });
 
   // Determine authentication status based on user data
-  const ok = !!user && user.role === "clinic";
+  const ok = !!user && (user.role === "clinic" || user.role === "admin");
 
   // Log diagnostic information
   useEffect(() => {
     if (isLoading) {
       console.log("ClinicAuth: Loading user data...");
     } else if (ok) {
-      console.log("ClinicAuth: User authenticated as clinic staff", user?.email);
+      console.log("ClinicAuth: User authenticated as clinic staff", user?.email, "Role:", user?.role);
       
       // Store a session marker to prevent repeated redirects
       sessionStorage.setItem('clinic_auth_timestamp', Date.now().toString());
     } else {
-      console.log("ClinicAuth: User not authenticated or not clinic staff");
+      console.log("ClinicAuth: User not authenticated or not clinic staff. User:", user);
     }
   }, [isLoading, ok, user]);
 

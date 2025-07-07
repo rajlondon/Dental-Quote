@@ -31,10 +31,10 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
 
     // Session storage key to track if we've shown the notification
     const SESSION_NOTIFICATION_KEY = 'clinic_refresh_notification_shown';
-    
+
     // Track navigation actions to distinguish between navigation and reload
     let isNavigating = false;
-    
+
     // Create a function to mark when we're navigating intentionally
     const markNavigating = () => {
       isNavigating = true;
@@ -43,10 +43,10 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
         isNavigating = false;
       }, 100);
     };
-    
+
     // Create a function that other components can call
     window.markClinicPortalNavigation = markNavigating;
-    
+
     // Listen for click events on links and buttons
     const handleClick = (e: MouseEvent) => {
       // Check if the click was on an anchor tag, a button, or any element with role="link" 
@@ -67,7 +67,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
         target = target.parentElement as HTMLElement;
       }
     };
-    
+
     // Only prevent actual page reloads, not navigation
     const preventReload = (e: BeforeUnloadEvent) => {
       // Let normal navigation proceed
@@ -75,20 +75,20 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
         console.log('Detected intentional navigation, allowing it to proceed');
         return undefined;
       }
-      
+
       if (window.location.pathname.includes('clinic-portal')) {
         console.log('🛡️ Blocked programmatic page reload on clinic portal');
         console.warn('⚠️ Automatic page reload blocked by ClinicGuard');
-        
+
         // Only show the toast if we haven't shown it this session
         const notificationShown = sessionStorage.getItem(SESSION_NOTIFICATION_KEY);
-        
+
         if (!notificationShown && !refreshBlockedRef.current) {
           refreshBlockedRef.current = true;
-          
+
           // Mark that we've shown the notification this session
           sessionStorage.setItem(SESSION_NOTIFICATION_KEY, 'true');
-          
+
           // Show a toast notification with a short duration
           toast({
             title: 'Session Protection Active',
@@ -96,7 +96,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
             duration: 3000, // 3 seconds
           });
         }
-        
+
         // Cancel the event
         e.preventDefault();
         e.returnValue = '';
@@ -104,11 +104,11 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       }
       return undefined;
     };
-    
+
     // Add event listeners
     document.addEventListener('click', handleClick, { capture: true });
     window.addEventListener('beforeunload', preventReload);
-    
+
     // Remove all event listeners when the component unmounts
     return () => {
       document.removeEventListener('click', handleClick, { capture: true });
@@ -123,12 +123,13 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
       const timer = setTimeout(() => {
         setInitialized(true);
       }, 500);
-      
+
       return () => clearTimeout(timer);
     }
   }, [isLoading]);
 
   if (isLoading) {
+    console.log("ClinicGuard: Still loading...");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
@@ -137,10 +138,12 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
   }
 
   if (!user) {
+    console.log("ClinicGuard: No user found, redirecting to /portal-login");
     return <Redirect to="/portal-login" />;
   }
 
   if (user.role !== 'clinic' && user.role !== 'admin') {
+    console.log(`ClinicGuard: User role is ${user.role}, redirecting to /portal-login`);
     toast({
       title: 'Access Denied',
       description: 'You do not have permission to access the clinic portal.',
@@ -150,6 +153,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
   }
 
   if (!initialized) {
+    console.log("ClinicGuard: Not initialized yet...");
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-border" />
@@ -158,6 +162,7 @@ const ClinicGuard: React.FC<ClinicGuardProps> = ({ children }) => {
   }
 
   // Wrap children in ClinicQueryProvider to prevent redirects in queries
+  console.log("ClinicGuard: User authorized, rendering children within ClinicQueryProvider");
   return (
     <ClinicQueryProvider>
       {children}

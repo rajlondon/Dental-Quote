@@ -129,6 +129,12 @@ router.post('/admin-login', async (req, res) => {
 // General user session endpoint (for compatibility)
 router.get('/user', async (req, res) => {
   try {
+    console.log('User session check:', {
+      userId: req.session.userId,
+      userRole: req.session.userRole,
+      sessionId: req.sessionID
+    });
+
     if (!req.session.userId) {
       return res.status(401).json({ message: 'Not authenticated' });
     }
@@ -144,6 +150,12 @@ router.get('/user', async (req, res) => {
     }
 
     const userData = user[0];
+    console.log('User data found:', {
+      id: userData.id,
+      email: userData.email,
+      role: userData.role
+    });
+
     res.json({
       user: {
         id: userData.id,
