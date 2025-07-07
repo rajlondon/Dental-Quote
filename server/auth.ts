@@ -342,18 +342,13 @@ export async function setupAuth(app: Express) {
     // Use session user if available, otherwise passport user
     const user = sessionUser || passportUser;
 
-    if (!user && !isAuthenticated) {
-      console.log('❌ No user found and not authenticated, returning 401');
+    if (!user) {
+      console.log('❌ No user found in session or passport, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
     }
 
-    if (user) {
-      console.log('✅ Returning user:', user.email, 'Role:', user.role);
-      res.json({ user: user });
-    } else {
-      console.log('❌ User object missing despite authentication, returning 401');
-      return res.status(401).json({ error: 'User data not available', user: null });
-    }
+    console.log('✅ Returning user:', user.email, 'Role:', user.role);
+    res.json({ user: user });
   });
 
   // Create admin and clinic users if they don't exist
