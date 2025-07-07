@@ -43,7 +43,7 @@ export async function setupAuth(app: Express) {
   // Session middleware config with enhanced stability
   const sessionConfig: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || "mydentalfly_dev_secret",
-    resave: false,
+    resave: true, // Force save session even if unmodified
     saveUninitialized: false,
     // Prevent race conditions by using rolling sessions and longer cookie maxAge
     rolling: true, // Reset maxAge on every response
@@ -228,7 +228,22 @@ export async function setupAuth(app: Express) {
           return res.status(500).json({ message: 'Login failed' });
         }
 
+        // Store user in session for backup
+        req.session.user = {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          emailVerified: user.emailVerified,
+          profileComplete: user.profileComplete,
+          status: user.status,
+          clinicId: user.clinicId,
+          profileImage: user.profileImage
+        };
+
         console.log('Login successful for:', email, 'Role:', user.role);
+        console.log('User stored in session:', JSON.stringify(req.session.user));
 
         // Create user response object
         const userResponse = {
@@ -313,19 +328,32 @@ export async function setupAuth(app: Express) {
   // Current user endpoint
   app.get("/api/auth/user", (req: any, res) => {
     console.log('=== AUTH USER ENDPOINT ===');
-    console.log('isAuthenticated:', req.isAuthenticated());
-    console.log('User:', req.user ? `${req.user.email} (${req.user.role})` : 'NONE');
     console.log('Session ID:', req.sessionID);
+    console.log('Session exists:', !!req.session);
+    console.log('Session user:', req.session?.user ? JSON.stringify(req.session.user) : 'NONE');
+    console.log('Passport isAuthenticated:', req.isAuthenticated());
+    console.log('Passport user:', req.user ? JSON.stringify(req.user) : 'NONE');
 
-    if (!req.isAuthenticated() || !req.user) {
-      console.log('❌ Not authenticated, returning 401');
+    // Check both session and passport authentication
+    const sessionUser = req.session?.user;
+    const passportUser = req.user;
+    const isAuthenticated = req.isAuthenticated();
+
+    // Use session user if available, otherwise passport user
+    const user = sessionUser || passportUser;
+
+    if (!user && !isAuthenticated) {
+      console.log('❌ No user found and not authenticated, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
     }
 
-    const user = req.user;
-    console.log('✅ Returning authenticated user:', user.email, 'Role:', user.role);
-    
-    res.json({ user: user });
+    if (user) {
+      console.log('✅ Returning user:', user.email, 'Role:', user.role);
+      res.json({ user: user });
+    } else {
+      console.log('❌ User object missing despite authentication, returning 401');
+      return res.status(401).json({ error: 'User data not available', user: null });
+    }
   });
 
   // Create admin and clinic users if they don't exist
