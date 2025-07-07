@@ -444,6 +444,11 @@ async function seedUsers() {
       console.log("✅ Created test admin user: test@mydentalfly.co.uk (password: Test123!)");
     } else {
       console.log("ℹ️ Test admin user already exists");
+      // Update existing user to ensure admin role
+      await db.update(users)
+        .set({ role: "admin", emailVerified: true, profileComplete: true, status: "active" })
+        .where(eq(users.email, "test@mydentalfly.co.uk"));
+      console.log("✅ Updated test admin user role");
     }
   } catch (error) {
     console.error("Error seeding users:", error);

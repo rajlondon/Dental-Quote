@@ -219,6 +219,15 @@ function AppRouter() {
         )}
       </Route>
 
+      {/* Fallback route for admin portal access */}
+      <Route path="/admin">
+        {() => (
+          <AdminPortalGuard>
+            <AdminPortalPage disableAutoRefresh={true} />
+          </AdminPortalGuard>
+        )}
+      </Route>
+
       <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
       <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
 

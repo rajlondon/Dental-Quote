@@ -55,21 +55,21 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 // Authentication provider component
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  
+
   // Use simpler tracking for component lifecycle
   const componentInitTime = React.useRef<number>(Date.now());
-  
+
   // Use flags to prevent multiple state updates
   const isComponentMounted = React.useRef(true);
   const userDataRef = React.useRef<User | null>(null);
-  
+
   React.useEffect(() => {
     isComponentMounted.current = true;
     return () => {
       isComponentMounted.current = false;
     };
   }, []);
-  
+
   // Read from cache initially to avoid flickering
   React.useEffect(() => {
     const cachedUserData = sessionStorage.getItem('cached_user_data');
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
   }, []);
-  
+
   // Simplified query that uses our stable userDataRef
   const {
     data: user,
@@ -94,11 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check sessionStorage cache first
       const cachedUserData = sessionStorage.getItem('cached_user_data');
       const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
-            
+
       if (cachedUserData && cachedTimestamp) {
         const timestamp = parseInt(cachedTimestamp, 10);
         const age = Date.now() - timestamp;
-        
+
         if (age < 10000) { // 10 seconds cache for quick access
           const parsedUser = JSON.parse(cachedUserData);
           userDataRef.current = parsedUser;
@@ -106,15 +106,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return parsedUser;
         }
       }
-      
+
       // Fetch fresh data from server
       try {
         console.log("Fetching fresh user data from server");
         const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
-        
+
         console.log("Server response user data:", userData ? `ID: ${userData.id}, Role: ${userData.role}` : 'null');
-        
+
         // Update cache and ref
         if (userData) {
           userDataRef.current = userData;
@@ -125,11 +125,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           sessionStorage.removeItem('cached_user_data');
           sessionStorage.removeItem('cached_user_timestamp');
         }
-        
+
         return userData;
       } catch (error: any) {
         console.error("User data fetch error:", error);
-        
+
         if (error.response?.status === 401) {
           console.warn("Authentication failed - session may have expired");
           userDataRef.current = null;
@@ -144,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refetchOnWindowFocus: false,
     retry: 1 // Only retry once to avoid excessive requests
   });
-  
+
   // Login mutation with enhanced verification handling
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
@@ -153,11 +153,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: credentials.email,
         password: credentials.password
       });
-      
+
       // Handle specific response codes
       if (!res.ok) {
         const errorData = await res.json();
-        
+
         // Special handling for verification errors
         if (res.status === 403 && errorData.code === "EMAIL_NOT_VERIFIED") {
           const verificationError = new Error(errorData.message);
@@ -167,12 +167,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           verificationError.email = errorData.email;
           throw verificationError;
         }
-        
+
         throw new Error(errorData.message || "Login failed");
       }
-      
+
       const data = await res.json();
-      
+
       // Store any warnings for display
       if (data.warnings && data.warnings.length > 0) {
         // Store warnings temporarily
@@ -180,18 +180,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         localStorage.removeItem('auth_warnings');
       }
-      
+
       // The server returns {success: true, user: {...}}
       return data.user || data;
     },
     onSuccess: (user: User) => {
       // Update query cache with the new user data
       queryClient.setQueryData(["/auth/user"], user);
-      
+
       // Set session flag for WebSocket initialization
       sessionStorage.setItem('just_logged_in', 'true');
       sessionStorage.setItem('login_timestamp', Date.now().toString());
-      
+
       // Cache user data for faster access
       sessionStorage.setItem('cached_user_data', JSON.stringify(user));
       sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
@@ -203,11 +203,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.removeItem('clinic_portal_timestamp');
       }
       */
-      
+
       // Check for auth warnings from localStorage
       const warningsStr = localStorage.getItem('auth_warnings');
       const warnings = warningsStr ? JSON.parse(warningsStr) : [];
-      
+
       // Show appropriate messages based on verification status
       if (warnings.length > 0) {
         toast({
@@ -235,10 +235,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         code?: string;
         email?: string;
       }
-      
+
       // Cast the error to our custom type
       const verificationError = error as VerificationError;
-      
+
       // Check for specific verification error
       if (verificationError.code === "EMAIL_NOT_VERIFIED") {
         toast({
@@ -246,7 +246,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           description: "Your email has not been verified yet. Please check your inbox for the verification link.",
           variant: "destructive",
         });
-        
+
         // Use the email from the custom error property
         if (verificationError.email) {
           // Redirect to verification sent page to allow resending
@@ -254,7 +254,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return;
       }
-      
+
       // Regular error handling
       toast({
         title: "Login failed",
@@ -302,14 +302,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Clear user data from query cache
       queryClient.setQueryData(["/auth/user"], null);
-      
+
       // Clear all session-related caches for a clean logout
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
       sessionStorage.removeItem('clinic_portal_timestamp');
-      
+
       console.log("Auth cache cleared during logout");
-      
+
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
