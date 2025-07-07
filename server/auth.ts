@@ -188,7 +188,7 @@ export async function setupAuth(app: Express) {
           profileImage: user.profileImage || undefined,
           clinicId: user.clinicId || undefined,
           emailVerified: user.emailVerified || false,
-          status: users.status || 'pending'
+          status: user.status || 'pending'
         };
 
         console.log(`Successfully deserialized user ${user.id} with role ${user.role}`);
