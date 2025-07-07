@@ -59,7 +59,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const { toast } = useToast();
   const { registerMessageHandler } = useWebSocket();
   const { user, isLoading: authLoading } = useAuth();
-  const [location, setLocation] = useLocation();
+  const [location, navigate] = useLocation();
 
   // Fetch special offers data
   const { 

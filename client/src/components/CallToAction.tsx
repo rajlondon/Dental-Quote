@@ -2,7 +2,7 @@ import React from "react";
 import { useLocation } from "wouter";
 
 const CallToAction: React.FC = () => {
-  const [location, setLocation] = useLocation();
+  const [, navigate] = useLocation();
 
   return (
     <section className="py-16 bg-primary text-white">
@@ -13,7 +13,7 @@ const CallToAction: React.FC = () => {
           <a
             href="#quote-form"
             className="inline-block bg-white text-primary font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-neutral-100 transition-colors"
-            onClick={() => setLocation("/your-quote")}
+            onClick={() => navigate("/your-quote")}
           >
             Get Your Free Quote
           </a>
