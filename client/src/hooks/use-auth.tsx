@@ -91,6 +91,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/auth/user"],
     queryFn: async () => {
+      // Skip auth check if we're on admin pages
+      if (window.location.pathname.includes('/admin')) {
+        return null;
+      }
       // Check sessionStorage cache first
       const cachedUserData = sessionStorage.getItem('cached_user_data');
       const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');

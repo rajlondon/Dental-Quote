@@ -79,7 +79,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const res = await apiRequest("POST", "/api/auth/login", { email, password });
+      const res = await apiRequest("POST", "/api/auth/admin-login", { email, password });
       const data = await res.json();
 
       if (!data || !data.user || data.user.role !== 'admin') {
