@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
-import connectPgSimple from "connect-pgSimple";
+import connectPgSimple from "connect-pg-simple";
 import { pool } from "./db";
 
 // Define extended session store options type to include errorCallback
