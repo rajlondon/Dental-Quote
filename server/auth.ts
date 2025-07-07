@@ -57,7 +57,7 @@ export async function setupAuth(app: Express) {
       }
     } as ExtendedPgStoreOptions),
     cookie: { 
-      secure: process.env.NODE_ENV === "production",
+      secure: false, // Set to false for development
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days for clinic staff persistence
       sameSite: 'lax',
       path: '/',
@@ -279,6 +279,7 @@ export async function setupAuth(app: Express) {
         }
 
         console.log('Session saved successfully for user:', user.email, 'Session ID:', req.session.id);
+        console.log('Session user stored:', JSON.stringify(req.session.user));
 
         res.json({
           success: true,
@@ -369,23 +370,26 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
 
   // Current user endpoint
   app.get("/api/auth/user", (req: any, res) => {
-    console.log('Auth check - Session exists:', !!req.session);
-    console.log('Auth check - Session user:', req.session?.user?.email);
-    console.log('Auth check - req.user:', req.user?.email);
-    console.log('Auth check - Session ID:', req.sessionID);
-    console.log('Auth check - isAuthenticated:', req.isAuthenticated());
+    console.log('=== AUTH USER ENDPOINT ===');
+    console.log('Session exists:', !!req.session);
+    console.log('Session ID:', req.sessionID);
+    console.log('Session user:', req.session?.user ? JSON.stringify(req.session.user) : 'NONE');
+    console.log('Passport user:', req.user ? JSON.stringify(req.user) : 'NONE');
+    console.log('isAuthenticated:', req.isAuthenticated());
+    console.log('Session data:', req.session ? JSON.stringify(req.session) : 'NO SESSION');
 
     // Check both session and passport authentication
     const sessionUser = req.session?.user;
     const passportUser = req.user;
 
     if (!sessionUser && !passportUser) {
-      console.log('No user in session or passport, returning 401');
+      console.log('❌ No user found in session or passport, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
     }
 
     // Prefer session user, fall back to passport user
     const user = sessionUser || passportUser;
+    console.log('✅ User found:', user.email, 'Role:', user.role);
 
     // Ensure the user object has all required fields
     const completeUser = {
@@ -400,7 +404,7 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
       status: user.status || 'pending'
     };
 
-    console.log('Returning user:', completeUser.email, 'Role:', completeUser.role);
+    console.log('✅ Returning user:', completeUser.email, 'Role:', completeUser.role);
     res.json({ user: completeUser });
   });
 
