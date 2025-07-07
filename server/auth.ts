@@ -138,73 +138,44 @@ export async function setupAuth(app: Express) {
     done(null, user.id);
   });
 
-  // Deserialize user from session with improved error handling and memory caching
+  // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
-      // First, validate the ID is actually a number
-      if (typeof id !== 'number' || isNaN(id)) {
-        console.error(`Invalid session user ID (${typeof id}): ${id}`);
+      console.log(`Deserializing user session for ID: ${id}`);
+
+      const [user] = await db.select({
+        id: users.id,
+        email: users.email,
+        role: users.role,
+        firstName: users.firstName,
+        lastName: users.lastName,
+        profileImage: users.profileImage,
+        clinicId: users.clinicId,
+        emailVerified: users.emailVerified,
+        status: users.status
+      }).from(users).where(eq(users.id, id));
+
+      if (!user) {
+        console.warn(`Session references non-existent user ID: ${id}`);
         return done(null, false);
       }
 
-      // Check our fast in-memory session cache first
-      if (userSessionCache.has(id)) {
-        const cachedUser = userSessionCache.get(id);
-        console.log(`Using cached user session for ID: ${id}, role: ${cachedUser?.role}`);
-        return done(null, cachedUser);
-      }
+      const userForAuth = {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+        profileImage: user.profileImage || undefined,
+        clinicId: user.clinicId || undefined,
+        emailVerified: user.emailVerified || false,
+        status: user.status || 'pending'
+      };
 
-      console.log(`Deserializing user session for ID: ${id}`);
-
-      try {
-        // Direct database query without timeout race condition
-        const userResult = await db.select({
-          id: users.id,
-          email: users.email,
-          role: users.role,
-          firstName: users.firstName,
-          lastName: users.lastName,
-          profileImage: users.profileImage,
-          clinicId: users.clinicId,
-          emailVerified: users.emailVerified,
-          status: users.status
-        }).from(users).where(eq(users.id, id));
-
-        // Extract user from query results
-        const [user] = userResult;
-
-        if (!user) {
-          console.warn(`Session references non-existent user ID: ${id}`);
-          return done(null, false);
-        }
-
-        // Transform null values to undefined to match the Express.User interface
-        const userForAuth = {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          firstName: user.firstName || undefined,
-          lastName: user.lastName || undefined,
-          profileImage: user.profileImage || undefined,
-          clinicId: user.clinicId || undefined,
-          emailVerified: user.emailVerified || false,
-          status: user.status || 'pending'
-        };
-
-        console.log(`Successfully deserialized user ${user.id} with role ${user.role}`);
-
-        // Cache the user in memory for future requests
-        userSessionCache.set(id, userForAuth);
-
-        done(null, userForAuth);
-      } catch (dbErr) {
-        console.error("Database error during session restore:", dbErr);
-        // Return null to indicate authentication failure
-        done(null, false);
-      }
+      console.log(`Successfully deserialized user ${user.id} with role ${user.role}`);
+      done(null, userForAuth);
     } catch (err) {
-      console.error("Critical session deserialization error:", err);
-      // Don't pass error to done() as it can crash the application
+      console.error("Session deserialization error:", err);
       done(null, false);
     }
   });
@@ -250,40 +221,32 @@ export async function setupAuth(app: Express) {
         });
       }
 
-      // Store user in session with proper structure that matches Express.User interface
-      const sessionUser = {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        emailVerified: user.emailVerified,
-        profileComplete: user.profileComplete,
-        status: user.status,
-        clinicId: user.clinicId,
-        profileImage: user.profileImage
-      };
-
-      req.session.user = sessionUser;
-
-      // Also set req.user for immediate availability to match session structure
-      req.user = sessionUser;
-
-      console.log('Login successful for:', email, 'Role:', user.role);
-
-      // Save session explicitly and ensure it's committed
-      req.session.save((err) => {
+      // Login the user using Passport
+      req.login(user, (err) => {
         if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ message: 'Session save failed' });
+          console.error('Passport login error:', err);
+          return res.status(500).json({ message: 'Login failed' });
         }
 
-        console.log('Session saved successfully for user:', user.email, 'Session ID:', req.session.id);
-        console.log('Session user stored:', JSON.stringify(req.session.user));
+        console.log('Login successful for:', email, 'Role:', user.role);
+
+        // Create user response object
+        const userResponse = {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          emailVerified: user.emailVerified,
+          profileComplete: user.profileComplete,
+          status: user.status,
+          clinicId: user.clinicId,
+          profileImage: user.profileImage
+        };
 
         res.json({
           success: true,
-          user: sessionUser
+          user: userResponse
         });
       });
 
@@ -347,65 +310,22 @@ export async function setupAuth(app: Express) {
     });
   });
 
-  // Add diagnostic middleware to log session and cookie information
-  app.use("/api/auth/user", (req, res, next) => {
-    console.log(`
-====== AUTH REQUEST DIAGNOSTICS ======
-Path: ${req.path}
-Method: ${req.method}
-Authenticated: ${req.isAuthenticated()}
-User ID: ${req.user?.id}
-User Role: ${req.user?.role}
-Session User: ${req.session?.user?.email || 'NONE'}
-Session User Role: ${req.session?.user?.role || 'NONE'}
-Has Cookie Header: ${!!req.headers.cookie}
-Cookie Length: ${req.headers.cookie ? req.headers.cookie.length : 0}
-Cookie Preview: ${req.headers.cookie ? req.headers.cookie.substring(0, 40) + '...' : 'NONE'}
-Session ID: ${req.sessionID || 'NONE'}
-Session Created: ${req.session.cookie.originalMaxAge !== undefined}
-======================================
-    `);
-    next();
-  });
-
   // Current user endpoint
   app.get("/api/auth/user", (req: any, res) => {
     console.log('=== AUTH USER ENDPOINT ===');
-    console.log('Session exists:', !!req.session);
-    console.log('Session ID:', req.sessionID);
-    console.log('Session user:', req.session?.user ? JSON.stringify(req.session.user) : 'NONE');
-    console.log('Passport user:', req.user ? JSON.stringify(req.user) : 'NONE');
     console.log('isAuthenticated:', req.isAuthenticated());
-    console.log('Session data:', req.session ? JSON.stringify(req.session) : 'NO SESSION');
+    console.log('User:', req.user ? `${req.user.email} (${req.user.role})` : 'NONE');
+    console.log('Session ID:', req.sessionID);
 
-    // Check both session and passport authentication
-    const sessionUser = req.session?.user;
-    const passportUser = req.user;
-
-    if (!sessionUser && !passportUser) {
-      console.log('❌ No user found in session or passport, returning 401');
+    if (!req.isAuthenticated() || !req.user) {
+      console.log('❌ Not authenticated, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
     }
 
-    // Prefer session user, fall back to passport user
-    const user = sessionUser || passportUser;
-    console.log('✅ User found:', user.email, 'Role:', user.role);
-
-    // Ensure the user object has all required fields
-    const completeUser = {
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      firstName: user.firstName || undefined,
-      lastName: user.lastName || undefined,
-      profileImage: user.profileImage || undefined,
-      clinicId: user.clinicId || undefined,
-      emailVerified: user.emailVerified || false,
-      status: user.status || 'pending'
-    };
-
-    console.log('✅ Returning user:', completeUser.email, 'Role:', completeUser.role);
-    res.json({ user: completeUser });
+    const user = req.user;
+    console.log('✅ Returning authenticated user:', user.email, 'Role:', user.role);
+    
+    res.json({ user: user });
   });
 
   // Create admin and clinic users if they don't exist
