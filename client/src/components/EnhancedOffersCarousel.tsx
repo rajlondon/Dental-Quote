@@ -58,6 +58,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { registerMessageHandler } = useWebSocket();
+  const { user, isLoading: authLoading } = useAuth();
+  const [location, setLocation] = useLocation();
 
   // Fetch special offers data
   const { 
@@ -427,9 +429,6 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
         return 'bg-gradient-to-r from-slate-500 to-slate-400 text-white hover:from-slate-400 hover:to-slate-300';
     }
   };
-
-  const [location, setLocation] = useLocation();
-  const { user, isLoading: authLoading } = useAuth();
 
   // Handle quote request with authentication check
   const handleRequestQuote = (offer: SpecialOffer) => {
