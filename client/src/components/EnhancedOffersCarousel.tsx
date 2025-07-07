@@ -59,7 +59,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const { toast } = useToast();
   const { registerMessageHandler } = useWebSocket();
   const { user, isLoading: authLoading } = useAuth();
-  const [location, navigate] = useLocation();
+  const [location, setLocation] = useLocation();
 
   // Fetch special offers data
   const { 
@@ -477,7 +477,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       // Redirect to the quote page where user can select treatments and clinics
       // with the special offer clinic highlighted - use navigate for SPA navigation
       console.log("Redirecting to quote page with special offer context");
-      navigate('/your-quote');
+      setLocation('/your-quote');
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
 
@@ -494,7 +494,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
       // Redirect to login page - use navigate for SPA navigation
       console.log("Redirecting to portal login page");
-      navigate('/portal-login');
+      setLocation('/portal-login');
     }
   };
 
@@ -709,7 +709,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       variant="outline" 
                       className="flex-1"
-                      onClick={() => navigate(`/clinics/${offer.clinic_id || 1}`)}
+                      onClick={() => setLocation(`/clinics/${offer.clinic_id || 1}`)}
                     >
                       View Clinic
                     </Button>
@@ -725,7 +725,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         }));
 
                         // Navigate to Your Quote page (treatment plan builder) with promo code
-                        navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+                        setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
 
                         toast({
                           title: "Package Selected",
