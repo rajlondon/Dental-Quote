@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Sparkles, ChevronLeft, ChevronRight, Clock, Tag, RefreshCw } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -54,7 +55,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   const [imageRefreshKey, setImageRefreshKey] = useState<number>(Date.now());
   const [imageCache, setImageCache] = useState<Record<string, string>>({});
 
-  // Hooks
+  // Hooks - ALL AT THE TOP LEVEL
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { registerMessageHandler } = useWebSocket();
@@ -702,15 +703,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                   <div className="flex space-x-3">
                     <Button 
                       className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => {
-                        // Store promo code in session storage for persistence
-                        if (offer.promo_code) {
-                          sessionStorage.setItem('pendingPromoCode', offer.promo_code);
-                        }
-
-                        // Navigate to Your Quote page (treatment plan builder) with promo code
-                        setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
-                      }}
+                      onClick={() => handleRequestQuote(offer)}
                     >
                       Request Quote
                     </Button>
