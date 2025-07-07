@@ -492,7 +492,7 @@ const PortalLoginPage: React.FC = () => {
 
       // Redirect to admin portal with intentional navigation flag
       setTimeout(() => {
-        console.log("Admin portal redirect with specialized auth");
+        console.log("Admin portal redirect with specialized auth - redirecting to /admin-portal");
         (window as any).__directAdminNavigation = true;
         setLocation('/admin-portal');
       }, 100);

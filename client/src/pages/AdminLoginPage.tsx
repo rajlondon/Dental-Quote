@@ -101,9 +101,9 @@ const AdminLoginPage: React.FC = () => {
               className="h-12 w-auto" 
             />
           </div>
-          <CardTitle className="text-2xl text-center">{t('admin.login.title', 'Admin Portal Login')}</CardTitle>
+          <CardTitle className="text-2xl text-center">Admin Portal Login</CardTitle>
           <CardDescription className="text-center">
-            {t('admin.login.subtitle', 'Enter your credentials to access the admin portal')}
+            Enter your credentials to access the admin portal
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -121,7 +121,7 @@ const AdminLoginPage: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.login.email', 'Email')}</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="admin@mydentalfly.com" 
@@ -140,7 +140,7 @@ const AdminLoginPage: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('admin.login.password', 'Password')}</FormLabel>
+                    <FormLabel>Password</FormLabel>
                     <FormControl>
                       <Input 
                         placeholder="••••••••" 
@@ -162,10 +162,10 @@ const AdminLoginPage: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t('admin.login.logging_in', 'Logging in...')}
+                    Logging in...
                   </>
                 ) : (
-                  t('admin.login.submit', 'Login to Admin Portal')
+                  'Login to Admin Portal'
                 )}
               </Button>
             </form>
@@ -173,7 +173,7 @@ const AdminLoginPage: React.FC = () => {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-center text-sm text-gray-500">
-            {t('admin.login.security_notice', 'This is a secure portal for authorized personnel only.')}
+            This is a secure portal for authorized personnel only.
           </div>
         </CardFooter>
       </Card>
@@ -181,7 +181,7 @@ const AdminLoginPage: React.FC = () => {
       {/* Legal footer */}
       <div className="absolute bottom-4 text-center w-full text-xs text-gray-400">
         <p>
-          {t('admin.login.copyright', '© 2025 MyDentalFly. All rights reserved.')}
+          © 2025 MyDentalFly. All rights reserved.
         </p>
       </div>
     </div>
