@@ -105,6 +105,23 @@ import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 
 function AppRouter() {
+  // Add route change logging
+  React.useEffect(() => {
+    const handleLocationChange = () => {
+      console.log(`🧭 Frontend route changed to: ${window.location.pathname}`);
+    };
+
+    // Log initial route
+    handleLocationChange();
+
+    // Listen for route changes
+    window.addEventListener('popstate', handleLocationChange);
+    
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+    };
+  }, []);
+
   return (
     <Switch>
               <Route path="/test" component={() => <div className="p-8 text-center"><h1 className="text-2xl">Test Route Working!</h1></div>} />
