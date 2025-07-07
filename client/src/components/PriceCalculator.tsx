@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectLabel,
   SelectTrigger,
@@ -1196,9 +1197,10 @@ export default function PriceCalculator({
                                         </FormControl>
                                         <SelectContent className="max-h-[400px]">
                                           {/* IMPLANTS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-1 bg-[#007B9E] rounded-sm">
-                                            Implants
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-1 bg-[#007B9E] rounded-sm">
+                                              Implants
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1240,11 +1242,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* CROWNS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Crowns
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Crowns
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1284,11 +1288,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* VENEERS SECTION */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Veneers
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Veneers
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1331,11 +1337,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* GENERAL DENTAL PROCEDURES */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            General Dental Procedures
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              General Dental Procedures
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1423,11 +1431,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* PERIODONTICS & GUM TREATMENTS */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Gum Treatments & Periodontics
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Gum Treatments & Periodontics
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1462,11 +1472,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* ORAL SURGERY */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Oral Surgery
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Oral Surgery
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1501,11 +1513,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* DENTURES & INVISALIGN/ORTHODONTIC */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Dentures & Orthodontics
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Dentures & Orthodontics
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1556,11 +1570,13 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
 
                                           {/* PACKAGES */}
-                                          <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
-                                            Packages
-                                          </SelectLabel>
+                                          <SelectGroup>
+                                            <SelectLabel className="px-2 py-2 text-sm font-bold text-white select-none mt-3 bg-[#007B9E] rounded-sm">
+                                              Packages
+                                            </SelectLabel>
                                           {treatments
                                             .filter(
                                               (treatment) =>
@@ -1603,6 +1619,7 @@ export default function PriceCalculator({
                                                 </div>
                                               </SelectItem>
                                             ))}
+                                          </SelectGroup>
                                         </SelectContent>
                                       </Select>
 
