@@ -303,12 +303,14 @@ interface TreatmentPlanBuilderProps {
   initialTreatments?: TreatmentItem[];
   onTreatmentsChange?: (treatments: TreatmentItem[]) => void;
   hideHeader?: boolean; // Add option to hide the "Build Your Treatment Plan" header
+  initialPromoCode?: string | null;
 }
 
 const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({ 
   initialTreatments = [], 
   onTreatmentsChange,
-  hideHeader = false
+  hideHeader = false,
+  initialPromoCode
 }) => {
   // Initialize treatments from props or empty array
   const [treatments, setTreatments] = useState<TreatmentItem[]>(
@@ -1254,7 +1256,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                   {/* Promo code input */}
                   <div className="mb-6">
                     <h4 className="text-sm font-medium mb-2">Promo Code</h4>
-                    <PromoCodeInput />
+                    <PromoCodeInput initialPromoCode={initialPromoCode} />
                   </div>
 
                   {/* Action buttons */}

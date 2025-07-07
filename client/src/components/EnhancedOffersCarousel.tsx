@@ -720,6 +720,23 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         View Clinic
                       </Link>
                     </Button>
+                    <Button 
+                    className="w-full bg-primary hover:bg-primary/90"
+                    onClick={() => {
+                      // Navigate to quote page with promo code pre-filled
+                      const quotePage = offer.promo_code ? 
+                        `/pricing?promo=${encodeURIComponent(offer.promo_code)}` : 
+                        '/pricing';
+                      window.location.href = quotePage;
+
+                      toast({
+                        title: "Package Selected",
+                        description: `${offer.title} package selected. Redirecting to quote builder...`,
+                      });
+                    }}
+                  >
+                    Select Package
+                  </Button>
                   </div>
                 </div>
               </div>

@@ -1,3 +1,7 @@
+The requested change involves modifying the "Select Package" button's functionality to redirect to the quote page with the appropriate promo code. This requires finding the button within the code and updating its onClick handler to construct the correct URL and navigate the user.
+```
+
+```replit_final_file
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 
@@ -98,18 +102,18 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
     queryKey: ["/api/special-offers/homepage"],
     // Default queryFn is already set up in the app to use the backend
   });
-  
+
   // Use sample offers for demonstration if the API returns empty
   const offers = apiOffers.length > 0 ? apiOffers : sampleOffers;
 
   // Auto-advance carousel every 5 seconds
   useEffect(() => {
     if (!isAutoPlaying || offers.length === 0 || isHovering) return;
-    
+
     const interval = setInterval(() => {
       setActiveIndex((prevIndex) => (prevIndex + 1) % offers.length);
     }, 5000);
-    
+
     return () => clearInterval(interval);
   }, [offers.length, isAutoPlaying, isHovering]);
 
@@ -175,7 +179,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
             <h2 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-700 to-indigo-600 text-transparent bg-clip-text">Special Offers</h2>
             <p className="text-gray-600">Exclusive deals from our partner clinics</p>
           </div>
-          
+
           <div className="flex space-x-2">
             <button
               onClick={handlePrevious}
@@ -219,7 +223,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                         target.src = `/images/offers/${offer.id.toLowerCase().replace(/\s+/g, '-')}.jpg`;
                       }}
                     />
-                    
+
                     {/* Promotion Badge */}
                     <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-semibold flex items-center ${getPromotionBadgeStyle(offer.promotion_level)}`}>
                       <Star size={14} className="mr-1" />
@@ -232,7 +236,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                     <div>
                       <h3 className="font-bold text-xl md:text-2xl text-gray-800 mb-2">{offer.title}</h3>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-3 md:line-clamp-5">{offer.description}</p>
-                      
+
                       {/* Offer Details */}
                       <div className="space-y-2">
                         {offer.discount_type && (
@@ -243,7 +247,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                             </span>
                           </div>
                         )}
-                        
+
                         {offer.applicable_treatments && offer.applicable_treatments.length > 0 && (
                           <div className="flex items-center text-sm">
                             <TagIcon size={16} className="mr-2 text-gray-500" />
@@ -254,7 +258,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                             </span>
                           </div>
                         )}
-                        
+
                         {offer.end_date && (
                           <div className="flex items-center text-sm">
                             <Clock size={16} className="mr-2 text-gray-500" />
@@ -267,7 +271,7 @@ const PremiumOffersCarousel: React.FC<PremiumOffersCarouselProps> = ({ className
                         )}
                       </div>
                     </div>
-                    
+
                     {/* CTA Button */}
                     <div className="mt-4">
                       <a

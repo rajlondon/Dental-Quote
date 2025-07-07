@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useOptionalQuote, QuoteContext } from '../contexts/QuoteContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,9 +6,20 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Package } from 'lucide-react';
 import axios from 'axios';
 
-export function PromoCodeInput() {
-  const [inputCode, setInputCode] = useState('');
+interface PromoCodeInputProps {
+  initialPromoCode?: string | null;
+}
+
+export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
+  const [inputCode, setInputCode] = useState(initialPromoCode || '');
   const [error, setError] = useState('');
+  
+  // Update input code when initialPromoCode changes
+  useEffect(() => {
+    if (initialPromoCode) {
+      setInputCode(initialPromoCode);
+    }
+  }, [initialPromoCode]);
   
   // Check if QuoteContext is available before using useQuote
   const quoteContextAvailable = useContext(QuoteContext) !== null;

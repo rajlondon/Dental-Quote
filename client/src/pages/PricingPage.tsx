@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
@@ -34,7 +33,7 @@ const PricingPage: React.FC = () => {
       package: searchParams.get('package') || '',
       from: searchParams.get('from') || ''
     };
-    
+
     setUrlParams(params);
     setSelectedCity(params.city || 'istanbul');
 
@@ -69,7 +68,7 @@ const PricingPage: React.FC = () => {
       'email': 'Email Promotion Treatment Selection',
       'social': 'Social Media Promotion Treatment Selection'
     };
-    
+
     const pageTitle = sourceDescriptions[params.from as keyof typeof sourceDescriptions] || 'Treatment Selection';
     document.title = `${pageTitle} | MyDentalFly`;
   }, [toast]);
@@ -104,7 +103,7 @@ const PricingPage: React.FC = () => {
   return (
     <>
       <Navbar />
-      
+
       <div className="min-h-screen bg-gradient-to-b from-neutral-50 to-white">
         {/* Header Section */}
         <div className="bg-white border-b border-neutral-200 py-6">
@@ -118,13 +117,13 @@ const PricingPage: React.FC = () => {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Back to Home
               </Button>
-              
+
               <div className="flex items-center text-sm text-neutral-600">
                 <MapPin className="w-4 h-4 mr-1" />
                 {getCityDisplayName(selectedCity)}
               </div>
             </div>
-            
+
             <div className="text-center">
               <h1 className="text-3xl md:text-4xl font-bold text-primary mb-2">
                 Select Your Dental Treatments
@@ -203,7 +202,7 @@ const PricingPage: React.FC = () => {
                 selectedCity,
                 sourceFlow: urlParams.from
               }));
-              
+
               // Check if promo code restricts to specific clinic
               const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
               if (pendingPromoCode) {
@@ -217,7 +216,7 @@ const PricingPage: React.FC = () => {
           />
         </div>
       </div>
-      
+
       <Footer />
     </>
   );
