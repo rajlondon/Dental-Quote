@@ -428,7 +428,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     }
   };
 
-  const [, setLocation] = useLocation();
+  const [location, setLocation] = useLocation();
   const { user, isLoading: authLoading } = useAuth();
 
   // Handle quote request with authentication check
@@ -702,43 +702,45 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
                   <div className="flex space-x-3">
                     <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => {
-                      // Store promo code in session storage for persistence
-                      if (offer.promo_code) {
-                        sessionStorage.setItem('pendingPromoCode', offer.promo_code);
-                      }
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                      onClick={() => {
+                        // Store promo code in session storage for persistence
+                        if (offer.promo_code) {
+                          sessionStorage.setItem('pendingPromoCode', offer.promo_code);
+                        }
 
-                      // Navigate to Your Quote page (treatment plan builder) with promo code
-                      setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
-                    }}
-                  >
-                    Request Quote
-                  </Button>
-                    <Button variant="outline" asChild>
-                      <Link href={`/clinics/${offer.clinic_id || 1}`}>
-                        View Clinic
-                      </Link>
+                        // Navigate to Your Quote page (treatment plan builder) with promo code
+                        setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+                      }}
+                    >
+                      Request Quote
                     </Button>
                     <Button 
-                    className="w-full bg-primary hover:bg-primary/90"
-                    onClick={() => {
-                      // Store promo code in session storage for persistence
-                      if (offer.promo_code) {
-                        sessionStorage.setItem('pendingPromoCode', offer.promo_code);
-                      }
+                      variant="outline" 
+                      className="flex-1"
+                      onClick={() => setLocation(`/clinics/${offer.clinic_id || 1}`)}
+                    >
+                      View Clinic
+                    </Button>
+                    <Button 
+                      className="flex-1 bg-primary hover:bg-primary/90"
+                      onClick={() => {
+                        // Store promo code in session storage for persistence
+                        if (offer.promo_code) {
+                          sessionStorage.setItem('pendingPromoCode', offer.promo_code);
+                        }
 
-                      // Navigate to Your Quote page (treatment plan builder) with promo code
-                      setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+                        // Navigate to Your Quote page (treatment plan builder) with promo code
+                        setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
 
-                      toast({
-                        title: "Package Selected",
-                        description: `${offer.title} package selected. Redirecting to quote builder...`,
-                      });
-                    }}
-                  >
-                    Select Package
-                  </Button>
+                        toast({
+                          title: "Package Selected",
+                          description: `${offer.title} package selected. Redirecting to quote builder...`,
+                        });
+                      }}
+                    >
+                      Select Package
+                    </Button>
                   </div>
                 </div>
               </div>
