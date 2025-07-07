@@ -92,32 +92,40 @@ router.post('/admin-login', async (req, res) => {
     }
 
     // Verify password
-    let isValidPassword = false;
-
     console.log('Verifying password for user:', user.email);
     console.log('Password hash exists:', !!user.password_hash);
     console.log('Password hash length:', user.password_hash ? user.password_hash.length : 0);
+    console.log('Input password:', password);
 
     if (!user.password_hash) {
       console.log('No password hash found - user needs to be recreated');
       return res.status(401).json({ 
         success: false, 
-        message: 'Admin user not properly configured. Please reset admin user.' 
+        message: 'Admin user not properly configured. Use /api/auth/recreate-admin' 
       });
     }
 
+    let isValidPassword = false;
     try {
       isValidPassword = await bcrypt.compare(password, user.password_hash);
-      console.log('Password comparison result:', isValidPassword);
+      console.log('Bcrypt comparison result:', isValidPassword);
+      
+      // Additional debug
+      if (!isValidPassword) {
+        console.log('Password mismatch - checking hash details');
+        console.log('Hash starts with:', user.password_hash.substring(0, 10));
+        console.log('Expected password length:', password.length);
+      }
+      
     } catch (bcryptError) {
       console.error('Password comparison error:', bcryptError);
       return res.status(500).json({ 
         success: false, 
-        message: 'Password verification failed' 
+        message: 'Password verification failed: ' + bcryptError.message 
       });
     }
 
-    console.log('Password validation result:', isValidPassword);
+    console.log('Final password validation result:', isValidPassword);
 
     if (!isValidPassword) {
       return res.status(401).json({ 
@@ -474,6 +482,75 @@ router.get('/debug-users', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
+      error: error.message
+    });
+  }
+});
+
+// Simple admin reset endpoint
+router.post('/recreate-admin', async (req, res) => {
+  try {
+    const adminEmail = 'admin@mydentalfly.com';
+    const adminPassword = 'Admin123!';
+    
+    console.log('Recreating admin user...');
+    
+    // Delete ALL users with admin email
+    const deletedCount = await db
+      .delete(users)
+      .where(eq(users.email, adminEmail));
+    
+    console.log('Deleted existing admin users:', deletedCount);
+    
+    // Create fresh hash
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
+    
+    console.log('Generated fresh password hash, length:', hashedPassword.length);
+    
+    // Insert new admin
+    const newAdmin = await db
+      .insert(users)
+      .values({
+        email: adminEmail,
+        password_hash: hashedPassword,
+        role: 'admin',
+        first_name: 'Admin',
+        last_name: 'User',
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+    
+    console.log('Created fresh admin user:', {
+      id: newAdmin[0].id,
+      email: newAdmin[0].email,
+      role: newAdmin[0].role,
+      hasPassword: !!newAdmin[0].password_hash,
+      passwordLength: newAdmin[0].password_hash?.length
+    });
+    
+    // Test the password immediately
+    const testResult = await bcrypt.compare(adminPassword, newAdmin[0].password_hash);
+    console.log('Password test result:', testResult);
+    
+    res.json({
+      success: true,
+      message: 'Admin user recreated successfully',
+      user: {
+        id: newAdmin[0].id,
+        email: newAdmin[0].email,
+        role: newAdmin[0].role,
+        hasPassword: !!newAdmin[0].password_hash,
+        passwordTest: testResult
+      }
+    });
+    
+  } catch (error) {
+    console.error('Recreate admin error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to recreate admin user',
       error: error.message
     });
   }
