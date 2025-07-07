@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,7 +41,7 @@ const getPortalFeatures = (portalType: string) => {
       { name: 'Analytics Dashboard', status: 'active', icon: Eye }
     ]
   };
-  
+
   return features[portalType as keyof typeof features] || [];
 };
 
@@ -72,7 +71,7 @@ const getWorkflowSteps = (portalType: string) => {
       'Manage system settings'
     ]
   };
-  
+
   return workflows[portalType as keyof typeof workflows] || [];
 };
 
@@ -97,7 +96,7 @@ const getSecurityFeatures = (portalType: string) => {
       { name: 'System Monitoring', status: 'active' }
     ]
   };
-  
+
   return security[portalType as keyof typeof security] || [];
 };
 
@@ -109,10 +108,31 @@ const ClinicPortalTesting: React.FC<ClinicPortalTestingProps> = ({ setActiveSect
   // Placeholder translation function
   const t = (key: string, fallback?: string) => fallback || key;
   const portalType = 'clinic';
-  
+
   const features = getPortalFeatures(portalType);
   const workflowSteps = getWorkflowSteps(portalType);
   const securityFeatures = getSecurityFeatures(portalType);
+
+  // Mock data for testing - this should be replaced with actual API calls
+  const testData = {
+    patients: [
+      { id: 1, name: "John Doe", email: "john@example.com", status: "active" },
+      { id: 2, name: "Jane Smith", email: "jane@example.com", status: "pending" }
+    ],
+    quotes: [
+      { id: 1, patientName: "John Doe", treatment: "Dental Implants", amount: 2500 },
+      { id: 2, patientName: "Jane Smith", treatment: "Veneers", amount: 1800 }
+    ],
+    appointments: [
+      { id: 1, patientName: "John Doe", date: "2024-01-15", time: "10:00 AM" },
+      { id: 2, patientName: "Jane Smith", date: "2024-01-16", time: "2:00 PM" }
+    ]
+  };
+
+  // Safe access to data with fallbacks
+  const patients = testData?.patients || [];
+  const quotes = testData?.quotes || [];
+  const appointments = testData?.appointments || [];
 
   return (
     <div className="space-y-6">
@@ -229,7 +249,7 @@ const ClinicPortalTesting: React.FC<ClinicPortalTestingProps> = ({ setActiveSect
                   Password: Clinic123!
                 </AlertDescription>
               </Alert>
-              
+
               <div className="mt-4 space-y-2">
                 <h4 className="font-medium">Testing Checklist:</h4>
                 <ul className="text-sm space-y-1 text-muted-foreground">
