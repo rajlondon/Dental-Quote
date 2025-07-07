@@ -261,24 +261,13 @@ export async function setupAuth(app: Express) {
         profileComplete: user.profileComplete,
         status: user.status,
         clinicId: user.clinicId,
-        stripeCustomerId: user.stripeCustomerId,
-        phone: user.phone
+        profileImage: user.profileImage
       };
 
       req.session.user = sessionUser;
       
-      // Also set req.user for immediate availability
-      req.user = {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        profileImage: user.profileImage,
-        clinicId: user.clinicId,
-        emailVerified: user.emailVerified,
-        status: user.status
-      };
+      // Also set req.user for immediate availability to match session structure
+      req.user = sessionUser;
 
       console.log('Login successful for:', email, 'Role:', user.role);
 
@@ -397,8 +386,22 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
 
     // Prefer session user, fall back to passport user
     const user = sessionUser || passportUser;
-    console.log('Returning user:', user.email, 'Role:', user.role);
-    res.json({ user });
+    
+    // Ensure the user object has all required fields
+    const completeUser = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName || undefined,
+      lastName: user.lastName || undefined,
+      profileImage: user.profileImage || undefined,
+      clinicId: user.clinicId || undefined,
+      emailVerified: user.emailVerified || false,
+      status: user.status || 'pending'
+    };
+    
+    console.log('Returning user:', completeUser.email, 'Role:', completeUser.role);
+    res.json({ user: completeUser });
   });
 
   // Create admin and clinic users if they don't exist
