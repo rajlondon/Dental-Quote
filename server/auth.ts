@@ -474,6 +474,26 @@ async function seedUsers() {
     } else {
       console.log("ℹ️ Patient user already exists");
     }
+
+    // Check if test admin user exists
+    const [testAdminExists] = await db.select().from(users).where(eq(users.email, "test@mydentalfly.co.uk"));
+    
+    if (!testAdminExists) {
+      const testAdminPassword = await bcrypt.hash("Test123!", 10);
+      await db.insert(users).values({
+        email: "test@mydentalfly.co.uk",
+        password: testAdminPassword,
+        firstName: "Test",
+        lastName: "Admin",
+        role: "admin",
+        emailVerified: true,
+        profileComplete: true,
+        status: "active"
+      });
+      console.log("✅ Created test admin user: test@mydentalfly.co.uk (password: Test123!)");
+    } else {
+      console.log("ℹ️ Test admin user already exists");
+    }
   } catch (error) {
     console.error("Error seeding users:", error);
     // Don't throw the error, just log it and continue
