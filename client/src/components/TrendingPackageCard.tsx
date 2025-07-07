@@ -153,19 +153,19 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
           </div>
 
           <Button 
-              onClick={() => {
-                // Store package data and redirect to treatment selection
-                sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
-                sessionStorage.setItem('pendingPackageData', JSON.stringify(pkg));
-                sessionStorage.setItem('sourceFlow', 'package_selection');
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                onClick={() => {
+                  // Store the promo code in session storage
+                  if (pkg.promoCode) {
+                    sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
+                  }
 
-                // Go directly to pricing page with package context
-                window.location.href = `/pricing?package=${encodeURIComponent(pkg.name)}&promo=${encodeURIComponent(pkg.promoCode)}&city=istanbul&from=package`;
-              }}
-              className="w-full bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 text-white font-medium"
-            >
-              Select Package
-            </Button>
+                  // Navigate to Your Quote page (treatment plan builder) with promo code parameter
+                  setLocation(`/your-quote?promo=${encodeURIComponent(pkg.promoCode || '')}`);
+                }}
+              >
+                Select Package
+              </Button>
         </div>
       </CardContent>
     </Card>

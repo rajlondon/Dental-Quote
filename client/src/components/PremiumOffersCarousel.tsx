@@ -1,7 +1,3 @@
-The requested change involves modifying the "Select Package" button's functionality to redirect to the quote page with the appropriate promo code. This requires finding the button within the code and updating its onClick handler to construct the correct URL and navigate the user.
-```
-
-```replit_final_file
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { 

@@ -496,6 +496,8 @@ const WhatsAppButton: React.FC = () => {
 const YourQuotePage: React.FC = () => {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const [treatments, setTreatments] = useState<TreatmentItem[]>([]);
+  const [initialPromoCode, setInitialPromoCode] = useState<string | null>(null);
 
   // Parse URL query parameters
   const [searchParams] = useState(() => new URLSearchParams(window.location.search));
@@ -678,6 +680,16 @@ const YourQuotePage: React.FC = () => {
       }
       sessionStorage.setItem('welcomeToastShown', 'true');
     }
+
+    // Parse URL parameters for any special offer, package data, or promo codes
+    const promoCode = searchParams.get('promo');
+
+    // Handle promo code from URL
+    if (promoCode) {
+      console.log('Promo code from URL:', promoCode);
+      sessionStorage.setItem('pendingPromoCode', promoCode);
+      setInitialPromoCode(promoCode);
+    }
   }, [specialOffer, treatmentItems.length]);
 
   return (
@@ -716,7 +728,7 @@ const YourQuotePage: React.FC = () => {
 
           {/* Quote Preferences Summary */}
           <div className="mb-8">
-            
+
 {/* Blue banner with quote parameters - matching homepage style */}
         <section className="bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 text-white py-12 relative overflow-hidden">
           {/* Gold accent background pattern */}
@@ -827,6 +839,7 @@ const YourQuotePage: React.FC = () => {
             <TreatmentPlanBuilder 
               initialTreatments={treatmentItems}
               onTreatmentsChange={handleTreatmentPlanChange}
+              initialPromoCode={initialPromoCode}
             />
           </div>
 

@@ -1,3 +1,10 @@
+` tags with the complete modified code, ensuring all changes are incorporated and the code is fully functional.
+
+```
+Updated the Request Quote button's onClick function to navigate to the treatment plan builder page with the promo code.
+```
+
+<replit_final_file>
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useLocation } from "wouter";
@@ -702,19 +709,19 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
                   <div className="flex space-x-3">
                     <Button 
-                      className="px-6" 
-                      onClick={() => {
-                        // Store the offer data and redirect to treatment selection
-                        sessionStorage.setItem('pendingPromoCode', offer.promo_code || '');
-                        sessionStorage.setItem('pendingOfferData', JSON.stringify(offer));
-                        sessionStorage.setItem('sourceFlow', 'special_offer');
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => {
+                      // Store promo code in session storage for persistence
+                      if (offer.promo_code) {
+                        sessionStorage.setItem('pendingPromoCode', offer.promo_code);
+                      }
 
-                        // Go directly to pricing page with offer context
-                        window.location.href = `/pricing?promo=${encodeURIComponent(offer.promo_code || '')}&city=istanbul&from=offer`;
-                      }}
-                    >
-                      Request Quote
-                    </Button>
+                      // Navigate to Your Quote page (treatment plan builder) with promo code
+                      setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+                    }}
+                  >
+                    Request Quote
+                  </Button>
                     <Button variant="outline" asChild>
                       <Link href={`/clinics/${offer.clinic_id || 1}`}>
                         View Clinic
