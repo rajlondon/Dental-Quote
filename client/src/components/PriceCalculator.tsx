@@ -996,7 +996,7 @@ export default function PriceCalculator({
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
             <h2 className="text-4xl md:text-5xl font-bold mb-4 text-primary relative inline-block">
-              {t("pricing.calculate_price")}
+              Calculate Your Price
               <span className="absolute -top-4 -right-12 bg-secondary/20 text-secondary-foreground text-xs px-2 py-1 rounded-full rotate-3">
                 FREE
               </span>
@@ -1023,10 +1023,10 @@ export default function PriceCalculator({
                 <div>
                   <div className="mb-6">
                     <h3 className="text-2xl font-bold text-primary mb-2">
-                      {t("pricing.treatment_selection")}
+                      Treatment Selection
                     </h3>
                     <p className="text-neutral-600">
-                      {t("pricing.select_treatments_description")}
+                      Select your required dental treatments and get an instant quote
                     </p>
                   </div>
 
@@ -1039,7 +1039,7 @@ export default function PriceCalculator({
                         <div className="bg-primary/5 p-4 rounded-lg">
                           <div className="mb-4">
                             <h3 className="text-lg font-semibold text-primary">
-                              {t("pricing.treatments")}
+                              Treatments
                             </h3>
                           </div>
 
@@ -1148,7 +1148,7 @@ export default function PriceCalculator({
                                     <FormItem>
                                       <div className="flex flex-wrap items-center">
                                         <FormLabel className="text-neutral-700 mr-2">
-                                          {t("pricing.treatment_type")}
+                                          Treatment Type
                                         </FormLabel>
                                         <TooltipProvider>
                                           <Tooltip>
@@ -1191,9 +1191,7 @@ export default function PriceCalculator({
                                         <FormControl>
                                           <SelectTrigger className="bg-white hover:bg-gray-50 focus:ring-2 focus:ring-primary/40 transition-colors h-10">
                                             <SelectValue
-                                              placeholder={t(
-                                                "pricing.select_treatment",
-                                              )}
+                                              placeholder="Select a treatment"
                                             />
                                           </SelectTrigger>
                                         </FormControl>
@@ -1757,7 +1755,7 @@ export default function PriceCalculator({
                                     <FormItem>
                                       <div className="flex flex-wrap items-center">
                                         <FormLabel className="text-neutral-700 mr-2">
-                                          {t("pricing.quantity")}
+                                          Quantity
                                         </FormLabel>
                                         <div className="relative inline-block">
                                           <svg
@@ -1882,14 +1880,14 @@ export default function PriceCalculator({
                                   d="M12 4v16m8-8H4"
                                 />
                               </svg>
-                              {t("pricing.add_treatment")}
+                              Add Treatment
                             </Button>
                           </div>
                         </div>
 
                         <div className="space-y-4 mt-6">
                           <h3 className="text-lg font-semibold text-primary">
-                            {t("pricing.patient_information")}
+                            Patient Information
                           </h3>
 
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1898,10 +1896,10 @@ export default function PriceCalculator({
                               name="name"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t("common.name")}</FormLabel>
+                                  <FormLabel>Name</FormLabel>
                                   <FormControl>
                                     <Input
-                                      placeholder={t("common.name_placeholder")}
+                                      placeholder="Enter your full name"
                                       className="bg-white"
                                       {...field}
                                     />
@@ -1916,13 +1914,11 @@ export default function PriceCalculator({
                               name="email"
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormLabel>{t("common.email")}</FormLabel>
+                                  <FormLabel>Email</FormLabel>
                                   <FormControl>
                                     <Input
                                       type="email"
-                                      placeholder={t(
-                                        "common.email_placeholder",
-                                      )}
+                                      placeholder="Enter your email address"
                                       className="bg-white"
                                       {...field}
                                     />
@@ -1938,7 +1934,7 @@ export default function PriceCalculator({
                             name="phone"
                             render={({ field }) => (
                               <FormItem>
-                                <FormLabel>{t("common.phone")}</FormLabel>
+                                <FormLabel>Phone</FormLabel>
                                 <FormControl>
                                   <Input
                                     placeholder="+44 123 456 7890"
@@ -1947,7 +1943,7 @@ export default function PriceCalculator({
                                   />
                                 </FormControl>
                                 <p className="text-xs text-neutral-500 mt-1">
-                                  {t("common.phone_help_text")}
+                                  Include country code for international numbers
                                 </p>
                                 <FormMessage />
                               </FormItem>
@@ -1958,12 +1954,10 @@ export default function PriceCalculator({
                           <div className="mt-6">
                             <div className="flex items-center mb-4">
                               <h3 className="text-lg font-semibold text-primary">
-                                {t("pricing.travel_information")}
+                                Travel Information
                               </h3>
                               <InfoIcon
-                                tooltipContent={t(
-                                  "pricing.travel_info_tooltip",
-                                )}
+                                tooltipContent="Help us estimate your travel costs and preferred treatment dates"
                                 position="right"
                                 size="medium"
                               />
@@ -1977,7 +1971,7 @@ export default function PriceCalculator({
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>
-                                        {t("pricing.travel_month")}
+                                        Travel Month
                                       </FormLabel>
                                       <InfoIcon
                                         tooltipContent="Select when you plan to travel. This helps us estimate flight costs and check clinic availability for your preferred dates."
@@ -1991,9 +1985,7 @@ export default function PriceCalculator({
                                       <FormControl>
                                         <SelectTrigger className="bg-white">
                                           <SelectValue
-                                            placeholder={t(
-                                              "pricing.select_month",
-                                            )}
+                                            placeholder="Select travel month"
                                           />
                                         </SelectTrigger>
                                       </FormControl>
@@ -2017,7 +2009,7 @@ export default function PriceCalculator({
                                   <FormItem>
                                     <div className="flex items-center">
                                       <FormLabel>
-                                        {t("pricing.departure_city")}
+                                        Departure City
                                       </FormLabel>
                                       <InfoIcon
                                         tooltipContent="Select your departure city to help us estimate the travel costs. We can arrange direct or connecting flights from many major cities."
@@ -2031,9 +2023,7 @@ export default function PriceCalculator({
                                       <FormControl>
                                         <SelectTrigger className="bg-white">
                                           <SelectValue
-                                            placeholder={t(
-                                              "pricing.select_city",
-                                            )}
+                                            placeholder="Select departure city"
                                           />
                                         </SelectTrigger>
                                       </FormControl>
@@ -2550,7 +2540,7 @@ export default function PriceCalculator({
                               d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
                             />
                           </svg>
-                          {t("pricing.calculate_quote")}
+                          Calculate Your Quote
                         </Button>
 
                         {/* Extra space at bottom on mobile to prevent button overlap */}
@@ -2568,13 +2558,13 @@ export default function PriceCalculator({
                           <thead className="bg-primary/10">
                             <tr>
                               <th className="px-4 py-3 text-left text-primary font-semibold">
-                                {t("pricing.treatment")}
+                                Treatment
                               </th>
                               <th className="px-4 py-3 text-center text-primary font-semibold">
-                                {t("pricing.quantity")}
+                                Quantity
                               </th>
                               <th className="px-4 py-3 text-right text-primary font-semibold">
-                                {t("pricing.price")} (£)
+                                Price (£)
                               </th>
                             </tr>
                           </thead>
@@ -2590,7 +2580,7 @@ export default function PriceCalculator({
                                       {formatTreatmentName(item.treatment)}
                                     </div>
                                     {item.guarantee !== "N/A" &&
-                                      `${t("pricing.guarantee")}: ${item.guarantee}`}
+                                      `Guarantee: ${item.guarantee}`}
                                   </div>
                                 </td>
                                 <td className="px-4 py-3 text-center">
@@ -2608,7 +2598,7 @@ export default function PriceCalculator({
                                 colSpan={2}
                                 className="px-4 py-3 text-primary"
                               >
-                                {t("pricing.total")}
+                                Total
                               </td>
                               <td className="px-4 py-3 text-right text-primary">
                                 £
@@ -2628,7 +2618,7 @@ export default function PriceCalculator({
                                 colSpan={2}
                                 className="px-4 py-3 text-primary"
                               >
-                                {t("pricing.total_usd")}
+                                Total (USD)
                               </td>
                               <td className="px-4 py-3 text-right text-primary">
                                 $
@@ -3049,14 +3039,14 @@ export default function PriceCalculator({
                             <polyline points="10 9 9 9 8 9"></polyline>
                           </svg>
                           <h4 className="text-lg font-semibold mb-2 text-primary">
-                            {t("pricing.no_quote_generated")}
+                            No Quote Generated Yet
                           </h4>
                           <p className="mb-3 text-sm">
-                            {t("pricing.select_treatments_to_generate")}
+                            Select your treatments and fill in your details to generate a quote
                           </p>
                           <div className="text-xs p-3 bg-primary/5 rounded-lg w-full max-w-sm">
                             <p className="font-medium text-primary mb-2">
-                              {t("pricing.how_it_works")}:
+                              How it works:
                             </p>
                             <ol className="text-left space-y-1.5">
                               <li className="flex">
@@ -3064,20 +3054,20 @@ export default function PriceCalculator({
                                   1
                                 </span>
                                 <span>
-                                  {t("pricing.step_select_treatments")}
+                                  Select your required treatments
                                 </span>
                               </li>
                               <li className="flex">
                                 <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
                                   2
                                 </span>
-                                <span>{t("pricing.step_enter_details")}</span>
+                                <span>Enter your contact details</span>
                               </li>
                               <li className="flex">
                                 <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
                                   3
                                 </span>
-                                <span>{t("pricing.step_calculate_quote")}</span>
+                                <span>Get your instant quote</span>
                               </li>
                             </ol>
                           </div>
@@ -3086,7 +3076,7 @@ export default function PriceCalculator({
                         {/* Middle Section: How to Get The Most Accurate Quote with Smart Tags */}
                         <div className="border-t border-gray-200 pt-6">
                           <h4 className="text-lg font-semibold mb-3 text-primary text-center">
-                            {t("pricing.get_accurate_quote_title")}
+                            How to Get the Most Accurate Quote
                           </h4>
 
                           {/* Smart i-Tag Info Section */}
@@ -3302,20 +3292,20 @@ export default function PriceCalculator({
                             <div className="rounded-lg border border-gray-200 overflow-hidden">
                               <div className="bg-primary/10 py-2 px-3 border-b border-gray-200">
                                 <h5 className="font-medium text-sm text-primary">
-                                  {t("pricing.sample_quote_title")}
+                                  Sample Quote Examples
                                 </h5>
                               </div>
 
                               <div className="p-3">
                                 <h6 className="font-medium text-xs mb-2 text-gray-600">
-                                  {t("pricing.recommended_combinations")}
+                                  Popular Treatment Combinations
                                 </h6>
 
                                 {/* Basic Package */}
                                 <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
                                   <div className="flex justify-between mb-1">
                                     <span className="text-xs font-medium">
-                                      {t("pricing.simple_combination")}
+                                      Basic Package
                                     </span>
                                     <span className="text-xs font-semibold text-primary">
                                       £650 - £850
@@ -3330,7 +3320,7 @@ export default function PriceCalculator({
                                 <div className="mb-3 pb-3 border-b border-dashed border-gray-200">
                                   <div className="flex justify-between mb-1">
                                     <span className="text-xs font-medium">
-                                      {t("pricing.medium_combination")}
+                                      Comprehensive Package
                                     </span>
                                     <span className="text-xs font-semibold text-primary">
                                       £1,850 - £2,200
@@ -3345,7 +3335,7 @@ export default function PriceCalculator({
                                 <div className="mb-1">
                                   <div className="flex justify-between mb-1">
                                     <span className="text-xs font-medium">
-                                      {t("pricing.advanced_combination")}
+                                      Premium Package
                                     </span>
                                     <span className="text-xs font-semibold text-primary">
                                       £4,500 - £5,800
@@ -3456,31 +3446,31 @@ export default function PriceCalculator({
 
           <div className="mt-12 text-center">
             <p className="text-lg font-medium text-primary mb-4">
-              {t("pricing.why_choose_istanbul")}
+              Why Choose Istanbul for Your Dental Treatment?
             </p>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">70%</div>
                 <p className="text-sm text-neutral-600">
-                  {t("pricing.benefit_savings")}
+                  Average savings vs UK prices
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">5★</div>
                 <p className="text-sm text-neutral-600">
-                  {t("pricing.benefit_quality")}
+                  Top-rated clinics & dentists
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">24/7</div>
                 <p className="text-sm text-neutral-600">
-                  {t("pricing.benefit_support")}
+                  Dedicated patient support
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg shadow-sm border border-neutral-200">
                 <div className="text-3xl text-primary mb-2">100%</div>
                 <p className="text-sm text-neutral-600">
-                  {t("pricing.benefit_guarantee")}
+                  Satisfaction guarantee
                 </p>
               </div>
             </div>
