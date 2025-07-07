@@ -7,7 +7,7 @@ import bcrypt from "bcrypt";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { eq, sql } from "drizzle-orm";
-import connectPgSimple from "connect-pg-simple";
+import connectPgSimple from "connect-pgSimple";
 import { pool } from "./db";
 
 // Define extended session store options type to include errorCallback
@@ -265,7 +265,7 @@ export async function setupAuth(app: Express) {
       };
 
       req.session.user = sessionUser;
-      
+
       // Also set req.user for immediate availability to match session structure
       req.user = sessionUser;
 
@@ -378,7 +378,7 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
     // Check both session and passport authentication
     const sessionUser = req.session?.user;
     const passportUser = req.user;
-    
+
     if (!sessionUser && !passportUser) {
       console.log('No user in session or passport, returning 401');
       return res.status(401).json({ error: 'Not authenticated', user: null });
@@ -386,7 +386,7 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
 
     // Prefer session user, fall back to passport user
     const user = sessionUser || passportUser;
-    
+
     // Ensure the user object has all required fields
     const completeUser = {
       id: user.id,
@@ -399,7 +399,7 @@ Session Created: ${req.session.cookie.originalMaxAge !== undefined}
       emailVerified: user.emailVerified || false,
       status: user.status || 'pending'
     };
-    
+
     console.log('Returning user:', completeUser.email, 'Role:', completeUser.role);
     res.json({ user: completeUser });
   });
