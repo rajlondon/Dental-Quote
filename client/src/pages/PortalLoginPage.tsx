@@ -129,7 +129,7 @@ const PortalLoginPage: React.FC = () => {
       setHasSelectedClinic(true);
       setSelectedClinicName(localStorage.getItem('selectedClinicName') || "");
     }
-  }, []);
+  }, [user, setLocation]);
 
   // Handle registration form submission
   const onRegisterSubmit = async (values: z.infer<typeof registerSchema>) => {
