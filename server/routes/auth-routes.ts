@@ -81,7 +81,7 @@ router.post('/admin-login', async (req, res) => {
     }
 
     const user = allUsers[0];
-    
+
     // Check if user is admin
     if (user.role !== 'admin') {
       console.log('User role is:', user.role, 'but admin required');
@@ -91,18 +91,30 @@ router.post('/admin-login', async (req, res) => {
       });
     }
 
-    // Verify password - handle both hashed and plain text passwords for testing
+    // Verify password
     let isValidPassword = false;
-    
-    if (user.password_hash) {
-      // Try bcrypt first
-      try {
-        isValidPassword = await bcrypt.compare(password, user.password_hash);
-      } catch (bcryptError) {
-        console.log('Bcrypt comparison failed, trying plain text comparison');
-        // Fallback to plain text comparison for development/testing
-        isValidPassword = password === user.password_hash;
-      }
+
+    console.log('Verifying password for user:', user.email);
+    console.log('Password hash exists:', !!user.password_hash);
+    console.log('Password hash length:', user.password_hash ? user.password_hash.length : 0);
+
+    if (!user.password_hash) {
+      console.log('No password hash found - user needs to be recreated');
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Admin user not properly configured. Please reset admin user.' 
+      });
+    }
+
+    try {
+      isValidPassword = await bcrypt.compare(password, user.password_hash);
+      console.log('Password comparison result:', isValidPassword);
+    } catch (bcryptError) {
+      console.error('Password comparison error:', bcryptError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Password verification failed' 
+      });
     }
 
     console.log('Password validation result:', isValidPassword);
@@ -280,14 +292,14 @@ router.post('/create-admin', async (req, res) => {
   try {
     const adminEmail = 'admin@mydentalfly.com';
     const adminPassword = 'Admin123!';
-    
+
     // Check if admin already exists
     const existingAdmin = await db
       .select()
       .from(users)
       .where(eq(users.email, adminEmail))
       .limit(1);
-    
+
     if (existingAdmin.length > 0) {
       return res.json({
         success: true,
@@ -298,10 +310,10 @@ router.post('/create-admin', async (req, res) => {
         }
       });
     }
-    
+
     // Create admin user
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
-    
+
     const newAdmin = await db
       .insert(users)
       .values({
@@ -314,9 +326,9 @@ router.post('/create-admin', async (req, res) => {
         updated_at: new Date()
       })
       .returning();
-    
+
     console.log('Created admin user:', newAdmin[0]);
-    
+
     res.json({
       success: true,
       message: 'Admin user created successfully',
@@ -325,12 +337,69 @@ router.post('/create-admin', async (req, res) => {
         role: newAdmin[0].role
       }
     });
-    
+
   } catch (error) {
     console.error('Create admin error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to create admin user',
+      error: error.message
+    });
+  }
+});
+
+// Reset admin user with fresh password
+router.post('/reset-admin', async (req, res) => {
+  try {
+    const adminEmail = 'admin@mydentalfly.com';
+    const adminPassword = 'Admin123!';
+
+    console.log('Resetting admin user...');
+
+    // Delete existing admin if exists
+    await db
+      .delete(users)
+      .where(eq(users.email, adminEmail));
+
+    // Create admin user with fresh password hash
+    const hashedPassword = await bcrypt.hash(adminPassword, 10);
+
+    console.log('Creating admin with hashed password length:', hashedPassword.length);
+
+    const newAdmin = await db
+      .insert(users)
+      .values({
+        email: adminEmail,
+        password_hash: hashedPassword,
+        role: 'admin',
+        first_name: 'Admin',
+        last_name: 'User',
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+
+    console.log('Successfully created admin user:', {
+      email: newAdmin[0].email,
+      role: newAdmin[0].role,
+      hasPassword: !!newAdmin[0].password_hash
+    });
+
+    res.json({
+      success: true,
+      message: 'Admin user reset successfully',
+      user: {
+        email: newAdmin[0].email,
+        role: newAdmin[0].role,
+        hasPassword: !!newAdmin[0].password_hash
+      }
+    });
+
+  } catch (error) {
+    console.error('Reset admin error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to reset admin user',
       error: error.message
     });
   }
@@ -393,13 +462,13 @@ router.get('/debug-users', async (req, res) => {
         last_name: users.last_name
       })
       .from(users);
-    
+
     res.json({
       success: true,
       users: allUsers,
       total: allUsers.length
     });
-    
+
   } catch (error) {
     console.error('Debug users error:', error);
     res.status(500).json({
@@ -414,7 +483,7 @@ router.get('/debug-users', async (req, res) => {
 router.post('/logout', async (req, res) => {
   try {
     console.log('Logout request for session:', req.sessionID);
-    
+
     // Destroy the session
     req.session.destroy((err) => {
       if (err) {
@@ -424,18 +493,18 @@ router.post('/logout', async (req, res) => {
           message: 'Failed to logout'
         });
       }
-      
+
       // Clear the session cookie
       res.clearCookie('connect.sid');
-      
+
       console.log('Session destroyed successfully');
-      
+
       res.json({
         success: true,
         message: 'Logged out successfully'
       });
     });
-    
+
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).json({
