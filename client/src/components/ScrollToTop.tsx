@@ -1,16 +1,19 @@
 import { useEffect } from 'react';
 import { useLocation } from 'wouter';
 
-// This component scrolls the window to the top whenever the route changes
 const ScrollToTop = () => {
   const [location] = useLocation();
   
   useEffect(() => {
-    // Scroll to the top of the page when location changes
-    window.scrollTo(0, 0);
+    // Use requestAnimationFrame to avoid potential issues
+    const timeoutId = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }, 0);
+    
+    return () => clearTimeout(timeoutId);
   }, [location]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
 
 export default ScrollToTop;

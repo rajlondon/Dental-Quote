@@ -66,7 +66,6 @@ import PatientPortalPage from "@/pages/PatientPortalPage";
 import AdminPortalPage from "@/pages/AdminPortalPage";
 // Special import with WebSocket disabled for clinic portal to prevent refresh cycles
 const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
-import PortalLoginPage from "@/pages/PortalLoginPage";
 import PortalTestingHub from "@/pages/PortalTestingHub";
 import SystemHealthDashboard from "./pages/SystemHealthDashboard";
 import ClinicDetailPage from "@/pages/ClinicDetailPage";
@@ -99,9 +98,9 @@ import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
 import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
 import ContactWidget from "@/components/ContactWidget";
 import ReloadTranslations from "@/components/ReloadTranslations";
-import ScrollToTop from "@/components/ScrollToTop";
 import { ProtectedRoute } from "./lib/protected-route";
 import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
+import PortalLoginPage from "@/pages/PortalLoginPage";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 
 function AppRouter() {
@@ -162,12 +161,6 @@ function AppRouter() {
       <Route path="/clinic/:id" component={ClinicDetailPage} />
       <Route path="/package/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
-      <Route path="/portal">
-        {() => <Redirect to="/portal-login" />}
-      </Route>
-      <Route path="/deposit-payment">
-        {() => <DepositPaymentPage />}
-      </Route>
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
       </Route>
@@ -406,7 +399,6 @@ function App() {
             <LoadingSpinner />
           </div>
         }>
-                  <ScrollToTop />
                   {/* Only exclude ReloadTranslations on clinic portal path */}
                   {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
                     <ReloadTranslations />
