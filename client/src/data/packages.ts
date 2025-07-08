@@ -37,6 +37,7 @@ export interface TrendingPackage {
     count: number;
   }[];
   totalPrice: number;
+  promoCode: string;
   savings: number;
   duration: string;
   includedServices: {
@@ -134,6 +135,7 @@ export const trendingPackages: TrendingPackage[] = [
       { name: 'Smile Design Consultation', count: 1 }
     ],
     totalPrice: 4250,
+    promoCode: "HOLLYWOOD_SMILE",
     savings: 2800,
     duration: '7 days',
     includedServices: {
@@ -168,6 +170,7 @@ export const trendingPackages: TrendingPackage[] = [
       { name: 'Dental Consultation', count: 1 }
     ],
     totalPrice: 2850,
+    promoCode: "DENTAL_IMPLANT_CITY",
     savings: 1500,
     duration: '5 days',
     includedServices: {
@@ -201,6 +204,7 @@ export const trendingPackages: TrendingPackage[] = [
       { name: 'Teeth Whitening', count: 1 }
     ],
     totalPrice: 1650,
+    promoCode: "VALUE_VENEER_ISTANBUL",
     savings: 950,
     duration: '4 days',
     includedServices: {

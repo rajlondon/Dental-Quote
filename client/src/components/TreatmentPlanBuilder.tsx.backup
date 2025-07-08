@@ -458,20 +458,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     if (storedPromoCode && !promoCode) {
       setPromoCode(storedPromoCode);
 
-      // Auto-apply package codes immediately
-      const packageCodes = ["HOLLYWOOD_SMILE", "DENTAL_IMPLANT_CITY", "VALUE_VENEER_ISTANBUL"];
-      if (packageCodes.includes(storedPromoCode.toUpperCase())) {
-        console.log("Auto-applying package promo code:", storedPromoCode);
-        
-        // Use setTimeout to ensure context is ready
-        setTimeout(() => {
-          if (typeof applyPromoCode === "function") {
-            applyPromoCode(storedPromoCode);
-            sessionStorage.removeItem("pendingPromoCode");
-          }
-        }, 1000);
-      }
-
       // Try to get discount info from session storage
       const packageData = sessionStorage.getItem('pendingPackageData');
       if (packageData) {

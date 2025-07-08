@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Car, Check, Crown, Hotel, MapPin, Plane, Shield, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -62,6 +62,7 @@ interface TrendingPackageCardProps {
 }
 
 const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg }) => {
+  const [location, setLocation] = useLocation();
   const { includedServices, tier } = pkg;
 
   // Calculate free excursions count

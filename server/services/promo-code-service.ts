@@ -158,6 +158,9 @@ const packagePromoCodes: PromoCode[] = [
       ]
     },
     clinicId: '2' // Associated with clinic ID 2
+  },  {    id: 'pkg003',    code: 'HOLLYWOOD_SMILE',    type: 'package',    isActive: true,    packageData: {      name: 'Hollywood Smile Vacation Package',      description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul',      treatments: [        { id: 'premium-porcelain-veneer', name: 'Premium Porcelain Veneer', quantity: 10 },        { id: 'teeth-whitening', name: 'Teeth Whitening', quantity: 1 },        { id: 'smile-design-consultation', name: 'Smile Design Consultation', quantity: 1 }      ],      originalPrice: 7050,      packagePrice: 4250,      attractions: []    },    clinicId: 'maltepe-dental-clinic'
+  },  {    id: 'pkg004',    code: 'DENTAL_IMPLANT_CITY',    type: 'package',    isActive: true,    packageData: {      name: 'Dental Implant & City Experience',      description: 'Restore your smile with quality dental implants and enjoy exploring Istanbul',      treatments: [        { id: 'single-dental-implant', name: 'Single Dental Implant', quantity: 2 },        { id: 'zirconia-crown', name: 'Zirconia Crown', quantity: 2 },        { id: 'dental-consultation', name: 'Dental Consultation', quantity: 1 }      ],      originalPrice: 4350,      packagePrice: 2850,      attractions: []    },    clinicId: 'dentgroup-istanbul'
+  },  {    id: 'pkg005',    code: 'VALUE_VENEER_ISTANBUL',    type: 'package',    isActive: true,    packageData: {      name: 'Value Veneer & Istanbul Discovery',      description: 'Get affordable veneers to enhance your smile while exploring Istanbul highlights',      treatments: [        { id: 'porcelain-veneer', name: 'Porcelain Veneer', quantity: 6 },        { id: 'teeth-whitening', name: 'Teeth Whitening', quantity: 1 }      ],      originalPrice: 2600,      packagePrice: 1650,      attractions: []    },    clinicId: 'istanbul-dental-care'
   }
 ];
 
