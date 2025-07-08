@@ -599,7 +599,7 @@ const ClinicPortalPage: React.FC<ClinicPortalPageProps> = ({
             <Button 
               variant="outline" 
               className="w-full justify-start gap-2"
-              onClick={handleLogout}
+              onClick={() => logoutMutation.mutate()}
             >
               <LogOut className="h-4 w-4" />
               {t("clinic.nav.logout", "Log out")}
