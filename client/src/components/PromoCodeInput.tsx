@@ -113,6 +113,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                 
                 // Store clinic ID if provided
                 if (response.data.clinicId) {
+                  console.log('Storing promo code clinic ID:', response.data.clinicId);
                   sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
                 } else {
                   // Clear any previous clinic ID if not specified for this package

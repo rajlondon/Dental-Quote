@@ -28,7 +28,8 @@ import {
   Heart,
   Target,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Tag
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
@@ -267,9 +268,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   // Check for promo code filtering
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
 
+  // Create a mapping of numeric clinic IDs to clinic objects
+  const clinicIdMap: Record<string, any> = {
+    "1": clinicsData.find(c => c.id === 'dentgroup-istanbul') || clinicsData[0],
+    "2": clinicsData.find(c => c.id === 'dent-istanbul') || clinicsData[1], 
+    "3": clinicsData.find(c => c.id === 'istanbul-aesthetic-center') || clinicsData[2],
+    "4": clinicsData.find(c => c.id === 'dentalpark-turkey') || clinicsData[0],
+    "5": clinicsData.find(c => c.id === 'esta-istanbul') || clinicsData[0]
+  };
+
   // Filter clinics based on promo code or show all
   const filteredClinics = promoCodeClinicId 
-    ? clinicsData.filter(clinic => clinic.id === promoCodeClinicId)
+    ? [clinicIdMap[promoCodeClinicId] || clinicsData[0]].filter(Boolean)
     : clinicsData;
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
@@ -441,6 +451,27 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
       <main>
         <div className="container mx-auto py-8 px-4">
+          {/* Promo code filtering indicator */}
+          {promoCodeClinicId && (
+            <div className="mb-6">
+              <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-green-100 rounded-full">
+                      <Tag className="h-5 w-5 text-green-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-green-800">Special Offer Applied</h3>
+                      <p className="text-sm text-green-600">
+                        Showing clinic associated with your selected promo code or package
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           {/* Features highlight bar */}
           <div className="mb-8 bg-gray-50 p-4 rounded-lg border">
             <div className="flex items-center justify-center space-x-8 text-sm text-gray-600">
@@ -528,7 +559,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
           {/* Clinic Comparison */}
           <div className="space-y-8">
-            {clinics.map((clinic, clinicIndex) => {
+            {filteredClinics.map((clinic, clinicIndex) => {
               const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
               const tierInfo = getTierLabel(clinic.tier);
               const isExpanded = expandedClinics[clinic.id] || false;

@@ -733,6 +733,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                           clinic_id: offer.clinic_id
                         }));
 
+                        // Store clinic ID for filtering in results page
+                        if (offer.clinic_id) {
+                          sessionStorage.setItem('pendingPromoCodeClinicId', offer.clinic_id);
+                        }
+
                         // Navigate to Your Quote page (treatment plan builder) with promo code
                         navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
 
