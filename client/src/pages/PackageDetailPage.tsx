@@ -8,22 +8,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, MapPin, Plane, Shield, Star, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import ScrollToTop from "@/components/ScrollToTop";
 
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
   const [_, setLocation] = useLocation();
   const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
-  
+
   useEffect(() => {
     // Debug info
     console.log("Package ID from params:", id);
     console.log("Available packages:", trendingPackages.map(p => p.id));
-    
+
     // Find the package by ID
     const pkg = trendingPackages.find(p => p.id === id);
     console.log("Found package:", pkg);
-    
+
     if (pkg) {
       setPackageData(pkg);
       document.title = `${pkg.title} - MyDentalFly`;
@@ -31,7 +32,7 @@ const PackageDetailPage = () => {
       document.title = "Package Not Found - MyDentalFly";
     }
   }, [id]);
-  
+
   if (!packageData) {
     return (
       <>
@@ -49,21 +50,22 @@ const PackageDetailPage = () => {
       </>
     );
   }
-  
+
   // Count complimentary excursions
   const complimentaryExcursions = packageData.excursions.filter(exc => exc.included);
-  
+
   // Tier styles
   const tierStyles = {
     bronze: "bg-amber-100 text-amber-800 border-amber-200",
     silver: "bg-slate-100 text-slate-800 border-slate-200",
     gold: "bg-yellow-100 text-yellow-800 border-yellow-200"
   };
-  
+
   return (
     <>
+      <ScrollToTop />
       <Navbar />
-      
+
       <div className="container mx-auto py-8 px-4 bg-white min-h-screen">
         {/* Breadcrumb navigation */}
         <div className="flex items-center text-sm text-gray-500 mb-6">
@@ -73,7 +75,7 @@ const PackageDetailPage = () => {
           <ChevronRight className="h-4 w-4 mx-1" />
           <span className="text-gray-700">{packageData.title}</span>
         </div>
-      
+
         {/* Package header section */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
@@ -89,11 +91,11 @@ const PackageDetailPage = () => {
                 {packageData.duration}
               </Badge>
             </div>
-            
+
             <h1 className="text-3xl font-bold mb-4">{packageData.title}</h1>
-            
+
             <p className="text-gray-700 mb-6">{packageData.description}</p>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <Card>
                 <CardContent className="p-4">
@@ -101,7 +103,7 @@ const PackageDetailPage = () => {
                     <Shield className="h-5 w-5 text-primary mr-2" />
                     Clinic Details
                   </h3>
-                  
+
                   <div className="mb-2">
                     <div className="font-medium">{packageData.clinic.name}</div>
                     <div className="text-sm text-gray-600 flex items-center mt-1">
@@ -111,14 +113,14 @@ const PackageDetailPage = () => {
                   </div>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardContent className="p-4">
                   <h3 className="font-medium mb-3 flex items-center">
                     <Hotel className="h-5 w-5 text-primary mr-2" />
                     Hotel Accommodation
                   </h3>
-                  
+
                   <div className="mb-2">
                     <div className="font-medium">{packageData.hotel.name}</div>
                     <div className="flex items-center mt-1">
@@ -135,7 +137,7 @@ const PackageDetailPage = () => {
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="mb-8">
               <h3 className="font-medium mb-3">Treatments Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -147,7 +149,7 @@ const PackageDetailPage = () => {
                 ))}
               </div>
             </div>
-            
+
             <div className="bg-gray-50 p-5 rounded-lg mb-8">
               <h3 className="font-medium mb-4">What's Included in Your Package</h3>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
@@ -174,7 +176,7 @@ const PackageDetailPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div>
             <Card className="sticky top-6">
               <CardContent className="p-6">
@@ -187,7 +189,7 @@ const PackageDetailPage = () => {
                     </Badge>
                   </div>
                 </div>
-                
+
                 <div className="border-t border-b py-4 mb-4">
                   {complimentaryExcursions.length > 0 ? (
                     <div className="mb-3">
@@ -209,13 +211,13 @@ const PackageDetailPage = () => {
                       Optional excursions available for additional fees
                     </div>
                   )}
-                  
+
                   <div className="flex items-center text-sm text-gray-700">
                     <Users className="h-4 w-4 mr-1.5 text-gray-500" />
                     <span>Includes all dental treatments and consultations</span>
                   </div>
                 </div>
-                
+
                 <div className="space-y-3">
                   <Button 
                     className="w-full"
@@ -237,7 +239,7 @@ const PackageDetailPage = () => {
             </Card>
           </div>
         </div>
-        
+
         {/* Tabs for detailed information */}
         <Tabs defaultValue="excursions" className="mb-16">
           <TabsList className="grid grid-cols-3 w-full max-w-lg mx-auto">
@@ -245,15 +247,14 @@ const PackageDetailPage = () => {
             <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
             <TabsTrigger value="details">Package Details</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="excursions" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {packageData.excursions.map((excursion) => (
                 <Card key={excursion.id} className={excursion.included ? 'border-green-200' : ''}>
                   <div className="relative h-48 bg-gray-100">
                     {excursion.included && (
-                      <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
-                        Included
+                      <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full                        Included
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -276,11 +277,11 @@ const PackageDetailPage = () => {
               ))}
             </div>
           </TabsContent>
-          
+
           <TabsContent value="itinerary" className="mt-6">
             <div className="max-w-3xl mx-auto">
               <h3 className="text-xl font-medium mb-6">Your Treatment Journey</h3>
-              
+
               <div className="relative pl-8 pb-8 border-l-2 border-gray-200">
                 <div className="mb-8 relative">
                   <div className="absolute -left-[25px] bg-primary rounded-full h-6 w-6 flex items-center justify-center">
@@ -292,7 +293,7 @@ const PackageDetailPage = () => {
                     You'll be transferred to {packageData.hotel.name} for check-in and rest.
                   </p>
                 </div>
-                
+
                 <div className="mb-8 relative">
                   <div className="absolute -left-[25px] bg-primary rounded-full h-6 w-6 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">2</span>
@@ -303,7 +304,7 @@ const PackageDetailPage = () => {
                     The dentist will confirm your treatment plan and prepare for the procedures.
                   </p>
                 </div>
-                
+
                 <div className="mb-8 relative">
                   <div className="absolute -left-[25px] bg-primary rounded-full h-6 w-6 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">3</span>
@@ -314,7 +315,7 @@ const PackageDetailPage = () => {
                     Between appointments, enjoy your included excursions and explore Istanbul.
                   </p>
                 </div>
-                
+
                 <div className="relative">
                   <div className="absolute -left-[25px] bg-primary rounded-full h-6 w-6 flex items-center justify-center">
                     <span className="text-white text-xs font-bold">4</span>
@@ -328,7 +329,7 @@ const PackageDetailPage = () => {
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="details" className="mt-6">
             <div className="max-w-3xl mx-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -379,7 +380,7 @@ const PackageDetailPage = () => {
                     </li>
                   </ul>
                 </div>
-                
+
                 <div>
                   <h3 className="text-lg font-medium mb-4">Additional Information</h3>
                   <ul className="space-y-3">
@@ -406,7 +407,7 @@ const PackageDetailPage = () => {
           </TabsContent>
         </Tabs>
       </div>
-      
+
       <Footer />
     </>
   );
