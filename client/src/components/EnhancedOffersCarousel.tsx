@@ -431,7 +431,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
   };
 
   // Handle quote request with authentication check
-  const handleRequestQuote = (offer: SpecialOffer) => {
+  const handleRequestQuote = useCallback((offer: SpecialOffer) => {
     console.log("Special Offer Request Quote clicked:", offer);
 
     // Standardize the offer data format to ensure consistency across the application
@@ -477,7 +477,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       // Redirect to the quote page where user can select treatments and clinics
       // with the special offer clinic highlighted - use navigate for SPA navigation
       console.log("Redirecting to quote page with special offer context");
-      setLocation('/your-quote');
+      navigate('/your-quote');
     } else {
       console.log("User not authenticated, saving offer to sessionStorage");
 
@@ -494,9 +494,9 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
       // Redirect to login page - use navigate for SPA navigation
       console.log("Redirecting to portal login page");
-      setLocation('/portal-login');
+      navigate('/portal-login');
     }
-  };
+  }, [authLoading, user, navigate, toast]);
 
   // Generate navigation dots
   const renderDots = () => {
@@ -709,7 +709,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       variant="outline" 
                       className="flex-1"
-                      onClick={() => setLocation(`/clinics/${offer.clinic_id || 1}`)}
+                      onClick={() => navigate(`/clinics/${offer.clinic_id || 1}`)}
                     >
                       View Clinic
                     </Button>
@@ -725,7 +725,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         }));
 
                         // Navigate to Your Quote page (treatment plan builder) with promo code
-                        setLocation(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+                        navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
 
                         toast({
                           title: "Package Selected",
