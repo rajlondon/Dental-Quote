@@ -701,12 +701,6 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
 
                   <div className="flex space-x-3">
                     <Button 
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-                      onClick={() => handleRequestQuote(offer)}
-                    >
-                      Request Quote
-                    </Button>
-                    <Button 
                       variant="outline" 
                       className="flex-1"
                       onClick={() => navigate(`/clinics/${offer.clinic_id || 1}`)}
@@ -719,7 +713,7 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                         // Store selected offer in session storage for persistence
                         sessionStorage.setItem('selectedOffer', JSON.stringify({
                           id: offer.id,
-                          name: offer.name,
+                          title: offer.title,
                           promo_code: offer.promo_code,
                           clinic_id: offer.clinic_id
                         }));
