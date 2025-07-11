@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { trendingPackages, type TrendingPackage, type Excursion } from "@/data/packages";
@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // PackageDetailPage component
 const PackageDetailPage = () => {
   const { id } = useParams();
+  const [_, setLocation] = useLocation();
   const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
   
   useEffect(() => {
@@ -216,7 +217,20 @@ const PackageDetailPage = () => {
                 </div>
                 
                 <div className="space-y-3">
-                  <Button className="w-full">Book This Package</Button>
+                  <Button 
+                    className="w-full"
+                    onClick={() => {
+                      // Store the promo code in session storage
+                      if (packageData.promoCode) {
+                        sessionStorage.setItem('pendingPromoCode', packageData.promoCode);
+                      }
+
+                      // Navigate to Your Quote page (treatment plan builder) with promo code parameter
+                      setLocation(`/your-quote?promo=${encodeURIComponent(packageData.promoCode || '')}`);
+                    }}
+                  >
+                    Select This Package
+                  </Button>
                   <Button variant="outline" className="w-full">Request More Information</Button>
                 </div>
               </CardContent>

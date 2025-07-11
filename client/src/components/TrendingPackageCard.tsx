@@ -153,20 +153,32 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
             )}
           </div>
 
-          <Button 
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                onClick={() => {
-                  // Store the promo code in session storage
-                  if (pkg.promoCode) {
-                    sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
-                  }
+          <div className="space-y-2">
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              onClick={() => {
+                // Navigate to package detail page
+                setLocation(`/packages/${pkg.id}`);
+              }}
+            >
+              View Package Details
+            </Button>
+            <Button 
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                // Store the promo code in session storage
+                if (pkg.promoCode) {
+                  sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
+                }
 
-                  // Navigate to Your Quote page (treatment plan builder) with promo code parameter
-                  setLocation(`/your-quote?promo=${encodeURIComponent(pkg.promoCode || '')}`);
-                }}
-              >
-                Select Package
-              </Button>
+                // Navigate to Your Quote page (treatment plan builder) with promo code parameter
+                setLocation(`/your-quote?promo=${encodeURIComponent(pkg.promoCode || '')}`);
+              }}
+            >
+              Get Quote Now
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
