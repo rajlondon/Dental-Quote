@@ -159,7 +159,7 @@ function AppRouter() {
       </Route>
       <Route path="/booking" component={BookingPage} />
       <Route path="/clinic/:id" component={ClinicDetailPage} />
-      <Route path="/package/:id" component={PackageDetailPage} />
+      <Route path="/packages/:id" component={PackageDetailPage} />
       <Route path="/portal-login" component={PortalLoginPage} />
       <Route path="/payment-confirmation">
         {() => <PaymentConfirmationPage />}
