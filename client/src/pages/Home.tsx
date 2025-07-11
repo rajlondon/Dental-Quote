@@ -30,9 +30,20 @@ const safePackages = ensureArray(trendingPackages);
 const Home: React.FC = () => {
   // Clean up old package data when users return to homepage
   useEffect(() => {
-    sessionStorage.removeItem('pendingPromoCode');
-    sessionStorage.removeItem('pendingPackageData');
-    sessionStorage.removeItem('pendingPromoCodeClinicId');
+    // Clear all session storage to prevent state pollution
+    sessionStorage.clear();
+    
+    // Clear specific localStorage treatment data
+    localStorage.removeItem('treatmentPlanData');
+    
+    // Clear browser caches if available
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => caches.delete(name));
+      }).catch(error => {
+        console.log('Cache clearing failed:', error);
+      });
+    }
   }, []);
 
   try {
