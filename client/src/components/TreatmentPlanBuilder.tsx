@@ -384,7 +384,6 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   hideHeader = false,
   initialPromoCode,
 }) => {
-  console.log("🚀 TreatmentPlanBuilder component loading...");
 
   // Initialize treatments from props or empty array
   const [treatments, setTreatments] = useState<TreatmentItem[]>(
@@ -443,7 +442,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     }, 100); // Small debounce to prevent excessive calls
 
     return () => clearTimeout(timeoutId);
-  }, [treatments, onTreatmentsChange]);
+  }, [treatments]);
 
   // Listen for promo code package events - simplified to reduce state updates
   useEffect(() => {
@@ -734,7 +733,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
   // Notify parent component of changes
   useEffect(() => {
     onTreatmentsChange?.(treatments);
-  }, [treatments, onTreatmentsChange]);
+  }, [treatments]);
 
   // Call onTreatmentsChange on initial load if we have treatments
   useEffect(() => {
