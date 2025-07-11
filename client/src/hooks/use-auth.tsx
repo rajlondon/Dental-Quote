@@ -91,24 +91,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/auth/user"],
     queryFn: async () => {
-      // Check sessionStorage cache first
-      const cachedUserData = sessionStorage.getItem('cached_user_data');
-      const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
-
-      if (cachedUserData && cachedTimestamp) {
-        const timestamp = parseInt(cachedTimestamp, 10);
-        const age = Date.now() - timestamp;
-
-        if (age < 10000) { // 10 seconds cache for quick access
-          const parsedUser = JSON.parse(cachedUserData);
-          userDataRef.current = parsedUser;
-          console.log(`Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
-          return parsedUser;
-        }
-      }
-
-      // Fetch fresh data from server
       try {
+        // Check sessionStorage cache first
+        const cachedUserData = sessionStorage.getItem('cached_user_data');
+        const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
+
+        if (cachedUserData && cachedTimestamp) {
+          const timestamp = parseInt(cachedTimestamp, 10);
+          const age = Date.now() - timestamp;
+
+          if (age < 10000) { // 10 seconds cache for quick access
+            const parsedUser = JSON.parse(cachedUserData);
+            userDataRef.current = parsedUser;
+            console.log(`Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
+            return parsedUser;
+          }
+        }
+
+        // Fetch fresh data from server
         console.log("Fetching fresh user data from server");
         const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
@@ -128,44 +128,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return userData;
       } catch (error: any) {
-        console.error("User data fetch error:", error);
-
+        console.log('Auth query error:', error?.response?.status, error?.message);
+        // If we get a 401, it just means user is not authenticated
         if (error.response?.status === 401) {
-          console.warn("Authentication failed - session may have expired");
-          userDataRef.current = null;
-          sessionStorage.removeItem('cached_user_data');
-          sessionStorage.removeItem('cached_user_timestamp');
-
-          // Check if we just logged in (within 5 seconds) - if so, don't clear the session immediately
-          const loginTimestamp = sessionStorage.getItem('login_timestamp');
-          const timeSinceLogin = loginTimestamp ? Date.now() - parseInt(loginTimestamp) : Infinity;
-
-          if (timeSinceLogin < 5000) {
-            console.log("Recent login detected, retrying auth request in 1 second");
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            // Retry the request once more
-            try {
-              const retryRes = await api.get("/auth/user");
-              const retryUserData = retryRes.data.user || null;
-              if (retryUserData) {
-                userDataRef.current = retryUserData;
-                sessionStorage.setItem('cached_user_data', JSON.stringify(retryUserData));
-                sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
-                return retryUserData;
-              }
-            } catch (retryError) {
-              console.error("Retry auth request also failed:", retryError);
-            }
-          }
-
           return null;
         }
-        throw new Error(`Failed to fetch user data: ${error.message || 'Unknown error'}`);
+        // For any other error, also return null to prevent crashes
+        console.warn('Authentication check failed:', error?.message);
+        return null;
       }
     },
     staleTime: 30000,
     refetchOnWindowFocus: false,
-    retry: 1 // Only retry once to avoid excessive requests
+    retry: false // Disable retries to prevent loops
   });
 
   // Login mutation with enhanced verification handling
