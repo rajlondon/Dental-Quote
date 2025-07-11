@@ -52,11 +52,95 @@ import { useToast } from "@/hooks/use-toast";
 // Treatment ID mapping function
 const mapBackendToFrontend = (backendId: string) => {
   const mappings: { [key: string]: string } = {
+    // Implants
+    "dental-implant": "dental_implant_standard",
+    "dental-implant-standard": "dental_implant_standard",
+    "dental-implant-premium": "dental_implant_premium",
+    "single-dental-implant": "dental_implant_standard",
+    "premium-dental-implant": "dental_implant_premium",
+    "all-on-4": "all_on_4_implants",
+    "all-on-4-implants": "all_on_4_implants",
+    "all-on-6": "all_on_6_implants",
+    "all-on-6-implants": "all_on_6_implants",
+    "bone-graft": "bone_graft",
+    "sinus-lift": "sinus_lift",
+    
+    // Crowns and Veneers
+    "porcelain-crown": "porcelain_crown",
+    "zirconia-crown": "zirconia_crown",
     "premium-porcelain-veneer": "porcelain_veneer",
+    "porcelain-veneer": "porcelain_veneer",
+    "composite-veneer": "composite_veneer",
+    "e-max-veneer": "porcelain_veneer",
+    "inlay-onlay": "inlay_onlay",
+    
+    // Whitening
     "teeth-whitening": "zoom_whitening",
+    "zoom-whitening": "zoom_whitening",
+    "laser-whitening": "laser_whitening",
+    "home-whitening": "home_whitening_kit",
+    "professional-whitening": "zoom_whitening",
+    
+    // Full Mouth
+    "full-smile-makeover": "full_smile_makeover",
+    "hollywood-smile": "hollywood_smile",
+    "full-mouth-restoration": "full_mouth_restoration",
+    "smile-makeover": "full_smile_makeover",
+    "complete-smile-reconstruction": "full_mouth_restoration",
+    
+    // General Dentistry
+    "dental-checkup": "dental_checkup_cleaning",
+    "dental-cleaning": "dental_checkup_cleaning",
     "smile-design-consultation": "dental_checkup_cleaning",
+    "dental-consultation": "dental_checkup_cleaning",
+    "tooth-filling": "tooth_fillings",
+    "composite-filling": "tooth_fillings",
+    "root-canal": "root_canal",
+    "root-canal-treatment": "root_canal",
+    "tooth-extraction": "tooth_extraction",
+    "dental-bridge": "dental_bridge",
+    "bridge-3-unit": "dental_bridge",
+    
+    // Other Treatments
+    "invisalign": "orthodontics_invisalign",
+    "invisalign-treatment": "orthodontics_invisalign",
+    "clear-aligners": "orthodontics_invisalign",
+    "braces": "orthodontics_braces",
+    "traditional-braces": "orthodontics_braces",
+    "metal-braces": "orthodontics_braces",
+    "ceramic-braces": "orthodontics_braces",
+    "gum-treatment": "gum_treatment",
+    "periodontal-treatment": "gum_treatment",
+    "night-guard": "night_guard",
+    "dental-splint": "night_guard",
   };
-  return mappings[backendId] || backendId;
+  
+  // Direct mapping if exists
+  if (mappings[backendId]) {
+    return mappings[backendId];
+  }
+  
+  // Fallback logic: try to find a similar treatment by name matching
+  const normalizedBackendId = backendId.toLowerCase().replace(/[-_]/g, '');
+  
+  // Search through all treatment categories for a partial match
+  for (const category of TREATMENT_CATEGORIES) {
+    for (const treatment of category.treatments) {
+      const normalizedTreatmentId = treatment.id.toLowerCase().replace(/[-_]/g, '');
+      const normalizedTreatmentName = treatment.name.toLowerCase().replace(/[-_\s]/g, '');
+      
+      // Check if backend ID contains key words from treatment name or ID
+      if (normalizedBackendId.includes(normalizedTreatmentId) || 
+          normalizedTreatmentId.includes(normalizedBackendId) ||
+          normalizedBackendId.includes(normalizedTreatmentName) ||
+          normalizedTreatmentName.includes(normalizedBackendId)) {
+        return treatment.id;
+      }
+    }
+  }
+  
+  // Final fallback: return the original ID with underscores instead of hyphens
+  return backendId.replace(/-/g, '_');
 };
 
 // Make function globally accessible for testing
