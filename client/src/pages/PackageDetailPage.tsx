@@ -254,7 +254,8 @@ const PackageDetailPage = () => {
                 <Card key={excursion.id} className={excursion.included ? 'border-green-200' : ''}>
                   <div className="relative h-48 bg-gray-100">
                     {excursion.included && (
-                      <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full                        Included
+                      <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                        Included
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center">
