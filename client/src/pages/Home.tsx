@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import HeroSimple from '@/components/HeroSimple';
 
@@ -28,6 +28,13 @@ const clinicsData = ensureArray(clinicsDataImport);
 const safePackages = ensureArray(trendingPackages);
 
 const Home: React.FC = () => {
+  // Clean up old package data when users return to homepage
+  useEffect(() => {
+    sessionStorage.removeItem('pendingPromoCode');
+    sessionStorage.removeItem('pendingPackageData');
+    sessionStorage.removeItem('pendingPromoCodeClinicId');
+  }, []);
+
   try {
     return (
       <div className="min-h-screen">
