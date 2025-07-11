@@ -713,8 +713,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                           "5": "esta-istanbul"
                         };
                         
-                        const routeClinicId = clinicIdMap[offer.clinic_id || "1"] || "dentgroup-istanbul";
-                        navigate(`/clinics/${routeClinicId}`);
+                        const clinicId = offer.clinic_id?.toString() || "1";
+                        const routeClinicId = clinicIdMap[clinicId] || clinicId;
+                        
+                        // Use /clinic/ route format to match existing routes
+                        navigate(`/clinic/${routeClinicId}`);
                       }}
                     >
                       View Clinic

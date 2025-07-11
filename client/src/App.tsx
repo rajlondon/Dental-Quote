@@ -115,7 +115,7 @@ function AppRouter() {
 
     // Listen for route changes
     window.addEventListener('popstate', handleLocationChange);
-    
+
     return () => {
       window.removeEventListener('popstate', handleLocationChange);
     };
@@ -391,7 +391,7 @@ function App() {
     <ErrorBoundary componentName="RootApplication">
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          
+
             <NotificationsProvider>
               <BookingsProvider>
                 <Suspense fallback={
@@ -412,7 +412,7 @@ function App() {
                 </Suspense>
               </BookingsProvider>
             </NotificationsProvider>
-          
+
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
