@@ -703,7 +703,19 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       variant="outline" 
                       className="flex-1"
-                      onClick={() => navigate(`/clinics/${offer.clinic_id || 1}`)}
+                      onClick={() => {
+                        // Map numeric clinic IDs to proper clinic route strings
+                        const clinicIdMap: Record<string, string> = {
+                          "1": "dentgroup-istanbul",
+                          "2": "dent-istanbul", 
+                          "3": "istanbul-aesthetic-center",
+                          "4": "dentalpark-turkey",
+                          "5": "esta-istanbul"
+                        };
+                        
+                        const routeClinicId = clinicIdMap[offer.clinic_id || "1"] || "dentgroup-istanbul";
+                        navigate(`/clinics/${routeClinicId}`);
+                      }}
                     >
                       View Clinic
                     </Button>
