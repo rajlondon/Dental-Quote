@@ -706,11 +706,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                       onClick={() => {
                         // Map numeric clinic IDs to proper clinic route strings
                         const clinicIdMap: Record<string, string> = {
-                          "1": "dentgroup-istanbul",
-                          "2": "dent-istanbul", 
-                          "3": "istanbul-aesthetic-center",
-                          "4": "dentalpark-turkey",
-                          "5": "esta-istanbul"
+                          "1": "dentgroup-istanbul",     // DentGroup Istanbul
+                          "2": "dent-istanbul",          // Dent Istanbul
+                          "3": "istanbul-aesthetic-center", // Istanbul Aesthetic Center
+                          "4": "dentalpark-turkey",      // Dentalpark Turkey
+                          "5": "esta-istanbul"           // Esta Istanbul
                         };
                         
                         const clinicId = offer.clinic_id?.toString() || "1";
