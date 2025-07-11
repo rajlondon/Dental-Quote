@@ -1525,9 +1525,9 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
               </CardHeader>
               <CardContent className="space-y-4">
                 {/* Quote Summary section */}
-                {treatments.length > 0 && (
-                  <div className="mb-6">
-                    {/* Treatment list */}
+                <div className="mb-6">
+                  {/* Treatment list */}
+                  {treatments.length > 0 && (
                     <div className="space-y-2 mb-6">
                       <h4 className="font-medium text-sm text-gray-700 mb-2">
                         Selected Treatments
@@ -1554,56 +1554,60 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         </div>
                       ))}
                     </div>
+                  )}
 
-                    {/* Subtotal */}
+                  {/* Subtotal */}
+                  {treatments.length > 0 && (
                     <div className="flex justify-between py-2 border-t">
                       <span>Subtotal</span>
                       <span className="font-medium">
                         £{totalGBP.toLocaleString()}
                       </span>
                     </div>
+                  )}
 
-                    {/* Discount (if applied) */}
-                    {discountAmount > 0 && (
-                      <div className="flex justify-between py-2 text-green-600">
-                        <span>
-                          {promoCode
-                            ? `Discount (${promoCode})`
-                            : "Package Discount"}
-                        </span>
-                        <span className="font-medium">
-                          -£{discountAmount.toLocaleString()}
-                        </span>
-                      </div>
-                    )}
+                  {/* Discount (if applied) */}
+                  {discountAmount > 0 && (
+                    <div className="flex justify-between py-2 text-green-600">
+                      <span>
+                        {promoCode
+                          ? `Discount (${promoCode})`
+                          : "Package Discount"}
+                      </span>
+                      <span className="font-medium">
+                        -£{discountAmount.toLocaleString()}
+                      </span>
+                    </div>
+                  )}
 
-                    {/* Total */}
+                  {/* Total */}
+                  {treatments.length > 0 && (
                     <div className="flex justify-between py-2 border-t border-b mb-6">
                       <span className="font-semibold">Total</span>
                       <span className="font-bold text-lg">
                         £{(totalGBP - discountAmount).toLocaleString()}
                       </span>
                     </div>
+                  )}
 
-                    {/* Promo code input */}
-                    <div className="mb-6">
-                      <h4 className="text-sm font-medium mb-2">Promo Code</h4>
-                      <PromoCodeInput initialPromoCode={initialPromoCode} />
-                    </div>
-
-                    {/* Action buttons */}
-                    <div className="flex flex-col space-y-2">
-                      <Button
-                        disabled={treatments.length === 0}
-                        className="bg-blue-600 hover:bg-blue-700"
-                        onClick={handleContinueToBooking}
-                      >
-                        Continue to Booking
-                      </Button>
-                      <Button variant="outline">Save Quote for Later</Button>
-                    </div>
+                  {/* Promo code input */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-medium mb-2">Promo Code</h4>
+                    <PromoCodeInput initialPromoCode={initialPromoCode} />
                   </div>
-                )}
+
+                  {/* Action buttons */}
+                  <div className="flex flex-col space-y-2">
+                    <Button
+                      disabled={treatments.length === 0}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={handleContinueToBooking}
+                    >
+                      Continue to Booking
+                    </Button>
+                    <Button variant="outline">Save Quote for Later</Button>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
