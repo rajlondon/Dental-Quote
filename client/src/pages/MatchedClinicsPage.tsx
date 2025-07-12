@@ -274,7 +274,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
   const pendingPackageData = sessionStorage.getItem('pendingPackageData');
   let packageData = null;
-  
+
   if (pendingPackageData) {
     try {
       packageData = JSON.parse(pendingPackageData);
@@ -283,7 +283,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       console.error('Error parsing package data:', error);
     }
   }
-  
+
   console.log('🔍 Promo code clinic ID from session:', promoCodeClinicId);
   console.log('🏥 Available clinics:', clinicsData.map(c => ({ id: c.id, name: c.name })));
 
@@ -291,9 +291,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const filteredClinics = promoCodeClinicId 
     ? clinicsData.filter(clinic => clinic.id === promoCodeClinicId)
     : clinicsData;
-    
+
   console.log('✅ Filtered clinics:', filteredClinics.map(c => ({ id: c.id, name: c.name })));
-  
+
   // If no clinic matches the promo code, show all clinics but log the issue
   if (promoCodeClinicId && filteredClinics.length === 0) {
     console.warn('⚠️ No clinic found for promo code clinic ID:', promoCodeClinicId);
@@ -781,32 +781,46 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                       )}
                                     </div>
                                   ))}
-                                  
+
                                   {isPackage && (
                                     <div className="mt-3 pt-3 border-t border-gray-200">
                                       <div className="space-y-1 text-sm text-gray-600">
-                                        <div className="flex items-center gap-2">
-                                          <Check className="h-4 w-4 text-green-500" />
-                                          <span>5-star hotel accommodation (5 nights)</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Check className="h-4 w-4 text-green-500" />
-                                          <span>VIP airport transfers</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Check className="h-4 w-4 text-green-500" />
-                                          <span>Guided Istanbul city tour</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Check className="h-4 w-4 text-green-500" />
-                                          <span>Personal patient coordinator</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                          <Check className="h-4 w-4 text-green-500" />
-                                          <span>Bosphorus cruise excursion</span>
+                                          <div className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span>5-star hotel accommodation (6 nights, 7 days)</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span>VIP airport transfers</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span>Personal patient coordinator</span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span className="font-medium">4 Complimentary Excursions:</span>
+                                          </div>
+                                          <div className="ml-6 space-y-1">
+                                            <div className="flex items-center gap-2">
+                                              <Check className="h-3 w-3 text-green-500" />
+                                              <span>Bosphorus Cruise</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <Check className="h-3 w-3 text-green-500" />
+                                              <span>Old City Walking Tour</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <Check className="h-3 w-3 text-green-500" />
+                                              <span>Traditional Turkish Bath</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                              <Check className="h-3 w-3 text-green-500" />
+                                              <span>Turkish Culinary Tour</span>
+                                            </div>
+                                          </div>
                                         </div>
                                       </div>
-                                    </div>
                                   )}
                                 </div>
                               </div>
