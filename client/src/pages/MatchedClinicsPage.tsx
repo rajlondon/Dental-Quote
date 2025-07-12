@@ -325,7 +325,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       const ukFamilyVacation = 4000; // Average of £3,000-5,000 range
       const ukTransfersCoordination = 500;
       const ukTotalEquivalent = ukPrivateDental + ukFamilyVacation + ukTransfersCoordination;
-      
+
       return {
         clinicTreatments,
         totalPrice: packageData.packagePrice || packageData.totalPrice,
@@ -922,17 +922,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                       localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
                                       localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
 
-                                      if (onSelectClinic) {
-                                        onSelectClinic(clinic.id);
-                                      }
+                                      // Store package data in session storage
+                                      sessionStorage.setItem('pendingPromoCode', packageData?.promoCode || '');
+                                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
+                                      sessionStorage.setItem('pendingPromoCodeClinicId', clinic.id);
+                                      localStorage.setItem('treatmentPlanData', JSON.stringify({ treatments: activeTreatmentPlan, totalGBP: totalPrice, patientPreferences: patientInfo }));
 
-                                      setTimeout(() => {
-                                        setLocation('/patient-portal');
-                                      }, 100);
+                                      // Redirect to matched clinics page
+                                      setLocation('/matched-clinics');
 
                                       toast({
-                                        title: "Clinic Selected",
-                                        description: "Sign in to your patient portal to complete your booking.",
+                                        title: "Package Selected",
+                                        description: "Redirecting to matched clinics...",
                                       });
                                     } catch (error) {
                                       console.error('Error in Reserve Now button:', error);
@@ -945,7 +946,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   }}
                                 >
                                   <Heart className="mr-2 h-4 w-4" />
-                                  Reserve Now
+                                  Get Quote Now
                                 </Button>
                               </div>
                             </div>

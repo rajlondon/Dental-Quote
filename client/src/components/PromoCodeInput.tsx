@@ -122,7 +122,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               }
               setValidationData(response.data);
               
-              // If it's a package, show package info
+              // If it's a package, show package info and prepare for direct navigation
               if (response.data.isPackage && response.data.packageData) {
                 setPackageInfo(response.data.packageData);
                 
@@ -147,13 +147,27 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                   sessionStorage.removeItem('pendingPromoCodeClinicId');
                 }
                 
-                // Emit a custom event to notify TreatmentPlanBuilder about the package
+                // Convert package treatments to treatment plan format for direct booking
+                if (response.data.packageData.treatments) {
+                  const treatmentPlanData = response.data.packageData.treatments.map((treatment: any) => ({
+                    id: treatment.id,
+                    treatmentName: treatment.name,
+                    quantity: treatment.quantity,
+                    priceGBP: 0, // Will be calculated on results page
+                    subtotalGBP: 0 // Will be calculated on results page
+                  }));
+                  
+                  localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
+                }
+                
+                // Emit a custom event to notify about the package for any listeners
                 try {
                   const packageEvent = new CustomEvent('packagePromoApplied', {
                     detail: {
                       code: inputCode.trim(),
                       packageData: response.data.packageData,
-                      clinicId: response.data.clinicId || null
+                      clinicId: response.data.clinicId || null,
+                      directToResults: true // Flag for direct navigation
                     }
                   });
                   window.dispatchEvent(packageEvent);
@@ -262,7 +276,28 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               </div>
             )}
             
-            <p className="text-xs text-blue-800 mt-2 font-medium">Continue to the quote page to apply this package</p>
+            <div className="mt-3 flex gap-2">
+              <Button 
+                size="sm" 
+                className="flex-1"
+                onClick={() => {
+                  // Navigate directly to matched clinics for instant booking
+                  window.location.href = '/matched-clinics';
+                }}
+              >
+                Book This Package
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex-1"
+                onClick={() => {
+                  window.location.href = '/your-quote';
+                }}
+              >
+                Customize Quote
+              </Button>
+            </div>
           </div>
         )}
         

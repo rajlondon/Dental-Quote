@@ -372,18 +372,69 @@ const PackageDetailPage = () => {
                   <Button 
                     className="w-full"
                     onClick={() => {
-                      // Store the promo code in session storage
+                      // Store package data in session storage
                       if (packageData.promoCode) {
                         sessionStorage.setItem('pendingPromoCode', packageData.promoCode);
                       }
+                      
+                      // Store complete package data
+                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
+                      
+                      // Store clinic ID for filtering
+                      if (packageData.clinic?.id) {
+                        sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
+                      }
+                      
+                      // Convert package treatments to treatment plan format
+                      const treatmentPlanData = packageData.treatments.map(treatment => ({
+                        id: treatment.id,
+                        treatmentName: treatment.name,
+                        quantity: treatment.quantity,
+                        priceGBP: 0, // Will be calculated on results page
+                        subtotalGBP: 0 // Will be calculated on results page
+                      }));
+                      
+                      // Store treatment plan data
+                      localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
 
-                      // Navigate to Your Quote page (treatment plan builder) with promo code parameter
-                      setLocation(`/your-quote?promo=${encodeURIComponent(packageData.promoCode || '')}`);
+                      // Navigate directly to matched clinics page
+                      setLocation('/matched-clinics');
                     }}
                   >
                     Select This Package
                   </Button>
-                  <Button variant="outline" className="w-full">Request More Information</Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => {
+                      // Store package data for quote request
+                      if (packageData.promoCode) {
+                        sessionStorage.setItem('pendingPromoCode', packageData.promoCode);
+                      }
+                      
+                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
+                      
+                      if (packageData.clinic?.id) {
+                        sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
+                      }
+                      
+                      // Convert treatments for quote
+                      const treatmentPlanData = packageData.treatments.map(treatment => ({
+                        id: treatment.id,
+                        treatmentName: treatment.name,
+                        quantity: treatment.quantity,
+                        priceGBP: 0,
+                        subtotalGBP: 0
+                      }));
+                      
+                      localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
+
+                      // Navigate directly to matched clinics for quote
+                      setLocation('/matched-clinics');
+                    }}
+                  >
+                    Get Quote Now
+                  </Button>
                 </div>
               </CardContent>
             </Card>
