@@ -330,19 +330,18 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         };
       });
 
-      // Calculate luxury family vacation value comparison
-      const ukPrivateDental = 5715;
-      const ukFamilyVacation = 4000; // Average of £3,000-5,000 range
-      const ukTransfersCoordination = 500;
-      const ukTotalEquivalent = ukPrivateDental + ukFamilyVacation + ukTransfersCoordination;
+      // Use package pricing from the data
+      const packagePrice = packageData.price || packageData.packagePrice || packageData.totalPrice || 4250;
+      const originalPrice = packageData.originalPrice || 11000;
+      const packageSavings = packageData.savings || (originalPrice - packagePrice);
 
       return {
         clinicTreatments,
-        totalPrice: packageData.packagePrice || packageData.totalPrice,
+        totalPrice: packagePrice,
         isPackage: true,
-        packageName: packageData.name,
-        packageSavings: ukTotalEquivalent - (packageData.packagePrice || packageData.totalPrice),
-        originalPrice: ukTotalEquivalent
+        packageName: packageData.title || packageData.name,
+        packageSavings: packageSavings,
+        originalPrice: originalPrice
       };
     }
 
