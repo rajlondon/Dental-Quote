@@ -28,7 +28,8 @@ import {
   Target,
   User,
   ShieldCheck,
-  Tag
+  Tag,
+  Package
 } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { useToast } from "@/hooks/use-toast";
@@ -269,8 +270,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   const activeTreatmentPlan = treatmentItems.length > 0 ? treatmentItems : treatmentPlan;
   const activeTotalGBP = totalGBP || localTotalGBP;
 
-  // Check for promo code filtering
+  // Check for promo code filtering and package data
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+  const pendingPackageData = sessionStorage.getItem('pendingPackageData');
+  let packageData = null;
+  
+  if (pendingPackageData) {
+    try {
+      packageData = JSON.parse(pendingPackageData);
+      console.log('📦 Package data found:', packageData);
+    } catch (error) {
+      console.error('Error parsing package data:', error);
+    }
+  }
   
   console.log('🔍 Promo code clinic ID from session:', promoCodeClinicId);
   console.log('🏥 Available clinics:', clinicsData.map(c => ({ id: c.id, name: c.name })));
@@ -292,6 +304,33 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     const clinic = filteredClinics.find(c => c.id === clinicId);
     const priceFactor = clinic?.priceFactor || 0.35;
 
+    // If we have package data and this is the package clinic, use package pricing
+    if (packageData && promoCodeClinicId === clinicId) {
+      const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
+        const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
+        const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
+
+        return {
+          treatmentName: treatment.name,
+          originalName: treatment.name,
+          quantity: treatment.quantity,
+          pricePerUnit: clinicPricePerUnit,
+          subtotal: clinicPricePerUnit * treatment.quantity,
+          category: treatment.category
+        };
+      });
+
+      return {
+        clinicTreatments,
+        totalPrice: packageData.packagePrice || packageData.totalPrice,
+        isPackage: true,
+        packageName: packageData.name,
+        packageSavings: packageData.savings || (packageData.originalPrice - packageData.packagePrice),
+        originalPrice: packageData.originalPrice
+      };
+    }
+
+    // Regular treatment pricing
     const clinicTreatments: ClinicTreatmentPrice[] = treatments.map(treatment => {
       const ukPricePerUnit = treatment.subtotalGBP / treatment.quantity;
       const clinicPricePerUnit = Math.round(ukPricePerUnit * priceFactor);
@@ -307,7 +346,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     });
 
     const totalPrice = clinicTreatments.reduce((sum, item) => sum + item.subtotal, 0);
-    return { clinicTreatments, totalPrice };
+    return { clinicTreatments, totalPrice, isPackage: false };
   };
 
   const getTierLabel = (tier: string) => {
@@ -566,7 +605,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
           {/* Clinic Comparison */}
           <div className="space-y-8">
             {filteredClinics.map((clinic, clinicIndex) => {
-              const { clinicTreatments, totalPrice } = getClinicPricing(clinic.id, activeTreatmentPlan);
+              const pricingResult = getClinicPricing(clinic.id, activeTreatmentPlan);
+              const { clinicTreatments, totalPrice, isPackage, packageName, packageSavings, originalPrice } = pricingResult;
               const tierInfo = getTierLabel(clinic.tier);
               const isExpanded = expandedClinics[clinic.id] || false;
 
@@ -692,12 +732,28 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                       {/* Quote Details - Right Columns */}
                       <div className="lg:col-span-2">
                         <div className="flex flex-col h-full">
-                          <h3 className="text-lg font-semibold mb-4">Your Personalized Treatment Quote</h3>
+                          <h3 className="text-lg font-semibold mb-4">
+                            {isPackage ? `${packageName} - Package Quote` : 'Your Personalized Treatment Quote'}
+                          </h3>
 
                           <div className="overflow-hidden mb-4">
                             <div className="bg-gray-50 rounded-lg p-4">
+                              {isPackage && (
+                                <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
+                                  <div className="flex items-center gap-2 mb-2">
+                                    <Package className="h-5 w-5 text-amber-600" />
+                                    <span className="font-semibold text-amber-800">Special Package Deal</span>
+                                  </div>
+                                  <p className="text-sm text-amber-700">
+                                    This exclusive package includes all treatments, luxury hotel stay, airport transfers, and guided Istanbul tours.
+                                  </p>
+                                </div>
+                              )}
+
                               <div className="mb-3">
-                                <h4 className="font-medium mb-2">Treatment Details</h4>
+                                <h4 className="font-medium mb-2">
+                                  {isPackage ? 'Package Includes' : 'Treatment Details'}
+                                </h4>
                                 <div className="space-y-2">
                                   {clinicTreatments.map((treatment, i) => (
                                     <div key={i} className="flex items-start justify-between">
@@ -711,28 +767,61 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                           </span>
                                         )}
                                       </div>
-                                      <div className="text-right">
-                                        <div className="text-sm font-medium">
-                                          £{treatment.subtotal}
-                                        </div>
-                                        {treatment.quantity > 1 && (
-                                          <div className="text-xs text-gray-500">
-                                            £{treatment.pricePerUnit} each
+                                      {!isPackage && (
+                                        <div className="text-right">
+                                          <div className="text-sm font-medium">
+                                            £{treatment.subtotal}
                                           </div>
-                                        )}
-                                      </div>
+                                          {treatment.quantity > 1 && (
+                                            <div className="text-xs text-gray-500">
+                                              £{treatment.pricePerUnit} each
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
+                                  
+                                  {isPackage && (
+                                    <div className="mt-3 pt-3 border-t border-gray-200">
+                                      <div className="space-y-1 text-sm text-gray-600">
+                                        <div className="flex items-center gap-2">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <span>5-star hotel accommodation (5 nights)</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <span>VIP airport transfers</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <span>Guided Istanbul city tour</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <span>Personal patient coordinator</span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <span>Bosphorus cruise excursion</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
 
                               <div className="border-t pt-4 mb-4">
                                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-100">
                                   <div className="flex justify-between items-center mb-3">
-                                    <span className="text-lg font-semibold text-gray-900">Total Price:</span>
+                                    <span className="text-lg font-semibold text-gray-900">
+                                      {isPackage ? 'Package Price:' : 'Total Price:'}
+                                    </span>
                                     <div className="text-right">
                                       <span className="text-2xl font-bold text-blue-600">£{totalPrice}</span>
-                                      <div className="text-sm text-gray-500 line-through">UK: £{ukTotal}</div>
+                                      <div className="text-sm text-gray-500 line-through">
+                                        {isPackage ? `Regular: £${originalPrice}` : `UK: £${ukTotal}`}
+                                      </div>
                                     </div>
                                   </div>
 
@@ -743,8 +832,12 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         <span className="font-medium text-green-800">You Save:</span>
                                       </div>
                                       <div className="text-right">
-                                        <span className="text-lg font-bold text-green-600">£{ukTotal - totalPrice}</span>
-                                        <div className="text-sm text-green-700">({Math.round((ukTotal - totalPrice) / ukTotal * 100)}% discount)</div>
+                                        <span className="text-lg font-bold text-green-600">
+                                          £{isPackage ? packageSavings : (ukTotal - totalPrice)}
+                                        </span>
+                                        <div className="text-sm text-green-700">
+                                          ({Math.round((isPackage ? packageSavings / originalPrice : (ukTotal - totalPrice) / ukTotal) * 100)}% discount)
+                                        </div>
                                       </div>
                                     </div>
                                   </div>
@@ -753,7 +846,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
                               <div className="text-xs text-gray-500">
                                 <p>* Final quote will be confirmed after clinic review of your dental records</p>
-                                <p>* Hotel stays often included in treatment packages</p>
+                                {isPackage ? (
+                                  <p>* Package includes all accommodations and experiences as listed</p>
+                                ) : (
+                                  <p>* Hotel stays often included in treatment packages</p>
+                                )}
                               </div>
                             </div>
                           </div>
