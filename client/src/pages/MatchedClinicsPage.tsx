@@ -113,8 +113,8 @@ const MatchedClinicsPage: React.FC = () => {
     
     // Show success message
     toast({
-      title: "Clinic Selected!",
-      description: `You've selected ${clinic.name}. Proceeding to booking...`,
+      title: "Quote Generated!",
+      description: `Getting your quote from ${clinic.name}...`,
       duration: 3000,
     });
 
@@ -324,7 +324,7 @@ const MatchedClinicsPage: React.FC = () => {
                           onClick={() => handleSelectClinic(clinic)}
                         >
                           <Heart className="h-4 w-4 mr-2" />
-                          Select This Clinic
+                          Get Quote Now
                         </Button>
                       </div>
                     </div>
