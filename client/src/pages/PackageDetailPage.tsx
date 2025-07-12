@@ -385,17 +385,23 @@ const PackageDetailPage = () => {
                         sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
                       }
                       
-                      // Convert package treatments to treatment plan format
+                      // Convert package treatments to treatment plan format with proper structure
                       const treatmentPlanData = packageData.treatments.map(treatment => ({
                         id: treatment.id,
                         treatmentName: treatment.name,
+                        name: treatment.name, // Add name field for compatibility
                         quantity: treatment.quantity,
-                        priceGBP: 0, // Will be calculated on results page
-                        subtotalGBP: 0 // Will be calculated on results page
+                        priceGBP: 100, // Temporary price for display
+                        subtotalGBP: 100 * treatment.quantity, // Calculate subtotal
+                        category: 'cosmetic' // Default category
                       }));
                       
-                      // Store treatment plan data
-                      localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
+                      // Store treatment plan data with proper structure
+                      localStorage.setItem('treatmentPlanData', JSON.stringify({
+                        treatments: treatmentPlanData,
+                        totalGBP: treatmentPlanData.reduce((sum, t) => sum + t.subtotalGBP, 0),
+                        timestamp: new Date().toISOString()
+                      }));
 
                       // Navigate directly to matched clinics page
                       setLocation('/matched-clinics');
@@ -418,16 +424,22 @@ const PackageDetailPage = () => {
                         sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
                       }
                       
-                      // Convert treatments for quote
+                      // Convert treatments for quote with proper structure
                       const treatmentPlanData = packageData.treatments.map(treatment => ({
                         id: treatment.id,
                         treatmentName: treatment.name,
+                        name: treatment.name, // Add name field for compatibility
                         quantity: treatment.quantity,
-                        priceGBP: 0,
-                        subtotalGBP: 0
+                        priceGBP: 100, // Temporary price for display
+                        subtotalGBP: 100 * treatment.quantity, // Calculate subtotal
+                        category: 'cosmetic' // Default category
                       }));
                       
-                      localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
+                      localStorage.setItem('treatmentPlanData', JSON.stringify({
+                        treatments: treatmentPlanData,
+                        totalGBP: treatmentPlanData.reduce((sum, t) => sum + t.subtotalGBP, 0),
+                        timestamp: new Date().toISOString()
+                      }));
 
                       // Navigate directly to matched clinics for quote
                       setLocation('/matched-clinics');

@@ -211,9 +211,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       if (savedTreatmentData) {
         try {
           const parsedData = JSON.parse(savedTreatmentData);
-          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
+          console.log('📋 Parsed treatment data from localStorage:', parsedData);
+          
+          // Handle both old format (array) and new format (object with treatments array)
+          if (Array.isArray(parsedData)) {
+            // Old format - direct array
+            setTreatmentPlan(parsedData);
+            setLocalTotalGBP(parsedData.reduce((sum, item) => sum + (item.subtotalGBP || 0), 0));
+          } else if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
+            // New format - object with treatments array
             setTreatmentPlan(parsedData.treatments);
             setLocalTotalGBP(parsedData.totalGBP || 0);
+          } else {
+            console.warn('⚠️ Unrecognized treatment plan format:', parsedData);
           }
         } catch (error) {
           console.error('Error parsing treatment data from localStorage:', error);

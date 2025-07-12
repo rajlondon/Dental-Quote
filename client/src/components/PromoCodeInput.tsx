@@ -152,12 +152,18 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                   const treatmentPlanData = response.data.packageData.treatments.map((treatment: any) => ({
                     id: treatment.id,
                     treatmentName: treatment.name,
+                    name: treatment.name, // Add name field for compatibility
                     quantity: treatment.quantity,
-                    priceGBP: 0, // Will be calculated on results page
-                    subtotalGBP: 0 // Will be calculated on results page
+                    priceGBP: 100, // Temporary price for display
+                    subtotalGBP: 100 * treatment.quantity, // Calculate subtotal
+                    category: 'cosmetic' // Default category
                   }));
                   
-                  localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentPlanData));
+                  localStorage.setItem('treatmentPlanData', JSON.stringify({
+                    treatments: treatmentPlanData,
+                    totalGBP: treatmentPlanData.reduce((sum: any, t: any) => sum + t.subtotalGBP, 0),
+                    timestamp: new Date().toISOString()
+                  }));
                 }
                 
                 // Emit a custom event to notify about the package for any listeners
