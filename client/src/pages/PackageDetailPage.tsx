@@ -1,46 +1,172 @@
+
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation } from "wouter";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { trendingPackages, type TrendingPackage, type Excursion } from "@/data/packages";
+import { getEducationContent } from "@/data/treatmentEducation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Check, ChevronRight, Coffee, Crown, Hotel, Info, Landmark, MapPin, Plane, Shield, Star, Users } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScrollToTop from "@/components/ScrollToTop";
+import axios from "axios";
 
-// PackageDetailPage component
+interface PackageData {
+  id: string;
+  title: string;
+  description: string;
+  clinic: {
+    id: string;
+    name: string;
+    location: string;
+    image: string;
+  };
+  hotel: {
+    name: string;
+    stars: number;
+    area: string;
+    image: string;
+  };
+  accommodation: {
+    nights: number;
+    days: number;
+    stars: number;
+    description: string;
+  };
+  treatments: {
+    id: string;
+    name: string;
+    quantity: number;
+  }[];
+  price: number;
+  originalPrice?: number;
+  savings?: number;
+  duration: string;
+  includedServices: {
+    hotel: boolean;
+    transfers: boolean;
+    consultation: boolean;
+    cityTour: boolean;
+    excursions: boolean;
+  };
+  excursions: {
+    id: string;
+    name: string;
+    description: string;
+    included: boolean;
+    duration: string;
+    price?: number;
+  }[];
+  tier: 'bronze' | 'silver' | 'gold';
+  promoCode?: string;
+  imageUrl?: string;
+}
+
 const PackageDetailPage = () => {
   const { id } = useParams();
   const [_, setLocation] = useLocation();
-  const [packageData, setPackageData] = useState<TrendingPackage | null>(null);
+  const [packageData, setPackageData] = useState<PackageData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Debug info
-    console.log("Package ID from params:", id);
-    console.log("Available packages:", trendingPackages.map(p => p.id));
+    const fetchPackageData = async () => {
+      try {
+        setLoading(true);
+        console.log("Fetching package data for ID:", id);
+        
+        // Try to fetch from treatment packages API first
+        const response = await axios.get(`/api/treatment-packages/${id}`);
+        
+        if (response.data.success && response.data.data) {
+          const pkg = response.data.data;
+          console.log("Found package data:", pkg);
+          
+          // Transform the data to match our interface if needed
+          const transformedPackage: PackageData = {
+            id: pkg.id,
+            title: pkg.title,
+            description: pkg.description,
+            clinic: pkg.clinic || {
+              id: pkg.clinicId,
+              name: `${pkg.clinicId} Clinic`,
+              location: 'Istanbul, Turkey',
+              image: '/images/carousel/clinic.png'
+            },
+            hotel: pkg.hotel || {
+              name: 'Premium Hotel',
+              stars: 4,
+              area: 'Istanbul',
+              image: '/images/hotels/standard-hotel.jpg'
+            },
+            accommodation: pkg.accommodation || {
+              nights: 5,
+              days: 6,
+              stars: 4,
+              description: '4-star hotel accommodation'
+            },
+            treatments: pkg.treatments || [],
+            price: pkg.price,
+            originalPrice: pkg.originalPrice,
+            savings: pkg.savings,
+            duration: pkg.duration || '5 days',
+            includedServices: pkg.includedServices || {
+              hotel: true,
+              transfers: true,
+              consultation: true,
+              cityTour: true,
+              excursions: false
+            },
+            excursions: pkg.excursions || [],
+            tier: pkg.tier || 'silver',
+            promoCode: pkg.promoCode,
+            imageUrl: pkg.imageUrl
+          };
+          
+          setPackageData(transformedPackage);
+          document.title = `${pkg.title} - MyDentalFly`;
+        } else {
+          setError("Package not found");
+          document.title = "Package Not Found - MyDentalFly";
+        }
+      } catch (err) {
+        console.error("Error fetching package data:", err);
+        setError("Failed to load package data");
+        document.title = "Error - MyDentalFly";
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    // Find the package by ID
-    const pkg = trendingPackages.find(p => p.id === id);
-    console.log("Found package:", pkg);
-
-    if (pkg) {
-      setPackageData(pkg);
-      document.title = `${pkg.title} - MyDentalFly`;
-    } else {
-      document.title = "Package Not Found - MyDentalFly";
+    if (id) {
+      fetchPackageData();
     }
   }, [id]);
 
-  if (!packageData) {
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <div className="container mx-auto py-16 px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <h1 className="text-2xl font-bold mb-4">Loading Package Details...</h1>
+          </div>
+        </div>
+        <Footer />
+      </>
+    );
+  }
+
+  if (error || !packageData) {
     return (
       <>
         <Navbar />
         <div className="container mx-auto py-16 px-4">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Package Not Found</h1>
-            <p className="mb-8">The package you're looking for doesn't exist or may have been removed.</p>
+            <p className="mb-8">{error || "The package you're looking for doesn't exist or may have been removed."}</p>
             <Button asChild>
               <a href="/">Return to Homepage</a>
             </Button>
@@ -80,7 +206,11 @@ const PackageDetailPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
           <div className="lg:col-span-2">
             <div className="mb-6 rounded-lg overflow-hidden h-[300px] shadow-md">
-              <img src={`/images/packages/${packageData.id}.png`} alt={packageData.title} className="w-full h-full object-cover" />
+              <img 
+                src={packageData.imageUrl || `/images/packages/${packageData.id}.png`} 
+                alt={packageData.title} 
+                className="w-full h-full object-cover" 
+              />
             </div>
             <div className="flex items-center gap-2 mb-3">
               <Badge className={`${tierStyles[packageData.tier]} flex items-center gap-1`}>
@@ -141,12 +271,25 @@ const PackageDetailPage = () => {
             <div className="mb-8">
               <h3 className="font-medium mb-3">Treatments Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {packageData.treatments.map((treatment, i) => (
-                  <div key={i} className="flex items-start">
-                    <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                    <span>{treatment.count}x {treatment.name}</span>
-                  </div>
-                ))}
+                {packageData.treatments.map((treatment, i) => {
+                  const educationContent = getEducationContent(treatment.id);
+                  return (
+                    <div key={i} className="flex items-start">
+                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
+                      <div>
+                        <span className="font-medium">{treatment.quantity}x {treatment.name}</span>
+                        {educationContent && (
+                          <div className="text-sm text-gray-600 mt-1">
+                            {educationContent.materials}
+                            <div className="text-xs text-green-600 font-medium mt-1">
+                              {educationContent.warranty}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -183,11 +326,18 @@ const PackageDetailPage = () => {
                 <div className="text-center mb-4">
                   <div className="text-sm text-gray-600 mb-1">Complete Package</div>
                   <div className="flex items-center justify-center gap-2">
-                    <span className="text-3xl font-bold text-primary">£{packageData.totalPrice}</span>
-                    <Badge className="bg-green-100 text-green-700 border-green-200">
-                      Save £{packageData.savings}
-                    </Badge>
+                    <span className="text-3xl font-bold text-primary">£{packageData.price}</span>
+                    {packageData.savings && (
+                      <Badge className="bg-green-100 text-green-700 border-green-200">
+                        Save £{packageData.savings}
+                      </Badge>
+                    )}
                   </div>
+                  {packageData.originalPrice && (
+                    <div className="text-sm text-gray-500 line-through mt-1">
+                      UK Equivalent: £{packageData.originalPrice}
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-b py-4 mb-4">
@@ -241,12 +391,66 @@ const PackageDetailPage = () => {
         </div>
 
         {/* Tabs for detailed information */}
-        <Tabs defaultValue="excursions" className="mb-16">
+        <Tabs defaultValue="treatments" className="mb-16">
           <TabsList className="grid grid-cols-3 w-full max-w-lg mx-auto">
+            <TabsTrigger value="treatments">Treatment Details</TabsTrigger>
             <TabsTrigger value="excursions">Excursions</TabsTrigger>
             <TabsTrigger value="itinerary">Itinerary</TabsTrigger>
-            <TabsTrigger value="details">Package Details</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="treatments" className="mt-6">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-xl font-medium mb-6">Treatment Education & Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {packageData.treatments.map((treatment) => {
+                  const educationContent = getEducationContent(treatment.id);
+                  return (
+                    <Card key={treatment.id} className="p-6">
+                      <h4 className="text-lg font-semibold mb-2">{treatment.quantity}x {treatment.name}</h4>
+                      {educationContent ? (
+                        <div className="space-y-3">
+                          <p className="text-gray-700">{educationContent.description}</p>
+                          
+                          <div>
+                            <h5 className="font-medium text-sm mb-1">Materials & Technology:</h5>
+                            <p className="text-sm text-gray-600">{educationContent.materials}</p>
+                          </div>
+                          
+                          <div>
+                            <h5 className="font-medium text-sm mb-1">Process:</h5>
+                            <p className="text-sm text-gray-600">{educationContent.process}</p>
+                          </div>
+                          
+                          <div>
+                            <h5 className="font-medium text-sm mb-1">Key Benefits:</h5>
+                            <ul className="text-sm text-gray-600 space-y-1">
+                              {educationContent.benefits.map((benefit, i) => (
+                                <li key={i} className="flex items-start">
+                                  <Check className="h-3.5 w-3.5 text-green-500 mr-1 mt-0.5 shrink-0" />
+                                  {benefit}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                          
+                          <div className="flex items-center justify-between pt-2 border-t">
+                            <span className="text-sm font-medium text-green-600">{educationContent.warranty}</span>
+                            {educationContent.ukEquivalentPrice && (
+                              <span className="text-sm text-gray-500">
+                                UK Price: £{educationContent.ukEquivalentPrice * treatment.quantity}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-gray-600">Professional dental treatment with high-quality materials and expert care.</p>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          </TabsContent>
 
           <TabsContent value="excursions" className="mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -259,9 +463,7 @@ const PackageDetailPage = () => {
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center">
-                      {React.cloneElement(excursion.icon as React.ReactElement, {
-                        className: "h-12 w-12 text-gray-400"
-                      })}
+                      <MapPin className="h-12 w-12 text-gray-400" />
                     </div>
                   </div>
                   <CardContent className="p-4">
@@ -269,7 +471,7 @@ const PackageDetailPage = () => {
                     <p className="text-sm text-gray-600 mb-3">{excursion.description}</p>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-500">{excursion.duration}</span>
-                      {!excursion.included && (
+                      {!excursion.included && excursion.price && (
                         <span className="font-medium text-primary">£{excursion.price}</span>
                       )}
                     </div>
@@ -326,82 +528,6 @@ const PackageDetailPage = () => {
                     Final check-up with your dentist to ensure everything is perfect.
                     Transfer to Istanbul Airport for your departure flight.
                   </p>
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="details" className="mt-6">
-            <div className="max-w-3xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Package Includes</h3>
-                  <ul className="space-y-2">
-                    <li className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                      <span>All dental treatments listed</span>
-                    </li>
-                    {packageData.includedServices.hotel && (
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>{packageData.duration} accommodation at {packageData.hotel.name}</span>
-                      </li>
-                    )}
-                    {packageData.includedServices.transfers && (
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>Airport transfers and clinic transportation</span>
-                      </li>
-                    )}
-                    {packageData.includedServices.consultation && (
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>Initial consultation and follow-up appointments</span>
-                      </li>
-                    )}
-                    {packageData.includedServices.cityTour && (
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>Guided city tour of Istanbul</span>
-                      </li>
-                    )}
-                    {complimentaryExcursions.length > 0 && (
-                      <li className="flex items-start">
-                        <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                        <span>{complimentaryExcursions.length} complimentary excursion{complimentaryExcursions.length > 1 ? 's' : ''}</span>
-                      </li>
-                    )}
-                    <li className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                      <span>Personal treatment coordinator</span>
-                    </li>
-                    <li className="flex items-start">
-                      <Check className="h-5 w-5 text-green-500 mr-2 shrink-0" />
-                      <span>24/7 customer support during your stay</span>
-                    </li>
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-4">Additional Information</h3>
-                  <ul className="space-y-3">
-                    <li className="text-sm text-gray-700">
-                      <strong className="block mb-1">Payment Terms:</strong>
-                      £200 deposit to secure your booking, with the balance payable before treatment begins.
-                    </li>
-                    <li className="text-sm text-gray-700">
-                      <strong className="block mb-1">Cancellation Policy:</strong>
-                      Full refund if cancelled more than 14 days before arrival. 50% refund if cancelled 7-14 days before arrival.
-                    </li>
-                    <li className="text-sm text-gray-700">
-                      <strong className="block mb-1">Treatment Warranty:</strong>
-                      All dental treatments come with a warranty period provided by the clinic.
-                    </li>
-                    <li className="text-sm text-gray-700">
-                      <strong className="block mb-1">Optional Add-ons:</strong>
-                      Additional excursions, room upgrades, and extended stays available upon request.
-                    </li>
-                  </ul>
                 </div>
               </div>
             </div>

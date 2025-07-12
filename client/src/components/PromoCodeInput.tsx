@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Package } from 'lucide-react';
 import axios from 'axios';
 import { trendingPackages } from '../data/packages';
+import { getEducationContent } from '../data/treatmentEducation';
 
 interface PromoCodeInputProps {
   initialPromoCode?: string | null;
@@ -237,11 +238,20 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
             {packageInfo.treatments && packageInfo.treatments.length > 0 && (
               <div className="mt-2">
                 <p className="text-xs font-medium text-blue-800">Included treatments:</p>
-                <ul className="mt-1 text-xs text-blue-700 list-disc pl-5">
-                  {packageInfo.treatments.map((treatment: any, i: number) => (
-                    <li key={i}>{treatment.quantity} x {treatment.name}</li>
-                  ))}
-                  <li className="font-medium text-blue-800 mt-1">Free excursion on a cruise in Istanbul</li>
+                <ul className="mt-1 text-xs text-blue-700 space-y-1">
+                  {packageInfo.treatments.map((treatment: any, i: number) => {
+                    const educationContent = getEducationContent(treatment.id);
+                    return (
+                      <li key={i} className="border-l-2 border-blue-200 pl-2">
+                        <div className="font-medium">{treatment.quantity} x {treatment.name}</div>
+                        {educationContent && (
+                          <div className="text-xs text-blue-600 mt-1">
+                            {educationContent.materials} • {educationContent.warranty}
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
                   
                   {packageInfo.savings && (
                     <div className="mt-2 text-green-700 text-xs font-medium">

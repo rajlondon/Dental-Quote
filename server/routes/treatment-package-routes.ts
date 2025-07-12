@@ -10,6 +10,201 @@ export const treatmentPackageRouter = Router();
 
 export const treatmentPackages = [
   {
+    id: 'hollywood-smile-vacation',
+    title: 'Hollywood Smile Luxury Family Vacation',
+    description: 'The ultimate luxury dental vacation for discerning families. Combine premium Hollywood Smile treatments with an exclusive 7-day Istanbul experience featuring 5-star accommodations, VIP services, and curated cultural excursions.',
+    clinicId: 'maltepe-dental-clinic',
+    price: 4250,
+    currency: 'GBP',
+    originalPrice: 11000,
+    savings: 6750,
+    treatments: [
+      { id: 'porcelain_veneer', name: 'Premium Porcelain Veneer', quantity: 10 },
+      { id: 'teeth_whitening', name: 'Teeth Whitening', quantity: 1 },
+      { id: 'dental_checkup_cleaning', name: 'Smile Design Consultation', quantity: 1 }
+    ],
+    clinic: {
+      id: 'maltepe-dental-clinic',
+      name: 'Maltepe Dental Clinic',
+      location: 'Maltepe, Istanbul',
+      image: '/images/carousel/clinic.png'
+    },
+    hotel: {
+      name: 'Hilton Istanbul Bomonti',
+      stars: 5,
+      area: 'Şişli',
+      image: '/images/hotels/luxury-hotel.jpg'
+    },
+    accommodation: {
+      nights: 6,
+      days: 7,
+      stars: 5,
+      description: '5-star luxury hotel accommodation'
+    },
+    duration: '7 days, 6 nights',
+    includedServices: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: true,
+      excursions: true
+    },
+    excursions: [
+      {
+        id: 'bosphorus-cruise',
+        name: 'Bosphorus Cruise',
+        description: 'Experience Istanbul from the water with scenic views',
+        included: true,
+        duration: '2-3 hours'
+      },
+      {
+        id: 'old-city-tour',
+        name: 'Old City Walking Tour',
+        description: 'Explore historic Istanbul with expert guide',
+        included: true,
+        duration: '6-7 hours'
+      },
+      {
+        id: 'turkish-bath',
+        name: 'Traditional Turkish Bath',
+        description: 'Relax with traditional hammam experience',
+        included: true,
+        duration: '1-2 hours'
+      },
+      {
+        id: 'culinary-tour',
+        name: 'Turkish Culinary Tour',
+        description: 'Sample authentic Turkish cuisine',
+        included: true,
+        duration: '4-5 hours'
+      }
+    ],
+    tier: 'gold',
+    imageUrl: '/images/packages/hollywood-smile-vacation.png',
+    promoCode: 'HOLLYWOOD_SMILE',
+    discountType: 'fixed_amount',
+    discountValue: 6750,
+    isActive: true
+  },
+  {
+    id: 'dental-implant-city-experience',
+    title: 'Dental Implant & City Experience',
+    description: 'Restore your smile with quality dental implants and enjoy exploring Istanbul with included hotel stay and select city experiences.',
+    clinicId: 'dentgroup-istanbul',
+    price: 2850,
+    currency: 'GBP',
+    originalPrice: 4350,
+    savings: 1500,
+    treatments: [
+      { id: 'single_dental_implant', name: 'Single Dental Implant', quantity: 2 },
+      { id: 'zirconia_crown', name: 'Zirconia Crown', quantity: 2 },
+      { id: 'dental_checkup_cleaning', name: 'Dental Consultation', quantity: 1 }
+    ],
+    clinic: {
+      id: 'dentgroup-istanbul',
+      name: 'DentGroup Istanbul',
+      location: 'Şişli, Istanbul',
+      image: '/images/carousel/clinic.png'
+    },
+    hotel: {
+      name: 'Radisson Blu Istanbul',
+      stars: 4,
+      area: 'Şişli',
+      image: '/images/hotels/standard-hotel.jpg'
+    },
+    accommodation: {
+      nights: 4,
+      days: 5,
+      stars: 4,
+      description: '4-star hotel accommodation'
+    },
+    duration: '5 days, 4 nights',
+    includedServices: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: true,
+      excursions: true
+    },
+    excursions: [
+      {
+        id: 'bosphorus-cruise',
+        name: 'Bosphorus Cruise',
+        description: 'Experience Istanbul from the water with scenic views',
+        included: true,
+        duration: '2-3 hours'
+      },
+      {
+        id: 'culinary-tour',
+        name: 'Turkish Culinary Tour',
+        description: 'Sample authentic Turkish cuisine',
+        included: true,
+        duration: '4-5 hours'
+      }
+    ],
+    tier: 'silver',
+    imageUrl: '/images/packages/dental-implant-city-experience.png',
+    promoCode: 'DENTAL_IMPLANT_CITY',
+    discountType: 'fixed_amount',
+    discountValue: 1500,
+    isActive: true
+  },
+  {
+    id: 'value-veneer-istanbul-discovery',
+    title: 'Value Veneer & Istanbul Discovery',
+    description: 'Get affordable veneers to enhance your smile while exploring the highlights of Istanbul with basic accommodations and essential services.',
+    clinicId: 'istanbul-dental-care',
+    price: 1650,
+    currency: 'GBP',
+    originalPrice: 2600,
+    savings: 950,
+    treatments: [
+      { id: 'porcelain_veneer', name: 'Porcelain Veneer', quantity: 6 },
+      { id: 'teeth_whitening', name: 'Teeth Whitening', quantity: 1 }
+    ],
+    clinic: {
+      id: 'istanbul-dental-care',
+      name: 'Istanbul Dental Care',
+      location: 'Kadıköy, Istanbul',
+      image: '/images/carousel/clinic.png'
+    },
+    hotel: {
+      name: 'Ibis Istanbul City',
+      stars: 3,
+      area: 'Kadıköy',
+      image: '/images/hotels/value-hotel.jpg'
+    },
+    accommodation: {
+      nights: 3,
+      days: 4,
+      stars: 3,
+      description: '3-star hotel accommodation'
+    },
+    duration: '4 days, 3 nights',
+    includedServices: {
+      hotel: true,
+      transfers: true,
+      consultation: true,
+      cityTour: false,
+      excursions: false
+    },
+    excursions: [
+      {
+        id: 'turkish-bath',
+        name: 'Traditional Turkish Bath',
+        description: 'Relax with traditional hammam experience',
+        included: true,
+        duration: '1-2 hours'
+      }
+    ],
+    tier: 'bronze',
+    imageUrl: '/images/packages/value-veneer-istanbul-discovery.png',
+    promoCode: 'VALUE_VENEER_ISTANBUL',
+    discountType: 'fixed_amount',
+    discountValue: 950,
+    isActive: true
+  },
+  {
     id: 'pkg_1',
     title: 'Complete Smile Makeover',
     description: 'Full mouth rehabilitation with premium materials and luxury accommodation',
