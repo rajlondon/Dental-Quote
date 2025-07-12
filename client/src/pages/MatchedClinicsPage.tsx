@@ -78,11 +78,46 @@ interface ClinicTreatmentPrice {
 // Fixed clinic data - defined outside component to prevent re-initialization issues
 const clinicsData = [
   {
-    id: 'dentspa',
-    name: 'DentSpa Istanbul',
+    id: 'maltepe-dental-clinic',
+    name: 'Maltepe Dental Clinic',
     tier: 'premium',
-    description: 'A premium clinic offering luxury dental services with state-of-the-art technology and experienced international dentists.',
+    description: 'Premier dental clinic specializing in Hollywood Smile makeovers and cosmetic dentistry with state-of-the-art technology.',
     priceFactor: 0.35,
+    ratings: {
+      overall: 5.0,
+      reviews: 312,
+      cleanliness: 5.0,
+      staff: 5.0,
+      value: 4.8,
+      location: 4.7
+    },
+    location: {
+      area: 'Maltepe',
+      city: 'Istanbul'
+    },
+    features: [
+      'Hollywood Smile Specialist',
+      'Premium Porcelain Veneers',
+      'Free Airport Transfer',
+      'Luxury Hotel Arrangement',
+      'Multilingual Staff',
+      'VIP Treatment Options',
+      'Digital Smile Design',
+      'Advanced 3D Imaging'
+    ],
+    guarantees: {
+      implants: '10 years',
+      veneers: '10 years',
+      crowns: '10 years',
+      fillings: '5 years'
+    }
+  },
+  {
+    id: 'dentgroup-istanbul',
+    name: 'DentGroup Istanbul',
+    tier: 'standard',
+    description: 'A well-established clinic offering quality dental treatments including implants and cosmetic dentistry.',
+    priceFactor: 0.30,
     ratings: {
       overall: 4.9,
       reviews: 453,
@@ -92,29 +127,29 @@ const clinicsData = [
       location: 4.8
     },
     location: {
-      area: 'Kadıköy',
+      area: 'Nişantaşı',
       city: 'Istanbul'
     },
     features: [
-      'Free Airport Transfer',
-      'Hotel Arrangement',
-      'Multilingual Staff',
-      'VIP Treatment Options',
-      'Digital X-ray equipment'
+      'Implant Dentistry',
+      'Modern clinic facilities',
+      'Airport pickup service',
+      'Hotel booking assistance',
+      'Multi-language service'
     ],
     guarantees: {
-      implants: '10 years',
+      implants: '7 years',
       veneers: '5 years',
       crowns: '5 years',
       fillings: '2 years'
     }
   },
   {
-    id: 'beyazada',
-    name: 'Beyaz Ada Dental Clinic',
-    tier: 'standard',
-    description: 'A well-established mid-range clinic offering quality dental treatments at competitive prices.',
-    priceFactor: 0.30,
+    id: 'istanbul-dental-care',
+    name: 'Istanbul Dental Care',
+    tier: 'affordable',
+    description: 'Budget-friendly clinic providing essential dental services at very competitive rates.',
+    priceFactor: 0.25,
     ratings: {
       overall: 4.7,
       reviews: 243,
@@ -128,46 +163,16 @@ const clinicsData = [
       city: 'Istanbul'
     },
     features: [
-      'Modern clinic facilities',
-      'Airport pickup service',
-      'Hotel booking assistance',
-      'Multi-language service'
-    ],
-    guarantees: {
-      implants: '5 years',
-      veneers: '3 years',
-      crowns: '3 years',
-      fillings: '1 year'
-    }
-  },
-  {
-    id: 'maltepe',
-    name: 'Maltepe Dental Center',
-    tier: 'affordable',
-    description: 'Budget-friendly clinic providing essential dental services at very competitive rates.',
-    priceFactor: 0.25,
-    ratings: {
-      overall: 4.5,
-      reviews: 178,
-      cleanliness: 4.6,
-      staff: 4.4,
-      value: 4.9,
-      location: 4.2
-    },
-    location: {
-      area: 'Maltepe',
-      city: 'Istanbul'
-    },
-    features: [
+      'Value Veneers',
       'Budget-friendly options',
       'Basic airport transfer',
       'Hotel recommendations',
       'English-speaking staff'
     ],
     guarantees: {
-      implants: '3 years',
-      veneers: '2 years',
-      crowns: '2 years',
+      implants: '5 years',
+      veneers: '3 years',
+      crowns: '3 years',
       fillings: '1 year'
     }
   }
@@ -266,20 +271,22 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   // Check for promo code filtering
   const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
-
-  // Create a mapping of numeric clinic IDs to clinic objects
-  const clinicIdMap: Record<string, any> = {
-    "1": clinicsData.find(c => c.id === 'dentgroup-istanbul') || clinicsData[0],
-    "2": clinicsData.find(c => c.id === 'dent-istanbul') || clinicsData[1], 
-    "3": clinicsData.find(c => c.id === 'istanbul-aesthetic-center') || clinicsData[2],
-    "4": clinicsData.find(c => c.id === 'dentalpark-turkey') || clinicsData[0],
-    "5": clinicsData.find(c => c.id === 'esta-istanbul') || clinicsData[0]
-  };
+  
+  console.log('🔍 Promo code clinic ID from session:', promoCodeClinicId);
+  console.log('🏥 Available clinics:', clinicsData.map(c => ({ id: c.id, name: c.name })));
 
   // Filter clinics based on promo code or show all
   const filteredClinics = promoCodeClinicId 
-    ? [clinicIdMap[promoCodeClinicId] || clinicsData[0]].filter(Boolean)
+    ? clinicsData.filter(clinic => clinic.id === promoCodeClinicId)
     : clinicsData;
+    
+  console.log('✅ Filtered clinics:', filteredClinics.map(c => ({ id: c.id, name: c.name })));
+  
+  // If no clinic matches the promo code, show all clinics but log the issue
+  if (promoCodeClinicId && filteredClinics.length === 0) {
+    console.warn('⚠️ No clinic found for promo code clinic ID:', promoCodeClinicId);
+    console.log('🔄 Falling back to all clinics');
+  }
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     const clinic = filteredClinics.find(c => c.id === clinicId);
