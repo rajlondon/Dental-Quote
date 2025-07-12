@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Star, Clock, CheckCircle, Heart, Plane, Calendar, Users } from 'lucide-react';
+import { MapPin, Star, Clock, CheckCircle, Heart, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock clinic data
@@ -22,8 +21,7 @@ const clinics = [
     tier: 'premium',
     specialties: ['Hollywood Smile', 'Dental Implants', 'Veneers'],
     features: ['5-star accommodation', 'VIP transfers', 'English-speaking staff'],
-    waitTime: '2-3 weeks',
-    packageIncluded: true
+    waitTime: '2-3 weeks'
   },
   {
     id: 'dentgroup-istanbul',
@@ -38,8 +36,7 @@ const clinics = [
     tier: 'standard',
     specialties: ['Cosmetic Dentistry', 'Implants', 'Orthodontics'],
     features: ['4-star hotel', 'Airport pickup', 'Treatment guarantee'],
-    waitTime: '1-2 weeks',
-    packageIncluded: false
+    waitTime: '1-2 weeks'
   },
   {
     id: 'istanbul-dental-care',
@@ -54,63 +51,18 @@ const clinics = [
     tier: 'value',
     specialties: ['General Dentistry', 'Cosmetic Procedures'],
     features: ['3-star hotel', 'City transfers', 'Flexible scheduling'],
-    waitTime: '1 week',
-    packageIncluded: false
+    waitTime: '1 week'
   }
 ];
 
 const MatchedClinicsPage: React.FC = () => {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [filteredClinics, setFilteredClinics] = useState(clinics);
-  const [packageData, setPackageData] = useState<any>(null);
-  const [promoCode, setPromoCode] = useState<string | null>(null);
-
-  useEffect(() => {
-    // Check for package data and promo code from session storage
-    const pendingPackageData = sessionStorage.getItem('pendingPackageData');
-    const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
-    const promoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
-
-    if (pendingPackageData) {
-      try {
-        const parsedPackageData = JSON.parse(pendingPackageData);
-        setPackageData(parsedPackageData);
-        console.log('📦 Package data found:', parsedPackageData);
-      } catch (error) {
-        console.error('Error parsing package data:', error);
-      }
-    }
-
-    if (pendingPromoCode) {
-      setPromoCode(pendingPromoCode);
-      console.log('🔍 Promo code clinic ID from session:', promoCodeClinicId);
-    }
-
-    // Filter clinics if a specific clinic is required for the promo code
-    if (promoCodeClinicId) {
-      console.log('🏥 Available clinics:', clinics.map(c => ({ id: c.id, name: c.name })));
-      const filtered = clinics.filter(clinic => clinic.id === promoCodeClinicId);
-      console.log('✅ Filtered clinics:', filtered.map(c => ({ id: c.id, name: c.name })));
-      setFilteredClinics(filtered);
-    }
-
-    // Get treatment data from localStorage
-    const treatmentData = localStorage.getItem('treatmentPlanData');
-    if (treatmentData) {
-      try {
-        const parsedTreatmentData = JSON.parse(treatmentData);
-        console.log('📋 Parsed treatment data from localStorage:', parsedTreatmentData);
-      } catch (error) {
-        console.error('Error parsing treatment data:', error);
-      }
-    }
-  }, []);
 
   const handleSelectClinic = (clinic: any) => {
     // Store selected clinic data
     sessionStorage.setItem('selectedClinic', JSON.stringify(clinic));
-    
+
     // Show success message
     toast({
       title: "Quote Generated!",
@@ -143,76 +95,16 @@ const MatchedClinicsPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            {packageData ? `${packageData.name} - Matched Clinics` : 'Your Matched Clinics'}
+            Your Matched Clinics
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            {packageData 
-              ? `We've found ${filteredClinics.length} clinic${filteredClinics.length !== 1 ? 's' : ''} that can provide your ${packageData.name} package.`
-              : `We've found ${filteredClinics.length} clinics that match your treatment requirements and preferences.`
-            }
+            We've found {clinics.length} clinics that match your treatment requirements and preferences.
           </p>
-          {promoCode && (
-            <div className="mt-4 inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800">
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Promo code "{promoCode}" applied
-            </div>
-          )}
         </div>
-
-        {/* Package Summary */}
-        {packageData && (
-          <Card className="mb-8 border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-800">
-                <Heart className="h-5 w-5" />
-                Package Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <h4 className="font-semibold text-blue-800 mb-2">Included Treatments</h4>
-                  <ul className="space-y-1">
-                    {packageData.treatments?.map((treatment: any, index: number) => (
-                      <li key={index} className="text-sm text-blue-700">
-                        {treatment.quantity}x {treatment.name}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                {packageData.accommodation && (
-                  <div>
-                    <h4 className="font-semibold text-blue-800 mb-2">Accommodation</h4>
-                    <p className="text-sm text-blue-700">
-                      {packageData.accommodation.nights} nights, {packageData.accommodation.days} days
-                    </p>
-                    <p className="text-sm text-blue-700">
-                      {packageData.accommodation.description}
-                    </p>
-                  </div>
-                )}
-                
-                {packageData.excursions && packageData.excursions.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold text-blue-800 mb-2">Included Excursions</h4>
-                    <ul className="space-y-1">
-                      {packageData.excursions.map((excursion: any, index: number) => (
-                        <li key={index} className="text-sm text-blue-700">
-                          {excursion.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Clinics Grid */}
         <div className="grid gap-6">
-          {filteredClinics.map((clinic) => (
+          {clinics.map((clinic) => (
             <Card key={clinic.id} className="overflow-hidden hover:shadow-lg transition-shadow">
               <CardContent className="p-0">
                 <div className="grid md:grid-cols-3 gap-0">
@@ -254,7 +146,7 @@ const MatchedClinicsPage: React.FC = () => {
                               {clinic.waitTime}
                             </div>
                           </div>
-                          
+
                           {/* Specialties */}
                           <div className="flex flex-wrap gap-2 mb-3">
                             {clinic.specialties.map((specialty, index) => (
@@ -298,18 +190,16 @@ const MatchedClinicsPage: React.FC = () => {
                           variant="outline" 
                           className="flex-1"
                           onClick={() => {
-                            // View clinic details
                             setLocation(`/clinic/${clinic.id}`);
                           }}
                         >
                           View Details
                         </Button>
-                        
+
                         <Button
                           variant="outline"
                           className="flex-1"
                           onClick={() => {
-                            // Download quote logic here
                             toast({
                               title: "Quote Downloaded",
                               description: "Your quote has been downloaded successfully.",
@@ -318,7 +208,7 @@ const MatchedClinicsPage: React.FC = () => {
                         >
                           Download Quote
                         </Button>
-                        
+
                         <Button 
                           className="flex-1 bg-blue-600 hover:bg-blue-700"
                           onClick={() => handleSelectClinic(clinic)}
@@ -336,7 +226,7 @@ const MatchedClinicsPage: React.FC = () => {
         </div>
 
         {/* No clinics found */}
-        {filteredClinics.length === 0 && (
+        {clinics.length === 0 && (
           <div className="text-center py-12">
             <div className="max-w-md mx-auto">
               <div className="text-gray-400 mb-4">
