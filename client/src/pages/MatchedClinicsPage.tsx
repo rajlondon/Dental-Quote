@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -240,7 +239,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
             const smartMatched = QuoteEngine.assignBestClinics(quoteRequest, enhancedClinics);
             const smartMatchedIds = new Set(smartMatched.map(c => c.id));
-            
+
             clinicsList = [
               ...clinicsList.filter(c => smartMatchedIds.has(c.id)),
               ...clinicsList.filter(c => !smartMatchedIds.has(c.id))
