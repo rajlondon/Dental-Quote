@@ -320,13 +320,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         };
       });
 
+      // Calculate luxury family vacation value comparison
+      const ukPrivateDental = 5715;
+      const ukFamilyVacation = 4000; // Average of £3,000-5,000 range
+      const ukTransfersCoordination = 500;
+      const ukTotalEquivalent = ukPrivateDental + ukFamilyVacation + ukTransfersCoordination;
+      
       return {
         clinicTreatments,
         totalPrice: packageData.packagePrice || packageData.totalPrice,
         isPackage: true,
         packageName: packageData.name,
-        packageSavings: packageData.savings || (packageData.originalPrice - packageData.packagePrice),
-        originalPrice: packageData.originalPrice
+        packageSavings: ukTotalEquivalent - (packageData.packagePrice || packageData.totalPrice),
+        originalPrice: ukTotalEquivalent
       };
     }
 
@@ -742,11 +748,14 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <div className="mb-4 p-3 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg">
                                   <div className="flex items-center gap-2 mb-2">
                                     <Package className="h-5 w-5 text-amber-600" />
-                                    <span className="font-semibold text-amber-800">Special Package Deal</span>
+                                    <span className="font-semibold text-amber-800">Luxury Family Dental Vacation</span>
                                   </div>
                                   <p className="text-sm text-amber-700">
-                                    This exclusive package includes all treatments, luxury hotel stay, airport transfers, and guided Istanbul tours.
+                                    Premium dental care meets luxury family vacation. Includes 5-star accommodation, VIP transfers, personal coordination, and exclusive cultural experiences - designed for discerning families seeking exceptional value.
                                   </p>
+                                  <div className="mt-2 text-xs bg-amber-100 p-2 rounded border border-amber-300">
+                                    <strong>UK Equivalent Value:</strong> Private dental (£5,715) + Luxury vacation (£4,000) + Transfers & coordination (£500) = <strong>£10,215+</strong>
+                                  </div>
                                 </div>
                               )}
 

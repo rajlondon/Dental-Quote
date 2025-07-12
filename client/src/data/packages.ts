@@ -115,8 +115,8 @@ const setExcursionInclusion = (packageTier: ExcursionTier, excursion: Excursion)
 export const trendingPackages: TrendingPackage[] = [
   {
     id: 'hollywood-smile-vacation',
-    title: 'Hollywood Smile Vacation Package',
-    description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying a luxury stay in Istanbul with guided tours and premium experiences.',
+    title: 'Hollywood Smile Luxury Family Vacation',
+    description: 'The ultimate luxury dental vacation for discerning families. Combine premium Hollywood Smile treatments with an exclusive 7-day Istanbul experience featuring 5-star accommodations, VIP services, and curated cultural excursions.',
     clinic: {
       id: 'maltepe-dental-clinic',
       name: 'Maltepe Dental Clinic',
@@ -136,8 +136,8 @@ export const trendingPackages: TrendingPackage[] = [
     ],
     totalPrice: 4250,
     promoCode: "HOLLYWOOD_SMILE",
-    savings: 2800,
-    duration: '7 days',
+    savings: 6750,
+    duration: '7 days, 6 nights',
     includedServices: {
       hotel: true,
       transfers: true,

@@ -91,8 +91,10 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
       </div>
 
       <CardContent className="p-4">
-        <p className="text-sm text-gray-600 line-clamp-2 mb-3">
-          {pkg.description}
+        <p className="text-sm text-gray-600 line-clamp-3 mb-3">
+          {pkg.id === 'hollywood-smile-vacation' 
+            ? 'The premier choice for discerning families combining world-class dental care with luxury Istanbul experiences. Premium treatments, 5-star accommodation, and VIP services throughout your 7-day journey.'
+            : pkg.description}
         </p>
 
         {/* Package details */}
@@ -141,12 +143,21 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
         {/* Price and call to action */}
         <div className="flex flex-col gap-3">
           <div className="bg-gray-50 p-3 rounded-md text-center">
-            <div className="text-sm text-gray-600 mb-1">Complete Package</div>
+            <div className="text-sm text-gray-600 mb-1">
+              {pkg.id === 'hollywood-smile-vacation' ? 'Luxury Family Package' : 'Complete Package'}
+            </div>
             <div className="flex items-center justify-center gap-2">
               <span className="text-xl font-bold text-primary">£{pkg.totalPrice}</span>
-              <span className="text-sm text-green-600 font-medium">Save £{pkg.savings}</span>
+              <span className="text-sm text-green-600 font-medium">
+                Save £{pkg.id === 'hollywood-smile-vacation' ? '6,000+' : pkg.savings}
+              </span>
             </div>
-            {freeExcursionsCount > 0 && (
+            {pkg.id === 'hollywood-smile-vacation' && (
+              <div className="text-xs text-blue-600 mt-1">
+                UK equivalent: £10,000+ | Premium dental + luxury vacation
+              </div>
+            )}
+            {pkg.id !== 'hollywood-smile-vacation' && freeExcursionsCount > 0 && (
               <div className="text-xs text-blue-600 mt-1">
                 Includes {freeExcursionsCount} complimentary excursion{freeExcursionsCount > 1 ? 's' : ''}
               </div>
