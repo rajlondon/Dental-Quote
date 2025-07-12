@@ -5,10 +5,28 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, XCircle, Package } from 'lucide-react';
 import axios from 'axios';
+import { trendingPackages } from '../data/packages';
 
 interface PromoCodeInputProps {
   initialPromoCode?: string | null;
 }
+
+// Helper function to get accommodation details based on package name
+const getAccommodationDetails = (packageName: string) => {
+  const packageMap: Record<string, any> = {
+    'Hollywood Smile Luxury Family Vacation': { nights: 6, days: 7, stars: 5, description: '5-star luxury hotel accommodation' },
+    'Dental Implant & City Experience': { nights: 4, days: 5, stars: 4, description: '4-star hotel accommodation' },
+    'Value Veneer & Istanbul Discovery': { nights: 3, days: 4, stars: 3, description: '3-star hotel accommodation' }
+  };
+  
+  return packageMap[packageName] || { nights: 5, days: 6, stars: 4, description: '4-star hotel accommodation' };
+};
+
+// Helper function to get package excursions
+const getPackageExcursions = (packageName: string) => {
+  const trendingPackage = trendingPackages.find(pkg => pkg.title === packageName);
+  return trendingPackage?.excursions || [];
+};
 
 export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
   const [inputCode, setInputCode] = useState(initialPromoCode || '');
@@ -109,7 +127,15 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                 
                 // Store package data in session storage for later use
                 sessionStorage.setItem('pendingPromoCode', inputCode.trim());
-                sessionStorage.setItem('pendingPackageData', JSON.stringify(response.data.packageData));
+                
+                // Enhance package data with accommodation details from trending packages
+                const enhancedPackageData = {
+                  ...response.data.packageData,
+                  accommodation: getAccommodationDetails(response.data.packageData.name),
+                  excursions: getPackageExcursions(response.data.packageData.name)
+                };
+                
+                sessionStorage.setItem('pendingPackageData', JSON.stringify(enhancedPackageData));
                 
                 // Store clinic ID if provided
                 if (response.data.clinicId) {

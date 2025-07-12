@@ -32,6 +32,12 @@ export interface TrendingPackage {
     area: string;
     image: string;
   };
+  accommodation: {
+    nights: number;
+    days: number;
+    stars: number;
+    description: string;
+  };
   treatments: {
     name: string;
     count: number;
@@ -129,6 +135,12 @@ export const trendingPackages: TrendingPackage[] = [
       area: 'Şişli',
       image: '/images/hotels/luxury-hotel.jpg'
     },
+    accommodation: {
+      nights: 6,
+      days: 7,
+      stars: 5,
+      description: '5-star luxury hotel accommodation'
+    },
     treatments: [
       { name: 'Premium Porcelain Veneer', count: 10 },
       { name: 'Teeth Whitening', count: 1 },
@@ -164,6 +176,12 @@ export const trendingPackages: TrendingPackage[] = [
       area: 'Şişli',
       image: '/images/hotels/standard-hotel.jpg'
     },
+    accommodation: {
+      nights: 4,
+      days: 5,
+      stars: 4,
+      description: '4-star hotel accommodation'
+    },
     treatments: [
       { name: 'Single Dental Implant', count: 2 },
       { name: 'Zirconia Crown', count: 2 },
@@ -198,6 +216,12 @@ export const trendingPackages: TrendingPackage[] = [
       stars: 3,
       area: 'Kadıköy',
       image: '/images/hotels/value-hotel.jpg'
+    },
+    accommodation: {
+      nights: 3,
+      days: 4,
+      stars: 3,
+      description: '3-star hotel accommodation'
     },
     treatments: [
       { name: 'Porcelain Veneer', count: 6 },

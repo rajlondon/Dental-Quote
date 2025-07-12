@@ -791,12 +791,15 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                     </div>
                                   ))}
 
-                                  {isPackage && (
+                                  {isPackage && packageData && (
                                     <div className="mt-3 pt-3 border-t border-gray-200">
                                       <div className="space-y-1 text-sm text-gray-600">
                                           <div className="flex items-center gap-2">
                                             <Check className="h-4 w-4 text-green-500" />
-                                            <span>5-star hotel accommodation (6 nights, 7 days)</span>
+                                            <span>
+                                              {packageData.accommodation?.description || `${packageData.accommodation?.stars || 4}-star hotel accommodation`} 
+                                              ({packageData.accommodation?.nights || 5} nights, {packageData.accommodation?.days || 6} days)
+                                            </span>
                                           </div>
                                           <div className="flex items-center gap-2">
                                             <Check className="h-4 w-4 text-green-500" />
@@ -806,28 +809,26 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                             <Check className="h-4 w-4 text-green-500" />
                                             <span>Personal patient coordinator</span>
                                           </div>
-                                          <div className="flex items-center gap-2">
-                                            <Check className="h-4 w-4 text-green-500" />
-                                            <span className="font-medium">4 Complimentary Excursions:</span>
-                                          </div>
-                                          <div className="ml-6 space-y-1">
-                                            <div className="flex items-center gap-2">
-                                              <Check className="h-3 w-3 text-green-500" />
-                                              <span>Bosphorus Cruise</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <Check className="h-3 w-3 text-green-500" />
-                                              <span>Old City Walking Tour</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <Check className="h-3 w-3 text-green-500" />
-                                              <span>Traditional Turkish Bath</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                              <Check className="h-3 w-3 text-green-500" />
-                                              <span>Turkish Culinary Tour</span>
-                                            </div>
-                                          </div>
+                                          {packageData.excursions && packageData.excursions.filter(exc => exc.included).length > 0 && (
+                                            <>
+                                              <div className="flex items-center gap-2">
+                                                <Check className="h-4 w-4 text-green-500" />
+                                                <span className="font-medium">
+                                                  {packageData.excursions.filter(exc => exc.included).length} Complimentary Excursion{packageData.excursions.filter(exc => exc.included).length > 1 ? 's' : ''}:
+                                                </span>
+                                              </div>
+                                              <div className="ml-6 space-y-1">
+                                                {packageData.excursions
+                                                  .filter(exc => exc.included)
+                                                  .map((excursion, index) => (
+                                                    <div key={index} className="flex items-center gap-2">
+                                                      <Check className="h-3 w-3 text-green-500" />
+                                                      <span>{excursion.name}</span>
+                                                    </div>
+                                                  ))}
+                                              </div>
+                                            </>
+                                          )}
                                         </div>
                                       </div>
                                   )}
