@@ -565,8 +565,13 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </div>
             <div className="flex justify-between pt-2 border-t font-semibold">
               <span>UK Estimated Price:</span>
-              <span>£{Math.round(ukTotal)}</span>
+              <span>£{packageData ? Math.round(packageData.originalPrice || 11000) : Math.round(ukTotal)}</span>
             </div>
+            {packageData && (
+              <div className="mt-2 text-sm text-green-600">
+                <span>UK Package Equivalent: Private dental (£{Math.round((packageData.originalPrice || 11000) * 0.6)}) + Luxury accommodation (£{Math.round((packageData.originalPrice || 11000) * 0.4)})</span>
+              </div>
+            )}
           </div>
 
           {/* Smart Matching Status */}
@@ -925,27 +930,41 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         totalPrice: totalPrice,
                                         treatmentPlan: activeTreatmentPlan,
                                         patientInfo: patientInfo,
-                                        timestamp: new Date().toISOString()
+                                        timestamp: new Date().toISOString(),
+                                        isPackage: isPackage,
+                                        packageData: packageData
                                       };
 
                                       localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
                                       localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
 
-                                      // Store package data in session storage
-                                      sessionStorage.setItem('pendingPromoCode', packageData?.promoCode || '');
-                                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
-                                      sessionStorage.setItem('pendingPromoCodeClinicId', clinic.id);
-                                      localStorage.setItem('treatmentPlanData', JSON.stringify({ treatments: activeTreatmentPlan, totalGBP: totalPrice, patientPreferences: patientInfo }));
+                                      // Store package data for portal
+                                      if (packageData) {
+                                        sessionStorage.setItem('pendingPromoCode', packageData.promoCode || packageData.id || '');
+                                        sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
+                                        sessionStorage.setItem('pendingPromoCodeClinicId', clinic.id);
+                                      }
+                                      
+                                      localStorage.setItem('treatmentPlanData', JSON.stringify({ 
+                                        treatments: activeTreatmentPlan, 
+                                        totalGBP: totalPrice, 
+                                        patientPreferences: patientInfo,
+                                        isPackage: isPackage,
+                                        packageData: packageData
+                                      }));
 
-                                      // Redirect to matched clinics page
-                                      setLocation('/matched-clinics');
+                                      // Set return URL for after login
+                                      localStorage.setItem('postLoginRedirect', '/patient-portal?section=quotes');
+
+                                      // Redirect to portal login
+                                      setLocation('/portal-login');
 
                                       toast({
-                                        title: "Package Selected",
-                                        description: "Redirecting to matched clinics...",
+                                        title: isPackage ? "Package Selected" : "Quote Selected",
+                                        description: "Please log in to continue with your booking...",
                                       });
                                     } catch (error) {
-                                      console.error('Error in Reserve Now button:', error);
+                                      console.error('Error in Get Quote Now button:', error);
                                       toast({
                                         title: "Error",
                                         description: "There was an error processing your selection. Please try again.",
