@@ -104,17 +104,10 @@ const PatientPortalPage: React.FC = () => {
     try {
       // Use the logout mutation from auth hook
       logoutMutation.mutate();
-      });
-
-      // 5. Now call server logout (but client is already destroyed)
-      await logoutMutation.mutateAsync();
     } catch (error) {
       console.error('Logout error:', error);
-
-      // Even if server logout fails, client is already destroyed
-      console.log('🆘 EMERGENCY CLIENT DESTRUCTION COMPLETE');
-
-      // Force redirect regardless
+      
+      // Force redirect on error
       setTimeout(() => {
         window.location.replace(`/portal-login?emergency_logout=${Date.now()}&client_destroyed=true`);
       }, 100);
