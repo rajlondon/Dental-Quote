@@ -3032,50 +3032,40 @@ export default function PriceCalculator({
                       </div>
                     </div>
                   ) : (
-                    <div className="min-h-[350px] flex flex-col text-neutral-700 bg-white rounded-lg border border-neutral-200 p-6">
-                      import React, { useState, useEffect } from 'react';
-import { useOptionalQuote } from '../contexts/QuoteContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { Calculator, FileText, Package, Clock, MapPin, Users, Shield, Award, Star } from 'lucide-react';
+                    <div className="min-h-[350px] flex flex-col justify-center items-center text-center text-neutral-700 bg-white rounded-lg border border-neutral-200 p-6">
+                      <div className="text-xs p-3 bg-primary/5 rounded-lg w-full max-w-sm">
+                        <p className="font-medium text-primary mb-2">
+                          How it works:
+                        </p>
+                        <ol className="text-left space-y-1.5">
+                          <li className="flex">
+                            <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
+                              1
+                            </span>
+                            <span>
+                              Select your required treatments
+                            </span>
+                          </li>
+                          <li className="flex">
+                            <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
+                              2
+                            </span>
+                            <span>Enter your contact details</span>
+                          </li>
+                          <li className="flex">
+                            <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
+                              3
+                            </span>
+                            <span>Get your instant quote</span>
+                          </li>
+                        </ol>
+                      </div>
 
-
-                          <div className="text-xs p-3 bg-primary/5 rounded-lg w-full max-w-sm">
-                            <p className="font-medium text-primary mb-2">
-                              How it works:
-                            </p>
-                            <ol className="text-left space-y-1.5">
-                              <li className="flex">
-                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
-                                  1
-                                </span>
-                                <span>
-                                  Select your required treatments
-                                </span>
-                              </li>
-                              <li className="flex">
-                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
-                                  2
-                                </span>
-                                <span>Enter your contact details</span>
-                              </li>
-                              <li className="flex">
-                                <span className="bg-primary text-white w-4 h-4 rounded-full flex items-center justify-center text-[10px] mr-1.5 flex-shrink-0 mt-0.5">
-                                  3
-                                </span>
-                                <span>Get your instant quote</span>
-                              </li>
-                            </ol>
-                          </div>
-                        </div>
-
-                        {/* Middle Section: How to Get The Most Accurate Quote with Smart Tags */}
-                        <div className="border-t border-gray-200 pt-6">
-                          <h4 className="text-lg font-semibold mb-3 text-primary text-center">
-                            How to Get the Most Accurate Quote
-                          </h4>
+                      {/* Middle Section: How to Get The Most Accurate Quote with Smart Tags */}
+                      <div className="border-t border-gray-200 pt-6 w-full">
+                        <h4 className="text-lg font-semibold mb-3 text-primary text-center">
+                          How to Get the Most Accurate Quote
+                        </h4>
 
                           {/* Smart i-Tag Info Section */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
