@@ -606,9 +606,10 @@ router.post('/logout', (req, res) => {
 
       // Add headers to prevent caching of auth state
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, private',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Clear-Site-Data': '"cache", "cookies", "storage"'
       });
 
       console.log(`Complete logout successful. Session ${sessionId} destroyed and cookies cleared`);
@@ -616,7 +617,8 @@ router.post('/logout', (req, res) => {
       res.status(200).json({ 
         success: true, 
         message: 'Logged out successfully',
-        sessionDestroyed: true
+        sessionDestroyed: true,
+        timestamp: Date.now()
       });
     });
   });

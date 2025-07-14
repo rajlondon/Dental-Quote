@@ -300,8 +300,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         queryClient.setQueryData(["global-auth-user"], null);
         userDataRef.current = null;
         
-        // Step 2: Call server logout endpoint
-        const res = await api.post("/api/auth/logout");
+        // Step 2: Call server logout endpoint with anti-cache headers
+        const res = await api.post("/api/auth/logout", {}, {
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         console.log("Server logout response:", res.status);
         return res.data;
       } catch (error: any) {
@@ -315,8 +320,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Aggressive client-side cleanup
       queryClient.clear();
+      queryClient.removeQueries();
+      queryClient.cancelQueries();
+      
+      // Clear all storage
       sessionStorage.clear();
       localStorage.clear();
+      
+      // Clear any cached user data
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
+      localStorage.removeItem('cached_user_data');
+      localStorage.removeItem('cached_user_timestamp');
 
       // Clear all possible cookie variations
       const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
@@ -346,9 +361,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log("Logout cleanup complete, redirecting...");
 
-      // Force redirect to login page with page reload
+      // Force redirect to login page with page reload and cache busting
       setTimeout(() => {
-        window.location.replace('/portal-login');
+        window.location.replace('/portal-login?t=' + Date.now());
       }, 50);
 
       toast({
@@ -361,6 +376,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Emergency cleanup
       queryClient.clear();
+      queryClient.removeQueries();
       sessionStorage.clear();
       localStorage.clear();
       userDataRef.current = null;
@@ -375,7 +391,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Force redirect even on error
       setTimeout(() => {
-        window.location.replace('/portal-login');
+        window.location.replace('/portal-login?t=' + Date.now());
       }, 50);
       
       toast({
