@@ -92,6 +92,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/auth/user"],
     queryFn: async () => {
       try {
+        // NUCLEAR PROTECTION: Check if logout is in progress
+        const logoutInProgress = sessionStorage.getItem('logout_in_progress') === 'true';
+        const forcedLogoutTimestamp = sessionStorage.getItem('forced_logout_timestamp');
+        const emergencyLogoutTimestamp = sessionStorage.getItem('emergency_logout_timestamp');
+        
+        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp) {
+          console.log("🛑 LOGOUT PROTECTION: Blocking auth query during logout process");
+          return null;
+        }
+        
         // Check sessionStorage cache first
         const cachedUserData = sessionStorage.getItem('cached_user_data');
         const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
@@ -293,21 +303,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       try {
-        console.log("Starting logout process...");
+        console.log("🚨 NUCLEAR LOGOUT: Starting complete session destruction...");
         
-        // Step 1: Clear client state FIRST to prevent race conditions
+        // Step 1: Immediately poison all client state
         queryClient.setQueryData(["/auth/user"], null);
         queryClient.setQueryData(["global-auth-user"], null);
         userDataRef.current = null;
         
-        // Step 2: Call server logout endpoint with anti-cache headers
-        const res = await api.post("/api/auth/logout", {}, {
+        // Step 2: Set a flag to prevent any auth queries from running
+        sessionStorage.setItem('logout_in_progress', 'true');
+        localStorage.setItem('logout_in_progress', 'true');
+        
+        // Step 3: Call server logout endpoint with maximum cache busting
+        const res = await api.post("/api/auth/logout", {
+          forceDestroy: true,
+          timestamp: Date.now()
+        }, {
           headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache'
+            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+            'X-Logout-Request': 'true'
           }
         });
-        console.log("Server logout response:", res.status);
+        console.log("🔥 Server logout response:", res.status);
         return res.data;
       } catch (error: any) {
         console.error("Server logout error:", error);
@@ -316,22 +335,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
-      console.log("Starting complete logout cleanup");
+      console.log("🧨 NUCLEAR CLEANUP: Starting complete state destruction");
       
-      // Aggressive client-side cleanup
+      // Step 1: Set permanent logout flags
+      const logoutTimestamp = Date.now();
+      sessionStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
+      localStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
+      
+      // Step 2: Aggressive query client cleanup
       queryClient.clear();
       queryClient.removeQueries();
       queryClient.cancelQueries();
+      queryClient.invalidateQueries();
       
-      // Clear all storage
+      // Step 3: Complete storage wipe
       sessionStorage.clear();
       localStorage.clear();
       
-      // Clear any cached user data
-      sessionStorage.removeItem('cached_user_data');
-      sessionStorage.removeItem('cached_user_timestamp');
-      localStorage.removeItem('cached_user_data');
-      localStorage.removeItem('cached_user_timestamp');
+      // Step 4: Re-set logout flags after clearing (they're important)
+      sessionStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
+      localStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
+      sessionStorage.setItem('logout_in_progress', 'true');
 
       // Clear all possible cookie variations
       const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
@@ -359,12 +383,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      console.log("Logout cleanup complete, redirecting...");
+      console.log("🚀 NUCLEAR REDIRECT: Forcing complete page replacement");
 
-      // Force redirect to login page with page reload and cache busting
+      // Force redirect with complete page replacement and maximum cache busting
       setTimeout(() => {
-        window.location.replace('/portal-login?t=' + Date.now());
-      }, 50);
+        const redirectUrl = `/portal-login?logout=${logoutTimestamp}&t=${Date.now()}&nocache=true`;
+        console.log("🎯 Redirecting to:", redirectUrl);
+        
+        // Use both replace and href assignment for maximum compatibility
+        window.location.replace(redirectUrl);
+        window.location.href = redirectUrl;
+      }, 100);
 
       toast({
         title: "Logged out",
@@ -372,14 +401,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      console.log("Logout error, performing emergency cleanup");
+      console.log("🆘 NUCLEAR ERROR RECOVERY: Performing emergency logout");
       
-      // Emergency cleanup
+      const emergencyTimestamp = Date.now();
+      
+      // Emergency state destruction
       queryClient.clear();
       queryClient.removeQueries();
       sessionStorage.clear();
       localStorage.clear();
       userDataRef.current = null;
+      
+      // Set emergency logout flags
+      sessionStorage.setItem('emergency_logout_timestamp', emergencyTimestamp.toString());
+      localStorage.setItem('emergency_logout_timestamp', emergencyTimestamp.toString());
       
       // Emergency cookie clearing
       document.cookie.split(";").forEach(function(c) { 
@@ -391,8 +426,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Force redirect even on error
       setTimeout(() => {
-        window.location.replace('/portal-login?t=' + Date.now());
-      }, 50);
+        const errorRedirectUrl = `/portal-login?error=logout_failed&t=${emergencyTimestamp}&nocache=true`;
+        window.location.replace(errorRedirectUrl);
+        window.location.href = errorRedirectUrl;
+      }, 100);
       
       toast({
         title: "Logout completed",

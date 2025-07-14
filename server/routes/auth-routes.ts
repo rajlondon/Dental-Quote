@@ -558,10 +558,13 @@ router.post('/recreate-admin', async (req, res) => {
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-  console.log('Logout request received for session:', req.sessionID);
+  console.log('🔥 NUCLEAR LOGOUT REQUEST: Complete session destruction for:', req.sessionID);
 
   // Get the session ID before destroying it
   const sessionId = req.sessionID;
+  const isForceDestroy = req.body.forceDestroy === true;
+
+  console.log('Force destroy requested:', isForceDestroy);
 
   // Immediately clear all session properties
   if (req.session) {
@@ -604,21 +607,26 @@ router.post('/logout', (req, res) => {
       res.cookie('connect.sid', '', { expires: new Date(0), path: '/', httpOnly: true });
       res.cookie('session', '', { expires: new Date(0), path: '/', httpOnly: true });
 
-      // Add headers to prevent caching of auth state
+      // Add nuclear headers to prevent ANY caching or persistence
       res.set({
-        'Cache-Control': 'no-cache, no-store, must-revalidate, private',
+        'Cache-Control': 'no-cache, no-store, must-revalidate, private, max-age=0',
         'Pragma': 'no-cache',
         'Expires': '0',
-        'Clear-Site-Data': '"cache", "cookies", "storage"'
+        'Clear-Site-Data': '"cache", "cookies", "storage", "executionContexts"',
+        'X-Logout-Complete': 'true',
+        'X-Session-Destroyed': sessionId,
+        'Vary': '*'
       });
 
-      console.log(`Complete logout successful. Session ${sessionId} destroyed and cookies cleared`);
+      console.log(`🧨 NUCLEAR LOGOUT COMPLETE: Session ${sessionId} completely destroyed`);
       
       res.status(200).json({ 
         success: true, 
-        message: 'Logged out successfully',
+        message: 'Nuclear logout completed - all session data destroyed',
         sessionDestroyed: true,
-        timestamp: Date.now()
+        sessionId: sessionId,
+        timestamp: Date.now(),
+        nuclearLogout: true
       });
     });
   });

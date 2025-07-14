@@ -31,6 +31,16 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
     queryKey: ['global-auth-user', Date.now()], // Add timestamp to force fresh requests
     queryFn: async () => {
       try {
+        // NUCLEAR PROTECTION: Check if logout is in progress
+        const logoutInProgress = sessionStorage.getItem('logout_in_progress') === 'true';
+        const forcedLogoutTimestamp = sessionStorage.getItem('forced_logout_timestamp');
+        const emergencyLogoutTimestamp = sessionStorage.getItem('emergency_logout_timestamp');
+        
+        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp) {
+          console.log("🛑 GLOBAL AUTH PROTECTION: Blocking auth query during logout process");
+          return null;
+        }
+        
         const response = await api.get('/api/auth/user', {
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
