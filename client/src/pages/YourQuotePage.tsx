@@ -10,7 +10,7 @@ import { QuoteContext, useOptionalQuote } from '../contexts/QuoteContext';
 import { TreatmentPlanBuilder } from '../components/TreatmentPlanBuilder';
 import { PromoCodeInput } from '../components/PromoCodeInput';
 import { Heart, MapPin, Star, Clock, Award, Shield, Plane, Hotel, Car, Users } from 'lucide-react';
-import { PriceCalculator } from '../components/PriceCalculator';
+import PriceCalculator from '../components/PriceCalculator';
 
 export default function YourQuotePage() {
   const [, setLocation] = useLocation();
