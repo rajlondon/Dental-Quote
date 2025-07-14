@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -12,7 +11,7 @@ import { PromoCodeInput } from '../components/PromoCodeInput';
 import { Heart, MapPin, Star, Clock, Award, Shield, Plane, Hotel, Car, Users } from 'lucide-react';
 import PriceCalculator from '../components/PriceCalculator';
 
-export default function YourQuotePage() {
+function YourQuotePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [urlParams] = useState(() => new URLSearchParams(window.location.search));
@@ -25,19 +24,19 @@ export default function YourQuotePage() {
   useEffect(() => {
     const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
     const pendingPackageData = sessionStorage.getItem('pendingPackageData');
-    
+
     if (pendingPromoCode && pendingPackageData) {
       console.log('Auto-applying package promo code:', pendingPromoCode);
-      
+
       try {
         const packageData = JSON.parse(pendingPackageData);
-        
+
         // Store clinic ID if provided
         const clinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
         if (clinicId) {
           console.log('Storing promo code clinic ID:', clinicId);
         }
-        
+
         // Emit the package event for any listeners
         const packageEvent = new CustomEvent('packagePromoApplied', {
           detail: {
@@ -49,12 +48,12 @@ export default function YourQuotePage() {
         });
         window.dispatchEvent(packageEvent);
         console.log('🎯 Package promo event received:', [packageEvent.detail]);
-        
+
         // Clear the session storage
         sessionStorage.removeItem('pendingPromoCode');
         sessionStorage.removeItem('pendingPackageData');
         sessionStorage.removeItem('pendingPromoCodeClinicId');
-        
+
       } catch (error) {
         console.error('Error processing pending package data:', error);
       }
@@ -187,3 +186,5 @@ export default function YourQuotePage() {
     </QuoteContext>
   );
 }
+
+export default YourQuotePage;

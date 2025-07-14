@@ -272,7 +272,7 @@ interface PriceCalculatorProps {
   onQuoteComplete?: (quoteData: any) => void;
 }
 
-export default function PriceCalculator({ 
+function PriceCalculator({ 
   selectedCity = 'istanbul',
   preselectedTreatment,
   promoCode,
@@ -3992,3 +3992,5 @@ export default function PriceCalculator({
     </section>
   );
 }
+
+export default PriceCalculator;
