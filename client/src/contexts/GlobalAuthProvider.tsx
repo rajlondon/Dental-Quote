@@ -28,13 +28,13 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
   // Use React Query to fetch and cache user data
   // We use a generous staleTime to avoid unnecessary refetches
   const { data, isLoading, error } = useQuery({
-    queryKey: ['global-auth-user', Date.now()], // Add timestamp to force fresh requests
+    queryKey: ['global-auth-user'], // Remove timestamp to allow caching
     queryFn: async () => {
       console.log('🌐 GLOBAL AUTH QUERY: Starting user data fetch');
       try {
         
         
-        const response = await api.get('/api/auth/user', {
+        const response = await api.get('/auth/user', {
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate',
             'Pragma': 'no-cache'
@@ -53,12 +53,12 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         return null;
       }
     },
-    staleTime: 0,             // Never consider data stale
+    staleTime: 30000,         // Consider data fresh for 30 seconds
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
-    retry: false,             // Don't retry failed requests
-    refetchOnMount: true,     // Always refetch when component mounts
+    retry: 1,                 // Retry failed requests once
+    refetchOnMount: false,    // Don't always refetch on mount
     enabled: true,            // Always enabled
-    gcTime: 0,                // Don't cache queries after component unmount
+    gcTime: 300000,           // Cache for 5 minutes
   });
 
   // Log authentication state
