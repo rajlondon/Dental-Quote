@@ -70,8 +70,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Read from cache initially to avoid flickering
+  // Read from cache initially to avoid flickering and clean up old debugging flags
   React.useEffect(() => {
+    // Clean up old debugging flags from previous versions
+    const oldFlags = [
+      'logout_in_progress',
+      'forced_logout_timestamp', 
+      'emergency_logout_timestamp',
+      'auth_disabled',
+      'ultimate_logout_flag',
+      'immediate_logout_timestamp',
+      'auth_completely_disabled',
+      'client_side_logout_complete'
+    ];
+    
+    oldFlags.forEach(flag => {
+      sessionStorage.removeItem(flag);
+      localStorage.removeItem(flag);
+    });
+
     const cachedUserData = sessionStorage.getItem('cached_user_data');
     if (cachedUserData) {
       try {
@@ -92,20 +109,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/auth/user"],
     queryFn: async () => {
       try {
-        // ULTIMATE PROTECTION: Check if logout is in progress
-        const logoutInProgress = sessionStorage.getItem('logout_in_progress') === 'true';
-        const forcedLogoutTimestamp = sessionStorage.getItem('forced_logout_timestamp');
-        const emergencyLogoutTimestamp = sessionStorage.getItem('emergency_logout_timestamp');
-        const authDisabled = sessionStorage.getItem('auth_disabled') === 'true';
-        const ultimateLogoutFlag = sessionStorage.getItem('ultimate_logout_flag') === 'true';
-        const immediateLogoutTimestamp = sessionStorage.getItem('immediate_logout_timestamp');
-        const authCompletelyDisabled = sessionStorage.getItem('auth_completely_disabled') === 'true';
-        const clientSideLogoutComplete = sessionStorage.getItem('client_side_logout_complete') === 'true';
-        
-        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp || authDisabled || ultimateLogoutFlag || immediateLogoutTimestamp || authCompletelyDisabled || clientSideLogoutComplete) {
-          console.log("🛑 ULTIMATE PROTECTION: Blocking auth query during logout process");
-          return null;
-        }
         
         // Check sessionStorage cache first
         const cachedUserData = sessionStorage.getItem('cached_user_data');
@@ -308,34 +311,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       try {
-        console.log("🚨 ULTIMATE LOGOUT: Starting complete session destruction...");
-        
-        // Step 1: Immediately poison all client state
-        queryClient.setQueryData(["/auth/user"], null);
-        queryClient.setQueryData(["global-auth-user"], null);
-        userDataRef.current = null;
-        
-        // Step 2: Set multiple flags to prevent any auth queries from running
-        sessionStorage.setItem('logout_in_progress', 'true');
-        localStorage.setItem('logout_in_progress', 'true');
-        sessionStorage.setItem('auth_disabled', 'true');
-        localStorage.setItem('auth_disabled', 'true');
-        
-        // Step 3: Call server logout endpoint with maximum cache busting
-        const res = await api.post("/api/auth/logout", {
-          forceDestroy: true,
-          timestamp: Date.now(),
-          ultimateLogout: true
-        }, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-            'X-Logout-Request': 'true',
-            'X-Ultimate-Logout': 'true'
-          }
-        });
-        console.log("🔥 Server logout response:", res.status);
+        // Call server logout endpoint
+        const res = await api.post("/api/auth/logout");
         return res.data;
       } catch (error: any) {
         console.error("Server logout error:", error);
@@ -344,78 +321,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
-      console.log("🧨 ULTIMATE CLEANUP: Starting complete state destruction");
+      // Clear query cache
+      queryClient.setQueryData(["/auth/user"], null);
+      queryClient.setQueryData(["global-auth-user"], null);
+      queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
+      queryClient.invalidateQueries({ queryKey: ["global-auth-user"] });
       
-      // Step 1: Set permanent logout flags
-      const logoutTimestamp = Date.now();
+      // Clear user ref
+      userDataRef.current = null;
       
-      // Step 2: ULTIMATE query client cleanup
-      queryClient.clear();
-      queryClient.removeQueries();
-      queryClient.cancelQueries();
-      queryClient.invalidateQueries();
-      queryClient.resetQueries();
+      // Clear auth-related storage only
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAdmin');
       
-      // Step 3: Complete storage wipe
-      sessionStorage.clear();
-      localStorage.clear();
+      // Clear session cookies
+      document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+      document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
       
-      // Step 4: Re-set logout flags after clearing (they're important)
-      sessionStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
-      localStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
-      sessionStorage.setItem('logout_in_progress', 'true');
-      localStorage.setItem('logout_in_progress', 'true');
-      sessionStorage.setItem('auth_disabled', 'true');
-      localStorage.setItem('auth_disabled', 'true');
-      sessionStorage.setItem('ultimate_logout_flag', 'true');
-      localStorage.setItem('ultimate_logout_flag', 'true');
-
-      // Clear all possible cookie variations
-      const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
-      const domains = [window.location.hostname, `.${window.location.hostname}`];
-      const paths = ['/', '/api', '/auth'];
-      
-      cookieNames.forEach(cookieName => {
-        paths.forEach(path => {
-          domains.forEach(domain => {
-            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}`;
-            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
-          });
-        });
-      });
-
-      // Clear ALL existing cookies as fallback
-      document.cookie.split(";").forEach(function(c) { 
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-        if (name) {
-          // Try multiple combinations to ensure deletion
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
-        }
-      });
-
-      console.log("🚀 ULTIMATE REDIRECT: Forcing complete page replacement");
-
-      // Force redirect with complete page replacement and maximum cache busting
-      setTimeout(() => {
-        const redirectUrl = `/portal-login?ultimate_logout=${logoutTimestamp}&t=${Date.now()}&nocache=true&clear_auth=true`;
-        console.log("🎯 Ultimate redirecting to:", redirectUrl);
-        
-        // Multiple redirect attempts for maximum compatibility
-        try {
-          window.location.replace(redirectUrl);
-        } catch (e) {
-          console.log("Replace failed, trying href");
-          window.location.href = redirectUrl;
-        }
-        
-        // Force page reload as backup
-        setTimeout(() => {
-          window.location.reload();
-        }, 200);
-      }, 100);
+      // Redirect to login
+      window.location.href = '/portal-login';
 
       toast({
         title: "Logged out",
@@ -423,35 +350,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      console.log("🆘 NUCLEAR ERROR RECOVERY: Performing emergency logout");
-      
-      const emergencyTimestamp = Date.now();
-      
-      // Emergency state destruction
-      queryClient.clear();
-      queryClient.removeQueries();
-      sessionStorage.clear();
-      localStorage.clear();
+      // Emergency cleanup on error
+      queryClient.setQueryData(["/auth/user"], null);
+      queryClient.setQueryData(["global-auth-user"], null);
       userDataRef.current = null;
       
-      // Set emergency logout flags
-      sessionStorage.setItem('emergency_logout_timestamp', emergencyTimestamp.toString());
-      localStorage.setItem('emergency_logout_timestamp', emergencyTimestamp.toString());
+      // Clear auth storage
+      sessionStorage.removeItem('cached_user_data');
+      sessionStorage.removeItem('cached_user_timestamp');
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('user');
+      localStorage.removeItem('isAdmin');
       
-      // Emergency cookie clearing
-      document.cookie.split(";").forEach(function(c) { 
-        const name = c.split("=")[0].trim();
-        if (name) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-        }
-      });
-      
-      // Force redirect even on error
-      setTimeout(() => {
-        const errorRedirectUrl = `/portal-login?error=logout_failed&t=${emergencyTimestamp}&nocache=true`;
-        window.location.replace(errorRedirectUrl);
-        window.location.href = errorRedirectUrl;
-      }, 100);
+      // Redirect to login
+      window.location.href = '/portal-login';
       
       toast({
         title: "Logout completed",

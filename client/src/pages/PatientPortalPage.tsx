@@ -101,37 +101,9 @@ const PatientPortalPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = async () => {
-    console.log('🚨 Starting patient portal logout...');
-
     try {
-      // IMMEDIATE CLIENT DESTRUCTION - before any server calls
-      console.log('🧨 IMMEDIATE CLIENT AUTH DESTRUCTION');
-
-      // 1. Poison all query caches immediately
-      queryClient.setQueryData(["/auth/user"], null);
-      queryClient.setQueryData(["global-auth-user"], null);
-
-      // 2. Clear all storages immediately
-      sessionStorage.clear();
-      localStorage.clear();
-
-      // 3. Set multiple blocking flags
-      const destructionTimestamp = Date.now();
-      sessionStorage.setItem('immediate_logout_timestamp', destructionTimestamp.toString());
-      localStorage.setItem('immediate_logout_timestamp', destructionTimestamp.toString());
-      sessionStorage.setItem('auth_completely_disabled', 'true');
-      localStorage.setItem('auth_completely_disabled', 'true');
-      sessionStorage.setItem('client_side_logout_complete', 'true');
-      localStorage.setItem('client_side_logout_complete', 'true');
-
-      // 4. Clear all cookies immediately
-      document.cookie.split(";").forEach(function(c) { 
-        const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
-        if (name) {
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-        }
+      // Use the logout mutation from auth hook
+      logoutMutation.mutate();
       });
 
       // 5. Now call server logout (but client is already destroyed)

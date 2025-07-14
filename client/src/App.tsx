@@ -349,32 +349,7 @@ function AppRouter() {
 }
 
 function App() {
-  // Global protection against accessing app after client-side logout
-  useEffect(() => {
-    const checkLogoutFlags = () => {
-      const immediateLogoutTimestamp = sessionStorage.getItem('immediate_logout_timestamp');
-      const authCompletelyDisabled = sessionStorage.getItem('auth_completely_disabled') === 'true';
-      const clientSideLogoutComplete = sessionStorage.getItem('client_side_logout_complete') === 'true';
-
-      if (immediateLogoutTimestamp || authCompletelyDisabled || clientSideLogoutComplete) {
-        const currentPath = window.location.pathname;
-
-        // If user is trying to access protected pages after client-side logout, redirect
-        if (currentPath !== '/portal-login' && currentPath !== '/' && !currentPath.startsWith('/how-it-works') && !currentPath.startsWith('/blog')) {
-          console.log('🚫 GLOBAL LOGOUT PROTECTION: Redirecting to login after client-side logout');
-          window.location.replace(`/portal-login?forced_redirect=${Date.now()}&reason=client_logout`);
-        }
-      }
-    };
-
-    // Check immediately
-    checkLogoutFlags();
-
-    // Check periodically
-    const interval = setInterval(checkLogoutFlags, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+  
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
