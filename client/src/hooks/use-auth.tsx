@@ -108,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } = useQuery<User | null, Error>({
     queryKey: ["/auth/user"],
     queryFn: async () => {
+      console.log("🔍 AUTH QUERY: Starting user authentication check");
       try {
         
         // Check sessionStorage cache first
@@ -121,24 +122,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (age < 10000) { // 10 seconds cache for quick access
             const parsedUser = JSON.parse(cachedUserData);
             userDataRef.current = parsedUser;
-            console.log(`Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
+            console.log(`🔍 AUTH QUERY: Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
             return parsedUser;
           }
         }
 
         // Fetch fresh data from server
-        console.log("Fetching fresh user data from server");
+        console.log("🔍 AUTH QUERY: Fetching fresh user data from server");
         const apiRes = await api.get("/auth/user");
         const userData = apiRes.data.user || null;
 
-        console.log("Server response user data:", userData ? `ID: ${userData.id}, Role: ${userData.role}` : 'null');
+        console.log("🔍 AUTH QUERY: Server response user data:", userData ? `ID: ${userData.id}, Role: ${userData.role}` : 'null');
 
         // Update cache and ref
         if (userData) {
+          console.log("🔍 AUTH QUERY: User authenticated, updating cache");
           userDataRef.current = userData;
           sessionStorage.setItem('cached_user_data', JSON.stringify(userData));
           sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
         } else {
+          console.log("🔍 AUTH QUERY: No user data, clearing cache");
           userDataRef.current = null;
           sessionStorage.removeItem('cached_user_data');
           sessionStorage.removeItem('cached_user_timestamp');
@@ -146,13 +149,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return userData;
       } catch (error: any) {
-        console.log('Auth query error:', error?.response?.status, error?.message);
+        console.log('🔍 AUTH QUERY: Auth query error:', error?.response?.status, error?.message);
         // If we get a 401, it just means user is not authenticated
         if (error.response?.status === 401) {
+          console.log('🔍 AUTH QUERY: 401 - User not authenticated');
           return null;
         }
         // For any other error, also return null to prevent crashes
-        console.warn('Authentication check failed:', error?.message);
+        console.warn('🔍 AUTH QUERY: Authentication check failed:', error?.message);
         return null;
       }
     },
@@ -310,27 +314,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
+      console.log("🚪 LOGOUT MUTATION: Starting logout process");
       try {
+        console.log("🚪 LOGOUT MUTATION: Calling server logout endpoint /api/auth/logout");
         // Call server logout endpoint
         const res = await api.post("/api/auth/logout");
+        console.log("🚪 LOGOUT MUTATION: Server logout successful", res.data);
         return res.data;
       } catch (error: any) {
-        console.error("Server logout error:", error);
+        console.error("🚪 LOGOUT MUTATION: Server logout error:", error);
         // Continue with cleanup even if server logout fails
         return null;
       }
     },
     onSuccess: () => {
+      console.log("🚪 LOGOUT SUCCESS: Starting cleanup process");
+      
       // Clear query cache
+      console.log("🚪 LOGOUT SUCCESS: Clearing query cache");
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
       queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["global-auth-user"] });
       
       // Clear user ref
+      console.log("🚪 LOGOUT SUCCESS: Clearing user ref");
       userDataRef.current = null;
       
       // Clear auth-related storage only
+      console.log("🚪 LOGOUT SUCCESS: Clearing localStorage and sessionStorage");
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
       localStorage.removeItem('authToken');
@@ -338,10 +350,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('isAdmin');
       
       // Clear session cookies
+      console.log("🚪 LOGOUT SUCCESS: Clearing session cookies");
       document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
       document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
       
       // Redirect to login
+      console.log("🚪 LOGOUT SUCCESS: Redirecting to /portal-login");
       window.location.href = '/portal-login';
 
       toast({
@@ -350,12 +364,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      console.error("🚪 LOGOUT ERROR: Logout mutation failed", error);
+      
       // Emergency cleanup on error
+      console.log("🚪 LOGOUT ERROR: Starting emergency cleanup");
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
       userDataRef.current = null;
       
       // Clear auth storage
+      console.log("🚪 LOGOUT ERROR: Clearing auth storage");
       sessionStorage.removeItem('cached_user_data');
       sessionStorage.removeItem('cached_user_timestamp');
       localStorage.removeItem('authToken');
@@ -363,6 +381,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('isAdmin');
       
       // Redirect to login
+      console.log("🚪 LOGOUT ERROR: Redirecting to /portal-login");
       window.location.href = '/portal-login';
       
       toast({

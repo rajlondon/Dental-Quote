@@ -62,6 +62,11 @@ const PatientPortalPage: React.FC = () => {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
 
+  // Log user state changes
+  React.useEffect(() => {
+    console.log('👤 PATIENT PORTAL: User state changed:', user ? `${user.email} (${user.role})` : 'null');
+  }, [user]);
+
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons
@@ -101,13 +106,16 @@ const PatientPortalPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = async () => {
+    console.log('👤 PATIENT PORTAL: handleLogout called');
     try {
+      console.log('👤 PATIENT PORTAL: Calling logoutMutation.mutate()');
       // Use the logout mutation from auth hook
       logoutMutation.mutate();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('👤 PATIENT PORTAL: Logout error:', error);
       
       // Force redirect on error
+      console.log('👤 PATIENT PORTAL: Forcing emergency redirect');
       setTimeout(() => {
         window.location.replace(`/portal-login?emergency_logout=${Date.now()}&client_destroyed=true`);
       }, 100);

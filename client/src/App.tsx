@@ -102,6 +102,20 @@ import { ProtectedRoute } from "./lib/protected-route";
 import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
 import PortalLoginPage from "@/pages/PortalLoginPage";
 import { LoadingSpinner } from "./components/LoadingSpinner";
+import { GlobalAuthProvider } from '@/contexts/GlobalAuthProvider';
+import { useAuth } from '@/hooks/use-auth';
+import React from 'react';
+
+// Auth state logger component
+const AuthStateLogger = () => {
+  const { user, isLoading } = useAuth();
+
+  React.useEffect(() => {
+    console.log('🔐 APP AUTH STATE: Loading:', isLoading, 'User:', user ? `${user.email} (${user.role})` : 'null');
+  }, [user, isLoading]);
+
+  return null;
+};
 
 function AppRouter() {
   // Add route change logging
@@ -349,7 +363,7 @@ function AppRouter() {
 }
 
 function App() {
-  
+
   // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
@@ -391,8 +405,9 @@ function App() {
   return (
     <ErrorBoundary componentName="RootApplication">
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-
+        <GlobalAuthProvider>
+          <AuthProvider>
+            <AuthStateLogger />
             <NotificationsProvider>
               <BookingsProvider>
                 <Suspense fallback={
@@ -413,8 +428,8 @@ function App() {
                 </Suspense>
               </BookingsProvider>
             </NotificationsProvider>
-
-        </AuthProvider>
+          </AuthProvider>
+        </GlobalAuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );

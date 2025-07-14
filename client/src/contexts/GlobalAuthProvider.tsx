@@ -30,6 +30,7 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
   const { data, isLoading, error } = useQuery({
     queryKey: ['global-auth-user', Date.now()], // Add timestamp to force fresh requests
     queryFn: async () => {
+      console.log('🌐 GLOBAL AUTH QUERY: Starting user data fetch');
       try {
         
         
@@ -39,13 +40,13 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
             'Pragma': 'no-cache'
           }
         });
-        console.log('GlobalAuthProvider: User data fetched successfully');
+        console.log('🌐 GLOBAL AUTH QUERY: User data fetched successfully');
         return response.data?.user || null;
       } catch (error: any) {
-        console.error('GlobalAuthProvider: Failed to fetch user data', error);
+        console.error('🌐 GLOBAL AUTH QUERY: Failed to fetch user data', error);
         // If 401, user is not authenticated
         if (error.response?.status === 401) {
-          console.log('GlobalAuthProvider: User not authenticated (401)');
+          console.log('🌐 GLOBAL AUTH QUERY: User not authenticated (401)');
           return null;
         }
         // Don't throw - return null for unauthenticated state
@@ -63,11 +64,11 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
   // Log authentication state
   React.useEffect(() => {
     if (isLoading) {
-      console.log('GlobalAuthProvider: Loading user data...');
+      console.log('🌐 GLOBAL AUTH: Loading user data...');
     } else if (data) {
-      console.log(`GlobalAuthProvider: Authenticated as ${data.email} (${data.role})`);
+      console.log(`🌐 GLOBAL AUTH: Authenticated as ${data.email} (${data.role})`);
     } else {
-      console.log('GlobalAuthProvider: Not authenticated');
+      console.log('🌐 GLOBAL AUTH: Not authenticated');
     }
   }, [isLoading, data]);
 
