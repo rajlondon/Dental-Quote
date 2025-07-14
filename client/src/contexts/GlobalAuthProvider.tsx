@@ -34,8 +34,12 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         const response = await api.get('/api/auth/user');
         console.log('GlobalAuthProvider: User data fetched successfully');
         return response.data?.user || null;
-      } catch (error) {
+      } catch (error: any) {
         console.error('GlobalAuthProvider: Failed to fetch user data', error);
+        // If 401, user is not authenticated
+        if (error.response?.status === 401) {
+          return null;
+        }
         // Don't throw - return null for unauthenticated state
         return null;
       }
@@ -43,6 +47,7 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
     staleTime: 30000,         // Consider data fresh for 30 seconds
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
     retry: false,             // Don't retry failed requests
+    refetchOnMount: true,     // Always refetch when component mounts
   });
 
   // Log authentication state

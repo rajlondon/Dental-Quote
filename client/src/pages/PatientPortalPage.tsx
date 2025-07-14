@@ -101,18 +101,33 @@ const PatientPortalPage: React.FC = () => {
   // Handle logout
   const handleLogout = async () => {
     try {
+      // Clear all client-side storage immediately
+      sessionStorage.clear();
+      localStorage.clear();
+      
+      // Clear React Query cache
+      const { queryClient } = require('@/lib/queryClient');
+      queryClient.clear();
+      
+      // Attempt server logout
       await logoutMutation.mutateAsync();
-      // Force a complete page reload to clear all state
-      window.location.href = '/portal-login';
+      
+      // Force complete navigation to login page
+      window.location.replace('/portal-login');
     } catch (error) {
       console.error('Logout failed:', error);
+      
+      // Even if server logout fails, clear client state and redirect
+      sessionStorage.clear();
+      localStorage.clear();
+      
       toast({
-        title: "Logout failed",
-        description: "There was an issue logging out. Please try again.",
-        variant: "destructive",
+        title: "Logout completed",
+        description: "You have been logged out.",
       });
-      // Even if logout fails, redirect to login
-      window.location.href = '/portal-login';
+      
+      // Force complete navigation to login page
+      window.location.replace('/portal-login');
     }
   };
 

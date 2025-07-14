@@ -560,21 +560,38 @@ router.post('/recreate-admin', async (req, res) => {
 router.post('/logout', (req, res) => {
   console.log('Logout request received');
 
+  // Clear session variables immediately
+  req.session.userId = undefined;
+  req.session.userRole = undefined;
+
   req.logout((err) => {
     if (err) {
       console.error('Error during logout:', err);
-      return res.status(500).json({ error: 'Logout failed' });
+      // Still try to destroy session even on logout error
     }
 
     // Destroy the session completely
     req.session.destroy((destroyErr) => {
       if (destroyErr) {
         console.error('Error destroying session:', destroyErr);
-        return res.status(500).json({ error: 'Session destruction failed' });
+        // Still clear cookie and respond even on destroy error
       }
 
-      // Clear the session cookie
-      res.clearCookie('connect.sid');
+      // Clear all possible session cookies
+      res.clearCookie('connect.sid', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
+      
+      // Also clear any other auth cookies
+      res.clearCookie('session', {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax'
+      });
 
       console.log('User logged out successfully and session destroyed');
       res.json({ success: true, message: 'Logged out successfully' });

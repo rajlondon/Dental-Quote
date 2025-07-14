@@ -298,15 +298,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
-      // Clear user data from query cache
+      // Clear user data from query cache immediately
       queryClient.setQueryData(["/auth/user"], null);
+      queryClient.setQueryData(["global-auth-user"], null);
       
       // Clear all React Query caches
       queryClient.clear();
 
-      // Clear all session-related caches for a clean logout
+      // Clear all session and local storage
       sessionStorage.clear();
       localStorage.clear();
+
+      // Clear any cached user data
+      userDataRef.current = null;
 
       console.log("Auth cache cleared during logout");
 
@@ -316,10 +320,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
+      // Even on error, clear client state
+      queryClient.setQueryData(["/auth/user"], null);
+      queryClient.setQueryData(["global-auth-user"], null);
+      sessionStorage.clear();
+      localStorage.clear();
+      userDataRef.current = null;
+      
       toast({
-        title: "Logout failed",
-        description: error.message,
-        variant: "destructive",
+        title: "Logout completed",
+        description: "You have been logged out",
       });
     },
   });
