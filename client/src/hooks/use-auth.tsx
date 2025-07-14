@@ -83,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       'auth_completely_disabled',
       'client_side_logout_complete'
     ];
-    
+
     oldFlags.forEach(flag => {
       sessionStorage.removeItem(flag);
       localStorage.removeItem(flag);
@@ -110,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async () => {
       console.log("🔍 AUTH QUERY: Starting user authentication check");
       try {
-        
+
         // Check sessionStorage cache first
         const cachedUserData = sessionStorage.getItem('cached_user_data');
         const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
@@ -329,18 +329,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       console.log("🚪 LOGOUT SUCCESS: Starting cleanup process");
-      
+
       // Clear query cache
       console.log("🚪 LOGOUT SUCCESS: Clearing query cache");
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
       queryClient.invalidateQueries({ queryKey: ["/auth/user"] });
       queryClient.invalidateQueries({ queryKey: ["global-auth-user"] });
-      
+
       // Clear user ref
       console.log("🚪 LOGOUT SUCCESS: Clearing user ref");
       userDataRef.current = null;
-      
+
       // Clear auth-related storage only
       console.log("🚪 LOGOUT SUCCESS: Clearing localStorage and sessionStorage");
       sessionStorage.removeItem('cached_user_data');
@@ -348,12 +348,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('isAdmin');
-      
+
       // Clear session cookies
       console.log("🚪 LOGOUT SUCCESS: Clearing session cookies");
       document.cookie = 'connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
       document.cookie = 'session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
-      
+
       // Redirect to login
       console.log("🚪 LOGOUT SUCCESS: Redirecting to /portal-login");
       window.location.href = '/portal-login';
@@ -365,13 +365,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onError: (error: Error) => {
       console.error("🚪 LOGOUT ERROR: Logout mutation failed", error);
-      
+
       // Emergency cleanup on error
       console.log("🚪 LOGOUT ERROR: Starting emergency cleanup");
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
       userDataRef.current = null;
-      
+
       // Clear auth storage
       console.log("🚪 LOGOUT ERROR: Clearing auth storage");
       sessionStorage.removeItem('cached_user_data');
@@ -379,11 +379,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       localStorage.removeItem('isAdmin');
-      
+
       // Redirect to login
       console.log("🚪 LOGOUT ERROR: Redirecting to /portal-login");
       window.location.href = '/portal-login';
-      
+
       toast({
         title: "Logout completed",
         description: "You have been logged out",

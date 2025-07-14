@@ -53,12 +53,14 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         return null;
       }
     },
-    staleTime: 30000,         // Consider data fresh for 30 seconds
+    staleTime: 60000,         // Consider data fresh for 60 seconds
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
     retry: 1,                 // Retry failed requests once
     refetchOnMount: false,    // Don't always refetch on mount
     enabled: true,            // Always enabled
     gcTime: 300000,           // Cache for 5 minutes
+    refetchInterval: false,   // Don't poll
+    refetchIntervalInBackground: false, // Don't poll in background
   });
 
   // Log authentication state
