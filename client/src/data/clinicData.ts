@@ -1,6 +1,6 @@
 import { ClinicInfo } from "@/types/quote";
 
-export const CLINIC_DATA: ClinicInfo[] = [
+export const clinicsData: ClinicInfo[] = [
   {
     id: "istanbul-dental-care",
     name: "Istanbul Dental Care",
