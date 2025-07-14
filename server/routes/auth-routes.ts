@@ -558,43 +558,49 @@ router.post('/recreate-admin', async (req, res) => {
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-  console.log('Logout request received');
+  console.log('Logout request received for session:', req.sessionID);
 
   // Clear session variables immediately
   req.session.userId = undefined;
   req.session.userRole = undefined;
 
-  req.logout((err) => {
-    if (err) {
-      console.error('Error during logout:', err);
-      // Still try to destroy session even on logout error
+  // Force immediate session save to clear the variables
+  req.session.save((saveErr) => {
+    if (saveErr) {
+      console.error('Error saving cleared session:', saveErr);
     }
 
-    // Destroy the session completely
-    req.session.destroy((destroyErr) => {
-      if (destroyErr) {
-        console.error('Error destroying session:', destroyErr);
-        // Still clear cookie and respond even on destroy error
+    req.logout((err) => {
+      if (err) {
+        console.error('Error during passport logout:', err);
+        // Still try to destroy session even on logout error
       }
 
-      // Clear all possible session cookies
-      res.clearCookie('connect.sid', {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
-      
-      // Also clear any other auth cookies
-      res.clearCookie('session', {
-        path: '/',
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax'
-      });
+      // Destroy the session completely
+      req.session.destroy((destroyErr) => {
+        if (destroyErr) {
+          console.error('Error destroying session:', destroyErr);
+          // Still clear cookie and respond even on destroy error
+        }
 
-      console.log('User logged out successfully and session destroyed');
-      res.json({ success: true, message: 'Logged out successfully' });
+        // Clear all possible session cookies with multiple variations
+        const cookieOptions = {
+          path: '/',
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax' as const
+        };
+
+        res.clearCookie('connect.sid', cookieOptions);
+        res.clearCookie('session', cookieOptions);
+        
+        // Also try clearing without httpOnly in case
+        res.clearCookie('connect.sid', { ...cookieOptions, httpOnly: false });
+        res.clearCookie('session', { ...cookieOptions, httpOnly: false });
+
+        console.log('User logged out successfully, session destroyed, cookies cleared');
+        res.json({ success: true, message: 'Logged out successfully' });
+      });
     });
   });
 });

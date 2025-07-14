@@ -292,27 +292,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/auth/logout");
-      if (!res.ok) {
-        throw new Error("Logout failed");
+      try {
+        // Use the configured api instance which includes credentials
+        const res = await api.post("/api/auth/logout");
+        console.log("Server logout successful");
+        return res.data;
+      } catch (error: any) {
+        console.error("Server logout failed:", error);
+        // Don't throw - we'll still clear client state
+        return null;
       }
     },
     onSuccess: () => {
-      // Clear user data from query cache immediately
+      console.log("Starting complete logout cleanup");
+      
+      // Step 1: Clear user data from query cache immediately
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
       
-      // Clear all React Query caches
+      // Step 2: Clear all React Query caches
       queryClient.clear();
 
-      // Clear all session and local storage
+      // Step 3: Clear all session and local storage
       sessionStorage.clear();
       localStorage.clear();
 
-      // Clear any cached user data
+      // Step 4: Clear any cached user data
       userDataRef.current = null;
 
-      console.log("Auth cache cleared during logout");
+      // Step 5: Clear any browser cookies manually
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
+
+      console.log("Complete logout cleanup finished");
 
       toast({
         title: "Logged out",
@@ -320,12 +333,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      // Even on error, clear client state
+      console.log("Logout error occurred, but clearing client state anyway");
+      
+      // Even on error, aggressively clear client state
       queryClient.setQueryData(["/auth/user"], null);
       queryClient.setQueryData(["global-auth-user"], null);
+      queryClient.clear();
       sessionStorage.clear();
       localStorage.clear();
       userDataRef.current = null;
+      
+      // Clear browser cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      });
       
       toast({
         title: "Logout completed",
