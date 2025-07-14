@@ -293,59 +293,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       try {
-        // Use the configured api instance which includes credentials
+        console.log("Starting logout process...");
+        
+        // Step 1: Clear client state FIRST to prevent race conditions
+        queryClient.setQueryData(["/auth/user"], null);
+        queryClient.setQueryData(["global-auth-user"], null);
+        userDataRef.current = null;
+        
+        // Step 2: Call server logout endpoint
         const res = await api.post("/api/auth/logout");
-        console.log("Server logout successful");
+        console.log("Server logout response:", res.status);
         return res.data;
       } catch (error: any) {
-        console.error("Server logout failed:", error);
-        // Don't throw - we'll still clear client state
+        console.error("Server logout error:", error);
+        // Continue with cleanup even if server logout fails
         return null;
       }
     },
     onSuccess: () => {
       console.log("Starting complete logout cleanup");
       
-      // Step 1: Clear user data from query cache immediately
-      queryClient.setQueryData(["/auth/user"], null);
-      queryClient.setQueryData(["global-auth-user"], null);
-      
-      // Step 2: Clear all React Query caches
+      // Aggressive client-side cleanup
       queryClient.clear();
-
-      // Step 3: Clear all session and local storage
       sessionStorage.clear();
       localStorage.clear();
 
-      // Step 4: Clear any cached user data
-      userDataRef.current = null;
-
-      // Step 5: Clear browser cookies more aggressively
-      const cookiesToClear = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
+      // Clear all possible cookie variations
+      const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
+      const domains = [window.location.hostname, `.${window.location.hostname}`];
+      const paths = ['/', '/api', '/auth'];
       
-      cookiesToClear.forEach(cookieName => {
-        // Clear with different path combinations
-        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
+      cookieNames.forEach(cookieName => {
+        paths.forEach(path => {
+          domains.forEach(domain => {
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}; domain=${domain}`;
+            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path}`;
+          });
+        });
       });
 
-      // Clear all existing cookies
+      // Clear ALL existing cookies as fallback
       document.cookie.split(";").forEach(function(c) { 
         const eqPos = c.indexOf("=");
-        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
-        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
-        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=" + window.location.hostname;
-        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=." + window.location.hostname;
+        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+        if (name) {
+          // Try multiple combinations to ensure deletion
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
+        }
       });
 
-      // Step 6: Force page reload after logout to ensure clean state
-      setTimeout(() => {
-        console.log("Force reloading page to ensure clean logout state");
-        window.location.href = '/portal-login';
-      }, 100);
+      console.log("Logout cleanup complete, redirecting...");
 
-      console.log("Complete logout cleanup finished");
+      // Force redirect to login page with page reload
+      setTimeout(() => {
+        window.location.replace('/portal-login');
+      }, 50);
 
       toast({
         title: "Logged out",
@@ -353,20 +357,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     },
     onError: (error: Error) => {
-      console.log("Logout error occurred, but clearing client state anyway");
+      console.log("Logout error, performing emergency cleanup");
       
-      // Even on error, aggressively clear client state
-      queryClient.setQueryData(["/auth/user"], null);
-      queryClient.setQueryData(["global-auth-user"], null);
+      // Emergency cleanup
       queryClient.clear();
       sessionStorage.clear();
       localStorage.clear();
       userDataRef.current = null;
       
-      // Clear browser cookies
+      // Emergency cookie clearing
       document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        const name = c.split("=")[0].trim();
+        if (name) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        }
       });
+      
+      // Force redirect even on error
+      setTimeout(() => {
+        window.location.replace('/portal-login');
+      }, 50);
       
       toast({
         title: "Logout completed",

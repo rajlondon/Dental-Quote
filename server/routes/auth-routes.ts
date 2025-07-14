@@ -560,63 +560,63 @@ router.post('/recreate-admin', async (req, res) => {
 router.post('/logout', (req, res) => {
   console.log('Logout request received for session:', req.sessionID);
 
-  // Store session ID for complete cleanup
+  // Get the session ID before destroying it
   const sessionId = req.sessionID;
 
-  // Immediately clear all session data
-  req.session.userId = undefined;
-  req.session.userRole = undefined;
-  
-  // Clear any other session properties that might exist
-  Object.keys(req.session).forEach(key => {
-    if (key !== 'cookie') {
+  // Immediately clear all session properties
+  if (req.session) {
+    Object.keys(req.session).forEach(key => {
       delete req.session[key];
-    }
-  });
+    });
+  }
 
-  // Force session regeneration to create new session ID
-  req.session.regenerate((regenerateErr) => {
-    if (regenerateErr) {
-      console.error('Error regenerating session:', regenerateErr);
+  // Call passport logout first
+  req.logout((logoutErr) => {
+    if (logoutErr) {
+      console.error('Passport logout error:', logoutErr);
     }
 
-    // Call passport logout
-    req.logout((logoutErr) => {
-      if (logoutErr) {
-        console.error('Error during passport logout:', logoutErr);
+    // Destroy the session completely
+    req.session.destroy((destroyErr) => {
+      if (destroyErr) {
+        console.error('Session destroy error:', destroyErr);
       }
 
-      // Now destroy the session completely
-      req.session.destroy((destroyErr) => {
-        if (destroyErr) {
-          console.error('Error destroying session:', destroyErr);
-        }
+      // Clear session cookies with all possible variations
+      const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
+      const cookieOptions = [
+        { path: '/', httpOnly: true, secure: false, sameSite: 'lax' as const },
+        { path: '/', httpOnly: false, secure: false, sameSite: 'lax' as const },
+        { path: '/api', httpOnly: true, secure: false, sameSite: 'lax' as const },
+        { path: '/auth', httpOnly: true, secure: false, sameSite: 'lax' as const },
+        { path: '/', domain: req.hostname, httpOnly: true, secure: false, sameSite: 'lax' as const },
+        { path: '/' }
+      ];
 
-        // Clear all possible session cookies with multiple variations and paths
-        const cookieOptions = [
-          { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const },
-          { path: '/', httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const },
-          { path: '/', httpOnly: true, secure: false, sameSite: 'lax' as const },
-          { path: '/', httpOnly: false, secure: false, sameSite: 'lax' as const },
-          { path: '/' },
-          {}
-        ];
-
-        // Clear all cookie variations
+      // Clear all cookie combinations
+      cookieNames.forEach(cookieName => {
         cookieOptions.forEach(options => {
-          res.clearCookie('connect.sid', options);
-          res.clearCookie('session', options);
-          res.clearCookie('sessionId', options);
-          res.clearCookie('auth-token', options);
-          res.clearCookie('user-session', options);
+          res.clearCookie(cookieName, options);
         });
+      });
 
-        // Set explicit expired cookies
-        res.cookie('connect.sid', '', { expires: new Date(0), path: '/' });
-        res.cookie('session', '', { expires: new Date(0), path: '/' });
+      // Force set expired cookies as backup
+      res.cookie('connect.sid', '', { expires: new Date(0), path: '/', httpOnly: true });
+      res.cookie('session', '', { expires: new Date(0), path: '/', httpOnly: true });
 
-        console.log(`User logged out successfully. Session ${sessionId} destroyed, all cookies cleared`);
-        res.json({ success: true, message: 'Logged out successfully' });
+      // Add headers to prevent caching of auth state
+      res.set({
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+
+      console.log(`Complete logout successful. Session ${sessionId} destroyed and cookies cleared`);
+      
+      res.status(200).json({ 
+        success: true, 
+        message: 'Logged out successfully',
+        sessionDestroyed: true
       });
     });
   });
