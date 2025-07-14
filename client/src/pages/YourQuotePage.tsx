@@ -237,7 +237,7 @@ const CLINIC_DATA: ClinicInfo[] = [
 
 // Patient Preferences Section Component
 const PatientPreferencesSection: React.FC = () => {
-  const [preferences, setPreferences] = useState<{
+  const [preferences, setPreferences<{
     budgetPriority: 'low' | 'medium' | 'high' | null;
     priority: 'cost' | 'quality' | 'location' | null;
     holidayInterest: boolean;
@@ -651,46 +651,73 @@ const YourQuotePage: React.FC = () => {
   // Estimated total for cost comparison
   const estimatedTotal = treatmentItems.reduce((sum, item) => sum + item.subtotalGBP, 0);
 
+  // Load any pending promo code, package data, or special offer data from previous navigation
   useEffect(() => {
-    document.title = "Build Your Dental Treatment Quote | MyDentalFly";
+    const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+    const pendingPackageDataStr = sessionStorage.getItem('pendingPackageData');
+    const pendingSpecialOfferStr = sessionStorage.getItem('pendingSpecialOffer');
 
-    if (specialOffer && searchParams.get('specialOffer')) {
-      sessionStorage.setItem('activeSpecialOffer', JSON.stringify(specialOffer));
+    if (pendingPromoCode && !initialPromoCode) {
+      setInitialPromoCode(pendingPromoCode);
     }
 
-    const hasShownWelcome = sessionStorage.getItem('welcomeToastShown');
-    const savedData = localStorage.getItem('treatmentPlanData');
+    // Handle package data pre-population
+    if (pendingPackageDataStr) {
+      try {
+        const pendingPackageData = JSON.parse(pendingPackageDataStr);
+        console.log('Found pending package data:', pendingPackageData);
 
-    if (!hasShownWelcome) {
-      if (savedData && treatmentItems.length > 0) {
-        toast({
-          title: "Treatment Plan Restored",
-          description: "Your previous treatment plan has been loaded. You can modify it below.",
-        });
-      } else if (specialOffer) {
-        toast({
-          title: "Special Offer Selected",
-          description: `Your quote includes: ${specialOffer.title}`,
-        });
-      } else {
-        toast({
-          title: "Let's Build Your Quote",
-          description: "Start by creating your custom treatment plan below.",
-        });
+        // Auto-populate treatments from package
+        if (pendingPackageData.treatments && Array.isArray(pendingPackageData.treatments)) {
+          const packageTreatments = pendingPackageData.treatments.map((treatment: any) => ({
+            id: `${treatment.id || treatment.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
+            name: treatment.name,
+            quantity: treatment.quantity || treatment.count || 1,
+            priceGBP: 100, // Will be calculated properly later
+            subtotalGBP: (treatment.quantity || treatment.count || 1) * 100,
+            category: 'cosmetic',
+            fromPackage: true
+          }));
+
+          setTreatments(packageTreatments);
+          console.log('Auto-populated treatments from package:', packageTreatments);
+        }
+      } catch (error) {
+        console.error('Error parsing pending package data:', error);
       }
-      sessionStorage.setItem('welcomeToastShown', 'true');
     }
 
-    // Parse URL parameters for any special offer, package data, or promo codes
-    const promoCode = searchParams.get('promo');
+    // Handle special offer data pre-population
+    if (pendingSpecialOfferStr) {
+      try {
+        const pendingSpecialOffer = JSON.parse(pendingSpecialOfferStr);
+        console.log('Found pending special offer data:', pendingSpecialOffer);
 
-    // Handle promo code from URL
-    if (promoCode) {
-      console.log('Promo code from URL:', promoCode);
-      sessionStorage.setItem('pendingPromoCode', promoCode);
-      setInitialPromoCode(promoCode);
+        // Apply promo code if available
+        if (pendingSpecialOffer.promo_code && !initialPromoCode) {
+          setInitialPromoCode(pendingSpecialOffer.promo_code);
+        }
+
+        // Pre-populate treatments if specified in the offer
+        if (pendingSpecialOffer.applicable_treatments && Array.isArray(pendingSpecialOffer.applicable_treatments)) {
+          const offerTreatments = pendingSpecialOffer.applicable_treatments.slice(0, 2).map((treatmentName: string, index: number) => ({
+            id: `${treatmentName.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}-${index}`,
+            name: treatmentName,
+            quantity: 1,
+            priceGBP: 100,
+            subtotalGBP: 100,
+            category: 'cosmetic',
+            fromOffer: true
+          }));
+
+          setTreatments(offerTreatments);
+          console.log('Auto-populated treatments from special offer:', offerTreatments);
+        }
+      } catch (error) {
+        console.error('Error parsing pending special offer data:', error);
+      }
     }
-  }, [specialOffer, treatmentItems.length]);
+  }, []);
 
   return (
     <>
@@ -873,8 +900,18 @@ const YourQuotePage: React.FC = () => {
 
                         localStorage.setItem('treatmentPlanData', JSON.stringify(treatmentDataToSave));
 
-                        // Navigate to matched clinics with smart matching
-                        setLocation('/matched-clinics?smartMatch=true');
+                        // Check if this is a package journey (single clinic) or multi-clinic journey
+                        const pendingPackageData = sessionStorage.getItem('pendingPackageData');
+                        const pendingPromoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+
+                        if (pendingPackageData || pendingPromoCodeClinicId) {
+                          console.log('Package/Promo journey detected - will show single clinic results');
+                        } else {
+                          console.log('Regular journey - will show multi-clinic results');
+                        }
+
+                        // Navigate to matched clinics page (filtering will be handled there)
+                        setLocation('/matched-clinics');
                       }}
                       className="flex items-center gap-2"
                       size="lg"

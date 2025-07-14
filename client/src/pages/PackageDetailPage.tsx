@@ -403,8 +403,8 @@ const PackageDetailPage = () => {
                         timestamp: new Date().toISOString()
                       }));
 
-                      // Navigate directly to matched clinics page
-                      setLocation('/matched-clinics');
+                      // Navigate to treatment summary page for review/customization
+                      setLocation('/your-quote');
                     }}
                   >
                     Select This Package
@@ -441,8 +441,8 @@ const PackageDetailPage = () => {
                         timestamp: new Date().toISOString()
                       }));
 
-                      // Navigate directly to matched clinics for quote
-                      setLocation('/matched-clinics');
+                      // Navigate to treatment summary page for review/customization
+                      setLocation('/your-quote');
                     }}
                   >
                     Get Quote Now

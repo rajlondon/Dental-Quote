@@ -160,7 +160,14 @@ const HeroSimple: React.FC = () => {
               {/* Search button - Booking.com style */}
               <div className="ml-4 flex items-center">
                 <button 
-                  onClick={handleSearch}
+                  onClick={() => {
+                    // Clear any existing session data for fresh start
+                    sessionStorage.removeItem('pendingPackageData');
+                    sessionStorage.removeItem('pendingSpecialOffer');
+                    sessionStorage.removeItem('pendingPromoCode');
+                    localStorage.removeItem('treatmentPlanData');
+                    navigate('/your-quote');
+                  }}
                   className="h-full px-6 bg-[#0071c2] hover:bg-[#00487a] text-white font-bold rounded flex items-center justify-center"
                 >
                   <span>Search</span>
@@ -217,7 +224,14 @@ const HeroSimple: React.FC = () => {
 
               {/* Search button - Booking.com style */}
               <button 
-                onClick={handleSearch}
+                onClick={() => {
+                    // Clear any existing session data for fresh start
+                    sessionStorage.removeItem('pendingPackageData');
+                    sessionStorage.removeItem('pendingSpecialOffer');
+                    sessionStorage.removeItem('pendingPromoCode');
+                    localStorage.removeItem('treatmentPlanData');
+                    navigate('/your-quote');
+                  }}
                 className="w-full bg-[#0071c2] hover:bg-[#00487a] text-white font-bold py-3 rounded flex items-center justify-center"
               >
                 <span>Search</span>

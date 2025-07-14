@@ -712,10 +712,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                           "4": "dentalpark-turkey",      // Dentalpark Turkey
                           "5": "esta-istanbul"           // Esta Istanbul
                         };
-                        
+
                         const clinicId = offer.clinic_id?.toString() || "1";
                         const routeClinicId = clinicIdMap[clinicId] || clinicId;
-                        
+
                         // Use /clinic/ route format to match existing routes
                         navigate(`/clinic/${routeClinicId}`);
                       }}
@@ -725,27 +725,11 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       className="flex-1 bg-primary hover:bg-primary/90"
                       onClick={() => {
-                        // Store selected offer in session storage for persistence
-                        sessionStorage.setItem('selectedOffer', JSON.stringify({
-                          id: offer.id,
-                          title: offer.title,
-                          promo_code: offer.promo_code,
-                          clinic_id: offer.clinic_id
-                        }));
-
-                        // Store clinic ID for filtering in results page
-                        if (offer.clinic_id) {
-                          sessionStorage.setItem('pendingPromoCodeClinicId', offer.clinic_id);
-                        }
-
-                        // Navigate to Your Quote page (treatment plan builder) with promo code
-                        navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
-
-                        toast({
-                          title: "Package Selected",
-                          description: `${offer.title} package selected. Redirecting to quote builder...`,
-                        });
-                      }}
+                          // Store special offer data for treatment summary
+                          sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
+                          navigate('/your-quote');
+                        }}
+                      
                     >
                       Select Package
                     </Button>

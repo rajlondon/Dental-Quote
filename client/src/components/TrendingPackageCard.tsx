@@ -183,7 +183,7 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
                   sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
                 }
                 
-                // Store enhanced package data
+                // Store enhanced package data for treatment summary page
                 const packageData = {
                   id: pkg.id,
                   title: pkg.title,
@@ -204,12 +204,12 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
                 
                 sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
                 
-                // Store clinic ID for filtering
+                // Store clinic ID for filtering at results stage
                 if (pkg.clinic?.id) {
                   sessionStorage.setItem('pendingPromoCodeClinicId', pkg.clinic.id);
                 }
                 
-                // Convert treatments to treatment plan format
+                // Convert treatments to treatment plan format for pre-population
                 const treatmentPlanData = pkg.treatments.map(treatment => ({
                   id: treatment.name.toLowerCase().replace(/\s+/g, '-'),
                   treatmentName: treatment.name,
@@ -226,8 +226,8 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
                   timestamp: new Date().toISOString()
                 }));
 
-                // Navigate directly to matched clinics page
-                setLocation('/matched-clinics');
+                // Navigate to treatment summary page for review/customization
+                setLocation('/your-quote');
               }}
             >
               Get Quote Now
