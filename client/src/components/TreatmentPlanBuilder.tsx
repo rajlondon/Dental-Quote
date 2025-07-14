@@ -1646,13 +1646,58 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                     </div>
                   )}
 
-                  {/* Total */}
+                  {/* Total with dynamic pricing display */}
                   {treatments.length > 0 && (
                     <div className="flex justify-between py-2 border-t border-b mb-6">
-                      <span className="font-semibold">Total</span>
-                      <span className="font-bold text-lg">
-                        £{(totalGBP - discountAmount).toLocaleString()}
-                      </span>
+                      {(() => {
+                        // Check if promo code or package is applied
+                        const hasPendingPromo = sessionStorage.getItem('pendingPromoCode');
+                        const hasPendingPackage = sessionStorage.getItem('pendingPackageData');
+                        const promoClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+                        
+                        if (hasPendingPromo || hasPendingPackage || promoClinicId) {
+                          // Show clinic-specific pricing
+                          let clinicName = 'Selected Clinic';
+                          
+                          // Try to get clinic name from stored data
+                          if (promoClinicId) {
+                            const clinicMap = {
+                              'maltepe-dental-clinic': 'Maltepe Dental Clinic',
+                              'dentgroup-istanbul': 'DentGroup Istanbul',
+                              'istanbul-dental-care': 'Istanbul Dental Care'
+                            };
+                            clinicName = clinicMap[promoClinicId] || 'Selected Clinic';
+                          }
+                          
+                          return (
+                            <>
+                              <span className="font-semibold">Total from {clinicName}</span>
+                              <span className="font-bold text-lg">
+                                £{(totalGBP - discountAmount).toLocaleString()}
+                              </span>
+                            </>
+                          );
+                        } else {
+                          // Show average pricing for normal searches
+                          return (
+                            <>
+                              <span className="font-semibold">Estimated Istanbul Average</span>
+                              <span className="font-bold text-lg">
+                                £{(totalGBP - discountAmount).toLocaleString()}
+                              </span>
+                            </>
+                          );
+                        }
+                      })()}
+                    </div>
+                  )}
+                  
+                  {/* Comparison note for normal searches only */}
+                  {treatments.length > 0 && !sessionStorage.getItem('pendingPromoCode') && !sessionStorage.getItem('pendingPackageData') && !sessionStorage.getItem('pendingPromoCodeClinicId') && (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <p className="text-sm text-blue-700">
+                        <strong>Next page:</strong> Compare exact prices from verified clinics in Istanbul
+                      </p>
                     </div>
                   )}
 
