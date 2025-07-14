@@ -300,8 +300,11 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     console.log('🔄 Falling back to all clinics');
   }
 
+  // Use filtered clinics instead of original clinics data
+  const clinicsToDisplay = filteredClinics.length > 0 ? filteredClinics : clinicsData;
+
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
-    const clinic = filteredClinics.find(c => c.id === clinicId);
+    const clinic = clinicsToDisplay.find(c => c.id === clinicId);
     const priceFactor = clinic?.priceFactor || 0.35;
 
     // If we have package data and this is the package clinic, use package pricing
@@ -377,7 +380,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
   const downloadPdf = (clinicId: string) => {
     try {
-      const clinic = filteredClinics.find(c => c.id === clinicId);
+      const clinic = clinicsToDisplay.find(c => c.id === clinicId);
       if (!clinic) return;
 
       const { clinicTreatments, totalPrice } = getClinicPricing(clinicId, activeTreatmentPlan);
@@ -612,7 +615,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
 
           {/* Clinic Comparison */}
           <div className="space-y-8">
-            {filteredClinics.map((clinic, clinicIndex) => {
+            {clinicsToDisplay.map((clinic, clinicIndex) => {
               const pricingResult = getClinicPricing(clinic.id, activeTreatmentPlan);
               const { clinicTreatments, totalPrice, isPackage, packageName, packageSavings, originalPrice } = pricingResult;
               const tierInfo = getTierLabel(clinic.tier);

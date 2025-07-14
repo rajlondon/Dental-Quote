@@ -1656,24 +1656,33 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         const promoClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
                         
                         if (hasPendingPromo || hasPendingPackage || promoClinicId) {
-                          // Show clinic-specific pricing
+                          // Calculate clinic-specific pricing
+                          let clinicSpecificTotal = totalGBP;
                           let clinicName = 'Selected Clinic';
                           
-                          // Try to get clinic name from stored data
+                          // Get clinic pricing factor and name
                           if (promoClinicId) {
-                            const clinicMap = {
-                              'maltepe-dental-clinic': 'Maltepe Dental Clinic',
-                              'dentgroup-istanbul': 'DentGroup Istanbul',
-                              'istanbul-dental-care': 'Istanbul Dental Care'
+                            const clinicPricingMap = {
+                              'maltepe-dental-clinic': { name: 'Maltepe Dental Clinic', factor: 0.35 },
+                              'dentgroup-istanbul': { name: 'DentGroup Istanbul', factor: 0.30 },
+                              'istanbul-dental-care': { name: 'Istanbul Dental Care', factor: 0.25 }
                             };
-                            clinicName = clinicMap[promoClinicId] || 'Selected Clinic';
+                            
+                            const clinicData = clinicPricingMap[promoClinicId];
+                            if (clinicData) {
+                              clinicName = clinicData.name;
+                              // Recalculate total using clinic's specific pricing factor
+                              // Current prices are already at 35% of UK, so adjust proportionally
+                              const adjustmentFactor = clinicData.factor / 0.35;
+                              clinicSpecificTotal = Math.round(totalGBP * adjustmentFactor);
+                            }
                           }
                           
                           return (
                             <>
                               <span className="font-semibold">Total from {clinicName}</span>
                               <span className="font-bold text-lg">
-                                £{(totalGBP - discountAmount).toLocaleString()}
+                                £{(clinicSpecificTotal - discountAmount).toLocaleString()}
                               </span>
                             </>
                           );
