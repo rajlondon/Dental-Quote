@@ -71,8 +71,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Register WebSocket handlers for special offer updates
+  // Register WebSocket handlers for special offer updates - only once
   useEffect(() => {
+    let isHandlerRegistered = false;
+    
     // Handler for general special offer updates
     const handleOfferUpdate = (message: any) => {
       if (message.type === 'special_offer_updated') {
@@ -295,13 +297,16 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       }
     };
 
-    // Register both handlers
-    console.log('🔌 Registering enhanced WebSocket handlers for special offers');
-    registerMessageHandler('special_offer_updated', handleOfferUpdate);
-    registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
+    // Register both handlers only if not already registered
+    if (!isHandlerRegistered) {
+      console.log('🔌 Registering enhanced WebSocket handlers for special offers');
+      registerMessageHandler('special_offer_updated', handleOfferUpdate);
+      registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
+      isHandlerRegistered = true;
+    }
 
     // No cleanup needed as useWebSocket handles it
-  }, [queryClient, registerMessageHandler, toast]);
+  }, []); // Remove dependencies to prevent re-registration
 
   // Auto-advance carousel
   useEffect(() => {
@@ -314,13 +319,17 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     return () => clearInterval(interval);
   }, [offers, isAutoPlaying]);
 
-  // Update refresh key when offers data changes
+  // Update refresh key when offers data changes - with debouncing
   useEffect(() => {
-    if (offers) {
-      setImageRefreshKey(Date.now());
-      setImageCache({});
+    if (offers && offers.length > 0) {
+      const timeout = setTimeout(() => {
+        setImageRefreshKey(Date.now());
+        setImageCache({});
+      }, 1000); // Debounce for 1 second
+
+      return () => clearTimeout(timeout);
     }
-  }, [offers]);
+  }, [offers?.length]); // Only depend on offers length, not the entire offers array
 
   // Event handlers
   const handleMouseEnter = () => setIsAutoPlaying(false);

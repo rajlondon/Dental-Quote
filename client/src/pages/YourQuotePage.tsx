@@ -653,16 +653,19 @@ const YourQuotePage: React.FC = () => {
 
   // Load any pending promo code, package data, or special offer data from previous navigation
   useEffect(() => {
+    let hasProcessed = false;
+    
     const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
     const pendingPackageDataStr = sessionStorage.getItem('pendingPackageData');
     const pendingSpecialOfferStr = sessionStorage.getItem('pendingSpecialOffer');
 
-    if (pendingPromoCode && !initialPromoCode) {
+    if (pendingPromoCode && !initialPromoCode && !hasProcessed) {
       setInitialPromoCode(pendingPromoCode);
+      hasProcessed = true;
     }
 
-    // Handle package data pre-population
-    if (pendingPackageDataStr) {
+    // Handle package data pre-population - only if no treatments are already loaded
+    if (pendingPackageDataStr && treatmentItems.length === 0 && !hasProcessed) {
       try {
         const pendingPackageData = JSON.parse(pendingPackageDataStr);
         console.log('Found pending package data:', pendingPackageData);
@@ -673,7 +676,7 @@ const YourQuotePage: React.FC = () => {
             id: `${treatment.id || treatment.name.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
             name: treatment.name,
             quantity: treatment.quantity || treatment.count || 1,
-            priceGBP: 100, // Will be calculated properly later
+            priceGBP: 100,
             subtotalGBP: (treatment.quantity || treatment.count || 1) * 100,
             category: 'cosmetic',
             fromPackage: true
@@ -681,14 +684,15 @@ const YourQuotePage: React.FC = () => {
 
           setTreatments(packageTreatments);
           console.log('Auto-populated treatments from package:', packageTreatments);
+          hasProcessed = true;
         }
       } catch (error) {
         console.error('Error parsing pending package data:', error);
       }
     }
 
-    // Handle special offer data pre-population
-    if (pendingSpecialOfferStr) {
+    // Handle special offer data pre-population - only if no treatments are already loaded
+    if (pendingSpecialOfferStr && treatmentItems.length === 0 && !hasProcessed) {
       try {
         const pendingSpecialOffer = JSON.parse(pendingSpecialOfferStr);
         console.log('Found pending special offer data:', pendingSpecialOffer);
@@ -712,12 +716,19 @@ const YourQuotePage: React.FC = () => {
 
           setTreatments(offerTreatments);
           console.log('Auto-populated treatments from special offer:', offerTreatments);
+          hasProcessed = true;
         }
       } catch (error) {
         console.error('Error parsing pending special offer data:', error);
       }
     }
-  }, []);
+
+    // Clear session storage after processing to prevent re-processing
+    if (hasProcessed) {
+      sessionStorage.removeItem('pendingPackageData');
+      sessionStorage.removeItem('pendingSpecialOffer');
+    }
+  }, []); // Remove dependencies to prevent loops
 
   return (
     <>
