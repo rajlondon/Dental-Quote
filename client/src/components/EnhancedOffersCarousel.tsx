@@ -71,10 +71,8 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Register WebSocket handlers for special offer updates - only once
+  // Register WebSocket handlers for special offer updates
   useEffect(() => {
-    let isHandlerRegistered = false;
-    
     // Handler for general special offer updates
     const handleOfferUpdate = (message: any) => {
       if (message.type === 'special_offer_updated') {
@@ -184,25 +182,34 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
           variant: 'default',
         });
 
-        // Single refresh to prevent jittering
-        setTimeout(() => {
-          const newRefreshKey = Date.now() + Math.random();
-          console.log(`⏱️ Single refresh with key: ${newRefreshKey}`);
-          setImageRefreshKey(newRefreshKey);
-          setImageCache({});
+        // Schedule multiple refreshes with staggered timing
+        // This helps overcome browser cache issues by trying multiple times
+        const refreshTimes = [500, 1500, 3000, 5000]; // Milliseconds
 
-          // Single re-query
-          queryClient.invalidateQueries({ 
-            queryKey: ['/api/special-offers/homepage'],
-            refetchType: 'all'
-          });
+        refreshTimes.forEach(delay => {
+          setTimeout(() => {
+            // Generate a unique refresh key each time
+            const newRefreshKey = Date.now() + Math.random();
+            console.log(`⏱️ Scheduled refresh #${delay/500}: new key ${newRefreshKey}`);
+            setImageRefreshKey(newRefreshKey);
+            setImageCache({}); // Clear cache again to be extra sure
 
-          toast({
-            title: 'Special Offer Updated',
-            description: 'New promotional images are now available',
-            variant: 'default',
-          });
-        }, 1000); // Single 1-second delay
+            // Force re-query on each refresh attempt
+            queryClient.invalidateQueries({ 
+              queryKey: ['/api/special-offers/homepage'],
+              refetchType: 'all'
+            });
+
+            // Only show toast on final refresh
+            if (delay === refreshTimes[refreshTimes.length - 1]) {
+              toast({
+                title: 'Special Offer Updated',
+                description: 'New promotional images are now available',
+                variant: 'default',
+              });
+            }
+          }, delay);
+        });
       }
     };
 
@@ -288,29 +295,32 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
       }
     };
 
-    // Register both handlers only if not already registered
-    if (!isHandlerRegistered) {
-      console.log('🔌 Registering enhanced WebSocket handlers for special offers');
-      registerMessageHandler('special_offer_updated', handleOfferUpdate);
-      registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
-      isHandlerRegistered = true;
-    }
+    // Register both handlers
+    console.log('🔌 Registering enhanced WebSocket handlers for special offers');
+    registerMessageHandler('special_offer_updated', handleOfferUpdate);
+    registerMessageHandler('special_offer_image_refreshed', handleImageRefresh);
 
     // No cleanup needed as useWebSocket handles it
-  }, []); // Remove dependencies to prevent re-registration
+  }, [queryClient, registerMessageHandler, toast]);
 
-  // Auto-advance carousel with slower, more stable timing
+  // Auto-advance carousel
   useEffect(() => {
     if (!isAutoPlaying || !offers || offers.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % offers.length);
-    }, 8000); // Increased to 8 seconds for less jittery experience
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [offers?.length, isAutoPlaying]); // Only depend on offers length, not entire offers object
+  }, [offers, isAutoPlaying]);
 
-  // Removed auto-refresh effect to prevent jittering
+  // Update refresh key when offers data changes
+  useEffect(() => {
+    if (offers) {
+      setImageRefreshKey(Date.now());
+      setImageCache({});
+    }
+  }, [offers]);
 
   // Event handlers
   const handleMouseEnter = () => setIsAutoPlaying(false);
@@ -702,10 +712,10 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                           "4": "dentalpark-turkey",      // Dentalpark Turkey
                           "5": "esta-istanbul"           // Esta Istanbul
                         };
-
+                        
                         const clinicId = offer.clinic_id?.toString() || "1";
                         const routeClinicId = clinicIdMap[clinicId] || clinicId;
-
+                        
                         // Use /clinic/ route format to match existing routes
                         navigate(`/clinic/${routeClinicId}`);
                       }}
@@ -715,11 +725,27 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
                     <Button 
                       className="flex-1 bg-primary hover:bg-primary/90"
                       onClick={() => {
-                          // Store special offer data for treatment summary
-                          sessionStorage.setItem('pendingSpecialOffer', JSON.stringify(offer));
-                          navigate('/your-quote');
-                        }}
-                      
+                        // Store selected offer in session storage for persistence
+                        sessionStorage.setItem('selectedOffer', JSON.stringify({
+                          id: offer.id,
+                          title: offer.title,
+                          promo_code: offer.promo_code,
+                          clinic_id: offer.clinic_id
+                        }));
+
+                        // Store clinic ID for filtering in results page
+                        if (offer.clinic_id) {
+                          sessionStorage.setItem('pendingPromoCodeClinicId', offer.clinic_id);
+                        }
+
+                        // Navigate to Your Quote page (treatment plan builder) with promo code
+                        navigate(`/your-quote?promo=${encodeURIComponent(offer.promo_code || '')}&from=offer`);
+
+                        toast({
+                          title: "Package Selected",
+                          description: `${offer.title} package selected. Redirecting to quote builder...`,
+                        });
+                      }}
                     >
                       Select Package
                     </Button>

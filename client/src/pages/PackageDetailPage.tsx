@@ -372,81 +372,18 @@ const PackageDetailPage = () => {
                   <Button 
                     className="w-full"
                     onClick={() => {
-                      // Store package data in session storage
+                      // Store the promo code in session storage
                       if (packageData.promoCode) {
                         sessionStorage.setItem('pendingPromoCode', packageData.promoCode);
                       }
-                      
-                      // Store complete package data
-                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
-                      
-                      // Store clinic ID for filtering
-                      if (packageData.clinic?.id) {
-                        sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
-                      }
-                      
-                      // Convert package treatments to treatment plan format with proper structure
-                      const treatmentPlanData = packageData.treatments.map(treatment => ({
-                        id: treatment.id,
-                        treatmentName: treatment.name,
-                        name: treatment.name, // Add name field for compatibility
-                        quantity: treatment.quantity,
-                        priceGBP: 100, // Temporary price for display
-                        subtotalGBP: 100 * treatment.quantity, // Calculate subtotal
-                        category: 'cosmetic' // Default category
-                      }));
-                      
-                      // Store treatment plan data with proper structure
-                      localStorage.setItem('treatmentPlanData', JSON.stringify({
-                        treatments: treatmentPlanData,
-                        totalGBP: treatmentPlanData.reduce((sum, t) => sum + t.subtotalGBP, 0),
-                        timestamp: new Date().toISOString()
-                      }));
 
-                      // Navigate to treatment summary page for review/customization
-                      setLocation('/your-quote');
+                      // Navigate to Your Quote page (treatment plan builder) with promo code parameter
+                      setLocation(`/your-quote?promo=${encodeURIComponent(packageData.promoCode || '')}`);
                     }}
                   >
                     Select This Package
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    className="w-full"
-                    onClick={() => {
-                      // Store package data for quote request
-                      if (packageData.promoCode) {
-                        sessionStorage.setItem('pendingPromoCode', packageData.promoCode);
-                      }
-                      
-                      sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
-                      
-                      if (packageData.clinic?.id) {
-                        sessionStorage.setItem('pendingPromoCodeClinicId', packageData.clinic.id);
-                      }
-                      
-                      // Convert treatments for quote with proper structure
-                      const treatmentPlanData = packageData.treatments.map(treatment => ({
-                        id: treatment.id,
-                        treatmentName: treatment.name,
-                        name: treatment.name, // Add name field for compatibility
-                        quantity: treatment.quantity,
-                        priceGBP: 100, // Temporary price for display
-                        subtotalGBP: 100 * treatment.quantity, // Calculate subtotal
-                        category: 'cosmetic' // Default category
-                      }));
-                      
-                      localStorage.setItem('treatmentPlanData', JSON.stringify({
-                        treatments: treatmentPlanData,
-                        totalGBP: treatmentPlanData.reduce((sum, t) => sum + t.subtotalGBP, 0),
-                        timestamp: new Date().toISOString()
-                      }));
-
-                      // Navigate to treatment summary page for review/customization
-                      setLocation('/your-quote');
-                    }}
-                  >
-                    Get Quote Now
-                  </Button>
+                  <Button variant="outline" className="w-full">Request More Information</Button>
                 </div>
               </CardContent>
             </Card>

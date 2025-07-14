@@ -13,7 +13,7 @@ export default function PortalLoginPage() {
   const { user, loginMutation, isLoading } = useAuth();
   const [location] = useLocation();
   const [activeTab, setActiveTab] = useState('patient');
-
+  
   // Form states for each portal
   const [patientForm, setPatientForm] = useState({ email: '', password: '' });
   const [clinicForm, setClinicForm] = useState({ email: '', password: '' });
@@ -41,7 +41,7 @@ export default function PortalLoginPage() {
 
   const handleEmailLogin = (e: React.FormEvent, userType: 'patient' | 'clinic' | 'admin') => {
     e.preventDefault();
-
+    
     let credentials;
     switch (userType) {
       case 'patient':
@@ -54,7 +54,7 @@ export default function PortalLoginPage() {
         credentials = adminForm;
         break;
     }
-
+    
     loginMutation.mutate(credentials);
   };
 
@@ -155,7 +155,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <div>
                   <Label htmlFor="patient-password">Password</Label>
                   <Input
@@ -169,7 +169,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <Button 
                   type="submit" 
                   className="w-full"
@@ -211,7 +211,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <div>
                   <Label htmlFor="clinic-password">Password</Label>
                   <Input
@@ -225,7 +225,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <Button 
                   type="submit" 
                   className="w-full"
@@ -267,7 +267,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <div>
                   <Label htmlFor="admin-password">Password</Label>
                   <Input
@@ -281,7 +281,7 @@ export default function PortalLoginPage() {
                     required
                   />
                 </div>
-
+                
                 <Button 
                   type="submit" 
                   className="w-full"

@@ -121,19 +121,6 @@ const PatientPortalPage: React.FC = () => {
       const section = params.get('section');
       if (section && navItems.some(item => item.id === section)) {
         setActiveSection(section);
-        
-        // If accessing quotes section, check for pending package data
-        if (section === 'quotes') {
-          const pendingPackageData = sessionStorage.getItem('pendingPackageData');
-          const pendingBooking = localStorage.getItem('pendingBooking');
-          
-          if (pendingPackageData || pendingBooking) {
-            toast({
-              title: "Package Data Loaded",
-              description: "Your selected package has been loaded into your quotes.",
-            });
-          }
-        }
       }
     } catch (error) {
       console.error("Error parsing URL parameters:", error);

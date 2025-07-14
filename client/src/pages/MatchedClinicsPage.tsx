@@ -211,19 +211,9 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       if (savedTreatmentData) {
         try {
           const parsedData = JSON.parse(savedTreatmentData);
-          console.log('📋 Parsed treatment data from localStorage:', parsedData);
-          
-          // Handle both old format (array) and new format (object with treatments array)
-          if (Array.isArray(parsedData)) {
-            // Old format - direct array
-            setTreatmentPlan(parsedData);
-            setLocalTotalGBP(parsedData.reduce((sum, item) => sum + (item.subtotalGBP || 0), 0));
-          } else if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
-            // New format - object with treatments array
+          if (parsedData.treatments && Array.isArray(parsedData.treatments)) {
             setTreatmentPlan(parsedData.treatments);
             setLocalTotalGBP(parsedData.totalGBP || 0);
-          } else {
-            console.warn('⚠️ Unrecognized treatment plan format:', parsedData);
           }
         } catch (error) {
           console.error('Error parsing treatment data from localStorage:', error);
@@ -330,18 +320,19 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
         };
       });
 
-      // Use package pricing from the data
-      const packagePrice = packageData.price || packageData.packagePrice || packageData.totalPrice || 4250;
-      const originalPrice = packageData.originalPrice || 11000;
-      const packageSavings = packageData.savings || (originalPrice - packagePrice);
-
+      // Calculate luxury family vacation value comparison
+      const ukPrivateDental = 5715;
+      const ukFamilyVacation = 4000; // Average of £3,000-5,000 range
+      const ukTransfersCoordination = 500;
+      const ukTotalEquivalent = ukPrivateDental + ukFamilyVacation + ukTransfersCoordination;
+      
       return {
         clinicTreatments,
-        totalPrice: packagePrice,
+        totalPrice: packageData.packagePrice || packageData.totalPrice,
         isPackage: true,
-        packageName: packageData.title || packageData.name,
-        packageSavings: packageSavings,
-        originalPrice: originalPrice
+        packageName: packageData.name,
+        packageSavings: ukTotalEquivalent - (packageData.packagePrice || packageData.totalPrice),
+        originalPrice: ukTotalEquivalent
       };
     }
 
@@ -565,13 +556,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
             </div>
             <div className="flex justify-between pt-2 border-t font-semibold">
               <span>UK Estimated Price:</span>
-              <span>£{packageData ? Math.round(packageData.originalPrice || 11000) : Math.round(ukTotal)}</span>
+              <span>£{Math.round(ukTotal)}</span>
             </div>
-            {packageData && (
-              <div className="mt-2 text-sm text-green-600">
-                <span>UK Package Equivalent: Private dental (£{Math.round((packageData.originalPrice || 11000) * 0.6)}) + Luxury accommodation (£{Math.round((packageData.originalPrice || 11000) * 0.4)})</span>
-              </div>
-            )}
           </div>
 
           {/* Smart Matching Status */}
@@ -930,41 +916,26 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                         totalPrice: totalPrice,
                                         treatmentPlan: activeTreatmentPlan,
                                         patientInfo: patientInfo,
-                                        timestamp: new Date().toISOString(),
-                                        isPackage: isPackage,
-                                        packageData: packageData
+                                        timestamp: new Date().toISOString()
                                       };
 
                                       localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
                                       localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
 
-                                      // Store package data for portal
-                                      if (packageData) {
-                                        sessionStorage.setItem('pendingPromoCode', packageData.promoCode || packageData.id || '');
-                                        sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
-                                        sessionStorage.setItem('pendingPromoCodeClinicId', clinic.id);
+                                      if (onSelectClinic) {
+                                        onSelectClinic(clinic.id);
                                       }
-                                      
-                                      localStorage.setItem('treatmentPlanData', JSON.stringify({ 
-                                        treatments: activeTreatmentPlan, 
-                                        totalGBP: totalPrice, 
-                                        patientPreferences: patientInfo,
-                                        isPackage: isPackage,
-                                        packageData: packageData
-                                      }));
 
-                                      // Set return URL for after login
-                                      localStorage.setItem('postLoginRedirect', '/patient-portal?section=quotes');
-
-                                      // Redirect to portal login
-                                      setLocation('/portal-login');
+                                      setTimeout(() => {
+                                        setLocation('/patient-portal');
+                                      }, 100);
 
                                       toast({
-                                        title: isPackage ? "Package Selected" : "Quote Selected",
-                                        description: "Please log in to continue with your booking...",
+                                        title: "Clinic Selected",
+                                        description: "Sign in to your patient portal to complete your booking.",
                                       });
                                     } catch (error) {
-                                      console.error('Error in Get Quote Now button:', error);
+                                      console.error('Error in Reserve Now button:', error);
                                       toast({
                                         title: "Error",
                                         description: "There was an error processing your selection. Please try again.",
@@ -974,7 +945,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                   }}
                                 >
                                   <Heart className="mr-2 h-4 w-4" />
-                                  Get Quote Now
+                                  Reserve Now
                                 </Button>
                               </div>
                             </div>

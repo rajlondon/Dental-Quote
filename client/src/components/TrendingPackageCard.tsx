@@ -178,56 +178,13 @@ const TrendingPackageCard: React.FC<TrendingPackageCardProps> = ({ package: pkg 
               variant="outline"
               className="w-full"
               onClick={() => {
-                // Store package data for direct navigation to results
+                // Store the promo code in session storage
                 if (pkg.promoCode) {
                   sessionStorage.setItem('pendingPromoCode', pkg.promoCode);
                 }
-                
-                // Store enhanced package data for treatment summary page
-                const packageData = {
-                  id: pkg.id,
-                  title: pkg.title,
-                  description: pkg.description,
-                  clinic: pkg.clinic,
-                  hotel: pkg.hotel,
-                  treatments: pkg.treatments.map(treatment => ({
-                    id: treatment.name.toLowerCase().replace(/\s+/g, '-'),
-                    name: treatment.name,
-                    quantity: treatment.count
-                  })),
-                  totalPrice: pkg.totalPrice,
-                  savings: pkg.savings,
-                  promoCode: pkg.promoCode,
-                  accommodation: pkg.accommodation,
-                  excursions: pkg.excursions
-                };
-                
-                sessionStorage.setItem('pendingPackageData', JSON.stringify(packageData));
-                
-                // Store clinic ID for filtering at results stage
-                if (pkg.clinic?.id) {
-                  sessionStorage.setItem('pendingPromoCodeClinicId', pkg.clinic.id);
-                }
-                
-                // Convert treatments to treatment plan format for pre-population
-                const treatmentPlanData = pkg.treatments.map(treatment => ({
-                  id: treatment.name.toLowerCase().replace(/\s+/g, '-'),
-                  treatmentName: treatment.name,
-                  name: treatment.name,
-                  quantity: treatment.count,
-                  priceGBP: 100,
-                  subtotalGBP: 100 * treatment.count,
-                  category: 'cosmetic'
-                }));
-                
-                localStorage.setItem('treatmentPlanData', JSON.stringify({
-                  treatments: treatmentPlanData,
-                  totalGBP: treatmentPlanData.reduce((sum, t) => sum + t.subtotalGBP, 0),
-                  timestamp: new Date().toISOString()
-                }));
 
-                // Navigate to treatment summary page for review/customization
-                setLocation('/your-quote');
+                // Navigate to Your Quote page (treatment plan builder) with promo code parameter
+                setLocation(`/your-quote?promo=${encodeURIComponent(pkg.promoCode || '')}`);
               }}
             >
               Get Quote Now
