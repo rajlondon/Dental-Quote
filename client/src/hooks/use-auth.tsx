@@ -300,11 +300,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       // Clear user data from query cache
       queryClient.setQueryData(["/auth/user"], null);
+      
+      // Clear all React Query caches
+      queryClient.clear();
 
       // Clear all session-related caches for a clean logout
-      sessionStorage.removeItem('cached_user_data');
-      sessionStorage.removeItem('cached_user_timestamp');
-      sessionStorage.removeItem('clinic_portal_timestamp');
+      sessionStorage.clear();
+      localStorage.clear();
 
       console.log("Auth cache cleared during logout");
 

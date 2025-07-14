@@ -60,7 +60,7 @@ const PatientPortalPage: React.FC = () => {
   const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  
+
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
 
   // Nav items with icons
@@ -99,19 +99,21 @@ const PatientPortalPage: React.FC = () => {
   };
 
   // Handle logout
-  const handleLogout = () => {
-    logoutMutation.mutate(undefined, {
-      onSuccess: () => {
-        // Use direct window.location for more reliable navigation after logout
-        window.location.href = '/portal-login';
-
-        // Toast notification will be shown before redirect
-        toast({
-          title: t('auth.logout_success', 'Logged out successfully'),
-          description: t('auth.logout_message', 'You have been logged out of your account'),
-        });
-      }
-    });
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      // Force a complete page reload to clear all state
+      window.location.href = '/portal-login';
+    } catch (error) {
+      console.error('Logout failed:', error);
+      toast({
+        title: "Logout failed",
+        description: "There was an issue logging out. Please try again.",
+        variant: "destructive",
+      });
+      // Even if logout fails, redirect to login
+      window.location.href = '/portal-login';
+    }
   };
 
   // Initialize based on URL parameters

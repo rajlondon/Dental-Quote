@@ -40,9 +40,9 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         return null;
       }
     },
-    staleTime: 60000,         // Consider data fresh for 60 seconds
+    staleTime: 30000,         // Consider data fresh for 30 seconds
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
-    retry: 1,                 // Only retry once if the request fails
+    retry: false,             // Don't retry failed requests
   });
 
   // Log authentication state

@@ -109,14 +109,14 @@ router.post('/admin-login', async (req, res) => {
     try {
       isValidPassword = await bcrypt.compare(password, user.password_hash);
       console.log('Bcrypt comparison result:', isValidPassword);
-      
+
       // Additional debug
       if (!isValidPassword) {
         console.log('Password mismatch - checking hash details');
         console.log('Hash starts with:', user.password_hash.substring(0, 10));
         console.log('Expected password length:', password.length);
       }
-      
+
     } catch (bcryptError) {
       console.error('Password comparison error:', bcryptError);
       return res.status(500).json({ 
@@ -492,22 +492,22 @@ router.post('/recreate-admin', async (req, res) => {
   try {
     const adminEmail = 'admin@mydentalfly.com';
     const adminPassword = 'Admin123!';
-    
+
     console.log('Recreating admin user...');
-    
+
     // Delete ALL users with admin email
     const deletedCount = await db
       .delete(users)
       .where(eq(users.email, adminEmail));
-    
+
     console.log('Deleted existing admin users:', deletedCount);
-    
+
     // Create fresh hash
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(adminPassword, saltRounds);
-    
+
     console.log('Generated fresh password hash, length:', hashedPassword.length);
-    
+
     // Insert new admin
     const newAdmin = await db
       .insert(users)
@@ -521,7 +521,7 @@ router.post('/recreate-admin', async (req, res) => {
         updated_at: new Date()
       })
       .returning();
-    
+
     console.log('Created fresh admin user:', {
       id: newAdmin[0].id,
       email: newAdmin[0].email,
@@ -529,11 +529,11 @@ router.post('/recreate-admin', async (req, res) => {
       hasPassword: !!newAdmin[0].password_hash,
       passwordLength: newAdmin[0].password_hash?.length
     });
-    
+
     // Test the password immediately
     const testResult = await bcrypt.compare(adminPassword, newAdmin[0].password_hash);
     console.log('Password test result:', testResult);
-    
+
     res.json({
       success: true,
       message: 'Admin user recreated successfully',
@@ -545,7 +545,7 @@ router.post('/recreate-admin', async (req, res) => {
         passwordTest: testResult
       }
     });
-    
+
   } catch (error) {
     console.error('Recreate admin error:', error);
     res.status(500).json({
@@ -557,38 +557,29 @@ router.post('/recreate-admin', async (req, res) => {
 });
 
 // Logout endpoint
-router.post('/logout', async (req, res) => {
-  try {
-    console.log('Logout request for session:', req.sessionID);
+router.post('/logout', (req, res) => {
+  console.log('Logout request received');
 
-    // Destroy the session
-    req.session.destroy((err) => {
-      if (err) {
-        console.error('Session destruction error:', err);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to logout'
-        });
+  req.logout((err) => {
+    if (err) {
+      console.error('Error during logout:', err);
+      return res.status(500).json({ error: 'Logout failed' });
+    }
+
+    // Destroy the session completely
+    req.session.destroy((destroyErr) => {
+      if (destroyErr) {
+        console.error('Error destroying session:', destroyErr);
+        return res.status(500).json({ error: 'Session destruction failed' });
       }
 
       // Clear the session cookie
       res.clearCookie('connect.sid');
 
-      console.log('Session destroyed successfully');
-
-      res.json({
-        success: true,
-        message: 'Logged out successfully'
-      });
+      console.log('User logged out successfully and session destroyed');
+      res.json({ success: true, message: 'Logged out successfully' });
     });
-
-  } catch (error) {
-    console.error('Logout error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Logout failed'
-    });
-  }
+  });
 });
 
 export default router;
