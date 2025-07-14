@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { NotificationsPopover } from '@/components/ui/notifications-popover';
 import { useNotifications, Notification } from '@/hooks/use-notifications';
 import ConsistentPageHeader from '@/components/ConsistentPageHeader';
+import { queryClient } from '@/lib/queryClient';
 
 // Real booking data will be fetched from API
 
@@ -62,7 +63,6 @@ const PatientPortalPage: React.FC = () => {
   const [_, setLocation] = useLocation();
 
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
-  const { queryClient } = require('@/lib/queryClient');
 
   // Nav items with icons
   const navItems = [
