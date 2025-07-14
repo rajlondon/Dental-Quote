@@ -64,7 +64,7 @@ const mapBackendToFrontend = (backendId: string) => {
     "all-on-6-implants": "all_on_6_implants",
     "bone-graft": "bone_graft",
     "sinus-lift": "sinus_lift",
-    
+
     // Crowns and Veneers
     "porcelain-crown": "porcelain_crown",
     "zirconia-crown": "zirconia_crown",
@@ -73,21 +73,21 @@ const mapBackendToFrontend = (backendId: string) => {
     "composite-veneer": "composite_veneer",
     "e-max-veneer": "porcelain_veneer",
     "inlay-onlay": "inlay_onlay",
-    
+
     // Whitening
     "teeth-whitening": "zoom_whitening",
     "zoom-whitening": "zoom_whitening",
     "laser-whitening": "laser_whitening",
     "home-whitening": "home_whitening_kit",
     "professional-whitening": "zoom_whitening",
-    
+
     // Full Mouth
     "full-smile-makeover": "full_smile_makeover",
     "hollywood-smile": "hollywood_smile",
     "full-mouth-restoration": "full_mouth_restoration",
     "smile-makeover": "full_smile_makeover",
     "complete-smile-reconstruction": "full_mouth_restoration",
-    
+
     // General Dentistry
     "dental-checkup": "dental_checkup_cleaning",
     "dental-cleaning": "dental_checkup_cleaning",
@@ -100,7 +100,7 @@ const mapBackendToFrontend = (backendId: string) => {
     "tooth-extraction": "tooth_extraction",
     "dental-bridge": "dental_bridge",
     "bridge-3-unit": "dental_bridge",
-    
+
     // Other Treatments
     "invisalign": "orthodontics_invisalign",
     "invisalign-treatment": "orthodontics_invisalign",
@@ -114,21 +114,21 @@ const mapBackendToFrontend = (backendId: string) => {
     "night-guard": "night_guard",
     "dental-splint": "night_guard",
   };
-  
+
   // Direct mapping if exists
   if (mappings[backendId]) {
     return mappings[backendId];
   }
-  
+
   // Fallback logic: try to find a similar treatment by name matching
   const normalizedBackendId = backendId.toLowerCase().replace(/[-_]/g, '');
-  
+
   // Search through all treatment categories for a partial match
   for (const category of TREATMENT_CATEGORIES) {
     for (const treatment of category.treatments) {
       const normalizedTreatmentId = treatment.id.toLowerCase().replace(/[-_]/g, '');
       const normalizedTreatmentName = treatment.name.toLowerCase().replace(/[-_\s]/g, '');
-      
+
       // Check if backend ID contains key words from treatment name or ID
       if (normalizedBackendId.includes(normalizedTreatmentId) || 
           normalizedTreatmentId.includes(normalizedBackendId) ||
@@ -138,7 +138,7 @@ const mapBackendToFrontend = (backendId: string) => {
       }
     }
   }
-  
+
   // Final fallback: return the original ID with underscores instead of hyphens
   return backendId.replace(/-/g, '_');
 };
@@ -1111,15 +1111,12 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           </div>
                         </div>
                       </div>
-                      <div className="text-left sm:text-right mt-2 sm:mt-0">
+                      <div className="text-right">
                         <Badge
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Istanbul: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>
@@ -1217,10 +1214,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Estimated Istanbul Price: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>
@@ -1295,10 +1289,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Estimated Istanbul Price: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>
@@ -1393,10 +1384,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Estimated Istanbul Price: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>
@@ -1488,10 +1476,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Estimated Istanbul Price: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>
@@ -1583,10 +1568,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Estimated Istanbul Price: £
-                          {Math.round(
-                            treatment.priceGBP * 0.35,
-                          ).toLocaleString()}
+                          Price varies by clinic
                         </Badge>
                       </div>
                     </div>

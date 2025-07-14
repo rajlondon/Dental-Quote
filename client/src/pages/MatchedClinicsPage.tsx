@@ -325,7 +325,7 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       const ukFamilyVacation = 4000; // Average of £3,000-5,000 range
       const ukTransfersCoordination = 500;
       const ukTotalEquivalent = ukPrivateDental + ukFamilyVacation + ukTransfersCoordination;
-      
+
       return {
         clinicTreatments,
         totalPrice: packageData.packagePrice || packageData.totalPrice,
@@ -486,6 +486,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
       </>
     );
   }
+
+  const treatmentPlanData = JSON.parse(localStorage.getItem('treatmentPlanData') || '{}');
 
   return (
     <>
