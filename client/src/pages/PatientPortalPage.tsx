@@ -62,6 +62,7 @@ const PatientPortalPage: React.FC = () => {
   const [_, setLocation] = useLocation();
 
   const { unreadCount, notifications, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { queryClient } = require('@/lib/queryClient');
 
   // Nav items with icons
   const navItems = [
@@ -100,34 +101,51 @@ const PatientPortalPage: React.FC = () => {
 
   // Handle logout
   const handleLogout = async () => {
+    console.log('🚨 Starting patient portal logout...');
+
     try {
-      // Clear all client-side storage immediately
+      // IMMEDIATE CLIENT DESTRUCTION - before any server calls
+      console.log('🧨 IMMEDIATE CLIENT AUTH DESTRUCTION');
+
+      // 1. Poison all query caches immediately
+      queryClient.setQueryData(["/auth/user"], null);
+      queryClient.setQueryData(["global-auth-user"], null);
+
+      // 2. Clear all storages immediately
       sessionStorage.clear();
       localStorage.clear();
-      
-      // Clear React Query cache
-      const { queryClient } = require('@/lib/queryClient');
-      queryClient.clear();
-      
-      // Attempt server logout
-      await logoutMutation.mutateAsync();
-      
-      // Force complete navigation to login page
-      window.location.replace('/portal-login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-      
-      // Even if server logout fails, clear client state and redirect
-      sessionStorage.clear();
-      localStorage.clear();
-      
-      toast({
-        title: "Logout completed",
-        description: "You have been logged out.",
+
+      // 3. Set multiple blocking flags
+      const destructionTimestamp = Date.now();
+      sessionStorage.setItem('immediate_logout_timestamp', destructionTimestamp.toString());
+      localStorage.setItem('immediate_logout_timestamp', destructionTimestamp.toString());
+      sessionStorage.setItem('auth_completely_disabled', 'true');
+      localStorage.setItem('auth_completely_disabled', 'true');
+      sessionStorage.setItem('client_side_logout_complete', 'true');
+      localStorage.setItem('client_side_logout_complete', 'true');
+
+      // 4. Clear all cookies immediately
+      document.cookie.split(";").forEach(function(c) { 
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+        if (name) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+        }
       });
-      
-      // Force complete navigation to login page
-      window.location.replace('/portal-login');
+
+      // 5. Now call server logout (but client is already destroyed)
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      console.error('Logout error:', error);
+
+      // Even if server logout fails, client is already destroyed
+      console.log('🆘 EMERGENCY CLIENT DESTRUCTION COMPLETE');
+
+      // Force redirect regardless
+      setTimeout(() => {
+        window.location.replace(`/portal-login?emergency_logout=${Date.now()}&client_destroyed=true`);
+      }, 100);
     }
   };
 
