@@ -104,7 +104,6 @@ import PortalLoginPage from "@/pages/PortalLoginPage";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { GlobalAuthProvider } from '@/contexts/GlobalAuthProvider';
 import { useAuth } from '@/hooks/use-auth';
-import React from 'react';
 
 // Auth state logger component
 const AuthStateLogger = () => {
