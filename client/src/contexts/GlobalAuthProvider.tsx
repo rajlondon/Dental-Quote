@@ -38,20 +38,26 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         console.error('GlobalAuthProvider: Failed to fetch user data', error);
         // If 401, user is not authenticated
         if (error.response?.status === 401) {
-          // Clear any stale cached data
-          sessionStorage.removeItem('cached_user_data');
-          sessionStorage.removeItem('cached_user_timestamp');
+          // Clear any stale cached data more aggressively
+          sessionStorage.clear();
+          localStorage.clear();
+          
+          // Clear React Query cache
+          queryClient.setQueryData(['global-auth-user'], null);
+          queryClient.setQueryData(['/auth/user'], null);
+          
           return null;
         }
         // Don't throw - return null for unauthenticated state
         return null;
       }
     },
-    staleTime: 10000,         // Shorter stale time to catch logout faster
+    staleTime: 5000,          // Even shorter stale time
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
     retry: false,             // Don't retry failed requests
     refetchOnMount: true,     // Always refetch when component mounts
     enabled: true,            // Always enabled
+    gcTime: 0,                // Don't cache queries after component unmount
   });
 
   // Log authentication state

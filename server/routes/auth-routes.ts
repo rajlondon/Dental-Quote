@@ -560,45 +560,62 @@ router.post('/recreate-admin', async (req, res) => {
 router.post('/logout', (req, res) => {
   console.log('Logout request received for session:', req.sessionID);
 
-  // Clear session variables immediately
+  // Store session ID for complete cleanup
+  const sessionId = req.sessionID;
+
+  // Immediately clear all session data
   req.session.userId = undefined;
   req.session.userRole = undefined;
+  
+  // Clear any other session properties that might exist
+  Object.keys(req.session).forEach(key => {
+    if (key !== 'cookie') {
+      delete req.session[key];
+    }
+  });
 
-  // Force immediate session save to clear the variables
-  req.session.save((saveErr) => {
-    if (saveErr) {
-      console.error('Error saving cleared session:', saveErr);
+  // Force session regeneration to create new session ID
+  req.session.regenerate((regenerateErr) => {
+    if (regenerateErr) {
+      console.error('Error regenerating session:', regenerateErr);
     }
 
-    req.logout((err) => {
-      if (err) {
-        console.error('Error during passport logout:', err);
-        // Still try to destroy session even on logout error
+    // Call passport logout
+    req.logout((logoutErr) => {
+      if (logoutErr) {
+        console.error('Error during passport logout:', logoutErr);
       }
 
-      // Destroy the session completely
+      // Now destroy the session completely
       req.session.destroy((destroyErr) => {
         if (destroyErr) {
           console.error('Error destroying session:', destroyErr);
-          // Still clear cookie and respond even on destroy error
         }
 
-        // Clear all possible session cookies with multiple variations
-        const cookieOptions = {
-          path: '/',
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          sameSite: 'lax' as const
-        };
+        // Clear all possible session cookies with multiple variations and paths
+        const cookieOptions = [
+          { path: '/', httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const },
+          { path: '/', httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const },
+          { path: '/', httpOnly: true, secure: false, sameSite: 'lax' as const },
+          { path: '/', httpOnly: false, secure: false, sameSite: 'lax' as const },
+          { path: '/' },
+          {}
+        ];
 
-        res.clearCookie('connect.sid', cookieOptions);
-        res.clearCookie('session', cookieOptions);
-        
-        // Also try clearing without httpOnly in case
-        res.clearCookie('connect.sid', { ...cookieOptions, httpOnly: false });
-        res.clearCookie('session', { ...cookieOptions, httpOnly: false });
+        // Clear all cookie variations
+        cookieOptions.forEach(options => {
+          res.clearCookie('connect.sid', options);
+          res.clearCookie('session', options);
+          res.clearCookie('sessionId', options);
+          res.clearCookie('auth-token', options);
+          res.clearCookie('user-session', options);
+        });
 
-        console.log('User logged out successfully, session destroyed, cookies cleared');
+        // Set explicit expired cookies
+        res.cookie('connect.sid', '', { expires: new Date(0), path: '/' });
+        res.cookie('session', '', { expires: new Date(0), path: '/' });
+
+        console.log(`User logged out successfully. Session ${sessionId} destroyed, all cookies cleared`);
         res.json({ success: true, message: 'Logged out successfully' });
       });
     });

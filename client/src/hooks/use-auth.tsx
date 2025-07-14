@@ -320,10 +320,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Step 4: Clear any cached user data
       userDataRef.current = null;
 
-      // Step 5: Clear any browser cookies manually
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      // Step 5: Clear browser cookies more aggressively
+      const cookiesToClear = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
+      
+      cookiesToClear.forEach(cookieName => {
+        // Clear with different path combinations
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
+        document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.${window.location.hostname}`;
       });
+
+      // Clear all existing cookies
+      document.cookie.split(";").forEach(function(c) { 
+        const eqPos = c.indexOf("=");
+        const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/";
+        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=" + window.location.hostname;
+        document.cookie = name.trim() + "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/;domain=." + window.location.hostname;
+      });
+
+      // Step 6: Force page reload after logout to ensure clean state
+      setTimeout(() => {
+        console.log("Force reloading page to ensure clean logout state");
+        window.location.href = '/portal-login';
+      }, 100);
 
       console.log("Complete logout cleanup finished");
 
