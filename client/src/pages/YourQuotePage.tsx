@@ -237,7 +237,7 @@ const CLINIC_DATA: ClinicInfo[] = [
 
 // Patient Preferences Section Component
 const PatientPreferencesSection: React.FC = () => {
-  const [preferences, setPreferences<{
+  const [preferences, setPreferences] = useState<{
     budgetPriority: 'low' | 'medium' | 'high' | null;
     priority: 'cost' | 'quality' | 'location' | null;
     holidayInterest: boolean;
