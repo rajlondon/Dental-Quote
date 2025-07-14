@@ -184,34 +184,25 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
           variant: 'default',
         });
 
-        // Schedule multiple refreshes with staggered timing
-        // This helps overcome browser cache issues by trying multiple times
-        const refreshTimes = [500, 1500, 3000, 5000]; // Milliseconds
+        // Single refresh to prevent jittering
+        setTimeout(() => {
+          const newRefreshKey = Date.now() + Math.random();
+          console.log(`⏱️ Single refresh with key: ${newRefreshKey}`);
+          setImageRefreshKey(newRefreshKey);
+          setImageCache({});
 
-        refreshTimes.forEach(delay => {
-          setTimeout(() => {
-            // Generate a unique refresh key each time
-            const newRefreshKey = Date.now() + Math.random();
-            console.log(`⏱️ Scheduled refresh #${delay/500}: new key ${newRefreshKey}`);
-            setImageRefreshKey(newRefreshKey);
-            setImageCache({}); // Clear cache again to be extra sure
+          // Single re-query
+          queryClient.invalidateQueries({ 
+            queryKey: ['/api/special-offers/homepage'],
+            refetchType: 'all'
+          });
 
-            // Force re-query on each refresh attempt
-            queryClient.invalidateQueries({ 
-              queryKey: ['/api/special-offers/homepage'],
-              refetchType: 'all'
-            });
-
-            // Only show toast on final refresh
-            if (delay === refreshTimes[refreshTimes.length - 1]) {
-              toast({
-                title: 'Special Offer Updated',
-                description: 'New promotional images are now available',
-                variant: 'default',
-              });
-            }
-          }, delay);
-        });
+          toast({
+            title: 'Special Offer Updated',
+            description: 'New promotional images are now available',
+            variant: 'default',
+          });
+        }, 1000); // Single 1-second delay
       }
     };
 
@@ -308,28 +299,18 @@ export default function EnhancedOffersCarousel({ className }: EnhancedOffersCaro
     // No cleanup needed as useWebSocket handles it
   }, []); // Remove dependencies to prevent re-registration
 
-  // Auto-advance carousel
+  // Auto-advance carousel with slower, more stable timing
   useEffect(() => {
     if (!isAutoPlaying || !offers || offers.length <= 1) return;
 
     const interval = setInterval(() => {
       setCurrentIndex(prev => (prev + 1) % offers.length);
-    }, 5000);
+    }, 8000); // Increased to 8 seconds for less jittery experience
 
     return () => clearInterval(interval);
-  }, [offers, isAutoPlaying]);
+  }, [offers?.length, isAutoPlaying]); // Only depend on offers length, not entire offers object
 
-  // Update refresh key when offers data changes - with debouncing
-  useEffect(() => {
-    if (offers && offers.length > 0) {
-      const timeout = setTimeout(() => {
-        setImageRefreshKey(Date.now());
-        setImageCache({});
-      }, 1000); // Debounce for 1 second
-
-      return () => clearTimeout(timeout);
-    }
-  }, [offers?.length]); // Only depend on offers length, not the entire offers array
+  // Removed auto-refresh effect to prevent jittering
 
   // Event handlers
   const handleMouseEnter = () => setIsAutoPlaying(false);
