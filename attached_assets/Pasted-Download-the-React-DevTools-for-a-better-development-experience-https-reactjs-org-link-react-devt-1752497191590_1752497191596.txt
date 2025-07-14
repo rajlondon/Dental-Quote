@@ -1,0 +1,220 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+App.tsx:113 🔐 APP AUTH STATE: Loading: true User: null
+EnhancedOffersCarousel.tsx:299 🔌 Registering enhanced WebSocket handlers for special offers
+use-websocket.tsx:604 🔄 Registered enhanced handler for special offer updates with forced browser cache clearing
+App.tsx:123 🧭 Frontend route changed to: /
+use-auth.tsx:111 🔍 AUTH QUERY: Starting user authentication check
+use-auth.tsx:131 🔍 AUTH QUERY: Fetching fresh user data from server
+GlobalAuthProvider.tsx:33 🌐 GLOBAL AUTH QUERY: Starting user data fetch
+GlobalAuthProvider.tsx:69 🌐 GLOBAL AUTH: Loading user data...
+App.tsx:383 Skipping reload prevention for non-clinic portal path: /
+use-websocket.tsx:468 WebSocket hook unmounting with connection ID: ws-1752497157644-xvrk793
+use-websocket.tsx:468 WebSocket hook unmounting with connection ID: ws-1752497157648-9dkg299
+App.tsx:113 🔐 APP AUTH STATE: Loading: true User: null
+EnhancedOffersCarousel.tsx:299 🔌 Registering enhanced WebSocket handlers for special offers
+use-websocket.tsx:604 🔄 Registered enhanced handler for special offer updates with forced browser cache clearing
+App.tsx:123 🧭 Frontend route changed to: /
+GlobalAuthProvider.tsx:69 🌐 GLOBAL AUTH: Loading user data...
+App.tsx:383 Skipping reload prevention for non-clinic portal path: /
+use-auth.tsx:132 
+            
+            
+           GET https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/api/auth/user 401 (Unauthorized)
+dispatchXhrRequest @ axios.js?v=c212b9f4:1637
+xhr @ axios.js?v=c212b9f4:1517
+dispatchRequest @ axios.js?v=c212b9f4:1992
+_request @ axios.js?v=c212b9f4:2213
+request @ axios.js?v=c212b9f4:2104
+Axios.<computed> @ axios.js?v=c212b9f4:2232
+wrap @ axios.js?v=c212b9f4:8
+queryFn @ use-auth.tsx:132
+fetchFn @ @tanstack_react-query.js?v=c212b9f4:840
+run @ @tanstack_react-query.js?v=c212b9f4:494
+start @ @tanstack_react-query.js?v=c212b9f4:536
+fetch @ @tanstack_react-query.js?v=c212b9f4:926
+executeFetch_fn @ @tanstack_react-query.js?v=c212b9f4:2211
+onSubscribe @ @tanstack_react-query.js?v=c212b9f4:1898
+subscribe @ @tanstack_react-query.js?v=c212b9f4:24
+(anonymous) @ @tanstack_react-query.js?v=c212b9f4:3022
+subscribeToStore @ chunk-276SZO74.js?v=c212b9f4:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=c212b9f4:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=c212b9f4:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=c212b9f4:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=c212b9f4:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=c212b9f4:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=c212b9f4:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=c212b9f4:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=c212b9f4:9119
+commitRootImpl @ chunk-276SZO74.js?v=c212b9f4:19432
+commitRoot @ chunk-276SZO74.js?v=c212b9f4:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=c212b9f4:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18718
+workLoop @ chunk-276SZO74.js?v=c212b9f4:197
+flushWork @ chunk-276SZO74.js?v=c212b9f4:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=c212b9f4:384Understand this error
+use-auth.tsx:152 🔍 AUTH QUERY: Auth query error: 401 Request failed with status code 401
+use-auth.tsx:155 🔍 AUTH QUERY: 401 - User not authenticated
+GlobalAuthProvider.tsx:37 
+            
+            
+           GET https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/api/auth/user 401 (Unauthorized)
+dispatchXhrRequest @ axios.js?v=c212b9f4:1637
+xhr @ axios.js?v=c212b9f4:1517
+dispatchRequest @ axios.js?v=c212b9f4:1992
+_request @ axios.js?v=c212b9f4:2213
+request @ axios.js?v=c212b9f4:2104
+Axios.<computed> @ axios.js?v=c212b9f4:2232
+wrap @ axios.js?v=c212b9f4:8
+queryFn @ GlobalAuthProvider.tsx:37
+fetchFn @ @tanstack_react-query.js?v=c212b9f4:840
+run @ @tanstack_react-query.js?v=c212b9f4:494
+start @ @tanstack_react-query.js?v=c212b9f4:536
+fetch @ @tanstack_react-query.js?v=c212b9f4:926
+executeFetch_fn @ @tanstack_react-query.js?v=c212b9f4:2211
+onSubscribe @ @tanstack_react-query.js?v=c212b9f4:1898
+subscribe @ @tanstack_react-query.js?v=c212b9f4:24
+(anonymous) @ @tanstack_react-query.js?v=c212b9f4:3022
+subscribeToStore @ chunk-276SZO74.js?v=c212b9f4:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=c212b9f4:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=c212b9f4:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=c212b9f4:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=c212b9f4:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=c212b9f4:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=c212b9f4:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=c212b9f4:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=c212b9f4:9119
+commitRootImpl @ chunk-276SZO74.js?v=c212b9f4:19432
+commitRoot @ chunk-276SZO74.js?v=c212b9f4:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=c212b9f4:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18718
+workLoop @ chunk-276SZO74.js?v=c212b9f4:197
+flushWork @ chunk-276SZO74.js?v=c212b9f4:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=c212b9f4:384Understand this error
+GlobalAuthProvider.tsx:46 🌐 GLOBAL AUTH QUERY: Failed to fetch user data AxiosError {message: 'Request failed with status code 401', name: 'AxiosError', code: 'ERR_BAD_REQUEST', config: {…}, request: XMLHttpRequest, …}
+queryFn @ GlobalAuthProvider.tsx:46
+await in queryFn
+fetchFn @ @tanstack_react-query.js?v=c212b9f4:840
+run @ @tanstack_react-query.js?v=c212b9f4:494
+start @ @tanstack_react-query.js?v=c212b9f4:536
+fetch @ @tanstack_react-query.js?v=c212b9f4:926
+executeFetch_fn @ @tanstack_react-query.js?v=c212b9f4:2211
+onSubscribe @ @tanstack_react-query.js?v=c212b9f4:1898
+subscribe @ @tanstack_react-query.js?v=c212b9f4:24
+(anonymous) @ @tanstack_react-query.js?v=c212b9f4:3022
+subscribeToStore @ chunk-276SZO74.js?v=c212b9f4:11984
+commitHookEffectListMount @ chunk-276SZO74.js?v=c212b9f4:16915
+commitPassiveMountOnFiber @ chunk-276SZO74.js?v=c212b9f4:18156
+commitPassiveMountEffects_complete @ chunk-276SZO74.js?v=c212b9f4:18129
+commitPassiveMountEffects_begin @ chunk-276SZO74.js?v=c212b9f4:18119
+commitPassiveMountEffects @ chunk-276SZO74.js?v=c212b9f4:18109
+flushPassiveEffectsImpl @ chunk-276SZO74.js?v=c212b9f4:19490
+flushPassiveEffects @ chunk-276SZO74.js?v=c212b9f4:19447
+performSyncWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18868
+flushSyncCallbacks @ chunk-276SZO74.js?v=c212b9f4:9119
+commitRootImpl @ chunk-276SZO74.js?v=c212b9f4:19432
+commitRoot @ chunk-276SZO74.js?v=c212b9f4:19277
+finishConcurrentRender @ chunk-276SZO74.js?v=c212b9f4:18805
+performConcurrentWorkOnRoot @ chunk-276SZO74.js?v=c212b9f4:18718
+workLoop @ chunk-276SZO74.js?v=c212b9f4:197
+flushWork @ chunk-276SZO74.js?v=c212b9f4:176
+performWorkUntilDeadline @ chunk-276SZO74.js?v=c212b9f4:384Understand this error
+GlobalAuthProvider.tsx:49 🌐 GLOBAL AUTH QUERY: User not authenticated (401)
+App.tsx:113 🔐 APP AUTH STATE: Loading: false User: null
+GlobalAuthProvider.tsx:73 🌐 GLOBAL AUTH: Not authenticated
+@stripe_stripe-js.js?v=c212b9f4:115 Uncaught (in promise) TypeError: Cannot read properties of undefined (reading 'match')
+    at initStripe2 (@stripe_stripe-js.js?v=c212b9f4:115:22)
+    at @stripe_stripe-js.js?v=c212b9f4:151:12
+initStripe2 @ @stripe_stripe-js.js?v=c212b9f4:115
+(anonymous) @ @stripe_stripe-js.js?v=c212b9f4:151
+Promise.then
+loadStripe2 @ @stripe_stripe-js.js?v=c212b9f4:150
+(anonymous) @ PaymentForm.tsx:202Understand this error
+EnhancedOffersCarousel.tsx:634 ✅ Successfully loaded image for offer 134cdb0f-e783-47f5-a502-70e3960f7246
+EnhancedOffersCarousel.tsx:634 ✅ Successfully loaded image for offer ac36590b-b0dc-434e-ba74-d42ab2485e81
+EnhancedOffersCarousel.tsx:641 ❌ Error loading image for offer 72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0: SyntheticBaseEvent {_reactName: 'onError', _targetInst: null, type: 'error', nativeEvent: Event, target: img.w-full.h-full.object-cover.object-center, …}
+onError @ EnhancedOffersCarousel.tsx:641
+callCallback2 @ chunk-276SZO74.js?v=c212b9f4:3674
+invokeGuardedCallbackDev @ chunk-276SZO74.js?v=c212b9f4:3699
+invokeGuardedCallback @ chunk-276SZO74.js?v=c212b9f4:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-276SZO74.js?v=c212b9f4:3736
+executeDispatch @ chunk-276SZO74.js?v=c212b9f4:7014
+processDispatchQueueItemsInOrder @ chunk-276SZO74.js?v=c212b9f4:7034
+processDispatchQueue @ chunk-276SZO74.js?v=c212b9f4:7043
+dispatchEventsForPlugins @ chunk-276SZO74.js?v=c212b9f4:7051
+(anonymous) @ chunk-276SZO74.js?v=c212b9f4:7174
+batchedUpdates$1 @ chunk-276SZO74.js?v=c212b9f4:18913
+batchedUpdates @ chunk-276SZO74.js?v=c212b9f4:3579
+dispatchEventForPluginEventSystem @ chunk-276SZO74.js?v=c212b9f4:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-276SZO74.js?v=c212b9f4:5478
+dispatchEvent @ chunk-276SZO74.js?v=c212b9f4:5472Understand this error
+EnhancedOffersCarousel.tsx:642 🔍 Image URL that failed: https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev/images/accommodations/premium-hotel.jpg?t=1752497158022&r=l8us8lgn47&v=1752497158009&u=f839a6fe-b3d6-481a-b6fa-9b8b91e3d6b5&nocache=true
+EnhancedOffersCarousel.tsx:634 ✅ Successfully loaded image for offer 72e65d76-4cd5-4fd2-9323-8c35f3a9b9f0
+EnhancedOffersCarousel.tsx:634 ✅ Successfully loaded image for offer 3e6a315d-9d9f-4b56-97da-4b3d4b4b5367
+YourQuotePage.tsx:514 Initializing YourQuotePage with URL params: ?promo=HOLLYWOOD_SMILE
+YourQuotePage.tsx:518 Special offer ID from URL: null
+YourQuotePage.tsx:544 No special offer found in URL or sessionStorage
+YourQuotePage.tsx:514 Initializing YourQuotePage with URL params: ?promo=HOLLYWOOD_SMILE
+YourQuotePage.tsx:518 Special offer ID from URL: null
+YourQuotePage.tsx:544 No special offer found in URL or sessionStorage
+use-websocket.tsx:468 WebSocket hook unmounting with connection ID: ws-1752497157657-vmk7xkl
+TreatmentPlanBuilder.tsx:639 Auto-applying package promo code: HOLLYWOOD_SMILE
+YourQuotePage.tsx:689 Promo code from URL: HOLLYWOOD_SMILE
+TreatmentPlanBuilder.tsx:639 Auto-applying package promo code: HOLLYWOOD_SMILE
+YourQuotePage.tsx:689 Promo code from URL: HOLLYWOOD_SMILE
+PromoCodeInput.tsx:143 Storing promo code clinic ID: maltepe-dental-clinic
+TreatmentPlanBuilder.tsx:534 🎯 Package promo event received: {code: 'HOLLYWOOD_SMILE', packageData: {…}, clinicId: 'maltepe-dental-clinic'}
+TreatmentPlanBuilder.tsx:541 🔄 Processing treatment: premium-porcelain-veneer
+TreatmentPlanBuilder.tsx:547 📍 Mapped ID: premium-porcelain-veneer → porcelain_veneer
+TreatmentPlanBuilder.tsx:553 ✅ Found matching treatment: Porcelain Veneer
+TreatmentPlanBuilder.tsx:541 🔄 Processing treatment: teeth-whitening
+TreatmentPlanBuilder.tsx:547 📍 Mapped ID: teeth-whitening → zoom_whitening
+TreatmentPlanBuilder.tsx:553 ✅ Found matching treatment: Zoom Whitening (In-office)
+TreatmentPlanBuilder.tsx:541 🔄 Processing treatment: smile-design-consultation
+TreatmentPlanBuilder.tsx:547 📍 Mapped ID: smile-design-consultation → dental_checkup_cleaning
+TreatmentPlanBuilder.tsx:553 ✅ Found matching treatment: Dental Check-up & Cleaning
+TreatmentPlanBuilder.tsx:593 🔧 Setting treatments: (3) [{…}, {…}, {…}]
+YourQuotePage.tsx:689 Promo code from URL: HOLLYWOOD_SMILE
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+MatchedClinicsPage.tsx:281 📦 Package data found: {name: 'Hollywood Smile Vacation Package', description: 'Transform your smile with a complete Hollywood Smile makeover while enjoying luxury stay in Istanbul', treatments: Array(3), originalPrice: 7050, packagePrice: 4250, …}
+MatchedClinicsPage.tsx:287 🔍 Promo code clinic ID from session: maltepe-dental-clinic
+MatchedClinicsPage.tsx:288 🏥 Available clinics: (3) [{…}, {…}, {…}]
+MatchedClinicsPage.tsx:295 ✅ Filtered clinics: [{…}]
+PatientPortalPage.tsx:67 👤 PATIENT PORTAL: User state changed: null
+PatientPortalPage.tsx:67 👤 PATIENT PORTAL: User state changed: null
