@@ -46,7 +46,7 @@ interface PendingPackage {
   clinicId?: string;
 }
 
-export function TreatmentPlanBuilder() {
+export default function TreatmentPlanBuilder() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [availableTreatments, setAvailableTreatments] = useState<any[]>([]);
