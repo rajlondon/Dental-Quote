@@ -10,6 +10,8 @@ import { Loader2, Mail, Lock, User, Building, Shield, ArrowLeft, Home } from 'lu
 import { useLocation } from 'wouter';
 
 export default function PortalLoginPage() {
+  const [data, setData] = useState(null);
+  const [role, setRole] = useState('');
   const { user, loginMutation, isLoading } = useAuth();
   const [location] = useLocation();
   const [activeTab, setActiveTab] = useState('patient');

@@ -92,13 +92,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryKey: ["/auth/user"],
     queryFn: async () => {
       try {
-        // NUCLEAR PROTECTION: Check if logout is in progress
+        // ULTIMATE PROTECTION: Check if logout is in progress
         const logoutInProgress = sessionStorage.getItem('logout_in_progress') === 'true';
         const forcedLogoutTimestamp = sessionStorage.getItem('forced_logout_timestamp');
         const emergencyLogoutTimestamp = sessionStorage.getItem('emergency_logout_timestamp');
+        const authDisabled = sessionStorage.getItem('auth_disabled') === 'true';
+        const ultimateLogoutFlag = sessionStorage.getItem('ultimate_logout_flag') === 'true';
         
-        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp) {
-          console.log("🛑 LOGOUT PROTECTION: Blocking auth query during logout process");
+        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp || authDisabled || ultimateLogoutFlag) {
+          console.log("🛑 ULTIMATE PROTECTION: Blocking auth query during logout process");
           return null;
         }
         
@@ -303,27 +305,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logoutMutation = useMutation({
     mutationFn: async () => {
       try {
-        console.log("🚨 NUCLEAR LOGOUT: Starting complete session destruction...");
+        console.log("🚨 ULTIMATE LOGOUT: Starting complete session destruction...");
         
         // Step 1: Immediately poison all client state
         queryClient.setQueryData(["/auth/user"], null);
         queryClient.setQueryData(["global-auth-user"], null);
         userDataRef.current = null;
         
-        // Step 2: Set a flag to prevent any auth queries from running
+        // Step 2: Set multiple flags to prevent any auth queries from running
         sessionStorage.setItem('logout_in_progress', 'true');
         localStorage.setItem('logout_in_progress', 'true');
+        sessionStorage.setItem('auth_disabled', 'true');
+        localStorage.setItem('auth_disabled', 'true');
         
         // Step 3: Call server logout endpoint with maximum cache busting
         const res = await api.post("/api/auth/logout", {
           forceDestroy: true,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          ultimateLogout: true
         }, {
           headers: {
             'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
             'Pragma': 'no-cache',
             'Expires': '0',
-            'X-Logout-Request': 'true'
+            'X-Logout-Request': 'true',
+            'X-Ultimate-Logout': 'true'
           }
         });
         console.log("🔥 Server logout response:", res.status);
@@ -335,18 +341,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     },
     onSuccess: () => {
-      console.log("🧨 NUCLEAR CLEANUP: Starting complete state destruction");
+      console.log("🧨 ULTIMATE CLEANUP: Starting complete state destruction");
       
       // Step 1: Set permanent logout flags
       const logoutTimestamp = Date.now();
-      sessionStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
-      localStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
       
-      // Step 2: Aggressive query client cleanup
+      // Step 2: ULTIMATE query client cleanup
       queryClient.clear();
       queryClient.removeQueries();
       queryClient.cancelQueries();
       queryClient.invalidateQueries();
+      queryClient.resetQueries();
       
       // Step 3: Complete storage wipe
       sessionStorage.clear();
@@ -356,6 +361,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
       localStorage.setItem('forced_logout_timestamp', logoutTimestamp.toString());
       sessionStorage.setItem('logout_in_progress', 'true');
+      localStorage.setItem('logout_in_progress', 'true');
+      sessionStorage.setItem('auth_disabled', 'true');
+      localStorage.setItem('auth_disabled', 'true');
+      sessionStorage.setItem('ultimate_logout_flag', 'true');
+      localStorage.setItem('ultimate_logout_flag', 'true');
 
       // Clear all possible cookie variations
       const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token', 'user-session'];
@@ -383,16 +393,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       });
 
-      console.log("🚀 NUCLEAR REDIRECT: Forcing complete page replacement");
+      console.log("🚀 ULTIMATE REDIRECT: Forcing complete page replacement");
 
       // Force redirect with complete page replacement and maximum cache busting
       setTimeout(() => {
-        const redirectUrl = `/portal-login?logout=${logoutTimestamp}&t=${Date.now()}&nocache=true`;
-        console.log("🎯 Redirecting to:", redirectUrl);
+        const redirectUrl = `/portal-login?ultimate_logout=${logoutTimestamp}&t=${Date.now()}&nocache=true&clear_auth=true`;
+        console.log("🎯 Ultimate redirecting to:", redirectUrl);
         
-        // Use both replace and href assignment for maximum compatibility
-        window.location.replace(redirectUrl);
-        window.location.href = redirectUrl;
+        // Multiple redirect attempts for maximum compatibility
+        try {
+          window.location.replace(redirectUrl);
+        } catch (e) {
+          console.log("Replace failed, trying href");
+          window.location.href = redirectUrl;
+        }
+        
+        // Force page reload as backup
+        setTimeout(() => {
+          window.location.reload();
+        }, 200);
       }, 100);
 
       toast({

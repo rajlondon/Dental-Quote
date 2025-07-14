@@ -31,13 +31,15 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
     queryKey: ['global-auth-user', Date.now()], // Add timestamp to force fresh requests
     queryFn: async () => {
       try {
-        // NUCLEAR PROTECTION: Check if logout is in progress
+        // ULTIMATE PROTECTION: Check if logout is in progress
         const logoutInProgress = sessionStorage.getItem('logout_in_progress') === 'true';
         const forcedLogoutTimestamp = sessionStorage.getItem('forced_logout_timestamp');
         const emergencyLogoutTimestamp = sessionStorage.getItem('emergency_logout_timestamp');
+        const authDisabled = sessionStorage.getItem('auth_disabled') === 'true';
+        const ultimateLogoutFlag = sessionStorage.getItem('ultimate_logout_flag') === 'true';
         
-        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp) {
-          console.log("🛑 GLOBAL AUTH PROTECTION: Blocking auth query during logout process");
+        if (logoutInProgress || forcedLogoutTimestamp || emergencyLogoutTimestamp || authDisabled || ultimateLogoutFlag) {
+          console.log("🛑 ULTIMATE GLOBAL AUTH PROTECTION: Blocking auth query during logout process");
           return null;
         }
         

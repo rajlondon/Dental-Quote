@@ -558,13 +558,15 @@ router.post('/recreate-admin', async (req, res) => {
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
-  console.log('🔥 NUCLEAR LOGOUT REQUEST: Complete session destruction for:', req.sessionID);
+  console.log('🔥 ULTIMATE LOGOUT REQUEST: Complete session destruction for:', req.sessionID);
 
   // Get the session ID before destroying it
   const sessionId = req.sessionID;
   const isForceDestroy = req.body.forceDestroy === true;
+  const isUltimateLogout = req.body.ultimateLogout === true;
 
   console.log('Force destroy requested:', isForceDestroy);
+  console.log('Ultimate logout requested:', isUltimateLogout);
 
   // Immediately clear all session properties
   if (req.session) {
@@ -618,15 +620,16 @@ router.post('/logout', (req, res) => {
         'Vary': '*'
       });
 
-      console.log(`🧨 NUCLEAR LOGOUT COMPLETE: Session ${sessionId} completely destroyed`);
+      console.log(`🧨 ULTIMATE LOGOUT COMPLETE: Session ${sessionId} completely destroyed`);
       
       res.status(200).json({ 
         success: true, 
-        message: 'Nuclear logout completed - all session data destroyed',
+        message: 'Ultimate logout completed - all session data destroyed',
         sessionDestroyed: true,
         sessionId: sessionId,
         timestamp: Date.now(),
-        nuclearLogout: true
+        ultimateLogout: true,
+        authDisabled: true
       });
     });
   });
