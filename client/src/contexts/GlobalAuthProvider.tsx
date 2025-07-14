@@ -32,7 +32,16 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
     queryFn: async () => {
       console.log('🌐 GLOBAL AUTH QUERY: Starting user data fetch');
       try {
+        // Check if we're in a post-logout state
+        const isPostLogout = !sessionStorage.getItem('cached_user_data') && 
+                           !localStorage.getItem('authToken') &&
+                           !document.cookie.includes('connect.sid') &&
+                           !document.cookie.includes('session');
         
+        if (isPostLogout) {
+          console.log('🌐 GLOBAL AUTH QUERY: Post-logout state detected, skipping request');
+          return null;
+        }
         
         const response = await api.get('/auth/user', {
           headers: {
@@ -53,12 +62,12 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
         return null;
       }
     },
-    staleTime: 60000,         // Consider data fresh for 60 seconds
+    staleTime: 30000,         // Reduce stale time to 30 seconds
     refetchOnWindowFocus: false, // Don't refetch when window gets focus
     retry: 1,                 // Retry failed requests once
-    refetchOnMount: false,    // Don't always refetch on mount
+    refetchOnMount: true,     // Always check auth state on mount
     enabled: true,            // Always enabled
-    gcTime: 300000,           // Cache for 5 minutes
+    gcTime: 60000,            // Reduce cache time to 1 minute
     refetchInterval: false,   // Don't poll
     refetchIntervalInBackground: false, // Don't poll in background
   });
