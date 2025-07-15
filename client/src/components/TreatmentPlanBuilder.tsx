@@ -1673,8 +1673,23 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             const packagePrice = packageData.packagePrice || packageData.totalPrice || totalGBP;
                             const packageName = packageData.name || 'Treatment Package';
                             
-                            // Generate package URL from package name
-                            const packageUrl = `/packages/${packageName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
+                            // Map package names to their correct IDs for URL generation
+                            const packageUrlMap: Record<string, string> = {
+                              'Hollywood Smile Vacation Package': 'hollywood-smile-vacation',
+                              'Hollywood Smile Luxury Family Vacation': 'hollywood-smile-vacation',
+                              'Dental Implant & City Experience': 'dental-implant-city-experience',
+                              'Value Veneer & Istanbul Discovery': 'value-veneer-istanbul-discovery',
+                              'Complete Smile Makeover': 'pkg_1',
+                              'VIP Dental Holiday': 'pkg_2',
+                              'Budget Implant Package': 'pkg_3',
+                              'Summer Dental Special': 'pkg_4',
+                              'Family Dental Package': 'pkg_5',
+                              'Test Discount Package': 'test_package'
+                            };
+                            
+                            // Get the correct package ID, fallback to simplified name if not found
+                            const packageId = packageUrlMap[packageName] || packageName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+                            const packageUrl = `/packages/${packageId}`;
                             
                             return (
                               <>
