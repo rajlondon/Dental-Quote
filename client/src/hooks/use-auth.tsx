@@ -378,9 +378,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
         });
 
-        // Force reload to clear any cached components
+        // Redirect to home page instead of just reloading
         setTimeout(() => {
-          window.location.reload();
+          window.location.href = '/';
         }, 100);
       }
     },

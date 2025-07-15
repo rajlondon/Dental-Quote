@@ -126,9 +126,11 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               if (response.data.isPackage && response.data.packageData) {
                 setPackageInfo(response.data.packageData);
 
-                // Only store if not already stored to prevent duplicates
+                // Only store and dispatch if not already applied to prevent duplicates
                 const existingCode = sessionStorage.getItem('pendingPromoCode');
-                if (existingCode !== inputCode.trim()) {
+                const existingPackageData = sessionStorage.getItem('pendingPackageData');
+                
+                if (existingCode !== inputCode.trim() || !existingPackageData) {
                   sessionStorage.setItem('pendingPromoCode', inputCode.trim());
 
                   // Enhance package data with accommodation details from trending packages
@@ -139,46 +141,51 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                   };
 
                   sessionStorage.setItem('pendingPackageData', JSON.stringify(enhancedPackageData));
-                }
 
-                // Store clinic ID if provided
-                if (response.data.clinicId) {
-                  console.log('Storing promo code clinic ID:', response.data.clinicId);
-                  sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
-                } else {
-                  // Clear any previous clinic ID if not specified for this package
-                  sessionStorage.removeItem('pendingPromoCodeClinicId');
-                }
+                  // Store clinic ID if provided
+                  if (response.data.clinicId) {
+                    console.log('Storing promo code clinic ID:', response.data.clinicId);
+                    sessionStorage.setItem('pendingPromoCodeClinicId', response.data.clinicId);
+                  } else {
+                    // Clear any previous clinic ID if not specified for this package
+                    sessionStorage.removeItem('pendingPromoCodeClinicId');
+                  }
 
-                // Emit a custom event to notify TreatmentPlanBuilder about the package
-                try {
-                  const packageEvent = new CustomEvent('packagePromoApplied', {
-                    detail: {
-                      code: inputCode.trim(),
-                      packageData: response.data.packageData,
-                      clinicId: response.data.clinicId || null
-                    }
-                  });
-                  window.dispatchEvent(packageEvent);
-                } catch (eventError) {
-                  console.error('Error dispatching package event:', eventError);
+                  // Emit a custom event to notify TreatmentPlanBuilder about the package (only once)
+                  try {
+                    const packageEvent = new CustomEvent('packagePromoApplied', {
+                      detail: {
+                        code: inputCode.trim(),
+                        packageData: response.data.packageData,
+                        clinicId: response.data.clinicId || null
+                      }
+                    });
+                    window.dispatchEvent(packageEvent);
+                  } catch (eventError) {
+                    console.error('Error dispatching package event:', eventError);
+                  }
                 }
               } else {
-                // Store discount code in session storage
-                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
+                // Only store and dispatch if not already applied
+                const existingCode = sessionStorage.getItem('pendingPromoCode');
+                
+                if (existingCode !== inputCode.trim()) {
+                  // Store discount code in session storage
+                  sessionStorage.setItem('pendingPromoCode', inputCode.trim());
 
-                // Emit a custom event to notify about discount code
-                try {
-                  const discountEvent = new CustomEvent('discountPromoApplied', {
-                    detail: {
-                      code: inputCode.trim(),
-                      discountType: response.data.discountType || 'fixed_amount',
-                      discountValue: response.data.discountValue || 0
-                    }
-                  });
-                  window.dispatchEvent(discountEvent);
-                } catch (eventError) {
-                  console.error('Error dispatching discount event:', eventError);
+                  // Emit a custom event to notify about discount code (only once)
+                  try {
+                    const discountEvent = new CustomEvent('discountPromoApplied', {
+                      detail: {
+                        code: inputCode.trim(),
+                        discountType: response.data.discountType || 'fixed_amount',
+                        discountValue: response.data.discountValue || 0
+                      }
+                    });
+                    window.dispatchEvent(discountEvent);
+                  } catch (eventError) {
+                    console.error('Error dispatching discount event:', eventError);
+                  }
                 }
               }
             } else {

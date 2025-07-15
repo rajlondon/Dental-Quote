@@ -530,11 +530,25 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   // Listen for promo code package events - simplified to reduce state updates
   useEffect(() => {
+    let eventProcessed = false;
+    
     const handlePackagePromo = (e: CustomEvent) => {
+      // Prevent duplicate processing of the same event
+      if (eventProcessed) return;
+      eventProcessed = true;
+      
       console.log("🎯 Package promo event received:", e.detail);
       const { packageData } = e.detail;
 
-      if (!packageData || !packageData.treatments) return;
+      if (!packageData || !packageData.treatments) {
+        eventProcessed = false;
+        return;
+      }
+      
+      // Reset flag after processing
+      setTimeout(() => {
+        eventProcessed = false;
+      }, 1000);
 
       // Map package treatments to our treatment format
       const packageTreatments = packageData.treatments.map((treatment: any) => {
