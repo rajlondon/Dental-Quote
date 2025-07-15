@@ -25,7 +25,7 @@ const PatientPortalTesting: React.FC<{
 }> = ({ setActiveSection }) => {
   const { toast } = useToast();
   const [isCreatingTestBooking, setIsCreatingTestBooking] = useState(false);
-  
+
   // Create a real quote request
   const createDemoQuote = async () => {
     try {
@@ -41,15 +41,15 @@ const PatientPortalTesting: React.FC<{
         hasXrays: false,
         consent: true
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: "Quote Request Created",
           description: `Quote request #${data.quoteRequest.id} created successfully.`,
         });
-        
+
         // Navigate to treatment comparison with real data
         setTimeout(() => {
           setActiveSection('treatment_comparison');
@@ -65,40 +65,40 @@ const PatientPortalTesting: React.FC<{
       });
     }
   };
-  
+
   // Quick action to upload a demo document
   const uploadDemoDocument = () => {
     toast({
       title: "Demo Document Uploaded",
       description: "A sample X-ray has been added to your documents for testing.",
     });
-    
+
     // Navigate to documents section
     setTimeout(() => {
       setActiveSection('documents');
     }, 1500);
   };
-  
+
   // Create a real test booking with clinic for messaging
   const createTestBooking = async () => {
     setIsCreatingTestBooking(true);
-    
+
     try {
       // Call our test API endpoint to create a booking between patient and clinic
       const response = await apiRequest('POST', '/api/test/create-test-booking', {
         patientEmail: 'patient@mydentalfly.com',
         clinicEmail: 'clinic@mydentalfly.com'
       });
-      
+
       const data = await response.json();
-      
+
       if (data.success) {
         toast({
           title: "Test Booking Created",
           description: `A test booking has been created with booking reference ${data.booking?.bookingReference || 'TEST-BOOKING'}.`,
           variant: "default"
         });
-        
+
         // Navigate to messages section
         setTimeout(() => {
           setActiveSection('messages');
@@ -111,7 +111,7 @@ const PatientPortalTesting: React.FC<{
             description: "A booking already exists between you and the clinic. You can use this for messaging tests.",
             variant: "default"
           });
-          
+
           // Navigate to messages section
           setTimeout(() => {
             setActiveSection('messages');
@@ -131,12 +131,12 @@ const PatientPortalTesting: React.FC<{
       setIsCreatingTestBooking(false);
     }
   };
-  
+
   // Deprecated demo message function (replaced with actual API implementation)
   const createDemoMessage = () => {
     createTestBooking();
   };
-  
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -146,7 +146,7 @@ const PatientPortalTesting: React.FC<{
             Test and verify all Patient Portal functionality
           </p>
         </div>
-        
+
         <Button 
           variant="outline"
           onClick={() => setActiveSection('dashboard')}
@@ -155,7 +155,7 @@ const PatientPortalTesting: React.FC<{
           Back to Dashboard
         </Button>
       </div>
-      
+
       <Alert className="bg-blue-50 border-blue-200">
         <Lightbulb className="h-4 w-4 text-blue-600" />
         <AlertTitle>Testing Mode</AlertTitle>
@@ -164,18 +164,18 @@ const PatientPortalTesting: React.FC<{
           Test data will be used to demonstrate features without affecting real data.
         </AlertDescription>
       </Alert>
-      
+
       <Tabs defaultValue="guide" className="space-y-4">
         <TabsList>
           <TabsTrigger value="guide">Testing Guide</TabsTrigger>
           <TabsTrigger value="quick-actions">Quick Test Actions</TabsTrigger>
           <TabsTrigger value="status">Feature Status</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="guide" className="space-y-4">
           <PortalTestingGuide portalType="patient" />
         </TabsContent>
-        
+
         <TabsContent value="quick-actions" className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
             <Card>
@@ -198,7 +198,7 @@ const PatientPortalTesting: React.FC<{
                 </Button>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
@@ -219,7 +219,7 @@ const PatientPortalTesting: React.FC<{
                 </Button>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center">
@@ -252,7 +252,7 @@ const PatientPortalTesting: React.FC<{
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4 mt-6">
             <Card className="border-blue-200">
               <CardHeader className="pb-3 bg-blue-50">
@@ -302,7 +302,7 @@ const PatientPortalTesting: React.FC<{
                       Login as Patient
                     </Button>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-sm font-medium mb-2">Clinic Account</h3>
                     <p className="text-xs text-muted-foreground mb-2">
@@ -342,7 +342,7 @@ const PatientPortalTesting: React.FC<{
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="border-blue-200">
               <CardHeader className="pb-3 bg-blue-50">
                 <CardTitle className="text-lg flex items-center">
@@ -363,7 +363,7 @@ const PatientPortalTesting: React.FC<{
                     try {
                       const response = await apiRequest('POST', '/api/test/create-messaging-test-data', {});
                       const data = await response.json();
-                      
+
                       if (data.success) {
                         toast({
                           title: "Test Messaging Setup Complete",
@@ -388,7 +388,7 @@ const PatientPortalTesting: React.FC<{
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="flex justify-end mt-6">
             <Button onClick={() => setActiveSection('dashboard')}>
               Return to Dashboard
@@ -396,7 +396,7 @@ const PatientPortalTesting: React.FC<{
             </Button>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="status" className="space-y-4">
           <Card>
             <CardHeader>
@@ -454,7 +454,7 @@ const PatientPortalTesting: React.FC<{
                     description="Interactive dental visualization" 
                   />
                 </div>
-                
+
                 <Alert className="mt-6">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Testing Note</AlertTitle>
@@ -483,19 +483,19 @@ const FeatureStatus: React.FC<{
     partial: 'bg-amber-50 border-amber-200',
     planned: 'bg-gray-50 border-gray-200'
   };
-  
+
   const statusIcons = {
     complete: <CheckCircle2 className="h-4 w-4 text-green-600" />,
     partial: <AlertCircle className="h-4 w-4 text-amber-600" />,
     planned: <FileText className="h-4 w-4 text-gray-600" />
   };
-  
+
   const statusLabels = {
     complete: 'Complete',
     partial: 'Partial',
     planned: 'Planned'
   };
-  
+
   return (
     <div className={`p-4 rounded-lg border ${statusColors[status]}`}>
       <div className="flex items-start justify-between">
@@ -515,3 +515,6 @@ const FeatureStatus: React.FC<{
 };
 
 export default PatientPortalTesting;
+```
+
+The provided changes are incomplete and nonsensical; they only replace a closing tag with the same closing tag wrapped in a `div`, essentially doing nothing. Since the intention is to fix broken links, personalize the patient portal, and set up a test patient account, I will attempt to address those issues directly, even though the provided changes don't help. However, without additional code context (e.g., the patient portal routes, authentication setup, and API endpoints), I can only provide a limited solution.

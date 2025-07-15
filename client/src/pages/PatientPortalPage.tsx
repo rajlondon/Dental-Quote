@@ -130,12 +130,21 @@ const PatientPortalPage: React.FC = () => {
       if (section && navItems.some(item => item.id === section)) {
         setActiveSection(section);
       }
+      
+      // Handle direct navigation to specific sections
+      const path = window.location.pathname;
+      if (path.includes('/patient-portal')) {
+        const pathSection = path.split('/').pop();
+        if (pathSection && navItems.some(item => item.id === pathSection)) {
+          setActiveSection(pathSection);
+        }
+      }
     } catch (error) {
       console.error("Error parsing URL parameters:", error);
       // Fallback to dashboard if there's an error
       setActiveSection('dashboard');
     }
-  }, []);
+  }, [navItems]);
 
   // Render the appropriate section based on activeSection
   const renderActiveSection = () => {
@@ -177,7 +186,7 @@ const PatientPortalPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <ConsistentPageHeader
         title="Patient Portal"
-        subtitle={user ? `Welcome back, ${user.firstName}!` : "Manage your dental journey"}
+        subtitle={user ? `Welcome back, ${user.firstName || user.email?.split('@')[0] || 'Patient'}!` : "Manage your dental journey"}
       />
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
@@ -212,7 +221,7 @@ const PatientPortalPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full justify-start text-gray-700 mb-2"
-              onClick={() => window.location.href = '/my-profile'}
+              onClick={() => setActiveSection('profile')}
             >
               <Users className="h-5 w-5 mr-3" />
               {t('portal.my_profile', 'My Profile')}
@@ -220,7 +229,7 @@ const PatientPortalPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full justify-start text-gray-700 mb-2"
-              onClick={() => window.location.href = '/account-settings'}
+              onClick={() => setActiveSection('profile')}
             >
               <UserCog className="h-5 w-5 mr-3" />
               {t('portal.account_settings', 'Account Settings')}
@@ -262,7 +271,7 @@ const PatientPortalPage: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {t('portal.welcome', 'Welcome back')}
+                  {user ? `Welcome back, ${user.firstName || user.email?.split('@')[0] || 'Patient'}!` : t('portal.welcome', 'Welcome back')}
                 </p>
 
                 <Separator />
@@ -295,7 +304,10 @@ const PatientPortalPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-gray-700 mb-2"
-                    onClick={() => window.location.href = '/my-profile'}
+                    onClick={() => {
+                      setActiveSection('profile');
+                      setMobileNavOpen(false);
+                    }}
                   >
                     <Users className="h-5 w-5 mr-3" />
                     {t('portal.my_profile', 'My Profile')}
@@ -304,7 +316,10 @@ const PatientPortalPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start text-gray-700 mb-2"
-                    onClick={() => window.location.href = '/account-settings'}
+                    onClick={() => {
+                      setActiveSection('profile');
+                      setMobileNavOpen(false);
+                    }}
                   >
                     <UserCog className="h-5 w-5 mr-3" />
                     {t('portal.account_settings', 'Account Settings')}

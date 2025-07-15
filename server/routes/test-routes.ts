@@ -21,31 +21,31 @@ router.post("/test-verification-email", async (req: Request, res: Response) => {
 
   try {
     const { email } = req.body;
-    
+
     if (!email) {
       return res.status(400).json({ 
         success: false, 
         message: "Email is required" 
       });
     }
-    
+
     // Get user with email
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    
+
     if (!user) {
       return res.status(404).json({ 
         success: false, 
         message: "User not found with this email" 
       });
     }
-    
+
     // Create new verification token
     const verificationToken = await createVerificationToken(user.id, "email_verification");
-    
+
     // Generate verification URL
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
-    
+
     // Format verification email data
     const userName = user.firstName || "User";
     const verificationData = {
@@ -53,19 +53,19 @@ router.post("/test-verification-email", async (req: Request, res: Response) => {
       userName: userName,
       verificationLink: verificationUrl
     };
-    
+
     // Import and use the Mailjet service
     try {
       const { sendVerificationEmail } = await import('../mailjet-service');
       const emailSent = await sendVerificationEmail(verificationData);
-      
+
       if (!emailSent) {
         return res.status(500).json({
           success: false,
           message: "Failed to send verification email via email service"
         });
       }
-      
+
       return res.status(200).json({
         success: true,
         message: "Verification email sent successfully",
@@ -102,24 +102,24 @@ router.post("/test-login", async (req: Request, res: Response) => {
 
   try {
     const { email, password } = req.body;
-    
+
     if (!email || !password) {
       return res.status(400).json({ 
         success: false, 
         message: "Email and password are required" 
       });
     }
-    
+
     // Get user with email
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    
+
     if (!user) {
       return res.status(401).json({ 
         success: false, 
         message: "Invalid credentials" 
       });
     }
-    
+
     // Check if the user's email is verified
     if (!user.emailVerified) {
       return res.status(403).json({
@@ -129,7 +129,7 @@ router.post("/test-login", async (req: Request, res: Response) => {
         userId: user.id
       });
     }
-    
+
     // Verify password (handle null password safely)
     if (!user.password) {
       return res.status(401).json({ 
@@ -137,16 +137,16 @@ router.post("/test-login", async (req: Request, res: Response) => {
         message: "Invalid credentials" 
       });
     }
-    
+
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
+
     if (!isPasswordValid) {
       return res.status(401).json({ 
         success: false, 
         message: "Invalid credentials" 
       });
     }
-    
+
     // Convert user to compatible format to fix type issues
     const userForAuth = {
       ...user,
@@ -160,7 +160,7 @@ router.post("/test-login", async (req: Request, res: Response) => {
       // Ensure emailVerified is never null (convert null to false)
       emailVerified: user.emailVerified === true
     };
-    
+
     // Login the user
     req.login(userForAuth, (err) => {
       if (err) {
@@ -171,7 +171,7 @@ router.post("/test-login", async (req: Request, res: Response) => {
           error: err.message
         });
       }
-      
+
       // Return user data (without sensitive information)
       const { password, ...userWithoutPassword } = user;
       return res.status(200).json({
@@ -202,24 +202,24 @@ router.get("/verification-status/:email", async (req: Request, res: Response) =>
 
   try {
     const { email } = req.params;
-    
+
     if (!email) {
       return res.status(400).json({ 
         success: false, 
         message: "Email is required" 
       });
     }
-    
+
     // Get user with email
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    
+
     if (!user) {
       return res.status(404).json({ 
         success: false, 
         message: "User not found with this email" 
       });
     }
-    
+
     // Return verification status
     return res.status(200).json({
       success: true,
@@ -279,27 +279,27 @@ router.delete("/delete-user-by-email/:email", async (req: Request, res: Response
 
   try {
     const { email } = req.params;
-    
+
     if (!email) {
       return res.status(400).json({ 
         success: false, 
         message: "Email parameter is required" 
       });
     }
-    
+
     // Find the user first to confirm it exists
     const [user] = await db.select().from(users).where(eq(users.email, email));
-    
+
     if (!user) {
       return res.status(404).json({ 
         success: false, 
         message: "User not found with this email" 
       });
     }
-    
+
     // Delete the user
     await db.delete(users).where(eq(users.email, email));
-    
+
     return res.status(200).json({
       success: true,
       message: `User with email ${email} has been successfully deleted`
@@ -327,51 +327,51 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
 
   try {
     const { patientEmail, clinicEmail } = req.body;
-    
+
     if (!patientEmail || !clinicEmail) {
       return res.status(400).json({ 
         success: false, 
         message: "Patient email and clinic email are required" 
       });
     }
-    
+
     // Get patient with email
     const [patient] = await db.select().from(users).where(eq(users.email, patientEmail));
-    
+
     if (!patient) {
       return res.status(404).json({ 
         success: false, 
         message: "Patient not found with this email" 
       });
     }
-    
+
     // Get clinic staff with email
     const [clinicStaff] = await db.select().from(users).where(eq(users.email, clinicEmail));
-    
+
     if (!clinicStaff || clinicStaff.role !== 'clinic_staff') {
       return res.status(404).json({ 
         success: false, 
         message: "Clinic staff not found with this email" 
       });
     }
-    
+
     if (!clinicStaff.clinicId) {
       return res.status(400).json({ 
         success: false, 
         message: "Clinic staff has no associated clinic" 
       });
     }
-    
+
     // Get clinic info
     const [clinic] = await db.select().from(clinics).where(eq(clinics.id, clinicStaff.clinicId));
-    
+
     if (!clinic) {
       return res.status(404).json({ 
         success: false, 
         message: "Clinic not found for this staff member" 
       });
     }
-    
+
     // Check if a booking already exists between these users
     const existingBooking = await db.query.bookings.findFirst({
       where: and(
@@ -379,7 +379,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
         eq(bookings.clinicId, clinic.id)
       )
     });
-    
+
     if (existingBooking) {
       // Return the existing booking
       return res.status(200).json({
@@ -388,10 +388,10 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
         booking: existingBooking
       });
     }
-    
+
     // Create a new booking with a reference number
     const reference = `TEST-${randomUUID().substring(0, 8).toUpperCase()}`;
-    
+
     const [newBooking] = await db.insert(bookings).values({
       bookingReference: reference,
       userId: patient.id,
@@ -403,7 +403,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       adminNotes: 'This is a test booking for messaging',
       clinicNotes: 'Created for testing purposes'
     }).returning();
-    
+
     // Create initial welcome message from clinic to patient
     const [welcomeMessage] = await db.insert(messages).values({
       bookingId: newBooking.id,
@@ -412,7 +412,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       content: `Welcome to ${clinic.name}! This is a test conversation to check messaging functionality. Feel free to ask any questions about your treatment.`,
       messageType: 'text',
     }).returning();
-    
+
     // Create a notification for the patient about the new message
     const [notification] = await db.insert(notifications).values({
       userId: patient.id,
@@ -423,7 +423,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       entityId: welcomeMessage.id,
       isRead: false
     }).returning();
-    
+
     // Try to send real-time notification via WebSocket if available
     const wsService = req.app.locals.wsService;
     if (wsService) {
@@ -437,7 +437,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
         target: patient.id.toString()
       });
     }
-    
+
     return res.status(201).json({
       success: true,
       message: "Test booking created successfully with initial message",
@@ -445,7 +445,7 @@ router.post("/create-test-booking", async (req: Request, res: Response) => {
       welcomeMessage,
       notification
     });
-    
+
   } catch (error: any) {
     console.error("Test booking creation error:", error);
     return res.status(500).json({
@@ -461,7 +461,7 @@ router.post('/create-messaging-test-data', async (req, res) => {
   try {
     const { createTestBookingData } = await import('./test-booking-data');
     const result = await createTestBookingData();
-    
+
     if (result.success) {
       res.status(200).json({
         success: true,
@@ -498,7 +498,7 @@ router.post('/create-patient-notification', async (req: Request, res: Response) 
   try {
     // Access the notification service through the app locals
     const notificationService = req.app.locals.notificationService;
-    
+
     if (!notificationService) {
       return res.status(500).json({
         success: false,
@@ -567,7 +567,7 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
   try {
     // Access the notification service through the app locals
     const notificationService = req.app.locals.notificationService;
-    
+
     if (!notificationService) {
       return res.status(500).json({
         success: false,
@@ -579,29 +579,29 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
     const categories = ['appointment', 'treatment', 'payment', 'message', 'document', 'system', 'offer'];
     const priorities = ['low', 'medium', 'high', 'urgent'];
     const targetTypes = ['admin', 'clinic', 'patient', 'all']; // Add 'all' for system-wide notifications
-    
+
     // Helper for random selection and integers
     const randomItem = (array: any[]) => array[Math.floor(Math.random() * array.length)];
     const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-    
+
     // Number of test notifications to create
     const numNotifications = req.body.count || 30;
     let successCount = 0;
     let failCount = 0;
-    
+
     // Create and track notification results
     const results = [];
-    
+
     for (let i = 0; i < numNotifications; i++) {
       const category = randomItem(categories);
       const priority = randomItem(priorities);
       const targetType = randomItem(targetTypes);
-      
+
       // Generate appropriate titles based on category
       let title, message, action_url;
-      
+
       const baseUrl = 'https://mydentalfly.com';
-      
+
       switch (category) {
         case 'appointment':
           title = `New appointment request (#${1000 + i})`;
@@ -639,10 +639,10 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
           action_url = `${baseUrl}/admin/offers-approval`;
           break;
       }
-      
+
       // Determine if notification should be read or unread (70% chance of being read)
       const shouldBeRead = Math.random() < 0.7;
-      
+
       try {
         // Create the notification
         const newNotification = {
@@ -661,22 +661,22 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
           action_url,
           created_at: new Date(Date.now() - randomInt(60000, 2592000000)), // Between 1 minute and 30 days ago
         };
-        
+
         // Save the notification
         const notification = await notificationService.createNotification(newNotification);
-        
+
         // If it should be read, mark it as read
         if (shouldBeRead) {
           // Add a random delay for when it was read (between 30 seconds and 1 hour)
           const timeToRead = randomInt(30, 3600); // in seconds
-          
+
           // Mark as read
           await notificationService.updateNotification({
             id: notification.id,
             status: 'read'
           });
         }
-        
+
         successCount++;
         results.push({
           id: notification.id,
@@ -688,20 +688,114 @@ router.post('/generate-notification-analytics-data', async (req: Request, res: R
         failCount++;
       }
     }
-    
+
     return res.status(200).json({
       success: true,
       message: `Generated ${successCount} test notifications (${failCount} failed)`,
       results,
       analytics: await notificationService.getNotificationAnalytics()
     });
-    
+
   } catch (error: any) {
     console.error('Error generating test notifications:', error);
     return res.status(500).json({
       success: false,
       message: `Server error: ${error.message}`,
       error: error
+    });
+  }
+});
+
+// Create test admin account
+router.post('/create-test-admin', async (req, res) => {
+  try {
+    // Delete existing admin if it exists
+    await db.delete(users).where(eq(users.email, 'admin@mydentalfly.com'));
+
+    // Create admin user
+    const hashedPassword = await bcrypt.hash('Admin123!', 10);
+    const adminUser = await db.insert(users).values({
+      email: 'admin@mydentalfly.com',
+      password_hash: hashedPassword,
+      role: 'admin',
+      first_name: 'Admin',
+      last_name: 'User',
+      created_at: new Date(),
+      updated_at: new Date()
+    }).returning();
+
+    res.json({
+      success: true,
+      message: 'Test admin created successfully',
+      user: {
+        email: adminUser[0].email,
+        role: adminUser[0].role
+      }
+    });
+  } catch (error) {
+    console.error('Error creating test admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create test admin',
+      error: error.message
+    });
+  }
+});
+
+// Create test patient account
+router.post('/create-test-patient', async (req, res) => {
+  try {
+    // Delete existing patient if it exists
+    await db.delete(users).where(eq(users.email, 'patient@mydentalfly.co.uk'));
+
+    // Create patient user
+    const hashedPassword = await bcrypt.hash('Patient123!', 10);
+    const patientUser = await db.insert(users).values({
+      email: 'patient@mydentalfly.co.uk',
+      password_hash: hashedPassword,
+      role: 'patient',
+      first_name: 'Raj',
+      last_name: 'Singh',
+      phone: '+44 7700 900123',
+      created_at: new Date(),
+      updated_at: new Date()
+    }).returning();
+
+    // Create a sample booking for the patient with Maltepe Dental Clinic
+    try {
+      await db.insert(bookings).values({
+        user_id: patientUser[0].id,
+        clinic_id: 'maltepe-dental-clinic',
+        booking_reference: 'MDC-' + Date.now(),
+        treatment_name: 'Hollywood Smile Package',
+        status: 'confirmed',
+        appointment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+        total_cost: 2850,
+        currency: 'GBP',
+        notes: 'Test booking for patient portal testing',
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    } catch (bookingError) {
+      console.log('Booking creation skipped (table may not exist):', bookingError.message);
+    }
+
+    res.json({
+      success: true,
+      message: 'Test patient created successfully',
+      user: {
+        email: patientUser[0].email,
+        role: patientUser[0].role,
+        firstName: patientUser[0].first_name,
+        lastName: patientUser[0].last_name
+      }
+    });
+  } catch (error) {
+    console.error('Error creating test patient:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create test patient',
+      error: error.message
     });
   }
 });
