@@ -1673,9 +1673,22 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             const packagePrice = packageData.packagePrice || packageData.totalPrice || totalGBP;
                             const packageName = packageData.name || 'Treatment Package';
                             
+                            // Generate package URL from package name
+                            const packageUrl = `/packages/${packageName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
+                            
                             return (
                               <>
-                                <span className="font-semibold">{packageName} from {clinicName}</span>
+                                <span className="font-semibold">
+                                  <a 
+                                    href={packageUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                                  >
+                                    {packageName}
+                                  </a>
+                                  {' from '}{clinicName}
+                                </span>
                                 <span className="font-bold text-lg">
                                   £{(packagePrice - discountAmount).toLocaleString()}
                                 </span>
