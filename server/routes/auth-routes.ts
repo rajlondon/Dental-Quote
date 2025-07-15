@@ -176,16 +176,28 @@ router.post('/admin-login', async (req, res) => {
 // General user session endpoint (for compatibility)
 router.get('/user', async (req, res) => {
   try {
-    console.log('User session check:', {
+    console.log('🔍 USER SESSION CHECK:', {
       userId: req.session.userId,
       userRole: req.session.userRole,
-      sessionId: req.sessionID
+      sessionId: req.sessionID,
+      hasSession: !!req.session,
+      sessionKeys: req.session ? Object.keys(req.session) : [],
+      timestamp: new Date().toISOString()
     });
 
     if (!req.session.userId) {
-      return res.status(401).json({ message: 'Not authenticated' });
+      console.log('❌ NO USER SESSION - Not authenticated');
+      return res.status(401).json({ 
+        message: 'Not authenticated',
+        debug: {
+          hasSession: !!req.session,
+          sessionId: req.sessionID,
+          sessionKeys: req.session ? Object.keys(req.session) : []
+        }
+      });
     }
 
+    console.log('🔍 FETCHING USER DATA for ID:', req.session.userId);
     const user = await db
       .select()
       .from(users)
@@ -193,29 +205,52 @@ router.get('/user', async (req, res) => {
       .limit(1);
 
     if (user.length === 0) {
-      return res.status(404).json({ message: 'User not found' });
+      console.log('❌ USER NOT FOUND in database for ID:', req.session.userId);
+      return res.status(404).json({ 
+        message: 'User not found',
+        debug: {
+          searchedUserId: req.session.userId,
+          sessionId: req.sessionID
+        }
+      });
     }
 
     const userData = user[0];
-    console.log('User data found:', {
+    console.log('✅ USER DATA FOUND:', {
       id: userData.id,
       email: userData.email,
-      role: userData.role
+      role: userData.role,
+      firstName: userData.first_name,
+      lastName: userData.last_name,
+      emailVerified: userData.email_verified,
+      status: userData.status
     });
 
-    res.json({
+    const responseData = {
       user: {
         id: userData.id,
         email: userData.email,
         role: userData.role,
         firstName: userData.first_name,
-        lastName: userData.last_name
+        lastName: userData.last_name,
+        emailVerified: userData.email_verified,
+        status: userData.status
       }
-    });
+    };
+
+    console.log('✅ RETURNING USER SESSION DATA:', responseData);
+    res.json(responseData);
 
   } catch (error) {
-    console.error('Get user error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('❌ GET USER SESSION ERROR:', error);
+    res.status(500).json({ 
+      message: 'Internal server error',
+      error: error.message,
+      debug: {
+        sessionId: req.sessionID,
+        userId: req.session?.userId
+      }
+    });
   }
 });
 
@@ -224,7 +259,15 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 LOGIN ATTEMPT:', {
+      email: email,
+      passwordProvided: !!password,
+      passwordLength: password ? password.length : 0,
+      timestamp: new Date().toISOString()
+    });
+
     if (!email || !password) {
+      console.log('❌ LOGIN FAILED: Missing email or password');
       return res.status(400).json({ 
         success: false, 
         message: 'Email and password are required' 
@@ -232,65 +275,122 @@ router.post('/login', async (req, res) => {
     }
 
     // Query for user with any role
+    console.log('🔍 SEARCHING FOR USER:', email);
     const user = await db
       .select()
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
 
+    console.log('👤 USER SEARCH RESULT:', {
+      found: user.length > 0,
+      userCount: user.length,
+      userData: user.length > 0 ? {
+        id: user[0].id,
+        email: user[0].email,
+        role: user[0].role,
+        firstName: user[0].first_name,
+        lastName: user[0].last_name,
+        hasPasswordHash: !!user[0].password_hash,
+        passwordHashLength: user[0].password_hash ? user[0].password_hash.length : 0,
+        emailVerified: user[0].email_verified,
+        status: user[0].status
+      } : null
+    });
+
     if (user.length === 0) {
+      console.log('❌ LOGIN FAILED: User not found');
       return res.status(401).json({ 
         success: false, 
-        message: 'Invalid credentials' 
+        message: 'Invalid credentials - user not found' 
       });
     }
 
     const userData = user[0];
 
-    // Verify password
-    const isValidPassword = await bcrypt.compare(password, userData.password_hash);
-    if (!isValidPassword) {
+    if (!userData.password_hash) {
+      console.log('❌ LOGIN FAILED: No password hash for user');
       return res.status(401).json({ 
         success: false, 
-        message: 'Invalid credentials' 
+        message: 'Account not properly configured' 
+      });
+    }
+
+    // Verify password
+    console.log('🔒 VERIFYING PASSWORD for user:', userData.email);
+    let isValidPassword = false;
+    try {
+      isValidPassword = await bcrypt.compare(password, userData.password_hash);
+      console.log('🔒 PASSWORD VERIFICATION RESULT:', {
+        isValid: isValidPassword,
+        inputPassword: password,
+        hashExists: !!userData.password_hash,
+        hashLength: userData.password_hash.length
+      });
+    } catch (bcryptError) {
+      console.error('❌ BCRYPT ERROR:', bcryptError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Password verification failed' 
+      });
+    }
+
+    if (!isValidPassword) {
+      console.log('❌ LOGIN FAILED: Invalid password');
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid credentials - wrong password' 
       });
     }
 
     // Create session
+    console.log('✅ PASSWORD VALID - Creating session for user:', userData.email);
     req.session.userId = userData.id;
     req.session.userRole = userData.role;
 
     // Save session explicitly
     await new Promise((resolve, reject) => {
       req.session.save((err) => {
-        if (err) reject(err);
-        else resolve(true);
+        if (err) {
+          console.error('❌ SESSION SAVE ERROR:', err);
+          reject(err);
+        } else {
+          console.log('✅ SESSION SAVED successfully');
+          resolve(true);
+        }
       });
     });
 
-    console.log('User session created:', {
+    console.log('✅ USER SESSION CREATED:', {
       userId: req.session.userId,
       userRole: req.session.userRole,
-      sessionId: req.sessionID
+      sessionId: req.sessionID,
+      email: userData.email
     });
 
     // Return user data
-    res.json({
+    const responseData = {
       success: true,
       user: {
         id: userData.id,
         email: userData.email,
         role: userData.role,
         firstName: userData.first_name,
-        lastName: userData.last_name
+        lastName: userData.last_name,
+        emailVerified: userData.email_verified,
+        status: userData.status
       }
-    });
+    };
+
+    console.log('✅ LOGIN SUCCESS - Returning user data:', responseData);
+    res.json(responseData);
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('❌ LOGIN ERROR:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Internal server error' 
+      message: 'Internal server error',
+      error: error.message 
     });
   }
 });
@@ -467,13 +567,19 @@ router.get('/debug-users', async (req, res) => {
         email: users.email,
         role: users.role,
         first_name: users.first_name,
-        last_name: users.last_name
+        last_name: users.last_name,
+        email_verified: users.email_verified,
+        status: users.status,
+        hasPassword: users.password_hash
       })
       .from(users);
 
     res.json({
       success: true,
-      users: allUsers,
+      users: allUsers.map(user => ({
+        ...user,
+        hasPassword: !!user.hasPassword
+      })),
       total: allUsers.length
     });
 
@@ -482,6 +588,128 @@ router.get('/debug-users', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch users',
+      error: error.message
+    });
+  }
+});
+
+// Create test patient account
+router.post('/create-test-patient', async (req, res) => {
+  try {
+    const testEmail = 'patient@mydentalfly.co.uk';
+    const testPassword = 'Patient123!';
+
+    console.log('🧪 Creating test patient account:', testEmail);
+
+    // Check if patient already exists
+    const existingPatient = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, testEmail))
+      .limit(1);
+
+    if (existingPatient.length > 0) {
+      console.log('👤 Test patient already exists:', {
+        id: existingPatient[0].id,
+        email: existingPatient[0].email,
+        role: existingPatient[0].role,
+        firstName: existingPatient[0].first_name,
+        lastName: existingPatient[0].last_name,
+        hasPassword: !!existingPatient[0].password_hash,
+        emailVerified: existingPatient[0].email_verified,
+        status: existingPatient[0].status
+      });
+
+      // Test the existing password
+      if (existingPatient[0].password_hash) {
+        const isPasswordCorrect = await bcrypt.compare(testPassword, existingPatient[0].password_hash);
+        console.log('🔒 Existing password test result:', isPasswordCorrect);
+        
+        if (!isPasswordCorrect) {
+          console.log('🔄 Updating password for existing test patient');
+          const hashedPassword = await bcrypt.hash(testPassword, 10);
+          
+          await db
+            .update(users)
+            .set({
+              password_hash: hashedPassword,
+              updated_at: new Date()
+            })
+            .where(eq(users.email, testEmail));
+        }
+      }
+
+      return res.json({
+        success: true,
+        message: 'Test patient account already exists',
+        user: {
+          id: existingPatient[0].id,
+          email: existingPatient[0].email,
+          role: existingPatient[0].role,
+          firstName: existingPatient[0].first_name,
+          lastName: existingPatient[0].last_name,
+          hasPassword: !!existingPatient[0].password_hash,
+          passwordUpdated: !existingPatient[0].password_hash || !(await bcrypt.compare(testPassword, existingPatient[0].password_hash))
+        }
+      });
+    }
+
+    // Create test patient
+    const hashedPassword = await bcrypt.hash(testPassword, 10);
+
+    console.log('🔐 Creating password hash for test patient, length:', hashedPassword.length);
+
+    const newPatient = await db
+      .insert(users)
+      .values({
+        email: testEmail,
+        password_hash: hashedPassword,
+        role: 'patient',
+        first_name: 'Raj',
+        last_name: 'Test',
+        email_verified: true,
+        status: 'active',
+        created_at: new Date(),
+        updated_at: new Date()
+      })
+      .returning();
+
+    console.log('✅ Test patient created successfully:', {
+      id: newPatient[0].id,
+      email: newPatient[0].email,
+      role: newPatient[0].role,
+      firstName: newPatient[0].first_name,
+      lastName: newPatient[0].last_name,
+      hasPassword: !!newPatient[0].password_hash
+    });
+
+    // Test the password immediately
+    const testResult = await bcrypt.compare(testPassword, newPatient[0].password_hash);
+    console.log('🧪 Immediate password test result:', testResult);
+
+    res.json({
+      success: true,
+      message: 'Test patient account created successfully',
+      user: {
+        id: newPatient[0].id,
+        email: newPatient[0].email,
+        role: newPatient[0].role,
+        firstName: newPatient[0].first_name,
+        lastName: newPatient[0].last_name,
+        hasPassword: !!newPatient[0].password_hash,
+        passwordTest: testResult,
+        credentials: {
+          email: testEmail,
+          password: testPassword
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Create test patient error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create test patient account',
       error: error.message
     });
   }
