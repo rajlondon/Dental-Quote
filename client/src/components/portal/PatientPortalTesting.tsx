@@ -280,9 +280,41 @@ const PatientPortalTesting: React.FC<{
                             password: 'Patient123!'
                           });
                           if (response.ok) {
+                            // Store test patient data with Maltepe clinic treatment plans
+                            const testPatientData = {
+                              id: 1,
+                              firstName: 'John',
+                              lastName: 'Doe',
+                              email: 'patient@mydentalfly.com',
+                              clinicId: 'maltepe-dental-clinic',
+                              treatmentPlan: {
+                                clinicName: 'Maltepe Dental Clinic',
+                                treatments: [
+                                  {
+                                    id: 1,
+                                    name: 'Premium Porcelain Veneer',
+                                    quantity: 10,
+                                    priceGBP: 210,
+                                    status: 'planned'
+                                  },
+                                  {
+                                    id: 2,
+                                    name: 'Zoom Whitening',
+                                    quantity: 1,
+                                    priceGBP: 158,
+                                    status: 'planned'
+                                  }
+                                ],
+                                totalGBP: 2258,
+                                packageName: 'Hollywood Smile Vacation Package'
+                              }
+                            };
+                            
+                            sessionStorage.setItem('test_patient_data', JSON.stringify(testPatientData));
+                            
                             toast({
                               title: "Patient Login Successful",
-                              description: "You are now logged in as the test patient user.",
+                              description: "You are now logged in as John Doe with Maltepe clinic treatment plans.",
                               variant: "default"
                             });
                             window.location.href = '/patient-portal';

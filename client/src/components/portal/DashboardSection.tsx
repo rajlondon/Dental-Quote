@@ -76,6 +76,44 @@ const timelineEvents = [
 const DashboardSection: React.FC = () => {
   const { user } = useAuth();
 
+  // Check for test patient data
+  const testPatientData = sessionStorage.getItem('test_patient_data');
+  const parsedTestData = testPatientData ? JSON.parse(testPatientData) : null;
+
+  // Mock data for patient dashboard
+  const mockPatientData = {
+    upcomingAppointments: [
+      {
+        id: 1,
+        date: '2024-07-15',
+        time: '10:00 AM',
+        clinic: parsedTestData?.treatmentPlan?.clinicName || 'Maltepe Dental Clinic',
+        treatment: parsedTestData?.treatmentPlan?.treatments?.[0]?.name || 'Premium Porcelain Veneer Consultation',
+        status: 'confirmed'
+      }
+    ],
+    messages: 3,
+    currentTreatmentPlan: parsedTestData?.treatmentPlan || {
+      clinic: 'Maltepe Dental Clinic',
+      treatments: [
+        { name: 'Premium Porcelain Veneer', quantity: 10, status: 'planned' },
+        { name: 'Zoom Whitening', quantity: 1, status: 'planned' }
+      ],
+      totalCost: '£2,258',
+      startDate: '2024-07-20',
+      packageName: 'Hollywood Smile Vacation Package'
+    },
+    medicalDocuments: 5,
+    paymentHistory: [
+      { date: '2024-05-05', description: 'Deposit Payment', amount: '£500', status: 'confirmed' }
+    ],
+    tripDetails: {
+      flight: 'TK789 - July 14, 2024',
+      hotel: 'The Ritz-Carlton, Istanbul',
+      transfer: 'Private car service arranged'
+    }
+  };
+
   // Fetch real patient data - only if user is authenticated
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['patient-dashboard', user?.id],

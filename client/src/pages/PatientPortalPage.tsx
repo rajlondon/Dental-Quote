@@ -231,7 +231,7 @@ const PatientPortalPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50">
       <ConsistentPageHeader
         title="Patient Portal"
-        subtitle={user ? `Welcome back, ${user.firstName || user.email?.split('@')[0] || 'Patient'}!` : "Manage your dental journey"}
+        subtitle={user ? `Welcome back, ${user.firstName || user.lastName || user.email?.split('@')[0] || 'Patient'}!` : "Manage your dental journey"}
       />
       {/* Desktop Sidebar - Hidden on mobile */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
@@ -316,7 +316,7 @@ const PatientPortalPage: React.FC = () => {
                   </Button>
                 </div>
                 <p className="text-sm text-gray-500">
-                  {user ? `Welcome back, ${user.firstName || user.email?.split('@')[0] || 'Patient'}!` : t('portal.welcome', 'Welcome back')}
+                  {user ? `Welcome back, ${user.firstName || user.lastName || user.email?.split('@')[0] || 'Patient'}!` : t('portal.welcome', 'Welcome back')}
                 </p>
 
                 <Separator />

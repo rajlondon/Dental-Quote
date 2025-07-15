@@ -32,6 +32,14 @@ export default function PortalLoginPage() {
 
   // Redirect if already logged in
   if (user) {
+    // Check if there's a redirect URL stored
+    const redirectAfterLogin = sessionStorage.getItem('redirect_after_login');
+    
+    if (redirectAfterLogin) {
+      sessionStorage.removeItem('redirect_after_login');
+      return <Redirect to={redirectAfterLogin} />;
+    }
+    
     if (user.role === 'admin') {
       return <Redirect to="/admin-portal" />;
     } else if (user.role === 'clinic') {

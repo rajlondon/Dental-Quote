@@ -718,12 +718,15 @@ const QuoteResultsPage: React.FC = () => {
       import('@/services/quoteState').then(({ setQuoteData }) => {
         setQuoteData(quoteData);
         
-        // Redirect to the booking page - for now without specific quote ID
-        setLocation(`/booking`);
+        // Store the intended destination for after login
+        sessionStorage.setItem('redirect_after_login', '/booking');
+        
+        // Redirect to portal login page first
+        setLocation('/portal-login?type=patient');
         
         toast({
           title: t('quote_results.proceeding_to_booking', 'Proceeding to booking'),
-          description: t('quote_results.deposit_info', 'You will be required to pay a £200 deposit to secure your booking.'),
+          description: t('quote_results.login_required', 'Please log in to your patient account to proceed with booking.'),
         });
       });
     } else {
