@@ -77,7 +77,6 @@ export default function PatientPortalPage() {
 
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { logoutMutation, user } = useAuth();
-  const [_, setLocation] = useLocation();
 
   // Log user state changes
   React.useEffect(() => {
