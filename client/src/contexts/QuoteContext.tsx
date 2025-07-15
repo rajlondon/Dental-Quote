@@ -366,6 +366,22 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         
         const response = await axios.post('/api/quotes', quoteData);
         
+        // If user is not authenticated and we get transfer data, store it for later
+        if (response.data.transferData) {
+          console.log('🔄 Storing quote data for potential transfer:', response.data.transferData);
+          localStorage.setItem('lastQuoteData', JSON.stringify({
+            ...response.data.transferData,
+            treatments: state.treatments,
+            promoCode: state.promoCode,
+            isPackage: state.isPackage,
+            packageName: state.packageName,
+            subtotal: state.subtotal,
+            discount: state.discountAmount,
+            total: state.total,
+            clinicId: state.clinicId
+          }));
+        }
+        
         toast({
           title: "Quote Saved",
           description: "Your quote has been saved successfully. Redirecting to booking page...",
@@ -373,7 +389,7 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         
         // Redirect to booking page
         setTimeout(() => {
-          window.location.href = `/booking?quoteId=${response.data.id}`;
+          window.location.href = `/booking?quoteId=${response.data.data.id}`;
         }, 1500);
         
         return response.data;

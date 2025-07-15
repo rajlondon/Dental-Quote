@@ -19,6 +19,10 @@ router.post("/", async (req, res, next) => {
     // If authenticated, associate with user
     if (req.isAuthenticated()) {
       quoteData.userId = req.user!.id;
+    } else {
+      // For unauthenticated users, store quote data for potential transfer
+      // This will be used if they log in later
+      console.log('Creating quote for unauthenticated user:', quoteData.email);
     }
 
     // Handle treatment plan data and package data from session transfer
@@ -91,7 +95,20 @@ router.post("/", async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: "Quote request submitted successfully",
-      data: quoteRequest
+      data: quoteRequest,
+      // Include quote data for frontend to store for potential transfer
+      transferData: !req.isAuthenticated() ? {
+        id: quoteRequest.id,
+        email: quoteRequest.email,
+        name: quoteRequest.name,
+        treatment: quoteRequest.treatment,
+        treatmentPlanData: quoteRequest.treatmentPlanData,
+        packageData: quoteRequest.packageData,
+        promoCode: quoteRequest.promoCode,
+        isPackage: quoteRequest.isPackage,
+        packageName: quoteRequest.packageName,
+        selectedClinicId: quoteRequest.selectedClinicId
+      } : null
     });
   } catch (error) {
     next(error);
@@ -152,6 +169,45 @@ router.get("/clinic", isAuthenticated, ensureRole("clinic_staff"), async (req, r
     });
   } catch (error) {
     console.error(`[ERROR] Error in /quotes/clinic route:`, error);
+    next(error);
+  }
+});
+
+// Transfer quote to logged-in user
+router.post("/transfer", isAuthenticated, async (req, res, next) => {
+  try {
+    const { quoteId, email } = req.body;
+    const user = req.user!;
+    
+    if (!quoteId) {
+      throw new BadRequestError("Quote ID is required");
+    }
+    
+    // Get the quote to verify it exists and isn't already assigned
+    const quote = await storage.getQuoteRequest(quoteId);
+    
+    if (!quote) {
+      throw new NotFoundError("Quote not found");
+    }
+    
+    // Check if quote belongs to the same email or is unassigned
+    if (quote.userId && quote.userId !== user.id) {
+      throw new BadRequestError("Quote is already assigned to another user");
+    }
+    
+    // Transfer the quote to the logged-in user
+    const updatedQuote = await storage.updateQuoteRequest(quoteId, {
+      userId: user.id,
+      email: user.email,
+      name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    });
+    
+    res.json({
+      success: true,
+      message: "Quote transferred successfully",
+      data: updatedQuote
+    });
+  } catch (error) {
     next(error);
   }
 });

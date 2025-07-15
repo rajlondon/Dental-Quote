@@ -471,7 +471,7 @@ async function transferQuoteDataToPatientAccount(user: User) {
       try {
         const parsedTreatmentData = JSON.parse(treatmentPlanData);
         quoteData.treatmentPlanData = parsedTreatmentData;
-        
+
         // Extract patient info from treatment data
         if (parsedTreatmentData.patientInfo) {
           quoteData.phone = parsedTreatmentData.patientInfo.phone;
@@ -508,7 +508,7 @@ async function transferQuoteDataToPatientAccount(user: User) {
         'dentgroup-istanbul': 2,
         'istanbul-dental-care': 3
       };
-      
+
       const numericClinicId = clinicIdMap[pendingClinicId];
       if (numericClinicId) {
         quoteData.selectedClinicId = numericClinicId;
@@ -521,16 +521,16 @@ async function transferQuoteDataToPatientAccount(user: User) {
 
     if (response.data.success) {
       console.log('✅ Quote data transferred successfully:', response.data.data.id);
-      
+
       // Clear session storage after successful transfer
       sessionStorage.removeItem('treatmentPlanData');
       sessionStorage.removeItem('pendingPackageData');
       sessionStorage.removeItem('pendingPromoCode');
       sessionStorage.removeItem('pendingPromoCodeClinicId');
-      
+
       // Store the created quote ID for patient portal
       sessionStorage.setItem('transferred_quote_id', response.data.data.id.toString());
-      
+
       console.log('✅ Quote data transfer complete, session storage cleared');
     } else {
       console.error('❌ Failed to transfer quote data:', response.data.message);

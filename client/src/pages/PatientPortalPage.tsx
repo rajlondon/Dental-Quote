@@ -80,16 +80,65 @@ export default function PatientPortalPage() {
 
     // Check if there's a transferred quote to display
     const transferredQuoteId = sessionStorage.getItem('transferred_quote_id');
+    const pendingQuoteData = sessionStorage.getItem('pendingQuoteTransfer');
+    
     if (transferredQuoteId && user) {
       // Navigate to quotes section to show the transferred quote
       setActiveSection('quotes');
       // Clear the transferred quote ID flag
       sessionStorage.removeItem('transferred_quote_id');
+      sessionStorage.removeItem('pendingQuoteTransfer');
       
       toast({
         title: "Quote Loaded",
         description: "Your quote has been saved to your account and is ready for review.",
       });
+    } else if (pendingQuoteData && user) {
+      // Handle quote transfer from pre-login quote generation
+      try {
+        const quoteData = JSON.parse(pendingQuoteData);
+        
+        // Transfer the quote to the user's account
+        fetch('/api/quotes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...quoteData,
+            userId: user.id,
+            email: user.email,
+            name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+          })
+        })
+        .then(response => response.json())
+        .then(result => {
+          if (result.success) {
+            // Clear the pending quote data
+            sessionStorage.removeItem('pendingQuoteTransfer');
+            sessionStorage.removeItem('lastQuoteData');
+            
+            // Navigate to quotes section
+            setActiveSection('quotes');
+            
+            toast({
+              title: "Quote Saved",
+              description: "Your quote has been saved to your account successfully.",
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error transferring quote:', error);
+          toast({
+            title: "Transfer Failed",
+            description: "Failed to transfer your quote. Please create a new quote.",
+            variant: "destructive"
+          });
+        });
+      } catch (error) {
+        console.error('Error parsing pending quote data:', error);
+        sessionStorage.removeItem('pendingQuoteTransfer');
+      }
     }
   }, [user]);
 
