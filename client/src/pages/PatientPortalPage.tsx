@@ -75,7 +75,6 @@ export default function PatientPortalPage() {
   // Use global auth context
   const { user: globalUser, loading: globalLoading } = useGlobalAuth();
 
-  const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { logoutMutation, user } = useAuth();
   const { toast } = useToast();
