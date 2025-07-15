@@ -343,16 +343,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true, clientOnly: true };
       }
     },
-    onSuccess: (data) => {
-      console.log('🚪 LOGOUT SUCCESS: Clearing all auth state');
+    onSuccess: () => {
+      console.log('🚪 LOGOUT SUCCESS: User logged out successfully');
 
-      // Clear React Query cache completely for all auth-related queries
+      // Clear React Query cache completely
       queryClient.setQueryData(['/api/auth/user'], null);
       queryClient.setQueryData(['auth-user'], null);
       queryClient.setQueryData(['global-auth-user'], null);
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       queryClient.invalidateQueries({ queryKey: ['auth-user'] });
       queryClient.invalidateQueries({ queryKey: ['global-auth-user'] });
+      queryClient.clear();
 
       // Clear all cached data
       if (typeof window !== 'undefined') {
@@ -366,6 +367,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
           document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
         });
+
+        // Force reload to clear any cached components
+        setTimeout(() => {
+          window.location.reload();
+        }, 100);
       }
     },
     onError: (error) => {
