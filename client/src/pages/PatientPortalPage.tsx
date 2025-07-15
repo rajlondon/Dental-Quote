@@ -62,6 +62,12 @@ export default function PatientPortalPage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
+  // Use global auth context
+  const { user: globalUser, loading: globalLoading } = useGlobalAuth();
+
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { logoutMutation, user } = useAuth();
+
   // Clear any quote flow cache when accessing patient portal directly
   useEffect(() => {
     const isDirectAccess = !window.location.search.includes('from=quote');
@@ -86,12 +92,6 @@ export default function PatientPortalPage() {
       });
     }
   }, [user]);
-
-  // Use global auth context
-  const { user: globalUser, loading: globalLoading } = useGlobalAuth();
-
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { logoutMutation, user } = useAuth();
 
   // Log user state changes
   React.useEffect(() => {
