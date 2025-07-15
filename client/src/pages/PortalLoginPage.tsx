@@ -29,10 +29,46 @@ export default function PortalLoginPage() {
       setActiveTab(type);
     }
     
-    // AGGRESSIVELY clear all authentication data when arriving at login page
-    console.log('🔍 LOGIN PAGE: Aggressively clearing all cached authentication data');
+    // Clear authentication data while preserving quote data when arriving at login page
+    console.log('🔍 LOGIN PAGE: Clearing cached authentication data while preserving quote data');
+    
+    // Preserve quote-related data before clearing
+    const treatmentPlanData = sessionStorage.getItem('treatmentPlanData');
+    const pendingPackageData = sessionStorage.getItem('pendingPackageData');
+    const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+    const pendingPromoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+    const lastQuoteData = localStorage.getItem('lastQuoteData');
+    const selectedBookingData = localStorage.getItem('selectedBookingData');
+    
+    // Clear all storage
     sessionStorage.clear();
     localStorage.clear();
+    
+    // Restore quote-related data
+    if (treatmentPlanData) {
+      sessionStorage.setItem('treatmentPlanData', treatmentPlanData);
+      console.log('🔄 LOGIN PAGE: Preserved treatmentPlanData');
+    }
+    if (pendingPackageData) {
+      sessionStorage.setItem('pendingPackageData', pendingPackageData);
+      console.log('🔄 LOGIN PAGE: Preserved pendingPackageData');
+    }
+    if (pendingPromoCode) {
+      sessionStorage.setItem('pendingPromoCode', pendingPromoCode);
+      console.log('🔄 LOGIN PAGE: Preserved pendingPromoCode');
+    }
+    if (pendingPromoCodeClinicId) {
+      sessionStorage.setItem('pendingPromoCodeClinicId', pendingPromoCodeClinicId);
+      console.log('🔄 LOGIN PAGE: Preserved pendingPromoCodeClinicId');
+    }
+    if (lastQuoteData) {
+      localStorage.setItem('lastQuoteData', lastQuoteData);
+      console.log('🔄 LOGIN PAGE: Preserved lastQuoteData');
+    }
+    if (selectedBookingData) {
+      localStorage.setItem('selectedBookingData', selectedBookingData);
+      console.log('🔄 LOGIN PAGE: Preserved selectedBookingData');
+    }
     
     // Clear all cookies
     document.cookie.split(";").forEach(function(c) { 

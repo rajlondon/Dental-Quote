@@ -409,8 +409,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.clear();
 
       if (typeof window !== 'undefined') {
+        // Preserve quote-related data before clearing on error
+        const treatmentPlanData = sessionStorage.getItem('treatmentPlanData');
+        const pendingPackageData = sessionStorage.getItem('pendingPackageData');
+        const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+        const pendingPromoCodeClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+        const lastQuoteData = localStorage.getItem('lastQuoteData');
+        const selectedBookingData = localStorage.getItem('selectedBookingData');
+
         sessionStorage.clear();
         localStorage.clear();
+
+        // Restore quote-related data after clearing
+        if (treatmentPlanData) {
+          sessionStorage.setItem('treatmentPlanData', treatmentPlanData);
+          console.log('🔄 ERROR LOGOUT: Preserved treatmentPlanData');
+        }
+        if (pendingPackageData) {
+          sessionStorage.setItem('pendingPackageData', pendingPackageData);
+          console.log('🔄 ERROR LOGOUT: Preserved pendingPackageData');
+        }
+        if (pendingPromoCode) {
+          sessionStorage.setItem('pendingPromoCode', pendingPromoCode);
+          console.log('🔄 ERROR LOGOUT: Preserved pendingPromoCode');
+        }
+        if (pendingPromoCodeClinicId) {
+          sessionStorage.setItem('pendingPromoCodeClinicId', pendingPromoCodeClinicId);
+          console.log('🔄 ERROR LOGOUT: Preserved pendingPromoCodeClinicId');
+        }
+        if (lastQuoteData) {
+          localStorage.setItem('lastQuoteData', lastQuoteData);
+          console.log('🔄 ERROR LOGOUT: Preserved lastQuoteData');
+        }
+        if (selectedBookingData) {
+          localStorage.setItem('selectedBookingData', selectedBookingData);
+          console.log('🔄 ERROR LOGOUT: Preserved selectedBookingData');
+        }
 
         // Clear cookies even on error
         document.cookie.split(";").forEach((c) => {
@@ -461,7 +495,7 @@ async function transferQuoteDataToPatientAccount(user: User) {
     // Check if we already transferred a quote for this user recently
     const lastTransferTime = sessionStorage.getItem('last_quote_transfer_time');
     const lastTransferUserId = sessionStorage.getItem('last_quote_transfer_user_id');
-    
+
     if (lastTransferTime && lastTransferUserId === user.id.toString()) {
       const timeSinceTransfer = Date.now() - parseInt(lastTransferTime);
       if (timeSinceTransfer < 30000) { // 30 seconds
@@ -495,7 +529,7 @@ async function transferQuoteDataToPatientAccount(user: User) {
       try {
         const parsedLastQuoteData = JSON.parse(lastQuoteData);
         console.log('🔄 Using lastQuoteData:', parsedLastQuoteData);
-        
+
         // Merge with existing quote data, ensuring required fields
         Object.assign(quoteData, {
           ...parsedLastQuoteData,
@@ -517,7 +551,7 @@ async function transferQuoteDataToPatientAccount(user: User) {
       try {
         const parsedTransferData = JSON.parse(pendingQuoteTransfer);
         console.log('🔄 Using pendingQuoteTransfer:', parsedTransferData);
-        
+
         // Merge with transfer data
         Object.assign(quoteData, {
           ...parsedTransferData,
@@ -615,10 +649,10 @@ async function transferQuoteDataToPatientAccount(user: User) {
       status: error.response?.status,
       quoteDataKeys: Object.keys(quoteData)
     });
-    
+
     // Store failed transfer attempt to prevent repeated tries
     sessionStorage.setItem('quote_transfer_failed', Date.now().toString());
-    
+
     // Don't throw the error - login should still succeed even if quote transfer fails
   }
 }
