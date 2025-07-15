@@ -19,7 +19,7 @@ const getAccommodationDetails = (packageName: string) => {
     'Dental Implant & City Experience': { nights: 4, days: 5, stars: 4, description: '4-star hotel accommodation' },
     'Value Veneer & Istanbul Discovery': { nights: 3, days: 4, stars: 3, description: '3-star hotel accommodation' }
   };
-  
+
   return packageMap[packageName] || { nights: 5, days: 6, stars: 4, description: '4-star hotel accommodation' };
 };
 
@@ -32,20 +32,20 @@ const getPackageExcursions = (packageName: string) => {
 export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
   const [inputCode, setInputCode] = useState(initialPromoCode || '');
   const [error, setError] = useState('');
-  
+
   // Update input code when initialPromoCode changes
   useEffect(() => {
     if (initialPromoCode) {
       setInputCode(initialPromoCode);
     }
   }, [initialPromoCode]);
-  
+
   // Check if QuoteContext is available before using useQuote
   const quoteContextAvailable = useContext(QuoteContext) !== null;
-  
+
   // Only use the context directly if it's available
   const quoteContext = useOptionalQuote();
-  
+
   // Extract values from context
   const promoCode = quoteContext?.promoCode || null;
   const discountAmount = quoteContext?.discountAmount || 0;
@@ -54,15 +54,15 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
   const packageName = quoteContext?.packageName || null;
   const applyPromoCode = quoteContext?.applyPromoCode;
   const clearPromoCode = quoteContext?.clearPromoCode;
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!inputCode.trim()) {
       setError('Please enter a promo code');
       return;
     }
-    
+
     // Check if context and applyPromoCode are available
     if (quoteContextAvailable && applyPromoCode) {
       try {
@@ -76,13 +76,13 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
       setError('Cannot apply promo code at this time');
     }
   };
-  
+
   // State for standalone mode
   const [success, setSuccess] = useState<string | null>(null);
   const [packageInfo, setPackageInfo] = useState<any>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validationData, setValidationData] = useState<any>(null);
-  
+
   // If context is not available, show enhanced standalone input
   if (!quoteContextAvailable) {
     return (
@@ -92,17 +92,17 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
           setError('');
           setSuccess(null);
           setPackageInfo(null);
-          
+
           if (!inputCode.trim()) {
             setError('Please enter a promo code');
             return;
           }
-          
+
           // Try to validate the promo code
           try {
             setIsValidating(true);
             const response = await axios.get(`/api/promo-codes/validate/${inputCode.trim()}`);
-            
+
             if (response.data.valid) {
               // Use the sampleDiscountAmount from the response if available
               if (response.data.sampleDiscountAmount) {
@@ -121,23 +121,26 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                 setSuccess(`Promo code "${inputCode}" is valid!`);
               }
               setValidationData(response.data);
-              
+
               // If it's a package, show package info
               if (response.data.isPackage && response.data.packageData) {
                 setPackageInfo(response.data.packageData);
-                
-                // Store package data in session storage for later use
-                sessionStorage.setItem('pendingPromoCode', inputCode.trim());
-                
-                // Enhance package data with accommodation details from trending packages
-                const enhancedPackageData = {
-                  ...response.data.packageData,
-                  accommodation: getAccommodationDetails(response.data.packageData.name),
-                  excursions: getPackageExcursions(response.data.packageData.name)
-                };
-                
-                sessionStorage.setItem('pendingPackageData', JSON.stringify(enhancedPackageData));
-                
+
+                // Only store if not already stored to prevent duplicates
+                const existingCode = sessionStorage.getItem('pendingPromoCode');
+                if (existingCode !== inputCode.trim()) {
+                  sessionStorage.setItem('pendingPromoCode', inputCode.trim());
+
+                  // Enhance package data with accommodation details from trending packages
+                  const enhancedPackageData = {
+                    ...response.data.packageData,
+                    accommodation: getAccommodationDetails(response.data.packageData.name),
+                    excursions: getPackageExcursions(response.data.packageData.name)
+                  };
+
+                  sessionStorage.setItem('pendingPackageData', JSON.stringify(enhancedPackageData));
+                }
+
                 // Store clinic ID if provided
                 if (response.data.clinicId) {
                   console.log('Storing promo code clinic ID:', response.data.clinicId);
@@ -146,7 +149,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                   // Clear any previous clinic ID if not specified for this package
                   sessionStorage.removeItem('pendingPromoCodeClinicId');
                 }
-                
+
                 // Emit a custom event to notify TreatmentPlanBuilder about the package
                 try {
                   const packageEvent = new CustomEvent('packagePromoApplied', {
@@ -163,7 +166,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               } else {
                 // Store discount code in session storage
                 sessionStorage.setItem('pendingPromoCode', inputCode.trim());
-                
+
                 // Emit a custom event to notify about discount code
                 try {
                   const discountEvent = new CustomEvent('discountPromoApplied', {
@@ -203,14 +206,14 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
             {isValidating ? 'Checking...' : 'Apply Code'}
           </Button>
         </form>
-        
+
         {error && (
           <Alert variant="destructive">
             <XCircle className="h-4 w-4 mr-2" />
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        
+
         {success && (
           <div className="bg-green-50 border border-green-200 text-green-800 p-3 rounded-md flex items-start">
             <CheckCircle className="h-4 w-4 mr-2 text-green-500 mt-0.5 flex-shrink-0" />
@@ -226,7 +229,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
             </div>
           </div>
         )}
-        
+
         {packageInfo && (
           <div className="mt-3 p-3 bg-blue-50 border border-blue-100 rounded-md">
             <h4 className="font-medium text-blue-800 flex items-center">
@@ -234,7 +237,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               {packageInfo.name || 'Treatment Package'}
             </h4>
             <p className="text-sm text-blue-700 mt-1">{packageInfo.description || 'Special package with multiple treatments'}</p>
-            
+
             {packageInfo.treatments && packageInfo.treatments.length > 0 && (
               <div className="mt-2">
                 <p className="text-xs font-medium text-blue-800">Included treatments:</p>
@@ -252,7 +255,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                       </li>
                     );
                   })}
-                  
+
                   {packageInfo.savings && (
                     <div className="mt-2 text-green-700 text-xs font-medium">
                       You save: £{packageInfo.savings} ({Math.round((packageInfo.savings / packageInfo.originalPrice) * 100)}% off UK prices)
@@ -261,11 +264,11 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
                 </ul>
               </div>
             )}
-            
+
             <p className="text-xs text-blue-800 mt-2 font-medium">Continue to the quote page to apply this package</p>
           </div>
         )}
-        
+
         <div className="text-xs text-gray-500">
           <p>Try these sample codes:</p>
           <ul className="list-disc pl-4 mt-1 space-y-1">
@@ -278,7 +281,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
       </div>
     );
   }
-  
+
   // If promo code is already applied, show active state
   if (promoCode) {
     return (
@@ -289,7 +292,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
           ) : (
             <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
           )}
-          
+
           <div className="flex-1">
             <p className={`text-sm font-medium ${isPackage ? 'text-blue-800' : 'text-green-800'}`}>
               {isPackage ? (
@@ -305,7 +308,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
               }).format(discountAmount)}
             </p>
           </div>
-          
+
           <Button 
             variant="outline" 
             size="sm" 
@@ -318,7 +321,7 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
       </div>
     );
   }
-  
+
   return (
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex space-x-2">
@@ -338,14 +341,14 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
           {isApplyingPromo ? 'Applying...' : 'Apply Code'}
         </Button>
       </form>
-      
+
       {error && (
         <Alert variant="destructive">
           <XCircle className="h-4 w-4 mr-2" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
-      
+
       <div className="text-xs text-gray-500">
         <p>Try our sample codes:</p>
         <ul className="list-disc pl-4 mt-1 space-y-1">

@@ -111,12 +111,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("🔍 AUTH QUERY: Starting user authentication check");
       try {
 
-        // Check if we're on a portal login page - don't use cache
+        // Check if we're on a portal login page or quote flow - don't use cache
         const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
                              window.location.pathname.includes('/login');
         
-        // Check sessionStorage cache first (but not on login pages)
-        if (!isOnLoginPage) {
+        const isOnQuoteFlow = window.location.pathname.includes('/your-quote') ||
+                             window.location.pathname.includes('/quote-results') ||
+                             window.location.pathname.includes('/matched-clinics') ||
+                             window.location.search.includes('promo=');
+        
+        // Check sessionStorage cache first (but not on login pages or quote flows)
+        if (!isOnLoginPage && !isOnQuoteFlow) {
           const cachedUserData = sessionStorage.getItem('cached_user_data');
           const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
 

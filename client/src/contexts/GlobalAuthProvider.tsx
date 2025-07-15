@@ -40,15 +40,23 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
                                !document.cookie.includes('connect.sid') &&
                                !document.cookie.includes('session');
           
-          // Check if we're on a portal login page
+          // Check if we're on a portal login page or quote flow page
           const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
                                window.location.pathname.includes('/login');
           
-          if (hasNoAuthData && !isOnLoginPage) {
-            console.log('🌐 GLOBAL AUTH QUERY: Post-logout state detected, clearing cache and skipping request');
+          const isOnQuoteFlow = window.location.pathname.includes('/your-quote') ||
+                               window.location.pathname.includes('/quote-results') ||
+                               window.location.pathname.includes('/matched-clinics') ||
+                               window.location.search.includes('promo=');
+          
+          // Don't auto-authenticate for quote flows or when no auth data exists
+          if ((hasNoAuthData && !isOnLoginPage) || isOnQuoteFlow) {
+            console.log('🌐 GLOBAL AUTH QUERY: Skipping auth check for quote flow or post-logout state');
             // Clear any remaining cache
-            sessionStorage.clear();
-            localStorage.clear();
+            if (hasNoAuthData) {
+              sessionStorage.clear();
+              localStorage.clear();
+            }
             return null;
           }
           

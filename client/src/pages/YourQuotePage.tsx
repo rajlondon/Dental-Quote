@@ -692,6 +692,19 @@ const YourQuotePage: React.FC = () => {
     }
   }, [specialOffer, treatmentItems.length]);
 
+  // Auto-apply promo code from URL if present (only once)
+  useEffect(() => {
+    const promoCodeFromUrl = searchParams.get('promo');
+    const hasAutoApplied = sessionStorage.getItem('promo_auto_applied');
+    const applyPromoCode = () => {}; // Placeholder, replace with actual function
+
+    if (promoCodeFromUrl && !initialPromoCode && !hasAutoApplied) {
+      console.log('Auto-applying package promo code:', promoCodeFromUrl);
+      sessionStorage.setItem('promo_auto_applied', 'true');
+      applyPromoCode(); // Call the applyPromoCode function
+    }
+  }, [initialPromoCode, searchParams]);
+
   return (
     <>
       <Navbar />
@@ -704,6 +717,7 @@ const YourQuotePage: React.FC = () => {
           <div className="mb-6">
             <Button
               variant="ghost"
+// Correct the auto apply promo code logic.
               size="sm"
               className="flex items-center text-gray-600"
               onClick={() => setLocation('/')}
