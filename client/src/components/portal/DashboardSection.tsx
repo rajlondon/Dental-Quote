@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -85,6 +85,9 @@ const DashboardSection: React.FC = () => {
   const { user } = useAuth();
     const { userQuotesQuery } = useQuotes();
 
+    const [pendingQuoteData, setPendingQuoteData] = useState<any>(null);
+    const [packageData, setPackageData] = useState<any>(null);
+    const [clinicId, setClinicId] = useState<string | null>(null);
 
   // Check for test patient data
   const testPatientData = sessionStorage.getItem('test_patient_data');
@@ -93,6 +96,24 @@ const DashboardSection: React.FC = () => {
     useEffect(() => {
         if (user) {
             userQuotesQuery.refetch();
+        }
+
+        // Load pending quote data from localStorage on component mount
+        const storedQuoteData = localStorage.getItem('treatmentPlanData');
+        if (storedQuoteData) {
+            setPendingQuoteData(JSON.parse(storedQuoteData));
+        }
+
+        // Load package data from sessionStorage
+        const storedPackageData = sessionStorage.getItem('pendingPackageData');
+        if (storedPackageData) {
+            setPackageData(JSON.parse(storedPackageData));
+        }
+
+        // Load clinic id from sessionStorage
+        const storedClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+        if (storedClinicId) {
+            setClinicId(storedClinicId);
         }
     }, [user]);
 
@@ -270,6 +291,171 @@ const DashboardSection: React.FC = () => {
 
       {/* Action Items & Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {(pendingQuoteData || packageData) && (
+                    <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg flex items-center text-green-900">
+                                    <FileText className="h-5 w-5 mr-2" />
+                                    {packageData ? 'Package Quote Ready' : 'Treatment Plan Ready'}
+                                </CardTitle>
+                                <Badge className="bg-green-600 text-white">
+                                    Ready to Book
+                                </Badge>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                {packageData && (
+                                    <>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-green-700">Package:</span>
+                                            <span className="font-medium text-green-900">{packageData.name}</span>
+                                        </div>
+
+                                        <div className="text-sm text-green-700">
+                                            <p className="mb-2">{packageData.description}</p>
+                                            {packageData.treatments && packageData.treatments.length > 0 && (
+                                                <div>
+                                                    <span className="font-medium">Included treatments:</span>
+                                                    <ul className="mt-1 space-y-1">
+                                                        {packageData.treatments.map((treatment: any, index: number) => (
+                                                            <li key={index} className="text-xs">
+                                                                • {treatment.quantity}x {treatment.name}
+                                                            </li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {packageData.originalPrice && packageData.packagePrice && (
+                                            <div className="bg-green-100 rounded-lg p-3">
+                                                <div className="flex justify-between text-sm">
+                                                    <span className="text-green-700">Original Price:</span>
+                                                    <span className="line-through text-green-600">£{packageData.originalPrice}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm font-bold">
+                                                    <span className="text-green-800">Package Price:</span>
+                                                    <span className="text-green-800">£{packageData.packagePrice}</span>
+                                                </div>
+                                                {packageData.originalPrice - packageData.packagePrice > 0 && (
+                                                    <div className="text-xs text-green-700 mt-1">
+                                                        You save £{packageData.originalPrice - packageData.packagePrice}!
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </>
+                                )}
+
+                                {pendingQuoteData && !packageData && pendingQuoteData.treatments && (
+                                    <div className="text-sm text-green-700">
+                                        <span className="font-medium">Selected treatments:</span>
+                                        <ul className="mt-1 space-y-1">
+                                            {pendingQuoteData.treatments.map((treatment: any, index: number) => (
+                                                <li key={index} className="text-xs">
+                                                    • {treatment.quantity || 1}x {treatment.name} - £{treatment.subtotalGBP || treatment.priceGBP}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
+
+                                {clinicId && (
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-green-700">Assigned Clinic:</span>
+                                        <span className="font-medium text-green-900">
+                                            {clinicId === 'maltepe-dental-clinic' ? 'Maltepe Dental Clinic' : 
+                                             clinicId === 'dentgroup-istanbul' ? 'DentGroup Istanbul' :
+                                             clinicId === 'istanbul-dental-care' ? 'Istanbul Dental Care' : 
+                                             clinicId}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="mt-4 pt-3 border-t border-green-200 space-y-2">
+                                <Button 
+                                    size="sm" 
+                                    className="w-full bg-green-600 hover:bg-green-700"
+                                    onClick={() => {
+                                        // Save the quote data to user's account
+                                        fetch('/api/quotes', {
+                                            method: 'POST',
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                            },
+                                            body: JSON.stringify({
+                                                userId: user?.id,
+                                                email: user?.email,
+                                                name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email,
+                                                treatment: packageData ? packageData.name : (pendingQuoteData?.treatments?.[0]?.name || 'Consultation'),
+                                                consent: true,
+                                                treatments: pendingQuoteData?.treatments || packageData?.treatments || [],
+                                                promoCode: packageData ? 'HOLLYWOOD_SMILE' : null,
+                                                isPackage: !!packageData,
+                                                packageName: packageData?.name,
+                                                subtotal: packageData?.originalPrice || pendingQuoteData?.subtotal || 0,
+                                                discount: packageData ? (packageData.originalPrice - packageData.packagePrice) : 0,
+                                                total: packageData?.packagePrice || pendingQuoteData?.total || 0,
+                                                clinicId: clinicId
+                                            })
+                                        })
+                                        .then(response => response.json())
+                                        .then(result => {
+                                            if (result.success) {
+                                                // Clear the pending data
+                                                sessionStorage.removeItem('pendingQuoteTransfer');
+                                                sessionStorage.removeItem('pendingPackageData');
+                                                sessionStorage.removeItem('pendingPromoCodeClinicId');
+                                                localStorage.removeItem('treatmentPlanData');
+
+                                                // Refresh the quotes
+                                                userQuotesQuery.refetch();
+
+                                                // Clear the pending state
+                                                setPendingQuoteData(null);
+                                                setPackageData(null);
+                                                setClinicId(null);
+
+                                                // Navigate to quotes section
+                                                window.location.href = '/patient-portal?section=quotes';
+                                            }
+                                        })
+                                        .catch(error => {
+                                            console.error('Error saving quote:', error);
+                                        });
+                                    }}
+                                >
+                                    Save Quote to My Account
+                                    <ArrowRight className="h-4 w-4 ml-2" />
+                                </Button>
+
+                                <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                                    onClick={() => {
+                                        // Clear pending data without saving
+                                        sessionStorage.removeItem('pendingQuoteTransfer');
+                                        sessionStorage.removeItem('pendingPackageData');
+                                        sessionStorage.removeItem('pendingPromoCodeClinicId');
+                                        localStorage.removeItem('treatmentPlanData');
+
+                                        setPendingQuoteData(null);
+                                        setPackageData(null);
+                                        setClinicId(null);
+                                    }}
+                                >
+                                    Clear Quote Data
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
+                {/* Recent Quote Card */}
                 {recentQuote && (
                     <Card>
                         <CardHeader>
