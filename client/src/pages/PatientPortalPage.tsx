@@ -109,15 +109,60 @@ const PatientPortalPage: React.FC = () => {
     console.log('👤 PATIENT PORTAL: handleLogout called');
     try {
       console.log('👤 PATIENT PORTAL: Calling logoutMutation.mutate()');
-      // Use the logout mutation from auth hook
-      logoutMutation.mutate();
+
+      // Clear session storage and local storage first
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('cached_user_data');
+      }
+
+      // Call the logout mutation
+      await logoutMutation.mutateAsync();
+
+      // Force clear React Query cache
+      queryClient.setQueryData(['auth-user'], null);
+      queryClient.setQueryData(['global-auth-user'], null);
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] });
+      queryClient.invalidateQueries({ queryKey: ['global-auth-user'] });
+      queryClient.clear();
+
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+
+      console.log('👤 PATIENT PORTAL: Logout successful, redirecting...');
+
+      // Small delay to ensure state is cleared
+      setTimeout(() => {
+        setLocation('/portal-login');
+        window.location.reload(); // Force reload to clear any cached state
+      }, 100);
+
     } catch (error) {
       console.error('👤 PATIENT PORTAL: Logout error:', error);
-      
-      // Force redirect on error
-      console.log('👤 PATIENT PORTAL: Forcing emergency redirect');
+
+      // Even if logout fails on server, clear client state
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('cached_user_data');
+      }
+
+      queryClient.setQueryData(['auth-user'], null);
+      queryClient.setQueryData(['global-auth-user'], null);
+      queryClient.clear();
+
+      toast({
+        title: "Logged out",
+        description: "You have been logged out locally.",
+        variant: "default",
+      });
+
       setTimeout(() => {
-        window.location.replace(`/portal-login?emergency_logout=${Date.now()}&client_destroyed=true`);
+        setLocation('/portal-login');
+        window.location.reload();
       }, 100);
     }
   };
@@ -130,7 +175,7 @@ const PatientPortalPage: React.FC = () => {
       if (section && navItems.some(item => item.id === section)) {
         setActiveSection(section);
       }
-      
+
       // Handle direct navigation to specific sections
       const path = window.location.pathname;
       if (path.includes('/patient-portal')) {

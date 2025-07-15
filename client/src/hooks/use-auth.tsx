@@ -314,96 +314,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Logout mutation
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      console.log("🚪 LOGOUT MUTATION: Starting logout process");
+      console.log('🚪 LOGOUT: Starting logout process');
+
+      // Clear any cached user data immediately
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem('cached_user_data');
+        localStorage.removeItem('authToken');
+      }
+
       try {
-        console.log("🚪 LOGOUT MUTATION: Calling server logout endpoint /api/auth/logout");
-        // Call server logout endpoint
-        const res = await api.post("/api/auth/logout");
-        console.log("🚪 LOGOUT MUTATION: Server logout successful", res.data);
-        return res.data;
-      } catch (error: any) {
-        console.error("🚪 LOGOUT MUTATION: Server logout error:", error);
-        // Continue with cleanup even if server logout fails
-        return null;
+        // Call logout endpoint with credentials
+        const response = await api.post('/auth/logout', { 
+          ultimateLogout: true,
+          forceDestroy: true 
+        }, {
+          withCredentials: true,
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
+
+        console.log('🚪 LOGOUT: Server logout response:', response.data);
+        return response.data;
+      } catch (error) {
+        console.warn('🚪 LOGOUT: Server logout failed, continuing with client cleanup:', error);
+        // Continue with client-side cleanup even if server logout fails
+        return { success: true, clientOnly: true };
       }
     },
-    onSuccess: () => {
-      console.log("🚪 LOGOUT SUCCESS: Starting cleanup process");
+    onSuccess: (data) => {
+      console.log('🚪 LOGOUT SUCCESS: Clearing all auth state');
 
-      // Clear ALL React Query cache to prevent any cached auth data
-      console.log("🚪 LOGOUT SUCCESS: Clearing ALL query cache");
+      // Clear React Query cache completely for all auth-related queries
+      queryClient.setQueryData(['/api/auth/user'], null);
+      queryClient.setQueryData(['auth-user'], null);
+      queryClient.setQueryData(['global-auth-user'], null);
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] });
+      queryClient.invalidateQueries({ queryKey: ['global-auth-user'] });
+
+      // Clear all cached data
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.clear();
+
+        // Clear any cookies by setting them to expire
+        document.cookie.split(";").forEach((c) => {
+          const eqPos = c.indexOf("=");
+          const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+        });
+      }
+    },
+    onError: (error) => {
+      console.error('🚪 LOGOUT ERROR:', error);
+
+      // Force clear everything on error too
+      queryClient.setQueryData(['/api/auth/user'], null);
+      queryClient.setQueryData(['auth-user'], null);
+      queryClient.setQueryData(['global-auth-user'], null);
       queryClient.clear();
 
-      // Clear user ref
-      console.log("🚪 LOGOUT SUCCESS: Clearing user ref");
-      userDataRef.current = null;
+      if (typeof window !== 'undefined') {
+        sessionStorage.clear();
+        localStorage.clear();
 
-      // Clear ALL auth-related storage
-      console.log("🚪 LOGOUT SUCCESS: Clearing ALL auth storage");
-      sessionStorage.removeItem('cached_user_data');
-      sessionStorage.removeItem('cached_user_timestamp');
-      sessionStorage.removeItem('just_logged_in');
-      sessionStorage.removeItem('login_timestamp');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('auth_warnings');
-
-      // Clear session cookies with multiple variations
-      console.log("🚪 LOGOUT SUCCESS: Clearing session cookies");
-      const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token'];
-      cookieNames.forEach(name => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${window.location.hostname}`;
-      });
-
-      // Force a small delay before redirect to ensure cleanup completes
-      setTimeout(() => {
-        console.log("🚪 LOGOUT SUCCESS: Redirecting to /portal-login");
-        window.location.href = '/portal-login';
-      }, 100);
-
-      toast({
-        title: "Logged out",
-        description: "You have been successfully logged out",
-      });
-    },
-    onError: (error: Error) => {
-      console.error("🚪 LOGOUT ERROR: Logout mutation failed", error);
-
-      // Emergency cleanup on error - clear EVERYTHING
-      console.log("🚪 LOGOUT ERROR: Starting emergency cleanup");
-      queryClient.clear();
-      userDataRef.current = null;
-
-      // Clear ALL auth storage
-      console.log("🚪 LOGOUT ERROR: Clearing ALL auth storage");
-      sessionStorage.removeItem('cached_user_data');
-      sessionStorage.removeItem('cached_user_timestamp');
-      sessionStorage.removeItem('just_logged_in');
-      sessionStorage.removeItem('login_timestamp');
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('user');
-      localStorage.removeItem('isAdmin');
-      localStorage.removeItem('auth_warnings');
-
-      // Clear cookies
-      const cookieNames = ['connect.sid', 'session', 'sessionId', 'auth-token'];
-      cookieNames.forEach(name => {
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
-      });
-
-      // Force redirect
-      setTimeout(() => {
-        console.log("🚪 LOGOUT ERROR: Redirecting to /portal-login");
-        window.location.href = '/portal-login';
-      }, 100);
-
-      toast({
-        title: "Logout completed",
-        description: "You have been logged out",
-      });
-    },
+        // Clear cookies even on error
+        document.cookie.split(";").forEach((c) => {
+          const eqPos = c.indexOf("=");
+          const name = eqPos > -1 ? c.substr(0, eqPos) : c;
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+          document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=" + window.location.hostname;
+        });
+      }
+    }
   });
 
   return (
