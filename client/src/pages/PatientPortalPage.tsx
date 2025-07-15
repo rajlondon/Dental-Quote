@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { useGlobalAuth } from '@/contexts/GlobalAuthProvider';
 
 // Placeholder translation function
 const t = (key: string, fallback: string) => fallback;
