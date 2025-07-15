@@ -98,23 +98,61 @@ const DashboardSection: React.FC = () => {
             userQuotesQuery.refetch();
         }
 
-        // Load pending quote data from localStorage on component mount
-        const storedQuoteData = localStorage.getItem('treatmentPlanData');
-        if (storedQuoteData) {
-            setPendingQuoteData(JSON.parse(storedQuoteData));
-        }
+        // Aggressively check for quote data with retry mechanism
+        const loadQuoteData = () => {
+            console.log('🔍 DASHBOARD: Loading quote data from storage...');
+            
+            // Load pending quote data from localStorage
+            const storedQuoteData = localStorage.getItem('treatmentPlanData');
+            if (storedQuoteData) {
+                console.log('📋 DASHBOARD: Found treatment plan data:', storedQuoteData);
+                setPendingQuoteData(JSON.parse(storedQuoteData));
+            } else {
+                console.log('📋 DASHBOARD: No treatment plan data found');
+            }
 
-        // Load package data from sessionStorage
-        const storedPackageData = sessionStorage.getItem('pendingPackageData');
-        if (storedPackageData) {
-            setPackageData(JSON.parse(storedPackageData));
-        }
+            // Load package data from sessionStorage
+            const storedPackageData = sessionStorage.getItem('pendingPackageData');
+            if (storedPackageData) {
+                console.log('📦 DASHBOARD: Found package data:', storedPackageData);
+                setPackageData(JSON.parse(storedPackageData));
+            } else {
+                console.log('📦 DASHBOARD: No package data found');
+            }
 
-        // Load clinic id from sessionStorage
-        const storedClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
-        if (storedClinicId) {
-            setClinicId(storedClinicId);
-        }
+            // Load clinic id from sessionStorage
+            const storedClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+            if (storedClinicId) {
+                console.log('🏥 DASHBOARD: Found clinic ID:', storedClinicId);
+                setClinicId(storedClinicId);
+            } else {
+                console.log('🏥 DASHBOARD: No clinic ID found');
+            }
+        };
+
+        // Load immediately
+        loadQuoteData();
+
+        // Also set up a listener for storage changes (in case data is added after login)
+        const handleStorageChange = (e: StorageEvent) => {
+            if (e.key === 'treatmentPlanData' || e.key === 'pendingPackageData' || e.key === 'pendingPromoCodeClinicId') {
+                console.log('🔄 DASHBOARD: Storage changed, reloading data...');
+                loadQuoteData();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+
+        // Force a check after a short delay to catch any race conditions
+        const timeoutId = setTimeout(() => {
+            console.log('⏰ DASHBOARD: Delayed check for quote data...');
+            loadQuoteData();
+        }, 1000);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            clearTimeout(timeoutId);
+        };
     }, [user]);
 
     // Get the most recent quote for dashboard display
