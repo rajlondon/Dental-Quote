@@ -3,6 +3,7 @@ import { useLocation, Link } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/use-auth';
 import { useGlobalAuth } from '@/contexts/GlobalAuthProvider';
+import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
