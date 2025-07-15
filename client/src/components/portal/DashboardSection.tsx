@@ -231,44 +231,63 @@ const DashboardSection: React.FC = () => {
   const hasActiveBooking = bookingData && bookingData.length > 0;
 
   // Build treatment overview from quote data in storage
-  const buildTreatmentOverview = () => {
-    const baseName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User";
+    const buildTreatmentOverview = () => {
+        const baseName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User";
 
-    // Check for quote data in localStorage and sessionStorage
-    const hasPendingQuote = pendingQuoteData && pendingQuoteData.length > 0;
-    const hasPackageData = packageData && packageData.name;
+        // Check for quote data in localStorage and sessionStorage
+        const hasPendingQuote = pendingQuoteData && (
+            Array.isArray(pendingQuoteData) ? pendingQuoteData.length > 0 :
+            pendingQuoteData.treatments && pendingQuoteData.treatments.length > 0
+        );
+        const hasPackageData = packageData && packageData.name;
 
-    // Get clinic name from stored clinic ID
-    let clinicName = "No clinic selected yet";
-    if (clinicId) {
-      const clinicMap: Record<string, string> = {
-        'maltepe-dental-clinic': 'Maltepe Dental Clinic',
-        'dentgroup-istanbul': 'DentGroup Istanbul',
-        'istanbul-dental-care': 'Istanbul Dental Care'
-      };
-      clinicName = clinicMap[clinicId] || clinicId;
-    }
+        console.log('🔍 DASHBOARD: Building treatment overview with:', {
+            hasPendingQuote,
+            hasPackageData,
+            pendingQuoteDataType: Array.isArray(pendingQuoteData) ? 'array' : typeof pendingQuoteData,
+            pendingQuoteDataLength: Array.isArray(pendingQuoteData) ? pendingQuoteData.length : 
+                (pendingQuoteData?.treatments ? pendingQuoteData.treatments.length : 0),
+            packageDataName: packageData?.name,
+            clinicId
+        });
 
-    // Build treatment plan description
-    let treatmentPlan = "No active treatment plan";
-    if (hasPackageData) {
-      treatmentPlan = `${packageData.name} (${packageData.treatments?.length || 0} treatments)`;
-    } else if (hasPendingQuote) {
-      const treatmentCount = pendingQuoteData.length;
-      treatmentPlan = `${treatmentCount} treatment${treatmentCount !== 1 ? 's' : ''} selected`;
-    }
+        // Get clinic name from stored clinic ID
+        let clinicName = "No clinic selected yet";
+        if (clinicId) {
+            const clinicMap: Record<string, string> = {
+                'maltepe-dental-clinic': 'Maltepe Dental Clinic',
+                'dentgroup-istanbul': 'DentGroup Istanbul',
+                'istanbul-dental-care': 'Istanbul Dental Care'
+            };
+            clinicName = clinicMap[clinicId] || clinicId;
+        }
 
-    // Determine next appointment message
-    let nextAppointment = "Please submit a quote request to begin";
-    if (hasPendingQuote || hasPackageData) {
-      nextAppointment = "Ready to book consultation";
-    }
+        // Build treatment plan description
+        let treatmentPlan = "No active treatment plan";
+        if (hasPackageData) {
+            treatmentPlan = `${packageData.name} (${packageData.treatments?.length || 0} treatments)`;
+        } else if (hasPendingQuote) {
+            // Handle both array format and object format
+            let treatmentCount = 0;
+            if (Array.isArray(pendingQuoteData)) {
+                treatmentCount = pendingQuoteData.length;
+            } else if (pendingQuoteData.treatments) {
+                treatmentCount = pendingQuoteData.treatments.length;
+            }
+            treatmentPlan = `${treatmentCount} treatment${treatmentCount !== 1 ? 's' : ''} selected`;
+        }
 
-    // Determine progress
-    let progress = 0;
-    if (hasPackageData || hasPendingQuote) {
-      progress = 25; // Quote/package selected
-    }
+        // Determine next appointment message
+        let nextAppointment = "Please submit a quote request to begin";
+        if (hasPendingQuote || hasPackageData) {
+            nextAppointment = "Ready to book consultation";
+        }
+
+        // Determine progress
+        let progress = 0;
+        if (hasPackageData || hasPendingQuote) {
+            progress = 25; // Quote/package selected
+        }
 
     return hasActiveBooking ? {
       name: baseName,
