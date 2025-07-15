@@ -458,6 +458,18 @@ async function transferQuoteDataToPatientAccount(user: User) {
       return;
     }
 
+    // Check if we already transferred a quote for this user recently
+    const lastTransferTime = sessionStorage.getItem('last_quote_transfer_time');
+    const lastTransferUserId = sessionStorage.getItem('last_quote_transfer_user_id');
+    
+    if (lastTransferTime && lastTransferUserId === user.id.toString()) {
+      const timeSinceTransfer = Date.now() - parseInt(lastTransferTime);
+      if (timeSinceTransfer < 30000) { // 30 seconds
+        console.log('🔄 Quote already transferred recently, skipping duplicate transfer');
+        return;
+      }
+    }
+
     console.log('🔄 Found quote data sources:', {
       treatmentPlanData: !!treatmentPlanData,
       pendingPackageData: !!pendingPackageData,
@@ -484,12 +496,16 @@ async function transferQuoteDataToPatientAccount(user: User) {
         const parsedLastQuoteData = JSON.parse(lastQuoteData);
         console.log('🔄 Using lastQuoteData:', parsedLastQuoteData);
         
-        // Merge with existing quote data
+        // Merge with existing quote data, ensuring required fields
         Object.assign(quoteData, {
           ...parsedLastQuoteData,
           userId: user.id, // Ensure user ID is correct
           email: user.email, // Ensure email is correct
-          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient'
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient',
+          // Ensure required fields exist
+          treatment: parsedLastQuoteData.treatment || 'multiple_treatments',
+          consent: true,
+          status: parsedLastQuoteData.status || 'draft'
         });
       } catch (error) {
         console.error('Error parsing lastQuoteData:', error);
@@ -570,6 +586,10 @@ async function transferQuoteDataToPatientAccount(user: User) {
     if (response.data.success) {
       console.log('✅ Quote data transferred successfully:', response.data.data.id);
 
+      // Record successful transfer
+      sessionStorage.setItem('last_quote_transfer_time', Date.now().toString());
+      sessionStorage.setItem('last_quote_transfer_user_id', user.id.toString());
+
       // Clear ALL quote data storage after successful transfer
       sessionStorage.removeItem('treatmentPlanData');
       sessionStorage.removeItem('pendingPackageData');
@@ -584,11 +604,21 @@ async function transferQuoteDataToPatientAccount(user: User) {
 
       console.log('✅ Quote data transfer complete, all storage cleared');
     } else {
-      console.error('❌ Failed to transfer quote data:', response.data.message);
+      console.error('❌ Failed to transfer quote data:', response.data.message || 'Unknown error');
     }
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error transferring quote data:', error);
+    console.error('❌ Error details:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      quoteDataKeys: Object.keys(quoteData)
+    });
+    
+    // Store failed transfer attempt to prevent repeated tries
+    sessionStorage.setItem('quote_transfer_failed', Date.now().toString());
+    
     // Don't throw the error - login should still succeed even if quote transfer fails
   }
 }
