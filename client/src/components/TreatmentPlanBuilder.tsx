@@ -826,6 +826,18 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
     }
   }, []); // Only run on mount
 
+  // Function to get clinic name for the badge
+  const getClinicNameBadge = () => {
+    const clinicId = sessionStorage.getItem("pendingPromoCodeClinicId");
+    const clinicNameMap: { [key: string]: string } = {
+      "maltepe-dental-clinic": "From Maltepe Dental Clinic",
+      "dentgroup-istanbul": "From DentGroup Istanbul",
+      "istanbul-dental-care": "From Istanbul Dental Care",
+    };
+
+    return clinicId && clinicNameMap[clinicId] ? clinicNameMap[clinicId] : "Price varies by clinic";
+  };
+
   return (
     <>
       <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8 hover:shadow-lg transition-shadow duration-200">
@@ -1116,7 +1128,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1214,7 +1226,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1289,7 +1301,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1384,7 +1396,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1476,7 +1488,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1568,7 +1580,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                           variant="outline"
                           className="font-medium text-sm"
                         >
-                          Price varies by clinic
+                          {getClinicNameBadge()}
                         </Badge>
                       </div>
                     </div>
@@ -1654,7 +1666,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         const hasPendingPromo = sessionStorage.getItem('pendingPromoCode');
                         const hasPendingPackage = sessionStorage.getItem('pendingPackageData');
                         const promoClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
-                        
+
                         // First check if it's a package promo code
                         if (hasPendingPackage) {
                           try {
@@ -1664,15 +1676,15 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               'dentgroup-istanbul': { name: 'DentGroup Istanbul', factor: 0.30 },
                               'istanbul-dental-care': { name: 'Istanbul Dental Care', factor: 0.25 }
                             };
-                            
+
                             let clinicName = 'Selected Clinic';
                             if (promoClinicId && clinicPricingMap[promoClinicId]) {
                               clinicName = clinicPricingMap[promoClinicId].name;
                             }
-                            
+
                             const packagePrice = packageData.packagePrice || packageData.totalPrice || totalGBP;
                             const packageName = packageData.name || 'Treatment Package';
-                            
+
                             // Map package names to their correct IDs for URL generation
                             const packageUrlMap: Record<string, string> = {
                               'Hollywood Smile Vacation Package': 'hollywood-smile-vacation',
@@ -1686,11 +1698,11 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               'Family Dental Package': 'pkg_5',
                               'Test Discount Package': 'test_package'
                             };
-                            
+
                             // Get the correct package ID, fallback to simplified name if not found
                             const packageId = packageUrlMap[packageName] || packageName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
                             const packageUrl = `/packages/${packageId}`;
-                            
+
                             return (
                               <>
                                 <span className="font-semibold">
@@ -1714,13 +1726,13 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                             // Fall through to clinic-specific pricing
                           }
                         }
-                        
+
                         // Handle special offer codes or clinic-specific pricing
                         if (hasPendingPromo || promoClinicId) {
                           // Calculate clinic-specific pricing
                           let clinicSpecificTotal = totalGBP;
                           let clinicName = 'Selected Clinic';
-                          
+
                           // Get clinic pricing factor and name
                           if (promoClinicId) {
                             const clinicPricingMap = {
@@ -1728,7 +1740,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               'dentgroup-istanbul': { name: 'DentGroup Istanbul', factor: 0.30 },
                               'istanbul-dental-care': { name: 'Istanbul Dental Care', factor: 0.25 }
                             };
-                            
+
                             const clinicData = clinicPricingMap[promoClinicId];
                             if (clinicData) {
                               clinicName = clinicData.name;
@@ -1738,7 +1750,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                               clinicSpecificTotal = Math.round(totalGBP * adjustmentFactor);
                             }
                           }
-                          
+
                           return (
                             <>
                               <span className="font-semibold">Total from {clinicName}</span>
@@ -1761,7 +1773,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                       })()}
                     </div>
                   )}
-                  
+
                   {/* Comparison note for normal searches only */}
                   {treatments.length > 0 && !sessionStorage.getItem('pendingPromoCode') && !sessionStorage.getItem('pendingPackageData') && !sessionStorage.getItem('pendingPromoCodeClinicId') && (
                     <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
