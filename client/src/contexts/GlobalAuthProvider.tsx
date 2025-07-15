@@ -34,18 +34,27 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
       try {
         // Clear any stale cache entries first
         if (typeof window !== 'undefined') {
-          // Check for logout indicators
-          const isPostLogout = !sessionStorage.getItem('cached_user_data') && 
-                             !localStorage.getItem('authToken') &&
-                             !document.cookie.includes('connect.sid') &&
-                             !document.cookie.includes('session');
+          // Check for logout indicators more strictly
+          const hasNoAuthData = !sessionStorage.getItem('cached_user_data') && 
+                               !localStorage.getItem('authToken') &&
+                               !document.cookie.includes('connect.sid') &&
+                               !document.cookie.includes('session');
           
-          if (isPostLogout) {
+          // Check if we're on a portal login page
+          const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
+                               window.location.pathname.includes('/login');
+          
+          if (hasNoAuthData && !isOnLoginPage) {
             console.log('🌐 GLOBAL AUTH QUERY: Post-logout state detected, clearing cache and skipping request');
             // Clear any remaining cache
             sessionStorage.clear();
             localStorage.clear();
             return null;
+          }
+          
+          // If we're on a login page, always check with server
+          if (isOnLoginPage) {
+            console.log('🌐 GLOBAL AUTH QUERY: On login page, checking server auth state');
           }
         }
         

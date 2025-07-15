@@ -111,19 +111,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("🔍 AUTH QUERY: Starting user authentication check");
       try {
 
-        // Check sessionStorage cache first
-        const cachedUserData = sessionStorage.getItem('cached_user_data');
-        const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
+        // Check if we're on a portal login page - don't use cache
+        const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
+                             window.location.pathname.includes('/login');
+        
+        // Check sessionStorage cache first (but not on login pages)
+        if (!isOnLoginPage) {
+          const cachedUserData = sessionStorage.getItem('cached_user_data');
+          const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
 
-        if (cachedUserData && cachedTimestamp) {
-          const timestamp = parseInt(cachedTimestamp, 10);
-          const age = Date.now() - timestamp;
+          if (cachedUserData && cachedTimestamp) {
+            const timestamp = parseInt(cachedTimestamp, 10);
+            const age = Date.now() - timestamp;
 
-          if (age < 10000) { // 10 seconds cache for quick access
-            const parsedUser = JSON.parse(cachedUserData);
-            userDataRef.current = parsedUser;
-            console.log(`🔍 AUTH QUERY: Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
-            return parsedUser;
+            if (age < 10000) { // 10 seconds cache for quick access
+              const parsedUser = JSON.parse(cachedUserData);
+              userDataRef.current = parsedUser;
+              console.log(`🔍 AUTH QUERY: Using cached user data (${age}ms old), role: ${parsedUser?.role}`);
+              return parsedUser;
+            }
           }
         }
 

@@ -300,8 +300,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
     console.log('🔄 Falling back to all clinics');
   }
 
-  // Use filtered clinics instead of original clinics data
-  const clinicsToDisplay = filteredClinics.length > 0 ? filteredClinics : clinicsData;
+  // FIXED: Always use filtered clinics when promo code is present
+  const clinicsToDisplay = promoCodeClinicId && filteredClinics.length > 0 ? filteredClinics : clinicsData;
 
   const getClinicPricing = (clinicId: string, treatments: TreatmentItem[]) => {
     const clinic = clinicsToDisplay.find(c => c.id === clinicId);

@@ -21,13 +21,19 @@ export default function PortalLoginPage() {
   const [clinicForm, setClinicForm] = useState({ email: '', password: '' });
   const [adminForm, setAdminForm] = useState({ email: '', password: '' });
 
-  // Check URL parameter for initial tab
+  // Check URL parameter for initial tab and clear any cached auth data
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const type = urlParams.get('type');
     if (type && ['patient', 'clinic', 'admin'].includes(type)) {
       setActiveTab(type);
     }
+    
+    // Clear any cached authentication data when arriving at login page
+    console.log('🔍 LOGIN PAGE: Clearing cached authentication data');
+    sessionStorage.removeItem('cached_user_data');
+    sessionStorage.removeItem('cached_user_timestamp');
+    localStorage.removeItem('authToken');
   }, [location]);
 
   // Redirect if already logged in
