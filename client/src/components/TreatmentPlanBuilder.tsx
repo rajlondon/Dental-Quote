@@ -1655,7 +1655,40 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
                         const hasPendingPackage = sessionStorage.getItem('pendingPackageData');
                         const promoClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
                         
-                        if (hasPendingPromo || hasPendingPackage || promoClinicId) {
+                        // First check if it's a package promo code
+                        if (hasPendingPackage) {
+                          try {
+                            const packageData = JSON.parse(hasPendingPackage);
+                            const clinicPricingMap = {
+                              'maltepe-dental-clinic': { name: 'Maltepe Dental Clinic', factor: 0.35 },
+                              'dentgroup-istanbul': { name: 'DentGroup Istanbul', factor: 0.30 },
+                              'istanbul-dental-care': { name: 'Istanbul Dental Care', factor: 0.25 }
+                            };
+                            
+                            let clinicName = 'Selected Clinic';
+                            if (promoClinicId && clinicPricingMap[promoClinicId]) {
+                              clinicName = clinicPricingMap[promoClinicId].name;
+                            }
+                            
+                            const packagePrice = packageData.packagePrice || packageData.totalPrice || totalGBP;
+                            const packageName = packageData.name || 'Treatment Package';
+                            
+                            return (
+                              <>
+                                <span className="font-semibold">{packageName} from {clinicName}</span>
+                                <span className="font-bold text-lg">
+                                  £{(packagePrice - discountAmount).toLocaleString()}
+                                </span>
+                              </>
+                            );
+                          } catch (error) {
+                            console.error('Error parsing package data:', error);
+                            // Fall through to clinic-specific pricing
+                          }
+                        }
+                        
+                        // Handle special offer codes or clinic-specific pricing
+                        if (hasPendingPromo || promoClinicId) {
                           // Calculate clinic-specific pricing
                           let clinicSpecificTotal = totalGBP;
                           let clinicName = 'Selected Clinic';
