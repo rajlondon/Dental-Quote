@@ -28,14 +28,23 @@ const clinicsData = ensureArray(clinicsDataImport);
 const safePackages = ensureArray(trendingPackages);
 
 const Home: React.FC = () => {
+  useEffect(() => {
+    document.title = "MyDentalFly - Get Expert Dental Care in Istanbul";
+
+    // Ensure no stale authentication cache on homepage
+    console.log('🏠 HOME: Clearing any stale authentication cache');
+    sessionStorage.removeItem('cached_user_data');
+    sessionStorage.removeItem('cached_user_timestamp');
+  }, []);
+
   // Clean up old package data when users return to homepage
   useEffect(() => {
     // Clear all session storage to prevent state pollution
     sessionStorage.clear();
-    
+
     // Clear specific localStorage treatment data
     localStorage.removeItem('treatmentPlanData');
-    
+
     // Clear browser caches if available
     if ('caches' in window) {
       caches.keys().then(names => {

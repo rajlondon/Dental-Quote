@@ -47,16 +47,28 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
           const isOnQuoteFlow = window.location.pathname.includes('/your-quote') ||
                                window.location.pathname.includes('/quote-results') ||
                                window.location.pathname.includes('/matched-clinics') ||
-                               window.location.search.includes('promo=');
+                               window.location.search.includes('promo=') ||
+                               window.location.pathname === '/';
           
-          // Don't auto-authenticate for quote flows or when no auth data exists
-          if ((hasNoAuthData && !isOnLoginPage) || isOnQuoteFlow) {
-            console.log('🌐 GLOBAL AUTH QUERY: Skipping auth check for quote flow or post-logout state');
-            // Clear any remaining cache
-            if (hasNoAuthData) {
-              sessionStorage.clear();
-              localStorage.clear();
-            }
+          // AGGRESSIVE: Always skip auth for quote flows and home page
+          if (isOnQuoteFlow) {
+            console.log('🌐 GLOBAL AUTH QUERY: Skipping auth check for quote flow - preventing auto-login');
+            // Clear ALL auth-related cache aggressively
+            sessionStorage.removeItem('cached_user_data');
+            sessionStorage.removeItem('cached_user_timestamp');
+            localStorage.removeItem('authToken');
+            // Clear any cookies that might contain auth data
+            document.cookie.split(";").forEach(function(c) { 
+              document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            return null;
+          }
+          
+          // Don't auto-authenticate when no auth data exists and not on login page
+          if (hasNoAuthData && !isOnLoginPage) {
+            console.log('🌐 GLOBAL AUTH QUERY: Post-logout state detected, clearing cache and skipping request');
+            sessionStorage.clear();
+            localStorage.clear();
             return null;
           }
           

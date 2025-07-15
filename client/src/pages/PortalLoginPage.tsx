@@ -29,11 +29,22 @@ export default function PortalLoginPage() {
       setActiveTab(type);
     }
     
-    // Clear any cached authentication data when arriving at login page
-    console.log('🔍 LOGIN PAGE: Clearing cached authentication data');
-    sessionStorage.removeItem('cached_user_data');
-    sessionStorage.removeItem('cached_user_timestamp');
-    localStorage.removeItem('authToken');
+    // AGGRESSIVELY clear all authentication data when arriving at login page
+    console.log('🔍 LOGIN PAGE: Aggressively clearing all cached authentication data');
+    sessionStorage.clear();
+    localStorage.clear();
+    
+    // Clear all cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    });
+    
+    // Clear React Query cache for auth
+    import('@/lib/queryClient').then(({ queryClient }) => {
+      queryClient.removeQueries({ queryKey: ['global-auth-user'] });
+      queryClient.removeQueries({ queryKey: ['/api/auth/user'] });
+      queryClient.clear();
+    });
   }, [location]);
 
   // Redirect if already logged in

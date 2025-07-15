@@ -111,17 +111,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log("🔍 AUTH QUERY: Starting user authentication check");
       try {
 
-        // Check if we're on a portal login page or quote flow - don't use cache
-        const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
-                             window.location.pathname.includes('/login');
-        
-        const isOnQuoteFlow = window.location.pathname.includes('/your-quote') ||
-                             window.location.pathname.includes('/quote-results') ||
-                             window.location.pathname.includes('/matched-clinics') ||
-                             window.location.search.includes('promo=');
-        
-        // Check sessionStorage cache first (but not on login pages or quote flows)
-        if (!isOnLoginPage && !isOnQuoteFlow) {
+        // Check if we're on pages that should never use auth cache
+        const isOnPublicPage = window.location.pathname.includes('/portal-login') ||
+                              window.location.pathname.includes('/login') ||
+                              window.location.pathname.includes('/your-quote') ||
+                              window.location.pathname.includes('/matched-clinics') ||
+                              window.location.pathname === '/' ||
+                              window.location.search.includes('promo=');
+
+        // NEVER use cache on public pages - always check with server
+        if (!isOnPublicPage) {
           const cachedUserData = sessionStorage.getItem('cached_user_data');
           const cachedTimestamp = sessionStorage.getItem('cached_user_timestamp');
 
