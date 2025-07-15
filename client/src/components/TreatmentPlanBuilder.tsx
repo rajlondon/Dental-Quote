@@ -530,25 +530,14 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
   // Listen for promo code package events - simplified to reduce state updates
   useEffect(() => {
-    let eventProcessed = false;
-    
     const handlePackagePromo = (e: CustomEvent) => {
       // Prevent duplicate processing of the same event
-      if (eventProcessed) return;
-      eventProcessed = true;
-      
       console.log("🎯 Package promo event received:", e.detail);
       const { packageData } = e.detail;
 
       if (!packageData || !packageData.treatments) {
-        eventProcessed = false;
         return;
       }
-      
-      // Reset flag after processing
-      setTimeout(() => {
-        eventProcessed = false;
-      }, 1000);
 
       // Map package treatments to our treatment format
       const packageTreatments = packageData.treatments.map((treatment: any) => {
@@ -609,20 +598,21 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
       setTreatments(packageTreatments);
     };
 
-    // Add event listener
-    window.addEventListener(
-      "packagePromoApplied",
-      handlePackagePromo as EventListener,
-    );
-
-    // Clean up
-    return () => {
-      window.removeEventListener(
-        "packagePromoApplied",
-        handlePackagePromo as EventListener,
-      );
+    const handleDiscountPromo = (event: CustomEvent) => {
+      console.log('💰 Discount promo event received:', event.detail);
+      // Rest of the logic here
     };
-  }, []); // Fixed dependency array - no more jittering!
+
+    // Add event listeners
+    window.addEventListener('packagePromoApplied', handlePackagePromo as EventListener);
+    window.addEventListener('discountPromoApplied', handleDiscountPromo as EventListener);
+
+    // Cleanup function to remove event listeners
+    return () => {
+      window.removeEventListener('packagePromoApplied', handlePackagePromo as EventListener);
+      window.removeEventListener('discountPromoApplied', handleDiscountPromo as EventListener);
+    };
+  }, [treatments, toast]);
 
   // Get available treatments for the selected category
   const availableTreatments =
@@ -917,7 +907,7 @@ const TreatmentPlanBuilder: React.FC<TreatmentPlanBuilderProps> = ({
 
           {treatments.length === 0 ? (
             <Alert>
-              <AlertCircle className="h-4 w-4" />
+                            <AlertCircle className="h-4 w-4" />
               <AlertDescription>
                 No treatments added yet. Select treatments from the categories
                 above to build your treatment plan.

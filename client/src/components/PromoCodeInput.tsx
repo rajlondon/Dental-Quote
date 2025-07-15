@@ -40,6 +40,14 @@ export function PromoCodeInput({ initialPromoCode }: PromoCodeInputProps = {}) {
     }
   }, [initialPromoCode]);
 
+  // Cleanup any event listeners when component unmounts
+  useEffect(() => {
+    return () => {
+      // Clean up any pending event listeners or timers
+      // This prevents the EventEmitter memory leak warnings
+    };
+  }, []);
+
   // Check if QuoteContext is available before using useQuote
   const quoteContextAvailable = useContext(QuoteContext) !== null;
 

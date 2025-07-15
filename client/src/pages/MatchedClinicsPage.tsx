@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation, Link } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
+import { useGlobalAuth } from '@/contexts/GlobalAuthProvider';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,9 +35,6 @@ import {
   Tag,
   Package
 } from 'lucide-react';
-import { useLocation } from 'wouter';
-import { useToast } from "@/hooks/use-toast";
-import ConsistentPageHeader from '@/components/ConsistentPageHeader';
 import { QuoteEngine, enhanceClinicData, type QuoteRequest, type EnhancedClinic } from '@/services/quoteEngine';
 
 interface TreatmentItem {
@@ -200,6 +201,8 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
   });
   const [clinics, setClinics] = useState(clinicsData);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const globalAuth = useGlobalAuth();
 
   // Initialize data once on mount
   useEffect(() => {
@@ -909,35 +912,50 @@ const MatchedClinicsPage: React.FC<MatchedClinicsPageProps> = ({
                                 <Button 
                                   size="lg"
                                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 shadow-md hover:shadow-lg transition-all duration-200" 
-                                  onClick={() => {
+                                  onClick={async () => {
                                     try {
-                                      setSelectedClinic(clinic.id);
-                                      localStorage.setItem('selectedClinicId', clinic.id);
-
+                                      // Store selected clinic for booking
                                       const bookingData = {
                                         clinicId: clinic.id,
                                         clinicName: clinic.name,
-                                        treatments: clinicTreatments,
-                                        totalPrice: totalPrice,
-                                        treatmentPlan: activeTreatmentPlan,
-                                        patientInfo: patientInfo,
+                                        selectedTreatments: treatmentItems,
+                                        totalCost: totalGBP,
                                         timestamp: new Date().toISOString()
                                       };
 
-                                      localStorage.setItem('selectedClinicData', JSON.stringify(bookingData));
-                                      localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+                                      localStorage.setItem('selectedBookingData', JSON.stringify(bookingData));
 
-                                      if (onSelectClinic) {
-                                        onSelectClinic(clinic.id);
+                                      // Check authentication state properly
+                                      const authToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+                                      const globalUser = globalAuth.user;
+                                      const localUser = user;
+
+                                      console.log('🔐 RESERVE NOW AUTH CHECK:', {
+                                        authToken: !!authToken,
+                                        globalUser: !!globalUser,
+                                        localUser: !!localUser,
+                                        globalUserEmail: globalUser?.email,
+                                        localUserEmail: localUser?.email
+                                      });
+
+                                      // If user is not authenticated, redirect to login
+                                      if (!authToken && !globalUser && !localUser) {
+                                        console.log('🚫 RESERVE NOW: User not authenticated, redirecting to login');
+                                        setLocation('/portal-login?redirect=/patient-portal&action=reserve');
+                                        toast({
+                                          title: "Authentication Required",
+                                          description: "Please sign in to complete your booking.",
+                                        });
+                                        return;
                                       }
 
-                                      setTimeout(() => {
-                                        setLocation('/patient-portal');
-                                      }, 100);
+                                      // User is authenticated, proceed to patient portal
+                                      console.log('✅ RESERVE NOW: User authenticated, proceeding to patient portal');
+                                      setLocation('/patient-portal');
 
                                       toast({
                                         title: "Clinic Selected",
-                                        description: "Sign in to your patient portal to complete your booking.",
+                                        description: "Proceeding to your patient portal to complete booking.",
                                       });
                                     } catch (error) {
                                       console.error('Error in Reserve Now button:', error);
