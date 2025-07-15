@@ -50,8 +50,12 @@ export function GlobalAuthProvider({ children }: { children: React.ReactNode }) 
                                window.location.search.includes('promo=') ||
                                window.location.pathname === '/';
           
-          // AGGRESSIVE: Always skip auth for quote flows and home page
-          if (isOnQuoteFlow) {
+          // Check if we're coming from a quote flow (not accessing patient portal directly)
+          const isAccessingPatientPortalDirectly = window.location.pathname === '/patient-portal' ||
+                                                   window.location.pathname === '/client-portal';
+          
+          // AGGRESSIVE: Always skip auth for quote flows and home page, but allow direct portal access
+          if (isOnQuoteFlow && !isAccessingPatientPortalDirectly) {
             console.log('🌐 GLOBAL AUTH QUERY: Skipping auth check for quote flow - preventing auto-login');
             // Clear ALL auth-related cache aggressively
             sessionStorage.removeItem('cached_user_data');

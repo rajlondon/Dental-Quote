@@ -119,6 +119,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                               window.location.pathname === '/' ||
                               window.location.search.includes('promo=');
 
+        // Check if accessing patient portal directly (not through quote flow)
+        const isAccessingPatientPortalDirectly = window.location.pathname === '/patient-portal' ||
+                                                 window.location.pathname === '/client-portal';
+
+        // For quote flow pages, always return null to prevent auto-login
+        if (isOnPublicPage && !isAccessingPatientPortalDirectly) {
+          console.log('🔍 AUTH QUERY: In quote flow - preventing auto-authentication');
+          return null;
+        }
+
         // NEVER use cache on public pages - always check with server
         if (!isOnPublicPage) {
           const cachedUserData = sessionStorage.getItem('cached_user_data');

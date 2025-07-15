@@ -55,7 +55,26 @@ const TreatmentComparisonSection = () => <div className="p-4">Treatment comparis
 // Use the imported dashboard component
 const DashboardSection = DashboardSectionComponent;
 
-const PatientPortalPage: React.FC = () => {
+export default function PatientPortalPage() {
+  const [activeSection, setActiveSection] = useState('dashboard');
+  const [isLoading, setIsLoading] = useState(true);
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
+  // Clear any quote flow cache when accessing patient portal directly
+  useEffect(() => {
+    const isDirectAccess = !window.location.search.includes('from=quote');
+    if (isDirectAccess) {
+      // Clear quote flow related cache
+      sessionStorage.removeItem('pendingPromoCode');
+      sessionStorage.removeItem('pendingPackageData');
+      sessionStorage.removeItem('pendingPromoCodeClinicId');
+    }
+  }, []);
+
+  // Use global auth context
+  const { user: globalUser, loading: globalLoading } = useGlobalAuth();
+
   const [activeSection, setActiveSection] = useState('dashboard');
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { logoutMutation, user } = useAuth();
@@ -437,5 +456,3 @@ const PatientPortalPage: React.FC = () => {
     </div>
   );
 };
-
-export default PatientPortalPage;
