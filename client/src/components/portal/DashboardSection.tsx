@@ -329,19 +329,20 @@ const DashboardSection: React.FC = () => {
 
       {/* Action Items & Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {(pendingQuoteData || packageData) && (
-                    <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
-                        <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                                <CardTitle className="text-lg flex items-center text-green-900">
-                                    <FileText className="h-5 w-5 mr-2" />
-                                    {packageData ? 'Package Quote Ready' : 'Treatment Plan Ready'}
-                                </CardTitle>
-                                <Badge className="bg-green-600 text-white">
-                                    Ready to Book
-                                </Badge>
-                            </div>
-                        </CardHeader>
+        {/* ALWAYS show the quote data card first if data exists */}
+        {(pendingQuoteData || packageData) && (
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200 md:col-span-2">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center text-green-900">
+                  <FileText className="h-5 w-5 mr-2" />
+                  {packageData ? 'Package Quote Ready' : 'Treatment Plan Ready'}
+                </CardTitle>
+                <Badge className="bg-green-600 text-white">
+                  Ready to Book
+                </Badge>
+              </div>
+            </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
                                 {packageData && (
@@ -493,15 +494,15 @@ const DashboardSection: React.FC = () => {
                     </Card>
                 )}
 
-                {/* Recent Quote Card */}
-                {recentQuote && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Package className="h-5 w-5 mr-2" />
-                                {t('dashboard.your_quote', 'Your Treatment Quote')}
-                            </CardTitle>
-                        </CardHeader>
+                {/* Recent Quote Card - only show if NO pending data */}
+        {!pendingQuoteData && !packageData && recentQuote && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Package className="h-5 w-5 mr-2" />
+                {t('dashboard.your_quote', 'Your Treatment Quote')}
+              </CardTitle>
+            </CardHeader>
                         <CardContent>
                             <div className="space-y-3">
                                 <div className="flex justify-between items-center">
@@ -562,7 +563,7 @@ const DashboardSection: React.FC = () => {
                 )}
 
         {/* Action Items */}
-        <Card className="md:col-span-2" id="next-steps-section">
+        <Card className={`${(pendingQuoteData || packageData) ? 'md:col-span-1' : 'md:col-span-2'}`} id="next-steps-section">
           <CardHeader className="pb-2">
             <CardTitle>{t("portal.dashboard.action_items", "Next Steps")}</CardTitle>
             <CardDescription>
@@ -866,6 +867,35 @@ const DashboardSection: React.FC = () => {
           </Button>
         </CardFooter>
       </Card>
+      {/* Debug Quote Data Display */}
+      {(pendingQuoteData || packageData) && (
+        <Card className="border-2 border-blue-500 bg-blue-50">
+          <CardHeader>
+            <CardTitle className="text-blue-800">🚨 DEBUG: Quote Data Found</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2 text-sm">
+              <div><strong>Pending Quote Data:</strong> {pendingQuoteData ? 'YES' : 'NO'}</div>
+              <div><strong>Package Data:</strong> {packageData ? 'YES' : 'NO'}</div>
+              <div><strong>Clinic ID:</strong> {clinicId || 'NONE'}</div>
+              {packageData && (
+                <div className="mt-2 p-2 bg-white rounded">
+                  <div><strong>Package Name:</strong> {packageData.name}</div>
+                  <div><strong>Treatments:</strong> {packageData.treatments?.length || 0}</div>
+                  <div><strong>Price:</strong> £{packageData.packagePrice}</div>
+                </div>
+              )}
+              {pendingQuoteData && (
+                <div className="mt-2 p-2 bg-white rounded">
+                  <div><strong>Treatments:</strong> {pendingQuoteData.treatments?.length || 0}</div>
+                  <div><strong>Total:</strong> £{pendingQuoteData.total}</div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Get Started Button */}
       {!hasActiveBooking && (
       <Card>
