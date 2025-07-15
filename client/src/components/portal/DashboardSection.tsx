@@ -101,7 +101,7 @@ const DashboardSection: React.FC = () => {
         // Aggressively check for quote data with retry mechanism
         const loadQuoteData = () => {
             console.log('🔍 DASHBOARD: Loading quote data from storage...');
-            
+
             // Load pending quote data from localStorage
             const storedQuoteData = localStorage.getItem('treatmentPlanData');
             if (storedQuoteData) {
@@ -157,7 +157,6 @@ const DashboardSection: React.FC = () => {
 
     // Get the most recent quote for dashboard display
     const recentQuote = userQuotesQuery.data?.[0] || null;
-
 
   // Mock data for patient dashboard
   const mockPatientData = {
@@ -231,35 +230,78 @@ const DashboardSection: React.FC = () => {
   const userName = user?.firstName || user?.email || "Patient";
   const hasActiveBooking = bookingData && bookingData.length > 0;
 
-  const treatmentOverview = hasActiveBooking ? {
-    name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
-    nextAppointment: bookingData[0]?.nextAppointment || "To be scheduled",
-    treatmentPlan: bookingData[0]?.treatmentPlan || "Treatment plan being prepared",
-    clinic: bookingData[0]?.clinic || "Clinic assigned",
-    progress: bookingData[0]?.progress || 25,
-    documents: bookingData[0]?.documents || 0,
-    messages: bookingData[0]?.messages || 0,
-    paymentStatus: bookingData[0]?.paymentStatus || "In Progress",
-    trip: bookingData[0]?.trip || {
-      flight: "To be booked",
-      hotel: "To be selected",
-      transfer: "To be arranged"
-    },
-  } : {
-    name: `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User",
-    nextAppointment: "Please submit a quote request to begin",
-    treatmentPlan: "No active treatment plan",
-    clinic: "No clinic selected yet",
-    progress: 0,
-    documents: 0,
-    messages: 0,
-    paymentStatus: "No payments made",
-    trip: {
-      flight: "Not booked",
-      hotel: "Not selected", 
-      transfer: "Not arranged"
-    },
+  // Build treatment overview from quote data in storage
+  const buildTreatmentOverview = () => {
+    const baseName = `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || user?.email || "Patient User";
+
+    // Check for quote data in localStorage and sessionStorage
+    const hasPendingQuote = pendingQuoteData && pendingQuoteData.length > 0;
+    const hasPackageData = packageData && packageData.name;
+
+    // Get clinic name from stored clinic ID
+    let clinicName = "No clinic selected yet";
+    if (clinicId) {
+      const clinicMap: Record<string, string> = {
+        'maltepe-dental-clinic': 'Maltepe Dental Clinic',
+        'dentgroup-istanbul': 'DentGroup Istanbul',
+        'istanbul-dental-care': 'Istanbul Dental Care'
+      };
+      clinicName = clinicMap[clinicId] || clinicId;
+    }
+
+    // Build treatment plan description
+    let treatmentPlan = "No active treatment plan";
+    if (hasPackageData) {
+      treatmentPlan = `${packageData.name} (${packageData.treatments?.length || 0} treatments)`;
+    } else if (hasPendingQuote) {
+      const treatmentCount = pendingQuoteData.length;
+      treatmentPlan = `${treatmentCount} treatment${treatmentCount !== 1 ? 's' : ''} selected`;
+    }
+
+    // Determine next appointment message
+    let nextAppointment = "Please submit a quote request to begin";
+    if (hasPendingQuote || hasPackageData) {
+      nextAppointment = "Ready to book consultation";
+    }
+
+    // Determine progress
+    let progress = 0;
+    if (hasPackageData || hasPendingQuote) {
+      progress = 25; // Quote/package selected
+    }
+
+    return hasActiveBooking ? {
+      name: baseName,
+      nextAppointment: bookingData[0]?.nextAppointment || nextAppointment,
+      treatmentPlan: bookingData[0]?.treatmentPlan || treatmentPlan,
+      clinic: bookingData[0]?.clinic || clinicName,
+      progress: bookingData[0]?.progress || progress,
+      documents: bookingData[0]?.documents || 0,
+      messages: bookingData[0]?.messages || 0,
+      paymentStatus: bookingData[0]?.paymentStatus || "In Progress",
+      trip: bookingData[0]?.trip || {
+        flight: "To be booked",
+        hotel: "To be selected",
+        transfer: "To be arranged"
+      },
+    } : {
+      name: baseName,
+      nextAppointment,
+      treatmentPlan,
+      clinic: clinicName,
+      progress,
+      documents: 0,
+      messages: 0,
+      paymentStatus: "No payments made",
+      trip: {
+        flight: "Not booked",
+        hotel: "Not selected", 
+        transfer: "Not arranged"
+      }
+    };
   };
+
+  const treatmentOverview = buildTreatmentOverview();
 
   return (
     <div className="space-y-6">
