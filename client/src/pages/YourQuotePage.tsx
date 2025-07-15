@@ -716,9 +716,7 @@ const YourQuotePage: React.FC = () => {
           {/* Back button */}
           <div className="mb-6">
             <Button
-              variant="ghost"
-// Correct the auto apply promo code logic.
-              size="sm"
+              variant="ghost"              size="sm"
               className="flex items-center text-gray-600"
               onClick={() => setLocation('/')}
             >

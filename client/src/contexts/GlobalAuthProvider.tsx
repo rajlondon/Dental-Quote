@@ -26,94 +26,51 @@ export const useGlobalAuth = () => useContext(GlobalAuthContext);
  */
 export function GlobalAuthProvider({ children }: { children: React.ReactNode }) {
   // Use React Query to fetch and cache user data
-  // We use a generous staleTime to avoid unnecessary refetches
+  // Fixed staleTime to prevent infinite refetching
   const { data, isLoading, error } = useQuery({
-    queryKey: ['global-auth-user', Date.now()], // Add timestamp to prevent stale cache
+    queryKey: ['global-auth-user'], // Remove changing timestamp to prevent infinite loops
     queryFn: async () => {
       console.log('🌐 GLOBAL AUTH QUERY: Starting user data fetch');
       try {
-        // Clear any stale cache entries first
+        // Check if we're on pages that should never auto-authenticate
         if (typeof window !== 'undefined') {
-          // Check for logout indicators more strictly
-          const hasNoAuthData = !sessionStorage.getItem('cached_user_data') && 
-                               !localStorage.getItem('authToken') &&
-                               !document.cookie.includes('connect.sid') &&
-                               !document.cookie.includes('session');
-          
-          // Check if we're on a portal login page or quote flow page
-          const isOnLoginPage = window.location.pathname.includes('/portal-login') ||
-                               window.location.pathname.includes('/login');
-          
           const isOnQuoteFlow = window.location.pathname.includes('/your-quote') ||
                                window.location.pathname.includes('/quote-results') ||
                                window.location.pathname.includes('/matched-clinics') ||
                                window.location.search.includes('promo=') ||
                                window.location.pathname === '/';
           
-          // Check if we're coming from a quote flow (not accessing patient portal directly)
           const isAccessingPatientPortalDirectly = window.location.pathname === '/patient-portal' ||
                                                    window.location.pathname === '/client-portal';
           
-          // AGGRESSIVE: Always skip auth for quote flows and home page, but allow direct portal access
+          // Skip auth for quote flows to prevent auto-login
           if (isOnQuoteFlow && !isAccessingPatientPortalDirectly) {
             console.log('🌐 GLOBAL AUTH QUERY: Skipping auth check for quote flow - preventing auto-login');
-            // Clear ALL auth-related cache aggressively
-            sessionStorage.removeItem('cached_user_data');
-            sessionStorage.removeItem('cached_user_timestamp');
-            localStorage.removeItem('authToken');
-            // Clear any cookies that might contain auth data
-            document.cookie.split(";").forEach(function(c) { 
-              document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-            });
             return null;
-          }
-          
-          // Don't auto-authenticate when no auth data exists and not on login page
-          if (hasNoAuthData && !isOnLoginPage) {
-            console.log('🌐 GLOBAL AUTH QUERY: Post-logout state detected, clearing cache and skipping request');
-            sessionStorage.clear();
-            localStorage.clear();
-            return null;
-          }
-          
-          // If we're on a login page, always check with server
-          if (isOnLoginPage) {
-            console.log('🌐 GLOBAL AUTH QUERY: On login page, checking server auth state');
           }
         }
         
-        const response = await api.get('/auth/user', {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
+        const response = await api.get('/auth/user');
         console.log('🌐 GLOBAL AUTH QUERY: User data fetched successfully');
         return response.data?.user || null;
       } catch (error: any) {
         console.error('🌐 GLOBAL AUTH QUERY: Failed to fetch user data', error);
-        // If 401, user is not authenticated - clear any cached data
+        // If 401, user is not authenticated
         if (error.response?.status === 401) {
-          console.log('🌐 GLOBAL AUTH QUERY: User not authenticated (401), clearing cache');
-          if (typeof window !== 'undefined') {
-            sessionStorage.clear();
-            localStorage.clear();
-          }
+          console.log('🌐 GLOBAL AUTH QUERY: User not authenticated (401)');
           return null;
         }
-        // Don't throw - return null for unauthenticated state
         return null;
       }
     },
-    staleTime: 0,             // No cache - always fresh
-    refetchOnWindowFocus: false, // Don't refetch when window gets focus
-    retry: 1,                 // Retry failed requests once
-    refetchOnMount: true,     // Always check auth state on mount
-    enabled: true,            // Always enabled
-    gcTime: 0,                // No cache time
-    refetchInterval: false,   // Don't poll
-    refetchIntervalInBackground: false, // Don't poll in background
+    staleTime: 30000,         // 30 seconds cache to prevent infinite loops
+    refetchOnWindowFocus: false,
+    retry: 1,
+    refetchOnMount: true,
+    enabled: true,
+    gcTime: 60000,            // 1 minute cache time
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
   });
 
   // Log authentication state
