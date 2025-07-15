@@ -224,7 +224,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // The server returns {success: true, user: {...}}
       return data.user || data;
     },
-    onSuccess: (user: User) => {
+    onSuccess: async (user: User) => {
       // Update query cache with the new user data
       queryClient.setQueryData(["/auth/user"], user);
 
@@ -235,6 +235,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Cache user data for faster access
       sessionStorage.setItem('cached_user_data', JSON.stringify(user));
       sessionStorage.setItem('cached_user_timestamp', Date.now().toString());
+
+      // Transfer quote data to patient account after login
+      if (user.role === 'patient') {
+        await transferQuoteDataToPatientAccount(user);
+      }
 
       // FIXED: Don't force reload for clinic staff by removing timestamp
       // Commenting out this part as it's causing the refresh cycles
@@ -432,6 +437,109 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       {children}
     </AuthContext.Provider>
   );
+}
+
+// Helper function to transfer quote data to patient account
+async function transferQuoteDataToPatientAccount(user: User) {
+  try {
+    console.log('🔄 Transferring quote data to patient account:', user.email);
+
+    // Get quote data from session storage
+    const treatmentPlanData = sessionStorage.getItem('treatmentPlanData');
+    const pendingPackageData = sessionStorage.getItem('pendingPackageData');
+    const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
+    const pendingClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+
+    if (!treatmentPlanData && !pendingPackageData) {
+      console.log('🔄 No quote data found in session storage');
+      return;
+    }
+
+    // Prepare quote data for transfer
+    const quoteData: any = {
+      userId: user.id,
+      name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient',
+      email: user.email,
+      treatment: 'multiple_treatments', // Since we have a treatment plan
+      specificTreatment: 'treatment_plan',
+      consent: true,
+      status: 'draft'
+    };
+
+    // Add treatment plan data if available
+    if (treatmentPlanData) {
+      try {
+        const parsedTreatmentData = JSON.parse(treatmentPlanData);
+        quoteData.treatmentPlanData = parsedTreatmentData;
+        
+        // Extract patient info from treatment data
+        if (parsedTreatmentData.patientInfo) {
+          quoteData.phone = parsedTreatmentData.patientInfo.phone;
+          quoteData.departureCity = parsedTreatmentData.patientInfo.departureCity;
+          quoteData.travelMonth = parsedTreatmentData.patientInfo.travelMonth;
+        }
+      } catch (error) {
+        console.error('Error parsing treatment plan data:', error);
+      }
+    }
+
+    // Add package data if available
+    if (pendingPackageData) {
+      try {
+        const parsedPackageData = JSON.parse(pendingPackageData);
+        quoteData.packageData = parsedPackageData;
+        quoteData.isPackage = true;
+        quoteData.packageName = parsedPackageData.name;
+      } catch (error) {
+        console.error('Error parsing package data:', error);
+      }
+    }
+
+    // Add promo code info
+    if (pendingPromoCode) {
+      quoteData.promoCode = pendingPromoCode;
+    }
+
+    // Add clinic assignment if available
+    if (pendingClinicId) {
+      // Map clinic string ID to numeric ID
+      const clinicIdMap: Record<string, number> = {
+        'maltepe-dental-clinic': 1,
+        'dentgroup-istanbul': 2,
+        'istanbul-dental-care': 3
+      };
+      
+      const numericClinicId = clinicIdMap[pendingClinicId];
+      if (numericClinicId) {
+        quoteData.selectedClinicId = numericClinicId;
+        quoteData.status = 'assigned';
+      }
+    }
+
+    // Create quote request via API
+    const response = await api.post('/quotes', quoteData);
+
+    if (response.data.success) {
+      console.log('✅ Quote data transferred successfully:', response.data.data.id);
+      
+      // Clear session storage after successful transfer
+      sessionStorage.removeItem('treatmentPlanData');
+      sessionStorage.removeItem('pendingPackageData');
+      sessionStorage.removeItem('pendingPromoCode');
+      sessionStorage.removeItem('pendingPromoCodeClinicId');
+      
+      // Store the created quote ID for patient portal
+      sessionStorage.setItem('transferred_quote_id', response.data.data.id.toString());
+      
+      console.log('✅ Quote data transfer complete, session storage cleared');
+    } else {
+      console.error('❌ Failed to transfer quote data:', response.data.message);
+    }
+
+  } catch (error) {
+    console.error('❌ Error transferring quote data:', error);
+    // Don't throw the error - login should still succeed even if quote transfer fails
+  }
 }
 
 // Hook to use auth context

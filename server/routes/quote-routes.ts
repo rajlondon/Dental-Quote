@@ -20,6 +20,27 @@ router.post("/", async (req, res, next) => {
     if (req.isAuthenticated()) {
       quoteData.userId = req.user!.id;
     }
+
+    // Handle treatment plan data and package data from session transfer
+    if (req.body.treatmentPlanData) {
+      quoteData.treatmentPlanData = JSON.stringify(req.body.treatmentPlanData);
+    }
+
+    if (req.body.packageData) {
+      quoteData.packageData = JSON.stringify(req.body.packageData);
+      quoteData.isPackage = true;
+      quoteData.packageName = req.body.packageData.name;
+    }
+
+    if (req.body.promoCode) {
+      quoteData.promoCode = req.body.promoCode;
+    }
+
+    // Enhanced status handling
+    if (req.body.selectedClinicId) {
+      quoteData.selectedClinicId = req.body.selectedClinicId;
+      quoteData.status = req.body.status || 'assigned';
+    }
     
     const quoteRequest = await storage.createQuoteRequest(quoteData);
     
@@ -29,7 +50,7 @@ router.post("/", async (req, res, next) => {
         await storage.createNotification({
           userId: 1, // Admin user (ID 1)
           title: "New Quote Request",
-          message: `New quote request received from ${quoteRequest.name}`,
+          message: `New quote request received from ${quoteRequest.name}${quoteRequest.isPackage ? ' (Package)' : ''}`,
           category: "treatment", // Use a valid category from NotificationCategory
           priority: "medium",
           target_type: "admin",
@@ -41,6 +62,29 @@ router.post("/", async (req, res, next) => {
       } catch (error) {
         console.error("Failed to create notification:", error);
         // Continue despite notification error
+      }
+
+      // If assigned to clinic, notify clinic staff
+      if (quoteRequest.selectedClinicId) {
+        try {
+          const clinicStaff = await storage.getUsersByClinicId(quoteRequest.selectedClinicId);
+          
+          for (const staffMember of clinicStaff) {
+            await storage.createNotification({
+              title: "New Quote Assignment",
+              message: `A new quote request has been assigned to your clinic${quoteRequest.isPackage ? ' (Package Deal)' : ''}`,
+              category: "treatment",
+              priority: "medium",
+              target_type: "clinic",
+              target_id: String(staffMember.id),
+              source_type: "system",
+              action_url: `/clinic/quotes/${quoteRequest.id}`,
+              status: "unread"
+            });
+          }
+        } catch (error) {
+          console.error("Failed to create clinic notifications:", error);
+        }
       }
     }
     

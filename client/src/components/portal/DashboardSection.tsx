@@ -14,11 +14,12 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
   CalendarClock, FileText, MessageSquare, Stethoscope, 
-  Plane, Home, CreditCard, Clipboard, ArrowRight, ChevronUp
+  Plane, Home, CreditCard, Clipboard, ArrowRight, ChevronUp, Package
 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { useQuotes } from '@/hooks/use-quotes';
 
 // Translation function placeholder
 const t = (key: string, fallback: string, options?: any) => {
@@ -82,10 +83,22 @@ const timelineEvents = [
 
 const DashboardSection: React.FC = () => {
   const { user } = useAuth();
+    const { userQuotesQuery } = useQuotes();
+
 
   // Check for test patient data
   const testPatientData = sessionStorage.getItem('test_patient_data');
   const parsedTestData = testPatientData ? JSON.parse(testPatientData) : null;
+
+    useEffect(() => {
+        if (user) {
+            userQuotesQuery.refetch();
+        }
+    }, [user]);
+
+    // Get the most recent quote for dashboard display
+    const recentQuote = userQuotesQuery.data?.[0] || null;
+
 
   // Mock data for patient dashboard
   const mockPatientData = {
@@ -257,6 +270,73 @@ const DashboardSection: React.FC = () => {
 
       {/* Action Items & Quick Links */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {recentQuote && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center">
+                                <Package className="h-5 w-5 mr-2" />
+                                {t('dashboard.your_quote', 'Your Treatment Quote')}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">Quote ID:</span>
+                                    <span className="font-medium">#{recentQuote.id}</span>
+                                </div>
+
+                                {recentQuote.treatmentPlanData && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Treatments:</span>
+                                        <span className="font-medium">
+                                            {JSON.parse(recentQuote.treatmentPlanData).treatments?.length || 1} item(s)
+                                        </span>
+                                    </div>
+                                )}
+
+                                {recentQuote.packageData && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Package:</span>
+                                        <span className="font-medium text-blue-600">
+                                            {JSON.parse(recentQuote.packageData).name || 'Treatment Package'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                {recentQuote.selectedClinicId && (
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-gray-600">Assigned Clinic:</span>
+                                        <span className="font-medium">
+                                            {recentQuote.selectedClinicId === 1 ? 'Maltepe Dental Clinic' :
+                                                recentQuote.selectedClinicId === 2 ? 'DentGroup Istanbul' :
+                                                    recentQuote.selectedClinicId === 3 ? 'Istanbul Dental Care' : 'Clinic'}
+                                        </span>
+                                    </div>
+                                )}
+
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm text-gray-600">Status:</span>
+                                    <Badge variant={
+                                        recentQuote.status === 'assigned' ? 'default' :
+                                            recentQuote.status === 'sent' ? 'secondary' :
+                                                recentQuote.status === 'accepted' ? 'default' :
+                                                    'outline'
+                                    }>
+                                        {recentQuote.status.charAt(0).toUpperCase() + recentQuote.status.slice(1)}
+                                    </Badge>
+                                </div>
+
+                                <div className="pt-2 border-t">
+                                    <Button variant="outline" className="w-full" size="sm">
+                                        <FileText className="h-4 w-4 mr-2" />
+                                        View Full Quote Details
+                                    </Button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
         {/* Action Items */}
         <Card className="md:col-span-2" id="next-steps-section">
           <CardHeader className="pb-2">

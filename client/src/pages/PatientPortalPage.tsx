@@ -71,7 +71,21 @@ export default function PatientPortalPage() {
       sessionStorage.removeItem('pendingPackageData');
       sessionStorage.removeItem('pendingPromoCodeClinicId');
     }
-  }, []);
+
+    // Check if there's a transferred quote to display
+    const transferredQuoteId = sessionStorage.getItem('transferred_quote_id');
+    if (transferredQuoteId && user) {
+      // Navigate to quotes section to show the transferred quote
+      setActiveSection('quotes');
+      // Clear the transferred quote ID flag
+      sessionStorage.removeItem('transferred_quote_id');
+      
+      toast({
+        title: "Quote Loaded",
+        description: "Your quote has been saved to your account and is ready for review.",
+      });
+    }
+  }, [user]);
 
   // Use global auth context
   const { user: globalUser, loading: globalLoading } = useGlobalAuth();
