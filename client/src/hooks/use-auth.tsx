@@ -444,27 +444,75 @@ async function transferQuoteDataToPatientAccount(user: User) {
   try {
     console.log('🔄 Transferring quote data to patient account:', user.email);
 
-    // Get quote data from session storage
+    // Get quote data from multiple storage locations
     const treatmentPlanData = sessionStorage.getItem('treatmentPlanData');
     const pendingPackageData = sessionStorage.getItem('pendingPackageData');
     const pendingPromoCode = sessionStorage.getItem('pendingPromoCode');
     const pendingClinicId = sessionStorage.getItem('pendingPromoCodeClinicId');
+    const lastQuoteData = localStorage.getItem('lastQuoteData');
+    const pendingQuoteTransfer = sessionStorage.getItem('pendingQuoteTransfer');
 
-    if (!treatmentPlanData && !pendingPackageData) {
-      console.log('🔄 No quote data found in session storage');
+    // Check if we have any quote data to transfer
+    if (!treatmentPlanData && !pendingPackageData && !lastQuoteData && !pendingQuoteTransfer) {
+      console.log('🔄 No quote data found in any storage location');
       return;
     }
 
-    // Prepare quote data for transfer
+    console.log('🔄 Found quote data sources:', {
+      treatmentPlanData: !!treatmentPlanData,
+      pendingPackageData: !!pendingPackageData,
+      lastQuoteData: !!lastQuoteData,
+      pendingQuoteTransfer: !!pendingQuoteTransfer,
+      pendingPromoCode,
+      pendingClinicId
+    });
+
+    // Prepare quote data for transfer - start with base structure
     const quoteData: any = {
       userId: user.id,
       name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient',
       email: user.email,
-      treatment: 'multiple_treatments', // Since we have a treatment plan
+      treatment: 'multiple_treatments',
       specificTreatment: 'treatment_plan',
       consent: true,
       status: 'draft'
     };
+
+    // Try to use existing quote data first
+    if (lastQuoteData) {
+      try {
+        const parsedLastQuoteData = JSON.parse(lastQuoteData);
+        console.log('🔄 Using lastQuoteData:', parsedLastQuoteData);
+        
+        // Merge with existing quote data
+        Object.assign(quoteData, {
+          ...parsedLastQuoteData,
+          userId: user.id, // Ensure user ID is correct
+          email: user.email, // Ensure email is correct
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient'
+        });
+      } catch (error) {
+        console.error('Error parsing lastQuoteData:', error);
+      }
+    }
+
+    // Handle pending quote transfer data
+    if (pendingQuoteTransfer) {
+      try {
+        const parsedTransferData = JSON.parse(pendingQuoteTransfer);
+        console.log('🔄 Using pendingQuoteTransfer:', parsedTransferData);
+        
+        // Merge with transfer data
+        Object.assign(quoteData, {
+          ...parsedTransferData,
+          userId: user.id,
+          email: user.email,
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email?.split('@')[0] || 'Patient'
+        });
+      } catch (error) {
+        console.error('Error parsing pendingQuoteTransfer:', error);
+      }
+    }
 
     // Add treatment plan data if available
     if (treatmentPlanData) {
@@ -522,16 +570,19 @@ async function transferQuoteDataToPatientAccount(user: User) {
     if (response.data.success) {
       console.log('✅ Quote data transferred successfully:', response.data.data.id);
 
-      // Clear session storage after successful transfer
+      // Clear ALL quote data storage after successful transfer
       sessionStorage.removeItem('treatmentPlanData');
       sessionStorage.removeItem('pendingPackageData');
       sessionStorage.removeItem('pendingPromoCode');
       sessionStorage.removeItem('pendingPromoCodeClinicId');
+      sessionStorage.removeItem('pendingQuoteTransfer');
+      localStorage.removeItem('lastQuoteData');
+      localStorage.removeItem('authToken');
 
       // Store the created quote ID for patient portal
       sessionStorage.setItem('transferred_quote_id', response.data.data.id.toString());
 
-      console.log('✅ Quote data transfer complete, session storage cleared');
+      console.log('✅ Quote data transfer complete, all storage cleared');
     } else {
       console.error('❌ Failed to transfer quote data:', response.data.message);
     }

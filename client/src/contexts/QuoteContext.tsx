@@ -369,7 +369,8 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
         // If user is not authenticated and we get transfer data, store it for later
         if (response.data.transferData) {
           console.log('🔄 Storing quote data for potential transfer:', response.data.transferData);
-          localStorage.setItem('lastQuoteData', JSON.stringify({
+          
+          const completeQuoteData = {
             ...response.data.transferData,
             treatments: state.treatments,
             promoCode: state.promoCode,
@@ -378,8 +379,18 @@ export function QuoteProvider({ children }: { children: React.ReactNode }) {
             subtotal: state.subtotal,
             discount: state.discountAmount,
             total: state.total,
-            clinicId: state.clinicId
-          }));
+            clinicId: state.clinicId,
+            // Additional data that might be useful
+            packageDescription: state.packageDescription,
+            attractions: state.attractions,
+            additionalServices: state.additionalServices
+          };
+
+          // Store in both localStorage and sessionStorage for redundancy
+          localStorage.setItem('lastQuoteData', JSON.stringify(completeQuoteData));
+          sessionStorage.setItem('pendingQuoteTransfer', JSON.stringify(completeQuoteData));
+          
+          console.log('🔄 Quote data stored in both localStorage and sessionStorage');
         }
         
         toast({
