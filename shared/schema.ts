@@ -755,3 +755,60 @@ export type Hotel = typeof hotels.$inferSelect;
 // Hotel booking types
 export type InsertHotelBooking = Omit<typeof hotelBookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type HotelBooking = typeof hotelBookings.$inferSelect;
+
+// Treatment Packages Tables
+export const treatmentPackages = pgTable("treatment_packages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  description: text("description"),
+  packagePrice: decimal("package_price").notNull(),
+  originalPrice: decimal("original_price").notNull(),
+  clinicId: text("clinic_id").references(() => clinics.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const packageTreatments = pgTable("package_treatments", {
+  packageId: text("package_id").references(() => treatmentPackages.id),
+  treatmentType: text("treatment_type").notNull(),
+  treatmentName: text("treatment_name").notNull(),
+  quantity: integer("quantity").default(1).notNull()
+});
+
+export const packageInclusions = pgTable("package_inclusions", {
+  packageId: text("package_id").references(() => treatmentPackages.id),
+  inclusionType: text("inclusion_type").notNull(),
+  description: text("description").notNull()
+});
+
+// Relations
+export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, many }) => ({
+  clinic: one(clinics, {
+    fields: [treatmentPackages.clinicId],
+    references: [clinics.id],
+  }),
+  treatments: many(packageTreatments),
+  inclusions: many(packageInclusions),
+}));
+
+export const packageTreatmentsRelations = relations(packageTreatments, ({ one }) => ({
+  package: one(treatmentPackages, {
+    fields: [packageTreatments.packageId],
+    references: [treatmentPackages.id],
+  }),
+}));
+
+export const packageInclusionsRelations = relations(packageInclusions, ({ one }) => ({
+  package: one(treatmentPackages, {
+    fields: [packageInclusions.packageId],
+    references: [treatmentPackages.id],
+  }),
+}));
+
+// TypeScript types
+export type InsertTreatmentPackage = Omit<typeof treatmentPackages.$inferInsert, "id" | "createdAt" | "updatedAt">;
+export type TreatmentPackage = typeof treatmentPackages.$inferSelect;
+export type InsertPackageTreatment = typeof packageTreatments.$inferInsert;
+export type PackageTreatment = typeof packageTreatments.$inferSelect;
+export type InsertPackageInclusion = typeof packageInclusions.$inferInsert;
+export type PackageInclusion = typeof packageInclusions.$inferSelect;
