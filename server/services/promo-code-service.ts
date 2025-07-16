@@ -2,7 +2,7 @@
  * Promo Code Service
  * Handles validation and application of promo codes
  */
-import { treatmentPackages } from '../routes/treatment-package-routes';
+import { hardcodedTreatmentPackages as treatmentPackages } from '../routes/treatment-package-routes';
 import { specialOffers } from '../routes/special-offers-routes-fixed';
 import { PackageTreatment, PromoCode, PackageData } from '../models/promo-code';
 

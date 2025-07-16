@@ -2,18 +2,13 @@
  * Treatment Package API Routes
  * Handles operations related to treatment packages
  */
-
-// Database imports
-import { db } from '../db';
-import { treatmentPackages, packageTreatments, packageInclusions } from '../../shared/schema';
-import { eq, and } from 'drizzle-orm';
 import { Router, Request, Response } from 'express';
 import { isAuthenticated } from '../middleware/auth';
 import { catchAsync } from '../middleware/error-handler';
 
 export const treatmentPackageRouter = Router();
 
-export const hardcodedTreatmentPackages = [
+export const treatmentPackages = [
   {
     id: 'hollywood-smile-vacation',
     title: 'Hollywood Smile Luxury Family Vacation',
@@ -299,14 +294,14 @@ export const hardcodedTreatmentPackages = [
 treatmentPackageRouter.get('/', catchAsync(async (req: Request, res: Response) => {
   res.json({
     success: true,
-    data: hardcodedTreatmentPackages
+    data: treatmentPackages
   });
 }));
 
 // Get treatment package by ID
 treatmentPackageRouter.get('/:id', catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const packageData = hardcodedTreatmentPackages.find(pkg => pkg.id === id);
+  const packageData = treatmentPackages.find(pkg => pkg.id === id);
   
   if (!packageData) {
     return res.status(404).json({
@@ -324,7 +319,7 @@ treatmentPackageRouter.get('/:id', catchAsync(async (req: Request, res: Response
 // Get treatment packages by clinic ID
 treatmentPackageRouter.get('/clinic/:clinicId', catchAsync(async (req: Request, res: Response) => {
   const { clinicId } = req.params;
-  const packages = hardcodedTreatmentPackages.filter(pkg => pkg.clinicId === clinicId);
+  const packages = treatmentPackages.filter(pkg => pkg.clinicId === clinicId);
   
   res.json({
     success: true,
