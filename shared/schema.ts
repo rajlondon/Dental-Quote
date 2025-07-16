@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   }>(),
   // Role-based fields
   role: varchar("role", { length: 20 }).default("patient").notNull(), // patient, admin, clinic_staff
-  clinicId: integer("clinic_id").references(() => clinics.id), // For clinic_staff only
+  clinicId: integer("clinic_id"), // For clinic_staff only
   jobTitle: varchar("job_title", { length: 100 }), // For clinic_staff only
   // Tracking fields
   lastLogin: timestamp("last_login"),
@@ -113,7 +113,7 @@ export const quoteRequests = pgTable("quote_requests", {
   // Special offer data
   specialOffer: json("special_offer"),
   // Selected clinic
-  selectedClinicId: integer("selected_clinic_id").references(() => clinics.id),
+  selectedClinicId: integer("selected_clinic_id"),
   // Notes visible to different users
   adminNotes: text("admin_notes"),
   clinicNotes: text("clinic_notes"),
@@ -282,7 +282,7 @@ export const clinicReviewsRelations = relations(clinicReviews, ({ one }) => ({
 export const treatmentPlans = pgTable("treatment_plans", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull().references(() => users.id),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   createdById: integer("created_by_id").references(() => users.id),
   status: varchar("status", { length: 50 }).default("draft").notNull(), // draft, finalized, in_treatment, completed
   treatmentDetails: json("treatment_details").notNull(), // JSON array of selected treatments
@@ -336,7 +336,7 @@ export const bookings = pgTable("bookings", {
   bookingReference: varchar("booking_reference", { length: 20 }).unique(),
   userId: integer("user_id").notNull().references(() => users.id),
   quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id).unique(),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   treatmentPlanId: integer("treatment_plan_id").references(() => treatmentPlans.id),
   // Assigned staff
   assignedAdminId: integer("assigned_admin_id").references(() => users.id),
@@ -407,7 +407,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   title: varchar("title", { length: 100 }).notNull(),
   description: text("description"),
   startTime: timestamp("start_time").notNull(),
@@ -763,7 +763,7 @@ export const treatmentPackages = pgTable("treatment_packages", {
   description: text("description"),
   packagePrice: decimal("package_price").notNull(),
   originalPrice: decimal("original_price").notNull(),
-  clinicId: text("clinic_id").references(() => clinics.id),
+  clinicId: text("clinic_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull()
 });

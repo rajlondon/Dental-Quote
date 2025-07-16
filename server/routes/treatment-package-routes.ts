@@ -299,7 +299,7 @@ export const hardcodedTreatmentPackages = [
 treatmentPackageRouter.get('/', catchAsync(async (req: Request, res: Response) => {
   res.json({
     success: true,
-    data: hardcodedTreatmentPackages
+    data: await db.select().from(treatmentPackages)
   });
 }));
 
