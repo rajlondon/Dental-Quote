@@ -1,434 +1,205 @@
-import React, { useEffect, Suspense } from "react";
-import { Switch, Route, Router, Redirect } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
+import React, { useEffect, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from "@/hooks/use-auth";
-
-import { NotificationsProvider } from "@/hooks/use-notifications";
-import { BookingsProvider } from "@/hooks/use-bookings";
-import { NotFoundPage } from "@/pages/ErrorPage";
-import ErrorTestPage from "@/pages/ErrorTestPage";
-import PortalCommunicationTester from "@/pages/PortalCommunicationTester";
-import ErrorBoundary from "@/components/ui/error-boundary";
-import Home from "./pages/Home";
-import { initPreventReloads } from "@/utils/prevent-reloads";
-import SimpleClinicPage from "@/pages/SimpleClinicPage";
-import ClinicGuard from "@/components/ClinicGuard";
-import AdminPortalGuard from "@/components/AdminPortalGuard";
-import PromoTestPage from "@/pages/PromoTestPage";
-
-// Environment indicator component for production
-const EnvironmentBadge = () => {
-  const isProd = import.meta.env.PROD || import.meta.env.NODE_ENV === 'production';
-
-  if (!isProd) return null;
-
-  return (
-    <div style={{
-      position: 'fixed',
-      bottom: '10px',
-      left: '10px',
-      zIndex: 9999,
-      background: '#ff5252',
-      color: 'white',
-      padding: '4px 8px',
-      borderRadius: '4px',
-      fontSize: '12px',
-      fontWeight: 'bold',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-    }}>
-      PRODUCTION
-    </div>
-  );
-};
-import BlogPage from "./pages/BlogPage";
-import SimpleBlogPage from "./pages/SimpleBlogPage";
-import NewBlogPage from "./pages/NewBlogPage";
-import HowItWorksBlogPost from "./pages/HowItWorksBlogPost";
-import DentalImplantsBlogPost from "./pages/DentalImplantsBlogPost";
-import VeneersBlogPost from "./pages/VeneersBlogPost";
-import HollywoodSmileBlogPost from "./pages/HollywoodSmileBlogPost";
-import FullMouthBlogPost from "./pages/FullMouthBlogPost";
-import PricingPage from "@/pages/PricingPage";
-import TeamPage from "@/pages/TeamPage";
-import HowItWorks from "@/pages/HowItWorks";
-import FAQPage from "@/pages/FAQPage";
-import QuoteResultsPage from "@/pages/QuoteResultsPage";
-import YourQuotePage from "@/pages/YourQuotePage";
-import YourQuotePage2 from "@/pages/YourQuotePage2";
-import DentalImplantsPage from "@/pages/DentalImplantsPage";
-import VeneersPage from "@/pages/VeneersPage";
-import HollywoodSmilePage from "@/pages/HollywoodSmilePage";
-import FullMouthPage from "@/pages/FullMouthPage";
-import BookingPage from "@/pages/BookingPage";
-import PatientPortalPage from "@/pages/PatientPortalPage";
-import AdminPortalPage from "@/pages/AdminPortalPage";
-// Special import with WebSocket disabled for clinic portal to prevent refresh cycles
-const ClinicPortalPage = React.lazy(() => import("@/pages/ClinicPortalPage"));
-import PortalTestingHub from "@/pages/PortalTestingHub";
-import SystemHealthDashboard from "./pages/SystemHealthDashboard";
-import ClinicDetailPage from "@/pages/ClinicDetailPage";
-import DepositPaymentPage from "@/pages/DepositPaymentPage";
-import PaymentConfirmationPage from "@/pages/PaymentConfirmationPage";
-import TreatmentPaymentPage from "@/pages/TreatmentPaymentPage";
-import DentalChartPage from "@/pages/DentalChartPage";
-import PatientDentalChart from "@/pages/PatientDentalChart";
-import ClinicDentalCharts from "@/pages/ClinicDentalCharts";
-import ClinicTreatmentMapperPage from "@/pages/ClinicTreatmentMapperPage";
-import AdminTreatmentMapperPage from "@/pages/AdminTreatmentMapperPage";
-import TreatmentComparisonPage from "./pages/TreatmentComparisonPage";
-import AccountSettingsPage from "@/pages/AccountSettingsPage";
-import ProfilePage from "@/pages/ProfilePage";
-import DataArchitecturePage from "@/pages/DataArchitecturePage";
-import DentalAdvicePage from "@/pages/DentalAdvicePage";
-import ForgotPasswordPage from "@/pages/ForgotPasswordPage";
-import ResetPasswordPage from "@/pages/ResetPasswordPage";
-import VerifyEmailPage from "@/pages/VerifyEmailPage";
-import VerificationSentPage from "@/pages/VerificationSentPage";
-import EmailVerifiedPage from "@/pages/EmailVerifiedPage";
-import VerificationFailedPage from "@/pages/VerificationFailedPage";
-import PackageDetailPage from "@/pages/PackageDetailPage";
-import PackageResultsPage from "@/pages/PackageResultsPage";
-import BookingsPage from "@/pages/bookings-page";
-import BookingDetailPage from "@/pages/booking-detail-page";
-import CreateBookingPage from "@/pages/create-booking-page";
-import AdminBookingsPage from "@/pages/admin/admin-bookings-page";
-import AdminBookingDetailPage from "@/pages/admin/admin-booking-detail-page";
-import AdminNewQuotePage from "@/pages/admin/AdminNewQuotePage";
-import ContactWidget from "@/components/ContactWidget";
-import ReloadTranslations from "@/components/ReloadTranslations";
-import { ProtectedRoute } from "./lib/protected-route";
-import MatchedClinicsPage from "@/pages/MatchedClinicsPage";
-import PortalLoginPage from "@/pages/PortalLoginPage";
-import { LoadingSpinner } from "./components/LoadingSpinner";
+import { AuthProvider } from '@/hooks/use-auth';
 import { GlobalAuthProvider } from '@/contexts/GlobalAuthProvider';
-import { useAuth } from '@/hooks/use-auth';
+import ErrorBoundary from '@/components/ui/error-boundary';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
+import ScrollToTop from '@/components/ScrollToTop';
 
-// Auth state logger component
-const AuthStateLogger = () => {
-  const { user, isLoading } = useAuth();
+// Import components directly (non-lazy) to avoid loading issues
+import Home from '@/pages/Home';
+import YourQuotePage from '@/pages/YourQuotePage';
+import QuoteResultsPage from '@/pages/QuoteResultsPage';
+import MatchedClinicsPage from '@/pages/MatchedClinicsPage';
+import PortalLoginPage from '@/pages/PortalLoginPage';
+import PatientPortalPage from '@/pages/PatientPortalPage';
+import ClinicPortalPage from '@/pages/ClinicPortalPage';
+import AdminPortalPage from '@/pages/AdminPortalPage';
+import BlogPage from '@/pages/BlogPage';
+import DentalImplantsPage from '@/pages/DentalImplantsPage';
+import VeneersPage from '@/pages/VeneersPage';
+import HollywoodSmilePage from '@/pages/HollywoodSmilePage';
+import FullMouthPage from '@/pages/FullMouthPage';
+import TeamPage from '@/pages/TeamPage';
+import FAQPage from '@/pages/FAQPage';
+import HowItWorks from '@/pages/HowItWorks';
+import VerifyEmailPage from '@/pages/VerifyEmailPage';
+import VerificationSentPage from '@/pages/VerificationSentPage';
+import EmailVerifiedPage from '@/pages/EmailVerifiedPage';
+import VerificationFailedPage from '@/pages/VerificationFailedPage';
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
+import ErrorPage from '@/pages/ErrorPage';
+import PackageDetailPage from '@/pages/PackageDetailPage';
+import PackageResultsPage from '@/pages/PackageResultsPage';
+import NotFound from '@/pages/not-found';
 
-  React.useEffect(() => {
-    console.log('🔐 APP AUTH STATE: Loading:', isLoading, 'User:', user ? `${user.email} (${user.role})` : 'null');
-  }, [user, isLoading]);
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error: any) => {
+        // Don't retry auth errors (401) as they're expected
+        if (error?.status === 401 || error?.response?.status === 401) {
+          return false;
+        }
+        return failureCount < 1;
+      },
+      refetchOnWindowFocus: false,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes
+      throwOnError: false, // Prevent queries from throwing
+      useErrorBoundary: false, // Don't use error boundary for queries
+    },
+    mutations: {
+      retry: 1,
+      throwOnError: false, // Prevent mutations from throwing
+      useErrorBoundary: false, // Don't use error boundary for mutations
+    },
+  },
+});
+
+// Route change tracker component
+function RouteChangeTracker() {
+  const location = useLocation();
+
+  useEffect(() => {
+    console.log('🧭 Frontend route changed to:', location.pathname);
+  }, [location]);
 
   return null;
-};
-
-function AppRouter() {
-  // Add route change logging
-  React.useEffect(() => {
-    const handleLocationChange = () => {
-      console.log(`🧭 Frontend route changed to: ${window.location.pathname}`);
-    };
-
-    // Log initial route
-    handleLocationChange();
-
-    // Listen for route changes
-    window.addEventListener('popstate', handleLocationChange);
-
-    return () => {
-      window.removeEventListener('popstate', handleLocationChange);
-    };
-  }, []);
-
-  return (
-    <Switch>
-              <Route path="/test" component={() => <div className="p-8 text-center"><h1 className="text-2xl">Test Route Working!</h1></div>} />
-              <Route path="/" component={Home} />
-      <Route path="/home" component={Home} />
-      <Route path="/index">
-        {() => <Redirect to="/" />}
-      </Route>
-      <Route path="/blog" component={NewBlogPage} />
-      <Route path="/blog-react">
-        {() => <Redirect to="/blog" />}
-      </Route>
-      <Route path="/blog/how-it-works" component={HowItWorksBlogPost} />
-      <Route path="/blog/dental-implants" component={DentalImplantsBlogPost} />
-      <Route path="/blog/veneers" component={VeneersBlogPost} />
-      <Route path="/blog/hollywood-smile" component={HollywoodSmileBlogPost} />
-      <Route path="/blog/full-mouth" component={FullMouthBlogPost} />
-      <Route path="/dental-implants" component={DentalImplantsPage} />
-      <Route path="/veneers" component={VeneersPage} />
-      <Route path="/hollywood-smile" component={HollywoodSmilePage} />
-      <Route path="/full-mouth" component={FullMouthPage} />
-      <Route path="/pricing" component={PricingPage} />
-      <Route path="/team" component={TeamPage} />
-      <Route path="/how-it-works">
-        {() => <Redirect to="/blog/how-it-works" />}
-      </Route>
-      <Route path="/faq" component={FAQPage} />
-      <Route path="/your-quote" component={YourQuotePage} />
-      <Route path="/matched-clinics">
-          <MatchedClinicsPage />
-        </Route>
-      <Route path="/quote-results" component={QuoteResultsPage} />
-      <Route path="/results" component={PackageResultsPage} />
-      <Route path="/quote">
-        {() => <Redirect to="/your-quote" />}
-      </Route>
-      <Route path="/booking" component={BookingPage} />
-      <Route path="/clinic/:id" component={ClinicDetailPage} />
-      <Route path="/packages/:id" component={PackageDetailPage} />
-      <Route path="/portal-login" component={PortalLoginPage} />
-      <Route path="/payment-confirmation">
-        {() => <PaymentConfirmationPage />}
-      </Route>
-      <Route path="/treatment-payment/:bookingId?">
-        {(params) => <TreatmentPaymentPage />}
-      </Route>
-      <Route path="/promo-test" component={PromoTestPage} />
-      <Route path="/portal-testing">
-        {() => <PortalTestingHub />}
-      </Route>
-
-      {/* Patient Portal Routes - Publicly accessible */}
-      <Route path="/client-portal" component={PatientPortalPage} />
-      <Route path="/patient-portal" component={PatientPortalPage} />
-      <Route path="/dental-chart" component={DentalChartPage} />
-      <Route path="/my-dental-chart" component={PatientDentalChart} />
-      <Route path="/treatment-comparison" component={TreatmentComparisonPage} />
-      <Route path="/account-settings" component={AccountSettingsPage} />
-      <Route path="/my-profile" component={ProfilePage} />
-      <Route path="/dental-advice" component={DentalAdvicePage} />
-      <Route path="/forgot-password" component={ForgotPasswordPage} />
-      <Route path="/reset-password" component={ResetPasswordPage} />
-      <Route path="/verify-email" component={VerifyEmailPage} />
-      <Route path="/verification-sent" component={VerificationSentPage} />
-      <Route path="/email-verified" component={EmailVerifiedPage} />
-      <Route path="/verification-failed" component={VerificationFailedPage} />
-
-      {/* Booking Routes */}
-      <ProtectedRoute path="/bookings" component={BookingsPage} />
-      <ProtectedRoute path="/bookings/:id" component={BookingDetailPage} />
-      <ProtectedRoute path="/create-booking" component={CreateBookingPage} />
-      <ProtectedRoute path="/create-booking/:clinicId" component={CreateBookingPage} />
-
-      {/* Admin login is now handled through the main portal login page */}
-
-      {/* Special route for handling admin logout properly */}
-      <Route path="/admin-logout">
-        {() => {
-          // This is a special route that handles logout and redirect without using AdminPortalGuard
-          if (typeof window !== 'undefined') {
-            // Clear admin-specific storage flags immediately
-            localStorage.removeItem('admin_session');
-            localStorage.removeItem('auth_guard');
-            sessionStorage.removeItem('admin_portal_timestamp');
-            sessionStorage.removeItem('admin_protected_navigation');
-            sessionStorage.removeItem('admin_role_verified');
-            sessionStorage.setItem('admin_logout_redirect', 'true');
-
-            // Make a direct server logout call
-            fetch('/api/auth/logout', { method: 'POST' })
-              .catch(() => console.log('Logout request sent'));
-
-            // Immediate redirect to home page
-            window.location.href = '/';
-          }
-          return null; // This component won't render as we redirect immediately
-        }}
-      </Route>
-
-      {/* Admin-only Protected Routes using the same pattern that works for Clinic Portal */}
-      <Route path="/admin-portal">
-        {() => (
-          <AdminPortalGuard>
-            <AdminPortalPage disableAutoRefresh={true} />
-          </AdminPortalGuard>
-        )}
-      </Route>
-
-      {/* Fallback route for admin portal access */}
-      <Route path="/admin">
-        {() => (
-          <AdminPortalGuard>
-            <AdminPortalPage disableAutoRefresh={true} />
-          </AdminPortalGuard>
-        )}
-      </Route>
-
-      <ProtectedRoute path="/admin-treatment-mapper" component={AdminTreatmentMapperPage} requiredRole="admin" />
-      <ProtectedRoute path="/data-architecture" component={DataArchitecturePage} requiredRole="admin" />
-
-      {/* Admin Booking Routes */}
-      <ProtectedRoute path="/admin/bookings" component={AdminBookingsPage} requiredRole="admin" />
-      <ProtectedRoute path="/admin/bookings/:id" component={AdminBookingDetailPage} requiredRole="admin" />
-      <ProtectedRoute path="/admin/create-booking" component={CreateBookingPage} requiredRole="admin" />
-
-      {/* Admin Quote Routes */}
-      <Route path="/admin/new-quote">
-        {() => (
-          <AdminPortalGuard>
-            <AdminNewQuotePage />
-          </AdminPortalGuard>
-        )}
-      </Route>
-
-      {/* Clinic Staff Protected Routes */}
-      {/* Adding a simple, alternative clinic portal route that should have no refresh issues */}
-      <Route path="/simple-clinic">
-        {() => <ClinicGuard><SimpleClinicPage /></ClinicGuard>}
-      </Route>
-
-      {/* Original clinic portal route with special guard to prevent refresh issues */}
-      <Route path="/clinic-portal">
-        {() => (
-          <ClinicGuard>
-            <ClinicPortalPage disableAutoRefresh={true} />
-          </ClinicGuard>
-        )}
-      </Route>
-      <ProtectedRoute path="/clinic-treatment-mapper" component={ClinicTreatmentMapperPage} requiredRole="clinic" />
-      <ProtectedRoute path="/clinic-dental-charts" component={ClinicDentalCharts} requiredRole="clinic" />
-
-      {/* Clinic Booking Routes */}
-      <ProtectedRoute path="/clinic/bookings" component={BookingsPage} requiredRole="clinic" />
-      <ProtectedRoute path="/clinic/bookings/:id" component={BookingDetailPage} requiredRole="clinic" />
-      <ProtectedRoute path="/clinic/create-booking" component={CreateBookingPage} requiredRole="clinic" />
-
-      {/* Clinic Quote Routes */}
-      <ProtectedRoute path="/clinic/quotes/:id" component={() => {
-        // This is a wrapper to ensure the quotes section is displayed properly
-        return (
-          <ClinicGuard>
-            <ClinicPortalPage disableAutoRefresh={true} initialSection="quotes" />
-          </ClinicGuard>
-        );
-      }} requiredRole="clinic" />
-
-      <Route path="/clinic">
-        {() => <Redirect to="/clinic-portal" />}
-      </Route>
-      {/* Redirect all test routes to home */}
-      <Route path="/test">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/test-pdf">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/simple-pdf-test">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/enhanced-pdf-test">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-      <Route path="/testpdf">
-        {() => {
-          window.location.href = "/";
-          return null;
-        }}
-      </Route>
-
-      {/* Testing and development routes - Portal Communication Tester available in all environments */}
-      <Route path="/portal-communication-test" component={PortalCommunicationTester} />
-      <Route path="/system-health" component={SystemHealthDashboard} />
-
-      {/* Development-only routes */}
-      {process.env.NODE_ENV !== 'production' && (
-        <>
-          <Route path="/error-test" component={ErrorTestPage} />
-          <Route path="/testing/xray-component">
-            {() => {
-              const TestComponent = React.lazy(() => import("@/pages/testing/XrayComponentTest"));
-              return (
-                <Suspense fallback={<div className="p-12 text-center">Loading test component...</div>}>
-                  <TestComponent />
-                </Suspense>
-              );
-            }}
-          </Route>
-        </>
-      )}
-
-      <Route component={NotFoundPage} />
-    </Switch>
-  );
 }
 
 function App() {
-
-  // WhatsApp phone number (without + sign) and formatted display number for direct calls
   const whatsappNumber = "447572445856"; // UK WhatsApp number without + sign
   const phoneNumber = "+44 7572 445856"; // Formatted display number for direct calls
 
-  // Initialize reload prevention system
+  // Add global error handling to catch unhandled rejections
   useEffect(() => {
-    // Check if we're in the browser and not in server-side rendering
-    if (typeof window !== 'undefined') {
-      // Only initialize for clinic portal path
-      if (window.location.pathname === '/clinic-portal') {
-        console.log('Initializing reload prevention for clinic portal');
-        try {
-          initPreventReloads();
-        } catch (error) {
-          console.error('Failed to initialize reload prevention:', error);
-        }
-      } else {
-        console.log('Skipping reload prevention for non-clinic portal path:', window.location.pathname);
+    console.log('🚀 App mounted successfully');
+    
+    // Handle unhandled promise rejections more aggressively
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('🚨 Unhandled promise rejection caught:', {
+        reason: event.reason,
+        type: typeof event.reason,
+        message: event.reason?.message,
+        stack: event.reason?.stack,
+        status: event.reason?.status,
+        response: event.reason?.response,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Always prevent the rejection from bubbling up to avoid white screen
+      event.preventDefault();
+      
+      // Check if it's an auth-related rejection
+      if (event.reason?.message?.includes('401') || 
+          event.reason?.message?.includes('auth') ||
+          event.reason?.status === 401) {
+        console.log('🔐 Auth-related rejection handled gracefully');
+        return;
       }
-    }
-  }, []);
 
-  // Add event listener for testing cross-portal notifications
-  useEffect(() => {
-    // Listen for a special test message that can be triggered from any portal
-    const handleMessage = (event: MessageEvent) => {
-      if (event.data && event.data.type === 'TEST_CROSS_PORTAL_NOTIFICATION') {
-        console.log('Received test notification event:', event.data);
-        // We can handle this in each portal's notification system
+      // Check if it's a network error
+      if (event.reason?.message?.includes('Failed to fetch') ||
+          event.reason?.message?.includes('NetworkError') ||
+          event.reason?.code === 'NETWORK_ERROR') {
+        console.log('🌐 Network-related rejection handled gracefully');
+        return;
+      }
+
+      // Check if it's a React Query error
+      if (event.reason?.message?.includes('query') ||
+          event.reason?.name === 'QueryError') {
+        console.log('🔍 Query-related rejection handled gracefully');
+        return;
       }
     };
 
-    window.addEventListener('message', handleMessage);
+    // Handle general errors
+    const handleError = (event: ErrorEvent) => {
+      console.error('🚨 Global error caught:', {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+        error: event.error,
+        stack: event.error?.stack,
+        timestamp: new Date().toISOString()
+      });
+      
+      // Prevent error from breaking the app
+      event.preventDefault();
+    };
+
+    // Add error handlers immediately when the component mounts
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    window.addEventListener('error', handleError);
+
+    // Also handle React errors at the window level
+    const handleReactError = (event: any) => {
+      console.error('🚨 React error caught at window level:', event);
+      event.preventDefault();
+    };
+
+    window.addEventListener('react-error', handleReactError);
+
     return () => {
-      window.removeEventListener('message', handleMessage);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('react-error', handleReactError);
     };
   }, []);
 
   return (
-    <ErrorBoundary componentName="RootApplication">
+    <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
         <GlobalAuthProvider>
           <AuthProvider>
-            <AuthStateLogger />
-            <NotificationsProvider>
-              <BookingsProvider>
-                <Suspense fallback={
-          <div className="flex items-center justify-center min-h-screen">
-            <LoadingSpinner />
-          </div>
-        }>
-                  {/* Only exclude ReloadTranslations on clinic portal path */}
-                  {typeof window !== 'undefined' && window.location.pathname !== '/clinic-portal' && 
-                    <ReloadTranslations />
-                  }
-                  <ErrorBoundary componentName="Router">
-                    <AppRouter />
-                  </ErrorBoundary>
-                  <ContactWidget whatsappNumber={whatsappNumber} phoneNumber={phoneNumber} />
-                  <EnvironmentBadge />
-                  <Toaster />
-                </Suspense>
-              </BookingsProvider>
-            </NotificationsProvider>
+            <Router>
+              <div className="min-h-screen bg-white">
+                <RouteChangeTracker />
+                <ScrollToTop />
+
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/your-quote" element={<YourQuotePage />} />
+                  <Route path="/quote-results" element={<QuoteResultsPage />} />
+                  <Route path="/matched-clinics" element={<MatchedClinicsPage />} />
+                  <Route path="/portal-login" element={<PortalLoginPage />} />
+                  <Route path="/patient-portal" element={<PatientPortalPage />} />
+                  <Route path="/clinic-portal" element={<ClinicPortalPage />} />
+                  <Route path="/admin-portal" element={<AdminPortalPage />} />
+                  <Route path="/blog" element={<BlogPage />} />
+                  <Route path="/dental-implants" element={<DentalImplantsPage />} />
+                  <Route path="/veneers" element={<VeneersPage />} />
+                  <Route path="/hollywood-smile" element={<HollywoodSmilePage />} />
+                  <Route path="/full-mouth-reconstruction" element={<FullMouthPage />} />
+                  <Route path="/team" element={<TeamPage />} />
+                  <Route path="/faq" element={<FAQPage />} />
+                  <Route path="/how-it-works" element={<HowItWorks />} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/verification-sent" element={<VerificationSentPage />} />
+                  <Route path="/email-verified" element={<EmailVerifiedPage />} />
+                  <Route path="/verification-failed" element={<VerificationFailedPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/error" element={<ErrorPage />} />
+                  <Route path="/package/:id" element={<PackageDetailPage />} />
+                  <Route path="/package-results" element={<PackageResultsPage />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+
+                <Toaster />
+              </div>
+            </Router>
           </AuthProvider>
         </GlobalAuthProvider>
+
+        <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
     </ErrorBoundary>
   );
