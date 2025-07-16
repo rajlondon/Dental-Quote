@@ -2,6 +2,7 @@
  * Treatment Package API Routes
  * Handles operations related to treatment packages
  */
+import { enhancePackageFromDatabase } from "../scripts/enhance-package-response";
 
 // Database imports
 import { db } from '../db';
@@ -299,14 +300,15 @@ export const hardcodedTreatmentPackages = [
 treatmentPackageRouter.get('/', catchAsync(async (req: Request, res: Response) => {
   res.json({
     success: true,
-    data: await db.select().from(treatmentPackages)
+    data: (await db.select().from(treatmentPackages)).map(enhancePackageFromDatabase)
   });
 }));
 
 // Get treatment package by ID
 treatmentPackageRouter.get('/:id', catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
-  const packageData = hardcodedTreatmentPackages.find(pkg => pkg.id === id);
+  const dbPackage = await db.select().from(treatmentPackages).where(eq(treatmentPackages.id, id));
+  const packageData = dbPackage[0] ? enhancePackageFromDatabase(dbPackage[0]) : null;
   
   if (!packageData) {
     return res.status(404).json({
