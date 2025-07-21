@@ -421,3 +421,10 @@ killExistingProcesses();
     }
   });
 })();
+// Admin package routes
+import adminPackageRouter from "./routes/admin-package-routes";
+app.use("/api/admin/packages", adminPackageRouter);
+
+// Admin package routes
+import adminPackageRouter from "./routes/admin-package-routes";
+app.use("/api/admin/packages", adminPackageRouter);

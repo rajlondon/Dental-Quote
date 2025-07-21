@@ -1,3 +1,6 @@
+import { Request, Response } from "express";
+import { catchAsync } from "../middleware/error-handler";
+import { eq } from "drizzle-orm";
 import { Router } from "express";
 import passport from "passport";
 import bcrypt from "bcrypt";
@@ -93,11 +96,11 @@ router.post('/admin-login', async (req, res) => {
 
     // Verify password
     console.log('Verifying password for user:', user.email);
-    console.log('Password hash exists:', !!user.password_hash);
-    console.log('Password hash length:', user.password_hash ? user.password_hash.length : 0);
+    console.log('Password hash exists:', !!user.password);
+    console.log('Password hash length:', user.password ? user.password.length : 0);
     console.log('Input password:', password);
 
-    if (!user.password_hash) {
+    if (!user.password) {
       console.log('No password hash found - user needs to be recreated');
       return res.status(401).json({ 
         success: false, 
@@ -107,13 +110,13 @@ router.post('/admin-login', async (req, res) => {
 
     let isValidPassword = false;
     try {
-      isValidPassword = await bcrypt.compare(password, user.password_hash);
+      isValidPassword = await bcrypt.compare(password, user.password);
       console.log('Bcrypt comparison result:', isValidPassword);
 
       // Additional debug
       if (!isValidPassword) {
         console.log('Password mismatch - checking hash details');
-        console.log('Hash starts with:', user.password_hash.substring(0, 10));
+        console.log('Hash starts with:', user.password.substring(0, 10));
         console.log('Expected password length:', password.length);
       }
 
@@ -308,7 +311,7 @@ router.post('/login', async (req, res) => {
 
     const userData = user[0];
 
-    if (!userData.password_hash) {
+    if (!userData.password) {
       console.log('❌ LOGIN FAILED: No password hash for user');
       return res.status(401).json({ 
         success: false, 
@@ -320,12 +323,12 @@ router.post('/login', async (req, res) => {
     console.log('🔒 VERIFYING PASSWORD for user:', userData.email);
     let isValidPassword = false;
     try {
-      isValidPassword = await bcrypt.compare(password, userData.password_hash);
+      isValidPassword = await bcrypt.compare(password, userData.password);
       console.log('🔒 PASSWORD VERIFICATION RESULT:', {
         isValid: isValidPassword,
         inputPassword: password,
-        hashExists: !!userData.password_hash,
-        hashLength: userData.password_hash.length
+        hashExists: !!userData.password,
+        hashLength: userData.password.length
       });
     } catch (bcryptError) {
       console.error('❌ BCRYPT ERROR:', bcryptError);
@@ -426,7 +429,7 @@ router.post('/create-admin', async (req, res) => {
       .insert(users)
       .values({
         email: adminEmail,
-        password_hash: hashedPassword,
+        password: hashedPassword,
         role: 'admin',
         first_name: 'Admin',
         last_name: 'User',
@@ -478,7 +481,7 @@ router.post('/reset-admin', async (req, res) => {
       .insert(users)
       .values({
         email: adminEmail,
-        password_hash: hashedPassword,
+        password: hashedPassword,
         role: 'admin',
         first_name: 'Admin',
         last_name: 'User',
@@ -632,7 +635,7 @@ router.post('/create-test-patient', async (req, res) => {
           await db
             .update(users)
             .set({
-              password_hash: hashedPassword,
+              password: hashedPassword,
               updated_at: new Date()
             })
             .where(eq(users.email, testEmail));
@@ -663,11 +666,11 @@ router.post('/create-test-patient', async (req, res) => {
       .insert(users)
       .values({
         email: testEmail,
-        password_hash: hashedPassword,
+        password: hashedPassword,
         role: 'patient',
         first_name: 'Raj',
         last_name: 'Test',
-        email_verified: true,
+        emailVerified: true,
         status: 'active',
         created_at: new Date(),
         updated_at: new Date()
@@ -741,7 +744,7 @@ router.post('/recreate-admin', async (req, res) => {
       .insert(users)
       .values({
         email: adminEmail,
-        password_hash: hashedPassword,
+        password: hashedPassword,
         role: 'admin',
         first_name: 'Admin',
         last_name: 'User',
@@ -863,4 +866,42 @@ router.post('/logout', (req, res) => {
   });
 });
 
+// User registration
+router.post("/register", catchAsync(async (req, res) => {
+  const { email, password, firstName, lastName } = req.body;
+  
+  // Check if user exists
+  const existingUser = await db.select().from(users).where(eq(users.email, email));
+  if (existingUser.length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: "User already exists"
+    });
+  }
+  
+  // Hash password properly
+  const hashedPassword = await bcrypt.hash(password, 10);
+  
+  const newUser = await db.insert(users).values({
+    email,
+    password: hashedPassword,
+    first_name: firstName,
+    last_name: lastName,
+    role: "patient",
+    emailVerified: true
+  }).returning();
+  
+  res.status(201).json({
+    success: true,
+    message: "User registered successfully",
+    user: { id: newUser[0].id, email: newUser[0].email }
+  });
+}));
+
+// Manually verify email for testing
+router.post("/verify-email-manual", async (req, res) => {
+  const { email } = req.body;
+  await db.update(users).set({ emailVerified: true }).where(eq(users.email, email));
+  res.json({ success: true, message: "Email verified" });
+});
 export default router;

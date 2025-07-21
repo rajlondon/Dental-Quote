@@ -34,7 +34,7 @@ export const users = pgTable("users", {
   }>(),
   // Role-based fields
   role: varchar("role", { length: 20 }).default("patient").notNull(), // patient, admin, clinic_staff
-  clinicId: integer("clinic_id").references(() => clinics.id), // For clinic_staff only
+  clinicId: integer("clinic_id"), // For clinic_staff only
   jobTitle: varchar("job_title", { length: 100 }), // For clinic_staff only
   // Tracking fields
   lastLogin: timestamp("last_login"),
@@ -113,7 +113,7 @@ export const quoteRequests = pgTable("quote_requests", {
   // Special offer data
   specialOffer: json("special_offer"),
   // Selected clinic
-  selectedClinicId: integer("selected_clinic_id").references(() => clinics.id),
+  selectedClinicId: integer("selected_clinic_id"),
   // Notes visible to different users
   adminNotes: text("admin_notes"),
   clinicNotes: text("clinic_notes"),
@@ -282,7 +282,7 @@ export const clinicReviewsRelations = relations(clinicReviews, ({ one }) => ({
 export const treatmentPlans = pgTable("treatment_plans", {
   id: serial("id").primaryKey(),
   patientId: integer("patient_id").notNull().references(() => users.id),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   createdById: integer("created_by_id").references(() => users.id),
   status: varchar("status", { length: 50 }).default("draft").notNull(), // draft, finalized, in_treatment, completed
   treatmentDetails: json("treatment_details").notNull(), // JSON array of selected treatments
@@ -336,7 +336,7 @@ export const bookings = pgTable("bookings", {
   bookingReference: varchar("booking_reference", { length: 20 }).unique(),
   userId: integer("user_id").notNull().references(() => users.id),
   quoteRequestId: integer("quote_request_id").references(() => quoteRequests.id).unique(),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   treatmentPlanId: integer("treatment_plan_id").references(() => treatmentPlans.id),
   // Assigned staff
   assignedAdminId: integer("assigned_admin_id").references(() => users.id),
@@ -407,7 +407,7 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
 export const appointments = pgTable("appointments", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookings.id, { onDelete: "cascade" }),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  clinicId: integer("clinic_id"),
   title: varchar("title", { length: 100 }).notNull(),
   description: text("description"),
   startTime: timestamp("start_time").notNull(),
@@ -756,64 +756,59 @@ export type Hotel = typeof hotels.$inferSelect;
 export type InsertHotelBooking = Omit<typeof hotelBookings.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type HotelBooking = typeof hotelBookings.$inferSelect;
 
-// === TREATMENT PACKAGES ===
+// Treatment Packages Tables
 export const treatmentPackages = pgTable("treatment_packages", {
-  id: serial("id").primaryKey(),
-  name: varchar("name", { length: 255 }).notNull(),
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
   description: text("description"),
-  packagePrice: decimal("package_price", { precision: 10, scale: 2 }).notNull(),
-  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
-  clinicId: integer("clinic_id").references(() => clinics.id),
+  packagePrice: decimal("package_price").notNull(),
+  originalPrice: decimal("original_price").notNull(),
+  clinicId: text("clinic_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
 });
 
+export const packageTreatments = pgTable("package_treatments", {
+  packageId: text("package_id").references(() => treatmentPackages.id),
+  treatmentType: text("treatment_type").notNull(),
+  treatmentName: text("treatment_name").notNull(),
+  quantity: integer("quantity").default(1).notNull()
+});
+
+export const packageInclusions = pgTable("package_inclusions", {
+  packageId: text("package_id").references(() => treatmentPackages.id),
+  inclusionType: text("inclusion_type").notNull(),
+  description: text("description").notNull()
+});
+
+// Relations
 export const treatmentPackagesRelations = relations(treatmentPackages, ({ one, many }) => ({
   clinic: one(clinics, {
     fields: [treatmentPackages.clinicId],
     references: [clinics.id],
   }),
-  packageTreatments: many(packageTreatments),
-  packageInclusions: many(packageInclusions),
+  treatments: many(packageTreatments),
+  inclusions: many(packageInclusions),
 }));
 
-// === PACKAGE TREATMENTS ===
-export const packageTreatments = pgTable("package_treatments", {
-  id: serial("id").primaryKey(),
-  packageId: integer("package_id").notNull().references(() => treatmentPackages.id, { onDelete: "cascade" }),
-  treatmentType: varchar("treatment_type", { length: 100 }).notNull(),
-  treatmentName: varchar("treatment_name", { length: 255 }).notNull(),
-  quantity: integer("quantity").notNull().default(1),
-});
-
 export const packageTreatmentsRelations = relations(packageTreatments, ({ one }) => ({
-  treatmentPackage: one(treatmentPackages, {
+  package: one(treatmentPackages, {
     fields: [packageTreatments.packageId],
     references: [treatmentPackages.id],
   }),
 }));
 
-// === PACKAGE INCLUSIONS ===
-export const packageInclusions = pgTable("package_inclusions", {
-  id: serial("id").primaryKey(),
-  packageId: integer("package_id").notNull().references(() => treatmentPackages.id, { onDelete: "cascade" }),
-  inclusionType: varchar("inclusion_type", { length: 100 }).notNull(), // hotel, transfer, consultation, etc.
-  description: text("description").notNull(),
-});
-
 export const packageInclusionsRelations = relations(packageInclusions, ({ one }) => ({
-  treatmentPackage: one(treatmentPackages, {
+  package: one(treatmentPackages, {
     fields: [packageInclusions.packageId],
     references: [treatmentPackages.id],
   }),
 }));
 
-// Treatment package types
+// TypeScript types
 export type InsertTreatmentPackage = Omit<typeof treatmentPackages.$inferInsert, "id" | "createdAt" | "updatedAt">;
 export type TreatmentPackage = typeof treatmentPackages.$inferSelect;
-
-export type InsertPackageTreatment = Omit<typeof packageTreatments.$inferInsert, "id">;
+export type InsertPackageTreatment = typeof packageTreatments.$inferInsert;
 export type PackageTreatment = typeof packageTreatments.$inferSelect;
-
-export type InsertPackageInclusion = Omit<typeof packageInclusions.$inferInsert, "id">;
+export type InsertPackageInclusion = typeof packageInclusions.$inferInsert;
 export type PackageInclusion = typeof packageInclusions.$inferSelect;
