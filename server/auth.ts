@@ -326,30 +326,30 @@ export async function setupAuth(app: Express) {
   });
 
   // Current user endpoint
-  app.get("/api/auth/user", (req: any, res) => {
-    console.log('=== AUTH USER ENDPOINT ===');
-    console.log('Session ID:', req.sessionID);
-    console.log('Session exists:', !!req.session);
-    console.log('Session user:', req.session?.user ? JSON.stringify(req.session.user) : 'NONE');
-    console.log('Passport isAuthenticated:', req.isAuthenticated());
-    console.log('Passport user:', req.user ? JSON.stringify(req.user) : 'NONE');
-
-    // Check both session and passport authentication
-    const sessionUser = req.session?.user;
-    const passportUser = req.user;
-    const isAuthenticated = req.isAuthenticated();
-
-    // Use session user if available, otherwise passport user
-    const user = sessionUser || passportUser;
-
-    if (!user) {
-      console.log('❌ No user found in session or passport, returning 401');
-      return res.status(401).json({ error: 'Not authenticated', user: null });
-    }
-
-    console.log('✅ Returning user:', user.email, 'Role:', user.role);
-    res.json({ user: user });
-  });
+//   app.get("/api/auth/user", (req: any, res) => {
+//     console.log('=== AUTH USER ENDPOINT ===');
+//     console.log('Session ID:', req.sessionID);
+//     console.log('Session exists:', !!req.session);
+//     console.log('Session user:', req.session?.user ? JSON.stringify(req.session.user) : 'NONE');
+//     console.log('Passport isAuthenticated:', req.isAuthenticated());
+//     console.log('Passport user:', req.user ? JSON.stringify(req.user) : 'NONE');
+// 
+//     // Check both session and passport authentication
+//     const sessionUser = req.session?.user;
+//     const passportUser = req.user;
+//     const isAuthenticated = req.isAuthenticated();
+// 
+//     // Use session user if available, otherwise passport user
+//     const user = sessionUser || passportUser;
+// 
+//     if (!user) {
+//       console.log('❌ No user found in session or passport, returning 401');
+//       return res.status(401).json({ error: 'Not authenticated', user: null });
+//     }
+// 
+//     console.log('✅ Returning user:', user.email, 'Role:', user.role);
+//     res.json({ user: user });
+//   });
 
   // Create admin and clinic users if they don't exist
   await seedUsers();

@@ -4,6 +4,12 @@ import express from 'express';
 
 const router = Router();
 
+router.use((req, res, next) => {
+  console.log("🔍 AUTH ROUTER HIT:", req.path);
+  console.log("🔍 Session available:", !!req.session);
+  next();
+});
+
 // In-memory user storage for testing
 const users = new Map();
 
@@ -134,35 +140,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Single user endpoint - no duplicates
-router.get("/user", (req, res) => {
-  console.log("🚨 USER ENDPOINT HIT!");
-  console.log("Session data:", JSON.stringify(req.session, null, 2));
-  console.log("Session ID:", req.sessionID);
-  console.log("User ID from session:", req.session?.userId);
 
-  if (!req.session?.userId) {
-    return res.status(401).json({ 
-      success: false, 
-      message: "Not authenticated",
-      debug: {
-        hasSession: !!req.session,
-        sessionId: req.sessionID,
-        sessionKeys: req.session ? Object.keys(req.session) : []
-      }
-    });
-  }
-
-  return res.json({
-    success: true,
-    user: {
-      id: req.session.userId,
-      email: req.session.userEmail,
-      role: req.session.userRole,
-      firstName: "User",
-      lastName: "Name"
-    }
-  });
-});
 
 // Logout endpoint
 router.post('/logout', (req, res) => {
@@ -256,4 +234,36 @@ router.get("/notifications", (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   return res.json({ notifications: [], unread_count: 0 });
+});
+
+// Working user endpoint that frontend needs
+
+
+
+// THE working user endpoint for frontend
+
+
+
+// THE working user endpoint for frontend
+router.get('/user', (req, res) => {
+  console.log("🎯 MEMORY AUTH USER ENDPOINT HIT!");
+  console.log("Session exists:", !!req.session);
+  console.log("Session userId:", req.session?.userId);
+  console.log('🎯 FINAL USER ENDPOINT HIT!');
+  console.log('Session check:', !!req.session?.userId);
+  
+  if (!req.session?.userId) {
+    return res.status(401).json({ success: false, message: "Not authenticated" });
+  }
+  
+  return res.json({
+    success: true,
+    user: {
+      id: req.session.userId,
+      email: req.session.userEmail,
+      role: req.session.userRole,
+      firstName: "User",
+      lastName: "Name"
+    }
+  });
 });

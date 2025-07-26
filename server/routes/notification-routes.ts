@@ -51,7 +51,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     
     if (userRole === 'patient') {
       userType = 'patient';
-    } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+    } else if (userRole === 'clinic' || userRole === 'clinic_staff' || userRole === 'clinic_admin') {
       userType = 'clinic';
     } else if (userRole === 'admin') {
       userType = 'admin';
@@ -97,7 +97,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
       
       if (userRole === 'patient') {
         sourceType = 'patient';
-      } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+      } else if (userRole === 'clinic' || userRole === 'clinic_staff' || userRole === 'clinic_admin') {
         sourceType = 'clinic';
       } else if (userRole === 'admin') {
         sourceType = 'admin';
@@ -214,7 +214,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     
     if (userRole === 'patient') {
       userType = 'patient';
-    } else if (userRole === 'clinic_staff' || userRole === 'clinic_admin') {
+    } else if (userRole === 'clinic' || userRole === 'clinic_staff' || userRole === 'clinic_admin') {
       userType = 'clinic';
     } else if (userRole === 'admin') {
       userType = 'admin';

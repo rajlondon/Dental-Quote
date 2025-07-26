@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // Create a pre-configured axios instance with consistent settings
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: '',
   withCredentials: true, // CRITICAL: This ensures cookies are sent with EVERY request
   headers: {
     'Content-Type': 'application/json',

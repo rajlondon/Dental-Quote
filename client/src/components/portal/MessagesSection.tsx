@@ -1,3 +1,5 @@
+import { t } from "@/lib/translate";
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { 

@@ -244,7 +244,7 @@ app.use(passport.session());
     });
 
     // Enhanced API endpoint with role information
-    app.get("/api/auth/user", (req: any, res) => {
+    app.get("/api/auth/user-disabled", (req: any, res) => {
       if (req.isAuthenticated()) {
         res.json({
           success: true,
@@ -295,6 +295,11 @@ app.use(passport.session());
       }
     });
 
+
+    // Google OAuth initiation route
+    app.get("/auth/google", passport.authenticate("google", {
+      scope: ["profile", "email"]
+    }));
     log("Enhanced Google Auth with portal routing configured successfully");
   } else {
     // Fallback routes when Google Auth is not configured
@@ -302,7 +307,7 @@ app.use(passport.session());
       res.status(500).json({ error: "Google OAuth not configured" });
     });
 
-    app.get("/api/auth/user", (req, res) => {
+    app.get("/api/auth/user-disabled", (req, res) => {
       res.status(500).json({ error: "Google OAuth not configured" });
     });
 

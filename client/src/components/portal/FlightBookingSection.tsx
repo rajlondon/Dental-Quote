@@ -1,3 +1,5 @@
+import { t } from "@/lib/translate";
+
 
 import React, { useState, useEffect } from 'react';
 // Removed react-i18next
