@@ -38,15 +38,16 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
   // GET endpoint to fetch notifications (for any portal type)
   router.get('/api/notifications', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Map user role to notification target type
     let userType: 'patient' | 'clinic' | 'admin';
     
     // Use string comparison for type safety
-    const userRole = req.user.role as string;
+    const userRole = req.session.userRole as string;
     
     if (userRole === 'patient') {
       userType = 'patient';
@@ -62,7 +63,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
     const status = req.query.status === 'unread' ? 'unread' : 'all';
     
     try {
-      const userId = String(req.user.id);
+      const userId = String(req.session.userId);
       const result = await notificationService.getNotifications(userType, userId, status);
       
       res.json(result);
@@ -74,12 +75,13 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
   // POST endpoint to create a new notification
   router.post('/api/notifications', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Only admin and clinic staff can create notifications
-    if (req.user.role !== 'admin' && req.user.role !== 'clinic_staff' && req.user.role !== 'clinic_admin') {
+    if (req.session.userRole !== 'admin' && req.session.userRole !== 'clinic_staff' && req.session.userRole !== 'clinic_admin') {
       return res.status(403).json({ error: 'Forbidden: Insufficient permissions' });
     }
 
@@ -91,7 +93,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
       let sourceType: 'patient' | 'clinic' | 'admin' | 'system';
       
       // Use a safer approach with string comparison instead of switch/case for better type safety
-      const userRole = req.user.role as string;
+      const userRole = req.session.userRole as string;
       
       if (userRole === 'patient') {
         sourceType = 'patient';
@@ -107,7 +109,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
       const notification = await notificationService.createNotification({
         ...notificationData,
         source_type: sourceType,
-        source_id: String(req.user.id)
+        source_id: String(req.session.userId)
       });
       
       res.status(201).json(notification);
@@ -123,8 +125,9 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
   // PUT endpoint to update notification status
   router.put('/api/notifications/:id', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { id } = req.params;
@@ -154,8 +157,9 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
   // DELETE endpoint to delete a notification
   router.delete('/api/notifications/:id', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
 
     const { id } = req.params;
@@ -176,12 +180,13 @@ export const createNotificationRoutes = (notificationService: NotificationServic
 
   // GET endpoint for notification analytics (admin only)
   router.get('/api/notifications/analytics', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
     
     // Only admins can access analytics
-    if (req.user.role !== 'admin') {
+    if (req.session.userRole !== 'admin') {
       return res.status(403).json({ error: 'Forbidden: Admin access required' });
     }
     
@@ -196,15 +201,16 @@ export const createNotificationRoutes = (notificationService: NotificationServic
   
   // POST endpoint to mark all notifications as read
   router.post('/api/notifications/mark-all-read', async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ error: 'Unauthorized' });
+    if (!req.session?.userId) {
+      console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
     }
 
     // Map user role to notification target type
     let userType: 'patient' | 'clinic' | 'admin';
     
     // Use string comparison for type safety
-    const userRole = req.user.role as string;
+    const userRole = req.session.userRole as string;
     
     if (userRole === 'patient') {
       userType = 'patient';
@@ -221,7 +227,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
       // For now, we'll use the clear method as a placeholder
       const success = await notificationService.clearAllNotifications(
         userType, 
-        String(req.user.id)
+        String(req.session.userId)
       );
 
       res.json({ success });
@@ -235,8 +241,9 @@ export const createNotificationRoutes = (notificationService: NotificationServic
   if (process.env.NODE_ENV !== 'production') {
     router.post('/api/test/email-notification', async (req, res) => {
       try {
-        if (!req.isAuthenticated()) {
-          return res.status(401).json({ error: 'Unauthorized' });
+        if (!req.session?.userId) {
+          console.log('❌ NOTIFICATION AUTH: No session found', { sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION', userId: req.session?.userId });
+  return res.status(401).json({ error: 'Unauthorized' });
         }
 
         // Create a test notification for the authenticated user
@@ -245,7 +252,7 @@ export const createNotificationRoutes = (notificationService: NotificationServic
           title: 'Test Email Notification',
           message: 'This is a test email notification to verify the integration.',
           target_type: 'patient',
-          target_id: String(req.user.id),
+          target_id: String(req.session.userId),
           source_type: 'system',
           source_id: 'system',
           category: 'appointment', // Using appointment category to trigger email

@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { storage } from '../storage';
+import { storage } from './storage';
 
 const router = Router();
 
-// Register endpoint
+// Simple register endpoint
 router.post('/register', async (req, res) => {
   try {
     const { email, password, firstName, lastName, role = 'patient' } = req.body;
@@ -16,28 +16,23 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    console.log('📝 REGISTER:', email, role);
-
-    // Check if user exists (this will handle errors gracefully)
-    let existingUser;
+    // Check if user exists using storage
     try {
-      existingUser = await storage.getUserByEmail(email);
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "User already exists"
+        });
+      }
     } catch (error) {
-      // User doesn't exist, which is good for registration
-      existingUser = null;
-    }
-
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: "User already exists"
-      });
+      // User doesn't exist, which is what we want
     }
 
     // Hash password
     const passwordHash = await bcrypt.hash(password, 10);
 
-    // Create user data object
+    // Create user data
     const userData = {
       email,
       passwordHash,
@@ -48,34 +43,30 @@ router.post('/register', async (req, res) => {
       status: 'active'
     };
 
-    // Create user using storage layer
+    // Create user using storage
     const newUser = await storage.createUser(userData);
     
-    console.log('✅ USER CREATED:', email);
-
     res.status(201).json({
       success: true,
       message: "User created successfully",
       user: {
         id: newUser.id,
         email: newUser.email,
-        role: newUser.role,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName
+        role: newUser.role
       }
     });
 
   } catch (error) {
-    console.error('❌ REGISTER ERROR:', error);
+    console.error('Register error:', error);
     res.status(500).json({
       success: false,
-      message: "Registration failed",
+      message: "Failed to create user",
       error: error instanceof Error ? error.message : String(error)
     });
   }
 });
 
-// Login endpoint
+// Simple login endpoint
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -87,13 +78,10 @@ router.post('/login', async (req, res) => {
       });
     }
 
-    console.log('🔐 LOGIN ATTEMPT:', email);
-
-    // Get user using storage layer
+    // Get user using storage
     const user = await storage.getUserByEmail(email);
     
     if (!user) {
-      console.log('❌ LOGIN: User not found');
       return res.status(401).json({
         success: false,
         message: "Invalid credentials"
@@ -104,7 +92,6 @@ router.post('/login', async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, user.passwordHash || '');
     
     if (!isValidPassword) {
-      console.log('❌ LOGIN: Invalid password');
       return res.status(401).json({
         success: false,
         message: "Invalid credentials"
@@ -114,8 +101,6 @@ router.post('/login', async (req, res) => {
     // Create session
     req.session.userId = user.id;
     req.session.userRole = user.role;
-
-    console.log('✅ LOGIN SUCCESS:', email, user.role);
 
     res.json({
       success: true,
@@ -131,67 +116,11 @@ router.post('/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ LOGIN ERROR:', error);
+    console.error('Login error:', error);
     res.status(500).json({
       success: false,
       message: "Login failed",
       error: error instanceof Error ? error.message : String(error)
-    });
-  }
-});
-
-// Logout endpoint
-router.post('/logout', (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).json({
-        success: false,
-        message: "Logout failed"
-      });
-    }
-    res.json({
-      success: true,
-      message: "Logged out successfully"
-    });
-  });
-});
-
-// Get current user
-router.get('/me', async (req, res) => {
-  try {
-    if (!req.session.userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Not authenticated"
-      });
-    }
-
-    const user = await storage.getUser(req.session.userId);
-    
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "User not found"
-      });
-    }
-
-    res.json({
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        clinicId: user.clinicId
-      }
-    });
-
-  } catch (error) {
-    console.error('❌ AUTH CHECK ERROR:', error);
-    res.status(500).json({
-      success: false,
-      message: "Authentication check failed"
     });
   }
 });

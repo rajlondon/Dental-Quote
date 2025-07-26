@@ -1,0 +1,46 @@
+=== WORKING API ENDPOINTS ===
+
+SERVER: https://c2ea1272-6e7e-49ff-be73-8b18837ae1fb-00-2vkeb1dlsf3ae.janeway.replit.dev:5000/
+
+✅ AUTHENTICATION:
+POST /api/auth/login - Regular login (works for admin too)
+POST /api/auth/admin-login - Admin login (session issues)
+GET /api/auth/user - Current user info
+
+✅ BOOKINGS (Complete system):
+GET /api/bookings - All bookings (admin only)
+GET /api/bookings/user/:userId - User bookings
+POST /api/bookings - Create booking
+PATCH /api/bookings/:id - Update booking
+PATCH /api/bookings/:id/status - Update status
+PATCH /api/bookings/:id/stage - Update stage
+
+✅ TREATMENT PACKAGES:
+GET /api/treatment-packages - All packages
+GET /api/admin/packages - Admin package management
+
+✅ CLINICS & OFFERS:
+GET /api/clinics - 5 clinic network with ratings
+GET /api/special-offers - Marketing system with promo codes
+GET /api/special-offers/homepage - Homepage offers
+
+✅ OTHER WORKING:
+GET /api/treatment-plans - Treatment planning system
+GET /api/payments - Payment integration ready
+GET /api/notifications - Notification system
+
+❌ IMPORT ISSUES:
+GET /api/quotes - "Not Found" (route exists, import issue)
+GET /api/files - "Not Found" (route exists, import issue)
+
+=== ADMIN CREDENTIALS ===
+Email: admin@mydentalfly.com
+Password: Admin123!
+
+=== PATIENT CREDENTIALS ===
+Email: working@example.com  
+Password: password123
+
+=== WORKING BOOKING EXAMPLES ===
+BK-6694B215 - £200 deposit, pending
+BK-2E22DC25 - £300 deposit, completed journey with DentSpa Istanbul

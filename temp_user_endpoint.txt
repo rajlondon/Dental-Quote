@@ -1,0 +1,58 @@
+// User endpoint - ENHANCED DEBUG VERSION
+router.get('/user', (req, res) => {
+  try {
+    console.log('🔍 USER CHECK: Session object:', req.session);
+    console.log('🔍 USER CHECK: Session ID:', req.sessionID);
+    console.log('🔍 USER CHECK: Session data:', {
+      userId: req.session?.userId,
+      userRole: req.session?.userRole,
+      userEmail: req.session?.userEmail,
+      sessionKeys: req.session ? Object.keys(req.session) : 'NO SESSION'
+    });
+
+    if (!req.session || !req.session.userId) {
+      console.log('❌ USER CHECK: No session or userId found');
+      return res.status(401).json({
+        success: false,
+        message: "Not authenticated",
+        debug: {
+          hasSession: !!req.session,
+          sessionKeys: req.session ? Object.keys(req.session) : null,
+          userId: req.session?.userId
+        }
+      });
+    }
+
+    // Find user by ID from our in-memory storage
+    const user = Array.from(users.values()).find(u => u.id === req.session.userId);
+    
+    if (!user) {
+      console.log('❌ USER CHECK: User not found in memory for ID:', req.session.userId);
+      return res.status(401).json({
+        success: false,
+        message: "User not found in memory"
+      });
+    }
+
+    console.log('✅ USER CHECK: User found:', user.email);
+
+    return res.json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        clinicId: user.clinicId
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ USER CHECK ERROR:', error);
+    return res.status(500).json({
+      success: false,
+      message: "User check failed"
+    });
+  }
+});

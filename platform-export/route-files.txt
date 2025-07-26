@@ -1,0 +1,86 @@
+=== ALL ROUTE FILES ===
+total 468
+drwxr-xr-x 1 runner runner  1322 Jul 21 19:58 .
+drwxr-xr-x 1 runner runner   490 Jul 16 20:24 ..
+-rw-r--r-- 1 runner runner  9138 Jun 21 22:20 admin-integrity-routes.ts
+-rw-r--r-- 1 runner runner  1189 Jul 16 21:13 admin-package-routes.ts
+-rw-r--r-- 1 runner runner 11763 Jun 15 20:48 appointment-routes.ts
+-rw-r--r-- 1 runner runner 26107 Jul 21 19:58 auth-routes.ts
+-rw-r--r-- 1 runner runner 10632 Jun  4 18:45 booking-routes.ts
+-rw-r--r-- 1 runner runner 15358 Jun  4 18:45 clinic-media-routes.ts
+-rw-r--r-- 1 runner runner 16489 Jun  4 18:45 clinic-routes.ts
+-rw-r--r-- 1 runner runner  2842 Jun 22 19:45 clinic-settings-routes.ts
+-rw-r--r-- 1 runner runner  3055 Jun  4 18:45 error-test-routes.ts
+-rw-r--r-- 1 runner runner 17768 Jun  4 18:45 fileRoutes.ts
+-rw-r--r-- 1 runner runner  8777 Jun  4 18:45 gemini-routes.ts
+-rw-r--r-- 1 runner runner  2354 Jun  4 18:45 image-cache-routes.ts
+-rw-r--r-- 1 runner runner  3435 Jun  4 18:45 messaging-routes.ts
+-rw-r--r-- 1 runner runner  9104 Jun  4 18:45 notification-routes.ts
+-rw-r--r-- 1 runner runner 15695 Jun 18 12:41 openai-routes.ts
+-rw-r--r-- 1 runner runner  6152 Jun  4 18:45 paymentRoutes.ts
+-rw-r--r-- 1 runner runner 28827 Jun 22 22:51 portal-routes.ts
+-rw-r--r-- 1 runner runner  9335 Jun 15 20:48 promo-code-routes.ts
+-rw-r--r-- 1 runner runner 28890 Jul 15 20:24 quote-routes.ts
+-rw-r--r-- 1 runner runner  1693 Jun 17 13:17 quote-session-routes.ts
+-rw-r--r-- 1 runner runner 37071 Jun  4 18:45 special-offers-routes-fixed.ts
+-rw-r--r-- 1 runner runner 26696 Jul 11 18:55 special-offers-routes.ts
+-rw-r--r-- 1 runner runner  5006 Jun  4 18:45 special-offers-update-helper.ts
+-rw-r--r-- 1 runner runner  5364 Jun  4 18:45 test-booking-data.ts
+-rw-r--r-- 1 runner runner 24979 Jul 21 19:52 test-routes.ts
+-rw-r--r-- 1 runner runner 10174 Jul 16 21:01 treatment-package-routes.ts
+-rw-r--r-- 1 runner runner  9716 Jul 16 16:04 treatment-package-routes.ts.backup
+-rw-r--r-- 1 runner runner 13241 Jun  4 18:45 treatmentPlanRoutes.ts
+-rw-r--r-- 1 runner runner 12784 Jun  4 18:45 treatment-routes.ts
+-rw-r--r-- 1 runner runner 13941 Jun  4 18:45 trending-packages-routes-fixed.ts
+-rw-r--r-- 1 runner runner 14668 Jun  4 18:45 trending-packages-routes.ts
+=== BOOKING ROUTES SAMPLE ===
+import { Router } from "express";
+import type { Request, Response } from "express";
+import { z } from "zod";
+import { storage } from "../storage";
+import { isAuthenticated } from "../middleware/auth-middleware";
+import { ensureRole } from "../middleware/auth";
+import { insertBookingSchema } from "@shared/schema";
+import { randomUUID } from "crypto";
+
+// Define status and stage types
+type BookingStatus = "pending" | "confirmed" | "in_progress" | "completed" | "cancelled";
+type BookingStage = "deposit" | "pre_travel" | "treatment" | "post_treatment" | "completed";
+
+const router = Router();
+
+// Schema for updating booking status
+const updateBookingStatusSchema = z.object({
+  status: z.enum(["pending", "confirmed", "in_progress", "completed", "cancelled"]),
+});
+
+// Schema for updating booking stage
+const updateBookingStageSchema = z.object({
+  stage: z.enum(["deposit", "pre_travel", "treatment", "post_treatment", "completed"]),
+});
+
+// Get all bookings (admin only)
+router.get(
+  "/",
+  isAuthenticated,
+  ensureRole(["admin"]),
+  async (req: Request, res: Response) => {
+    try {
+      const bookings = await storage.getAllBookings();
+      res.json(bookings);
+    } catch (error) {
+      console.error("Error fetching all bookings:", error);
+      res.status(500).json({ message: "Failed to fetch bookings" });
+    }
+  }
+);
+
+// Get bookings for a specific user
+router.get(
+  "/user/:userId",
+  isAuthenticated,
+  async (req: Request, res: Response) => {
+    try {
+      const userId = Number(req.params.userId);
+      
+      // Only allow admins, clinic staff, or the user themselves to access their bookings

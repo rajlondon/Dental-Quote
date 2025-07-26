@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express, { type Request, Response, NextFunction } from "express";
-import memoryAuth from "./simple-memory-auth";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import path from "path";
@@ -8,7 +7,6 @@ import cors from "cors";
 import { logError } from "./services/error-logger";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler";
 import session from "express-session";
-import memoryAuth from "./simple-memory-auth";
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { db } from "./db";
@@ -328,9 +326,6 @@ app.use(
 );
 
 app.use(express.json());
-
-// Mount our memory auth routes
-app.use("/api/auth", memoryAuth);
 app.use(express.urlencoded({ extended: false }));
 
 // Auth middleware to check if user is logged in
