@@ -433,3 +433,52 @@ app.use("/api/admin/packages", adminPackageRouter);
 // Admin package routes
 import adminPackageRouter from "./routes/admin-package-routes";
 app.use("/api/admin/packages", adminPackageRouter);
+
+// Global route listing endpoint for debugging
+  app.get('/api/debug/all-routes', (req, res) => {
+    const routes = [];
+
+    function extractRoutes(stack, basePath = '') {
+      stack.forEach((middleware) => {
+        if (middleware.route) {
+          // Regular route
+          routes.push({
+            path: basePath + middleware.route.path,
+            methods: Object.keys(middleware.route.methods),
+            type: 'route'
+          });
+        } else if (middleware.name === 'router') {
+          // Router middleware
+          const routerStack = middleware.handle.stack;
+          if (routerStack) {
+            extractRoutes(routerStack, basePath + (middleware.regexp.source.match(/\^\\?\/(.*?)\\\//)?.[1] || ''));
+          }
+        }
+      });
+    }
+
+    extractRoutes(app._router.stack);
+
+    res.json({
+      totalRoutes: routes.length,
+      routes: routes.sort((a, b) => a.path.localeCompare(b.path))
+    });
+  });
+
+  // WebSocket connection status endpoint with domain info
+  app.get('/api/ws-status', (req, res) => {
+    res.json({
+      enabled: true,
+      endpoint: '/ws',
+      supportedEvents: [
+        'register', 
+        'sync_appointment', 
+        'treatment_update', 
+        'message'
+      ],
+      host: req.get('host'),
+      protocol: req.protocol,
+      domain_test: true,
+      time: new Date().toISOString()
+    });
+  });

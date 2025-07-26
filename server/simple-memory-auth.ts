@@ -45,7 +45,7 @@ router.post('/register', async (req, res) => {
     };
 
     users.set(email, userData);
-    
+
     console.log('✅ USER CREATED:', email);
 
     return res.status(201).json({
@@ -73,7 +73,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     console.log('🔐 LOGIN ATTEMPT:', req.body);
-    
+
     const { email, password } = req.body;
 
     if (!email || !password) {
@@ -133,15 +133,25 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// User endpoint - ENHANCED DEBUG VERSION
+// Single user endpoint - no duplicates
 router.get("/user", (req, res) => {
-  console.log("🚨 FIXED USER ENDPOINT HIT!");
-  console.log("Session data:", req.session);
-  
+  console.log("🚨 USER ENDPOINT HIT!");
+  console.log("Session data:", JSON.stringify(req.session, null, 2));
+  console.log("Session ID:", req.sessionID);
+  console.log("User ID from session:", req.session?.userId);
+
   if (!req.session?.userId) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
+    return res.status(401).json({ 
+      success: false, 
+      message: "Not authenticated",
+      debug: {
+        hasSession: !!req.session,
+        sessionId: req.sessionID,
+        sessionKeys: req.session ? Object.keys(req.session) : []
+      }
+    });
   }
-  
+
   return res.json({
     success: true,
     user: {
@@ -175,27 +185,6 @@ router.get('/test', (req, res) => {
   return res.json({ success: true, message: 'Auth routes working!' });
 });
 
-// Debug endpoint
-router.get("/user", (req, res) => {
-  console.log("🚨 FIXED USER ENDPOINT HIT!");
-  console.log("Session data:", req.session);
-  
-  if (!req.session?.userId) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
-  }
-  
-  return res.json({
-    success: true,
-    user: {
-      id: req.session.userId,
-      email: req.session.userEmail,
-      role: req.session.userRole,
-      firstName: "User",
-      lastName: "Name"
-    }
-  });
-});
-
 export default router;
 
 // Session debug endpoint
@@ -213,30 +202,9 @@ router.get('/notifications', (req, res) => {
   if (!req.session?.userId) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
+
   // Return empty notifications for now
   return res.json([]);
-});
-
-// Simple working user endpoint bypass
-router.get("/user", (req, res) => {
-  console.log("🚨 FIXED USER ENDPOINT HIT!");
-  console.log("Session data:", req.session);
-  
-  if (!req.session?.userId) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
-  }
-  
-  return res.json({
-    success: true,
-    user: {
-      id: req.session.userId,
-      email: req.session.userEmail,
-      role: req.session.userRole,
-      firstName: "User",
-      lastName: "Name"
-    }
-  });
 });
 
 // Temporary notifications fallback
@@ -254,7 +222,7 @@ router.get('/api/notifications', (req, res) => {
   if (!req.session?.userId) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
+
   // Return empty notifications for now
   return res.json({ notifications: [], unread_count: 0 });
 });
@@ -263,11 +231,11 @@ router.get('/api/notifications', (req, res) => {
 router.get('/api/notifications', (req, res) => {
   console.log('🚨 NOTIFICATIONS BYPASS HIT!');
   console.log('🔍 Session:', req.session);
-  
+
   if (!req.session?.userId) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-  
+
   // Return empty notifications for now - clinic portal should work
   return res.json({ 
     notifications: [], 
@@ -288,25 +256,4 @@ router.get("/notifications", (req, res) => {
     return res.status(401).json({ error: "Unauthorized" });
   }
   return res.json({ notifications: [], unread_count: 0 });
-});
-
-// WORKING user verification endpoint
-router.get("/user", (req, res) => {
-  console.log("🚨 FIXED USER ENDPOINT HIT!");
-  console.log("Session data:", req.session);
-  
-  if (!req.session?.userId) {
-    return res.status(401).json({ success: false, message: "Not authenticated" });
-  }
-  
-  return res.json({
-    success: true,
-    user: {
-      id: req.session.userId,
-      email: req.session.userEmail,
-      role: req.session.userRole,
-      firstName: "User",
-      lastName: "Name"
-    }
-  });
 });
